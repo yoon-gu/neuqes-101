@@ -345,18 +345,21 @@ AutoModelForSequenceClassification.from_pretrained(
 # ----- 19. 삽질 -----
 md(r"""## 🚀 삽질 코너 (선택)
 
-방식 A와 B의 정답 분포 자체는 같았는데, 정규화(`C`) 강도를 줄이면 결과가 갈릴까요?
+다음 코드는 sklearn 없이 numpy만으로 softmax의 **shift invariance** 를 보여줍니다 — 모든 logit에 같은 상수를 더해도 출력 분포가 변하지 않는다는 성질입니다. 이게 K=2일 때 sklearn이 collapse를 하는 *정확한 이유* 입니다.
 
 ```python
-for C in [100, 1, 0.01]:
-    a = LogisticRegression(C=C, max_iter=2000).fit(X_train, y_train)
-    b = LogisticRegression(C=C, multi_class="multinomial", max_iter=2000).fit(X_train, y_train)
-    pa = a.predict_proba(X_test)[:, 1]
-    pb = b.predict_proba(X_test)[:, 1]
-    print(f"C={C}: max |P_a - P_b| = {np.abs(pa - pb).max():.4f}")
+z = np.array([1.0, 2.0])
+
+p_original  = np.exp(z)         / np.sum(np.exp(z))
+p_shift5    = np.exp(z + 5)     / np.sum(np.exp(z + 5))
+p_zero_z0   = np.exp(z - z[0])  / np.sum(np.exp(z - z[0]))   # z_0 = 0 으로 정규화한 형태
+
+print(f"softmax([1, 2]):    {p_original.round(6)}")
+print(f"softmax([6, 7]):    {p_shift5.round(6)}")
+print(f"softmax([0, 1]):    {p_zero_z0.round(6)}")
 ```
 
-힌트: 정규화가 매우 약해지면 (`C` 크게) 두 방식의 잉여 자유도가 다른 식으로 정해질 수 있어 차이가 약간 늘어날 수 있습니다. 하지만 결정 경계(predict 결과)는 거의 같게 유지됩니다.""")
+힌트: 세 결과가 모두 같습니다. 두 logit 중 *하나는 자유롭게 정할 수 있고* 의미 있는 정보는 차이 $z_1 - z_0$ 뿐 — 만약 $z_0 = 0$ 으로 고정하면 $z_1$ 만 학습하면 됩니다. 이게 sklearn이 K=2 multinomial을 binary form으로 collapse하는 형식적 근거이고, K=2 softmax가 sigmoid의 리파라미터화에 불과한 이유입니다.""")
 
 # ----- 20. next -----
 md(r"""## 다음 챕터 예고
