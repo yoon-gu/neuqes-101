@@ -6,10 +6,12 @@ Hugging Face 입문 커리큘럼 (18챕터). 모든 실습자료는 **Google Col
 
 ```
 모델 축:    sklearn ─→ DistilBERT(영어) ─→ KLUE-BERT(한국어) ─→ 작은 BERT(워드레벨)
-태스크 축:  Regression ─→ Binary ─→ Multi-class ─→ Multi-label ─→ +Auxiliary
-Loss 축:    MSELoss ─→ BCEWithLogitsLoss ─→ CrossEntropyLoss ─→ BCEWithLogitsLoss(per-label) ─→ Combined
+태스크 축:  Regression ─→ Binary ─→ Multi-class ─→ Multi-label
+Loss 축:    MSELoss ─→ BCEWithLogitsLoss ─→ CrossEntropyLoss ─→ BCEWithLogitsLoss(per-label) ─→ +Auxiliary (Combined)
 토크나이저: TF-IDF ─→ WordPiece(영어) ─→ WordPiece(한국어) ─→ 워드레벨(직접) ─→ 형태소기반(직접)
 ```
+
+> Auxiliary는 새 task가 아니라 기존 loss에 보조 항(예: `λ·MSE`)을 더하는 변화이므로 **Loss 축** 끝에 둡니다. Ch 12·16의 메인 task는 직전 챕터(Multi-label)와 동일합니다.
 
 각 챕터는 레포 루트의 자체 폴더(예: `01_tfidf/`)에 노트북과 요약 `README.md`가 함께 들어 있습니다.
 

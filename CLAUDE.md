@@ -12,7 +12,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 절대 위반 금지 제약
 
-1. **변경점 한 가지 원칙** — 한 챕터는 직전 챕터 대비 **딱 한 가지** 만 바뀝니다. 모델 축(sklearn → DistilBERT → KLUE-BERT → 작은 BERT)과 태스크 축(Regression → Binary → Multi-class → Multi-label → +Auxiliary) 중 하나만 변하고 나머지는 고정. 두 가지가 동시에 바뀌면 학습자가 효과를 분리해 이해할 수 없습니다.
+1. **변경점 한 가지 원칙** — 한 챕터는 직전 챕터 대비 **딱 한 가지** 만 바뀝니다. 변화의 축은 셋:
+   - **모델 축**: sklearn → DistilBERT → KLUE-BERT → 작은 BERT
+   - **태스크 축**: Regression → Binary → Multi-class → Multi-label
+   - **Loss 축**: MSELoss → BCEWithLogitsLoss → CrossEntropyLoss → BCEWithLogitsLoss(per-label) → +Auxiliary(Combined)
+
+   한 챕터에서 한 축만 변하고 나머지는 고정. 두 축이 동시에 바뀌면 학습자가 효과를 분리해 이해할 수 없습니다. **Auxiliary는 task 신설이 아니라 loss에 보조 항을 더하는 변화** 이므로 Loss 축 끝에 위치합니다 — Ch 12/16의 메인 task는 직전 챕터(Multi-label)와 동일하고, 새 보조 헤드 + λ 가중치만 추가됩니다.
 2. **T4 30분 제약** — 학습 코드는 30분 안에 끝나야 합니다. 기본 가이드: Yelp 5,000 샘플 / `max_length=128` / `batch_size=16~32` / 1~2 에폭 / `fp16=True`.
 3. **bf16 사용 금지** — T4(Compute Capability 7.5)는 bf16 미지원. **항상 `fp16=True`**. Flash Attention 2도 미지원.
 4. **용어 통일** — PyTorch/Hugging Face 용어를 메인으로, sklearn 용어는 괄호 안 보조로. 예: `BCEWithLogitsLoss` (sklearn: log loss).
