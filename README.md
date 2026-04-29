@@ -24,18 +24,18 @@ Loss 축:    MSELoss ─→ BCEWithLogitsLoss ─→ CrossEntropyLoss ─→ BCE
 | 1 | — | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/01_tfidf/01_tfidf.ipynb) | (TF-IDF) | `TfidfVectorizer` | — | — | — | — |
 | 2 | — | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/02_sklearn_regression/02_sklearn_regression.ipynb) | LinearReg | TF-IDF | (1차원) | 없음 | `MSELoss` | float |
 | 3 | — | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/03_sklearn_binary/03_sklearn_binary.ipynb) | LogReg | TF-IDF | (1차원) | sigmoid | `BCEWithLogitsLoss` | int (0/1) |
-| 4 | — | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/04_sklearn_multiclass/04_sklearn_multiclass.ipynb) | LogReg | TF-IDF | (5차원) | softmax | `CrossEntropyLoss` | int (0~4) |
+| 4 | — | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/04_sklearn_multiclass/04_sklearn_multiclass.ipynb) | LogReg | TF-IDF | (5차원) | softmax | `CrossEntropyLoss` | int (0-4) |
 | 5 | — | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/05_sklearn_multilabel/05_sklearn_multilabel.ipynb) | OneVsRest LogReg | TF-IDF | (5차원) | sigmoid (각각) | `BCEWithLogitsLoss` per-label | multi-hot |
 | 6 | — | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/06_bert_pipeline/06_bert_pipeline.ipynb) | DistilBERT (추론) | WordPiece | 사전학습 헤드 | softmax | — | — |
 | 7 | — | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/07_tokenizer_datasets/07_tokenizer_datasets.ipynb) | DistilBERT (추론) | WordPiece | — | — | — | — |
 | 8 | — | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/08_bert_regression/08_bert_regression.ipynb) | DistilBERT 파인튜닝 | WordPiece | `Linear(H,1)` | 없음 | `MSELoss` | float |
 | 9a | — | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/09_bert_binary/09_bert_binary.ipynb) | DistilBERT 파인튜닝 | WordPiece | `Linear(H,1)` | sigmoid | `BCEWithLogitsLoss` | float (0.0/1.0) |
 | 9b | — | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/09_bert_binary/09_bert_binary.ipynb) | DistilBERT 파인튜닝 | WordPiece | `Linear(H,2)` | softmax | `CrossEntropyLoss` | int (0/1) |
-| 10 | — | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/10_bert_multiclass/10_bert_multiclass.ipynb) | DistilBERT 파인튜닝 | WordPiece | `Linear(H,5)` | softmax | `CrossEntropyLoss` | int (0~4) |
+| 10 | — | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/10_bert_multiclass/10_bert_multiclass.ipynb) | DistilBERT 파인튜닝 | WordPiece | `Linear(H,5)` | softmax | `CrossEntropyLoss` | int (0-4) |
 | 11 | — | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/11_bert_multilabel/11_bert_multilabel.ipynb) | DistilBERT 파인튜닝 | WordPiece | `Linear(H,5)` | sigmoid (각각) | `BCEWithLogitsLoss` | multi-hot |
 | 12 | — | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/12_auxiliary_loss/12_auxiliary_loss.ipynb) | DistilBERT + 보조 헤드 | WordPiece | 메인(5) + 보조(1) | sigmoid + 없음 | `BCEWithLogitsLoss + λ·MSELoss` | multi-hot + float |
 | 13 | — | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/13_ko_binary/13_ko_binary.ipynb) | klue/bert-base | WordPiece (한국어) | `Linear(H,2)` | softmax | `CrossEntropyLoss` | int (0/1) |
-| 14 | — | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/14_ko_multiclass/14_ko_multiclass.ipynb) | klue/bert-base | WordPiece (한국어) | `Linear(H,7)` | softmax | `CrossEntropyLoss` | int (0~6) |
+| 14 | — | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/14_ko_multiclass/14_ko_multiclass.ipynb) | klue/bert-base | WordPiece (한국어) | `Linear(H,7)` | softmax | `CrossEntropyLoss` | int (0-6) |
 | 15 | — | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/15_ko_multilabel/15_ko_multilabel.ipynb) | klue/bert-base | WordPiece (한국어) | `Linear(H,7)` | sigmoid (각각) | `BCEWithLogitsLoss` | multi-hot |
 | 16 | — | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/16_ko_auxiliary/16_ko_auxiliary.ipynb) | klue/bert-base + 보조 | WordPiece (한국어) | 메인(7) + 보조 | sigmoid + 태스크별 | `BCEWithLogitsLoss + λ·L_aux` | 메인 + 보조 |
 | 17 | — | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/17_en_word_tokenizer/17_en_word_tokenizer.ipynb) | 작은 BERT (직접) | 워드레벨 (직접 학습) | `Linear(H,2)` | softmax | `CrossEntropyLoss` | int (0/1) |
@@ -45,10 +45,10 @@ Loss 축:    MSELoss ─→ BCEWithLogitsLoss ─→ CrossEntropyLoss ─→ BCE
 
 ## Phase 구분
 
-- **Phase 0 (Ch 1~5)** — sklearn으로 태스크/loss의 본질 학습. BERT 등장하지 않음.
-- **Phase 1 (Ch 6~12)** — DistilBERT(영어)로 같은 태스크들을 다시. Auxiliary loss로 마무리.
-- **Phase 2 (Ch 13~16)** — 한국어로 압축 재방문 (klue/bert-base). Binary부터 시작 (회귀는 영어에서 다뤘으므로 생략).
-- **Phase 3 (Ch 17~18)** — 토크나이저를 직접 학습. 사전학습 의존 없는 경험. Phase 3가 클라이맥스가 되도록 토크나이저 시각을 Ch 1부터 일관되게 추적합니다.
+- **Phase 0 (Ch 1-5)** — sklearn으로 태스크/loss의 본질 학습. BERT 등장하지 않음.
+- **Phase 1 (Ch 6-12)** — DistilBERT(영어)로 같은 태스크들을 다시. Auxiliary loss로 마무리.
+- **Phase 2 (Ch 13-16)** — 한국어로 압축 재방문 (klue/bert-base). Binary부터 시작 (회귀는 영어에서 다뤘으므로 생략).
+- **Phase 3 (Ch 17-18)** — 토크나이저를 직접 학습. 사전학습 의존 없는 경험. Phase 3가 클라이맥스가 되도록 토크나이저 시각을 Ch 1부터 일관되게 추적합니다.
 
 ## 학습 환경
 

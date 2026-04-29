@@ -102,7 +102,7 @@ plt.rcParams["axes.unicode_minus"] = False""")
 # ----- 7. 실습 도입 -----
 md(r"""## 🚀 실습: Yelp 리뷰 데이터 살펴보기
 
-`yelp_review_full`은 Yelp 식당 리뷰 65만 건에 1~5점 별점이 달린 데이터셋입니다 (라벨은 0~4로 저장됨). 학습 흐름을 가볍게 유지하기 위해 **5,000건만 무작위 샘플링** 합니다.""")
+`yelp_review_full`은 Yelp 식당 리뷰 65만 건에 1-5점 별점이 달린 데이터셋입니다 (라벨은 0-4로 저장됨). 학습 흐름을 가볍게 유지하기 위해 **5,000건만 무작위 샘플링** 합니다.""")
 
 # ----- 8. 데이터 로드 -----
 code(r"""dataset = load_dataset("yelp_review_full")
@@ -220,7 +220,7 @@ md(r"""## 📦 이번 챕터에 등장한 라이브러리
 |---|---|---|
 | `datasets` | Hugging Face의 데이터셋 로딩 라이브러리 (Apache Arrow 기반) | Ch 7에서 깊게 본다 |
 | `sklearn.feature_extraction.text.CountVectorizer` | 횟수 벡터화 | 이후 챕터의 비교 기준 |
-| `sklearn.feature_extraction.text.TfidfVectorizer` | TF-IDF 벡터화 | Ch 2~5에서 입력으로 계속 사용 |""")
+| `sklearn.feature_extraction.text.TfidfVectorizer` | TF-IDF 벡터화 | Ch 2-5에서 입력으로 계속 사용 |""")
 
 # ----- 22. 체크포인트 -----
 md(r"""## 🎯 체크포인트 질문
@@ -289,7 +289,7 @@ TfidfVectorizer(
 )
 ```
 
-5,000건짜리 영어 문서 데이터에선 5K~30K가 흔한 출발점입니다. `10000`은 학습 흐름을 빠르게 가져가기 위한 보수적 설정이고, 실험으로 조정하면 됩니다.
+5,000건짜리 영어 문서 데이터에선 5K-30K가 흔한 출발점입니다. `10000`은 학습 흐름을 빠르게 가져가기 위한 보수적 설정이고, 실험으로 조정하면 됩니다.
 
 ### Q5. (실무) sklearn에서 한국어도 처리되나요? 다음 챕터에서도 그대로 동작할까요?
 
@@ -305,7 +305,7 @@ tokenizer = Mecab().morphs  # 함수: str -> list[str]
 TfidfVectorizer(tokenizer=tokenizer, token_pattern=None)
 ```
 
-이 커리큘럼에서는 Phase 2(Ch 13~16, 한국어)에서 `klue/bert-base`의 한국어 WordPiece 토크나이저를, Phase 3(Ch 18)에서 형태소 기반 워드레벨 토크나이저를 직접 다룹니다.
+이 커리큘럼에서는 Phase 2(Ch 13-16, 한국어)에서 `klue/bert-base`의 한국어 WordPiece 토크나이저를, Phase 3(Ch 18)에서 형태소 기반 워드레벨 토크나이저를 직접 다룹니다.
 
 ### Q6. (이론) sparse 행렬이 dense 행렬보다 메모리에 유리한 이유는 무엇인가요? `.toarray()`로 바꾸면 왜 메모리가 폭발할 수 있나요?
 
@@ -338,7 +338,7 @@ md(r"""## 다음 챕터 예고
 
 **Chapter 2. sklearn Regression — 시작점**
 
-- `LinearRegression`으로 별점(1~5)을 회귀합니다.
+- `LinearRegression`으로 별점(1-5)을 회귀합니다.
 - 활성화 함수도 없이 출력값을 그대로 사용 — 음수도, 5보다 큰 값도 나올 수 있습니다.
 - 다음 챕터의 첫 Loss 등장: `MSELoss` (sklearn: squared error).""")
 

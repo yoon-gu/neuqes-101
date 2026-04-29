@@ -13,7 +13,7 @@
 - "BERT 임베딩과 어떻게 다를까?" 떡밥
 
 ## 데이터
-`yelp_review_full` (Hugging Face Hub) — 별점 1~5점 식당 리뷰. 학습 흐름을 가볍게 유지하기 위해 5,000건만 무작위 샘플링.
+`yelp_review_full` (Hugging Face Hub) — 별점 1-5점 식당 리뷰. 학습 흐름을 가볍게 유지하기 위해 5,000건만 무작위 샘플링.
 
 ## 환경
 Google Colab CPU 런타임으로 충분합니다 (GPU 불필요). 약 5분 소요.

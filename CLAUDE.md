@@ -18,10 +18,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - **Loss 축**: MSELoss → BCEWithLogitsLoss → CrossEntropyLoss → BCEWithLogitsLoss(per-label) → +Auxiliary(Combined)
 
    한 챕터에서 한 축만 변하고 나머지는 고정. 두 축이 동시에 바뀌면 학습자가 효과를 분리해 이해할 수 없습니다. **Auxiliary는 task 신설이 아니라 loss에 보조 항을 더하는 변화** 이므로 Loss 축 끝에 위치합니다 — Ch 12/16의 메인 task는 직전 챕터(Multi-label)와 동일하고, 새 보조 헤드 + λ 가중치만 추가됩니다.
-2. **T4 30분 제약** — 학습 코드는 30분 안에 끝나야 합니다. 기본 가이드: Yelp 5,000 샘플 / `max_length=128` / `batch_size=16~32` / 1~2 에폭 / `fp16=True`.
+2. **T4 30분 제약** — 학습 코드는 30분 안에 끝나야 합니다. 기본 가이드: Yelp 5,000 샘플 / `max_length=128` / `batch_size=16-32` / 1-2 에폭 / `fp16=True`.
 3. **bf16 사용 금지** — T4(Compute Capability 7.5)는 bf16 미지원. **항상 `fp16=True`**. Flash Attention 2도 미지원.
 4. **용어 통일** — PyTorch/Hugging Face 용어를 메인으로, sklearn 용어는 괄호 안 보조로. 예: `BCEWithLogitsLoss` (sklearn: log loss).
-5. **FAQ 답변까지 작성** — FAQ 섹션은 5~7개 질문 + **각 답변을 함께** 작성합니다. 필요하면 답변 안에 짧은 코드 스니펫(코드 레벨 안내)을 포함해 학습자가 바로 적용할 수 있게 합니다. 실무 : 이론 ≈ 6 : 4 비율은 유지.
+5. **FAQ 답변까지 작성** — FAQ 섹션은 5-7개 질문 + **각 답변을 함께** 작성합니다. 필요하면 답변 안에 짧은 코드 스니펫(코드 레벨 안내)을 포함해 학습자가 바로 적용할 수 있게 합니다. 실무 : 이론 ≈ 6 : 4 비율은 유지.
 
 ## 챕터 표준 구조 (노트북 셀 순서)
 
@@ -33,8 +33,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 4. **🔤 토크나이저 노트** — **모든 챕터에 포함**. 같은 문장이 어떻게 토큰화되는지 예시, 다음 챕터에서 바뀌는지 여부.
 5. **🚀 실습 → 🔬 해부 → 🛠️ 변형** — 3단 구조 ("먼저 돌려보기 → 안에서 무슨 일이 → 직접 재현"). 코드 셀로 구성.
 6. **📦 등장한 라이브러리 정리** — 해당 챕터에서 새로 등장한 것만.
-7. **🎯 체크포인트 질문** 3~4개.
-8. **❓ FAQ** 5~7개 — 실무 : 이론 ≈ 6 : 4. 각 질문에 **답변까지** 작성. 필요한 곳은 짧은 코드 스니펫 포함.
+7. **🎯 체크포인트 질문** 3-4개.
+8. **❓ FAQ** 5-7개 — 실무 : 이론 ≈ 6 : 4. 각 질문에 **답변까지** 작성. 필요한 곳은 짧은 코드 스니펫 포함.
 9. **🚀 삽질 코너** (선택) — 일부러 틀린 코드로 에러 메시지 학습.
 10. **다음 챕터 예고**.
 
@@ -46,10 +46,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 챕터 폴더 경로 규약: 레포 루트의 `<NN>_<slug>/` (zero-pad 두 자리). 폴더 안에 같은 이름의 노트북(`<NN>_<slug>.ipynb`)과 요약 `README.md`가 함께 들어감. **상위 `notebooks/` 디렉터리는 두지 않음** — 챕터 폴더가 루트에 직접 위치.
 
 Phase 구분:
-- **Phase 0 (Ch 1~5)**: sklearn으로 태스크/loss의 본질. BERT 등장하지 않음.
-- **Phase 1 (Ch 6~12)**: DistilBERT(영어)로 같은 태스크들을 다시. Auxiliary loss로 마무리.
-- **Phase 2 (Ch 13~16)**: 한국어로 압축 재방문 (klue/bert-base). **회귀 챕터는 생략** — 영어 Phase 1에서 이미 다뤘기 때문에 Binary부터 시작.
-- **Phase 3 (Ch 17~18)**: 토크나이저를 직접 학습. 사전학습 의존 없는 경험. **Phase 3가 클라이맥스가 되도록 토크나이저 시각을 Ch 1부터 일관되게 추적.**
+- **Phase 0 (Ch 1-5)**: sklearn으로 태스크/loss의 본질. BERT 등장하지 않음.
+- **Phase 1 (Ch 6-12)**: DistilBERT(영어)로 같은 태스크들을 다시. Auxiliary loss로 마무리.
+- **Phase 2 (Ch 13-16)**: 한국어로 압축 재방문 (klue/bert-base). **회귀 챕터는 생략** — 영어 Phase 1에서 이미 다뤘기 때문에 Binary부터 시작.
+- **Phase 3 (Ch 17-18)**: 토크나이저를 직접 학습. 사전학습 의존 없는 경험. **Phase 3가 클라이맥스가 되도록 토크나이저 시각을 Ch 1부터 일관되게 추적.**
 
 ## 작업 흐름
 
