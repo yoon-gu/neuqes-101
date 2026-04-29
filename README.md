@@ -17,11 +17,11 @@ Loss 축:    MSELoss ─→ BCEWithLogitsLoss ─→ CrossEntropyLoss ─→ BCE
 
 ## 챕터별 변화추적표
 
-각 행의 Colab 버튼을 누르면 해당 챕터 노트북이 Colab에서 바로 열립니다. **진행** 열은 사용자가 Colab에서 직접 실행해 끝까지 정상 동작함을 확인하면 `✅ Done`으로 갱신합니다(미검증: `—`).
+각 행의 Colab 버튼을 누르면 해당 챕터 노트북이 Colab에서 바로 열립니다. **진행** 열은 사용자가 Colab에서 직접 실행해 끝까지 정상 동작함을 확인하면 `✅`으로 갱신합니다(미검증: `—`).
 
 | Ch | 진행 | Colab | 모델 | 토크나이저 | 데이터 | Output Head | Activation | Loss | 라벨 형식 |
 |---|---|---|---|---|---|---|---|---|---|
-| 1 | ✅ Done | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/01_tfidf/01_tfidf.ipynb) | (TF-IDF) | `TfidfVectorizer` | Yelp 5,000 샘플 | — | — | — | — |
+| 1 | ✅ | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/01_tfidf/01_tfidf.ipynb) | (TF-IDF) | `TfidfVectorizer` | Yelp 5,000 샘플 | — | — | — | — |
 | 2 | — | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/02_sklearn_regression/02_sklearn_regression.ipynb) | LinearReg | TF-IDF | Yelp (별점 1-5) | (1차원) | 없음 | `MSELoss` | float |
 | 3 | — | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/03_sklearn_binary/03_sklearn_binary.ipynb) | LogReg | TF-IDF | Yelp 이진화 (4-5→1, 1-2→0, 3 제외) | (1차원) | sigmoid | `BCEWithLogitsLoss` | int (0/1) |
 | 4 | — | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/04_sklearn_multiclass/04_sklearn_multiclass.ipynb) | LogReg | TF-IDF | Yelp 5클래스 (별점 0-4) | (5차원) | softmax | `CrossEntropyLoss` | int (0-4) |
