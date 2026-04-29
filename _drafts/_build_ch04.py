@@ -1,0 +1,433 @@
+"""Build 04_sklearn_multiclass/04_sklearn_multiclass.ipynb."""
+import json
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parent.parent
+OUT = REPO / "04_sklearn_multiclass" / "04_sklearn_multiclass.ipynb"
+
+cells = []
+_counter = 0
+
+
+def _cid():
+    global _counter
+    _counter += 1
+    return f"cell{_counter:03d}"
+
+
+def md(text: str):
+    cells.append({
+        "cell_type": "markdown",
+        "id": _cid(),
+        "metadata": {},
+        "source": text,
+    })
+
+
+def code(text: str):
+    cells.append({
+        "cell_type": "code",
+        "id": _cid(),
+        "execution_count": None,
+        "metadata": {},
+        "outputs": [],
+        "source": text,
+    })
+
+
+# ----- 1. Title -----
+md(r"""# Chapter 4. sklearn Multi-class — sigmoid가 softmax로
+
+**목표**: sigmoid를 **softmax** 로 일반화합니다. 출력은 1차원에서 K차원으로 늘어나고, loss는 BCE에서 `CrossEntropyLoss`로 바뀝니다. 다만 K=2일 때는 두 방식이 **수학적으로 동등** 함을 먼저 확인하고, 그 위에서 K=5로 확장합니다.
+
+**환경**: Google Colab (GPU 불필요 — sklearn만 사용)
+
+**예상 소요 시간**: 약 5-10분
+
+---
+
+## 학습 흐름
+
+1. 🚀 **Section A — Binary 재방문**: Ch 3과 똑같은 binary 문제를 `softmax + CE` (출력 차원 2)로 다시 풀고, sigmoid + BCE 결과와 일치함을 확인
+2. 🔬 **수학적 동등성**: $\sigma(z) = \text{softmax}([0, z])_1$ 를 직접 확인 — K=2 softmax가 사실은 sigmoid의 리파라미터화
+3. 🛠️ **Section B — 5클래스로 확장**: Yelp 별점 1-5를 5개 독립 클래스로 분류. softmax/CE는 K가 무엇이든 그대로 일반화""")
+
+# ----- 2. 추적표 -----
+md(r"""## 📊 변화추적표
+
+| Ch | 모델 | 토크나이저 | 데이터 | Output Head | Activation | Loss |
+|---|---|---|---|---|---|---|
+| 1 | (TF-IDF) | `TfidfVectorizer` | Yelp 5,000 | — | — | — |
+| 2 | LinearReg | TF-IDF | Yelp (별점 1-5) | (1차원) | 없음 | `MSELoss` |
+| 3 | LogReg | TF-IDF | Yelp 이진화 | (1차원) | sigmoid | `BCEWithLogitsLoss` |
+| **4 ← 여기** | LogReg | TF-IDF | Yelp 5클래스 (별점 0-4) | (5차원) | **softmax** | **`CrossEntropyLoss`** (sklearn: multinomial log loss) |
+
+전체 18챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.""")
+
+# ----- 3. 변경점 -----
+md(r"""## 🔄 변경점 (Diff from Ch 3)
+
+| 축 | Ch 3 | Ch 4 |
+|---|---|---|
+| 모델 | `LogisticRegression` (binary) | `LogisticRegression(multi_class="multinomial")` |
+| Activation | sigmoid (1차원) | **softmax (K차원)** |
+| Loss | `BCEWithLogitsLoss` | **`CrossEntropyLoss`** |
+| 라벨 | int (0/1) | int (0~K-1) |
+| 데이터 | Yelp 이진화 | Yelp 별점 5클래스 (Section B) |
+| 토크나이저 | TF-IDF | TF-IDF (그대로) |
+
+핵심 변화는 **활성화 함수와 loss의 일반화** 입니다. K=2인 특수 경우 (Section A에서 다룸)에는 Ch 3과 거의 동일한 결과가 나오고, K가 커지면 자연스럽게 다중 클래스로 확장됩니다.""")
+
+# ----- 4. Loss 변화 -----
+md(r"""## 📐 Loss 함수의 변화 — `CrossEntropyLoss` 등장
+
+**Cross Entropy** 는 모델의 예측 분포 $\hat{\mathbf{p}}$ 와 정답 분포 $\mathbf{y}$ (one-hot) 사이의 차이를 잽니다.
+
+$$L = -\frac{1}{N}\sum_{i=1}^{N}\sum_{k=1}^{K} y_{ik} \log \hat p_{ik}$$
+
+원-핫 정답에서는 정답 클래스의 항만 살아남으므로 단순화됩니다.
+
+$$L = -\frac{1}{N}\sum_{i=1}^{N} \log \hat p_{i,\, y_i}$$
+
+**숫자로 감 잡기** (K=5, 정답 클래스 = 2인 한 샘플):
+
+| 예측 분포 $\hat{\mathbf{p}} = [\hat p_0, \dots, \hat p_4]$ | 정답 확률 $\hat p_{2}$ | 손실 $-\log \hat p_{2}$ |
+|---|---|---|
+| **정답에 집중**: `[0.05, 0.05, 0.80, 0.05, 0.05]` | 0.80 | 0.223 |
+| **균등(uniform)**: `[0.20, 0.20, 0.20, 0.20, 0.20]` | 0.20 | 1.609 |
+| **틀린 클래스에 집중**: `[0.05, 0.05, 0.05, 0.05, 0.80]` | 0.05 | **2.996** |
+
+해석:
+- K=5에서 **완전 균등** 분포일 때 손실은 $\log K = \log 5 \approx 1.609$. 모델이 아무 정보도 없는 baseline.
+- 정답에 확신이 있으면 baseline보다 작아지고, 정답이 *아닌* 곳에 확신이 있으면 baseline을 훨씬 넘어 폭증.
+
+**K=2이면 BCE와 동등**: 식을 풀어보면 두 클래스의 CE가 정확히 BCE와 같습니다. Section A에서 같은 binary 데이터에 두 방식을 돌려 결과가 거의 일치하는 것을 확인합니다.
+
+```python
+# PyTorch (Ch 10 이후)
+criterion = nn.CrossEntropyLoss()
+loss = criterion(logits, targets)   # logits: (N, K), targets: (N,) 정수 인덱스
+
+# sklearn (이번 챕터)
+LogisticRegression(multi_class="multinomial", max_iter=1000)
+```""")
+
+# ----- 5. 토크나이저 노트 -----
+md(r"""## 🔤 토크나이저 노트
+
+이번 챕터의 토크나이저는 **Ch 1-3과 동일한 `TfidfVectorizer`** 입니다. 입력 표현은 그대로고, 출력 차원과 loss만 일반화됩니다.
+
+> **다음 챕터(Ch 5)**: 같은 TF-IDF 그대로. 변하는 건 출력의 K개 sigmoid가 *각각 독립* 으로 작동하면서 multi-label로 확장되는 것입니다 (softmax처럼 합 = 1을 강제하지 않음).""")
+
+# ----- 6. install -----
+code(r"""!pip install -q datasets scikit-learn pandas matplotlib""")
+
+# ----- 7. import + load + binary 데이터 -----
+code(r"""import warnings
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from datasets import load_dataset
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import (
+    accuracy_score, classification_report, confusion_matrix, log_loss,
+)
+
+plt.rcParams["axes.unicode_minus"] = False
+
+dataset = load_dataset("yelp_review_full")
+SAMPLE_SIZE = 5000
+ds = dataset["train"].shuffle(seed=42).select(range(SAMPLE_SIZE))
+df = ds.to_pandas()
+df["star"] = df["label"] + 1   # 0-4 → 1-5
+print(f"전체 샘플 수: {len(df)}")""")
+
+# ----- 8. Section A 도입 -----
+md(r"""## 🚀 Section A — Binary 재방문: softmax로 다시 풀기
+
+Ch 3과 **완전히 같은 데이터** 로 시작합니다 — 별점 3 제외, 4-5 → 1, 1-2 → 0. 이번엔 두 방식을 나란히 학습합니다.
+
+- **방식 A** (Ch 3): 출력 1차원, sigmoid, BCE
+- **방식 B** (Ch 4 새 방식): 출력 **2차원**, softmax, CE
+
+K=2에서 두 방식이 정말 같은 결과를 주는지 확인합니다.""")
+
+# ----- 9. binary 데이터 + split -----
+code(r"""# Ch 3과 동일한 이진화
+df_bin = df[df["star"] != 3].copy()
+df_bin["y"] = (df_bin["star"] >= 4).astype(int)
+
+X_text_train_b, X_text_test_b, y_train_b, y_test_b = train_test_split(
+    df_bin["text"], df_bin["y"], test_size=0.2, random_state=42, stratify=df_bin["y"],
+)
+
+tfidf_b = TfidfVectorizer(max_features=10000)
+X_train_b = tfidf_b.fit_transform(X_text_train_b)
+X_test_b = tfidf_b.transform(X_text_test_b)
+
+print(f"X_train: {X_train_b.shape}, 긍정 비율: {y_train_b.mean():.1%}")""")
+
+# ----- 10. 두 방식 fit + accuracy -----
+code(r"""# 방식 A: sigmoid + BCE (Ch 3 그대로)
+model_a = LogisticRegression(max_iter=1000)
+model_a.fit(X_train_b, y_train_b)
+
+# 방식 B: softmax + CE (multinomial)
+model_b = LogisticRegression(multi_class="multinomial", max_iter=1000)
+model_b.fit(X_train_b, y_train_b)
+
+acc_a = accuracy_score(y_test_b, model_a.predict(X_test_b))
+acc_b = accuracy_score(y_test_b, model_b.predict(X_test_b))
+
+print(f"방식 A (sigmoid + BCE) accuracy: {acc_a:.4f}")
+print(f"방식 B (softmax + CE)  accuracy: {acc_b:.4f}")
+print(f"차이: {abs(acc_a - acc_b):.4f}")""")
+
+# ----- 11. predict_proba 비교 -----
+code(r"""proba_a = model_a.predict_proba(X_test_b)
+proba_b = model_b.predict_proba(X_test_b)
+
+print(f"방식 A predict_proba shape: {proba_a.shape}")
+print(f"방식 B predict_proba shape: {proba_b.shape}")
+print(f"  → 둘 다 (N, 2). 방식 A도 sklearn이 내부적으로 [P(0), P(1)]을 내줌.")
+
+# 두 방식의 P(y=1) 비교
+proba_a_pos = proba_a[:, 1]
+proba_b_pos = proba_b[:, 1]
+
+print(f"\n앞 5개 샘플 P(y=1):")
+print(f"방식 A: {proba_a_pos[:5].round(4)}")
+print(f"방식 B: {proba_b_pos[:5].round(4)}")
+print(f"\n전체 max 차이: {np.abs(proba_a_pos - proba_b_pos).max():.4f}")
+print(f"전체 mean 차이: {np.abs(proba_a_pos - proba_b_pos).mean():.4f}")""")
+
+# ----- 12. 수학적 동등성 시연 -----
+md(r"""## 🔬 수학적 동등성: $\sigma(z) = \text{softmax}([0, z])_1$
+
+방식 B는 logit을 두 개 ($z_0, z_1$) 학습합니다. 한편 softmax의 출력 두 번째 성분은:
+
+$$\text{softmax}([z_0, z_1])_1 = \frac{e^{z_1}}{e^{z_0} + e^{z_1}} = \frac{1}{1 + e^{-(z_1 - z_0)}} = \sigma(z_1 - z_0)$$
+
+즉 **방식 B의 두 logit 차이** 가 방식 A의 binary logit과 같은 역할을 합니다. softmax + 2차원은 sigmoid + 1차원의 **리파라미터화** 일 뿐 — 자유도가 하나 더 있는 형태이고, 그 잉여 자유도는 정규화나 학습 과정에서 자동으로 정해집니다.
+
+직접 확인합니다.""")
+
+# ----- 13. 동등성 코드 -----
+code(r"""# 방식 B의 logit 두 개 (N, 2)
+logits_b = np.asarray(X_test_b @ model_b.coef_.T) + model_b.intercept_
+
+# 두 logit의 차이
+diff_logits = logits_b[:, 1] - logits_b[:, 0]   # (N,)
+
+# sigmoid에 차이를 넣은 결과 = 방식 B의 P(y=1)
+proba_from_diff = 1 / (1 + np.exp(-diff_logits))
+
+print(f"sigmoid(z_1 - z_0)    앞 5개: {proba_from_diff[:5].round(4)}")
+print(f"방식 B predict_proba[:, 1]:  {proba_b_pos[:5].round(4)}")
+print(f"max 차이: {np.abs(proba_from_diff - proba_b_pos).max():.2e}")""")
+
+# ----- 14. Section B 도입 -----
+md(r"""## 🛠️ Section B — 5클래스로 확장
+
+K=2 특수 경우를 확인했으니, 이제 softmax/CE의 진짜 가치인 K>2를 봅니다. Yelp 별점 1-5를 5개 독립 클래스로 분류합니다 (라벨 0-4).
+
+회귀(Ch 2)에서는 별점 사이의 거리(4점과 5점이 가깝다는 정보)를 loss가 보존했습니다. 분류에서는 클래스 간 거리를 가정하지 않습니다 — 1점과 5점이 "다른 클래스 두 개"일 뿐, 4점과 5점보다 더 멀다고 모델이 알 길이 없습니다.""")
+
+# ----- 15. 5클래스 데이터 + fit -----
+code(r"""# 별점 1-5 → 라벨 0-4
+y_5class = df["label"]   # 이미 0-4
+
+X_text_train, X_text_test, y_train, y_test = train_test_split(
+    df["text"], y_5class, test_size=0.2, random_state=42, stratify=y_5class,
+)
+
+tfidf = TfidfVectorizer(max_features=10000)
+X_train = tfidf.fit_transform(X_text_train)
+X_test = tfidf.transform(X_text_test)
+
+# softmax + CE (multinomial)
+model_5 = LogisticRegression(multi_class="multinomial", max_iter=1000)
+model_5.fit(X_train, y_train)
+
+y_pred_5 = model_5.predict(X_test)
+print(f"5클래스 accuracy: {accuracy_score(y_test, y_pred_5):.4f}")
+print(f"baseline (균등 추측): {1/5:.4f}")""")
+
+# ----- 16. predict_proba shape + classification_report -----
+code(r"""proba_5 = model_5.predict_proba(X_test)
+print(f"predict_proba shape: {proba_5.shape}  (N, K=5)")
+print(f"행 합 (1이어야 함): {proba_5.sum(axis=1)[:5].round(4)}")
+
+print()
+print(classification_report(y_test, y_pred_5, target_names=[f"{i+1}★" for i in range(5)]))""")
+
+# ----- 17. confusion matrix -----
+code(r"""cm = confusion_matrix(y_test, y_pred_5)
+cm_df = pd.DataFrame(
+    cm,
+    index=[f"true {i+1}★" for i in range(5)],
+    columns=[f"pred {i+1}★" for i in range(5)],
+)
+print(cm_df)""")
+
+# ----- 18. 관찰 + OvR 떡밥 -----
+md(r"""**관찰**
+
+- confusion matrix를 보면 오답이 **대각선 근처에 몰려 있습니다** — 4점을 5점으로 헷갈리는 경우는 많아도 4점을 1점으로 헷갈리는 경우는 거의 없습니다. 이건 별점이 사실은 ordinal 데이터라서 모델이 자연스럽게 "비슷한 클래스끼리 헷갈림"을 학습한 결과입니다.
+- 분류 모델은 클래스 간 거리를 가정하지 않지만, 데이터가 ordinal이면 학습 결과에서 그 구조가 드러납니다.
+
+**multinomial vs OvR (One-vs-Rest)** — Ch 5 떡밥
+
+`multi_class="multinomial"`은 하나의 softmax로 K개 클래스를 동시에 학습합니다 (확률 합 = 1, 클래스 간 *상호배타*).
+
+또 다른 방식 `multi_class="ovr"`은 K개의 **독립 binary 분류기** 를 만듭니다 ("클래스 0 vs 나머지", "클래스 1 vs 나머지", ...). 확률은 합이 1이 아닐 수 있고, 각 클래스 결정이 독립적입니다.
+
+> **다음 챕터(Ch 5)** 에서는 OvR을 활용해 **multi-label 분류** 로 넘어갑니다 — "한 문서에 여러 라벨이 동시에 붙을 수 있는" 경우. softmax의 합=1 제약이 풀리고, 각 라벨이 독립 sigmoid로 작동합니다.""")
+
+# ----- 19. library -----
+md(r"""## 📦 이번 챕터에 등장한 라이브러리
+
+| 이름 | 한 줄 설명 | 다음 챕터에서 |
+|---|---|---|
+| `LogisticRegression(multi_class="multinomial")` | softmax + CE 다중 분류 | Ch 5에서 `multi_class="ovr"`로 multi-label로 확장 |
+| `sklearn.metrics.confusion_matrix` | 혼동 행렬 (다중 클래스도 K×K로 일반화) | 분류 챕터마다 등장 |
+| `sklearn.metrics.classification_report` | per-class precision/recall/F1 | — |""")
+
+# ----- 20. checkpoints -----
+md(r"""## 🎯 체크포인트 질문
+
+1. softmax 함수는 K개의 logit을 받아 무엇을 보장하나요? (두 가지 성질)
+2. K=2일 때 softmax + CE와 sigmoid + BCE가 동등하다는 것을 식으로 보일 수 있나요? (힌트: $\text{softmax}([z_0, z_1])_1$를 정리해보세요)
+3. Cross Entropy 손실에서 K=5 균등 분포일 때 손실값은 얼마인가요? 이걸 baseline으로 삼는 의미는?
+4. 5클래스 confusion matrix에서 오답이 대각선 근처에 몰리는 이유는 데이터의 어떤 성질 때문인가요?""")
+
+# ----- 21. FAQ -----
+md(r"""## ❓ FAQ
+
+### Q1. (이론) `multi_class="multinomial"`과 `"ovr"`은 어떻게 다른가요?
+
+핵심 차이는 **클래스 간 의존성** 입니다.
+
+- **multinomial (softmax)**: 한 모델이 K개 logit을 동시에 학습. softmax로 변환하면 확률 합 = 1 — 클래스가 *상호배타* 라고 가정.
+- **OvR (One-vs-Rest)**: K개 *독립* binary 분류기. 클래스 0의 logit은 다른 클래스의 logit 학습에 영향을 주지 않음. 확률 합이 1이 아닐 수 있음.
+
+| 상황 | 적합한 방식 |
+|---|---|
+| 한 샘플에 정확히 한 라벨 (예: 별점 1-5, 뉴스 카테고리) | multinomial |
+| 한 샘플에 여러 라벨 가능 (예: 영화 장르 — 로맨스+코미디) | OvR (Ch 5에서 다룸) |
+| 클래스가 매우 많고 (수백 개) 빠른 학습 필요 | OvR (병렬화 쉬움) |
+
+### Q2. (실무) 클래스가 100개를 넘어가면 학습이 느려지는데 어떻게 하나요?
+
+세 가지 흔한 처리법.
+
+1. **Hierarchical classification**: 큰 그룹으로 먼저 분류 → 그 안에서 세부 분류. 예: 의류 → 상의/하의 → 셔츠/티셔츠/...
+2. **희귀 클래스 묶기**: 빈도 1-2회짜리 클래스를 "기타"로 합치기. 보통 long tail의 80%는 모델이 어차피 못 배움.
+3. **계산 트릭**: hierarchical softmax, sampled softmax (학습 시 일부 클래스만 negative로). 학술 모델에 자주 등장하지만 sklearn 기본엔 없음 — PyTorch 영역.
+
+이번 챕터의 K=5 정도는 위 트릭이 필요 없는 작은 규모입니다.
+
+### Q3. (이론) softmax는 왜 합이 1이 되어야 하나요?
+
+수식 자체가 정규화를 강제합니다.
+
+$$\text{softmax}(z)_k = \frac{e^{z_k}}{\sum_{j=1}^{K} e^{z_j}}$$
+
+분모는 모든 클래스의 $e^{z_j}$ 합이라 분자들이 그 합을 정확히 분할 — 합이 1이 됩니다.
+
+**왜 이런 구조를 쓰나?** 모델 출력을 "확률 분포"로 해석하고 싶기 때문입니다. 확률 분포는 정의상 합이 1이고, 각 항이 [0, 1]이어야 합니다. softmax는 임의의 실수 logit 벡터를 그런 분포로 보내는 가장 자연스러운 변환 중 하나입니다 (지수 함수가 단조증가 + 양수 보장 → 정규화).
+
+### Q4. (이론) 회귀(Ch 2)처럼 별점 1-5를 다루는 것과 5클래스 분류의 차이는?
+
+같은 데이터를 두 관점으로 본 것입니다.
+
+| 관점 | 가정 | 손실 |
+|---|---|---|
+| 회귀 (Ch 2) | 별점 사이 **거리** 가 의미 있음 (1점과 2점의 차이 = 4점과 5점의 차이) | MSE — 거리의 제곱 |
+| 분류 (Ch 4) | 5개 **독립 클래스** (거리 가정 없음) | CE — 정답 클래스 확률의 -log |
+
+회귀는 4점을 5점으로 예측한 작은 실수와 1점을 5점으로 예측한 큰 실수에 *다른 페널티* (1 vs 16). 분류는 둘 다 그냥 "틀림"으로 동일 처리.
+
+별점 같은 ordinal 데이터에서 둘 중 뭐가 나은지는 케바케 — 회귀는 ordinal 정보를 활용, 분류는 클래스별 패턴(예: 1점 리뷰의 욕설 vs 5점 리뷰의 칭찬)을 잘 잡습니다. 이번 챕터의 confusion matrix가 자연스럽게 대각선에 모인 것은 분류 모델이 데이터의 ordinal 구조를 자동으로 학습한 결과입니다.
+
+### Q5. (실무) confusion matrix를 시각화하는 추천 방법은?
+
+`seaborn.heatmap`이 깔끔합니다.
+
+```python
+import seaborn as sns
+sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
+            xticklabels=[f"{i+1}★" for i in range(5)],
+            yticklabels=[f"{i+1}★" for i in range(5)])
+plt.xlabel("Predicted"); plt.ylabel("True")
+```
+
+또는 정규화해서 비율로 보기 (행 합이 1이 되도록 — recall 관점):
+
+```python
+cm_norm = cm / cm.sum(axis=1, keepdims=True)
+sns.heatmap(cm_norm, annot=True, fmt=".2f", cmap="Blues")
+```
+
+### Q6. (이론) `problem_type`을 명시 안 하면 sklearn은 어떻게 동작하나요?
+
+`LogisticRegression(multi_class="auto")` (기본값)이면:
+- 라벨이 2개면 binary (sigmoid + BCE).
+- 3개 이상이면 solver에 따라 multinomial 또는 OvR 자동 선택.
+
+명시적으로 쓰는 게 안전합니다 — solver 변경이나 라이브러리 버전 업그레이드로 동작이 달라질 수 있어서요. 이번 챕터에서는 두 방식의 차이를 보여주려 일부러 `multi_class`를 명시했습니다.
+
+(참고) Hugging Face `Trainer`는 `problem_type` 파라미터로 비슷한 결정을 합니다 — Ch 8 이후에 등장.""")
+
+# ----- 22. 삽질 -----
+md(r"""## 🚀 삽질 코너 (선택)
+
+같은 5클래스 데이터에 `multi_class="ovr"`을 적용하고 multinomial과 비교해보세요. 어떤 차이가 보일까요?
+
+```python
+model_ovr = LogisticRegression(multi_class="ovr", max_iter=1000)
+model_ovr.fit(X_train, y_train)
+
+acc_ovr = accuracy_score(y_test, model_ovr.predict(X_test))
+proba_ovr = model_ovr.predict_proba(X_test)
+
+print(f"multinomial accuracy: {accuracy_score(y_test, y_pred_5):.4f}")
+print(f"OvR accuracy:         {acc_ovr:.4f}")
+print(f"\nOvR predict_proba 행 합 (1과 가까운가?): {proba_ovr.sum(axis=1)[:5].round(4)}")
+```
+
+힌트: OvR은 K개 독립 sigmoid 모델이라, sklearn이 결과를 정규화하기 전 raw 확률 합은 1이 아닐 수 있습니다 (sklearn은 후처리로 합 1로 맞춰주긴 합니다). 정확도는 K가 작을 때 둘이 비슷합니다.""")
+
+# ----- 23. next -----
+md(r"""## 다음 챕터 예고
+
+**Chapter 5. sklearn Multi-label — softmax 합=1 제약을 푼다**
+
+- 한 샘플에 *여러* 라벨이 동시에 붙는 multi-label 문제로 확장
+- 새 데이터: Yelp 리뷰 + **측면(aspect) 키워드 합성** (food / service / price / ambiance / location 5개)
+- softmax 한 개 대신 **5개 독립 sigmoid** — 각 라벨이 다른 라벨에 영향받지 않음
+- Loss는 CrossEntropyLoss에서 **per-label `BCEWithLogitsLoss`** 로
+- `OneVsRestClassifier(LogisticRegression())` + `MultiLabelBinarizer`로 구현""")
+
+
+nb = {
+    "cells": cells,
+    "metadata": {
+        "colab": {"provenance": [], "toc_visible": True},
+        "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
+        "language_info": {"name": "python"},
+    },
+    "nbformat": 4,
+    "nbformat_minor": 5,
+}
+
+OUT.parent.mkdir(parents=True, exist_ok=True)
+with open(OUT, "w", encoding="utf-8") as f:
+    json.dump(nb, f, indent=1, ensure_ascii=False)
+
+print(f"Wrote {OUT.relative_to(REPO)}  ({len(cells)} cells)")
