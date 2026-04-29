@@ -38,7 +38,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 9. **🚀 삽질 코너** (선택) — 일부러 틀린 코드로 에러 메시지 학습.
 10. **다음 챕터 예고**.
 
-## 전체 추적표 (Loss / Head / Tokenizer)
+## 전체 추적표 (Loss / Head / Tokenizer / Data)
 
 18챕터의 변화 흐름과 Colab 링크가 담긴 단일 출처는 루트 `README.md`의 "챕터별 변화추적표" 입니다. 챕터를 작성할 때:
 - 노트북 도입부 추적표는 README.md 표에서 **현재 챕터까지의 행만 잘라** 그대로 사용 (현재 행 강조).
