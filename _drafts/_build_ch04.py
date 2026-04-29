@@ -197,57 +197,56 @@ print(f"전체 mean 차이: {np.abs(p_a - p_b).mean():.4f}")""")
 # ----- 12. 동등성 도출 -----
 md(r"""## 🔬 해부: 수학적 동등성
 
-방식 B는 logit을 두 개 ($z_0, z_1$) 학습합니다. softmax의 두 번째 성분을 풀어보면:
+방식 B는 *개념적으로* logit을 두 개 ($z_0, z_1$) 학습합니다. softmax의 두 번째 성분을 풀어보면:
 
 $$\text{softmax}([z_0, z_1])_1 = \frac{e^{z_1}}{e^{z_0} + e^{z_1}} = \frac{1}{1 + e^{-(z_1 - z_0)}} = \sigma(z_1 - z_0)$$
 
-즉 **방식 B의 두 logit 차이** 가 방식 A의 binary logit과 같은 역할을 합니다. softmax + 2차원은 sigmoid + 1차원의 **리파라미터화**.
+즉 두 logit에서 **의미 있는 정보는 $z_1 - z_0$ 뿐** 입니다 — 두 logit에 같은 상수를 더해도 softmax 결과가 안 바뀌니까요 ($e^{z+c}/\sum e^{z+c} = e^{z}/\sum e^{z}$). softmax+2는 sigmoid+1의 **리파라미터화** 일 뿐입니다.
 
-CE 쪽도 풀어보면 K=2에서 BCE와 같은 식이 됩니다.
+CE 쪽도 K=2에서 BCE와 같은 식이 됩니다 (one-hot이라 $y_1 = y$, $y_0 = 1-y$ 대입):
 
 $$\text{CE} = -[y_1 \log \hat p_1 + y_0 \log \hat p_0] = -[y \log \hat p_1 + (1-y)\log(1 - \hat p_1)] = \text{BCE}$$
 
-(첫 등식은 one-hot이라 $y_1 = y$, $y_0 = 1-y$를 대입한 것.)
+확률·loss가 같으니 학습된 결정 경계도, gradient도 같습니다.
 
-직접 확인합니다.""")
+먼저 식이 정말 일치하는지 임의의 logit 쌍으로 직접 확인합니다.""")
 
-# ----- 13. 동등성 코드 -----
-code(r"""# 방식 B의 logit 두 개 (N, 2)
-logits_b = np.asarray(X_test @ model_b.coef_.T) + model_b.intercept_
+# ----- 13. 임의 logit으로 동등성 시연 -----
+code(r"""# 임의의 logit 쌍 4개를 만들어 softmax([z0,z1])_1 == sigmoid(z1 - z0) 인지 확인
+z0_arr = np.array([-2.0, 0.0, 1.5, 3.0])
+z1_arr = np.array([ 1.0, 0.5, -0.5, 2.0])
 
-# 두 logit의 차이를 sigmoid에 넣은 결과
-diff_logits = logits_b[:, 1] - logits_b[:, 0]
-proba_from_diff = 1 / (1 + np.exp(-diff_logits))
+softmax_p1  = np.exp(z1_arr) / (np.exp(z0_arr) + np.exp(z1_arr))
+sigmoid_diff = 1.0 / (1.0 + np.exp(-(z1_arr - z0_arr)))
 
-# 이 값이 방식 B의 P(y=1)와 정확히 같아야 함
-print(f"sigmoid(z_1 - z_0)         앞 5개: {proba_from_diff[:5].round(4)}")
-print(f"방식 B predict_proba[:, 1]: {p_b[:5].round(4)}")
-print(f"max 차이: {np.abs(proba_from_diff - p_b).max():.2e}")""")
+print(f"{'z_0':>6} {'z_1':>6}    {'softmax([z0,z1])_1':>22}    {'sigmoid(z1-z0)':>16}")
+print("-" * 60)
+for i in range(len(z0_arr)):
+    print(f"{z0_arr[i]:>6.1f} {z1_arr[i]:>6.1f}    {softmax_p1[i]:>22.8f}    {sigmoid_diff[i]:>16.8f}")
 
-# ----- 14. 변형: coefficient 자유도 -----
-md(r"""## 🛠️ 변형: 두 모델의 coefficient 자유도
+print(f"\nmax 차이: {np.abs(softmax_p1 - sigmoid_diff).max():.2e}  (수치적 오차 수준)")""")
 
-방식 A는 $w$ 한 벡터를 학습합니다 (shape `(1, V)`). 방식 B는 $w_0, w_1$ 두 벡터 (shape `(2, V)`). 그러나 결과적으로 **방식 B는 $w_1 - w_0$ 의 정보만 의미가 있습니다** — softmax는 모든 logit에 같은 상수를 더해도 결과가 변하지 않기 때문 ($e^{z+c} / \sum e^{z+c} = e^z / \sum e^z$).
+# ----- 14. 변형: sklearn coef shape 관찰 -----
+md(r"""## 🛠️ 변형: sklearn은 왜 K=2 multinomial에서 `(2, V)` coef를 안 만드나?
 
-이 **잉여 자유도** 는 정규화(L2)에서 자동으로 정리됩니다 — 방식 B의 두 coefficient는 보통 $w_1 \approx -w_0$ 인 대칭 형태로 학습되어 차이($w_1 - w_0 \approx 2 w_1$)가 방식 A의 $w$에 비례합니다.""")
+위 동등성 덕분에 K=2에서 두 logit 중 하나는 잉여입니다. sklearn은 이 사실을 알고 **K=2 multinomial을 자동으로 binary form으로 collapse** 시킵니다 — `coef_` 를 `(2, V)` 가 아니라 `(1, V)` 로만 저장합니다. 두 방식이 그래서 사실상 같은 모델이 되어 `predict_proba`도 거의 일치하는 거였죠.
 
-# ----- 15. coefficient 비교 코드 -----
-code(r"""print(f"방식 A coef_ shape: {model_a.coef_.shape}")  # (1, V)
-print(f"방식 B coef_ shape: {model_b.coef_.shape}")  # (2, V)
+직접 두 모델의 `coef_` 모양을 확인합니다.""")
 
-# 방식 B의 두 coefficient 간 대칭성 확인
-w0_b = model_b.coef_[0]
-w1_b = model_b.coef_[1]
-print(f"\n방식 B 두 coef의 대칭성: w_0 + w_1 의 max abs = {np.abs(w0_b + w1_b).max():.4e}")
-print(f"  (정규화로 w_1 ≈ -w_0 가 학습되어 합이 거의 0)")
-
-# 방식 A의 w와 방식 B의 (w_1 - w_0) 비교
-w_a = model_a.coef_[0]
-diff_b = w1_b - w0_b
-ratio = (diff_b / w_a)
-ratio = ratio[np.isfinite(ratio) & (np.abs(w_a) > 1e-3)]
-print(f"\n비율 (w_1 - w_0) / w_a 의 분포 (큰 |w_a|만): median ≈ {np.median(ratio):.3f}")
-print(f"  (정규화 강도에 따라 1.0 또는 2.0 근처. 핵심은 두 모델이 같은 결정 경계를 학습한다는 것)")""")
+# ----- 15. coef shape 비교 코드 -----
+code(r"""print(f"방식 A coef_ shape:      {model_a.coef_.shape}")
+print(f"방식 B coef_ shape:      {model_b.coef_.shape}")
+print(f"방식 A intercept_ shape: {model_a.intercept_.shape}")
+print(f"방식 B intercept_ shape: {model_b.intercept_.shape}")
+print()
+print("→ 둘 다 (1, V) — sklearn이 K=2 multinomial을 binary form으로 collapse")
+print()
+print(f"두 coef_ 의 max 차이:      {np.abs(model_a.coef_ - model_b.coef_).max():.2e}")
+print(f"두 intercept_ 의 max 차이: {np.abs(model_a.intercept_ - model_b.intercept_).max():.2e}")
+print()
+print("(미세한 차이는 solver 수렴 기준의 차이일 뿐, 본질적으로 같은 모델)")
+print()
+print("진짜 (2, V) 두 logit head는 PyTorch가 '직접' 만들어주는 Ch 10 BERT binary에서 등장합니다.")""")
 
 # ----- 16. library -----
 md(r"""## 📦 이번 챕터에 등장한 라이브러리
@@ -303,16 +302,16 @@ $$\text{softmax}(z)_k = \frac{e^{z_k}}{\sum_{j=1}^{K} e^{z_j}}$$
 
 **왜 이런 구조?** 모델 출력을 "확률 분포"로 해석하고 싶어서입니다. 확률 분포는 정의상 $\sum_k p_k = 1$ 이고 각 항이 [0, 1]. softmax는 임의 실수 logit 벡터를 그런 분포로 보내는 가장 자연스러운 변환 중 하나(지수 함수 = 단조증가 + 양수 보장 → 정규화).
 
-### Q4. (실무) softmax + 2차원 모델의 coefficient는 sigmoid + 1차원과 어떻게 다른가요?
+### Q4. (실무) sklearn에서 binary에 `multi_class="multinomial"` 을 줘도 `coef_.shape`가 `(1, V)` 인 이유는?
 
-위 셀에서 봤듯, 방식 B의 두 coefficient는 정규화 덕분에 **대칭** ($w_0 + w_1 \approx 0$, 즉 $w_1 \approx -w_0$)으로 학습됩니다. 그러면 두 logit의 차이는 $z_1 - z_0 = 2 w_1 \cdot x + \text{const}$.
-
-방식 A의 $w$와 비교하면 정규화 강도에 따라 비율이 1 또는 2 근처로 나옵니다. 이는 **모델 표현력 차이가 아니라 같은 결정 경계의 두 가지 좌표 표현** 입니다.
+위 본문에서 확인했듯 K=2 softmax는 두 logit 중 하나가 잉여(redundant)입니다 — $z_1 - z_0$ 만 의미가 있어요. sklearn은 이걸 알고 **K=2 multinomial을 자동으로 binary form으로 collapse** 시킵니다. 그래서 `coef_` 가 `(2, V)` 가 아니라 `(1, V)`, `intercept_` 도 `(1,)` 로 저장됩니다.
 
 ```python
-# 방식 B 자유도 redundancy 직접 확인
-print(np.abs(model_b.coef_[0] + model_b.coef_[1]).max())  # ≈ 0
+LogisticRegression(multi_class="multinomial").fit(X, y_binary).coef_.shape  # (1, V)
+LogisticRegression(multi_class="multinomial").fit(X, y_3class).coef_.shape  # (3, V) — K≥3에선 (K, V)
 ```
+
+그래서 방식 A와 방식 B가 sklearn 안에서는 사실상 같은 모델이고, predict_proba도 미세한 수치 오차 빼고 일치합니다. 진짜 *두 별개의 logit head* 가 살아 있는 형태는 프레임워크가 collapse하지 않는 환경 — PyTorch에서 `nn.Linear(H, 2)` 를 직접 만들 때 — 비로소 등장합니다 (Ch 10).
 
 ### Q5. (이론) sklearn `multi_class` 인자의 의미와 자동 선택 기준은?
 

@@ -8,9 +8,9 @@ Ch 3과 **완전히 같은 binary 데이터** 를 출력 차원 2로 늘리고 s
 ## 다루는 핵심 개념
 - 첫 등장 Loss: **`CrossEntropyLoss`** — K=2 수치 예시가 Ch 3의 BCE 표와 완전히 같다는 점이 동등성의 첫 단서
 - 두 방식 비교: 같은 데이터에 sigmoid+BCE / softmax+CE 학습 → predict_proba 거의 일치
-- **수학적 동등성**: $\sigma(z) = \text{softmax}([z_0, z_1])_1 = \sigma(z_1 - z_0)$, CE in K=2 → BCE
-- 동등성 코드 시연: 방식 B의 두 logit 차이를 sigmoid에 넣어 P(y=1)와 max 차이 ~1e-15 검증
-- 잉여 자유도: softmax+2차원의 두 coefficient가 정규화 덕분에 대칭($w_1 \approx -w_0$)으로 학습됨
+- **수학적 동등성**: $\sigma(z) = \text{softmax}([z_0, z_1])_1 = \sigma(z_1 - z_0)$, K=2 CE → BCE
+- 동등성 코드 시연: 임의의 logit 쌍에서 `softmax([z_0,z_1])_1 == sigmoid(z_1-z_0)` 직접 확인 (max 차이 ~1e-16)
+- sklearn 동작 관찰: `multi_class="multinomial"` 을 줘도 K=2이면 `coef_.shape`가 `(1, V)` — sklearn이 K=2 multinomial을 binary form으로 자동 collapse하기 때문. 진짜 (2, V) 두 logit head는 Ch 10 PyTorch에서 등장
 
 ## Loss 수치 예시 (K=2, 정답 y=1)
 | 예측 분포 | 정답 확률 | 손실 |
