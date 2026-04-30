@@ -49,9 +49,10 @@ md(r"""# Chapter 6. sklearn Multi-label — softmax 합=1 제약을 푼다
 ## 학습 흐름
 
 1. 🚀 **실습**: Yelp 리뷰에 측면(aspect) 키워드를 매칭해 5개 라벨(food/service/price/ambiance/location) multi-hot 합성 → `OneVsRestClassifier`로 학습
-2. 🔬 **해부**: multi-label 평가 지표 — subset accuracy, hamming loss, micro/macro F1
-3. 🛠️ **변형**: 임계값(threshold)을 옮기면 micro/macro F1이 어떻게 움직이나
-4. ⚠️ **합성의 한계** — 키워드 매칭으로 만든 라벨이 실제 라벨링과 어떻게 다른지 솔직히 짚기""")
+2. 📐 **Loss 분해**: 학습된 모델의 실제 예측으로 BCE 5개를 직접 합산해 본다 — multinomial CE를 못 쓰는 이유를 숫자로
+3. 🔬 **해부**: multi-label 평가 지표 — subset accuracy, hamming loss, micro/macro F1
+4. 🛠️ **변형**: 임계값(threshold)을 옮기면 micro/macro F1이 어떻게 움직이나
+5. ⚠️ **합성의 한계** — 키워드 매칭으로 만든 라벨이 실제 라벨링과 어떻게 다른지 솔직히 짚기""")
 
 # ----- 2. 추적표 -----
 md(r"""## 📊 변화추적표
@@ -287,7 +288,60 @@ print(f"proba shape:  {proba_ml.shape}")
 print(f"\n앞 3개 샘플의 예측 확률 (per-label):")
 print(pd.DataFrame(proba_ml[:3], columns=ASPECTS).round(4))""")
 
-# ----- 14. 해부 도입 -----
+# ----- 14a. Loss 분해 도입 -----
+md(r"""## 📐 Loss 한 단계 더: 학습된 모델의 실제 예측으로 BCE 분해
+
+방금 fit한 `model_ml`이 한 샘플에 대해 어떤 손실을 만들어내는지 직접 분해합니다. 변경점 표에서 본 "**per-label BCE 평균**" 이 단순한 수식이 아니라 **실제 5개 숫자의 산수** 라는 걸 확인합니다 — 그리고 그 위에서 "왜 multinomial CE는 여기 못 쓰나"를 진짜 값으로 짚습니다.""")
+
+# ----- 14b. Loss 분해 코드 -----
+code(r"""# 여러 라벨이 활성된 test 샘플 하나 고르기 (분해가 잘 보이도록)
+multi_active = np.where(Y_test.sum(axis=1) >= 3)[0]
+sample_idx = int(multi_active[0]) if len(multi_active) > 0 else 0
+
+y_true = Y_test[sample_idx]
+p_pred = proba_ml[sample_idx]
+text = X_text_test.iloc[sample_idx]
+
+print(f"리뷰 (앞 200자): {text[:200]}...")
+print(f"활성 라벨 수: {y_true.sum()}\n")
+
+print(f"{'측면':>10}  {'정답 y':>6}  {'예측 p':>10}  {'기여 항':>20}  {'손실':>10}")
+print("-" * 64)
+total_loss = 0.0
+for k, aspect in enumerate(ASPECTS):
+    y_k, p_k = int(y_true[k]), float(p_pred[k])
+    if y_k == 1:
+        loss_k = -np.log(max(p_k, 1e-12))
+        formula = f"-log({p_k:.4f})"
+    else:
+        loss_k = -np.log(max(1 - p_k, 1e-12))
+        formula = f"-log(1-{p_k:.4f})"
+    total_loss += loss_k
+    print(f"{aspect:>10}  {y_k:>6d}  {p_k:>10.4f}  {formula:>20}  {loss_k:>10.4f}")
+print("-" * 64)
+print(f"{'합':>10}  {'':>6}  {'':>10}  {'':>20}  {total_loss:>10.4f}")
+print(f"{'평균 BCE':>10}  {'':>6}  {'':>10}  {'÷ 5':>20}  {total_loss/5:>10.4f}")""")
+
+# ----- 14c. Loss 분해 해석 + multinomial 못 쓰는 이유 -----
+md(r"""**관찰**
+
+- 5개 라벨이 *각자 독립적으로* 손실을 기여합니다 — 한 라벨에서 잘 맞춰도 다른 라벨에서 못 맞추면 그 영향이 그대로 평균에 더해집니다.
+- 정답이 1인 라벨은 $-\log(p)$ — 예측 확률이 1에 가까울수록 손실 0에 수렴.
+- 정답이 0인 라벨은 $-\log(1-p)$ — 예측 확률이 0에 가까울수록 손실 0에 수렴.
+- 같은 sigmoid 출력에 대해 정답이 0이냐 1이냐에 따라 **정반대 방향** 으로 페널티가 커집니다 (대칭 구조).
+
+### 같은 샘플을 multinomial CE로 풀려고 하면
+
+위 샘플의 정답은 multi-hot — 여러 라벨이 동시에 1입니다. 만약 multinomial CE를 *억지로* 적용하려면 다음 두 가지 *임의 결정* 이 필요합니다.
+
+1. **5개 활성 라벨 중 *하나만* 정답으로 골라야 함**: argmax? 첫 활성? 어느 기준이든 *임의*.
+2. **그러면 나머지 활성 라벨들은 *틀린* 클래스로 학습됨**: 모델이 그 라벨에 강한 확률을 줄수록 손실이 *커짐*.
+
+결과: 모델이 "동시 활성 패턴을 *피하려고*" 학습됩니다 — 실제 정답에서는 동시 활성이 정답인데도. 이건 *데이터 가정과 정반대 방향* 으로 학습 신호가 작동하는 셈입니다.
+
+per-label BCE는 위 표처럼 5개 손실을 *독립적으로* 합산하므로 각 라벨이 자기 정답에만 책임을 집니다. **multi-label 데이터의 본래 구조와 정합한 유일한 선택** 인 이유가 이 산수에 있습니다.""")
+
+# ----- 15. 해부 도입 -----
 md(r"""## 🔬 해부: multi-label 평가 지표
 
 multi-class에서 자주 쓰던 accuracy는 multi-label에서 의미가 미묘하게 다릅니다.
