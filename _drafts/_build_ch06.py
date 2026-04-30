@@ -59,12 +59,12 @@ md(r"""## 📊 변화추적표
 
 | Ch | 모델 | 토크나이저 | 데이터 | Output Head | Activation | Loss |
 |---|---|---|---|---|---|---|
-| 1 | (TF-IDF) | `TfidfVectorizer` | Yelp 5,000 | — | — | — |
-| 2 | `LinearRegression()` | TF-IDF | Yelp (별점 1-5) | (1차원) | 없음 | `MSELoss` |
-| 3 | `LogisticRegression()` | TF-IDF | Yelp 이진화 | (1차원) | sigmoid | `BCEWithLogitsLoss` |
-| 4 | `LogisticRegression(multi_class="multinomial")` | TF-IDF | Yelp 이진화 (Ch 3과 동일) | (2차원) | softmax | `CrossEntropyLoss` |
-| 5 | `LogisticRegression(multi_class="multinomial")` | TF-IDF | Yelp 5클래스 | (5차원) | softmax | `CrossEntropyLoss` |
-| **6 ← 여기** | `OneVsRestClassifier(LogisticRegression())` | TF-IDF | Yelp + 측면 키워드 합성 | (5차원) | **sigmoid (각각 독립)** | **`BCEWithLogitsLoss` per-label** |
+| 1 | (TF-IDF) | `TfidfVectorizer()` | Yelp 5,000 | — | — | — |
+| 2 | `LinearRegression()` | `TfidfVectorizer()` | Yelp (별점 1-5) | (1차원) | 없음 | `MSELoss` |
+| 3 | `LogisticRegression()` | `TfidfVectorizer()` | Yelp 이진화 | (1차원) | sigmoid | `BCEWithLogitsLoss` |
+| 4 | `LogisticRegression(multi_class="multinomial")` | `TfidfVectorizer()` | Yelp 이진화 (Ch 3과 동일) | (2차원) | softmax | `CrossEntropyLoss` |
+| 5 | `LogisticRegression(multi_class="multinomial")` | `TfidfVectorizer()` | Yelp 5클래스 | (5차원) | softmax | `CrossEntropyLoss` |
+| **6 ← 여기** | `OneVsRestClassifier(LogisticRegression())` | `TfidfVectorizer()` | Yelp + 측면 키워드 합성 | (5차원) | **sigmoid (각각 독립)** | **`BCEWithLogitsLoss` per-label** |
 
 전체 19챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.""")
 

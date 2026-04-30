@@ -63,7 +63,7 @@ md(r"""## 📊 변화추적표
 
 | Ch | 모델 | 토크나이저 | Output Head | Activation | Loss |
 |---|---|---|---|---|---|
-| **1 ← 여기** | (TF-IDF) | `TfidfVectorizer` (학습) | — | — | — |
+| **1 ← 여기** | (TF-IDF) | `TfidfVectorizer()` | — | — | — |
 
 전체 18챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.""")
 

@@ -22,9 +22,9 @@ Google Colab CPU 런타임으로 충분 (GPU 불필요). 약 5-10분.
 
 | Ch | 모델 | 토크나이저 | 데이터 | Activation | Loss |
 |---|---|---|---|---|---|
-| 1 | (TF-IDF) | `TfidfVectorizer` | Yelp 5,000 | — | — |
-| 2 | `LinearRegression()` | TF-IDF | Yelp (별점 1-5) | 없음 | `MSELoss` |
-| **3** | `LogisticRegression()` | TF-IDF | Yelp 이진화 | **sigmoid** | **`BCEWithLogitsLoss`** |
+| 1 | (TF-IDF) | `TfidfVectorizer()` | Yelp 5,000 | — | — |
+| 2 | `LinearRegression()` | `TfidfVectorizer()` | Yelp (별점 1-5) | 없음 | `MSELoss` |
+| **3** | `LogisticRegression()` | `TfidfVectorizer()` | Yelp 이진화 | **sigmoid** | **`BCEWithLogitsLoss`** |
 
 전체 18챕터 표는 [루트 README](../README.md#챕터별-변화추적표)를 참고하세요.
 
