@@ -58,8 +58,8 @@ md(r"""## 📊 변화추적표
 | Ch | 모델 | 토크나이저 | 데이터 | Output Head | Activation | Loss |
 |---|---|---|---|---|---|---|
 | 1 | (TF-IDF) | `TfidfVectorizer` | Yelp 5,000 샘플 | — | — | — |
-| 2 | LinearReg | TF-IDF | Yelp (별점 1-5) | (1차원) | 없음 | `MSELoss` |
-| **3 ← 여기** | LogReg | TF-IDF | Yelp 이진화 (4-5→1, 1-2→0, 3 제외) | (1차원) | **sigmoid** | **`BCEWithLogitsLoss`** (sklearn: log loss) |
+| 2 | `LinearRegression()` | TF-IDF | Yelp (별점 1-5) | (1차원) | 없음 | `MSELoss` |
+| **3 ← 여기** | `LogisticRegression()` | TF-IDF | Yelp 이진화 (4-5→1, 1-2→0, 3 제외) | (1차원) | **sigmoid** | **`BCEWithLogitsLoss`** (sklearn: log loss) |
 
 전체 18챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.""")
 

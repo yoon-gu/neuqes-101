@@ -32,8 +32,8 @@ Google Colab CPU 런타임으로 충분 (GPU 불필요). 약 5-10분.
 
 | Ch | 모델 | 데이터 | Activation | Loss | 라벨 |
 |---|---|---|---|---|---|
-| 5 | LogReg(multinomial) | Yelp 5클래스 | softmax | `CrossEntropyLoss` | int (0-4) |
-| **6** | OneVsRest LogReg | Yelp + 측면 합성 | **per-label sigmoid** | **per-label `BCE`** | **multi-hot** |
+| 5 | `LogisticRegression(multi_class="multinomial")` | Yelp 5클래스 | softmax | `CrossEntropyLoss` | int (0-4) |
+| **6** | `OneVsRestClassifier(LogisticRegression())` | Yelp + 측면 합성 | **per-label sigmoid** | **per-label `BCE`** | **multi-hot** |
 
 전체 19챕터 표는 [루트 README](../README.md#챕터별-변화추적표)를 참고하세요.
 

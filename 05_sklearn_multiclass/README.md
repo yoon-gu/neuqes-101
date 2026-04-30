@@ -32,8 +32,8 @@ Google Colab CPU 런타임으로 충분 (GPU 불필요). 약 5-10분.
 
 | Ch | 모델 | 데이터 | Output | Loss |
 |---|---|---|---|---|
-| 4 | LogReg(multinomial) | Yelp 이진화 | (2차원) | `CrossEntropyLoss` |
-| **5** | LogReg(multinomial) | **Yelp 5클래스** | **(5차원)** | `CrossEntropyLoss` |
+| 4 | `LogisticRegression(multi_class="multinomial")` | Yelp 이진화 | (2차원) | `CrossEntropyLoss` |
+| **5** | `LogisticRegression(multi_class="multinomial")` | **Yelp 5클래스** | **(5차원)** | `CrossEntropyLoss` |
 
 전체 19챕터 표는 [루트 README](../README.md#챕터별-변화추적표)를 참고하세요.
 
