@@ -243,14 +243,42 @@ Ch 5에서 multi-class의 *대안* 으로 본 `OneVsRestClassifier`가 이번엔
 
 `predict_proba`도 차이가 있습니다 — Ch 5에서는 sklearn이 후처리로 합=1로 정규화해줬지만, multi-label 모드에서는 *정규화하지 않고* 각 라벨의 P(label_k = 1)을 그대로 반환합니다 (각 라벨이 독립이니까).""")
 
-# ----- 13. 학습 -----
-code(r"""model_ml = OneVsRestClassifier(LogisticRegression(max_iter=1000))
+# ----- 13a. bare LogReg 시도 -----
+code(r"""# 먼저 wrapper 없이 그냥 LogisticRegression() 에 multi-hot Y를 넣어보기
+bare_model = LogisticRegression(max_iter=1000)
+try:
+    bare_model.fit(X_train, Y_train)
+    print(f"성공? coef_ shape: {bare_model.coef_.shape}")
+except ValueError as e:
+    print(f"❌ 실패: {type(e).__name__}")
+    print(f"   메시지: {e}")""")
+
+# ----- 13b. 해설 -----
+md(r"""**왜 실패했나?** sklearn `LogisticRegression` 은 *1D Y* (각 샘플당 한 클래스 인덱스)만 받습니다. 우리의 `Y_train.shape == (N, 5)` 는 "한 샘플에 여러 라벨"이라는 의미인데 *형식 자체* 가 호환되지 않아요. fit이 첫 줄에서 죽습니다.
+
+`OneVsRestClassifier` 의 역할은 단순합니다.
+
+1. 2D Y를 K개의 1D 컬럼으로 **쪼개고**,
+2. 각 컬럼마다 `LogisticRegression` 을 **별도로** 학습 (총 K개 모델),
+3. 결과를 `.estimators_` 리스트에 보관해 `predict` 시 모두 적용.
+
+알고리즘은 동일한 LogReg지만 **fit 시점의 Y 형식 처리** 가 결정적 차이입니다 — bare 호출은 죽고, wrapper 호출은 K개 모델로 분할 학습됩니다.""")
+
+# ----- 13c. OvR 학습 -----
+code(r"""# 위 실패와 대비: wrapper 한 줄로 K개 LogReg가 자동 분할 학습됨
+model_ml = OneVsRestClassifier(LogisticRegression(max_iter=1000))
 model_ml.fit(X_train, Y_train)
 
-print(f"학습된 binary 분류기 수: {len(model_ml.estimators_)}")
-print(f"각 분류기는 한 측면의 'positive vs not'을 독립적으로 학습")
+print(f"OvR fit 성공!")
+print(f"  학습된 binary 분류기 수: {len(model_ml.estimators_)}")
+print(f"  각 estimator 타입:       {type(model_ml.estimators_[0]).__name__}")
+print(f"  각 estimator coef shape: {model_ml.estimators_[0].coef_.shape}  (1, V — 한 라벨용 binary)")
+print(f"\n각 분류기가 학습한 라벨:")
+for k, aspect in enumerate(ASPECTS):
+    n_pos = Y_train[:, k].sum()
+    print(f"  estimator[{k}] = '{aspect}': positive {n_pos}건 ({n_pos/len(Y_train):.1%})")
 
-# 예측
+# 예측 + 확률
 Y_pred = model_ml.predict(X_test)         # (N, K) multi-hot 0/1 (threshold 0.5 자동 적용)
 proba_ml = model_ml.predict_proba(X_test) # (N, K) per-label probability (정규화 X)
 
