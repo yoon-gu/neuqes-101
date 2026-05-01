@@ -40,7 +40,7 @@ md(r"""# Chapter 7. BERT 첫 만남 — `pipeline` 한 줄과 그 안의 4단계
 
 **목표**: sklearn 시대를 마치고 `transformers` 라이브러리를 만납니다. **5줄짜리 코드** 로 사전학습된 DistilBERT를 돌려보고, 그 한 줄 뒤에 어떤 일이 일어났는지 단계별로 풀어 헤칩니다.
 
-**환경**: Google Colab — CPU도 가능, T4 GPU면 더 빠름 (런타임 → 런타임 유형 변경 → T4 GPU)
+**환경**: Google Colab — **T4 GPU 권장** (런타임 → 런타임 유형 변경 → T4 GPU). 이번 챕터부터 GPU 메모리(VRAM) 추적이 등장하니 GPU 런타임에서 돌리면 모델 로드 → VRAM 증가가 한눈에 보입니다. CPU 런타임도 추론 자체는 동작하지만 `!nvidia-smi` 셀은 에러납니다.
 
 **예상 소요 시간**: 약 10분 (학습 없음, 추론만)
 
@@ -115,25 +115,66 @@ print(f"CUDA 사용 가능: {torch.cuda.is_available()}")
 if torch.cuda.is_available():
     print(f"GPU:            {torch.cuda.get_device_name(0)}")
 else:
-    print("CPU로 실행됩니다 (이번 챕터는 추론만이라 OK, 다만 Ch 9부터 학습은 GPU 권장)")""")
+    print("CPU로 실행됩니다 (이번 챕터는 추론만이라 동작은 함, 다만 nvidia-smi 셀은 건너뛰세요)")""")
+
+# ----- 7b. nvidia-smi 도입 -----
+md(r"""### `!nvidia-smi` — GPU 메모리(VRAM) 실시간 추적
+
+이번 챕터부터 학습·추론 코드가 GPU에 모델을 올리기 시작합니다. **`!nvidia-smi`** 는 NVIDIA에서 제공하는 명령행 도구로, 현재 GPU의 VRAM 사용량·온도·전력을 한 번에 보여줍니다. Colab 셀에서 `!` 접두사로 호출 가능.
+
+T4의 총 VRAM은 **약 15.36 GB** (= 15,360 MiB). 모델·옵티마이저·activation을 모두 이 안에 담아야 합니다 — Ch 9 이후 학습 chapter에서는 이 한도와 자주 부딪히게 되어요.
+
+**baseline** — 아직 아무 모델도 안 올린 상태:""")
+
+# ----- 7c. nvidia-smi baseline -----
+code(r"""!nvidia-smi""")
+
+# ----- 7d. nvidia-smi 해석 -----
+md(r"""**무엇을 봐야 하나** — 출력 가운데 줄 `Memory-Usage` 칸:
+
+```
+| ... |  XXX MiB / 15360MiB | ...
+        └─ used    └─ total
+```
+
+- 처음엔 ~3-200 MiB 정도. CUDA 컨텍스트가 잡혀 있는 만큼만.
+- 모델을 GPU에 올릴 때마다 `used` 가 증가합니다.
+- `Volatile GPU-Util` 은 *현재* GPU가 일하는 비율 — 학습 중에는 90~100% 가까이.
+
+**Python으로도 확인 가능** (셀 내부에서 변수로 받고 싶을 때):
+
+```python
+if torch.cuda.is_available():
+    used  = torch.cuda.memory_allocated() / 1024**2
+    total = torch.cuda.get_device_properties(0).total_memory / 1024**2
+    print(f"GPU memory: {used:.0f} / {total:.0f} MiB")
+```
+
+> Tip: `!nvidia-smi` 는 *시스템 전체* VRAM을 보여주고, `torch.cuda.memory_allocated()` 는 *현재 PyTorch 프로세스* 의 할당량만 보여줍니다 — 후자는 캐시·예약 메모리는 빼고 실제 텐서가 점유한 양에 가깝습니다.""")
 
 # ----- 8. 실습 도입 -----
 md(r"""## 1. 🚀 실습: 일단 돌려봅시다
 
 Hugging Face의 `pipeline` 은 **"모델 다운로드 → 토큰화 → 추론 → 결과 후처리"** 를 한 줄로 묶어주는 함수입니다.
 
-감성 분석(sentiment analysis)부터 시작합니다.""")
+감성 분석(sentiment analysis)부터 시작합니다. **GPU가 있으면 `device=0` 으로 명시** — 그래야 모델이 VRAM에 올라가서 nvidia-smi 변화가 보입니다 (기본은 CPU).""")
 
 # ----- 9. pipeline 한 줄 -----
 code(r"""from transformers import pipeline
 
-classifier = pipeline("sentiment-analysis")
+DEVICE = 0 if torch.cuda.is_available() else -1   # 0 = GPU index, -1 = CPU
+classifier = pipeline("sentiment-analysis", device=DEVICE)
 classifier("I love using Hugging Face! It's so simple.")""")
 
-# ----- 10. 첫 실행 안내 -----
-md(r"""**결과**: `[{'label': 'POSITIVE', 'score': 0.9998...}]`
+# ----- 9b. nvidia-smi after first model -----
+md(r"""**DistilBERT(SST-2)가 VRAM에 올라간 직후의 nvidia-smi:**""")
 
-처음 실행 시 모델 다운로드(약 250MB)에 30초~1분 정도 걸립니다. 두 번째부터는 캐시되어 즉시 실행.
+code(r"""!nvidia-smi""")
+
+md(r"""baseline과 비교하면 `Memory-Usage` 가 **약 250-400 MiB 늘어났을** 겁니다 — DistilBERT-base의 가중치(~67M 파라미터, fp32 기준 ~250 MB) + activation/cache가 올라간 결과. 모델마다 크기가 달라서 늘어나는 양도 다르다는 점이 곧 GPT-2/BERT 로드에서 보입니다.""")
+
+# ----- 10. 첫 실행 안내 -----
+md(r"""**참고**: 처음 실행 시 모델 다운로드(약 250MB)에 30초~1분 정도 걸립니다. 두 번째부터는 캐시되어 즉시 실행.
 
 여러 문장도 한 번에:""")
 
@@ -153,13 +194,30 @@ md(r"""### 다른 task도 같은 패턴
 
 # ----- 13. text-generation -----
 code(r"""# 텍스트 생성 (GPT-2)
-generator = pipeline("text-generation", model="gpt2")
+generator = pipeline("text-generation", model="gpt2", device=DEVICE)
 generator("Hugging Face is", max_length=30, num_return_sequences=1)""")
 
 # ----- 14. fill-mask -----
 code(r"""# 마스크 채우기 (BERT)
-unmasker = pipeline("fill-mask", model="bert-base-uncased")
+unmasker = pipeline("fill-mask", model="bert-base-uncased", device=DEVICE)
 unmasker("Hugging Face is a [MASK] for NLP.")""")
+
+# ----- 14b. nvidia-smi after 3 pipelines -----
+md(r"""**3개 pipeline(DistilBERT + GPT-2 + BERT-base)이 모두 VRAM에 쌓인 상태:**""")
+
+code(r"""!nvidia-smi""")
+
+md(r"""파이썬 객체 (`classifier`, `generator`, `unmasker`)가 각자 *별도의 모델 가중치* 를 들고 있어서 VRAM이 누적됩니다. 더 이상 안 쓰는 모델은 다음 패턴으로 메모리에서 비울 수 있습니다.
+
+```python
+import gc, torch
+del generator, unmasker      # 파이썬 참조 제거
+gc.collect()                 # 가비지 컬렉션
+if torch.cuda.is_available():
+    torch.cuda.empty_cache() # CUDA 캐시 비우기 (선택, 불필요한 캐시 반환)
+```
+
+T4 메모리(15.36 GB)는 작은 추론 모델 여러 개를 무리 없이 담지만, BERT-large(~340M)나 학습 시 옵티마이저까지 올리면 빠르게 한도에 도달하니 *항상 nvidia-smi 로 잔여 VRAM 확인* 하는 습관이 좋습니다.""")
 
 # ----- 15. 해부 도입 -----
 md(r"""## 2. 🔬 해부: pipeline 안에서는 뭐가 일어났을까?
@@ -214,9 +272,19 @@ model_name = "distilbert-base-uncased-finetuned-sst-2-english"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForSequenceClassification.from_pretrained(model_name)
 
-print("✅ 로드 완료")
+# GPU가 있으면 모델을 VRAM으로 이동 (직접 로드는 default가 CPU라 명시 필요)
+if torch.cuda.is_available():
+    model = model.to("cuda")
+
+print("로드 완료")
 print(f"  tokenizer 클래스: {type(tokenizer).__name__}")
-print(f"  model 클래스:     {type(model).__name__}")""")
+print(f"  model 클래스:     {type(model).__name__}")
+print(f"  model device:     {next(model.parameters()).device}")""")
+
+# ----- 19b. nvidia-smi after direct load -----
+md(r"""**`pipeline` 위에 추가로 *같은 DistilBERT* 가 올라간 상태** — VRAM이 또 한 번 늘어났습니다. 같은 가중치라도 별도 객체이면 별도 메모리.""")
+
+code(r"""!nvidia-smi""")
 
 # ----- 20. Auto 클래스 설명 -----
 md(r"""> **잠깐, `Auto`가 뭔가요?**
@@ -263,13 +331,17 @@ for token_id in inputs["input_ids"][0]:
 md(r"""### Step 3: 숫자 → 로짓 (Model forward)""")
 
 # ----- 26. forward -----
-code(r"""# 추론할 때는 gradient 계산을 끄는 것이 메모리/속도에 좋음
+code(r"""# 입력 텐서도 모델과 같은 device로 이동시켜야 함 (CPU↔GPU 혼합 forward는 에러)
+inputs_on_device = {k: v.to(model.device) for k, v in inputs.items()}
+
+# 추론할 때는 gradient 계산을 끄는 것이 메모리/속도에 좋음
 with torch.no_grad():
-    outputs = model(**inputs)
+    outputs = model(**inputs_on_device)
 
 print(f"출력 객체:    {type(outputs).__name__}")
 print(f"로짓 shape:   {outputs.logits.shape}  (배치 1개, 클래스 2개: NEGATIVE, POSITIVE)")
-print(f"로짓 값:      {outputs.logits}")""")
+print(f"로짓 값:      {outputs.logits}")
+print(f"로짓 device:  {outputs.logits.device}")""")
 
 # ----- 27. 로짓 설명 -----
 md(r"""로짓(logits)은 모델이 뱉은 **정규화되지 않은 점수**. shape `[1, 2]`는 "배치 1개, 클래스 2개"를 의미합니다.
@@ -377,6 +449,23 @@ for sent in sample_sentences:
         print(f"  {name:>28}  ({len(tokens)}개) {tokens}")
     print()""")
 
+# ----- 31c2. 특수 토큰 의미 정리 -----
+md(r"""### 특수 토큰(special token)이란
+
+`[CLS]`, `[SEP]` 같은 토큰은 *문장 텍스트* 가 아니라 **모델에 신호를 주기 위해 사전학습 단계에서 정해진 약속** 입니다. 어휘 사전에 별도 ID로 들어 있고, 토크나이저가 입력에 자동으로 붙입니다.
+
+| 토큰 | 풀이름 | 위치 | 역할 |
+|---|---|---|---|
+| `[CLS]` | Classification | 모든 입력 *맨 앞* | 분류 헤드는 *이 위치* 의 hidden state를 사용. attention을 통해 전체 문장 정보가 [CLS]로 모이도록 학습됨. |
+| `[SEP]` | Separator | 문장 끝, 두 문장 사이 | 한 문장 입력엔 `[CLS] ... [SEP]`. 두 문장이면 `[CLS] A [SEP] B [SEP]` (NSP·QA·NLI 등). |
+| `[PAD]` | Padding | 짧은 문장 끝 | 배치 안 문장 길이를 맞추는 더미 토큰. **`attention_mask=0`** 으로 표시해 모델이 무시. |
+| `[UNK]` | Unknown | 어디든 | 어휘 사전에 없는 토큰. WordPiece는 거의 항상 더 작은 서브워드로 쪼개므로 실제 출현은 드뭄. |
+| `[MASK]` | Mask | 사전학습 시 입력 일부 | BERT 사전학습의 *Masked LM* — 입력 토큰 15%를 `[MASK]` 로 가리고 모델이 맞추도록. 추론 시엔 거의 안 등장(fill-mask 데모 제외). |
+
+**autoregressive 모델 (GPT-2)** 은 `[CLS]/[SEP]` 가 없습니다 — 다음 토큰을 *순서대로* 예측하는 구조라 문장 시작/끝 마커가 별도로 필요 없고, `<|endoftext|>` 라는 단일 토큰이 BOS/EOS 역할을 겸합니다.
+
+이 약속은 *모델별로 다릅니다*. RoBERTa는 `<s>`, `</s>` 를, T5는 `<pad>`, `<extra_id_0>` 등을 씁니다 — `tokenizer.special_tokens_map` 으로 한 번에 확인 가능.""")
+
 # ----- 31d. 특수 토큰 비교 -----
 code(r"""# 특수 토큰: 모델마다 어떤 token을 [CLS]/[SEP]/[PAD]/[UNK] 자리에 두는지
 print(f"{'모델':>28}  {'BOS/CLS':>16}  {'EOS/SEP':>16}  {'PAD':>10}  {'UNK':>10}")
@@ -386,7 +475,12 @@ for name, tok in tokenizer_specs.items():
     sep = tok.sep_token if tok.sep_token else (tok.eos_token or "—")
     pad = tok.pad_token or "—"
     unk = tok.unk_token or "—"
-    print(f"{name:>28}  {cls:>16}  {sep:>16}  {pad:>10}  {unk:>10}")""")
+    print(f"{name:>28}  {cls:>16}  {sep:>16}  {pad:>10}  {unk:>10}")
+
+# 모든 special token을 한 번에 보고 싶으면:
+print()
+for name, tok in tokenizer_specs.items():
+    print(f"{name}.special_tokens_map = {tok.special_tokens_map}")""")
 
 # ----- 31e. 보너스 관찰 -----
 md(r"""**관찰 포인트**
