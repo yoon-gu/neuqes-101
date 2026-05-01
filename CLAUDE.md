@@ -14,7 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 1. **변경점 한 가지 원칙** — 한 챕터는 직전 챕터 대비 **딱 한 가지** 만 바뀝니다. 변화의 축은 셋:
    - **모델 축**: sklearn → DistilBERT → KLUE-BERT → 작은 BERT
-   - **태스크 축**: Regression → Binary → Multi-class → Multi-label
+   - **태스크 축**: Regression → Binary Classification → Multi-class Classification → Multi-label Classification
    - **Loss 축**: MSELoss → BCEWithLogitsLoss → CrossEntropyLoss → BCEWithLogitsLoss(per-label) → +Auxiliary(Combined)
 
    한 챕터에서 한 축만 변하고 나머지는 고정. 두 축이 동시에 바뀌면 학습자가 효과를 분리해 이해할 수 없습니다. **Auxiliary는 task 신설이 아니라 loss에 보조 항을 더하는 변화** 이므로 Loss 축 끝에 위치합니다 — Ch 12/16의 메인 task는 직전 챕터(Multi-label)와 동일하고, 새 보조 헤드 + λ 가중치만 추가됩니다.
@@ -48,7 +48,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Phase 구분:
 - **Phase 0 (Ch 1-6)**: sklearn으로 태스크/loss의 본질. BERT 등장하지 않음. (Ch 4는 sigmoid↔softmax 동등성을 sklearn binary로 시연하는 다리 챕터.)
 - **Phase 1 (Ch 7-13)**: DistilBERT(영어)로 같은 태스크들을 다시. Auxiliary loss로 마무리.
-- **Phase 2 (Ch 14-17)**: 한국어로 압축 재방문 (klue/bert-base). **회귀 챕터는 생략** — 영어 Phase 1에서 이미 다뤘기 때문에 Binary부터 시작.
+- **Phase 2 (Ch 14-17)**: 한국어로 압축 재방문 (klue/bert-base). **회귀 챕터는 생략** — 영어 Phase 1에서 이미 다뤘기 때문에 Binary Classification부터 시작.
 - **Phase 3 (Ch 18-19)**: 토크나이저를 직접 학습. 사전학습 의존 없는 경험. **Phase 3가 클라이맥스가 되도록 토크나이저 시각을 Ch 1부터 일관되게 추적.**
 
 ## 작업 흐름

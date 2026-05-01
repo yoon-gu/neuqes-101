@@ -97,7 +97,7 @@ CHAPTERS = [
         3,
         "sklearn_binary",
         "이진 분류와 BCEWithLogitsLoss",
-        "Binary",
+        "Binary Classification",
         "logit, sigmoid, BCE가 만나는 방식",
         (
             "Binary classification",
@@ -119,7 +119,7 @@ CHAPTERS = [
         4,
         "softmax_binary",
         "sigmoid와 softmax의 동등성",
-        "Softmax Binary",
+        "Softmax Binary Classification",
         "2차원 softmax 이진 분류와 1차원 sigmoid의 관계",
         (
             "softmax",
@@ -138,7 +138,7 @@ CHAPTERS = [
         5,
         "sklearn_multiclass",
         "다중 클래스와 CrossEntropyLoss",
-        "Multi-class",
+        "Multi-class Classification",
         "K=5 출력 헤드와 softmax 일반화",
         (
             "Multi-class classification",
@@ -156,7 +156,7 @@ CHAPTERS = [
         6,
         "sklearn_multilabel",
         "다중 라벨과 per-label BCE",
-        "Multi-label",
+        "Multi-label Classification",
         "softmax의 합=1 제약을 풀고 라벨별 sigmoid로 확장",
         (
             "Multi-label classification",

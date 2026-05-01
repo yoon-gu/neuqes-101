@@ -6,7 +6,7 @@ Hugging Face 입문 커리큘럼 (19챕터). 모든 실습자료는 **Google Col
 
 ```
 모델 축:    sklearn ─→ DistilBERT(영어) ─→ KLUE-BERT(한국어) ─→ 작은 BERT(워드레벨)
-태스크 축:  Regression ─→ Binary ─→ Multi-class ─→ Multi-label
+태스크 축:  Regression ─→ Binary Classification ─→ Multi-class Classification ─→ Multi-label Classification
 Loss 축:    MSELoss ─→ BCEWithLogitsLoss ─→ CrossEntropyLoss ─→ BCEWithLogitsLoss(per-label) ─→ +Auxiliary (Combined)
 토크나이저: TF-IDF ─→ WordPiece(영어) ─→ WordPiece(한국어) ─→ 워드레벨(직접) ─→ 형태소기반(직접)
 ```
@@ -48,7 +48,7 @@ Loss 축:    MSELoss ─→ BCEWithLogitsLoss ─→ CrossEntropyLoss ─→ BCE
 
 - **Phase 0 (Ch 1-6)** — sklearn으로 태스크/loss의 본질 학습. BERT 등장하지 않음.
 - **Phase 1 (Ch 7-13)** — DistilBERT(영어)로 같은 태스크들을 다시. Auxiliary loss로 마무리.
-- **Phase 2 (Ch 14-17)** — 한국어로 압축 재방문 (klue/bert-base). Binary부터 시작 (회귀는 영어에서 다뤘으므로 생략).
+- **Phase 2 (Ch 14-17)** — 한국어로 압축 재방문 (klue/bert-base). Binary Classification부터 시작 (회귀는 영어에서 다뤘으므로 생략).
 - **Phase 3 (Ch 18-19)** — 토크나이저를 직접 학습. 사전학습 의존 없는 경험. Phase 3가 클라이맥스가 되도록 토크나이저 시각을 Ch 1부터 일관되게 추적합니다.
 
 ## 학습 환경
