@@ -67,6 +67,7 @@ Phase 구분:
 ## 톤과 표기
 
 - **존댓말** (사용자 선호).
+- PR 제목, PR 본문, PR 설명 코멘트는 항상 **한글**로 작성합니다. Git commit 메시지는 기존 흐름에 맞춰 영어를 써도 되지만, GitHub에 노출되는 PR 글은 한글을 기본으로 합니다.
 - 코드 주석은 한국어. 변수명/함수명은 영어.
 - 라이브러리 이름은 백틱: `transformers`, `datasets`, `tokenizers`.
 - 수식은 LaTeX: `$L = -\sum y \log p$`.
