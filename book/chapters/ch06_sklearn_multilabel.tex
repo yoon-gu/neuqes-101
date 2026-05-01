@@ -165,9 +165,9 @@ model.fit(X, Y_multilabel)   # Y_multilabel shape: (N, K) 0/1
 !pip install -q datasets scikit-learn pandas matplotlib
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{!pip install -q datasets scikit-learn pandas matplotlib}에서는 Colab 실행에 필요한 패키지를 설치합니다.
-\par\vspace{0.9em}
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{!pip install -q datasets scikit-learn pandas matplotlib}에서는 Colab 실행에 필요한 패키지를 설치합니다.
+\par\vspace{0.35em}
 
 
 
@@ -198,8 +198,15 @@ df = ds.to_pandas()
 print(f"전체 샘플 수: {len(df)}")
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{numpy, pandas, matplotlib, datasets, scikit-learn} 같은 주요 패키지를 불러옵니다. \inlinecode{warnings.filterwarnings("ignore", category=FutureWarning)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{warnings.filterwarnings("ignore", category=DeprecationW...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \inlinecode{numpy, pandas, matplotlib, datasets, scikit-learn} 같은 주요 패키지를 불러옵니다.
+\par\vspace{0.35em}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+전체 샘플 수: 5000
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad accuracy 값은 현재 설정에서 모델이 평가 데이터의 라벨을 어느 정도 맞히는지 보여줍니다.
 \par\vspace{0.9em}
 
 
@@ -257,8 +264,19 @@ print(f"Y shape: {Y.shape}  (샘플 수, 측면 수)")
 print(f"앞 3개 샘플의 multi-hot 라벨:\n{Y[:3]}")
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{ASPECT\_KEYWORDS = \{ "food": ["food", "meal", "dish", "t...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{ASPECTS = list(ASPECT\_KEYWORDS.keys())}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{K = len(ASPECTS)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{def extract\_aspects(text: str) -> list[int]:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \inlinecode{text\_lower = text.lower()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{return [ int(any(re.search(rf"\textbackslash\{\}b\{re.escape(kw)\}\textbackslash\{\}b", tex...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \inlinecode{df["aspects"] = df["text"].apply(extract\_aspects)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{Y = np.array(df["aspects"].tolist())   \# (N, 5) multi-hot}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \textbf{1--12행}의 \inlinecode{ASPECT\_KEYWORDS = \{ "food": ["food", "meal", "dish", "t...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{13행}의 \inlinecode{ASPECTS = list(ASPECT\_KEYWORDS.keys())}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{14행}의 \inlinecode{K = len(ASPECTS)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{16행}의 \inlinecode{def extract\_aspects(text: str) -> list[int]:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{17행}의 \inlinecode{text\_lower = text.lower()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{18--21행}의 \inlinecode{return [ int(any(re.search(rf"\textbackslash\{\}b\{re.escape(kw)\}\textbackslash\{\}b", tex...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{24행}의 \inlinecode{df["aspects"] = df["text"].apply(extract\_aspects)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{25행}의 \inlinecode{Y = np.array(df["aspects"].tolist())   \# (N, 5) multi-hot}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\par\vspace{0.35em}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Y shape: (5000, 5)  (샘플 수, 측면 수)
+앞 3개 샘플의 multi-hot 라벨:
+[[0 1 0 0 1]
+ [0 0 0 0 1]
+ [0 0 0 1 0]]
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad 출력된 shape는 데이터가 코드에서 기대한 차원으로 변환되었는지 확인하는 점검 지점입니다.
 \par\vspace{0.9em}
 
 
@@ -276,8 +294,29 @@ for n in range(K + 1):
     print(f"  {n}개: {count}건  ({count/len(Y):.1%})")
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{for k, aspect in enumerate(ASPECTS):}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \inlinecode{n\_labels\_per\_sample = Y.sum(axis=1)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{for n in range(K + 1):}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \inlinecode{count = (n\_labels\_per\_sample == n).sum()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \textbf{2행}의 \inlinecode{for k, aspect in enumerate(ASPECTS):}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{5행}의 \inlinecode{n\_labels\_per\_sample = Y.sum(axis=1)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{8행}의 \inlinecode{for n in range(K + 1):}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{9행}의 \inlinecode{count = (n\_labels\_per\_sample == n).sum()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\par\vspace{0.35em}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+측면별 활성 비율 (전체 5,000건 기준):
+       food: 55.6%  (2778건)
+    service: 49.6%  (2480건)
+      price: 29.4%  (1472건)
+   ambiance: 18.1%  (905건)
+   location: 21.9%  (1095건)
+
+샘플당 평균 활성 라벨 수: 1.75
+활성 라벨 분포:
+  0개: 741건  (14.8%)
+  1개: 1464건  (29.3%)
+  2개: 1506건  (30.1%)
+  3개: 957건  (19.1%)
+  4개: 277건  (5.5%)
+  5개: 55건  (1.1%)
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad 분포 출력은 학습 데이터가 특정 라벨에 치우쳐 있는지 확인하기 위한 기본 점검입니다.
 \par\vspace{0.9em}
 
 
@@ -295,8 +334,16 @@ print(f"X_train: {X_train.shape}, Y_train: {Y_train.shape}")
 print(f"X_test:  {X_test.shape}, Y_test:  {Y_test.shape}")
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{X\_text\_train, X\_text\_test, Y\_train, Y\_test = train\_test...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \textbf{1--3행}의 \inlinecode{X\_text\_train, X\_text\_test, Y\_train, Y\_test = train\_test...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{5행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{6행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{7행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
+\par\vspace{0.35em}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+X_train: (4000, 10000), Y_train: (4000, 5)
+X_test:  (1000, 10000), Y_test:  (1000, 5)
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad 출력된 shape는 데이터가 코드에서 기대한 차원으로 변환되었는지 확인하는 점검 지점입니다.
 \par\vspace{0.9em}
 
 
@@ -330,8 +377,16 @@ except ValueError as e:
     print(f"   메시지: {e}")
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{bare\_model = LogisticRegression(max\_iter=1000)}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \inlinecode{try:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \inlinecode{bare\_model.fit(X\_train, Y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \inlinecode{except ValueError as e:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \textbf{2행}의 \inlinecode{bare\_model = LogisticRegression(max\_iter=1000)}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{3행}의 \inlinecode{try:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{4행}의 \inlinecode{bare\_model.fit(X\_train, Y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{6행}의 \inlinecode{except ValueError as e:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\par\vspace{0.35em}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+X 실패: ValueError
+   메시지: y should be a 1d array, got an array of shape (4000, 5) instead.
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad 출력된 shape는 데이터가 코드에서 기대한 차원으로 변환되었는지 확인하는 점검 지점입니다.
 \par\vspace{0.9em}
 
 
@@ -379,8 +434,31 @@ print(f"\n앞 3개 샘플의 예측 확률 (per-label):")
 print(pd.DataFrame(proba_ml[:3], columns=ASPECTS).round(4))
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{model\_ml = OneVsRestClassifier(LogisticRegression(max\_i...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \inlinecode{model\_ml.fit(X\_train, Y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \inlinecode{for k, aspect in enumerate(ASPECTS):}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \textbf{2행}의 \inlinecode{model\_ml = OneVsRestClassifier(LogisticRegression(max\_i...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{3행}의 \inlinecode{model\_ml.fit(X\_train, Y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{10행}의 \inlinecode{for k, aspect in enumerate(ASPECTS):}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\par\vspace{0.35em}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+OvR fit 성공!
+  학습된 binary 분류기 수: 5
+  각 estimator 타입:       LogisticRegression
+  각 estimator coef shape: (1, 10000)  (1, V — 한 라벨용 binary)
+
+각 분류기가 학습한 라벨:
+  estimator[0] = 'food': positive 2214건 (55.4%)
+  estimator[1] = 'service': positive 1961건 (49.0%)
+  estimator[2] = 'price': positive 1196건 (29.9%)
+  estimator[3] = 'ambiance': positive 720건 (18.0%)
+  estimator[4] = 'location': positive 892건 (22.3%)
+
+Y_pred shape: (1000, 5)
+proba shape:  (1000, 5)
+
+앞 3개 샘플의 예측 확률 (per-label):
+...
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad 출력된 shape는 데이터가 코드에서 기대한 차원으로 변환되었는지 확인하는 점검 지점입니다.
 \par\vspace{0.9em}
 
 
@@ -420,6 +498,25 @@ print("-" * 64)
 print(f"{'합':>10}  {'':>6}  {'':>10}  {'':>20}  {total_loss:>10.4f}")
 print(f"{'평균 BCE':>10}  {'':>6}  {'':>10}  {'÷ 5':>20}  {total_loss/5:>10.4f}")
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+리뷰 (앞 200자): Okay, so I just went to Vegas for the first time for my 21st birthday. Basically, I LOVE VEGAS! The clubs we went to were absolutely amazing...\n\nEXCEPT Prive!\n\nSo let me just say, all the girls th...
+활성 라벨 수: 3
+
+        측면    정답 y        예측 p                  기여 항          손실
+----------------------------------------------------------------
+      food       0      0.4466        -log(1-0.4466)      0.5917
+   service       1      0.9027          -log(0.9027)      0.1024
+     price       1      0.7366          -log(0.7366)      0.3057
+  ambiance       1      0.5771          -log(0.5771)      0.5497
+  location       0      0.2620        -log(1-0.2620)      0.3038
+----------------------------------------------------------------
+         합                                                1.8533
+    평균 BCE                                       ÷ 5      0.3707
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad 확률 출력은 각 클래스 또는 라벨에 대해 모델이 어느 정도 자신감을 갖는지 보여줍니다.
+\par\vspace{0.9em}
 
 
 
@@ -481,6 +578,16 @@ print(f"micro F1: {f1_score(Y_test, Y_pred, average='micro', zero_division=0):.4
 print(f"macro F1: {f1_score(Y_test, Y_pred, average='macro', zero_division=0):.4f}")
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Subset accuracy (모두 일치): 0.4930
+Hamming loss (라벨별 평균 오답): 0.1382
+micro F1: 0.7737
+macro F1: 0.6470
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad accuracy 값은 현재 설정에서 모델이 평가 데이터의 라벨을 어느 정도 맞히는지 보여줍니다.
+\par\vspace{0.9em}
+
 
 
 \begin{lstlisting}
@@ -491,6 +598,24 @@ print(classification_report(
     zero_division=0,
 ))
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+precision    recall  f1-score   support
+
+        food       0.90      0.90      0.90       564
+     service       0.89      0.86      0.88       519
+       price       0.93      0.43      0.59       276
+    ambiance       1.00      0.28      0.43       185
+    location       0.94      0.29      0.44       203
+
+   micro avg       0.90      0.68      0.77      1747
+   macro avg       0.93      0.55      0.65      1747
+weighted avg       0.92      0.68      0.74      1747
+ samples avg       0.68      0.58      0.61      1747
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad classification report는 precision, recall, F1을 클래스별로 나누어 보여주므로 정확도 하나로 가려지는 오류 패턴을 확인할 수 있습니다.
+\par\vspace{0.9em}
 
 
 
@@ -517,6 +642,19 @@ for t in thresholds:
 df_t = pd.DataFrame(rows).round(4)
 print(df_t.to_string(index=False))
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+threshold  subset_acc  hamming  micro_F1  macro_F1
+       0.2       0.233   0.2696    0.7178    0.6984
+       0.3       0.472   0.1468    0.8135    0.7877
+       0.4       0.563   0.1136    0.8335    0.7697
+       0.5       0.493   0.1382    0.7737    0.6470
+       0.6       0.416   0.1658    0.6984    0.5129
+       0.7       0.344   0.2028    0.5947    0.3919
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad accuracy 값은 현재 설정에서 모델이 평가 데이터의 라벨을 어느 정도 맞히는지 보여줍니다.
+\par\vspace{0.9em}
 
 
 

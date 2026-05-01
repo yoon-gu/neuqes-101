@@ -113,9 +113,9 @@ L = -\frac{1}{N}\sum_{i=1}^{N} \log \hat p_{i,\, y_i}
 !pip install -q datasets scikit-learn pandas matplotlib
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{!pip install -q datasets scikit-learn pandas matplotlib}에서는 Colab 실행에 필요한 패키지를 설치합니다.
-\par\vspace{0.9em}
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{!pip install -q datasets scikit-learn pandas matplotlib}에서는 Colab 실행에 필요한 패키지를 설치합니다.
+\par\vspace{0.35em}
 
 
 
@@ -145,8 +145,23 @@ print("클래스 분포 (라벨 0-4 = 별점 1-5):")
 print(df["label"].value_counts().sort_index())
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{numpy, pandas, matplotlib, datasets, scikit-learn} 같은 주요 패키지를 불러옵니다. \inlinecode{warnings.filterwarnings("ignore", category=FutureWarning)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{warnings.filterwarnings("ignore", category=DeprecationW...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \inlinecode{numpy, pandas, matplotlib, datasets, scikit-learn} 같은 주요 패키지를 불러옵니다.
+\par\vspace{0.35em}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+전체 샘플 수: 5000
+클래스 분포 (라벨 0-4 = 별점 1-5):
+label
+0    1017
+1    1027
+2     960
+3    1021
+4     975
+Name: count, dtype: int64
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad accuracy 값은 현재 설정에서 모델이 평가 데이터의 라벨을 어느 정도 맞히는지 보여줍니다.
 \par\vspace{0.9em}
 
 
@@ -166,8 +181,15 @@ X_test = tfidf.transform(X_text_test)
 print(f"X_train: {X_train.shape}, y_train 분포: {pd.Series(y_train).value_counts().sort_index().tolist()}")
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{y\_5class = df["label"]}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{X\_text\_train, X\_text\_test, y\_train, y\_test = train\_test...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \textbf{2행}의 \inlinecode{y\_5class = df["label"]}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{4--6행}의 \inlinecode{X\_text\_train, X\_text\_test, y\_train, y\_test = train\_test...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{8행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{9행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{10행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
+\par\vspace{0.35em}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+X_train: (4000, 10000), y_train 분포: [813, 822, 768, 817, 780]
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad 출력된 shape는 데이터가 코드에서 기대한 차원으로 변환되었는지 확인하는 점검 지점입니다.
 \par\vspace{0.9em}
 
 
@@ -179,7 +201,7 @@ print(f"X_train: {X_train.shape}, y_train 분포: {pd.Series(y_train).value_coun
 
 
 \begin{lstlisting}
-model_5 = LogisticRegression(multi_class="multinomial", max_iter=1000)
+model_5 = LogisticRegression(max_iter=1000)
 model_5.fit(X_train, y_train)
 
 y_pred = model_5.predict(X_test)
@@ -191,8 +213,17 @@ print(f"baseline (균등 추측): {baseline:.4f}")
 print(f"baseline 대비 개선: {acc - baseline:+.4f}")
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{model\_5 = LogisticRegression(multi\_class="multinomial",...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \inlinecode{model\_5.fit(X\_train, y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \inlinecode{y\_pred = model\_5.predict(X\_test)}에서는 학습된 모델로 최종 예측값을 만듭니다. \inlinecode{acc = accuracy\_score(y\_test, y\_pred)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{baseline = 1 / 5}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{model\_5 = LogisticRegression(max\_iter=1000)}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model\_5.fit(X\_train, y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{y\_pred = model\_5.predict(X\_test)}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{5행}의 \inlinecode{acc = accuracy\_score(y\_test, y\_pred)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{6행}의 \inlinecode{baseline = 1 / 5}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\par\vspace{0.35em}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Test accuracy: 0.5080
+baseline (균등 추측): 0.2000
+baseline 대비 개선: +0.3080
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad accuracy 값은 현재 설정에서 모델이 평가 데이터의 라벨을 어느 정도 맞히는지 보여줍니다.
 \par\vspace{0.9em}
 
 
@@ -205,8 +236,22 @@ print(f"\n앞 3개 샘플의 확률 분포:")
 print(pd.DataFrame(proba_5[:3], columns=[f"P({i+1}★)" for i in range(5)]).round(3))
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{proba\_5 = model\_5.predict\_proba(X\_test)}에서는 클래스별 예측 확률을 계산합니다.
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{proba\_5 = model\_5.predict\_proba(X\_test)}에서는 클래스별 예측 확률을 계산합니다.
+\par\vspace{0.35em}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+predict_proba shape: (1000, 5)  (N, K=5)
+행 합 (모두 1이어야 함): [1. 1. 1. 1. 1.]
+
+앞 3개 샘플의 확률 분포:
+   P(1★)  P(2★)  P(3★)  P(4★)  P(5★)
+0  0.348  0.301  0.171  0.084  0.096
+1  0.137  0.333  0.352  0.139  0.040
+2  0.615  0.230  0.052  0.042  0.060
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad 출력된 shape는 데이터가 코드에서 기대한 차원으로 변환되었는지 확인하는 점검 지점입니다.
 \par\vspace{0.9em}
 
 
@@ -221,6 +266,23 @@ print(pd.DataFrame(proba_5[:3], columns=[f"P({i+1}★)" for i in range(5)]).roun
 print(classification_report(y_test, y_pred, target_names=[f"{i+1}★" for i in range(5)]))
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+precision    recall  f1-score   support
+
+          1★       0.62      0.76      0.68       204
+          2★       0.39      0.35      0.37       205
+          3★       0.41      0.35      0.38       192
+          4★       0.45      0.43      0.44       204
+          5★       0.62      0.64      0.63       195
+
+    accuracy                           0.51      1000
+   macro avg       0.50      0.51      0.50      1000
+weighted avg       0.50      0.51      0.50      1000
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad accuracy 값은 현재 설정에서 모델이 평가 데이터의 라벨을 어느 정도 맞히는지 보여줍니다.
+\par\vspace{0.9em}
+
 
 
 \begin{lstlisting}
@@ -233,8 +295,20 @@ cm_df = pd.DataFrame(
 print(cm_df)
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{cm = confusion\_matrix(y\_test, y\_pred)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{cm\_df = pd.DataFrame( cm, index=[f"true \{i+1\}★" for i i...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{cm = confusion\_matrix(y\_test, y\_pred)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{2--6행}의 \inlinecode{cm\_df = pd.DataFrame( cm, index=[f"true \{i+1\}★" for i i...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\par\vspace{0.35em}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+pred 1★  pred 2★  pred 3★  pred 4★  pred 5★
+true 1★      156       38        2        4        4
+true 2★       54       72       52       16       11
+true 3★       23       50       68       37       14
+true 4★       10       20       38       88       48
+true 5★       10        3        7       51      124
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad 혼동 행렬은 어떤 정답 클래스가 어떤 예측 클래스로 잘못 이동했는지 보여주는 오류 지도입니다.
 \par\vspace{0.9em}
 
 
@@ -339,6 +413,28 @@ print("-" * 56)
 print(f"  합     {p_multi.sum():>14.4f}  {p_ovr_raw.sum():>10.4f}  {p_ovr_norm.sum():>16.4f}")
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+OvR estimators 개수: 5
+각 estimator는 'class k vs rest'를 학습한 별도의 LogisticRegression
+  estimator 0 의 coef_ shape: (1, 10000)  (1, V)
+
+리뷰 (앞 200자): A friend suggested this.. and we met up here with 2 other friends on Christmas day. Another friend also suggested I get wide noodles with an order.\n\nBased on Yelp's reviews we ordered Beef Roll, Gre...
+실제 별점:     2★
+
+     클래스     multinomial     OvR raw         OvR 정규화 후
+--------------------------------------------------------
+  1★            0.3479      0.3272            0.3540
+  2★            0.3014      0.2617            0.2832
+  3★            0.1708      0.1581            0.1711
+  4★            0.0842      0.0846            0.0916
+  5★            0.0957      0.0925            0.1001
+--------------------------------------------------------
+  합             1.0000      0.9241            1.0000
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad 출력된 shape는 데이터가 코드에서 기대한 차원으로 변환되었는지 확인하는 점검 지점입니다.
+\par\vspace{0.9em}
+
 
 
 \textbf{관찰}
@@ -384,6 +480,21 @@ print(f"  max:  {raw_sums.max():.3f}")
 print(f"  mean: {raw_sums.mean():.3f}")
 print(f"  → 5개 sigmoid가 독립적이라 합이 정확히 1로 떨어지지 않음")
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+multinomial accuracy: 0.5080
+OvR accuracy:         0.5050
+차이: 0.0030
+
+OvR raw 행 합 분포 (정규화 전):
+  min:  0.779
+  max:  1.394
+  mean: 0.982
+  → 5개 sigmoid가 독립적이라 합이 정확히 1로 떨어지지 않음
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad accuracy 값은 현재 설정에서 모델이 평가 데이터의 라벨을 어느 정도 맞히는지 보여줍니다.
+\par\vspace{0.9em}
 
 
 

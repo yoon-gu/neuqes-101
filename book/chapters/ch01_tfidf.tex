@@ -84,9 +84,9 @@ Ch & 모델 & 토크나이저 & Output Head & Activation & Loss \\
 !pip install -q datasets scikit-learn pandas matplotlib
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{!pip install -q datasets scikit-learn pandas matplotlib}에서는 Colab 실행에 필요한 패키지를 설치합니다.
-\par\vspace{0.9em}
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{!pip install -q datasets scikit-learn pandas matplotlib}에서는 Colab 실행에 필요한 패키지를 설치합니다.
+\par\vspace{0.35em}
 
 
 
@@ -100,9 +100,9 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 plt.rcParams["axes.unicode_minus"] = False
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{numpy, pandas, matplotlib, datasets, scikit-learn} 같은 주요 패키지를 불러옵니다. \inlinecode{plt.rcParams["axes.unicode\_minus"] = False}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
-\par\vspace{0.9em}
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \inlinecode{numpy, pandas, matplotlib, datasets, scikit-learn} 같은 주요 패키지를 불러옵니다.
+\par\vspace{0.35em}
 
 
 
@@ -117,8 +117,24 @@ dataset = load_dataset("yelp_review_full")
 print(dataset)
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{dataset = load\_dataset("yelp\_review\_full")}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{dataset = load\_dataset("yelp\_review\_full")}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\par\vspace{0.35em}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+DatasetDict({
+    train: Dataset({
+        features: ['label', 'text'],
+        num_rows: 650000
+    })
+    test: Dataset({
+        features: ['label', 'text'],
+        num_rows: 50000
+    })
+})
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad 이 출력은 앞 코드가 만든 중간 결과를 확인해 다음 단계의 입력이 올바르게 준비되었는지 점검합니다.
 \par\vspace{0.9em}
 
 
@@ -132,8 +148,19 @@ print(f"샘플 수: {len(df)}")
 df.head(3)
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{SAMPLE\_SIZE = 5000}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{ds = dataset["train"].shuffle(seed=42).select(range(SAM...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{df = ds.to\_pandas()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{df.head(3)}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{SAMPLE\_SIZE = 5000}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{2행}의 \inlinecode{ds = dataset["train"].shuffle(seed=42).select(range(SAM...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{3행}의 \inlinecode{df = ds.to\_pandas()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{6행}의 \inlinecode{df.head(3)}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\par\vspace{0.35em}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+샘플 수: 5000
+   label                                               text
+0      4  I stalk this truck.  I've been to industrial p...
+1      2  who really knows if this is good pho or not, i...
+2      4  I LOVE Bloom Salon... all of their stylist are...
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad 이 출력은 앞 코드가 만든 중간 결과를 확인해 다음 단계의 입력이 올바르게 준비되었는지 점검합니다.
 \par\vspace{0.9em}
 
 
@@ -148,8 +175,22 @@ plt.show()
 print(counts)
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{counts = df["label"].value\_counts().sort\_index()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{labels = [f"\{i+1\} star" for i in counts.index]}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{plt.bar(labels, counts.values)}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \inlinecode{plt.title("Star rating distribution (sampled 5,000)")}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \inlinecode{plt.ylabel("Reviews")}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \inlinecode{plt.show()}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{counts = df["label"].value\_counts().sort\_index()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{2행}의 \inlinecode{labels = [f"\{i+1\} star" for i in counts.index]}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\par\vspace{0.35em}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+<Figure size 640x480 with 1 Axes>
+label
+0    1017
+1    1027
+2     960
+3    1021
+4     975
+Name: count, dtype: int64
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad 분포 출력은 학습 데이터가 특정 라벨에 치우쳐 있는지 확인하기 위한 기본 점검입니다.
 \par\vspace{0.9em}
 
 
@@ -159,8 +200,23 @@ df["len_words"] = df["text"].str.split().str.len()
 df[["len_words"]].describe()
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{df["len\_words"] = df["text"].str.split().str.len()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{df[["len\_words"]].describe()}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{df["len\_words"] = df["text"].str.split().str.len()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{2행}의 \inlinecode{df[["len\_words"]].describe()}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\par\vspace{0.35em}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+len_words
+count  5000.000000
+mean    133.811400
+std     119.787704
+min       1.000000
+25%      53.000000
+50%     100.000000
+75%     177.000000
+max     977.000000
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad 이 출력은 앞 코드가 만든 중간 결과를 확인해 다음 단계의 입력이 올바르게 준비되었는지 점검합니다.
 \par\vspace{0.9em}
 
 
@@ -188,8 +244,18 @@ sparsity = 1 - X_count.nnz / (X_count.shape[0] * X_count.shape[1])
 print(f"sparsity: {sparsity:.2%}  (비어있는 칸의 비율)")
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{cv = CountVectorizer(max\_features=10000)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{X\_count = cv.fit\_transform(df["text"])}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \inlinecode{sparsity = 1 - X\_count.nnz / (X\_count.shape[0] * X\_coun...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{cv = CountVectorizer(max\_features=10000)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{2행}의 \inlinecode{X\_count = cv.fit\_transform(df["text"])}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{7행}의 \inlinecode{sparsity = 1 - X\_count.nnz / (X\_count.shape[0] * X\_coun...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\par\vspace{0.35em}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+shape: (5000, 10000)  (문서 수, 어휘 크기)
+non-zero entries: 405,789
+전체 칸 수: 50,000,000
+sparsity: 99.19%  (비어있는 칸의 비율)
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad 출력된 shape는 데이터가 코드에서 기대한 차원으로 변환되었는지 확인하는 점검 지점입니다.
 \par\vspace{0.9em}
 
 
@@ -201,8 +267,16 @@ print(f"입력 문장: {sample!r}")
 print(f"토큰화 결과: {analyzer(sample)}")
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{sample = "I love using Hugging Face!"}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{analyzer = cv.build\_analyzer()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{sample = "I love using Hugging Face!"}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{2행}의 \inlinecode{analyzer = cv.build\_analyzer()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\par\vspace{0.35em}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+입력 문장: 'I love using Hugging Face!'
+토큰화 결과: ['love', 'using', 'hugging', 'face']
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad 이 출력은 앞 코드가 만든 중간 결과를 확인해 다음 단계의 입력이 올바르게 준비되었는지 점검합니다.
 \par\vspace{0.9em}
 
 
@@ -235,8 +309,28 @@ for i in top:
     print(f"  {vocab[i]:>15}  {word_counts[i]:>6,}")
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{vocab = cv.get\_feature\_names\_out()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{word\_counts = np.asarray(X\_count.sum(axis=0)).flatten()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{top = np.argsort(word\_counts)[::-1][:10]}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{for i in top:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{vocab = cv.get\_feature\_names\_out()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{5행}의 \inlinecode{word\_counts = np.asarray(X\_count.sum(axis=0)).flatten()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{6행}의 \inlinecode{top = np.argsort(word\_counts)[::-1][:10]}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{8행}의 \inlinecode{for i in top:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\par\vspace{0.35em}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+어휘 크기: 10,000
+처음 20개: ['00', '000', '00am', '00pm', '05', '08', '09', '10', '100', '1000', '100th', '101', '10am', '10min', '10pm', '11', '110', '112', '11am', '11pm']
+
+가장 자주 등장한 단어 top 10
+              the  33,748
+              and  21,311
+               to  16,702
+              was  12,295
+               it  10,682
+               of  10,226
+              for   7,839
+               is   7,760
+               in   7,593
+             that   6,756
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad 토큰과 어휘 출력은 텍스트가 모델 입력 단위로 어떻게 분해되는지 확인하게 해줍니다.
 \par\vspace{0.9em}
 
 
@@ -272,6 +366,13 @@ X_tfidf = tfidf.fit_transform(df["text"])
 print(f"shape: {X_tfidf.shape}")
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+shape: (5000, 10000)
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad 출력된 shape는 데이터가 코드에서 기대한 차원으로 변환되었는지 확인하는 점검 지점입니다.
+\par\vspace{0.9em}
+
 
 
 \begin{lstlisting}
@@ -290,6 +391,26 @@ print("-" * 35)
 for i in top:
     print(f"{vocab_tf[i]:>15}  {cv_row[i]:>6}  {tfidf_row[i]:>8.4f}")
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+리뷰 (앞 200자): I stalk this truck.  I've been to industrial parks where I pretend to be a tech worker standing in line, strip mall parking lots, and of course the farmer's market.  The bowls are so so absolutely div...
+
+             단어   count     tfidf
+-----------------------------------
+          stalk       1    0.2418
+        pretend       1    0.2252
+     industrial       1    0.2212
+         farmer       1    0.2212
+          parks       1    0.2212
+         divine       1    0.2092
+           tech       1    0.2068
+          pride       1    0.2046
+          bowls       1    0.1988
+          gotta       1    0.1898
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad 토큰과 어휘 출력은 텍스트가 모델 입력 단위로 어떻게 분해되는지 확인하게 해줍니다.
+\par\vspace{0.9em}
 
 
 

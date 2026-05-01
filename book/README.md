@@ -7,7 +7,7 @@
 레포 루트에서 실행합니다.
 
 ```bash
-python3 book/tools/notebook_to_tex.py
+python3 book/tools/notebook_to_tex.py --execute
 latexmk -xelatex book/main.tex
 ```
 
@@ -32,7 +32,8 @@ PDF는 `book/build/neuqes-101-phase0-manuscript.pdf`에 생성됩니다.
 - 인라인 코드는 `inlinecode` 매크로로 회색 음영 처리합니다.
 - `texttt`로 들어오는 verbatim 계열 항목도 회색 음영 처리합니다.
 - 코드 셀과 마크다운 코드 펜스는 모두 `lstlisting` 블록으로 표시합니다.
-- 실습·해부 코드 뒤에는 박스가 아닌 본문 산문으로 주요 코드 조각과 설명을 함께 제공합니다.
+- 실습·해부·토크나이저 노트 코드 뒤에는 박스가 아닌 본문 산문으로 행 번호, 주요 코드 조각, 설명을 함께 제공합니다.
+- 노트북을 `--execute`로 변환하면 코드 읽기 뒤에 핵심 출력과 출력 해석을 함께 붙입니다.
 - 넓은 표는 `adjustbox`로 페이지 폭 안에 맞춥니다.
 - 표시 수식은 번호가 있는 `equation` 환경으로 변환하고, 설명 문장에서 `eqref`로 참조합니다.
 - 수식 글꼴은 본문과 맞도록 sans-serif 계열로 통일합니다.

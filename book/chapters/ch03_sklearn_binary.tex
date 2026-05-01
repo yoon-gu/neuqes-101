@@ -139,9 +139,9 @@ model.fit(X, y)                              # 내부에서 sigmoid + log loss
 !pip install -q datasets scikit-learn pandas matplotlib
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{!pip install -q datasets scikit-learn pandas matplotlib}에서는 Colab 실행에 필요한 패키지를 설치합니다.
-\par\vspace{0.9em}
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{!pip install -q datasets scikit-learn pandas matplotlib}에서는 Colab 실행에 필요한 패키지를 설치합니다.
+\par\vspace{0.35em}
 
 
 
@@ -169,8 +169,22 @@ print(f"전체 샘플 수: {len(df)}")
 print(df["star"].value_counts().sort_index())
 \end{lstlisting}
 
-\vspace{0.45em}
+\vspace{0.12em}
 \noindent\textbf{위 코드 읽기.}\quad \inlinecode{numpy, pandas, matplotlib, datasets, scikit-learn} 같은 주요 패키지를 불러옵니다.
+\par\vspace{0.35em}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+전체 샘플 수: 5000
+star
+1    1017
+2    1027
+3     960
+4    1021
+5     975
+Name: count, dtype: int64
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad accuracy 값은 현재 설정에서 모델이 평가 데이터의 라벨을 어느 정도 맞히는지 보여줍니다.
 \par\vspace{0.9em}
 
 
@@ -185,8 +199,21 @@ print(f"클래스 분포:\n{df_bin['y'].value_counts().sort_index()}")
 print(f"긍정 비율: {df_bin['y'].mean():.1%}")
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{df\_bin = df[df["star"] != 3].copy()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{df\_bin["y"] = (df\_bin["star"] >= 4).astype(int)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \textbf{2행}의 \inlinecode{df\_bin = df[df["star"] != 3].copy()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{3행}의 \inlinecode{df\_bin["y"] = (df\_bin["star"] >= 4).astype(int)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\par\vspace{0.35em}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+이진화 후 샘플 수: 4040  (3점 제외)
+클래스 분포:
+y
+0    2044
+1    1996
+Name: count, dtype: int64
+긍정 비율: 49.4%
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad 분포 출력은 학습 데이터가 특정 라벨에 치우쳐 있는지 확인하기 위한 기본 점검입니다.
 \par\vspace{0.9em}
 
 
@@ -205,8 +232,16 @@ print(f"X_train: {X_train.shape}, y_train: {y_train.shape}")
 print(f"X_test:  {X_test.shape}, y_test:  {y_test.shape}")
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{X\_text\_train, X\_text\_test, y\_train, y\_test = train\_test...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \textbf{1--4행}의 \inlinecode{X\_text\_train, X\_text\_test, y\_train, y\_test = train\_test...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{6행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{7행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{8행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
+\par\vspace{0.35em}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+X_train: (3232, 10000), y_train: (3232,)
+X_test:  (808, 10000), y_test:  (808,)
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad 출력된 shape는 데이터가 코드에서 기대한 차원으로 변환되었는지 확인하는 점검 지점입니다.
 \par\vspace{0.9em}
 
 
@@ -236,8 +271,15 @@ y_pred = model.predict(X_test)
 print(f"Test accuracy: {accuracy_score(y_test, y_pred):.4f}")
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{model = LogisticRegression(max\_iter=1000)}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \inlinecode{model.fit(X\_train, y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \inlinecode{y\_pred = model.predict(X\_test)}에서는 학습된 모델로 최종 예측값을 만듭니다.
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{model = LogisticRegression(max\_iter=1000)}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model.fit(X\_train, y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{y\_pred = model.predict(X\_test)}에서는 학습된 모델로 최종 예측값을 만듭니다.
+\par\vspace{0.35em}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Test accuracy: 0.8639
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad accuracy 값은 현재 설정에서 모델이 평가 데이터의 라벨을 어느 정도 맞히는지 보여줍니다.
 \par\vspace{0.9em}
 
 
@@ -253,8 +295,25 @@ print(pd.DataFrame(y_proba[:5], columns=["P(neg)", "P(pos)"]).round(4))
 print(f"\n행 합 (1이어야 함): {y_proba.sum(axis=1)[:5]}")
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{y\_proba = model.predict\_proba(X\_test)}에서는 클래스별 예측 확률을 계산합니다.
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \textbf{2행}의 \inlinecode{y\_proba = model.predict\_proba(X\_test)}에서는 클래스별 예측 확률을 계산합니다.
+\par\vspace{0.35em}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+y_proba shape: (808, 2)  (각 샘플마다 [P(0), P(1)])
+
+앞 5개 예측 확률:
+   P(neg)  P(pos)
+0  0.5515  0.4485
+1  0.9001  0.0999
+2  0.8362  0.1638
+3  0.3339  0.6661
+4  0.2422  0.7578
+
+행 합 (1이어야 함): [1. 1. 1. 1. 1.]
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad 출력된 shape는 데이터가 코드에서 기대한 차원으로 변환되었는지 확인하는 점검 지점입니다.
 \par\vspace{0.9em}
 
 
@@ -285,8 +344,18 @@ print(f"\n수동 계산 앞 5개: {proba_manual[:5].round(4)}")
 print(f"sklearn 앞 5개:    {proba_sklearn[:5].round(4)}")
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{logits = X\_test @ model.coef\_.T + model.intercept\_   \#...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{logits = logits.flatten()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{proba\_manual = 1 / (1 + np.exp(-logits))}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{proba\_sklearn = y\_proba[:, 1]   \# P(y=1)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{diff = np.abs(proba\_manual - proba\_sklearn).max()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \textbf{3행}의 \inlinecode{logits = X\_test @ model.coef\_.T + model.intercept\_   \#...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{4행}의 \inlinecode{logits = logits.flatten()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{7행}의 \inlinecode{proba\_manual = 1 / (1 + np.exp(-logits))}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{8행}의 \inlinecode{proba\_sklearn = y\_proba[:, 1]   \# P(y=1)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{11행}의 \inlinecode{diff = np.abs(proba\_manual - proba\_sklearn).max()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\par\vspace{0.35em}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+수동 계산 vs sklearn 최대 차이: 0.00e+00
+
+수동 계산 앞 5개: [0.4485 0.0999 0.1638 0.6661 0.7578]
+sklearn 앞 5개:    [0.4485 0.0999 0.1638 0.6661 0.7578]
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad 출력된 shape는 데이터가 코드에서 기대한 차원으로 변환되었는지 확인하는 점검 지점입니다.
 \par\vspace{0.9em}
 
 
@@ -304,8 +373,17 @@ print(f"sklearn BCE: {sklearn_bce:.6f}")
 print(f"차이:         {abs(manual_bce - sklearn_bce):.2e}")
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{y\_test\_arr = y\_test.values}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{p = proba\_sklearn}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{manual\_bce = -(y\_test\_arr * np.log(p) + (1 - y\_test\_arr...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \inlinecode{sklearn\_bce = log\_loss(y\_test, y\_proba)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \textbf{3행}의 \inlinecode{y\_test\_arr = y\_test.values}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{4행}의 \inlinecode{p = proba\_sklearn}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{5행}의 \inlinecode{manual\_bce = -(y\_test\_arr * np.log(p) + (1 - y\_test\_arr...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{6행}의 \inlinecode{sklearn\_bce = log\_loss(y\_test, y\_proba)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\par\vspace{0.35em}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+수동 BCE:    0.383475
+sklearn BCE: 0.383475
+차이:         0.00e+00
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad 확률 출력은 각 클래스 또는 라벨에 대해 모델이 어느 정도 자신감을 갖는지 보여줍니다.
 \par\vspace{0.9em}
 
 
@@ -318,8 +396,29 @@ print(f"\nconfusion matrix:\n{cm}")
 print(f"  TN={cm[0,0]}, FP={cm[0,1]}\n  FN={cm[1,0]}, TP={cm[1,1]}")
 \end{lstlisting}
 
-\vspace{0.45em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{cm = confusion\_matrix(y\_test, y\_pred)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\vspace{0.12em}
+\noindent\textbf{위 코드 읽기.}\quad \textbf{3행}의 \inlinecode{cm = confusion\_matrix(y\_test, y\_pred)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\par\vspace{0.35em}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+precision    recall  f1-score   support
+
+    negative       0.87      0.86      0.86       409
+    positive       0.86      0.87      0.86       399
+
+    accuracy                           0.86       808
+   macro avg       0.86      0.86      0.86       808
+weighted avg       0.86      0.86      0.86       808
+
+
+confusion matrix:
+[[352  57]
+ [ 53 346]]
+  TN=352, FP=57
+  FN=53, TP=346
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad accuracy 값은 현재 설정에서 모델이 평가 데이터의 라벨을 어느 정도 맞히는지 보여줍니다.
 \par\vspace{0.9em}
 
 
@@ -356,6 +455,18 @@ for t in thresholds:
 df_t = pd.DataFrame(rows).round(4)
 print(df_t.to_string(index=False))
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+threshold  accuracy  precision  recall     f1
+       0.3    0.7686     0.6840  0.9875 0.8082
+       0.4    0.8515     0.7925  0.9474 0.8630
+       0.5    0.8639     0.8586  0.8672 0.8628
+       0.6    0.8366     0.9159  0.7368 0.8167
+       0.7    0.7772     0.9700  0.5664 0.7152
+\end{lstlisting}
+\noindent\textbf{출력 해석.}\quad accuracy 값은 현재 설정에서 모델이 평가 데이터의 라벨을 어느 정도 맞히는지 보여줍니다.
+\par\vspace{0.9em}
 
 
 

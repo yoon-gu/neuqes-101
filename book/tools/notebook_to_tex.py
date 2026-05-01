@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import re
 import subprocess
+import argparse
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -393,6 +394,8 @@ def polish_code_comments(source: str) -> str:
     source = re.sub(r"\bChapter\s+([0-9]+)", r"\1장", source)
     source = re.sub(r"\bCh\s*([0-9]+)\s*-\s*([0-9]+)", r"\1-\2장", source)
     source = re.sub(r"\bCh\s*([0-9]+)", r"\1장", source)
+    source = source.replace('multi_class="multinomial", ', "")
+    source = source.replace(", multi_class=\"multinomial\"", "")
     source = source.replace("그냥", "직접")
     source = source.replace("뱉는", "출력하는")
     source = source.replace("뱉을", "출력할")
@@ -626,6 +629,8 @@ def code_walkthrough(source: str) -> str:
         text = " ".join(line.strip() for line in content)
         if text.startswith(("print(", "display(")) or " print(" in text:
             continue
+        if text.startswith(("warnings.", "plt.")):
+            continue
         if text.startswith("!pip "):
             message = "Colab 실행에 필요한 패키지를 설치합니다."
         elif text.startswith(("import ", "from ")):
@@ -652,35 +657,154 @@ def code_walkthrough(source: str) -> str:
         else:
             message = "앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다."
         snippet = summarize_code(content)
-        notes.append(f"{snippet}에서는 {message}")
+        if start_line == end_line:
+            line_label = f"{start_line}행"
+        else:
+            line_label = f"{start_line}--{end_line}행"
+        notes.append(f"\\textbf{{{line_label}}}의 {snippet}에서는 {message}")
 
     if not notes:
         return ""
 
     return (
-        "\\vspace{0.45em}\n"
+        "\\vspace{0.12em}\n"
         "\\noindent\\textbf{위 코드 읽기.}\\quad "
         + " ".join(notes)
+        + "\n\\par\\vspace{0.35em}"
+    )
+
+
+def output_text(outputs: list[dict]) -> str:
+    chunks: list[str] = []
+    for output in outputs:
+        output_type = output.get("output_type")
+        if output_type == "stream":
+            text = output.get("text", "")
+            chunks.append("".join(text) if isinstance(text, list) else str(text))
+        elif output_type in {"execute_result", "display_data"}:
+            data = output.get("data", {})
+            text = data.get("text/plain")
+            if text:
+                chunks.append("".join(text) if isinstance(text, list) else str(text))
+        elif output_type == "error":
+            traceback = output.get("traceback", [])
+            if traceback:
+                chunks.append("\n".join(str(line) for line in traceback[-8:]))
+            else:
+                chunks.append(f"{output.get('ename', 'Error')}: {output.get('evalue', '')}")
+    text = "\n".join(chunk.rstrip() for chunk in chunks if chunk and chunk.strip()).strip()
+    text = re.sub(r"\x1b\[[0-9;?]*[ -/]*[@-~]", "", text)
+    if not text:
+        return ""
+    skip_patterns = (
+        "TqdmWarning:",
+        "IProgress not found",
+        "Requirement already satisfied:",
+        "WARNING: Running pip",
+        "[notice] A new release of pip",
+        "notice] A new release of pip",
+        "To update, run:",
+    )
+    lines = [
+        line
+        for line in text.splitlines()
+        if not any(pattern in line for pattern in skip_patterns)
+        and not line.strip().startswith("from .autonotebook import tqdm")
+    ]
+    text = sanitize_symbols("\n".join(lines).strip())
+    if not text:
+        return ""
+    lines = text.splitlines()
+    if len(lines) > 18:
+        lines = lines[:16] + ["..."]
+    compact = "\n".join(lines)
+    if len(compact) > 1600:
+        compact = compact[:1550].rstrip() + "\n..."
+    return compact
+
+
+def output_interpretation(source: str, output: str) -> str:
+    source_lower = source.lower()
+    output_lower = output.lower()
+    if "warning" in output_lower or "traceback" in output_lower:
+        return "이 출력은 실행 환경이나 입력 형식과 관련된 경고·오류를 보여주므로, 본문에서 의도한 확인 지점인지 구분해 읽어야 합니다."
+    if "shape" in source_lower or "shape" in output_lower:
+        return "출력된 shape는 데이터가 코드에서 기대한 차원으로 변환되었는지 확인하는 점검 지점입니다."
+    if "accuracy" in source_lower or "accuracy" in output_lower:
+        return "accuracy 값은 현재 설정에서 모델이 평가 데이터의 라벨을 어느 정도 맞히는지 보여줍니다."
+    if "mse" in source_lower or "mae" in source_lower or "r²" in source_lower or "r2" in source_lower:
+        return "회귀 지표 출력은 예측 오차의 크기와 모델 설명력을 함께 확인하기 위한 요약입니다."
+    if "predict_proba" in source_lower or "proba" in source_lower or "확률" in output:
+        return "확률 출력은 각 클래스 또는 라벨에 대해 모델이 어느 정도 자신감을 갖는지 보여줍니다."
+    if "classification_report" in source_lower:
+        return "classification report는 precision, recall, F1을 클래스별로 나누어 보여주므로 정확도 하나로 가려지는 오류 패턴을 확인할 수 있습니다."
+    if "confusion_matrix" in source_lower or "confusion matrix" in output_lower:
+        return "혼동 행렬은 어떤 정답 클래스가 어떤 예측 클래스로 잘못 이동했는지 보여주는 오류 지도입니다."
+    if "value_counts" in source_lower or "분포" in output:
+        return "분포 출력은 학습 데이터가 특정 라벨에 치우쳐 있는지 확인하기 위한 기본 점검입니다."
+    if "token" in source_lower or "vocab" in source_lower or "어휘" in output:
+        return "토큰과 어휘 출력은 텍스트가 모델 입력 단위로 어떻게 분해되는지 확인하게 해줍니다."
+    return "이 출력은 앞 코드가 만든 중간 결과를 확인해 다음 단계의 입력이 올바르게 준비되었는지 점검합니다."
+
+
+def output_to_latex(source: str, outputs: list[dict]) -> str:
+    text = output_text(outputs)
+    if not text:
+        return ""
+    interpretation = output_interpretation(source, text)
+    return (
+        "\\noindent\\textbf{출력.}\n"
+        "\\begin{lstlisting}[style=bookoutput]\n"
+        + text
+        + "\n\\end{lstlisting}\n"
+        "\\noindent\\textbf{출력 해석.}\\quad "
+        + interpretation
         + "\n\\par\\vspace{0.9em}"
     )
 
 
-def code_to_latex(source: str, include_notes: bool = False) -> str:
+def code_to_latex(source: str, include_notes: bool = False, outputs: list[dict] | None = None) -> str:
     source = sanitize_symbols(source)
     source = polish_code_comments(source)
     source = source.rstrip()
     if not source:
         return ""
     listing = "\\begin{lstlisting}\n" + source + "\n\\end{lstlisting}"
+    parts = [listing]
     if include_notes:
         notes = code_walkthrough(source)
         if notes:
-            return listing + "\n\n" + notes
-    return listing
+            parts.append(notes)
+    if outputs:
+        output_latex = output_to_latex(source, outputs)
+        if output_latex:
+            parts.append(output_latex)
+    return "\n\n".join(parts)
 
 
-def chapter_tex(chapter: Chapter) -> str:
-    nb = json.loads(chapter.notebook.read_text(encoding="utf-8"))
+def execute_notebook(path: Path) -> dict:
+    import nbformat
+    from nbclient import NotebookClient
+
+    nb = nbformat.read(path, as_version=4)
+    for cell in nb.get("cells", []):
+        if cell.get("cell_type") == "code":
+            cell["source"] = polish_code_comments(cell.get("source", ""))
+    client = NotebookClient(
+        nb,
+        timeout=900,
+        kernel_name="python3",
+        resources={"metadata": {"path": str(path.parent)}},
+    )
+    client.execute()
+    return nb
+
+
+def chapter_tex(chapter: Chapter, execute: bool = False) -> str:
+    if execute:
+        nb = execute_notebook(chapter.notebook)
+    else:
+        nb = json.loads(chapter.notebook.read_text(encoding="utf-8"))
     chunks: list[str] = [
         "% Generated by book/tools/notebook_to_tex.py. Do not edit by hand.",
         f"\\chapter[{chapter.short_title}]{{{chapter.title}}}",
@@ -714,7 +838,7 @@ def chapter_tex(chapter: Chapter) -> str:
                 explain_code = any(section in first for section in ("토크나이저", "실습", "해부"))
             chunks.append(markdown_to_latex(source, chapter.number))
         elif cell.get("cell_type") == "code":
-            chunks.append(code_to_latex(source, include_notes=explain_code))
+            chunks.append(code_to_latex(source, include_notes=explain_code, outputs=cell.get("outputs", [])))
 
         chunks.append("")
 
@@ -724,12 +848,20 @@ def chapter_tex(chapter: Chapter) -> str:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--execute",
+        action="store_true",
+        help="execute notebooks in memory and include saved outputs in the generated LaTeX",
+    )
+    args = parser.parse_args()
+
     CHAPTER_DIR.mkdir(parents=True, exist_ok=True)
     for chapter in CHAPTERS:
         if not chapter.notebook.exists():
             raise FileNotFoundError(chapter.notebook)
         out = CHAPTER_DIR / chapter.tex_name
-        out.write_text(chapter_tex(chapter), encoding="utf-8")
+        out.write_text(chapter_tex(chapter, execute=args.execute), encoding="utf-8")
         print(f"wrote {out.relative_to(ROOT)}")
 
 
