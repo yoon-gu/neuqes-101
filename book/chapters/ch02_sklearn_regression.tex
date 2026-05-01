@@ -114,18 +114,15 @@ L = \frac{1}{N} \sum_{i=1}^{N} (y_i - \hat y_i)^2
 
 PyTorch에서는 \inlinecode{nn.MSELoss}, sklearn에서는 같은 개념이 \inlinecode{LinearRegression}에 내장돼 있고 평가 함수로는 \inlinecode{mean\_squared\_error}로 따로 부릅니다.
 
-\Needspace{14\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
-# PyTorch (8장 이후 등장)
 criterion = nn.MSELoss()
 loss = criterion(pred, target)
 
-# sklearn (이 장)
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 model.fit(X, y)
-# 내부적으로 MSE 최소화
-mean_squared_error(y, model.predict(X))    # 평가
+mean_squared_error(y, model.predict(X))
 \end{lstlisting}
 
 
@@ -193,9 +190,8 @@ display(pd.DataFrame([{"metric": "sample_count", "value": len(df)}]))
 
 
 
-\Needspace{23\baselineskip}
+\Needspace{21\baselineskip}
 \begin{lstlisting}
-# 별점은 0-4로 저장돼 있으니 1-5로 변환
 df["star"] = df["label"] + 1
 
 # train / test split
@@ -204,7 +200,6 @@ X_text_train, X_text_test, y_train, y_test = train_test_split(
     test_size=0.2, random_state=42,
 )
 
-# TF-IDF (1장과 같은 설정)
 tfidf = TfidfVectorizer(max_features=10000)
 X_train = tfidf.fit_transform(X_text_train)
 X_test = tfidf.transform(X_text_test)
@@ -217,7 +212,7 @@ display(split_summary)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{2행}의 \inlinecode{df["star"] = df["label"] + 1}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5--8행}의 \inlinecode{X\_text\_train, X\_text\_test, y\_train, y\_tes...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{11행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 TF-IDF 기반 벡터라이저를 만듭니다. \textbf{12행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{13행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{15--18행}의 \inlinecode{split\_summary = pd.DataFrame([ \{"split":...}에서는 결과를 표로 보기 좋게 정리합니다.
+\textbf{1행}의 \inlinecode{df["star"] = df["label"] + 1}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{4--7행}의 \inlinecode{X\_text\_train, X\_text\_test, y\_train, y\_tes...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{9행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 TF-IDF 기반 벡터라이저를 만듭니다. \textbf{10행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{11행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{13--16행}의 \inlinecode{split\_summary = pd.DataFrame([ \{"split":...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
 \par\noindent\textbf{출력 표.}\par\smallskip
@@ -294,7 +289,6 @@ display(regression_metrics.round(4))
 
 \Needspace{26\baselineskip}
 \begin{lstlisting}
-# 예측값이 1-5 범위를 얼마나 벗어나는지 확인
 range_summary = pd.DataFrame([
     {"series": "prediction", "min": y_pred_test.min(), "max": y_pred_test.max()},
     {"series": "target", "min": y_test.min(), "max": y_test.max()},
@@ -324,7 +318,7 @@ plt.show()
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{2--5행}의 \inlinecode{range\_summary = pd.DataFrame([ \{"series":...}에서는 결과를 표로 보기 좋게 정리합니다.
+\textbf{1--4행}의 \inlinecode{range\_summary = pd.DataFrame([ \{"series":...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
 \par\noindent\textbf{출력 표.}\par\smallskip
@@ -354,10 +348,8 @@ plt.show()
 
 
 
-\Needspace{15\baselineskip}
+\Needspace{13\baselineskip}
 \begin{lstlisting}
-# sklearn의 mean_squared_error가 내부에서 뭘 계산하는지 
-# 직접 재현
 manual_mse = ((y_test - y_pred_test) ** 2).mean()
 sklearn_mse = mean_squared_error(y_test, y_pred_test)
 
@@ -370,7 +362,7 @@ display(mse_check)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{3행}의 \inlinecode{manual\_mse = ((y\_test - y\_pred\_test) ** 2...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다. \textbf{4행}의 \inlinecode{sklearn\_mse = mean\_squared\_error(y\_test,...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다. \textbf{6--10행}의 \inlinecode{mse\_check = pd.DataFrame([ \{"metric": "ma...}에서는 결과를 표로 보기 좋게 정리합니다.
+\textbf{1행}의 \inlinecode{manual\_mse = ((y\_test - y\_pred\_test) ** 2...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다. \textbf{2행}의 \inlinecode{sklearn\_mse = mean\_squared\_error(y\_test,...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다. \textbf{4--8행}의 \inlinecode{mse\_check = pd.DataFrame([ \{"metric": "ma...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
 \par\noindent\textbf{출력 표.}\par\smallskip
@@ -443,10 +435,8 @@ display(normalization_metrics.round(4))
 
 
 
-\Needspace{20\baselineskip}
+\Needspace{18\baselineskip}
 \begin{lstlisting}
-# 정규화한 모델도 여전히 [0, 1]을 벗어나는 값을 
-# 출력하는가?
 n_below = (y_pred_norm < 0).sum()
 n_above = (y_pred_norm > 1).sum()
 
@@ -657,17 +647,14 @@ display(pd.DataFrame([{"metric": "test_mse_after_clip", "value": mean_squared_er
 
 다음 코드를 돌려보고, 두 모델의 결과가 같은지 다른지 예측해보세요.
 
-\Needspace{15\baselineskip}
+\Needspace{12\baselineskip}
 \begin{lstlisting}
-# 모델 A: 별점 1-5 그대로 학습
 model_a = LinearRegression().fit(X_train, y_train)
 
-# 모델 B: 정답에 100을 곱해서 학습 (별점 100-500처럼)
 model_b = LinearRegression().fit(X_train, y_train * 100)
 
 pred_a = model_a.predict(X_test)
 pred_b = model_b.predict(X_test) / 100
-# 다시 1-5 스케일로
 
 display(pd.DataFrame([{"metric": "max_prediction_difference", "value": np.abs(pred_a - pred_b).max()}]))
 \end{lstlisting}

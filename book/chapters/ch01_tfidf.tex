@@ -555,13 +555,10 @@ display(top_tfidf_words)
 
 그래도 다운스트림(예: pandas 변환, sklearn fit) 단계에서 메모리가 부담되면 두 가지를 씁니다.
 
-\Needspace{17\baselineskip}
+\Needspace{14\baselineskip}
 \begin{lstlisting}
-# (a) 일부만 잘라서 사용 — 위 셀에서 쓴 패턴
 ds = dataset["train"].shuffle(seed=42).select(range(5000))
 
-# (b) streaming 모드 — 전체를 다운로드하지 않고 한 줄씩 
-# 받음
 stream = load_dataset(
     "yelp_review_full",
     split="train",
@@ -632,14 +629,12 @@ IDF(Inverse Document Frequency)는 \textbf{"이 단어가 얼마나 희귀한가
 
 실무에선 보통 두 가지를 조합합니다.
 
-\Needspace{11\baselineskip}
+\Needspace{9\baselineskip}
 \begin{lstlisting}
 TfidfVectorizer(
-    max_features=10000,   # 빈도 상위 K개만 남김
+    max_features=10000,
     min_df=5,
-    # 5개 미만 문서에 나오는 단어는 버림
     max_df=0.9,
-    # 90% 이상 문서에 나오는 단어도 버림
 )
 \end{lstlisting}
 
@@ -653,11 +648,10 @@ TfidfVectorizer(
 
 실무에선 형태소 분석기를 토크나이저로 끼워 넣습니다.
 
-\Needspace{9\baselineskip}
+\Needspace{8\baselineskip}
 \begin{lstlisting}
-# Colab에서: !pip install konlpy
-from konlpy.tag import Mecab  # 또는 Okt, Komoran
-tokenizer = Mecab().morphs  # 함수: str -> list[str]
+from konlpy.tag import Mecab
+tokenizer = Mecab().morphs
 
 TfidfVectorizer(tokenizer=tokenizer, token_pattern=None)
 \end{lstlisting}

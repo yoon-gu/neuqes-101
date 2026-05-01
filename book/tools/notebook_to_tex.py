@@ -12,7 +12,9 @@ import json
 import re
 import subprocess
 import argparse
+import io
 import textwrap
+import tokenize
 from dataclasses import dataclass
 from html import unescape
 from html.parser import HTMLParser
@@ -1078,7 +1080,57 @@ def split_long_comment(line: str, max_width: int = 58) -> list[str] | None:
     return [indent + "# " + chunk for chunk in chunks]
 
 
+def contains_hangul(text: str) -> bool:
+    return any("\uac00" <= char <= "\ud7a3" for char in text)
+
+
+def strip_hangul_comments(source: str) -> str:
+    """Hide Korean comments in book code listings while preserving notebook code."""
+    lines = source.splitlines()
+    if not lines:
+        return source
+
+    edited = lines[:]
+    try:
+        for tok in tokenize.generate_tokens(io.StringIO(source).readline):
+            if tok.type != tokenize.COMMENT or not contains_hangul(tok.string):
+                continue
+            row, col = tok.start
+            end_row, end_col = tok.end
+            if row != end_row:
+                continue
+            line = edited[row - 1]
+            before = line[:col].rstrip()
+            after = line[end_col:]
+            edited[row - 1] = (before + after).rstrip()
+    except (tokenize.TokenError, IndentationError, SyntaxError):
+        stripped_lines: list[str] = []
+        for line in lines:
+            stripped = line.lstrip()
+            if stripped.startswith("#") and contains_hangul(stripped):
+                stripped_lines.append("")
+            elif "  # " in line:
+                code, comment = line.split("  # ", 1)
+                stripped_lines.append(code.rstrip() if contains_hangul(comment) else line)
+            else:
+                stripped_lines.append(line)
+        edited = stripped_lines
+
+    cleaned: list[str] = []
+    blank_pending = False
+    for line in edited:
+        if line.strip():
+            if blank_pending and cleaned:
+                cleaned.append("")
+            cleaned.append(line.rstrip())
+            blank_pending = False
+        else:
+            blank_pending = True
+    return "\n".join(cleaned)
+
+
 def format_code_for_book(source: str) -> str:
+    source = strip_hangul_comments(source)
     formatted: list[str] = []
     for line in source.splitlines():
         split = (

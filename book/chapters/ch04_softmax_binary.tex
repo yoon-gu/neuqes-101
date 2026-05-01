@@ -111,14 +111,11 @@ L = -\frac{1}{N}\sum_{i=1}^{N} \log \hat p_{i,\, y_i}
 
 \textbf{3장 BCE 표와 비교해보면} 손실값이 \emph{완전히 같습니다} (0.105 / 0.693 / 2.303). K=2에서 BCE와 CE가 동등하다는 첫 단서.
 
-\Needspace{14\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
-# PyTorch (10장 이후, 방식 B)
 criterion = nn.CrossEntropyLoss()
 loss = criterion(logits, targets)
-# logits: (N, K), targets: (N,) 정수 인덱스
 
-# sklearn (이 장)
 LogisticRegression(
     multi_class="multinomial",
     max_iter=1000,
@@ -181,9 +178,8 @@ df["star"] = df["label"] + 1   # 0-4 → 1-5
 
 
 
-\Needspace{26\baselineskip}
+\Needspace{25\baselineskip}
 \begin{lstlisting}
-# 3장과 동일한 이진화: 별점 3 제외, 4-5 → 1, 1-2 → 0
 df_bin = df[df["star"] != 3].copy()
 df_bin["y"] = (df_bin["star"] >= 4).astype(int)
 
@@ -208,7 +204,7 @@ display(label_summary)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{2행}의 \inlinecode{df\_bin = df[df["star"] != 3].copy()}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{df\_bin["y"] = (df\_bin["star"] >= 4).astyp...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5--7행}의 \inlinecode{X\_text\_train, X\_text\_test, y\_train, y\_tes...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{9행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 TF-IDF 기반 벡터라이저를 만듭니다. \textbf{10행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{11행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
+\textbf{1행}의 \inlinecode{df\_bin = df[df["star"] != 3].copy()}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{2행}의 \inlinecode{df\_bin["y"] = (df\_bin["star"] >= 4).astyp...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{4--6행}의 \inlinecode{X\_text\_train, X\_text\_test, y\_train, y\_tes...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{8행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 TF-IDF 기반 벡터라이저를 만듭니다. \textbf{9행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{10행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
 \end{codeRead}
 
 \par\noindent\textbf{출력 표.}\par\smallskip
@@ -260,13 +256,12 @@ B (이 장) & \inlinecode{LogisticRegression(multi\_class="multinomial")} & 2 & 
 
 
 
-\Needspace{20\baselineskip}
+\Needspace{19\baselineskip}
 \begin{lstlisting}
 model_a = LogisticRegression(max_iter=1000)
-# 방식 A
 model_a.fit(X_train, y_train)
 
-model_b = LogisticRegression(max_iter=1000)  # 방식 B
+model_b = LogisticRegression(max_iter=1000)
 model_b.fit(X_train, y_train)
 
 acc_a = accuracy_score(y_test, model_a.predict(X_test))
@@ -281,7 +276,7 @@ display(accuracy_comparison)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{model\_a = LogisticRegression(max\_iter=1000)}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{3행}의 \inlinecode{model\_a.fit(X\_train, y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{5행}의 \inlinecode{model\_b = LogisticRegression(max\_iter=100...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{6행}의 \inlinecode{model\_b.fit(X\_train, y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{8행}의 \inlinecode{acc\_a = accuracy\_score(y\_test, model\_a.pr...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{9행}의 \inlinecode{acc\_b = accuracy\_score(y\_test, model\_b.pr...}에서는 학습된 모델로 최종 예측값을 만듭니다.
+\textbf{1행}의 \inlinecode{model\_a = LogisticRegression(max\_iter=1000)}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model\_a.fit(X\_train, y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{model\_b = LogisticRegression(max\_iter=1000)}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{5행}의 \inlinecode{model\_b.fit(X\_train, y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{7행}의 \inlinecode{acc\_a = accuracy\_score(y\_test, model\_a.pr...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{8행}의 \inlinecode{acc\_b = accuracy\_score(y\_test, model\_b.pr...}에서는 학습된 모델로 최종 예측값을 만듭니다.
 \end{codeRead}
 
 \par\noindent\textbf{출력 표.}\par\smallskip
@@ -409,10 +404,8 @@ CE 쪽도 K=2에서 BCE와 같은 식이 됩니다 (one-hot이라 \(y_1 = y\), \
 
 
 
-\Needspace{20\baselineskip}
+\Needspace{18\baselineskip}
 \begin{lstlisting}
-# 임의의 logit 쌍 4개를 만들어 softmax([z0,z1])_1 == 
-# sigmoid(z1 - z0) 인지 확인
 z0_arr = np.array([-2.0, 0.0, 1.5, 3.0])
 z1_arr = np.array([ 1.0, 0.5, -0.5, 2.0])
 
@@ -430,7 +423,7 @@ display(softmax_sigmoid_check)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{3행}의 \inlinecode{z0\_arr = np.array([-2.0, 0.0, 1.5, 3.0])}에서는 비교 실험에 사용할 작은 배열을 만듭니다. \textbf{4행}의 \inlinecode{z1\_arr = np.array([ 1.0, 0.5, -0.5, 2.0])}에서는 비교 실험에 사용할 작은 배열을 만듭니다. \textbf{6행}의 \inlinecode{softmax\_p1  = np.exp(z1\_arr) / (np.exp(z0...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{7행}의 \inlinecode{sigmoid\_diff = 1.0 / (1.0 + np.exp(-(z1\_a...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{9--15행}의 \inlinecode{softmax\_sigmoid\_check = pd.DataFrame(\{ "z...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다.
+\textbf{1행}의 \inlinecode{z0\_arr = np.array([-2.0, 0.0, 1.5, 3.0])}에서는 비교 실험에 사용할 작은 배열을 만듭니다. \textbf{2행}의 \inlinecode{z1\_arr = np.array([ 1.0, 0.5, -0.5, 2.0])}에서는 비교 실험에 사용할 작은 배열을 만듭니다. \textbf{4행}의 \inlinecode{softmax\_p1  = np.exp(z1\_arr) / (np.exp(z0...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{sigmoid\_diff = 1.0 / (1.0 + np.exp(-(z1\_a...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{7--13행}의 \inlinecode{softmax\_sigmoid\_check = pd.DataFrame(\{ "z...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다.
 \end{codeRead}
 
 \par\noindent\textbf{출력 표.}\par\smallskip
@@ -607,12 +600,11 @@ display(parameter_difference)
 
 위 본문에서 확인했듯 K=2 softmax는 두 logit 중 하나가 잉여(redundant)입니다 --- \(z_1 - z_0\) 만 의미가 있어요. sklearn은 이걸 알고 \textbf{K=2 multinomial을 자동으로 binary form으로 collapse} 시킵니다. 그래서 \inlinecode{coef\_} 가 \inlinecode{(2,\ V)} 가 아니라 \inlinecode{(1,\ V)}, \inlinecode{intercept\_} 도 \inlinecode{(1,)} 로 저장됩니다.
 
-\Needspace{8\baselineskip}
+\Needspace{7\baselineskip}
 \begin{lstlisting}
 LogisticRegression(multi_class="multinomial").fit(X, y_binary).coef_.shape
 # (1, V)
 LogisticRegression(multi_class="multinomial").fit(X, y_3class).coef_.shape
-# (3, V) — K≥3에선 (K, V)
 \end{lstlisting}
 
 그래서 방식 A와 방식 B가 sklearn 안에서는 사실상 같은 모델이고, predict\_proba도 미세한 수치 오차 빼고 일치합니다. 진짜 \emph{두 별개의 logit head} 가 살아 있는 형태는 프레임워크가 collapse하지 않는 환경 --- PyTorch에서 \inlinecode{nn.Linear(H,\ 2)} 를 직접 만들 때 --- 비로소 등장합니다 (10장).
@@ -639,17 +631,14 @@ sklearn 1.5부터 \inlinecode{multi\_class} 자체가 deprecated이고 multinomi
 
 가능하고, \inlinecode{AutoModelForSequenceClassification} 인자 한 줄 차이입니다.
 
-\Needspace{17\baselineskip}
+\Needspace{14\baselineskip}
 \begin{lstlisting}
-# 방식 A: num_labels=1, BCE 자동 적용
 AutoModelForSequenceClassification.from_pretrained(
     "distilbert-base-uncased",
     num_labels=1,
     problem_type="single_label_classification",
-    # 또는 자동
 )
 
-# 방식 B: num_labels=2, CE 자동 적용 (BERT 표준)
 AutoModelForSequenceClassification.from_pretrained(
     "distilbert-base-uncased",
     num_labels=2,
@@ -665,14 +654,13 @@ AutoModelForSequenceClassification.from_pretrained(
 
 다음 코드는 sklearn 없이 numpy만으로 softmax의 \textbf{shift invariance} 를 보여줍니다 --- 모든 logit에 같은 상수를 더해도 출력 분포가 변하지 않는다는 성질입니다. 이게 K=2일 때 sklearn이 collapse를 하는 \emph{정확한 이유} 입니다.
 
-\Needspace{17\baselineskip}
+\Needspace{16\baselineskip}
 \begin{lstlisting}
 z = np.array([1.0, 2.0])
 
 p_original  = np.exp(z)         / np.sum(np.exp(z))
 p_shift5    = np.exp(z + 5)     / np.sum(np.exp(z + 5))
 p_zero_z0   = np.exp(z - z[0])  / np.sum(np.exp(z - z[0]))
-# z_0 = 0 으로 정규화한 형태
 
 shift_check = pd.DataFrame([
     {"case": "original", "probability": p_original.round(6)},
