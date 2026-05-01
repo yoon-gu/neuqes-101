@@ -524,7 +524,8 @@ y_true = Y_test[sample_idx]
 p_pred = proba_ml[sample_idx]
 text = X_text_test.iloc[sample_idx]
 
-print(f"리뷰 (앞 200자): {text[:200]}...")
+print("리뷰 미리보기 200자:")
+print(f"{text[:200]}...")
 print(f"활성 라벨 수: {y_true.sum()}\n")
 
 print(
@@ -559,9 +560,10 @@ print(
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-리뷰 (앞 200자): Okay, so I just went to Vegas for the first
-  time for my 21st birthday. Basically, I LOVE VEGAS! The
-  clubs we went to were absolutely amazing...\n\nEXCEPT
+리뷰 미리보기 200자:
+Okay, so I just went to Vegas for the first time for my
+  21st birthday. Basically, I LOVE VEGAS! The clubs we
+  went to were absolutely amazing...\n\nEXCEPT
   Prive!\n\nSo let me just say, all the girls th...
 활성 라벨 수: 3
 

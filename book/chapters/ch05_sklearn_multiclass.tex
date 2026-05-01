@@ -444,7 +444,8 @@ p_ovr_raw = ovr_sigmoid_all[sample_idx]
 p_ovr_norm = model_ovr.predict_proba(X_test)[sample_idx]
 # OvR 정규화 후 (sklearn 표시용)
 
-print(f"\n리뷰 (앞 200자): {sample_text[:200]}...")
+print("\n리뷰 미리보기 200자:")
+print(f"{sample_text[:200]}...")
 print(f"정답 별점:     {true_label + 1}★\n")
 
 print(
@@ -470,11 +471,11 @@ OvR estimators 개수: 5
 각 estimator는 'class k vs rest'를 학습한 별도의 LogisticRegression
   estimator 0 의 coef_ shape: (1, 10000)  (1, V)
 
-리뷰 (앞 200자): A friend suggested this.. and we met up here
-  with 2 other friends on Christmas day. Another friend
-  also suggested I get wide noodles with an
-  order.\n\nBased on Yelp's reviews we ordered Beef Roll,
-  Gre...
+리뷰 미리보기 200자:
+A friend suggested this.. and we met up here with 2 other
+  friends on Christmas day. Another friend also suggested
+  I get wide noodles with an order.\n\nBased on Yelp's
+  reviews we ordered Beef Roll, Gre...
 정답 별점:     2★
 
      클래스     multinomial     OvR raw         OvR 정규화 후

@@ -394,11 +394,12 @@ shape: (5000, 10000)
 
 
 
-\Needspace{21\baselineskip}
+\Needspace{22\baselineskip}
 \begin{lstlisting}
 doc_id = 0
 review = df["text"].iloc[doc_id]
-print(f"리뷰 (앞 200자): {review[:200]}...\n")
+print("리뷰 미리보기 200자:")
+print(f"{review[:200]}...\n")
 
 vocab_tf = tfidf.get_feature_names_out()
 cv_row = np.asarray(X_count[doc_id].todense()).flatten()
@@ -417,10 +418,11 @@ for i in top:
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-리뷰 (앞 200자): I stalk this truck.  I've been to industrial
-  parks where I pretend to be a tech worker standing in
-  line, strip mall parking lots, and of course the
-  farmer's market.  The bowls are so so absolutely div...
+리뷰 미리보기 200자:
+I stalk this truck.  I've been to industrial parks where I
+  pretend to be a tech worker standing in line, strip mall
+  parking lots, and of course the farmer's market.  The
+  bowls are so so absolutely div...
 
              단어   count     tfidf
 -----------------------------------
