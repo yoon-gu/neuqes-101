@@ -45,7 +45,7 @@ Ch & 모델 & 토크나이저 & Output Head & Activation & Loss \\
 \end{tabular}
 \end{adjustbox}
 
-전체 18개 장의 표는 \href{https://github.com/yoon-gu/neuqes-101\#장별-변화추적표}{루트 README.md}를 참고하세요.
+전체 18개 장의 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
 
 
 
@@ -69,7 +69,7 @@ Ch & 모델 & 토크나이저 & Output Head & Activation & Loss \\
 \item
   \textbf{어휘 학습(vocabulary)}: 학습 데이터에 등장한 토큰을 모두 모아 정수 인덱스로 매핑.
 \item
-  \textbf{OOV 처리}: 학습 어휘에 없는 단어는 단순히 \textbf{무시}합니다 (BERT의 \texttt{{[}UNK{]}}처럼 별도 토큰으로 보존하지 않음).
+  \textbf{OOV 처리}: 학습 어휘에 없는 단어는 \textbf{무시}합니다 (BERT의 \texttt{{[}UNK{]}}처럼 별도 토큰으로 보존하지 않음).
 \end{enumerate}
 
 조금 뒤 같은 문장 \inlinecode{"I\ love\ using\ Hugging\ Face!"} 가 어떻게 토큰화되는지 직접 확인합니다.
@@ -121,7 +121,7 @@ print(dataset)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{dataset = load\_dataset("yelp\_review\_full")}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\textbf{1행}의 \inlinecode{dataset = load\_dataset("yelp\_review\_full")}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -153,7 +153,7 @@ df.head(3)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{SAMPLE\_SIZE = 5000}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{2행}의 \inlinecode{ds = dataset["train"].shuffle(seed=42).se...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{3행}의 \inlinecode{df = ds.to\_pandas()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{6행}의 \inlinecode{df.head(3)}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\textbf{1행}의 \inlinecode{SAMPLE\_SIZE = 5000}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{2행}의 \inlinecode{ds = dataset["train"].shuffle(seed=42).se...}에서는 전체 데이터에서 실습에 사용할 샘플만 추립니다. \textbf{3행}의 \inlinecode{df = ds.to\_pandas()}에서는 데이터셋을 표 형태로 바꿔 이후 셀에서 다루기 쉽게 합니다. \textbf{6행}의 \inlinecode{df.head(3)}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -185,7 +185,7 @@ print(counts)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{counts = df["label"].value\_counts().sort\_...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{2행}의 \inlinecode{labels = [f"\{i+1\} star" for i in counts.i...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\textbf{1행}의 \inlinecode{counts = df["label"].value\_counts().sort\_...}에서는 라벨별 샘플 개수를 집계합니다. \textbf{2행}의 \inlinecode{labels = [f"\{i+1\} star" for i in counts.i...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -211,7 +211,7 @@ df[["len_words"]].describe()
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{df["len\_words"] = df["text"].str.split()....}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{2행}의 \inlinecode{df[["len\_words"]].describe()}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\textbf{1행}의 \inlinecode{df["len\_words"] = df["text"].str.split()....}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{2행}의 \inlinecode{df[["len\_words"]].describe()}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -239,7 +239,7 @@ max     977.000000
 "이 문서에 단어 X가 몇 번 나왔는가?"
 \end{quote}
 
-각 문서가 길이 V짜리 벡터로 변환됩니다 (V는 어휘 크기). 대부분의 칸은 0이라 \textbf{희소(sparse)} 행렬로 저장합니다.
+각 문서가 길이 V짜리 벡터로 변환됩니다 (V는 어휘 수). 대부분의 칸은 0이라 \textbf{희소(sparse)} 행렬로 저장합니다.
 
 
 
@@ -248,26 +248,26 @@ max     977.000000
 cv = CountVectorizer(max_features=10000)
 X_count = cv.fit_transform(df["text"])
 
-print(f"shape: {X_count.shape}  (문서 수, 어휘 크기)")
+print(f"shape: {X_count.shape}  (문서 수, 어휘 수)")
 print(f"non-zero entries: {X_count.nnz:,}")
 print(
-    f"전체 칸 수: "
+    f"전체 원소 수: "
     f"{X_count.shape[0] * X_count.shape[1]:,}"
 )
 sparsity = 1 - X_count.nnz / (X_count.shape[0] * X_count.shape[1])
-print(f"sparsity: {sparsity:.2%}  (비어있는 칸의 비율)")
+print(f"sparsity: {sparsity:.2%}  (0인 원소의 비율)")
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{cv = CountVectorizer(max\_features=10000)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{2행}의 \inlinecode{X\_count = cv.fit\_transform(df["text"])}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{10행}의 \inlinecode{sparsity = 1 - X\_count.nnz / (X\_count.sha...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\textbf{1행}의 \inlinecode{cv = CountVectorizer(max\_features=10000)}에서는 단어 횟수 기반 벡터라이저를 만듭니다. \textbf{2행}의 \inlinecode{X\_count = cv.fit\_transform(df["text"])}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{10행}의 \inlinecode{sparsity = 1 - X\_count.nnz / (X\_count.sha...}에서는 행렬에서 0인 원소의 비율을 계산합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-shape: (5000, 10000)  (문서 수, 어휘 크기)
+shape: (5000, 10000)  (문서 수, 어휘 수)
 non-zero entries: 405,789
-전체 칸 수: 50,000,000
-sparsity: 99.19%  (비어있는 칸의 비율)
+전체 원소 수: 50,000,000
+sparsity: 99.19%  (0인 원소의 비율)
 \end{lstlisting}
 \noindent\textbf{출력 해석.}\quad 출력된 shape는 데이터가 코드에서 기대한 차원으로 변환되었는지 확인하는 점검 지점입니다.
 \par\vspace{0.9em}
@@ -283,7 +283,7 @@ print(f"토큰화 결과: {analyzer(sample)}")
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{sample = "I love using Hugging Face!"}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{2행}의 \inlinecode{analyzer = cv.build\_analyzer()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\textbf{1행}의 \inlinecode{sample = "I love using Hugging Face!"}에서는 토큰화 예제로 사용할 문장을 정합니다. \textbf{2행}의 \inlinecode{analyzer = cv.build\_analyzer()}에서는 벡터라이저 내부의 토큰화 규칙을 직접 호출할 함수로 꺼냅니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -315,28 +315,28 @@ print(f"토큰화 결과: {analyzer(sample)}")
 \Needspace{13\baselineskip}
 \begin{lstlisting}
 vocab = cv.get_feature_names_out()
-print(f"어휘 크기: {len(vocab):,}")
-print(f"처음 20개: {list(vocab[:20])}")
+print(f"어휘 수: {len(vocab):,}")
+print(f"어휘 앞 20개: {list(vocab[:20])}")
 
 word_counts = np.asarray(X_count.sum(axis=0)).flatten()
 top = np.argsort(word_counts)[::-1][:10]
-print("\n가장 자주 등장한 단어 top 10")
+print("\n등장 빈도 상위 10개 단어")
 for i in top:
     print(f"  {vocab[i]:>15}  {word_counts[i]:>6,}")
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{vocab = cv.get\_feature\_names\_out()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{5행}의 \inlinecode{word\_counts = np.asarray(X\_count.sum(axis...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{6행}의 \inlinecode{top = np.argsort(word\_counts)[::-1][:10]}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\textbf{1행}의 \inlinecode{vocab = cv.get\_feature\_names\_out()}에서는 벡터라이저가 학습한 어휘 목록을 가져옵니다. \textbf{5행}의 \inlinecode{word\_counts = np.asarray(X\_count.sum(axis...}에서는 열 방향으로 값을 더해 특성별 합계를 계산합니다. \textbf{6행}의 \inlinecode{top = np.argsort(word\_counts)[::-1][:10]}에서는 값이 큰 항목부터 볼 수 있도록 인덱스를 정렬합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-어휘 크기: 10,000
-처음 20개: ['00', '000', '00am', '00pm', '05', '08', '09',
+어휘 수: 10,000
+어휘 앞 20개: ['00', '000', '00am', '00pm', '05', '08', '09',
   '10', '100', '1000', '100th', '101', '10am', '10min',
   '10pm', '11', '110', '112', '11am', '11pm']
 
-가장 자주 등장한 단어 top 10
+등장 빈도 상위 10개 단어
               the  33,748
               and  21,311
                to  16,702
@@ -550,7 +550,7 @@ IDF(Inverse Document Frequency)는 \textbf{"이 단어가 얼마나 희귀한가
 
 \end{faqBox}
 
-\begin{faqBox}{Q4. (이론) 어휘 크기는 무엇을 기준으로 정해야 하나요? \inlinecode{max\_features=10000}은 어떻게 정한 값인가요?}
+\begin{faqBox}{Q4. (이론) 어휘 수는 무엇을 기준으로 정해야 하나요? \inlinecode{max\_features=10000}은 어떻게 정한 값인가요?}
 
 세 가지 트레이드오프가 있습니다.
 
@@ -639,7 +639,7 @@ X2 = cv2.fit_transform(df["text"])
 print(len(cv2.get_feature_names_out()))
 \end{lstlisting}
 
-힌트: \inlinecode{lowercase=False}로 두면 \inlinecode{"good"}과 \inlinecode{"Good"}이 같은 토큰일까요, 다른 토큰일까요? 어휘 크기가 변하는 방향을 예측해보세요.
+힌트: \inlinecode{lowercase=False}로 두면 \inlinecode{"good"}과 \inlinecode{"Good"}이 같은 토큰일까요, 다른 토큰일까요? 어휘 수가 변하는 방향을 예측해보세요.
 
 
 

@@ -50,7 +50,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 \end{tabular}
 \end{adjustbox}
 
-전체 18개 장의 표는 \href{https://github.com/yoon-gu/neuqes-101\#장별-변화추적표}{루트 README.md}를 참고하세요.
+전체 18개 장의 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
 
 
 
@@ -72,7 +72,7 @@ Loss & 없음 & \textbf{\inlinecode{MSELoss}} ← 첫 등장 \\
 
 이 장에서 바뀌는 것은 \textbf{모델 + Loss} 두 가지입니다 --- 그러나 둘은 한 묶음으로 처음 등장하는 거라, 학습자 관점에선 사실상 "모델이 처음 생겼다"는 한 가지 변화입니다. 다음 장부터는 한 번에 하나씩 변합니다.
 
-\textbf{왜 회귀부터?} 모델이 출력하는 출력은 본질적으로 비활성 스칼라 출력입니다. 분류·다중라벨·multi-task 같은 복합적인 형태들은 모두 "그 숫자를 어떻게 가공해서 어떤 loss를 매길 것인가"의 변주일 뿐입니다. 가장 단순한 형태 --- 활성화 함수도 없는 1차원 출력 --- 부터 시작합니다.
+\textbf{왜 회귀부터?} 모델 출력은 본질적으로 비활성 스칼라 출력입니다. 분류·다중라벨·multi-task 같은 복합적인 형태들은 모두 "그 숫자를 어떻게 가공해서 어떤 loss를 매길 것인가"의 변주일 뿐입니다. 가장 단순한 형태 --- 활성화 함수도 없는 1차원 출력 --- 부터 시작합니다.
 
 
 
@@ -90,7 +90,7 @@ L = \frac{1}{N} \sum_{i=1}^{N} (y_i - \hat y_i)^2
 \begin{itemize}
 \tightlist
 \item
-  \(y_i\): 정답 (실제 별점)
+  \(y_i\): 정답 (정답 별점)
 \item
   \(\hat y_i\): 모델 예측
 \end{itemize}
@@ -210,7 +210,7 @@ print(f"X_test:  {X_test.shape}, y_test:  {y_test.shape}")
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{2행}의 \inlinecode{df["star"] = df["label"] + 1}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{5--8행}의 \inlinecode{X\_text\_train, X\_text\_test, y\_train, y\_tes...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{11행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{12행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{13행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
+\textbf{2행}의 \inlinecode{df["star"] = df["label"] + 1}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5--8행}의 \inlinecode{X\_text\_train, X\_text\_test, y\_train, y\_tes...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{11행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 TF-IDF 기반 벡터라이저를 만듭니다. \textbf{12행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{13행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -322,7 +322,7 @@ plt.show()
 
 
 
-\section{해부: "출력은 비활성 스칼라 출력입니다"}
+\section{해부: "출력은 활성화 함수가 없는 스칼라 값이다"}
 
 위 분포를 보면 모델이 0.4점이나 5.7점 같은 \textbf{별점 범위 밖} 의 값도 출력합니다. 이상해 보이지만 자연스러운 결과입니다.
 
@@ -348,7 +348,7 @@ print(
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{3행}의 \inlinecode{manual\_mse = ((y\_test - y\_pred\_test) ** 2...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{4행}의 \inlinecode{sklearn\_mse = mean\_squared\_error(y\_test,...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\textbf{3행}의 \inlinecode{manual\_mse = ((y\_test - y\_pred\_test) ** 2...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다. \textbf{4행}의 \inlinecode{sklearn\_mse = mean\_squared\_error(y\_test,...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -566,7 +566,7 @@ w = (X^\top X)^{-1} X^\top y
 
 회귀의 정의가 "임의의 실수를 예측한다"이기 때문입니다. 활성화 함수는 출력 범위에 제약을 거는 도구라(sigmoid → {[}0,1{]}, tanh → {[}-1,1{]}, softmax → 확률 분포), 범위 제약이 필요 없는 회귀에서는 자연스럽게 빠집니다.
 
-오히려 혼동하는 건 분류 쪽입니다. 분류는 출력이 "확률"이어야 하므로 sigmoid/softmax가 강제로 들어가는 거지, 활성화 함수가 더 "원본" 형태인 게 아닙니다. \textbf{회귀의 비활성 출력이 가장 단순한 형태} 라고 보면 됩니다.
+오히려 혼동하기 쉬운 건 분류 쪽입니다. 분류는 출력이 "확률"이어야 하므로 sigmoid/softmax가 강제로 들어가는 거지, 활성화 함수가 더 "원본" 형태인 게 아닙니다. \textbf{회귀의 비활성 출력이 가장 단순한 형태} 라고 보면 됩니다.
 
 \end{faqBox}
 

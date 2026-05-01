@@ -403,6 +403,17 @@ def polish_book_prose(latex: str) -> str:
         "fit이 첫 줄에서": "fit 호출이 즉시",
         "Binary Cross Entropy": "Binary Cross-Entropy",
         "비활성 스칼라 출력다": "비활성 스칼라 출력입니다",
+        "비활성 스칼라 출력를": "비활성 스칼라 출력을",
+        "어휘 크기": "어휘 수",
+        "전체 칸 수": "전체 원소 수",
+        "비어있는 칸": "0인 원소",
+        "처음 20개": "어휘 앞 20개",
+        "가장 자주 등장한 단어 top 10": "등장 빈도 상위 10개 단어",
+        "앞 3개": "첫 3개",
+        "앞 5개": "첫 5개",
+        "성공? coef_ shape": "학습 성공: coef_ shape",
+        "OvR fit 성공!": "OvR 학습 성공",
+        "실제 별점": "정답 별점",
         "다음 장를": "다음 장을",
         "1·2장와": "1·2장과",
         "2장와": "2장과",
@@ -414,6 +425,7 @@ def polish_book_prose(latex: str) -> str:
     latex = re.sub(r"변경점 \(Diff from ([0-9]+장)\)", r"변경점: \1 대비", latex)
     latex = latex.replace("전체 18장 표", "전체 18개 장의 표")
     latex = latex.replace("전체 19장 표", "전체 19개 장의 표")
+    latex = latex.replace(r"\#장별-변화추적표", r"\#챕터별-변화추적표")
     return latex
 
 
@@ -426,6 +438,18 @@ def polish_code_comments(source: str) -> str:
     source = source.replace("그냥", "직접")
     source = source.replace("뱉는", "출력하는")
     source = source.replace("뱉을", "출력할")
+    source = source.replace("뱉습니다", "출력합니다")
+    source = source.replace("뱉은", "출력한")
+    source = source.replace("어휘 크기", "어휘 수")
+    source = source.replace("전체 칸 수", "전체 원소 수")
+    source = source.replace("비어있는 칸", "0인 원소")
+    source = source.replace("처음 20개", "어휘 앞 20개")
+    source = source.replace("가장 자주 등장한 단어 top 10", "등장 빈도 상위 10개 단어")
+    source = source.replace("앞 3개", "첫 3개")
+    source = source.replace("앞 5개", "첫 5개")
+    source = source.replace("성공? coef_ shape", "학습 성공: coef_ shape")
+    source = source.replace("OvR fit 성공!", "OvR 학습 성공")
+    source = source.replace("실제 별점", "정답 별점")
     return source
 
 
@@ -626,6 +650,48 @@ def code_walkthrough(source: str) -> str:
             joined = joined[:41].rstrip() + "..."
         return f"\\inlinecode{{{latex_escape_text(joined)}}}"
 
+    def variable_name(text: str) -> str:
+        match = re.match(r"([A-Za-z_][A-Za-z0-9_]*)\s*=", text)
+        return match.group(1) if match else ""
+
+    def assignment_message(text: str) -> str:
+        name = variable_name(text)
+        if "get_feature_names_out" in text or name == "vocab":
+            return "벡터라이저가 학습한 어휘 목록을 가져옵니다."
+        if "CountVectorizer" in text:
+            return "단어 횟수 기반 벡터라이저를 만듭니다."
+        if "TfidfVectorizer" in text:
+            return "TF-IDF 기반 벡터라이저를 만듭니다."
+        if name == "sample":
+            return "토큰화 예제로 사용할 문장을 정합니다."
+        if name == "sparsity":
+            return "행렬에서 0인 원소의 비율을 계산합니다."
+        if "value_counts" in text:
+            return "라벨별 샘플 개수를 집계합니다."
+        if "to_pandas()" in text or name == "df":
+            return "데이터셋을 표 형태로 바꿔 이후 셀에서 다루기 쉽게 합니다."
+        if "shuffle(" in text and "select(" in text:
+            return "전체 데이터에서 실습에 사용할 샘플만 추립니다."
+        if "sum(axis=0)" in text or name in {"word_counts", "raw_sums"}:
+            return "열 방향으로 값을 더해 특성별 합계를 계산합니다."
+        if "argsort" in text or name == "top":
+            return "값이 큰 항목부터 볼 수 있도록 인덱스를 정렬합니다."
+        if ".build_analyzer()" in text or name == "analyzer":
+            return "벡터라이저 내부의 토큰화 규칙을 직접 호출할 함수로 꺼냅니다."
+        if "np.array" in text:
+            return "비교 실험에 사용할 작은 배열을 만듭니다."
+        if ".values" in text or ".to_numpy" in text:
+            return "계산에 바로 쓸 수 있도록 배열 형태로 변환합니다."
+        if "np.abs" in text or name in {"diff", "manual_bce", "manual_mse", "sklearn_mse"}:
+            return "두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다."
+        if "threshold" in text or name.endswith("thr"):
+            return "예측 확률을 0/1 라벨로 바꿀 기준값을 정합니다."
+        if "DataFrame" in text:
+            return "결과를 표로 보기 좋게 정리합니다."
+        if "np.clip" in text:
+            return "예측값을 허용 범위 안으로 잘라 후처리합니다."
+        return "이후 분석에서 사용할 값을 준비합니다."
+
     def imported_modules() -> list[str]:
         known = {
             "numpy": "numpy",
@@ -681,7 +747,7 @@ def code_walkthrough(source: str) -> str:
         elif "LogisticRegression" in text or "LinearRegression" in text or "OneVsRestClassifier" in text:
             message = "이번 실습에서 관찰할 모델 객체를 정의합니다."
         elif "=" in text:
-            message = "이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다."
+            message = assignment_message(text)
         else:
             message = "앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다."
         snippet = summarize_code(content)

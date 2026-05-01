@@ -51,7 +51,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 \end{tabular}
 \end{adjustbox}
 
-전체 18개 장의 표는 \href{https://github.com/yoon-gu/neuqes-101\#장별-변화추적표}{루트 README.md}를 참고하세요.
+전체 18개 장의 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
 
 
 
@@ -210,7 +210,7 @@ print(f"긍정 비율: {df_bin['y'].mean():.1%}")
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{3행}의 \inlinecode{df\_bin = df[df["star"] != 3].copy()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{4행}의 \inlinecode{df\_bin["y"] = (df\_bin["star"] >= 4).astyp...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\textbf{3행}의 \inlinecode{df\_bin = df[df["star"] != 3].copy()}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{4행}의 \inlinecode{df\_bin["y"] = (df\_bin["star"] >= 4).astyp...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -247,7 +247,7 @@ print(f"X_test:  {X_test.shape}, y_test:  {y_test.shape}")
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1--4행}의 \inlinecode{X\_text\_train, X\_text\_test, y\_train, y\_tes...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{6행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{7행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{8행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
+\textbf{1--4행}의 \inlinecode{X\_text\_train, X\_text\_test, y\_train, y\_tes...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{6행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 TF-IDF 기반 벡터라이저를 만듭니다. \textbf{7행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{8행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -311,7 +311,7 @@ print(
     f"y_proba shape: "
     f"{y_proba.shape}  (각 샘플마다 [P(0), P(1)])"
 )
-print(f"\n앞 5개 예측 확률:")
+print(f"\n첫 5개 예측 확률:")
 print(
     pd.DataFrame(y_proba[:5], columns=["P(neg)", "P(pos)"]).round(4)
 )
@@ -328,7 +328,7 @@ print(f"\n행 합 (1이어야 함): {y_proba.sum(axis=1)[:5]}")
 \begin{lstlisting}[style=bookoutput]
 y_proba shape: (808, 2)  (각 샘플마다 [P(0), P(1)])
 
-앞 5개 예측 확률:
+첫 5개 예측 확률:
    P(neg)  P(pos)
 0  0.5515  0.4485
 1  0.9001  0.0999
@@ -370,20 +370,20 @@ proba_sklearn = y_proba[:, 1]   # P(y=1)
 diff = np.abs(proba_manual - proba_sklearn).max()
 print(f"수동 계산 vs sklearn 최대 차이: {diff:.2e}")
 
-print(f"\n수동 계산 앞 5개: {proba_manual[:5].round(4)}")
-print(f"sklearn 앞 5개:    {proba_sklearn[:5].round(4)}")
+print(f"\n수동 계산 첫 5개: {proba_manual[:5].round(4)}")
+print(f"sklearn 첫 5개:    {proba_sklearn[:5].round(4)}")
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{4--7행}의 \inlinecode{logits = X\_test @ model.coef\_.T + model.i...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{8행}의 \inlinecode{logits = logits.flatten()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{11행}의 \inlinecode{proba\_manual = 1 / (1 + np.exp(-logits))}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{12행}의 \inlinecode{proba\_sklearn = y\_proba[:, 1]   \# P(y=1)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{15행}의 \inlinecode{diff = np.abs(proba\_manual - proba\_sklear...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\textbf{4--7행}의 \inlinecode{logits = X\_test @ model.coef\_.T + model.i...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{8행}의 \inlinecode{logits = logits.flatten()}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{11행}의 \inlinecode{proba\_manual = 1 / (1 + np.exp(-logits))}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{12행}의 \inlinecode{proba\_sklearn = y\_proba[:, 1]   \# P(y=1)}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{15행}의 \inlinecode{diff = np.abs(proba\_manual - proba\_sklear...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
 수동 계산 vs sklearn 최대 차이: 0.00e+00
 
-수동 계산 앞 5개: [0.4485 0.0999 0.1638 0.6661 0.7578]
-sklearn 앞 5개:    [0.4485 0.0999 0.1638 0.6661 0.7578]
+수동 계산 첫 5개: [0.4485 0.0999 0.1638 0.6661 0.7578]
+sklearn 첫 5개:    [0.4485 0.0999 0.1638 0.6661 0.7578]
 \end{lstlisting}
 \noindent\textbf{출력 해석.}\quad 출력된 shape는 데이터가 코드에서 기대한 차원으로 변환되었는지 확인하는 점검 지점입니다.
 \par\vspace{0.9em}
@@ -408,7 +408,7 @@ print(
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{3행}의 \inlinecode{y\_test\_arr = y\_test.values}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{4행}의 \inlinecode{p = proba\_sklearn}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{5행}의 \inlinecode{manual\_bce = -(y\_test\_arr * np.log(p) + (...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{6행}의 \inlinecode{sklearn\_bce = log\_loss(y\_test, y\_proba)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\textbf{3행}의 \inlinecode{y\_test\_arr = y\_test.values}에서는 계산에 바로 쓸 수 있도록 배열 형태로 변환합니다. \textbf{4행}의 \inlinecode{p = proba\_sklearn}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{manual\_bce = -(y\_test\_arr * np.log(p) + (...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다. \textbf{6행}의 \inlinecode{sklearn\_bce = log\_loss(y\_test, y\_proba)}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -437,7 +437,7 @@ print(
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{5행}의 \inlinecode{cm = confusion\_matrix(y\_test, y\_pred)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\textbf{5행}의 \inlinecode{cm = confusion\_matrix(y\_test, y\_pred)}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -558,7 +558,7 @@ threshold  accuracy  precision  recall     f1
 \item
   \textbf{sigmoid + MSE는 비볼록(non-convex)}: 손실면이 매끈한 그릇 모양이 아니라 평탄한 구간이 생깁니다. local minima에 빠질 수 있고 학습이 불안정합니다. 반면 sigmoid + BCE는 볼록(convex)이라 전역 최적해로 수렴이 보장됩니다.
 \item
-  \textbf{gradient 소실(saturation)}: sigmoid 양 극단(출력이 0이나 1 근처)에서 도함수가 거의 0이 됩니다. MSE의 gradient는 그 도함수에 곱해지므로 함께 0으로 중단될 수 있습니다. BCE는 sigmoid와 결합되었을 때 gradient가 단순히 \(\hat p - y\)로 떨어져 saturation이 사라집니다.
+  \textbf{gradient 소실(saturation)}: sigmoid 양 극단(출력이 0이나 1 근처)에서 도함수가 거의 0이 됩니다. MSE의 gradient는 그 도함수에 곱해지므로 함께 거의 0이 될 수 있습니다. BCE는 sigmoid와 결합되었을 때 gradient가 단순히 \(\hat p - y\)로 떨어져 saturation이 사라집니다.
 \end{enumerate}
 
 참고로 통계학에선 0/1 라벨을 그대로 \inlinecode{LinearRegression}으로 푸는 \textbf{Linear Probability Model(LPM)} 이 있긴 합니다. 단순 분석엔 쓰지만 출력이 {[}0, 1{]}을 안 지키고 BCE보다 학습 안정성이 떨어져 ML에선 거의 안 씁니다.

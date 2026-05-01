@@ -56,7 +56,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 \end{tabular}
 \end{adjustbox}
 
-전체 19개 장의 표는 \href{https://github.com/yoon-gu/neuqes-101\#장별-변화추적표}{루트 README.md}를 참고하세요.
+전체 19개 장의 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
 
 
 
@@ -270,17 +270,17 @@ def extract_aspects(text: str) -> list[int]:
 df["aspects"] = df["text"].apply(extract_aspects)
 Y = np.array(df["aspects"].tolist())   # (N, 5) multi-hot
 print(f"Y shape: {Y.shape}  (샘플 수, 측면 수)")
-print(f"앞 3개 샘플의 multi-hot 라벨:\n{Y[:3]}")
+print(f"첫 3개 샘플의 multi-hot 라벨:\n{Y[:3]}")
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1--12행}의 \inlinecode{ASPECT\_KEYWORDS = \{ "food": ["food", "mea...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{13행}의 \inlinecode{ASPECTS = list(ASPECT\_KEYWORDS.keys())}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{14행}의 \inlinecode{K = len(ASPECTS)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{16행}의 \inlinecode{def extract\_aspects(text: str) -> list[int]:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{17행}의 \inlinecode{text\_lower = text.lower()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{18--21행}의 \inlinecode{return [ int(any(re.search(rf"\textbackslash\{\}b\{re.escap...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\textbf{1--12행}의 \inlinecode{ASPECT\_KEYWORDS = \{ "food": ["food", "mea...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{13행}의 \inlinecode{ASPECTS = list(ASPECT\_KEYWORDS.keys())}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{14행}의 \inlinecode{K = len(ASPECTS)}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{16행}의 \inlinecode{def extract\_aspects(text: str) -> list[int]:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{17행}의 \inlinecode{text\_lower = text.lower()}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{18--21행}의 \inlinecode{return [ int(any(re.search(rf"\textbackslash\{\}b\{re.escap...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
 Y shape: (5000, 5)  (샘플 수, 측면 수)
-앞 3개 샘플의 multi-hot 라벨:
+첫 3개 샘플의 multi-hot 라벨:
 [[0 1 0 0 1]
  [0 0 0 0 1]
  [0 0 0 1 0]]
@@ -311,7 +311,7 @@ for n in range(K + 1):
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{2행}의 \inlinecode{for k, aspect in enumerate(ASPECTS):}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{8행}의 \inlinecode{n\_labels\_per\_sample = Y.sum(axis=1)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\textbf{2행}의 \inlinecode{for k, aspect in enumerate(ASPECTS):}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{8행}의 \inlinecode{n\_labels\_per\_sample = Y.sum(axis=1)}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -355,7 +355,7 @@ print(f"X_test:  {X_test.shape}, Y_test:  {Y_test.shape}")
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1--3행}의 \inlinecode{X\_text\_train, X\_text\_test, Y\_train, Y\_tes...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{5행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{6행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{7행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
+\textbf{1--3행}의 \inlinecode{X\_text\_train, X\_text\_test, Y\_train, Y\_tes...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{5행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 TF-IDF 기반 벡터라이저를 만듭니다. \textbf{6행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{7행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -386,26 +386,29 @@ X_test:  (1000, 10000), Y_test:  (1000, 5)
 
 
 
-\Needspace{13\baselineskip}
+\Needspace{16\baselineskip}
 \begin{lstlisting}
-# 먼저 wrapper 없이 직접 LogisticRegression() 에 multi-hot
-# Y를 넣어보기
+# 먼저 wrapper 없이 단순히 LogisticRegression() 에 
+# multi-hot Y를 넣어보기
 bare_model = LogisticRegression(max_iter=1000)
 try:
     bare_model.fit(X_train, Y_train)
-    print(f"성공? coef_ shape: {bare_model.coef_.shape}")
+    print(
+        f"학습 성공: coef_ shape: "
+        f"{bare_model.coef_.shape}"
+    )
 except ValueError as e:
-    print(f"X 실패: {type(e).__name__}")
+    print(f"실패: {type(e).__name__}")
     print(f"   메시지: {e}")
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{3행}의 \inlinecode{bare\_model = LogisticRegression(max\_iter=...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{4행}의 \inlinecode{try:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{5행}의 \inlinecode{bare\_model.fit(X\_train, Y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{7행}의 \inlinecode{except ValueError as e:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\textbf{3행}의 \inlinecode{bare\_model = LogisticRegression(max\_iter=...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{4행}의 \inlinecode{try:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{5행}의 \inlinecode{bare\_model.fit(X\_train, Y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{10행}의 \inlinecode{except ValueError as e:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-X 실패: ValueError
+실패: ValueError
    메시지: y should be a 1d array, got an array of shape
      (4000, 5) instead.
 \end{lstlisting}
@@ -440,7 +443,7 @@ X 실패: ValueError
 model_ml = OneVsRestClassifier(LogisticRegression(max_iter=1000))
 model_ml.fit(X_train, Y_train)
 
-print(f"OvR fit 성공!")
+print(f"OvR 학습 성공")
 print(
     f"  학습된 binary 분류기 수: "
     f"{len(model_ml.estimators_)}"
@@ -468,7 +471,7 @@ proba_ml = model_ml.predict_proba(X_test) # (N, K) per-label probability (정규
 
 print(f"\nY_pred shape: {Y_pred.shape}")
 print(f"proba shape:  {proba_ml.shape}")
-print(f"\n앞 3개 샘플의 예측 확률 (per-label):")
+print(f"\n첫 3개 샘플의 예측 확률 (per-label):")
 print(
     pd.DataFrame(proba_ml[:3], columns=ASPECTS).round(4)
 )
@@ -480,7 +483,7 @@ print(
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-OvR fit 성공!
+OvR 학습 성공
   학습된 binary 분류기 수: 5
   각 estimator 타입:       LogisticRegression
   각 estimator coef shape: (1, 10000)  (1, V — 한 라벨용
@@ -496,7 +499,7 @@ OvR fit 성공!
 Y_pred shape: (1000, 5)
 proba shape:  (1000, 5)
 
-앞 3개 샘플의 예측 확률 (per-label):
+첫 3개 샘플의 예측 확률 (per-label):
 ...
 \end{lstlisting}
 \noindent\textbf{출력 해석.}\quad 출력된 shape는 데이터가 코드에서 기대한 차원으로 변환되었는지 확인하는 점검 지점입니다.
@@ -753,7 +756,7 @@ threshold  subset_acc  hamming  micro_F1  macro_F1
 \item
   \textbf{사전 협소} --- \textquotesingle food\textquotesingle 에 \textquotesingle sushi\textquotesingle, \textquotesingle ramen\textquotesingle, \textquotesingle pasta\textquotesingle{} 같은 구체 음식명이 빠져 있으면 그 리뷰는 food=0이 되어 버림.
 \item
-  \textbf{정답이 노이지} --- 우리 라벨 자체가 진짜 정답이 아닌 휴리스틱이라, 모델 성능을 이 정답에 비교하는 건 결국 "모델이 휴리스틱을 얼마나 따라 했나"를 잴 뿐.
+  \textbf{정답에 노이즈가 있음} --- 우리 라벨 자체가 진짜 정답이 아닌 휴리스틱이라, 모델 성능을 이 정답에 비교하는 건 결국 "모델이 휴리스틱을 얼마나 따라 했나"를 잴 뿐.
 \item
   \textbf{빈 라벨}: 모든 측면이 0인 샘플도 있음 (\texttt{\{n\_labels\_per\_sample\ ==\ 0).sum()} 건). 실제 multi-label 데이터에선 보통 최소 한 라벨은 보장.
 \end{enumerate}
@@ -870,7 +873,7 @@ Y_clean = Y[mask_nonempty]
 df_clean = df[mask_nonempty]
 \end{lstlisting}
 
-이 장는 (a) 그대로 두기 --- 합성 데이터에서 "어느 키워드도 없는 짧은 리뷰"는 자연스러운 부분이라.
+이 장은 (a) 그대로 두기 --- 합성 데이터에서 "어느 키워드도 없는 짧은 리뷰"는 자연스러운 부분이라.
 
 \end{faqBox}
 
@@ -1030,7 +1033,7 @@ print(
 
 \section{Phase 0 마무리 --- sklearn vs HuggingFace 미리보기}
 
-이 장로 scikit-learn 단계가 끝납니다. 다음 장(7장)부터 등장하는 \inlinecode{transformers} (Hugging Face)는 \emph{loss를 최소화한다} 는 목적은 같지만 \textbf{그 방식과 철학} 이 다릅니다. 큰 그림을 미리 잡아두면 Phase 1의 학습 코드가 익숙하게 이해할 수 있습니다.
+이 장으로 scikit-learn 단계가 끝납니다. 다음 장(7장)부터 등장하는 \inlinecode{transformers} (Hugging Face)는 \emph{loss를 최소화한다} 는 목적은 같지만 \textbf{그 방식과 철학} 이 다릅니다. 큰 그림을 미리 잡아두면 Phase 1의 학습 코드가 익숙하게 이해할 수 있습니다.
 
 \subsection{핵심 차이 한 문장}
 

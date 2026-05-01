@@ -46,7 +46,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 \end{tabular}
 \end{adjustbox}
 
-전체 19개 장의 표는 \href{https://github.com/yoon-gu/neuqes-101\#장별-변화추적표}{루트 README.md}를 참고하세요.
+전체 19개 장의 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
 
 
 
@@ -68,7 +68,7 @@ Loss & \inlinecode{BCEWithLogitsLoss} & \textbf{\inlinecode{CrossEntropyLoss}} \
 \end{tabular}
 \end{adjustbox}
 
-\textbf{왜 같은 데이터에 같은 task인데 따로 장로 다루나?} 두 방식은 출력 차원·activation·loss가 모두 바뀌어 보이지만 \emph{수학적으로 동등} 합니다. 이 동등성을 가장 단순한 sklearn 환경에서 미리 체험해두면, 10장에서 BERT binary가 두 방식 중 어느 쪽을 골라도 같다는 사실을 자연스럽게 받아들일 수 있습니다.
+\textbf{왜 같은 데이터에 같은 task인데 따로 장으로 다루나?} 두 방식은 출력 차원·activation·loss가 모두 바뀌어 보이지만 \emph{수학적으로 동등} 합니다. 이 동등성을 가장 단순한 sklearn 환경에서 미리 체험해두면, 10장에서 BERT binary가 두 방식 중 어느 쪽을 골라도 같다는 사실을 자연스럽게 받아들일 수 있습니다.
 
 또 K=2를 통과하면 같은 식이 K=5(다음 장)로 자연스럽게 일반화됩니다 --- softmax/CE는 K가 무엇이든 작동합니다.
 
@@ -202,7 +202,7 @@ print(
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{2행}의 \inlinecode{df\_bin = df[df["star"] != 3].copy()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{3행}의 \inlinecode{df\_bin["y"] = (df\_bin["star"] >= 4).astyp...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{5--7행}의 \inlinecode{X\_text\_train, X\_text\_test, y\_train, y\_tes...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{9행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{10행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{11행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
+\textbf{2행}의 \inlinecode{df\_bin = df[df["star"] != 3].copy()}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{df\_bin["y"] = (df\_bin["star"] >= 4).astyp...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5--7행}의 \inlinecode{X\_text\_train, X\_text\_test, y\_train, y\_tes...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{9행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 TF-IDF 기반 벡터라이저를 만듭니다. \textbf{10행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{11행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -275,7 +275,7 @@ print(
 )
 
 p_a, p_b = proba_a[:, 1], proba_b[:, 1]
-print(f"\n앞 5개 P(y=1):")
+print(f"\n첫 5개 P(y=1):")
 print(f"방식 A: {p_a[:5].round(4)}")
 print(f"방식 B: {p_b[:5].round(4)}")
 print(f"\n전체 max 차이: {np.abs(p_a - p_b).max():.4f}")
@@ -283,7 +283,7 @@ print(f"전체 mean 차이: {np.abs(p_a - p_b).mean():.4f}")
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{proba\_a = model\_a.predict\_proba(X\_test)...}에서는 클래스별 예측 확률을 계산합니다. \textbf{2행}의 \inlinecode{proba\_b = model\_b.predict\_proba(X\_test)...}에서는 클래스별 예측 확률을 계산합니다. \textbf{11행}의 \inlinecode{p\_a, p\_b = proba\_a[:, 1], proba\_b[:, 1]}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\textbf{1행}의 \inlinecode{proba\_a = model\_a.predict\_proba(X\_test)...}에서는 클래스별 예측 확률을 계산합니다. \textbf{2행}의 \inlinecode{proba\_b = model\_b.predict\_proba(X\_test)...}에서는 클래스별 예측 확률을 계산합니다. \textbf{11행}의 \inlinecode{p\_a, p\_b = proba\_a[:, 1], proba\_b[:, 1]}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -293,7 +293,7 @@ print(f"전체 mean 차이: {np.abs(p_a - p_b).mean():.4f}")
   (방식 A도 sklearn이 내부적으로 [P(0), P(1)]을 내줌 — sigmoid 결과를 두
     열로 펼친 것)
 
-앞 5개 P(y=1):
+첫 5개 P(y=1):
 방식 A: [0.4485 0.0999 0.1638 0.6661 0.7578]
 방식 B: [0.4485 0.0999 0.1638 0.6661 0.7578]
 
@@ -361,7 +361,7 @@ print(
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{3행}의 \inlinecode{z0\_arr = np.array([-2.0, 0.0, 1.5, 3.0])}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{4행}의 \inlinecode{z1\_arr = np.array([ 1.0, 0.5, -0.5, 2.0])}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{6행}의 \inlinecode{softmax\_p1  = np.exp(z1\_arr) / (np.exp(z0...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{7행}의 \inlinecode{sigmoid\_diff = 1.0 / (1.0 + np.exp(-(z1\_a...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\textbf{3행}의 \inlinecode{z0\_arr = np.array([-2.0, 0.0, 1.5, 3.0])}에서는 비교 실험에 사용할 작은 배열을 만듭니다. \textbf{4행}의 \inlinecode{z1\_arr = np.array([ 1.0, 0.5, -0.5, 2.0])}에서는 비교 실험에 사용할 작은 배열을 만듭니다. \textbf{6행}의 \inlinecode{softmax\_p1  = np.exp(z1\_arr) / (np.exp(z0...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{7행}의 \inlinecode{sigmoid\_diff = 1.0 / (1.0 + np.exp(-(z1\_a...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
