@@ -456,7 +456,137 @@ for batch in loader:
 | `DataCollatorWithPadding(...)` | (Trainer가 자동 생성) | `DataLoader(collate_fn=...)` |
 | `with_format("torch")` | (Trainer가 처리) | `DataLoader` 가 텐서 변환 |
 
-**요점**: 이번 챕터에서 익힌 부품들이 Ch 9-13에서 *그대로 입력으로* 들어갑니다. `Trainer` 는 그 부품들을 묶어 학습 루프를 자동화한 것뿐 — 안에서 일어나는 일은 패턴 B와 같습니다. 커스텀 학습이 필요해지면 패턴 B로 *분해해 다시 짜는* 게 어렵지 않다는 게, Ch 8 데이터 파이프라인을 손에 익혀두는 가장 큰 이유입니다.""")
+**요점**: 이번 챕터에서 익힌 부품들이 Ch 9-13에서 *그대로 입력으로* 들어갑니다. `Trainer` 는 그 부품들을 묶어 학습 루프를 자동화한 것뿐이며, 안에서 일어나는 일은 패턴 B와 같습니다. 커스텀 학습이 필요해지면 패턴 B로 분해해 다시 짤 수 있다는 점이 Ch 8을 손에 익혀두는 가장 큰 이유입니다.""")
+
+# ----- 23e. Collator 추가 실습 도입 -----
+md(r"""## 6. 🛠️ Collator 추가 실습
+
+DataCollator의 다양한 모습을 직접 돌려봅니다 — 동적 padding의 효율을 *숫자로* 확인하고, BERT 사전학습에 쓰는 MLM collator를 시연하며, 마지막으로 *직접 작성한 collator* 까지 보면 Ch 13 보조 loss 같은 커스텀 학습이 어떻게 가능한지 감이 잡힙니다.""")
+
+# ----- 23f. 정적 vs 동적 효율 실측 -----
+md(r"""### 실험 1 — 정적 vs 동적 padding 효율을 숫자로
+
+같은 50 샘플을 두 방식으로 처리해 *전체 토큰 수* 와 *실제 토큰 비율* 을 직접 비교합니다.""")
+
+code(r"""# 정적 padding 데이터셋 (max_length=128 고정)
+def tokenize_static(batch):
+    return tokenizer(batch["text"], padding="max_length", truncation=True, max_length=128)
+
+tokenized_static = small.select(range(50)).map(tokenize_static, batched=True).remove_columns(["text"])
+tokenized_static = tokenized_static.with_format("torch", columns=["input_ids", "attention_mask", "label"])
+
+static_loader = DataLoader(tokenized_static, batch_size=8, shuffle=False)
+# dyn_loader는 앞 실습에서 만들어둔 것 그대로 사용
+
+def loader_stats(loader, name):
+    real_total = grid_total = 0
+    for batch in loader:
+        real_total += batch["attention_mask"].sum().item()
+        grid_total += batch["attention_mask"].numel()
+    return {"방식": name, "실제 토큰": real_total, "전체 토큰": grid_total, "채움률": real_total / grid_total}
+
+stats_static = loader_stats(static_loader, "정적 (max_length=128)")
+stats_dyn    = loader_stats(dyn_loader,    "동적 (DataCollator)")
+
+df_stats = pd.DataFrame([stats_static, stats_dyn])
+df_stats["채움률"] = df_stats["채움률"].apply(lambda r: f"{r:.1%}")
+print(df_stats.to_string(index=False))
+
+ratio = stats_dyn["전체 토큰"] / stats_static["전체 토큰"]
+print(f"\n동적 방식의 전체 토큰 수가 정적 대비 {ratio:.1%} → 약 {1-ratio:.0%} 감소")
+print("(이만큼 self-attention 계산이 줄어들어 학습 시간·메모리 모두 이득)")""")
+
+# ----- 23g. MLM collator 시연 -----
+md(r"""### 실험 2 — `DataCollatorForLanguageModeling` 으로 MLM masking 직접 보기
+
+BERT 사전학습은 입력 토큰의 15%를 `[MASK]` 로 가리고 모델이 맞추도록 학습됩니다 (Masked Language Modeling). 그 masking 자체를 담당하는 게 `DataCollatorForLanguageModeling` — 이번 챕터의 학습엔 안 쓰지만, BERT의 기원을 이해하는 데 직접 보는 게 빠릅니다.""")
+
+code(r"""from transformers import DataCollatorForLanguageModeling
+
+mlm_collator = DataCollatorForLanguageModeling(
+    tokenizer=tokenizer,
+    mlm=True,
+    mlm_probability=0.15,   # 입력의 15% 가림 (BERT 원논문)
+)
+
+# tokenized_dyn 의 앞 3개 샘플로 시연
+small_batch = [tokenized_dyn[i] for i in range(3)]
+mlm_out = mlm_collator(small_batch)
+
+print(f"input_ids shape: {mlm_out['input_ids'].shape}")
+print(f"labels shape:    {mlm_out['labels'].shape}  (-100인 자리는 loss 계산에서 무시)")
+
+# masked 위치 통계
+mask_id = tokenizer.mask_token_id
+n_mask = (mlm_out["input_ids"] == mask_id).sum().item()
+n_total = mlm_out["input_ids"].numel()
+print(f"\n[MASK] 토큰 수: {n_mask} / {n_total} ({n_mask/n_total:.1%})")
+print("  (15% 중 80%만 [MASK], 10%는 무작위 토큰, 10%는 원래 토큰 그대로 — 그래서 [MASK] 비율은 12% 안팎)")""")
+
+code(r"""# 첫 샘플 — 원래 vs masked vs label 비교
+i = 0
+orig_ids = small_batch[i]["input_ids"][:25]
+mask_ids = mlm_out["input_ids"][i][:25].tolist()
+label_ids = mlm_out["labels"][i][:25].tolist()
+
+rows = []
+for orig, masked, lbl in zip(orig_ids, mask_ids, label_ids):
+    orig_tok = tokenizer.decode([orig])
+    masked_tok = tokenizer.decode([masked])
+    if lbl == -100:
+        label_str = "(무시)"
+    else:
+        label_str = tokenizer.decode([lbl])
+    changed = "✱" if orig != masked else ""
+    rows.append({"원래": orig_tok, "masked": masked_tok, "label": label_str, "변경": changed})
+
+print(pd.DataFrame(rows).to_string(index=False))
+print("\n✱ 가 붙은 행이 collator가 가리거나 바꾼 자리 — 모델은 그 자리의 원래 토큰을 맞히도록 학습됨")""")
+
+# ----- 23h. 커스텀 collate_fn -----
+md(r"""### 실험 3 — 커스텀 `collate_fn` 직접 작성
+
+위에서 본 `DataCollatorWithPadding` 와 `DataCollatorForLanguageModeling` 은 `transformers` 가 task별로 미리 만들어준 도구입니다. 그러나 *우리 task* 가 표준 형식에서 벗어나면 (예: Ch 13 보조 loss처럼 라벨이 두 종류) 직접 함수를 작성해야 합니다.
+
+`collate_fn` 의 시그니처는 단순합니다 — 입력은 *샘플 dict의 리스트*, 출력은 *batch dict* (각 키에 stacked 텐서).""")
+
+code(r"""def custom_collate(batch_list):
+    # 샘플 dict 리스트 → batch dict.
+    # Ch 13 보조 loss를 미리 흉내내 라벨을 두 종류로 만들어 둠:
+    #   - main_label: 0-4 정수 (분류 라벨)
+    #   - aux_score:  0.0-1.0 float (정규화한 별점)
+
+    # input_ids/attention_mask 는 DataCollatorWithPadding 에 위임 (편함)
+    pad_input = collator(
+        [{"input_ids": item["input_ids"], "attention_mask": item["attention_mask"]} for item in batch_list]
+    )
+
+    # 라벨을 두 형태로 변환
+    raw_labels = torch.tensor([item["label"] for item in batch_list], dtype=torch.long)
+    aux_scores = raw_labels.float() / 4.0   # 0-4 → 0-1 (정규화)
+
+    pad_input["main_label"] = raw_labels
+    pad_input["aux_score"]  = aux_scores
+    return pad_input
+
+
+custom_loader = DataLoader(
+    tokenized_dyn,
+    batch_size=4,
+    shuffle=False,
+    collate_fn=custom_collate,
+)
+
+batch = next(iter(custom_loader))
+print(f"input_ids shape:        {batch['input_ids'].shape}")
+print(f"attention_mask shape:   {batch['attention_mask'].shape}")
+print(f"main_label (정수):      {batch['main_label'].tolist()}")
+print(f"aux_score (float 정규화): {[round(x, 3) for x in batch['aux_score'].tolist()]}")""")
+
+# ----- 23i. 커스텀 collate 정리 -----
+md(r"""**관찰**: `collate_fn` 한 함수가 *batch 단위 변환의 집결지* 입니다. 라벨 형식 변환, 추가 메타정보 부착, 다중 라벨 dict 등 무엇이든 여기서 처리할 수 있습니다.
+
+Ch 13 보조 loss는 이 패턴을 그대로 사용 — 메인 라벨(multi-hot)과 보조 라벨(별점 float)을 한 dict 안에 같이 담아서 모델이 두 loss를 합쳐 계산하도록 합니다. *학습 코드의 어디에도 collate_fn 정의가 없는데 학습이 잘 되네?* 라고 느낀다면, 그건 `Trainer` 가 `tokenizer` 만 보고 `DataCollatorWithPadding` 을 자동 생성한 결과일 가능성이 큽니다 — 직접 짜야 하는 순간엔 위 패턴이 출발점입니다.""")
 
 # ----- 24. library -----
 md(r"""## 📦 이번 챕터에 등장한 라이브러리·함수
