@@ -404,31 +404,58 @@ true 5★  10        3         7         51        124
 
 \subsection{두 방식의 구조 비교}
 
-\textbf{multinomial (softmax)}:
+\begin{bookfigure}[htbp]{Multinomial softmax와 OvR의 출력 구조 비교}
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[
+  font=\sffamily\small,
+  node distance=8mm,
+  box/.style={draw=CodeRule, fill=CodeBg, rounded corners=1.5mm, minimum height=8mm, align=center, inner xsep=5pt, inner ysep=4pt},
+  soft/.style={draw=BookBlue, fill=BookPaper, rounded corners=1.5mm, minimum height=8mm, align=center, inner xsep=5pt, inner ysep=4pt},
+  ovr/.style={draw=BookGreen, fill=BookPaper, rounded corners=1.5mm, minimum height=7mm, align=center, inner xsep=5pt, inner ysep=3pt},
+  arrow/.style={->, line width=0.55pt, draw=BookMuted}
+]
 
-\Needspace{10\baselineskip}
-\begin{lstlisting}
-[입력 x] ──→ Linear(V → K) ──→ logits [z_1, ..., z_K]
-                            ──→ softmax 한 번
-                            ──→ [p_1, ..., p_K]   (
-                                합 = 1,
-                                클래스끼리 경쟁,
-                            )
-\end{lstlisting}
+\node[anchor=west, font=\sffamily\bfseries] at (0,0) {multinomial (softmax)};
+\node[box] (mx) at (0,-1.0) {입력\\$x$};
+\node[box] (mlin) at (2.4,-1.0) {Linear\\$V \rightarrow K$};
+\node[box] (mlogit) at (4.9,-1.0) {logits\\$z_1,\ldots,z_K$};
+\node[soft] (msoft) at (7.4,-1.0) {softmax\\한 번};
+\node[box] (mprob) at (9.9,-1.0) {$p_1,\ldots,p_K$\\$\sum p_k=1$};
+\draw[arrow] (mx) -- (mlin);
+\draw[arrow] (mlin) -- (mlogit);
+\draw[arrow] (mlogit) -- (msoft);
+\draw[arrow] (msoft) -- (mprob);
+\node[align=center, text=BookMuted] at (7.4,-1.95) {분모를 공유하므로\\클래스끼리 경쟁};
 
-\textbf{OvR} (이 장의 K=5 예시):
+\node[anchor=west, font=\sffamily\bfseries] at (0,-3.0) {OvR (K=5)};
+\node[box] (ox) at (0,-4.8) {입력\\$x$};
+\node[ovr] (c1) at (3.3,-3.6) {분류기 1\\$1★$ vs rest};
+\node[ovr] (c2) at (3.3,-4.2) {분류기 2\\$2★$ vs rest};
+\node[ovr] (c3) at (3.3,-4.8) {분류기 3\\$3★$ vs rest};
+\node[ovr] (c4) at (3.3,-5.4) {분류기 4\\$4★$ vs rest};
+\node[ovr] (c5) at (3.3,-6.0) {분류기 5\\$5★$ vs rest};
 
-\Needspace{12\baselineskip}
-\begin{lstlisting}
-             ┌──→ 분류기 1:  "1★ vs 나머지"  ──→ sigmoid ──→ P_1
-             ├──→ 분류기 2:  "2★ vs 나머지"  ──→ sigmoid ──→ P_2
-[입력 x] ──→ ├──→ 분류기 3:  "3★ vs 나머지"  ──→ sigmoid ──→ P_3
-             ├──→ 분류기 4:  "4★ vs 나머지"  ──→ sigmoid ──→ P_4
-             └──→ 분류기 5:  "5★ vs 나머지"  ──→ sigmoid ──→ P_5
+\node[soft] (s1) at (6.2,-3.6) {sigmoid};
+\node[soft] (s2) at (6.2,-4.2) {sigmoid};
+\node[soft] (s3) at (6.2,-4.8) {sigmoid};
+\node[soft] (s4) at (6.2,-5.4) {sigmoid};
+\node[soft] (s5) at (6.2,-6.0) {sigmoid};
 
-   각 P_k 는 다른 P_j 와 무관한 독립 sigmoid 출력 (raw 합 ≠ 1)
-   예측: argmax(P_k) — sklearn이 표시할 땐 행을 정규화해 합 1로 보여줌
-\end{lstlisting}
+\node[box] (p1) at (8.45,-3.6) {$P_1$};
+\node[box] (p2) at (8.45,-4.2) {$P_2$};
+\node[box] (p3) at (8.45,-4.8) {$P_3$};
+\node[box] (p4) at (8.45,-5.4) {$P_4$};
+\node[box] (p5) at (8.45,-6.0) {$P_5$};
+
+\foreach \c/\s/\p in {c1/s1/p1,c2/s2/p2,c3/s3/p3,c4/s4/p4,c5/s5/p5}{
+  \draw[arrow] (ox.east) -- (\c.west);
+  \draw[arrow] (\c.east) -- (\s.west);
+  \draw[arrow] (\s.east) -- (\p.west);
+}
+\node[align=left, text=BookMuted, anchor=west] at (0,-6.9) {각 $P_k$는 독립 sigmoid 출력입니다. raw 합은 1일 필요가 없고, multi-class 예측에서는 $\arg\max_k P_k$를 선택합니다.};
+\end{tikzpicture}%
+}
+\end{bookfigure}
 
 핵심 차이는 \textbf{클래스가 서로 경쟁하느냐} 입니다. multinomial은 한 logit이 커지면 다른 logit의 softmax 확률이 자동으로 줄어듭니다 (분모 공유). OvR의 각 sigmoid는 다른 클래스 학습과 독립적이라 P\_k 가 모두 동시에 0.8이 될 수도, 모두 0.1이 될 수도 있습니다.
 
