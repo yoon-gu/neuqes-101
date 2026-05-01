@@ -585,7 +585,18 @@ print(f"label2id:                {cfg.label2id}")
 print(f"problem_type:            {cfg.problem_type!r}    (None이면 num_labels로 자동 추론)")""")
 
 # ----- 31h. config 해석 -----
-md(r"""**자주 쓰는 속성 한눈에 보기**
+md(r"""> 📒 **더 깊이 보고 싶다면 — 부록 노트북**
+>
+> [`appendix_model_config.ipynb`](./appendix_model_config.ipynb) 에서 다음을 다룹니다:
+> - `PretrainedConfig` 의 정체와 클래스 계층 (BertConfig / GPT2Config / T5Config / ViTConfig …)
+> - `AutoConfig.from_pretrained` 로 *가중치 없이* config만 로드
+> - 5종 모델(bert / distilbert / gpt2 / t5 / roberta) config를 한 표에 비교 + ViT(비전) 사례
+> - 분류 헤드 갈아끼우는 `from_pretrained` 인자 패턴 (`num_labels`, `problem_type`)
+> - 공식 문서 링크: <https://huggingface.co/docs/transformers/en/main_classes/configuration>
+>
+> Colab으로 바로: [Open](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/07_bert_pipeline/appendix_model_config.ipynb). 본 챕터 흐름과 별개라 시간 될 때 보시면 됩니다.
+
+**자주 쓰는 속성 한눈에 보기**
 
 | 속성·호출 | 의미 | 자주 쓰는 곳 |
 |---|---|---|
