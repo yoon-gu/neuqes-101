@@ -417,7 +417,7 @@ true 5★  10        3         7         51        124
 ]
 \node[font=\sffamily\bfseries\small] at (4.75,0.58) {multinomial: one softmax over 5 logits};
 \node[box] (mx) at (-0.35,-1.20) {입력\\$x$};
-\node[box] (mlin) at (1.55,-1.20) {Linear\\$V\to 5$};
+\node[box, minimum width=12mm, inner xsep=2pt] (mlin) at (1.45,-1.20) {Linear\\$V\to 5$};
 \node[soft] (msoft) at (5.50,-1.20) {softmax};
 \foreach \i/\y in {1/-0.05,2/-0.625,3/-1.20,4/-1.775,5/-2.35}{
   \node[cell] (z\i) at (3.25,\y) {$z_\i$};
