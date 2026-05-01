@@ -1,0 +1,28 @@
+\begin{titlepage}
+\thispagestyle{empty}
+\begin{tikzpicture}[remember picture,overlay]
+  \fill[BookInk] (current page.south west) rectangle (current page.north east);
+  \fill[BookBlue] (current page.south west) rectangle ([xshift=28mm]current page.north west);
+  \draw[BookCyan,line width=1.6pt] ([xshift=46mm,yshift=-54mm]current page.north west) -- ++(118mm,0);
+  \draw[BookGreen,line width=1.6pt] ([xshift=46mm,yshift=-71mm]current page.north west) -- ++(95mm,0);
+  \draw[BookOrange,line width=1.6pt] ([xshift=46mm,yshift=-88mm]current page.north west) -- ++(132mm,0);
+  \foreach \x/\y/\c in {46/54/BookCyan,88/54/BookCyan,164/54/BookCyan,46/71/BookGreen,103/71/BookGreen,141/71/BookGreen,46/88/BookOrange,87/88/BookOrange,132/88/BookOrange,178/88/BookOrange} {
+    \fill[\c] ([xshift=\x mm,yshift=-\y mm]current page.north west) circle (2.2mm);
+  }
+  \node[anchor=west,text=white,font=\sffamily\bfseries\fontsize{30}{38}\selectfont,align=left]
+    at ([xshift=46mm,yshift=-122mm]current page.north west)
+    {Hugging Face로 시작하는\\텍스트 분석 입문};
+  \node[anchor=west,text=white,font=\sffamily\bfseries\fontsize{18}{25}\selectfont,align=left]
+    at ([xshift=46mm,yshift=-156mm]current page.north west)
+    {Loss와 Head로 정리하는\\ML/DL/BERT 실습};
+  \node[anchor=west,text=white!78,font=\sffamily\fontsize{10}{15}\selectfont,align=left]
+    at ([xshift=46mm,yshift=-187mm]current page.north west)
+    {빠르게 지나온 ML, DL, BERT, LLM 시대를\\텍스트 분석 흐름으로 다시 정리하는 실무형 대중서};
+  \node[anchor=west,text=white!72,font=\sffamily\fontsize{11}{14}\selectfont]
+    at ([xshift=46mm,yshift=28mm]current page.south west)
+    {Yoon Gu};
+  \node[anchor=east,text=white!50,font=\sffamily\fontsize{8}{10}\selectfont,align=right]
+    at ([xshift=-24mm,yshift=28mm]current page.south east)
+    {Phase 0 원고판\\1--6장};
+\end{tikzpicture}
+\end{titlepage}

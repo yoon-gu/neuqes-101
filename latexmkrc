@@ -1,0 +1,7 @@
+$do_cd = 1;
+$pdf_mode = 5;
+$jobname = 'neuqes-101-phase0-manuscript';
+$xelatex = 'xelatex -interaction=nonstopmode -halt-on-error %O %S';
+$makeindex = 'makeindex %O -o %D %S';
+$out_dir = 'build';
+$aux_dir = 'build';

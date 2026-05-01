@@ -1,0 +1,300 @@
+\usepackage[a4paper,margin=24mm,headheight=16pt]{geometry}
+\usepackage{kotex}
+\usepackage{fontspec}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{amsmath,amssymb}
+\usepackage{sansmath}
+\usepackage{booktabs,longtable,array}
+\usepackage{tabularx}
+\usepackage{xltabular}
+\usepackage{adjustbox}
+\usepackage{caption}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage[most]{tcolorbox}
+\usepackage{listings}
+\usepackage{makeidx}
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage{enumitem}
+\usepackage{etoolbox}
+\usepackage{setspace}
+\usepackage{needspace}
+
+\makeindex
+
+\setmainfont{NanumGothic-Regular.ttf}[
+  Path = /Users/yoon-gu/Library/Fonts/,
+  BoldFont = NanumGothic-Bold.ttf,
+  ItalicFont = NanumGothic-Regular.ttf,
+  BoldItalicFont = NanumGothic-Bold.ttf
+]
+\setsansfont{NanumGothic-Regular.ttf}[
+  Path = /Users/yoon-gu/Library/Fonts/,
+  BoldFont = NanumGothic-Bold.ttf
+]
+\setmonofont{NanumGothicCoding-Regular.ttf}[
+  Path = /Users/yoon-gu/Library/Fonts/,
+  BoldFont = NanumGothicCoding-Bold.ttf
+]
+\setmainhangulfont{NanumGothic-Regular.ttf}[
+  Path = /Users/yoon-gu/Library/Fonts/,
+  BoldFont = NanumGothic-Bold.ttf
+]
+\setsanshangulfont{NanumGothic-Regular.ttf}[
+  Path = /Users/yoon-gu/Library/Fonts/,
+  BoldFont = NanumGothic-Bold.ttf
+]
+\setmonohangulfont{NanumGothicCoding-Regular.ttf}[
+  Path = /Users/yoon-gu/Library/Fonts/,
+  BoldFont = NanumGothicCoding-Bold.ttf
+]
+\AtBeginDocument{\sansmath}
+
+\definecolor{BookInk}{HTML}{17202A}
+\definecolor{BookMuted}{HTML}{5F6B7A}
+\definecolor{BookBlue}{HTML}{1F6FEB}
+\definecolor{BookCyan}{HTML}{00A6D6}
+\definecolor{BookGreen}{HTML}{2EAD68}
+\definecolor{BookOrange}{HTML}{E68619}
+\definecolor{BookRed}{HTML}{D04A3A}
+\definecolor{BookPaper}{HTML}{F7F8FA}
+\definecolor{CodeBg}{HTML}{F4F6F8}
+\definecolor{CodeRule}{HTML}{D8DEE8}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=BookBlue,
+  urlcolor=BookBlue,
+  citecolor=BookBlue,
+  pdftitle={Hugging Face로 시작하는 텍스트 분석 입문},
+  pdfauthor={Yoon Gu}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE,RO]{\sffamily\small\thepage}
+\fancyhead[LO]{\sffamily\small\nouppercase{\rightmark}}
+\fancyhead[RE]{\sffamily\small\nouppercase{\leftmark}}
+\renewcommand{\headrulewidth}{0.3pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\titleformat{\chapter}[display]
+  {\sffamily\bfseries\Huge\color{BookInk}}
+  {\thechapter 장}
+  {12pt}
+  {\Huge}
+\titleformat{\section}
+  {\sffamily\bfseries\Large\color{BookInk}}
+  {\thesection}{0.8em}{}
+\titleformat{\subsection}
+  {\sffamily\bfseries\large\color{BookInk}}
+  {\thesubsection}{0.8em}{}
+\titlespacing*{\chapter}{0pt}{-4pt}{28pt}
+\titlespacing*{\section}{0pt}{20pt}{8pt}
+\titlespacing*{\subsection}{0pt}{14pt}{6pt}
+
+\setlist{itemsep=2pt,topsep=4pt}
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setstretch{1.18}
+\renewcommand{\arraystretch}{1.24}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\setlength{\tabcolsep}{3pt}
+\emergencystretch=4em
+\sloppy
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.68em}
+
+\lstdefinestyle{bookpython}{
+  language=Python,
+  basicstyle=\small\ttfamily,
+  keywordstyle=\color{BookBlue}\bfseries,
+  commentstyle=\color{BookMuted}\upshape,
+  stringstyle=\color{BookGreen},
+  numberstyle=\tiny\color{BookMuted},
+  numbers=left,
+  stepnumber=1,
+  numbersep=8pt,
+  showstringspaces=false,
+  breaklines=true,
+  breakatwhitespace=false,
+  breakautoindent=true,
+  breakindent=1.8em,
+  columns=fullflexible,
+  keepspaces=true,
+  frame=single,
+  rulecolor=\color{CodeRule},
+  backgroundcolor=\color{CodeBg},
+  frameround=ffff,
+  xleftmargin=1.4em,
+  framexleftmargin=1.1em,
+  framesep=6pt,
+  aboveskip=12pt,
+  belowskip=3pt
+}
+\lstdefinestyle{bookoutput}{
+  language={},
+  basicstyle=\small\ttfamily,
+  keywordstyle=\color{BookInk},
+  commentstyle=\color{BookInk},
+  stringstyle=\color{BookInk},
+  numbers=none,
+  showstringspaces=false,
+  breaklines=true,
+  breakatwhitespace=false,
+  breakautoindent=true,
+  breakindent=1.4em,
+  columns=fullflexible,
+  keepspaces=true,
+  frame=single,
+  rulecolor=\color{CodeRule},
+  backgroundcolor=\color{CodeBg},
+  frameround=ffff,
+  xleftmargin=1.4em,
+  framexleftmargin=0.8em,
+  framesep=6pt,
+  aboveskip=4pt,
+  belowskip=4pt
+}
+\lstset{style=bookpython}
+
+\AtBeginEnvironment{xltabular}{\scriptsize\sloppy}
+\AtEndEnvironment{xltabular}{\normalsize}
+
+\newtcolorbox{noteBox}[1][]{
+  enhanced,
+  width=\linewidth,
+  colback=BookPaper,
+  colframe=BookBlue,
+  coltitle=white,
+  title={#1},
+  fonttitle=\sffamily\bfseries,
+  boxrule=0.6pt,
+  arc=2mm,
+  left=8pt,right=8pt,top=7pt,bottom=7pt
+}
+\newtcolorbox{faqBox}[1]{
+  enhanced,
+  breakable,
+  width=\linewidth,
+  colback=BookPaper,
+  colframe=CodeRule,
+  coltitle=BookInk,
+  title={#1},
+  fonttitle=\sffamily\bfseries\normalsize,
+  boxrule=0.5pt,
+  arc=2mm,
+  left=9pt,right=9pt,top=8pt,bottom=8pt,
+  before skip=10pt,
+  after skip=8pt
+}
+\newtcolorbox{previewBox}[1]{
+  enhanced,
+  breakable,
+  width=\linewidth,
+  colback=BookPaper,
+  colframe=BookCyan,
+  coltitle=BookInk,
+  title={▷ #1},
+  fonttitle=\sffamily\mdseries\normalsize,
+  fontupper=\sffamily\mdseries\small,
+  boxrule=0.65pt,
+  arc=2mm,
+  left=9pt,right=9pt,top=8pt,bottom=8pt,
+  before skip=12pt,
+  after skip=10pt
+}
+\newtcolorbox{codeReadBox}[1]{
+  enhanced,
+  breakable,
+  width=\linewidth,
+  colback=white,
+  colframe=CodeRule,
+  coltitle=BookMuted,
+  title={#1},
+  fonttitle=\sffamily\bfseries\normalsize,
+  boxrule=0.45pt,
+  arc=2mm,
+  left=9pt,right=9pt,top=7pt,bottom=7pt,
+  before skip=7pt,
+  after skip=10pt
+}
+\newcommand{\inlinecode}[1]{%
+  \begingroup
+  \setlength{\fboxsep}{1.6pt}%
+  \colorbox{CodeBg}{\strut\ttfamily\small #1}%
+  \endgroup
+}
+\newenvironment{codeRead}{%
+  \vspace{0.12em}%
+  \begingroup
+  \small
+  \raggedright
+  \setlength{\parskip}{0.25em}%
+  \noindent\textbf{위 코드 읽기.}\quad
+}{%
+  \par
+  \endgroup
+  \vspace{0.35em}%
+}
+\let\oldtexttt\texttt
+\renewcommand{\texttt}[1]{\inlinecode{#1}}
+\newenvironment{bookfigure}[2][htbp]
+  {\def\bookfigurecaption{#2}\begin{figure}[#1]\centering}
+  {\caption{\bookfigurecaption}\end{figure}}
+\newenvironment{bookdiagram}[2][htbp]
+  {\def\bookfigurecaption{#2}\begin{figure}[#1]\centering\begin{tikzpicture}}
+  {\end{tikzpicture}\caption{\bookfigurecaption}\end{figure}}
+\newtcolorbox{practiceBox}[1][]{
+  enhanced,
+  width=\linewidth,
+  colback=white,
+  colframe=BookGreen,
+  title={#1},
+  fonttitle=\sffamily\bfseries\color{BookGreen},
+  boxrule=0.6pt,
+  arc=2mm,
+  left=8pt,right=8pt,top=7pt,bottom=7pt
+}
+\newtcolorbox{warningBox}[1][]{
+  enhanced,
+  width=\linewidth,
+  colback=white,
+  colframe=BookOrange,
+  title={#1},
+  fonttitle=\sffamily\bfseries\color{BookOrange},
+  boxrule=0.6pt,
+  arc=2mm,
+  left=8pt,right=8pt,top=7pt,bottom=7pt
+}
+
+\newcommand{\code}[1]{\inlinecode{#1}}
+\newcommand{\concept}[1]{#1\index{#1}}
+\newcommand{\api}[1]{\inlinecode{#1}\index{#1@\oldtexttt{#1}}}
+\newcommand{\dataset}[1]{\inlinecode{#1}\index{#1@\oldtexttt{#1}}}
+
+\newcommand{\chaptermeta}[3]{%
+  \begin{noteBox}[Chapter map]
+  \textbf{원천 노트북}: \texttt{\detokenize{#1}}\\
+  \textbf{Colab}: \href{#2}{바로 열기}\\
+  \textbf{이 장의 초점}: #3
+  \end{noteBox}
+}
+
+\newcommand{\partdivider}[3]{%
+  \cleardoublepage
+  \thispagestyle{empty}
+  \begin{tikzpicture}[remember picture,overlay]
+    \fill[#1] (current page.south west) rectangle (current page.north east);
+    \fill[white,opacity=.10] ([xshift=-2cm,yshift=-3cm]current page.north east) circle (6cm);
+    \fill[white,opacity=.08] ([xshift=1cm,yshift=2cm]current page.south west) circle (7cm);
+  \end{tikzpicture}
+  \vspace*{0.22\textheight}
+  {\color{white}\sffamily\bfseries\fontsize{34}{40}\selectfont #2\par}
+  \vspace{1.2em}
+  {\color{white}\sffamily\Large #3\par}
+  \cleardoublepage
+}

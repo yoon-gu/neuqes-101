@@ -302,7 +302,7 @@ y_true = Y_test[sample_idx]
 p_pred = proba_ml[sample_idx]
 text = X_text_test.iloc[sample_idx]
 
-print(f"리뷰 (앞 200자): {text[:200]}...")
+print("리뷰 미리보기 200자:")\nprint(f"{text[:200]}...")
 print(f"활성 라벨 수: {y_true.sum()}\n")
 
 print(f"{'측면':>10}  {'정답 y':>6}  {'예측 p':>10}  {'기여 항':>20}  {'손실':>10}")
