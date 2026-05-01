@@ -570,24 +570,28 @@ md(r"""## 🧩 보너스: `model.config` 안에 뭐가 있나
 
 # ----- 31g. config 속성 코드 -----
 code(r"""cfg = model.config
+n_params, size_mb = model_size_summary(model)   # 앞에서 정의한 헬퍼 재사용
 
-print(f"모델 이름·경로:      {cfg._name_or_path}")
-print(f"모델 타입:           {cfg.model_type}")
-print(f"hidden_size:        {cfg.hidden_size}        (BERT-base/DistilBERT는 768)")
-print(f"vocab_size:         {cfg.vocab_size:,}     (토크나이저 어휘 크기와 일치)")
+print(f"모델 이름·경로:           {cfg._name_or_path}")
+print(f"모델 타입:                {cfg.model_type}")
+print(f"파라미터 수:              {n_params:,}  ({n_params/1e6:.1f} M)")
+print(f"파라미터 fp32 크기:       {size_mb:.1f} MB  (= 파라미터 × 4 bytes)")
+print(f"hidden_size:             {cfg.hidden_size}        (BERT-base/DistilBERT는 768)")
+print(f"vocab_size:              {cfg.vocab_size:,}     (토크나이저 어휘 크기와 일치)")
 print(f"max_position_embeddings: {cfg.max_position_embeddings}  (입력 길이 상한)")
-print(f"num_labels:         {cfg.num_labels}          (분류 헤드 출력 차원)")
-print(f"id2label:           {cfg.id2label}")
-print(f"label2id:           {cfg.label2id}")
-print(f"problem_type:       {cfg.problem_type!r}    (None이면 num_labels로 자동 추론)")""")
+print(f"num_labels:              {cfg.num_labels}          (분류 헤드 출력 차원)")
+print(f"id2label:                {cfg.id2label}")
+print(f"label2id:                {cfg.label2id}")
+print(f"problem_type:            {cfg.problem_type!r}    (None이면 num_labels로 자동 추론)")""")
 
 # ----- 31h. config 해석 -----
 md(r"""**자주 쓰는 속성 한눈에 보기**
 
-| 속성 | 의미 | 자주 쓰는 곳 |
+| 속성·호출 | 의미 | 자주 쓰는 곳 |
 |---|---|---|
 | `model.config._name_or_path` | 모델 식별자 (Hugging Face Hub repo 또는 로컬 경로) | 어떤 모델인지 빠르게 확인 |
 | `model.config.model_type` | 모델 아키텍처 종류 (`bert`, `distilbert`, `gpt2`, ...) | 분기 처리 |
+| `sum(p.numel() for p in model.parameters())` | **파라미터 총 개수** (config 속성은 아니지만 항상 같이 봄) | VRAM 사용량 추정, 모델 비교 |
 | `model.config.hidden_size` | hidden state 차원 (예: 768 / 1024) | 분류 헤드를 직접 만들 때 |
 | `model.config.vocab_size` | 어휘 크기 (토크나이저와 일치해야 함) | 토크나이저 호환 검증 |
 | `model.config.max_position_embeddings` | 입력 토큰 수 상한 | `truncation=True, max_length=...` 결정 |
