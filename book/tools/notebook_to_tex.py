@@ -12,6 +12,7 @@ import json
 import re
 import subprocess
 import argparse
+import textwrap
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -249,6 +250,32 @@ def normalize_code_blocks(latex: str) -> str:
     latex = latex.replace("\\begin{verbatim}", "\\begin{lstlisting}")
     latex = latex.replace("\\end{verbatim}", "\\end{lstlisting}")
     return latex
+
+
+def format_embedded_listings(latex: str) -> str:
+    """Apply book code wrapping to fenced code blocks embedded in markdown."""
+
+    def repl(match: re.Match[str]) -> str:
+        options = match.group(1) or ""
+        source = match.group(2).strip("\n")
+        if not source.strip():
+            return match.group(0)
+        formatted = format_code_for_book(source)
+        line_count = len(formatted.splitlines())
+        needspace = max(6, min(line_count + 4, 24))
+        return (
+            f"\\Needspace{{{needspace}\\baselineskip}}\n"
+            f"\\begin{{lstlisting}}{options}\n"
+            f"{formatted}\n"
+            "\\end{lstlisting}"
+        )
+
+    return re.sub(
+        r"\\begin\{lstlisting\}(\[[^\]]*\])?\n(.*?)\n\\end\{lstlisting\}",
+        repl,
+        latex,
+        flags=re.DOTALL,
+    )
 
 
 def faq_subsections_to_questions(latex: str) -> str:
@@ -535,6 +562,7 @@ def markdown_to_latex(markdown: str, chapter_number: int) -> str:
     latex = proc.stdout
     latex = strip_pandoc_targets(latex)
     latex = normalize_code_blocks(latex)
+    latex = format_embedded_listings(latex)
     latex = faq_subsections_to_questions(latex)
     latex = normalize_tables(latex)
     latex = normalize_inline_code(latex)
@@ -719,7 +747,169 @@ def output_text(outputs: list[dict]) -> str:
     compact = "\n".join(lines)
     if len(compact) > 1600:
         compact = compact[:1550].rstrip() + "\n..."
-    return compact
+    return wrap_listing_text(compact, width=58)
+
+
+def display_width(text: str) -> int:
+    return sum(1 if ord(char) < 128 else 2 for char in text)
+
+
+def wrap_listing_text(text: str, width: int = 58) -> str:
+    wrapped: list[str] = []
+    for line in text.splitlines():
+        if display_width(line) <= width:
+            wrapped.append(line)
+            continue
+        indent = re.match(r"^\s*", line).group(0)
+        wrapped.extend(
+            textwrap.wrap(
+                line,
+                width=width,
+                initial_indent="",
+                subsequent_indent=indent + "  ",
+                break_long_words=False,
+                break_on_hyphens=False,
+            )
+            or [line]
+        )
+    return "\n".join(wrapped)
+
+
+def split_top_level_commas(text: str) -> list[str]:
+    parts: list[str] = []
+    current: list[str] = []
+    depth = 0
+    quote = ""
+    escaped = False
+    for char in text:
+        if quote:
+            current.append(char)
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == quote:
+                quote = ""
+            continue
+        if char in {"'", '"'}:
+            quote = char
+            current.append(char)
+            continue
+        if char in "([{":
+            depth += 1
+        elif char in ")]}":
+            depth = max(0, depth - 1)
+        if char == "," and depth == 0:
+            parts.append("".join(current).strip())
+            current = []
+        else:
+            current.append(char)
+    tail = "".join(current).strip()
+    if tail:
+        parts.append(tail)
+    return parts
+
+
+def split_string_content(content: str, width: int) -> list[str]:
+    chunks: list[str] = []
+    current = ""
+    for word in re.split(r"(\s+)", content):
+        if not word:
+            continue
+        candidate = current + word
+        if current and display_width(candidate) > width:
+            chunks.append(current)
+            current = word.lstrip()
+        else:
+            current = candidate
+    if current:
+        chunks.append(current)
+    return chunks
+
+
+def split_long_print(line: str, max_width: int = 58) -> list[str] | None:
+    if display_width(line) <= max_width:
+        return None
+    indent = re.match(r"^\s*", line).group(0)
+    stripped = line.strip()
+    if not (stripped.startswith("print(") and stripped.endswith(")")):
+        return None
+    arg = stripped[len("print(") : -1]
+    child = indent + "    "
+    if arg.startswith('f"') and arg.endswith('"') and "{" in arg and "}" in arg:
+        last_open = arg.rfind("{")
+        if last_open > 2:
+            literal = arg[2:last_open]
+            expr = arg[last_open:-1]
+            return [
+                indent + "print(",
+                child + f'f"{literal}"',
+                child + f'f"{expr}"',
+                indent + ")",
+            ]
+    string_match = re.fullmatch(r"([fFrRbBuU]*)\"(.*)\"", arg)
+    if string_match and "{" not in arg and "}" not in arg:
+        prefix, content = string_match.groups()
+        chunks = split_string_content(content, max_width - display_width(child) - display_width(prefix) - 2)
+        if len(chunks) > 1:
+            return [indent + "print("] + [child + f'{prefix}"{chunk}"' for chunk in chunks] + [indent + ")"]
+    return [indent + "print(", child + arg, indent + ")"]
+
+
+def split_long_call(line: str, max_width: int = 58) -> list[str] | None:
+    if display_width(line) <= max_width:
+        return None
+    indent = re.match(r"^\s*", line).group(0)
+    stripped = line.strip()
+    if stripped.startswith(("print(", "#")):
+        return None
+    if "(" not in stripped or "," not in stripped or stripped.endswith("\\"):
+        return None
+    open_idx = stripped.find("(")
+    if not stripped.endswith(")"):
+        return None
+    head = stripped[: open_idx + 1]
+    args = stripped[open_idx + 1 : -1]
+    parts = split_top_level_commas(args)
+    if len(parts) < 2:
+        return None
+    return [indent + head] + [indent + "    " + part + "," for part in parts] + [indent + ")"]
+
+
+def split_trailing_comment(line: str, max_width: int = 58) -> list[str] | None:
+    if display_width(line) <= max_width or "  # " not in line:
+        return None
+    code, comment = line.split("  # ", 1)
+    indent = re.match(r"^\s*", line).group(0)
+    return [code.rstrip(), indent + "# " + comment.strip()]
+
+
+def split_long_comment(line: str, max_width: int = 58) -> list[str] | None:
+    stripped = line.lstrip()
+    if display_width(line) <= max_width or not stripped.startswith("#"):
+        return None
+    indent = line[: len(line) - len(stripped)]
+    content = stripped[1:].strip()
+    chunks = split_string_content(content, max_width - display_width(indent) - 2)
+    if len(chunks) <= 1:
+        return None
+    return [indent + "# " + chunk for chunk in chunks]
+
+
+def format_code_for_book(source: str) -> str:
+    formatted: list[str] = []
+    for line in source.splitlines():
+        split = (
+            split_long_print(line)
+            or split_long_call(line)
+            or split_trailing_comment(line)
+            or split_long_comment(line)
+        )
+        if split:
+            formatted.extend(split)
+        else:
+            formatted.append(line)
+    return "\n".join(formatted)
 
 
 def output_interpretation(source: str, output: str) -> str:
@@ -768,10 +958,18 @@ def code_to_latex(source: str, include_notes: bool = False, outputs: list[dict] 
     source = source.rstrip()
     if not source:
         return ""
-    listing = "\\begin{lstlisting}\n" + source + "\n\\end{lstlisting}"
+    display_source = format_code_for_book(source)
+    display_line_count = len(display_source.splitlines())
+    needspace = max(8, min(display_line_count + 4, 26))
+    listing = (
+        f"\\Needspace{{{needspace}\\baselineskip}}\n"
+        "\\begin{lstlisting}\n"
+        + display_source
+        + "\n\\end{lstlisting}"
+    )
     parts = [listing]
     if include_notes:
-        notes = code_walkthrough(source)
+        notes = code_walkthrough(display_source)
         if notes:
             parts.append(notes)
     if outputs:

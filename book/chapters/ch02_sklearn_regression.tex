@@ -114,6 +114,7 @@ L = \frac{1}{N} \sum_{i=1}^{N} (y_i - \hat y_i)^2
 
 PyTorch에서는 \inlinecode{nn.MSELoss}, sklearn에서는 같은 개념이 \inlinecode{LinearRegression}에 내장돼 있고 평가 함수로는 \inlinecode{mean\_squared\_error}로 따로 부릅니다.
 
+\Needspace{14\baselineskip}
 \begin{lstlisting}
 # PyTorch (8장 이후 등장)
 criterion = nn.MSELoss()
@@ -122,7 +123,8 @@ loss = criterion(pred, target)
 # sklearn (이 장)
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
-model.fit(X, y)                            # 내부적으로 MSE 최소화
+model.fit(X, y)
+# 내부적으로 MSE 최소화
 mean_squared_error(y, model.predict(X))    # 평가
 \end{lstlisting}
 
@@ -140,6 +142,7 @@ mean_squared_error(y, model.predict(X))    # 평가
 
 
 
+\Needspace{8\baselineskip}
 \begin{lstlisting}
 !pip install -q datasets scikit-learn pandas matplotlib
 \end{lstlisting}
@@ -150,6 +153,7 @@ mean_squared_error(y, model.predict(X))    # 평가
 
 
 
+\Needspace{20\baselineskip}
 \begin{lstlisting}
 import numpy as np
 import pandas as pd
@@ -182,6 +186,7 @@ print(f"샘플 수: {len(df)}")
 
 
 
+\Needspace{23\baselineskip}
 \begin{lstlisting}
 # 별점은 0-4로 저장돼 있으니 1-5로 변환
 df["star"] = df["label"] + 1
@@ -197,7 +202,10 @@ tfidf = TfidfVectorizer(max_features=10000)
 X_train = tfidf.fit_transform(X_text_train)
 X_test = tfidf.transform(X_text_test)
 
-print(f"X_train: {X_train.shape}, y_train: {y_train.shape}")
+print(
+    f"X_train: {X_train.shape}, y_train: "
+    f"{y_train.shape}"
+)
 print(f"X_test:  {X_test.shape}, y_test:  {y_test.shape}")
 \end{lstlisting}
 
@@ -230,6 +238,7 @@ X_test:  (1000, 10000), y_test:  (1000,)
 
 
 
+\Needspace{23\baselineskip}
 \begin{lstlisting}
 model = LinearRegression()
 model.fit(X_train, y_train)
@@ -237,9 +246,18 @@ model.fit(X_train, y_train)
 y_pred_train = model.predict(X_train)
 y_pred_test = model.predict(X_test)
 
-print(f"Train MSE: {mean_squared_error(y_train, y_pred_train):.4f}")
-print(f"Test  MSE: {mean_squared_error(y_test,  y_pred_test):.4f}")
-print(f"Test  MAE: {mean_absolute_error(y_test, y_pred_test):.4f}")
+print(
+    f"Train MSE: "
+    f"{mean_squared_error(y_train, y_pred_train):.4f}"
+)
+print(
+    f"Test  MSE: "
+    f"{mean_squared_error(y_test,  y_pred_test):.4f}"
+)
+print(
+    f"Test  MAE: "
+    f"{mean_absolute_error(y_test, y_pred_test):.4f}"
+)
 print(f"Test  R²:  {r2_score(y_test, y_pred_test):.4f}")
 \end{lstlisting}
 
@@ -259,14 +277,32 @@ Test  R²:  0.2161
 
 
 
+\Needspace{26\baselineskip}
 \begin{lstlisting}
 # 예측값이 1-5 범위를 얼마나 벗어나는지 확인
-print(f"예측값 범위: [{y_pred_test.min():.2f}, {y_pred_test.max():.2f}]")
-print(f"정답   범위: [{y_test.min():.0f}, {y_test.max():.0f}]")
+print(
+    f"예측값 범위: [{y_pred_test.min():.2f}, "
+    f"{y_pred_test.max():.2f}]"
+)
+print(
+    f"정답   범위: [{y_test.min():.0f}, "
+    f"{y_test.max():.0f}]"
+)
 
-plt.hist(y_pred_test, bins=40, alpha=0.6, label="predicted")
+plt.hist(
+    y_pred_test,
+    bins=40,
+    alpha=0.6,
+    label="predicted",
+)
 plt.hist(y_test, bins=5, alpha=0.6, label="actual")
-plt.axvline(1, color="red", linestyle="--", linewidth=1, label="1 / 5 boundary")
+plt.axvline(
+    1,
+    color="red",
+    linestyle="--",
+    linewidth=1,
+    label="1 / 5 boundary",
+)
 plt.axvline(5, color="red", linestyle="--", linewidth=1)
 plt.xlabel("Star (1-5)")
 plt.ylabel("Count")
@@ -296,18 +332,23 @@ plt.show()
 
 
 
+\Needspace{15\baselineskip}
 \begin{lstlisting}
-# sklearn의 mean_squared_error가 내부에서 뭘 계산하는지 직접 재현
+# sklearn의 mean_squared_error가 내부에서 뭘 계산하는지 
+# 직접 재현
 manual_mse = ((y_test - y_pred_test) ** 2).mean()
 sklearn_mse = mean_squared_error(y_test, y_pred_test)
 
 print(f"수동 계산 MSE: {manual_mse:.6f}")
 print(f"sklearn MSE:   {sklearn_mse:.6f}")
-print(f"차이:           {abs(manual_mse - sklearn_mse):.2e}")
+print(
+    f"차이:           "
+    f"{abs(manual_mse - sklearn_mse):.2e}"
+)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{2행}의 \inlinecode{manual\_mse = ((y\_test - y\_pred\_test) ** 2...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{3행}의 \inlinecode{sklearn\_mse = mean\_squared\_error(y\_test,...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\textbf{3행}의 \inlinecode{manual\_mse = ((y\_test - y\_pred\_test) ** 2...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{4행}의 \inlinecode{sklearn\_mse = mean\_squared\_error(y\_test,...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -336,6 +377,7 @@ y' = \frac{y - 1}{4} \in [0, 1]
 
 
 
+\Needspace{26\baselineskip}
 \begin{lstlisting}
 y_train_norm = (y_train - 1) / 4   # 1-5 → 0-1
 y_test_norm = (y_test - 1) / 4
@@ -346,12 +388,21 @@ model_norm.fit(X_train, y_train_norm)
 y_pred_norm = model_norm.predict(X_test)
 
 # 정규화 공간에서의 MSE
-print(f"Test MSE (정규화 공간): {mean_squared_error(y_test_norm, y_pred_norm):.4f}")
+print(
+    f"Test MSE (정규화 공간): "
+    f"{mean_squared_error(y_test_norm, y_pred_norm):.4f}"
+)
 
 # 원래 별점 공간으로 되돌렸을 때 MSE 비교
 y_pred_back = y_pred_norm * 4 + 1
-print(f"Test MSE (원래 별점 공간으로 환원): {mean_squared_error(y_test, y_pred_back):.4f}")
-print(f"Test MSE (정규화 없이 학습한 모델):    {mean_squared_error(y_test, y_pred_test):.4f}")
+print(
+    f"Test MSE (원래 별점 공간으로 환원): "
+    f"{mean_squared_error(y_test, y_pred_back):.4f}"
+)
+print(
+    f"Test MSE (정규화 없이 학습한 모델):    "
+    f"{mean_squared_error(y_test, y_pred_test):.4f}"
+)
 \end{lstlisting}
 
 \noindent\textbf{출력.}
@@ -365,15 +416,26 @@ Test MSE (정규화 없이 학습한 모델):    1.5522
 
 
 
+\Needspace{22\baselineskip}
 \begin{lstlisting}
-# 정규화한 모델도 여전히 [0, 1]을 벗어나는 값을 출력하는가?
-print(f"정규화 모델 예측값 범위: [{y_pred_norm.min():.3f}, {y_pred_norm.max():.3f}]")
+# 정규화한 모델도 여전히 [0, 1]을 벗어나는 값을 
+# 출력하는가?
+print(
+    f"정규화 모델 예측값 범위: [{y_pred_norm.min():.3f}, "
+    f"{y_pred_norm.max():.3f}]"
+)
 print(f"이상적 범위: [0, 1]")
 
 n_below = (y_pred_norm < 0).sum()
 n_above = (y_pred_norm > 1).sum()
-print(f"\n0 미만 예측: {n_below}개 ({n_below / len(y_pred_norm):.1%})")
-print(f"1 초과 예측: {n_above}개 ({n_above / len(y_pred_norm):.1%})")
+print(
+    f"\n0 미만 예측: {n_below}개 ("
+    f"{n_below / len(y_pred_norm):.1%})"
+)
+print(
+    f"1 초과 예측: {n_above}개 ("
+    f"{n_above / len(y_pred_norm):.1%})"
+)
 \end{lstlisting}
 
 \noindent\textbf{출력.}
@@ -459,6 +521,7 @@ MSE는 오차를 제곱하지만 MAE(Mean Absolute Error)는 절댓값만 취합
   \textbf{gradient 형태}: MSE의 gradient는 \(\hat y - y\) (오차에 비례), MAE는 \(\pm 1\) (오차와 무관한 상수). 그래서 SGD 기반 학습에서 MAE는 미세 조정이 어려울 수 있고 0 근처에서 비미분(non-differentiable)이라 변형(Huber loss 등)이 자주 쓰입니다.
 \end{enumerate}
 
+\Needspace{6\baselineskip}
 \begin{lstlisting}
 from sklearn.metrics import mean_absolute_error
 mean_absolute_error(y_test, y_pred_test)
@@ -520,9 +583,13 @@ w = (X^\top X)^{-1} X^\top y
   \textbf{clip으로 잘라낸다}: 후처리로 {[}1, 5{]} 안으로 강제.
 \end{enumerate}
 
+\Needspace{9\baselineskip}
 \begin{lstlisting}
 y_pred_clipped = np.clip(y_pred_test, 1, 5)
-print(f"Test MSE (clip 후): {mean_squared_error(y_test, y_pred_clipped):.4f}")
+print(
+    f"Test MSE (clip 후): "
+    f"{mean_squared_error(y_test, y_pred_clipped):.4f}"
+)
 \end{lstlisting}
 
 \begin{enumerate}
@@ -558,6 +625,7 @@ print(f"Test MSE (clip 후): {mean_squared_error(y_test, y_pred_clipped):.4f}")
 
 다음 코드를 돌려보고, 두 모델의 결과가 같은지 다른지 예측해보세요.
 
+\Needspace{18\baselineskip}
 \begin{lstlisting}
 # 모델 A: 별점 1-5 그대로 학습
 model_a = LinearRegression().fit(X_train, y_train)
@@ -566,9 +634,13 @@ model_a = LinearRegression().fit(X_train, y_train)
 model_b = LinearRegression().fit(X_train, y_train * 100)
 
 pred_a = model_a.predict(X_test)
-pred_b = model_b.predict(X_test) / 100   # 다시 1-5 스케일로
+pred_b = model_b.predict(X_test) / 100
+# 다시 1-5 스케일로
 
-print(f"A vs B 예측 차이 최대: {np.abs(pred_a - pred_b).max():.2e}")
+print(
+    f"A vs B 예측 차이 최대: "
+    f"{np.abs(pred_a - pred_b).max():.2e}"
+)
 \end{lstlisting}
 
 힌트: 닫힌 형태 풀이에서 라벨에 상수를 곱하면 가중치도 같은 비율로 바뀔 뿐, 예측을 같은 스케일로 되돌리면 정확히 같은 값이 나와야 합니다.
