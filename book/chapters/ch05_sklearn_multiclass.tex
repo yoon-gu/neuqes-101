@@ -404,31 +404,61 @@ true 5★  10        3         7         51        124
 
 \subsection{두 방식의 구조 비교}
 
-\textbf{multinomial (softmax)}:
+\textbackslash begin\{bookfigure\}{[}htbp{]}\{Multinomial softmax와 OvR의 출력 구조 비교\}
+\textbackslash resizebox\{0.98\textbackslash linewidth\}\{!\}\{\%
+\textbackslash begin\{tikzpicture\}{[}
+font=\textbackslash sffamily\textbackslash small,
+box/.style=\{draw=CodeRule, fill=CodeBg, rounded corners=1.5mm, minimum width=24mm, minimum height=8mm, align=center, inner xsep=5pt, inner ysep=4pt\},
+wide/.style=\{draw=CodeRule, fill=CodeBg, rounded corners=1.5mm, minimum width=34mm, minimum height=8mm, align=center, inner xsep=5pt, inner ysep=4pt\},
+soft/.style=\{draw=BookBlue, fill=BookPaper, rounded corners=1.5mm, minimum width=25mm, minimum height=8mm, align=center, inner xsep=5pt, inner ysep=4pt\},
+ovr/.style=\{draw=BookGreen, fill=BookPaper, rounded corners=1.5mm, minimum width=34mm, minimum height=7mm, align=center, inner xsep=5pt, inner ysep=3pt\},
+arrow/.style=\{-\textgreater, line width=0.55pt, draw=BookMuted\}
+{]}
 
-\Needspace{10\baselineskip}
-\begin{lstlisting}
-[입력 x] ──→ Linear(V → K) ──→ logits [z_1, ..., z_K]
-                            ──→ softmax 한 번
-                            ──→ [p_1, ..., p_K]   (
-                                합 = 1,
-                                클래스끼리 경쟁,
-                            )
-\end{lstlisting}
+\textbackslash node{[}font=\textbackslash sffamily\textbackslash bfseries{]} at (5.35,0.3) \{multinomial (softmax): 하나의 확률분포\};
+\textbackslash node{[}box{]} (mx) at (0,-0.7) \{입력\textbackslash{}\(x\)\};
+\textbackslash node{[}box{]} (mlin) at (2.3,-0.7) \{Linear\textbackslash{}\(V \rightarrow K\)\};
+\textbackslash node{[}wide{]} (mlogit) at (4.8,-0.7) \{logits\textbackslash{}\(z_1,\ldots,z_K\)\};
+\textbackslash node{[}soft{]} (msoft) at (7.2,-0.7) \{softmax\textbackslash 한 번\};
+\textbackslash node{[}wide{]} (mprob) at (9.8,-0.7) \{\(p_1,\ldots,p_K\)\textbackslash{}\(\sum p_k=1\)\};
+\textbackslash draw{[}arrow{]} (mx) -\/- (mlin);
+\textbackslash draw{[}arrow{]} (mlin) -\/- (mlogit);
+\textbackslash draw{[}arrow{]} (mlogit) -\/- (msoft);
+\textbackslash draw{[}arrow{]} (msoft) -\/- (mprob);
+\textbackslash node{[}align=center, text=BookMuted{]} at (5.35,-1.55) \{분모를 공유하므로 한 클래스 확률이 커지면\textbackslash 다른 클래스 확률은 함께 줄어듭니다.\};
 
-\textbf{OvR} (이 장의 K=5 예시):
+\textbackslash draw{[}CodeRule, line width=0.4pt{]} (-0.45,-2.25) -\/- (10.55,-2.25);
 
-\Needspace{12\baselineskip}
-\begin{lstlisting}
-             ┌──→ 분류기 1:  "1★ vs 나머지"  ──→ sigmoid ──→ P_1
-             ├──→ 분류기 2:  "2★ vs 나머지"  ──→ sigmoid ──→ P_2
-[입력 x] ──→ ├──→ 분류기 3:  "3★ vs 나머지"  ──→ sigmoid ──→ P_3
-             ├──→ 분류기 4:  "4★ vs 나머지"  ──→ sigmoid ──→ P_4
-             └──→ 분류기 5:  "5★ vs 나머지"  ──→ sigmoid ──→ P_5
+\textbackslash node{[}font=\textbackslash sffamily\textbackslash bfseries{]} at (5.35,-3.0) \{OvR: K개의 독립 binary classifier\};
+\textbackslash node{[}box{]} (ox) at (0,-5.05) \{입력\textbackslash{}\(x\)\};
 
-   각 P_k 는 다른 P_j 와 무관한 독립 sigmoid 출력 (raw 합 ≠ 1)
-   예측: argmax(P_k) — sklearn이 표시할 땐 행을 정규화해 합 1로 보여줌
-\end{lstlisting}
+\textbackslash node{[}ovr{]} (c1) at (3.1,-3.75) \{분류기 1\textbackslash{}\(1\star\) vs rest\};
+\textbackslash node{[}ovr{]} (c2) at (3.1,-4.40) \{분류기 2\textbackslash{}\(2\star\) vs rest\};
+\textbackslash node{[}ovr{]} (c3) at (3.1,-5.05) \{분류기 3\textbackslash{}\(3\star\) vs rest\};
+\textbackslash node{[}ovr{]} (c4) at (3.1,-5.70) \{분류기 4\textbackslash{}\(4\star\) vs rest\};
+\textbackslash node{[}ovr{]} (c5) at (3.1,-6.35) \{분류기 5\textbackslash{}\(5\star\) vs rest\};
+
+\textbackslash node{[}soft{]} (s1) at (6.1,-3.75) \{sigmoid\};
+\textbackslash node{[}soft{]} (s2) at (6.1,-4.40) \{sigmoid\};
+\textbackslash node{[}soft{]} (s3) at (6.1,-5.05) \{sigmoid\};
+\textbackslash node{[}soft{]} (s4) at (6.1,-5.70) \{sigmoid\};
+\textbackslash node{[}soft{]} (s5) at (6.1,-6.35) \{sigmoid\};
+
+\textbackslash node{[}box{]} (p1) at (8.55,-3.75) \{\(P_1\)\};
+\textbackslash node{[}box{]} (p2) at (8.55,-4.40) \{\(P_2\)\};
+\textbackslash node{[}box{]} (p3) at (8.55,-5.05) \{\(P_3\)\};
+\textbackslash node{[}box{]} (p4) at (8.55,-5.70) \{\(P_4\)\};
+\textbackslash node{[}box{]} (p5) at (8.55,-6.35) \{\(P_5\)\};
+
+\textbackslash foreach \textbackslash c/\textbackslash s/\textbackslash p in \{c1/s1/p1,c2/s2/p2,c3/s3/p3,c4/s4/p4,c5/s5/p5\}\{
+\textbackslash draw{[}arrow{]} (ox.east) -\/- (\textbackslash c.west);
+\textbackslash draw{[}arrow{]} (\textbackslash c.east) -\/- (\textbackslash s.west);
+\textbackslash draw{[}arrow{]} (\textbackslash s.east) -\/- (\textbackslash p.west);
+\}
+\textbackslash node{[}align=center, text=BookMuted{]} at (5.35,-7.25) \{각 \(P_k\)는 다른 \(P_j\)와 독립입니다. raw 합은 1일 필요가 없고,\textbackslash multi-class 예측에서는 \(\arg\max_k P_k\)를 선택합니다.\};
+\textbackslash end\{tikzpicture\}\%
+\}
+\textbackslash end\{bookfigure\}
 
 핵심 차이는 \textbf{클래스가 서로 경쟁하느냐} 입니다. multinomial은 한 logit이 커지면 다른 logit의 softmax 확률이 자동으로 줄어듭니다 (분모 공유). OvR의 각 sigmoid는 다른 클래스 학습과 독립적이라 P\_k 가 모두 동시에 0.8이 될 수도, 모두 0.1이 될 수도 있습니다.
 
