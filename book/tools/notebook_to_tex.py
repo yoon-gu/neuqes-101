@@ -14,6 +14,8 @@ import subprocess
 import argparse
 import textwrap
 from dataclasses import dataclass
+from html import unescape
+from html.parser import HTMLParser
 from pathlib import Path
 
 
@@ -816,6 +818,120 @@ def output_text(outputs: list[dict]) -> str:
     return wrap_listing_text(compact, width=58)
 
 
+class PandasTableParser(HTMLParser):
+    """Extract simple pandas DataFrame HTML tables from notebook output."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.tables: list[dict[str, list[list[str]]]] = []
+        self.in_table = False
+        self.in_row = False
+        self.in_cell = False
+        self.cell_is_header = False
+        self.current_cell: list[str] = []
+        self.current_row: list[tuple[bool, str]] = []
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag == "table":
+            self.in_table = True
+            self.tables.append({"headers": [], "rows": []})
+        elif self.in_table and tag == "tr":
+            self.in_row = True
+            self.current_row = []
+        elif self.in_table and self.in_row and tag in {"th", "td"}:
+            self.in_cell = True
+            self.cell_is_header = tag == "th"
+            self.current_cell = []
+        elif self.in_cell and tag == "br":
+            self.current_cell.append(" ")
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag in {"th", "td"} and self.in_cell:
+            text = unescape("".join(self.current_cell))
+            text = re.sub(r"\s+", " ", text).strip()
+            self.current_row.append((self.cell_is_header, text))
+            self.in_cell = False
+            self.current_cell = []
+        elif tag == "tr" and self.in_row:
+            if self.current_row and self.tables:
+                values = [value for _, value in self.current_row]
+                header_count = sum(1 for is_header, _ in self.current_row if is_header)
+                data_count = len(self.current_row) - header_count
+                table = self.tables[-1]
+                if header_count >= data_count:
+                    table["headers"] = values
+                else:
+                    table["rows"].append(values)
+            self.in_row = False
+            self.current_row = []
+        elif tag == "table":
+            self.in_table = False
+
+    def handle_data(self, data: str) -> None:
+        if self.in_cell:
+            self.current_cell.append(data)
+
+
+def latex_escape_cell(text: str) -> str:
+    return (
+        text.replace("\\", r"\textbackslash{}")
+        .replace("&", r"\&")
+        .replace("%", r"\%")
+        .replace("$", r"\$")
+        .replace("#", r"\#")
+        .replace("_", r"\_\allowbreak{}")
+        .replace("{", r"\{")
+        .replace("}", r"\}")
+        .replace("~", r"\textasciitilde{}")
+        .replace("^", r"\textasciicircum{}")
+    )
+
+
+def html_tables_to_latex(html: str) -> list[str]:
+    parser = PandasTableParser()
+    parser.feed(html)
+    tables: list[str] = []
+    for table in parser.tables:
+        headers = table["headers"]
+        rows = table["rows"]
+        if not headers or not rows:
+            continue
+        width = max(len(headers), *(len(row) for row in rows))
+        headers = (headers + [""] * width)[:width]
+        rows = [(row + [""] * width)[:width] for row in rows]
+        spec = "Y" * width
+        body = [
+            "\\par\\noindent\\textbf{출력 표.}\\par\\smallskip",
+            "\\begingroup\\scriptsize",
+            "\\begin{adjustbox}{max width=.98\\linewidth}",
+            f"\\begin{{tabularx}}{{.98\\linewidth}}{{@{{}}{spec}@{{}}}}",
+            "\\toprule",
+            " & ".join(latex_escape_cell(cell) for cell in headers) + r" \\",
+            "\\midrule",
+        ]
+        for row in rows[:18]:
+            body.append(" & ".join(latex_escape_cell(cell) for cell in row) + r" \\")
+        if len(rows) > 18:
+            body.append(r"\multicolumn{" + str(width) + r"}{@{}l@{}}{\ldots} \\")
+        body.extend(["\\bottomrule", "\\end{tabularx}", "\\end{adjustbox}", "\\endgroup", "\\par\\vspace{0.9em}"])
+        tables.append("\n".join(body))
+    return tables
+
+
+def output_tables(outputs: list[dict]) -> list[str]:
+    tables: list[str] = []
+    for output in outputs:
+        if output.get("output_type") not in {"execute_result", "display_data"}:
+            continue
+        data = output.get("data", {})
+        html = data.get("text/html")
+        if isinstance(html, list):
+            html = "".join(html)
+        if isinstance(html, str) and "<table" in html:
+            tables.extend(html_tables_to_latex(html))
+    return tables
+
+
 def display_width(text: str) -> int:
     return sum(1 if ord(char) < 128 else 2 for char in text)
 
@@ -1003,6 +1119,9 @@ def output_interpretation(source: str, output: str) -> str:
 
 
 def output_to_latex(source: str, outputs: list[dict]) -> str:
+    tables = output_tables(outputs)
+    if tables:
+        return "\n\n".join(tables)
     text = output_text(outputs)
     if not text:
         return ""
