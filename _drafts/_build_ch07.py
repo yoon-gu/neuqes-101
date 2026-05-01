@@ -171,7 +171,40 @@ md(r"""**DistilBERT(SST-2)가 VRAM에 올라간 직후의 nvidia-smi:**""")
 
 code(r"""!nvidia-smi""")
 
-md(r"""baseline과 비교하면 `Memory-Usage` 가 **약 250-400 MiB 늘어났을** 겁니다 — DistilBERT-base의 가중치(~67M 파라미터, fp32 기준 ~250 MB) + activation/cache가 올라간 결과. 모델마다 크기가 달라서 늘어나는 양도 다르다는 점이 곧 GPT-2/BERT 로드에서 보입니다.""")
+md(r"""baseline과 비교하면 `Memory-Usage` 가 늘어났을 겁니다. **얼마나 늘어났을까?** — 모델 파라미터 수에서 거꾸로 추정해봅니다.""")
+
+# ----- 9c. param count for DistilBERT -----
+code(r"""def model_size_summary(model, dtype_bytes=4):
+    # 파라미터 개수와 dtype 기준 예상 메모리 반환. fp32 = 4 bytes, fp16/bf16 = 2 bytes.
+    n_params = sum(p.numel() for p in model.parameters())
+    size_mb = n_params * dtype_bytes / 1024**2
+    return n_params, size_mb
+
+n, size_mb = model_size_summary(classifier.model)
+print(f"DistilBERT (SST-2) 파라미터:")
+print(f"  개수:           {n:>13,}  ({n/1e6:.1f} M)")
+print(f"  fp32 예상 크기: {size_mb:>10.1f} MB  (= 파라미터 수 × 4 bytes)")""")
+
+# ----- 9d. param ↔ VRAM 관계 설명 -----
+md(r"""**파라미터 수와 VRAM의 관계**
+
+가중치 한 개는 *한 개의 부동소수* — fp32면 4 bytes, fp16/bf16이면 2 bytes를 차지합니다. 그래서:
+
+$$\text{모델 가중치 크기} \approx \text{파라미터 수} \times \text{dtype bytes}$$
+
+| dtype | bytes/param | DistilBERT(67M) 예상 크기 |
+|---|---|---|
+| **fp32** (기본 학습) | 4 | ~255 MB |
+| **fp16 / bf16** (mixed precision) | 2 | ~128 MB |
+| **int8** (양자화 추론) | 1 | ~64 MB |
+
+**그런데 nvidia-smi는 파라미터 크기보다 *더 많이* 늘어나는데요?** 차이의 정체:
+
+- **PyTorch CUDA 컨텍스트** (~150-300 MB): 라이브러리·드라이버가 GPU 점유 시 한 번 잡는 고정 비용. 첫 모델 로드에서만 보이고 이후엔 누적되지 않음.
+- **CUDA 캐시 할당자** (수십 MB): PyTorch가 자주 쓰일 텐서를 캐싱.
+- **추론 중 일시 activation**: forward pass에서 layer 사이 중간 결과. 추론은 작지만 학습은 큼.
+
+**학습이 되면 메모리는 더 커집니다** — Adam 옵티마이저는 모델당 *추가로 2배* (1차·2차 모멘텀)를 더 들고, gradient도 *모델 크기만큼* 한 벌 — 즉 학습 중엔 **fp32 기준 파라미터 × 4배 정도** 의 VRAM이 필요합니다. Ch 9에서 다시 다룹니다.""")
 
 # ----- 10. 첫 실행 안내 -----
 md(r"""**참고**: 처음 실행 시 모델 다운로드(약 250MB)에 30초~1분 정도 걸립니다. 두 번째부터는 캐시되어 즉시 실행.
@@ -207,17 +240,46 @@ md(r"""**3개 pipeline(DistilBERT + GPT-2 + BERT-base)이 모두 VRAM에 쌓인 
 
 code(r"""!nvidia-smi""")
 
-md(r"""파이썬 객체 (`classifier`, `generator`, `unmasker`)가 각자 *별도의 모델 가중치* 를 들고 있어서 VRAM이 누적됩니다. 더 이상 안 쓰는 모델은 다음 패턴으로 메모리에서 비울 수 있습니다.
+# ----- 14c. 3개 모델 파라미터 비교표 -----
+md(r"""**파라미터 수 합계로 예측한 모델 가중치 vs 실제 VRAM 증가** — 차이가 PyTorch 오버헤드입니다.""")
+
+code(r"""models_info = {
+    "DistilBERT (SST-2)":       classifier.model,
+    "GPT-2":                    generator.model,
+    "BERT-base-uncased":        unmasker.model,
+}
+
+print(f"{'모델':>30}  {'파라미터':>12}  {'fp32 크기':>14}")
+print("-" * 65)
+total_params, total_size = 0, 0.0
+for name, m in models_info.items():
+    n, sz = model_size_summary(m)
+    total_params += n
+    total_size += sz
+    print(f"{name:>30}  {n/1e6:>9.1f} M  {sz:>11.1f} MB")
+print("-" * 65)
+print(f"{'합계':>30}  {total_params/1e6:>9.1f} M  {total_size:>11.1f} MB")
+print(f"{'GB 환산':>30}  {' '*12}  {total_size/1024:>11.2f} GB")""")
+
+# ----- 14d. 해석 -----
+md(r"""**실제 nvidia-smi VRAM 사용량과 비교** — 위 합계(~수백 MB)에 **PyTorch CUDA 컨텍스트 + 캐시 할당자 ~ 200-400 MB** 를 더한 값이 nvidia-smi 의 `Memory-Usage` 와 비슷할 겁니다.
+
+> 모델별 파라미터 차이가 흥미롭습니다.
+> - **DistilBERT (~67M)**: BERT-base에서 layer를 절반으로 줄여 학습한 경량화 모델. 추론 속도 ~2배.
+> - **GPT-2 small (~124M)**: 파라미터는 BERT-base보다 약간 많고, 어휘(50K)도 더 큼.
+> - **BERT-base (~110M)**: BERT 표준 사이즈.
+
+**메모리를 비우는 표준 패턴** — 더 이상 안 쓰는 모델은:
 
 ```python
 import gc, torch
-del generator, unmasker      # 파이썬 참조 제거
-gc.collect()                 # 가비지 컬렉션
+del generator, unmasker         # 파이썬 참조 제거 (refcount=0)
+gc.collect()                    # 가비지 컬렉션
 if torch.cuda.is_available():
-    torch.cuda.empty_cache() # CUDA 캐시 비우기 (선택, 불필요한 캐시 반환)
+    torch.cuda.empty_cache()    # CUDA 캐시 비우기 (예약된 캐시 반환)
 ```
 
-T4 메모리(15.36 GB)는 작은 추론 모델 여러 개를 무리 없이 담지만, BERT-large(~340M)나 학습 시 옵티마이저까지 올리면 빠르게 한도에 도달하니 *항상 nvidia-smi 로 잔여 VRAM 확인* 하는 습관이 좋습니다.""")
+T4 메모리(15.36 GB)는 작은 추론 모델 여러 개를 무리 없이 담지만, BERT-large(~340M, fp32 ~1.4 GB)나 학습 시 *옵티마이저 + gradient* 까지 올리면 빠르게 한도에 도달하니 항상 nvidia-smi로 잔여 VRAM 확인하는 습관이 좋습니다.""")
 
 # ----- 15. 해부 도입 -----
 md(r"""## 2. 🔬 해부: pipeline 안에서는 뭐가 일어났을까?
