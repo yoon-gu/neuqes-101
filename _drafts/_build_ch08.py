@@ -331,22 +331,81 @@ print(f"attention_mask shape: {batch['attention_mask'].shape}")
 print(f"label shape:          {batch['label'].shape}")
 print(f"label 값:             {batch['label'].tolist()}")""")
 
-# ----- 23. DataCollator 미리보기 -----
-md(r"""**조금 더 — `DataCollatorWithPadding`**: 위 코드는 `padding="max_length"` 로 *모든* 샘플을 128로 만들어둔 상태. 그러나 *동적 패딩* (배치 내 longest까지만)이 더 효율적입니다. 이때 `DataCollatorWithPadding` 을 `DataLoader` 의 `collate_fn` 으로 넘깁니다 — Ch 9 `Trainer` 가 자동으로 사용.
+# ----- 23. DataCollator 도입 -----
+md(r"""## 5. `DataCollator` — 동적 padding을 배치 시점에
+
+위 `DataLoader` 코드는 `padding="max_length"` 로 *모든* 샘플을 128로 미리 padding한 상태였습니다. 짧은 문장은 대부분 패딩 자리라 메모리 낭비가 큽니다.
+
+**더 좋은 방법: 토큰화 시엔 padding 안 하고**, `DataLoader` 가 *배치를 만들 때마다 그 배치 안 longest까지만* padding (동적 padding). 이걸 담당하는 게 `DataCollator`.
+
+`DataCollator` 는 `DataLoader` 의 `collate_fn` 자리 — 매 배치마다 N개 샘플을 받아 *batch-level 변환* 을 적용한 뒤 텐서로 묶어주는 함수입니다. Hugging Face는 task별로 여러 종류를 제공합니다.""")
+
+# ----- 23b. DataCollatorWithPadding 실험 -----
+code(r"""from transformers import DataCollatorWithPadding
+
+# 토큰화 시엔 padding을 *빼고* truncation만 (길이가 들쭉날쭉)
+def tokenize_dynamic(batch):
+    return tokenizer(batch["text"], truncation=True, max_length=128)
+
+tokenized_dyn = small.select(range(50)).map(tokenize_dynamic, batched=True)
+tokenized_dyn = tokenized_dyn.remove_columns(["text"])  # 깔끔하게 input만
+
+# 각 샘플의 input_ids 길이는 모두 다름 (padding 없으니까)
+sample_lens = [len(tokenized_dyn[i]["input_ids"]) for i in range(10)]
+print(f"앞 10개 샘플 토큰 길이: {sample_lens}")
+print(f"  → 각자 다름 — 그대로는 텐서 배치가 안 됨")""")
+
+# ----- 23c. DataCollator로 동적 padding -----
+code(r"""# DataCollatorWithPadding이 collate_fn 자리에서 매 배치 동적 padding
+collator = DataCollatorWithPadding(tokenizer=tokenizer, padding=True)
+dyn_loader = DataLoader(
+    tokenized_dyn, batch_size=8, shuffle=False,
+    collate_fn=collator,
+)
+
+print(f"배치별 shape (batch_size=8, 매번 다름):")
+print(f"{'batch':>6}  {'shape':>16}  {'실제 토큰':>10}  {'전체':>6}  {'채움률':>6}")
+for i, batch in enumerate(dyn_loader):
+    real = batch["attention_mask"].sum().item()
+    total = batch["attention_mask"].numel()
+    print(f"{i:>6}  {str(tuple(batch['input_ids'].shape)):>16}  {real:>10}  {total:>6}  {real/total:>6.0%}")
+    if i >= 4: break""")
+
+# ----- 23d. 정적 vs 동적 비교 -----
+md(r"""**정적 vs 동적 padding 비교**
+
+| 방식 | 토큰화 시점 | 배치 shape | 실제 토큰 비율 | 메모리/속도 |
+|---|---|---|---|---|
+| **정적** (`padding="max_length"=128`) | 모든 샘플을 128로 미리 padding | 항상 (B, 128) | 보통 30-50% | 일정, 낭비 큼 |
+| **동적** (`DataCollatorWithPadding`) | padding 없이 truncation만 | (B, longest in batch) — 매번 다름 | 보통 70-95% | 변동, 효율 |
+
+위 출력에서 채움률(실제 토큰/전체)이 정적 방식보다 훨씬 높을 겁니다. 같은 학습이라도 동적 padding이 *2배 가까이 빠른 경우* 도 흔합니다.
+
+### 다양한 `DataCollator` 종류
+
+| Collator | 용도 | 자주 쓰이는 곳 |
+|---|---|---|
+| `DataCollatorWithPadding` | 분류·회귀 — `input_ids`/`attention_mask` 동적 padding | **Ch 9-13 모든 분류 학습 (기본)** |
+| `DataCollatorForLanguageModeling` | MLM — 입력의 15%를 `[MASK]` 로 가려 라벨 생성 | BERT 사전학습 재현, MLM 헤드 학습 |
+| `DataCollatorForSeq2Seq` | seq2seq — encoder/decoder input 둘 다 padding | T5, BART 같은 인코더-디코더 학습 |
+| `DataCollatorForTokenClassification` | NER 같은 토큰 단위 라벨링 — labels도 padding | NER, POS tagging |
+| `default_data_collator` | 단순 stacking — padding 없이 길이 같은 샘플들에 | 이미 padding 끝낸 데이터 |
+
+### `Trainer` 와 collator의 관계 (Ch 9 떡밥)
 
 ```python
-from transformers import DataCollatorWithPadding
+# Ch 9에서 보게 될 패턴
+trainer = Trainer(
+    model=model,
+    args=training_args,
+    train_dataset=tokenized,         # padding 없는 Dataset 그대로
+    eval_dataset=eval_tokenized,
+    tokenizer=tokenizer,             # ← 이걸 넘기면 Trainer가 자동으로
+    # data_collator=DataCollatorWithPadding(tokenizer)   를 만들어 사용
+)
+```
 
-# 토큰화는 padding 안 하고 truncation만:
-def tokenize_fn_dyn(batch):
-    return tokenizer(batch["text"], truncation=True, max_length=128)
-tokenized_dyn = small.map(tokenize_fn_dyn, batched=True)
-tokenized_dyn = tokenized_dyn.with_format("torch", columns=["input_ids", "attention_mask", "label"])
-
-# DataLoader가 배치 시점에 동적 padding 적용
-collator = DataCollatorWithPadding(tokenizer=tokenizer, padding=True)
-dyn_loader = DataLoader(tokenized_dyn, batch_size=8, shuffle=True, collate_fn=collator)
-```""")
+즉, Ch 9-13에서 우리가 **collator 코드를 *직접* 쓸 일이 거의 없습니다** — `Trainer` 가 `tokenizer` 를 보고 적절한 collator를 자동 선택. 그래도 알아두면 디버깅·커스텀 학습 루프(직접 `DataLoader` 만들어 쓸 때)에서 큰 도움이 됩니다.""")
 
 # ----- 24. library -----
 md(r"""## 📦 이번 챕터에 등장한 라이브러리·함수
