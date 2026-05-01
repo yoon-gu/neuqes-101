@@ -149,7 +149,7 @@ model.fit(X, y)
 
 
 
-\Needspace{25\baselineskip}
+\Needspace{26\baselineskip}
 \begin{lstlisting}
 import numpy as np
 import pandas as pd
@@ -170,8 +170,9 @@ SAMPLE_SIZE = 5000
 ds = dataset["train"].shuffle(seed=42).select(range(SAMPLE_SIZE))
 df = ds.to_pandas()
 df["star"] = df["label"] + 1   # 0-4 → 1-5
-print(f"전체 샘플 수: {len(df)}")
-print(df["star"].value_counts().sort_index())
+
+display(pd.DataFrame([{"metric": "sample_count", "value": len(df)}]))
+display(df["star"].value_counts().sort_index().rename_axis("star").reset_index(name="count"))
 \end{lstlisting}
 
 \begin{codeRead}
@@ -180,50 +181,49 @@ print(df["star"].value_counts().sort_index())
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-전체 샘플 수: 5000
-star
-1    1017
-2    1027
-3     960
-4    1021
-5     975
-Name: count, dtype: int64
+metric  value
+0  sample_count   5000
+   star  count
+0     1   1017
+1     2   1027
+2     3    960
+3     4   1021
+4     5    975
 \end{lstlisting}
-\noindent\textbf{출력 해석.}\quad accuracy 값은 현재 설정에서 모델이 평가 데이터의 라벨을 어느 정도 맞히는지 보여줍니다.
 \par\vspace{0.9em}
 
 
 
-\Needspace{15\baselineskip}
+\Needspace{17\baselineskip}
 \begin{lstlisting}
 # 별점 3은 애매하므로 제외, 4-5 → 1 (positive), 1-2 → 0 
 # (negative)
 df_bin = df[df["star"] != 3].copy()
 df_bin["y"] = (df_bin["star"] >= 4).astype(int)
 
-print(f"이진화 후 샘플 수: {len(df_bin)}  (3점 제외)")
-print(
-    f"클래스 분포:\n"
-    f"{df_bin['y'].value_counts().sort_index()}"
-)
-print(f"긍정 비율: {df_bin['y'].mean():.1%}")
+binary_summary = pd.DataFrame([
+    {"metric": "sample_count_after_filter", "value": len(df_bin)},
+    {"metric": "positive_rate", "value": df_bin["y"].mean()},
+])
+class_counts = df_bin["y"].value_counts().sort_index().rename_axis("class").reset_index(name="count")
+
+display(binary_summary)
+display(class_counts)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{3행}의 \inlinecode{df\_bin = df[df["star"] != 3].copy()}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{4행}의 \inlinecode{df\_bin["y"] = (df\_bin["star"] >= 4).astyp...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\textbf{3행}의 \inlinecode{df\_bin = df[df["star"] != 3].copy()}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{4행}의 \inlinecode{df\_bin["y"] = (df\_bin["star"] >= 4).astyp...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6--9행}의 \inlinecode{binary\_summary = pd.DataFrame([ \{"metric"...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{10행}의 \inlinecode{class\_counts = df\_bin["y"].value\_counts()...}에서는 라벨별 샘플 개수를 집계합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-이진화 후 샘플 수: 4040  (3점 제외)
-클래스 분포:
-y
-0    2044
-1    1996
-Name: count, dtype: int64
-긍정 비율: 49.4%
+metric        value
+0  sample_count_after_filter  4040.000000
+1              positive_rate     0.494059
+   class  count
+0      0   2044
+1      1   1996
 \end{lstlisting}
-\noindent\textbf{출력 해석.}\quad 분포 출력은 학습 데이터가 특정 라벨에 치우쳐 있는지 확인하기 위한 기본 점검입니다.
 \par\vspace{0.9em}
 
 
@@ -239,23 +239,23 @@ tfidf = TfidfVectorizer(max_features=10000)
 X_train = tfidf.fit_transform(X_text_train)
 X_test = tfidf.transform(X_text_test)
 
-print(
-    f"X_train: {X_train.shape}, y_train: "
-    f"{y_train.shape}"
-)
-print(f"X_test:  {X_test.shape}, y_test:  {y_test.shape}")
+split_summary = pd.DataFrame([
+    {"split": "train", "X_shape": X_train.shape, "y_shape": y_train.shape},
+    {"split": "test", "X_shape": X_test.shape, "y_shape": y_test.shape},
+])
+display(split_summary)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1--4행}의 \inlinecode{X\_text\_train, X\_text\_test, y\_train, y\_tes...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{6행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 TF-IDF 기반 벡터라이저를 만듭니다. \textbf{7행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{8행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
+\textbf{1--4행}의 \inlinecode{X\_text\_train, X\_text\_test, y\_train, y\_tes...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{6행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 TF-IDF 기반 벡터라이저를 만듭니다. \textbf{7행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{8행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{10--13행}의 \inlinecode{split\_summary = pd.DataFrame([ \{"split":...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-X_train: (3232, 10000), y_train: (3232,)
-X_test:  (808, 10000), y_test:  (808,)
+split        X_shape  y_shape
+0  train  (3232, 10000)  (3232,)
+1   test   (808, 10000)   (808,)
 \end{lstlisting}
-\noindent\textbf{출력 해석.}\quad 출력된 shape는 데이터가 코드에서 기대한 차원으로 변환되었는지 확인하는 점검 지점입니다.
 \par\vspace{0.9em}
 
 
@@ -277,27 +277,29 @@ X_test:  (808, 10000), y_test:  (808,)
 
 
 
-\Needspace{12\baselineskip}
+\Needspace{14\baselineskip}
 \begin{lstlisting}
 model = LogisticRegression(max_iter=1000)
 model.fit(X_train, y_train)
 
 y_pred = model.predict(X_test)
-print(
-    f"Test accuracy: "
-    f"{accuracy_score(y_test, y_pred):.4f}"
-)
+y_proba = model.predict_proba(X_test)
+
+binary_accuracy = pd.DataFrame([
+    {"metric": "test_accuracy", "value": accuracy_score(y_test, y_pred)},
+])
+display(binary_accuracy)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{model = LogisticRegression(max\_iter=1000)}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model.fit(X\_train, y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{y\_pred = model.predict(X\_test)}에서는 학습된 모델로 최종 예측값을 만듭니다.
+\textbf{1행}의 \inlinecode{model = LogisticRegression(max\_iter=1000)}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model.fit(X\_train, y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{y\_pred = model.predict(X\_test)}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{5행}의 \inlinecode{y\_proba = model.predict\_proba(X\_test)}에서는 클래스별 예측 확률을 계산합니다. \textbf{7--9행}의 \inlinecode{binary\_accuracy = pd.DataFrame([ \{"metric...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Test accuracy: 0.8639
+metric     value
+0  test_accuracy  0.863861
 \end{lstlisting}
-\noindent\textbf{출력 해석.}\quad accuracy 값은 현재 설정에서 모델이 평가 데이터의 라벨을 어느 정도 맞히는지 보여줍니다.
 \par\vspace{0.9em}
 
 
@@ -307,38 +309,40 @@ Test accuracy: 0.8639
 # predict_proba는 [P(y=0), P(y=1)] 형태로 두 확률을 모두 
 # 줌
 y_proba = model.predict_proba(X_test)
-print(
-    f"y_proba shape: "
-    f"{y_proba.shape}  (각 샘플마다 [P(0), P(1)])"
-)
-print(f"\n첫 5개 예측 확률:")
-print(
-    pd.DataFrame(y_proba[:5], columns=["P(neg)", "P(pos)"]).round(4)
-)
 
-# 두 확률을 합치면 항상 1
-print(f"\n행 합 (1이어야 함): {y_proba.sum(axis=1)[:5]}")
+proba_shape = pd.DataFrame([{"object": "y_proba", "shape": y_proba.shape}])
+proba_preview = pd.DataFrame(
+    y_proba[:5],
+    columns=["P(neg)", "P(pos)"]).round(4,
+)
+row_sum_check = pd.DataFrame({"row_sum": y_proba.sum(axis=1)[:5].round(6)})
+
+display(proba_shape)
+display(proba_preview)
+display(row_sum_check)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{3행}의 \inlinecode{y\_proba = model.predict\_proba(X\_test)}에서는 클래스별 예측 확률을 계산합니다.
+\textbf{3행}의 \inlinecode{y\_proba = model.predict\_proba(X\_test)}에서는 클래스별 예측 확률을 계산합니다. \textbf{5행}의 \inlinecode{proba\_shape = pd.DataFrame([\{"object": "y...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{6--9행}의 \inlinecode{proba\_preview = pd.DataFrame( y\_proba[:5]...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{10행}의 \inlinecode{row\_sum\_check = pd.DataFrame(\{"row\_sum":...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-y_proba shape: (808, 2)  (각 샘플마다 [P(0), P(1)])
-
-첫 5개 예측 확률:
+object     shape
+0  y_proba  (808, 2)
    P(neg)  P(pos)
 0  0.5515  0.4485
 1  0.9001  0.0999
 2  0.8362  0.1638
 3  0.3339  0.6661
 4  0.2422  0.7578
-
-행 합 (1이어야 함): [1. 1. 1. 1. 1.]
+   row_sum
+0      1.0
+1      1.0
+2      1.0
+3      1.0
+4      1.0
 \end{lstlisting}
-\noindent\textbf{출력 해석.}\quad 출력된 shape는 데이터가 코드에서 기대한 차원으로 변환되었는지 확인하는 점검 지점입니다.
 \par\vspace{0.9em}
 
 
@@ -351,7 +355,7 @@ y_proba shape: (808, 2)  (각 샘플마다 [P(0), P(1)])
 
 
 
-\Needspace{23\baselineskip}
+\Needspace{26\baselineskip}
 \begin{lstlisting}
 # 모델의 logit 직접 계산: z = X · w + b
 # (sparse 행렬이라 .toarray() 안 쓰고 sparse dot product 
@@ -366,26 +370,32 @@ logits = logits.flatten()
 proba_manual = 1 / (1 + np.exp(-logits))
 proba_sklearn = y_proba[:, 1]   # P(y=1)
 
-# 둘이 같은가?
 diff = np.abs(proba_manual - proba_sklearn).max()
-print(f"수동 계산 vs sklearn 최대 차이: {diff:.2e}")
+proba_check = pd.DataFrame({
+    "manual_sigmoid": proba_manual[:5].round(4),
+    "sklearn_predict_proba": proba_sklearn[:5].round(4),
+})
+diff_summary = pd.DataFrame([{"metric": "max_absolute_difference", "value": diff}])
 
-print(f"\n수동 계산 첫 5개: {proba_manual[:5].round(4)}")
-print(f"sklearn 첫 5개:    {proba_sklearn[:5].round(4)}")
+display(diff_summary)
+display(proba_check)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{4--7행}의 \inlinecode{logits = X\_test @ model.coef\_.T + model.i...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{8행}의 \inlinecode{logits = logits.flatten()}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{11행}의 \inlinecode{proba\_manual = 1 / (1 + np.exp(-logits))}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{12행}의 \inlinecode{proba\_sklearn = y\_proba[:, 1]   \# P(y=1)}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{15행}의 \inlinecode{diff = np.abs(proba\_manual - proba\_sklear...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다.
+\textbf{4--7행}의 \inlinecode{logits = X\_test @ model.coef\_.T + model.i...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{8행}의 \inlinecode{logits = logits.flatten()}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{11행}의 \inlinecode{proba\_manual = 1 / (1 + np.exp(-logits))}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{12행}의 \inlinecode{proba\_sklearn = y\_proba[:, 1]   \# P(y=1)}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{14행}의 \inlinecode{diff = np.abs(proba\_manual - proba\_sklear...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다. \textbf{15--18행}의 \inlinecode{proba\_check = pd.DataFrame(\{ "manual\_sigm...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-수동 계산 vs sklearn 최대 차이: 0.00e+00
-
-수동 계산 첫 5개: [0.4485 0.0999 0.1638 0.6661 0.7578]
-sklearn 첫 5개:    [0.4485 0.0999 0.1638 0.6661 0.7578]
+metric  value
+0  max_absolute_difference    0.0
+   manual_sigmoid  sklearn_predict_proba
+0          0.4485                 0.4485
+1          0.0999                 0.0999
+2          0.1638                 0.1638
+3          0.6661                 0.6661
+4          0.7578                 0.7578
 \end{lstlisting}
-\noindent\textbf{출력 해석.}\quad 출력된 shape는 데이터가 코드에서 기대한 차원으로 변환되었는지 확인하는 점검 지점입니다.
 \par\vspace{0.9em}
 
 
@@ -399,66 +409,65 @@ p = proba_sklearn
 manual_bce = -(y_test_arr * np.log(p) + (1 - y_test_arr) * np.log(1 - p)).mean()
 sklearn_bce = log_loss(y_test, y_proba)
 
-print(f"수동 BCE:    {manual_bce:.6f}")
-print(f"sklearn BCE: {sklearn_bce:.6f}")
-print(
-    f"차이:         "
-    f"{abs(manual_bce - sklearn_bce):.2e}"
-)
+bce_check = pd.DataFrame([
+    {"metric": "manual_bce", "value": manual_bce},
+    {"metric": "sklearn_log_loss", "value": sklearn_bce},
+    {"metric": "absolute_difference", "value": abs(manual_bce - sklearn_bce)},
+])
+display(bce_check)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{3행}의 \inlinecode{y\_test\_arr = y\_test.values}에서는 계산에 바로 쓸 수 있도록 배열 형태로 변환합니다. \textbf{4행}의 \inlinecode{p = proba\_sklearn}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{manual\_bce = -(y\_test\_arr * np.log(p) + (...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다. \textbf{6행}의 \inlinecode{sklearn\_bce = log\_loss(y\_test, y\_proba)}에서는 이후 분석에서 사용할 값을 준비합니다.
+\textbf{3행}의 \inlinecode{y\_test\_arr = y\_test.values}에서는 계산에 바로 쓸 수 있도록 배열 형태로 변환합니다. \textbf{4행}의 \inlinecode{p = proba\_sklearn}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{manual\_bce = -(y\_test\_arr * np.log(p) + (...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다. \textbf{6행}의 \inlinecode{sklearn\_bce = log\_loss(y\_test, y\_proba)}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{8--12행}의 \inlinecode{bce\_check = pd.DataFrame([ \{"metric": "ma...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-수동 BCE:    0.383475
-sklearn BCE: 0.383475
-차이:         0.00e+00
+metric     value
+0           manual_bce  0.383475
+1     sklearn_log_loss  0.383475
+2  absolute_difference  0.000000
 \end{lstlisting}
-\noindent\textbf{출력 해석.}\quad 확률 출력은 각 클래스 또는 라벨에 대해 모델이 어느 정도 자신감을 갖는지 보여줍니다.
 \par\vspace{0.9em}
 
 
 
-\Needspace{14\baselineskip}
+\Needspace{20\baselineskip}
 \begin{lstlisting}
-print(
-    classification_report(y_test, y_pred, target_names=["negative", "positive"])
+report = classification_report(
+    y_test,
+    y_pred,
+    target_names=["negative", "positive"],
+    output_dict=True,
+)
+report_df = pd.DataFrame(report).T
+cm = confusion_matrix(y_test, y_pred)
+cm_df = pd.DataFrame(
+    cm,
+    index=["true_negative", "true_positive"],
+    columns=["pred_negative", "pred_positive"],
 )
 
-cm = confusion_matrix(y_test, y_pred)
-print(f"\nconfusion matrix:\n{cm}")
-print(
-    f"  TN={cm[0,0]}, FP={cm[0,1]}\n  FN={cm[1,0]}, TP="
-    f"{cm[1,1]}"
-)
+display(report_df.round(4))
+display(cm_df)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{5행}의 \inlinecode{cm = confusion\_matrix(y\_test, y\_pred)}에서는 이후 분석에서 사용할 값을 준비합니다.
+\textbf{1--6행}의 \inlinecode{report = classification\_report( y\_test, y...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{7행}의 \inlinecode{report\_df = pd.DataFrame(report).T}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{8행}의 \inlinecode{cm = confusion\_matrix(y\_test, y\_pred)}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{9--13행}의 \inlinecode{cm\_df = pd.DataFrame( cm, index=["true\_ne...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-precision    recall  f1-score   support
-
-    negative       0.87      0.86      0.86       409
-    positive       0.86      0.87      0.86       399
-
-    accuracy                           0.86       808
-   macro avg       0.86      0.86      0.86       808
-weighted avg       0.86      0.86      0.86       808
-
-
-confusion matrix:
-[[352  57]
- [ 53 346]]
-  TN=352, FP=57
-  FN=53, TP=346
+precision  recall  f1-score   support
+negative         0.8691  0.8606    0.8649  409.0000
+positive         0.8586  0.8672    0.8628  399.0000
+accuracy         0.8639  0.8639    0.8639    0.8639
+macro avg        0.8638  0.8639    0.8639  808.0000
+weighted avg     0.8639  0.8639    0.8639  808.0000
+               pred_negative  pred_positive
+true_negative            352             57
+true_positive             53            346
 \end{lstlisting}
-\noindent\textbf{출력 해석.}\quad accuracy 값은 현재 설정에서 모델이 평가 데이터의 라벨을 어느 정도 맞히는지 보여줍니다.
 \par\vspace{0.9em}
 
 
@@ -494,19 +503,18 @@ for t in thresholds:
     rows.append({"threshold": t, "accuracy": acc, "precision": p, "recall": r, "f1": f1})
 
 df_t = pd.DataFrame(rows).round(4)
-print(df_t.to_string(index=False))
+display(df_t)
 \end{lstlisting}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-threshold  accuracy  precision  recall     f1
-       0.3    0.7686     0.6840  0.9875 0.8082
-       0.4    0.8515     0.7925  0.9474 0.8630
-       0.5    0.8639     0.8586  0.8672 0.8628
-       0.6    0.8366     0.9159  0.7368 0.8167
-       0.7    0.7772     0.9700  0.5664 0.7152
+threshold  accuracy  precision  recall      f1
+0        0.3    0.7686     0.6840  0.9875  0.8082
+1        0.4    0.8515     0.7925  0.9474  0.8630
+2        0.5    0.8639     0.8586  0.8672  0.8628
+3        0.6    0.8366     0.9159  0.7368  0.8167
+4        0.7    0.7772     0.9700  0.5664  0.7152
 \end{lstlisting}
-\noindent\textbf{출력 해석.}\quad accuracy 값은 현재 설정에서 모델이 평가 데이터의 라벨을 어느 정도 맞히는지 보여줍니다.
 \par\vspace{0.9em}
 
 
@@ -626,7 +634,7 @@ y_pred_custom = (proba_pos >= 0.3).astype(int)
 from sklearn.metrics import roc_curve
 fpr, tpr, thr = roc_curve(y_test, proba_pos)
 best_thr = thr[(tpr - fpr).argmax()]
-print(f"Youden's J 기준 최적 임계값: {best_thr:.3f}")
+display(pd.DataFrame([{"metric": "best_threshold_youden_j", "value": best_thr}]))
 \end{lstlisting}
 
 \end{faqBox}
@@ -682,23 +690,20 @@ lpm = LinearRegression()
 lpm.fit(X_train, y_train)
 pred_lpm = lpm.predict(X_test)
 
-print(
-    f"LPM 예측 범위: [{pred_lpm.min():.3f}, "
-    f"{pred_lpm.max():.3f}]"
-)
-print(f"0 미만 예측: {(pred_lpm < 0).sum()}개")
-print(f"1 초과 예측: {(pred_lpm > 1).sum()}개")
-
-# 임계값 0.5로 잘라서 정확도 비교
 acc_lpm = accuracy_score(
     y_test,
     (pred_lpm >= 0.5).astype(int),
 )
-print(f"\nLPM accuracy (threshold 0.5): {acc_lpm:.4f}")
-print(
-    f"LogReg accuracy:               "
-    f"{accuracy_score(y_test, y_pred):.4f}"
-)
+
+lpm_summary = pd.DataFrame([
+    {"metric": "prediction_min", "value": pred_lpm.min()},
+    {"metric": "prediction_max", "value": pred_lpm.max()},
+    {"metric": "count_below_0", "value": (pred_lpm < 0).sum()},
+    {"metric": "count_above_1", "value": (pred_lpm > 1).sum()},
+    {"metric": "lpm_accuracy_threshold_0_5", "value": acc_lpm},
+    {"metric": "logreg_accuracy", "value": accuracy_score(y_test, y_pred)},
+])
+display(lpm_summary)
 \end{lstlisting}
 
 힌트: LPM은 출력이 {[}0, 1{]}을 안 지키지만, 임계값 0.5로 자르면 분류 성능 자체는 LogReg와 비슷할 수도 있습니다. 다만 "출력이 확률"이라는 해석을 잃습니다.

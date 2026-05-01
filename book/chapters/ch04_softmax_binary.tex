@@ -181,7 +181,7 @@ df["star"] = df["label"] + 1   # 0-4 → 1-5
 
 
 
-\Needspace{20\baselineskip}
+\Needspace{26\baselineskip}
 \begin{lstlisting}
 # 3장과 동일한 이진화: 별점 3 제외, 4-5 → 1, 1-2 → 0
 df_bin = df[df["star"] != 3].copy()
@@ -195,10 +195,16 @@ tfidf = TfidfVectorizer(max_features=10000)
 X_train = tfidf.fit_transform(X_text_train)
 X_test = tfidf.transform(X_text_test)
 
-print(
-    f"X_train: {X_train.shape}, 긍정 비율: "
-    f"{y_train.mean():.1%}"
-)
+setup_summary = pd.DataFrame([
+    {"object": "X_train", "shape": X_train.shape},
+    {"object": "X_test", "shape": X_test.shape},
+    {"object": "y_train", "shape": y_train.shape},
+    {"object": "y_test", "shape": y_test.shape},
+])
+label_summary = pd.DataFrame([{"metric": "positive_rate_train", "value": y_train.mean()}])
+
+display(setup_summary)
+display(label_summary)
 \end{lstlisting}
 
 \begin{codeRead}
@@ -207,9 +213,14 @@ print(
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-X_train: (3232, 10000), 긍정 비율: 49.4%
+object          shape
+0  X_train  (3232, 10000)
+1   X_test   (808, 10000)
+2  y_train        (3232,)
+3   y_test         (808,)
+                metric     value
+0  positive_rate_train  0.494121
 \end{lstlisting}
-\noindent\textbf{출력 해석.}\quad 출력된 shape는 데이터가 코드에서 기대한 차원으로 변환되었는지 확인하는 점검 지점입니다.
 \par\vspace{0.9em}
 
 
@@ -230,7 +241,7 @@ B (이 장) & \inlinecode{LogisticRegression(multi\_class="multinomial")} & 2 & 
 
 
 
-\Needspace{17\baselineskip}
+\Needspace{20\baselineskip}
 \begin{lstlisting}
 model_a = LogisticRegression(max_iter=1000)
 # 방식 A
@@ -242,9 +253,12 @@ model_b.fit(X_train, y_train)
 acc_a = accuracy_score(y_test, model_a.predict(X_test))
 acc_b = accuracy_score(y_test, model_b.predict(X_test))
 
-print(f"방식 A (sigmoid + BCE)  accuracy: {acc_a:.4f}")
-print(f"방식 B (softmax + CE)   accuracy: {acc_b:.4f}")
-print(f"차이: {abs(acc_a - acc_b):.4f}")
+accuracy_comparison = pd.DataFrame([
+    {"method": "A_sigmoid_bce", "accuracy": acc_a},
+    {"method": "B_softmax_ce", "accuracy": acc_b},
+    {"method": "absolute_difference", "accuracy": abs(acc_a - acc_b)},
+])
+display(accuracy_comparison)
 \end{lstlisting}
 
 \begin{codeRead}
@@ -253,54 +267,59 @@ print(f"차이: {abs(acc_a - acc_b):.4f}")
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-방식 A (sigmoid + BCE)  accuracy: 0.8639
-방식 B (softmax + CE)   accuracy: 0.8639
-차이: 0.0000
+method  accuracy
+0        A_sigmoid_bce  0.863861
+1         B_softmax_ce  0.863861
+2  absolute_difference  0.000000
 \end{lstlisting}
-\noindent\textbf{출력 해석.}\quad accuracy 값은 현재 설정에서 모델이 평가 데이터의 라벨을 어느 정도 맞히는지 보여줍니다.
 \par\vspace{0.9em}
 
 
 
-\Needspace{20\baselineskip}
+\Needspace{25\baselineskip}
 \begin{lstlisting}
 proba_a = model_a.predict_proba(X_test)   # (N, 2)
 proba_b = model_b.predict_proba(X_test)   # (N, 2)
 
-print(f"방식 A predict_proba shape: {proba_a.shape}")
-print(f"방식 B predict_proba shape: {proba_b.shape}")
-print(
-    f"  (방식 A도 sklearn이 내부적으로 [P(0), P(1)]을 "
-    f"내줌 — sigmoid 결과를 두 열로 펼친 것)"
-)
-
 p_a, p_b = proba_a[:, 1], proba_b[:, 1]
-print(f"\n첫 5개 P(y=1):")
-print(f"방식 A: {p_a[:5].round(4)}")
-print(f"방식 B: {p_b[:5].round(4)}")
-print(f"\n전체 max 차이: {np.abs(p_a - p_b).max():.4f}")
-print(f"전체 mean 차이: {np.abs(p_a - p_b).mean():.4f}")
+
+shape_comparison = pd.DataFrame([
+    {"method": "A_sigmoid_bce", "predict_proba_shape": proba_a.shape},
+    {"method": "B_softmax_ce", "predict_proba_shape": proba_b.shape},
+])
+probability_preview = pd.DataFrame({
+    "P_y1_A": p_a[:5].round(4),
+    "P_y1_B": p_b[:5].round(4),
+})
+difference_summary = pd.DataFrame([
+    {"metric": "max_absolute_difference", "value": np.abs(p_a - p_b).max()},
+    {"metric": "mean_absolute_difference", "value": np.abs(p_a - p_b).mean()},
+])
+
+display(shape_comparison)
+display(probability_preview)
+display(difference_summary)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{proba\_a = model\_a.predict\_proba(X\_test)...}에서는 클래스별 예측 확률을 계산합니다. \textbf{2행}의 \inlinecode{proba\_b = model\_b.predict\_proba(X\_test)...}에서는 클래스별 예측 확률을 계산합니다. \textbf{11행}의 \inlinecode{p\_a, p\_b = proba\_a[:, 1], proba\_b[:, 1]}에서는 이후 분석에서 사용할 값을 준비합니다.
+\textbf{1행}의 \inlinecode{proba\_a = model\_a.predict\_proba(X\_test)...}에서는 클래스별 예측 확률을 계산합니다. \textbf{2행}의 \inlinecode{proba\_b = model\_b.predict\_proba(X\_test)...}에서는 클래스별 예측 확률을 계산합니다. \textbf{4행}의 \inlinecode{p\_a, p\_b = proba\_a[:, 1], proba\_b[:, 1]}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6--9행}의 \inlinecode{shape\_comparison = pd.DataFrame([ \{"metho...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{10--13행}의 \inlinecode{probability\_preview = pd.DataFrame(\{ "P\_y...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{14--17행}의 \inlinecode{difference\_summary = pd.DataFrame([ \{"met...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-방식 A predict_proba shape: (808, 2)
-방식 B predict_proba shape: (808, 2)
-  (방식 A도 sklearn이 내부적으로 [P(0), P(1)]을 내줌 — sigmoid 결과를 두
-    열로 펼친 것)
-
-첫 5개 P(y=1):
-방식 A: [0.4485 0.0999 0.1638 0.6661 0.7578]
-방식 B: [0.4485 0.0999 0.1638 0.6661 0.7578]
-
-전체 max 차이: 0.0000
-전체 mean 차이: 0.0000
+method predict_proba_shape
+0  A_sigmoid_bce            (808, 2)
+1   B_softmax_ce            (808, 2)
+   P_y1_A  P_y1_B
+0  0.4485  0.4485
+1  0.0999  0.0999
+2  0.1638  0.1638
+3  0.6661  0.6661
+4  0.7578  0.7578
+                     metric  value
+0   max_absolute_difference    0.0
+1  mean_absolute_difference    0.0
 \end{lstlisting}
-\noindent\textbf{출력 해석.}\quad 출력된 shape는 데이터가 코드에서 기대한 차원으로 변환되었는지 확인하는 점검 지점입니다.
 \par\vspace{0.9em}
 
 
@@ -333,7 +352,7 @@ CE 쪽도 K=2에서 BCE와 같은 식이 됩니다 (one-hot이라 \(y_1 = y\), \
 
 
 
-\Needspace{26\baselineskip}
+\Needspace{20\baselineskip}
 \begin{lstlisting}
 # 임의의 logit 쌍 4개를 만들어 softmax([z0,z1])_1 == 
 # sigmoid(z1 - z0) 인지 확인
@@ -343,43 +362,33 @@ z1_arr = np.array([ 1.0, 0.5, -0.5, 2.0])
 softmax_p1  = np.exp(z1_arr) / (np.exp(z0_arr) + np.exp(z1_arr))
 sigmoid_diff = 1.0 / (1.0 + np.exp(-(z1_arr - z0_arr)))
 
-print(
-    f"{'z_0':>6} {'z_1':>6}    {'softmax([z0,z1])_1':>22}    "
-    f"{'sigmoid(z1-z0)':>16}"
-)
-print("-" * 60)
-for i in range(len(z0_arr)):
-    print(
-        f"{z0_arr[i]:>6.1f} {z1_arr[i]:>6.1f}    {softmax_p1[i]:>22.8f}    "
-        f"{sigmoid_diff[i]:>16.8f}"
-    )
-
-print(
-    f"\nmax 차이: "
-    f"{np.abs(softmax_p1 - sigmoid_diff).max():.2e}  (수치적 오차 수준)"
-)
+softmax_sigmoid_check = pd.DataFrame({
+    "z0": z0_arr,
+    "z1": z1_arr,
+    "softmax_p1": softmax_p1,
+    "sigmoid_z1_minus_z0": sigmoid_diff,
+    "absolute_difference": np.abs(softmax_p1 - sigmoid_diff),
+})
+display(softmax_sigmoid_check)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{3행}의 \inlinecode{z0\_arr = np.array([-2.0, 0.0, 1.5, 3.0])}에서는 비교 실험에 사용할 작은 배열을 만듭니다. \textbf{4행}의 \inlinecode{z1\_arr = np.array([ 1.0, 0.5, -0.5, 2.0])}에서는 비교 실험에 사용할 작은 배열을 만듭니다. \textbf{6행}의 \inlinecode{softmax\_p1  = np.exp(z1\_arr) / (np.exp(z0...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{7행}의 \inlinecode{sigmoid\_diff = 1.0 / (1.0 + np.exp(-(z1\_a...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\textbf{3행}의 \inlinecode{z0\_arr = np.array([-2.0, 0.0, 1.5, 3.0])}에서는 비교 실험에 사용할 작은 배열을 만듭니다. \textbf{4행}의 \inlinecode{z1\_arr = np.array([ 1.0, 0.5, -0.5, 2.0])}에서는 비교 실험에 사용할 작은 배열을 만듭니다. \textbf{6행}의 \inlinecode{softmax\_p1  = np.exp(z1\_arr) / (np.exp(z0...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{7행}의 \inlinecode{sigmoid\_diff = 1.0 / (1.0 + np.exp(-(z1\_a...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{9--15행}의 \inlinecode{softmax\_sigmoid\_check = pd.DataFrame(\{ "z...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-z_0    z_1        softmax([z0,z1])_1      sigmoid(z1-z0)
-------------------------------------------------------------
-  -2.0    1.0                0.95257413
-    0.95257413
-   0.0    0.5                0.62245933
-     0.62245933
-   1.5   -0.5                0.11920292
-     0.11920292
-   3.0    2.0                0.26894142
-     0.26894142
-
-max 차이: 2.22e-16  (수치적 오차 수준)
+z0   z1  softmax_p1  sigmoid_z1_minus_z0
+  absolute_difference
+0 -2.0  1.0    0.952574             0.952574
+  2.220446e-16
+1  0.0  0.5    0.622459             0.622459
+  0.000000e+00
+2  1.5 -0.5    0.119203             0.119203
+  2.775558e-17
+3  3.0  2.0    0.268941             0.268941
+  0.000000e+00
 \end{lstlisting}
-\noindent\textbf{출력 해석.}\quad 이 출력은 앞 코드가 만든 중간 결과를 확인해 다음 단계의 입력이 올바르게 준비되었는지 점검합니다.
 \par\vspace{0.9em}
 
 
@@ -392,63 +401,30 @@ max 차이: 2.22e-16  (수치적 오차 수준)
 
 
 
-\Needspace{26\baselineskip}
+\Needspace{15\baselineskip}
 \begin{lstlisting}
-print(f"방식 A coef_ shape:      {model_a.coef_.shape}")
-print(f"방식 B coef_ shape:      {model_b.coef_.shape}")
-print(
-    f"방식 A intercept_ shape: "
-    f"{model_a.intercept_.shape}"
-)
-print(
-    f"방식 B intercept_ shape: "
-    f"{model_b.intercept_.shape}"
-)
-print()
-print(
-    "→ 둘 다 (1, V) — sklearn이 K=2 multinomial을 "
-    "binary form으로 collapse"
-)
-print()
-print(
-    f"두 coef_ 의 max 차이:      "
-    f"{np.abs(model_a.coef_ - model_b.coef_).max():.2e}"
-)
-print(
-    f"두 intercept_ 의 max 차이: "
-    f"{np.abs(model_a.intercept_ - model_b.intercept_).max():.2e}"
-)
-print()
-print(
-    "(미세한 차이는 solver 수렴 기준의 차이일 뿐, "
-    "본질적으로 같은 모델)"
-)
-print()
-print(
-    "진짜 (2, V) 두 logit head는 PyTorch가 '직접' "
-    "만들어주는 10장 BERT binary에서 등장합니다."
-)
+coef_shape_check = pd.DataFrame([
+    {"method": "A_sigmoid_bce", "coef_shape": model_a.coef_.shape, "intercept_shape": model_a.intercept_.shape},
+    {"method": "B_softmax_ce", "coef_shape": model_b.coef_.shape, "intercept_shape": model_b.intercept_.shape},
+])
+parameter_difference = pd.DataFrame([
+    {"metric": "coef_max_absolute_difference", "value": np.abs(model_a.coef_ - model_b.coef_).max()},
+    {"metric": "intercept_max_absolute_difference", "value": np.abs(model_a.intercept_ - model_b.intercept_).max()},
+])
+
+display(coef_shape_check)
+display(parameter_difference)
 \end{lstlisting}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-방식 A coef_ shape:      (1, 10000)
-방식 B coef_ shape:      (1, 10000)
-방식 A intercept_ shape: (1,)
-방식 B intercept_ shape: (1,)
-
-→ 둘 다 (1, V) — sklearn이 K=2 multinomial을 binary form으로
-  collapse
-
-두 coef_ 의 max 차이:      0.00e+00
-두 intercept_ 의 max 차이: 0.00e+00
-
-(미세한 차이는 solver 수렴 기준의 차이일 뿐, 본질적으로 같은 모델)
-
-진짜 (2, V) 두 logit head는 PyTorch가 '직접' 만들어주는 10장 BERT
-  binary에서 등장합니다.
+method  coef_shape intercept_shape
+0  A_sigmoid_bce  (1, 10000)            (1,)
+1   B_softmax_ce  (1, 10000)            (1,)
+                              metric  value
+0       coef_max_absolute_difference    0.0
+1  intercept_max_absolute_difference    0.0
 \end{lstlisting}
-\noindent\textbf{출력 해석.}\quad 출력된 shape는 데이터가 코드에서 기대한 차원으로 변환되었는지 확인하는 점검 지점입니다.
 \par\vspace{0.9em}
 
 
@@ -611,7 +587,7 @@ AutoModelForSequenceClassification.from_pretrained(
 
 다음 코드는 sklearn 없이 numpy만으로 softmax의 \textbf{shift invariance} 를 보여줍니다 --- 모든 logit에 같은 상수를 더해도 출력 분포가 변하지 않는다는 성질입니다. 이게 K=2일 때 sklearn이 collapse를 하는 \emph{정확한 이유} 입니다.
 
-\Needspace{14\baselineskip}
+\Needspace{17\baselineskip}
 \begin{lstlisting}
 z = np.array([1.0, 2.0])
 
@@ -620,9 +596,12 @@ p_shift5    = np.exp(z + 5)     / np.sum(np.exp(z + 5))
 p_zero_z0   = np.exp(z - z[0])  / np.sum(np.exp(z - z[0]))
 # z_0 = 0 으로 정규화한 형태
 
-print(f"softmax([1, 2]):    {p_original.round(6)}")
-print(f"softmax([6, 7]):    {p_shift5.round(6)}")
-print(f"softmax([0, 1]):    {p_zero_z0.round(6)}")
+shift_check = pd.DataFrame([
+    {"case": "original", "probability": p_original.round(6)},
+    {"case": "shift_plus_5", "probability": p_shift5.round(6)},
+    {"case": "zero_z0", "probability": p_zero_z0.round(6)},
+])
+display(shift_check)
 \end{lstlisting}
 
 힌트: 세 결과가 모두 같습니다. 두 logit 중 \emph{하나는 자유롭게 정할 수 있고} 의미 있는 정보는 차이 \(z_1 - z_0\) 뿐 --- 만약 \(z_0 = 0\) 으로 고정하면 \(z_1\) 만 학습하면 됩니다. 이게 sklearn이 K=2 multinomial을 binary form으로 collapse하는 형식적 근거이고, K=2 softmax가 sigmoid의 리파라미터화에 불과한 이유입니다.

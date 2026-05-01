@@ -1006,15 +1006,12 @@ def output_to_latex(source: str, outputs: list[dict]) -> str:
     text = output_text(outputs)
     if not text:
         return ""
-    interpretation = output_interpretation(source, text)
     return (
         "\\noindent\\textbf{출력.}\n"
         "\\begin{lstlisting}[style=bookoutput]\n"
         + text
         + "\n\\end{lstlisting}\n"
-        "\\noindent\\textbf{출력 해석.}\\quad "
-        + interpretation
-        + "\n\\par\\vspace{0.9em}"
+        "\\par\\vspace{0.9em}"
     )
 
 

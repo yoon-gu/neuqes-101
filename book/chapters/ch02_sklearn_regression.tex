@@ -170,7 +170,7 @@ dataset = load_dataset("yelp_review_full")
 SAMPLE_SIZE = 5000
 ds = dataset["train"].shuffle(seed=42).select(range(SAMPLE_SIZE))
 df = ds.to_pandas()
-print(f"샘플 수: {len(df)}")
+display(pd.DataFrame([{"metric": "sample_count", "value": len(df)}]))
 \end{lstlisting}
 
 \begin{codeRead}
@@ -179,9 +179,9 @@ print(f"샘플 수: {len(df)}")
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-샘플 수: 5000
+metric  value
+0  sample_count   5000
 \end{lstlisting}
-\noindent\textbf{출력 해석.}\quad 회귀 지표 출력은 예측 오차의 크기와 모델 설명력을 함께 확인하기 위한 요약입니다.
 \par\vspace{0.9em}
 
 
@@ -202,23 +202,23 @@ tfidf = TfidfVectorizer(max_features=10000)
 X_train = tfidf.fit_transform(X_text_train)
 X_test = tfidf.transform(X_text_test)
 
-print(
-    f"X_train: {X_train.shape}, y_train: "
-    f"{y_train.shape}"
-)
-print(f"X_test:  {X_test.shape}, y_test:  {y_test.shape}")
+split_summary = pd.DataFrame([
+    {"split": "train", "X_shape": X_train.shape, "y_shape": y_train.shape},
+    {"split": "test", "X_shape": X_test.shape, "y_shape": y_test.shape},
+])
+display(split_summary)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{2행}의 \inlinecode{df["star"] = df["label"] + 1}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5--8행}의 \inlinecode{X\_text\_train, X\_text\_test, y\_train, y\_tes...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{11행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 TF-IDF 기반 벡터라이저를 만듭니다. \textbf{12행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{13행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
+\textbf{2행}의 \inlinecode{df["star"] = df["label"] + 1}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5--8행}의 \inlinecode{X\_text\_train, X\_text\_test, y\_train, y\_tes...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{11행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 TF-IDF 기반 벡터라이저를 만듭니다. \textbf{12행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{13행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{15--18행}의 \inlinecode{split\_summary = pd.DataFrame([ \{"split":...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-X_train: (4000, 10000), y_train: (4000,)
-X_test:  (1000, 10000), y_test:  (1000,)
+split        X_shape  y_shape
+0  train  (4000, 10000)  (4000,)
+1   test  (1000, 10000)  (1000,)
 \end{lstlisting}
-\noindent\textbf{출력 해석.}\quad 출력된 shape는 데이터가 코드에서 기대한 차원으로 변환되었는지 확인하는 점검 지점입니다.
 \par\vspace{0.9em}
 
 
@@ -238,7 +238,7 @@ X_test:  (1000, 10000), y_test:  (1000,)
 
 
 
-\Needspace{23\baselineskip}
+\Needspace{17\baselineskip}
 \begin{lstlisting}
 model = LinearRegression()
 model.fit(X_train, y_train)
@@ -246,33 +246,27 @@ model.fit(X_train, y_train)
 y_pred_train = model.predict(X_train)
 y_pred_test = model.predict(X_test)
 
-print(
-    f"Train MSE: "
-    f"{mean_squared_error(y_train, y_pred_train):.4f}"
-)
-print(
-    f"Test  MSE: "
-    f"{mean_squared_error(y_test,  y_pred_test):.4f}"
-)
-print(
-    f"Test  MAE: "
-    f"{mean_absolute_error(y_test, y_pred_test):.4f}"
-)
-print(f"Test  R²:  {r2_score(y_test, y_pred_test):.4f}")
+regression_metrics = pd.DataFrame([
+    {"metric": "train_mse", "value": mean_squared_error(y_train, y_pred_train)},
+    {"metric": "test_mse", "value": mean_squared_error(y_test, y_pred_test)},
+    {"metric": "test_mae", "value": mean_absolute_error(y_test, y_pred_test)},
+    {"metric": "test_r2", "value": r2_score(y_test, y_pred_test)},
+])
+display(regression_metrics.round(4))
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{model = LinearRegression()}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model.fit(X\_train, y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{y\_pred\_train = model.predict(X\_train)}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{5행}의 \inlinecode{y\_pred\_test = model.predict(X\_test)}에서는 학습된 모델로 최종 예측값을 만듭니다.
+\textbf{1행}의 \inlinecode{model = LinearRegression()}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model.fit(X\_train, y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{y\_pred\_train = model.predict(X\_train)}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{5행}의 \inlinecode{y\_pred\_test = model.predict(X\_test)}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{7--12행}의 \inlinecode{regression\_metrics = pd.DataFrame([ \{"met...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Train MSE: 0.0000
-Test  MSE: 1.5522
-Test  MAE: 0.9929
-Test  R²:  0.2161
+metric   value
+0  train_mse  0.0000
+1   test_mse  1.5522
+2   test_mae  0.9929
+3    test_r2  0.2161
 \end{lstlisting}
-\noindent\textbf{출력 해석.}\quad 회귀 지표 출력은 예측 오차의 크기와 모델 설명력을 함께 확인하기 위한 요약입니다.
 \par\vspace{0.9em}
 
 
@@ -280,14 +274,11 @@ Test  R²:  0.2161
 \Needspace{26\baselineskip}
 \begin{lstlisting}
 # 예측값이 1-5 범위를 얼마나 벗어나는지 확인
-print(
-    f"예측값 범위: [{y_pred_test.min():.2f}, "
-    f"{y_pred_test.max():.2f}]"
-)
-print(
-    f"정답   범위: [{y_test.min():.0f}, "
-    f"{y_test.max():.0f}]"
-)
+range_summary = pd.DataFrame([
+    {"series": "prediction", "min": y_pred_test.min(), "max": y_pred_test.max()},
+    {"series": "target", "min": y_test.min(), "max": y_test.max()},
+]).round(3)
+display(range_summary)
 
 plt.hist(
     y_pred_test,
@@ -311,13 +302,17 @@ plt.title("Prediction distribution: actual vs predicted")
 plt.show()
 \end{lstlisting}
 
+\begin{codeRead}
+\textbf{2--5행}의 \inlinecode{range\_summary = pd.DataFrame([ \{"series":...}에서는 결과를 표로 보기 좋게 정리합니다.
+\end{codeRead}
+
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-예측값 범위: [-1.27, 7.45]
-정답   범위: [1, 5]
+series    min    max
+0  prediction -1.271  7.449
+1      target  1.000  5.000
 <Figure size 640x480 with 1 Axes>
 \end{lstlisting}
-\noindent\textbf{출력 해석.}\quad 이 출력은 앞 코드가 만든 중간 결과를 확인해 다음 단계의 입력이 올바르게 준비되었는지 점검합니다.
 \par\vspace{0.9em}
 
 
@@ -339,25 +334,25 @@ plt.show()
 manual_mse = ((y_test - y_pred_test) ** 2).mean()
 sklearn_mse = mean_squared_error(y_test, y_pred_test)
 
-print(f"수동 계산 MSE: {manual_mse:.6f}")
-print(f"sklearn MSE:   {sklearn_mse:.6f}")
-print(
-    f"차이:           "
-    f"{abs(manual_mse - sklearn_mse):.2e}"
-)
+mse_check = pd.DataFrame([
+    {"metric": "manual_mse", "value": manual_mse},
+    {"metric": "sklearn_mse", "value": sklearn_mse},
+    {"metric": "absolute_difference", "value": abs(manual_mse - sklearn_mse)},
+])
+display(mse_check)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{3행}의 \inlinecode{manual\_mse = ((y\_test - y\_pred\_test) ** 2...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다. \textbf{4행}의 \inlinecode{sklearn\_mse = mean\_squared\_error(y\_test,...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다.
+\textbf{3행}의 \inlinecode{manual\_mse = ((y\_test - y\_pred\_test) ** 2...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다. \textbf{4행}의 \inlinecode{sklearn\_mse = mean\_squared\_error(y\_test,...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다. \textbf{6--10행}의 \inlinecode{mse\_check = pd.DataFrame([ \{"metric": "ma...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-수동 계산 MSE: 1.552180
-sklearn MSE:   1.552180
-차이:           0.00e+00
+metric    value
+0           manual_mse  1.55218
+1          sklearn_mse  1.55218
+2  absolute_difference  0.00000
 \end{lstlisting}
-\noindent\textbf{출력 해석.}\quad 회귀 지표 출력은 예측 오차의 크기와 모델 설명력을 함께 확인하기 위한 요약입니다.
 \par\vspace{0.9em}
 
 
@@ -377,7 +372,7 @@ y' = \frac{y - 1}{4} \in [0, 1]
 
 
 
-\Needspace{26\baselineskip}
+\Needspace{19\baselineskip}
 \begin{lstlisting}
 y_train_norm = (y_train - 1) / 4   # 1-5 → 0-1
 y_test_norm = (y_test - 1) / 4
@@ -386,67 +381,59 @@ model_norm = LinearRegression()
 model_norm.fit(X_train, y_train_norm)
 
 y_pred_norm = model_norm.predict(X_test)
-
-# 정규화 공간에서의 MSE
-print(
-    f"Test MSE (정규화 공간): "
-    f"{mean_squared_error(y_test_norm, y_pred_norm):.4f}"
-)
-
-# 원래 별점 공간으로 되돌렸을 때 MSE 비교
 y_pred_back = y_pred_norm * 4 + 1
-print(
-    f"Test MSE (원래 별점 공간으로 환원): "
-    f"{mean_squared_error(y_test, y_pred_back):.4f}"
-)
-print(
-    f"Test MSE (정규화 없이 학습한 모델):    "
-    f"{mean_squared_error(y_test, y_pred_test):.4f}"
-)
+
+normalization_metrics = pd.DataFrame([
+    {"metric": "mse_normalized_space", "value": mean_squared_error(y_test_norm, y_pred_norm)},
+    {"metric": "mse_back_to_star_space", "value": mean_squared_error(y_test, y_pred_back)},
+    {"metric": "mse_without_normalization", "value": mean_squared_error(y_test, y_pred_test)},
+])
+display(normalization_metrics.round(4))
 \end{lstlisting}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Test MSE (정규화 공간): 0.0970
-Test MSE (원래 별점 공간으로 환원): 1.5522
-Test MSE (정규화 없이 학습한 모델):    1.5522
+metric   value
+0       mse_normalized_space  0.0970
+1     mse_back_to_star_space  1.5522
+2  mse_without_normalization  1.5522
 \end{lstlisting}
-\noindent\textbf{출력 해석.}\quad 회귀 지표 출력은 예측 오차의 크기와 모델 설명력을 함께 확인하기 위한 요약입니다.
 \par\vspace{0.9em}
 
 
 
-\Needspace{22\baselineskip}
+\Needspace{20\baselineskip}
 \begin{lstlisting}
 # 정규화한 모델도 여전히 [0, 1]을 벗어나는 값을 
 # 출력하는가?
-print(
-    f"정규화 모델 예측값 범위: [{y_pred_norm.min():.3f}, "
-    f"{y_pred_norm.max():.3f}]"
-)
-print(f"이상적 범위: [0, 1]")
-
 n_below = (y_pred_norm < 0).sum()
 n_above = (y_pred_norm > 1).sum()
-print(
-    f"\n0 미만 예측: {n_below}개 ("
-    f"{n_below / len(y_pred_norm):.1%})"
-)
-print(
-    f"1 초과 예측: {n_above}개 ("
-    f"{n_above / len(y_pred_norm):.1%})"
-)
+
+normalized_range_summary = pd.DataFrame([
+    {"metric": "prediction_min", "value": y_pred_norm.min()},
+    {"metric": "prediction_max", "value": y_pred_norm.max()},
+    {"metric": "ideal_min", "value": 0.0},
+    {"metric": "ideal_max", "value": 1.0},
+    {"metric": "count_below_0", "value": n_below},
+    {"metric": "count_above_1", "value": n_above},
+    {"metric": "rate_below_0", "value": n_below / len(y_pred_norm)},
+    {"metric": "rate_above_1", "value": n_above / len(y_pred_norm)},
+])
+display(normalized_range_summary)
 \end{lstlisting}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-정규화 모델 예측값 범위: [-0.568, 1.612]
-이상적 범위: [0, 1]
-
-0 미만 예측: 84개 (8.4%)
-1 초과 예측: 88개 (8.8%)
+metric      value
+0  prediction_min  -0.567737
+1  prediction_max   1.612202
+2       ideal_min   0.000000
+3       ideal_max   1.000000
+4   count_below_0  84.000000
+5   count_above_1  88.000000
+6    rate_below_0   0.084000
+7    rate_above_1   0.088000
 \end{lstlisting}
-\noindent\textbf{출력 해석.}\quad 이 출력은 앞 코드가 만든 중간 결과를 확인해 다음 단계의 입력이 올바르게 준비되었는지 점검합니다.
 \par\vspace{0.9em}
 
 
@@ -583,13 +570,10 @@ w = (X^\top X)^{-1} X^\top y
   \textbf{clip으로 잘라낸다}: 후처리로 {[}1, 5{]} 안으로 강제.
 \end{enumerate}
 
-\Needspace{9\baselineskip}
+\Needspace{6\baselineskip}
 \begin{lstlisting}
 y_pred_clipped = np.clip(y_pred_test, 1, 5)
-print(
-    f"Test MSE (clip 후): "
-    f"{mean_squared_error(y_test, y_pred_clipped):.4f}"
-)
+display(pd.DataFrame([{"metric": "test_mse_after_clip", "value": mean_squared_error(y_test, y_pred_clipped)}]))
 \end{lstlisting}
 
 \begin{enumerate}
@@ -625,7 +609,7 @@ print(
 
 다음 코드를 돌려보고, 두 모델의 결과가 같은지 다른지 예측해보세요.
 
-\Needspace{18\baselineskip}
+\Needspace{15\baselineskip}
 \begin{lstlisting}
 # 모델 A: 별점 1-5 그대로 학습
 model_a = LinearRegression().fit(X_train, y_train)
@@ -637,10 +621,7 @@ pred_a = model_a.predict(X_test)
 pred_b = model_b.predict(X_test) / 100
 # 다시 1-5 스케일로
 
-print(
-    f"A vs B 예측 차이 최대: "
-    f"{np.abs(pred_a - pred_b).max():.2e}"
-)
+display(pd.DataFrame([{"metric": "max_prediction_difference", "value": np.abs(pred_a - pred_b).max()}]))
 \end{lstlisting}
 
 힌트: 닫힌 형태 풀이에서 라벨에 상수를 곱하면 가중치도 같은 비율로 바뀔 뿐, 예측을 같은 스케일로 되돌리면 정확히 같은 값이 나와야 합니다.
