@@ -165,9 +165,9 @@ model.fit(X, Y_multilabel)   # Y_multilabel shape: (N, K) 0/1
 !pip install -q datasets scikit-learn pandas matplotlib
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{!pip install -q datasets scikit-learn pandas matplotlib}에서는 Colab 실행에 필요한 패키지를 설치합니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{!pip install -q datasets scikit-learn pan...}에서는 Colab 실행에 필요한 패키지를 설치합니다.
+\end{codeRead}
 
 
 
@@ -198,9 +198,9 @@ df = ds.to_pandas()
 print(f"전체 샘플 수: {len(df)}")
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{numpy, pandas, matplotlib, datasets, scikit-learn} 같은 주요 패키지를 불러옵니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\inlinecode{numpy, pandas, matplotlib, datasets, scikit-learn} 같은 주요 패키지를 불러옵니다.
+\end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
@@ -264,9 +264,9 @@ print(f"Y shape: {Y.shape}  (샘플 수, 측면 수)")
 print(f"앞 3개 샘플의 multi-hot 라벨:\n{Y[:3]}")
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \textbf{1--12행}의 \inlinecode{ASPECT\_KEYWORDS = \{ "food": ["food", "meal", "dish", "t...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{13행}의 \inlinecode{ASPECTS = list(ASPECT\_KEYWORDS.keys())}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{14행}의 \inlinecode{K = len(ASPECTS)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{16행}의 \inlinecode{def extract\_aspects(text: str) -> list[int]:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{17행}의 \inlinecode{text\_lower = text.lower()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{18--21행}의 \inlinecode{return [ int(any(re.search(rf"\textbackslash\{\}b\{re.escape(kw)\}\textbackslash\{\}b", tex...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{24행}의 \inlinecode{df["aspects"] = df["text"].apply(extract\_aspects)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{25행}의 \inlinecode{Y = np.array(df["aspects"].tolist())   \# (N, 5) multi-hot}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\textbf{1--12행}의 \inlinecode{ASPECT\_KEYWORDS = \{ "food": ["food", "mea...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{13행}의 \inlinecode{ASPECTS = list(ASPECT\_KEYWORDS.keys())}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{14행}의 \inlinecode{K = len(ASPECTS)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{16행}의 \inlinecode{def extract\_aspects(text: str) -> list[int]:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{17행}의 \inlinecode{text\_lower = text.lower()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{18--21행}의 \inlinecode{return [ int(any(re.search(rf"\textbackslash\{\}b\{re.escap...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
@@ -294,9 +294,9 @@ for n in range(K + 1):
     print(f"  {n}개: {count}건  ({count/len(Y):.1%})")
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \textbf{2행}의 \inlinecode{for k, aspect in enumerate(ASPECTS):}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{5행}의 \inlinecode{n\_labels\_per\_sample = Y.sum(axis=1)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{8행}의 \inlinecode{for n in range(K + 1):}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{9행}의 \inlinecode{count = (n\_labels\_per\_sample == n).sum()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\textbf{2행}의 \inlinecode{for k, aspect in enumerate(ASPECTS):}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{5행}의 \inlinecode{n\_labels\_per\_sample = Y.sum(axis=1)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
@@ -334,9 +334,9 @@ print(f"X_train: {X_train.shape}, Y_train: {Y_train.shape}")
 print(f"X_test:  {X_test.shape}, Y_test:  {Y_test.shape}")
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \textbf{1--3행}의 \inlinecode{X\_text\_train, X\_text\_test, Y\_train, Y\_test = train\_test...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{5행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{6행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{7행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\textbf{1--3행}의 \inlinecode{X\_text\_train, X\_text\_test, Y\_train, Y\_tes...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{5행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{6행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{7행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
+\end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
@@ -377,9 +377,9 @@ except ValueError as e:
     print(f"   메시지: {e}")
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \textbf{2행}의 \inlinecode{bare\_model = LogisticRegression(max\_iter=1000)}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{3행}의 \inlinecode{try:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{4행}의 \inlinecode{bare\_model.fit(X\_train, Y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{6행}의 \inlinecode{except ValueError as e:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\textbf{2행}의 \inlinecode{bare\_model = LogisticRegression(max\_iter=...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{3행}의 \inlinecode{try:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{4행}의 \inlinecode{bare\_model.fit(X\_train, Y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{6행}의 \inlinecode{except ValueError as e:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
@@ -434,9 +434,9 @@ print(f"\n앞 3개 샘플의 예측 확률 (per-label):")
 print(pd.DataFrame(proba_ml[:3], columns=ASPECTS).round(4))
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \textbf{2행}의 \inlinecode{model\_ml = OneVsRestClassifier(LogisticRegression(max\_i...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{3행}의 \inlinecode{model\_ml.fit(X\_train, Y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{10행}의 \inlinecode{for k, aspect in enumerate(ASPECTS):}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\textbf{2행}의 \inlinecode{model\_ml = OneVsRestClassifier(LogisticRe...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{3행}의 \inlinecode{model\_ml.fit(X\_train, Y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다.
+\end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]

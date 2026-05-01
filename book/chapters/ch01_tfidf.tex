@@ -84,9 +84,9 @@ Ch & 모델 & 토크나이저 & Output Head & Activation & Loss \\
 !pip install -q datasets scikit-learn pandas matplotlib
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{!pip install -q datasets scikit-learn pandas matplotlib}에서는 Colab 실행에 필요한 패키지를 설치합니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{!pip install -q datasets scikit-learn pan...}에서는 Colab 실행에 필요한 패키지를 설치합니다.
+\end{codeRead}
 
 
 
@@ -100,9 +100,9 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 plt.rcParams["axes.unicode_minus"] = False
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{numpy, pandas, matplotlib, datasets, scikit-learn} 같은 주요 패키지를 불러옵니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\inlinecode{numpy, pandas, matplotlib, datasets, scikit-learn} 같은 주요 패키지를 불러옵니다.
+\end{codeRead}
 
 
 
@@ -117,9 +117,9 @@ dataset = load_dataset("yelp_review_full")
 print(dataset)
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{dataset = load\_dataset("yelp\_review\_full")}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{dataset = load\_dataset("yelp\_review\_full")}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
@@ -148,9 +148,9 @@ print(f"샘플 수: {len(df)}")
 df.head(3)
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{SAMPLE\_SIZE = 5000}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{2행}의 \inlinecode{ds = dataset["train"].shuffle(seed=42).select(range(SAM...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{3행}의 \inlinecode{df = ds.to\_pandas()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{6행}의 \inlinecode{df.head(3)}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{SAMPLE\_SIZE = 5000}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{2행}의 \inlinecode{ds = dataset["train"].shuffle(seed=42).se...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{3행}의 \inlinecode{df = ds.to\_pandas()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{6행}의 \inlinecode{df.head(3)}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
@@ -175,9 +175,9 @@ plt.show()
 print(counts)
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{counts = df["label"].value\_counts().sort\_index()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{2행}의 \inlinecode{labels = [f"\{i+1\} star" for i in counts.index]}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{counts = df["label"].value\_counts().sort\_...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{2행}의 \inlinecode{labels = [f"\{i+1\} star" for i in counts.i...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
@@ -200,9 +200,9 @@ df["len_words"] = df["text"].str.split().str.len()
 df[["len_words"]].describe()
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{df["len\_words"] = df["text"].str.split().str.len()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{2행}의 \inlinecode{df[["len\_words"]].describe()}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{df["len\_words"] = df["text"].str.split()....}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{2행}의 \inlinecode{df[["len\_words"]].describe()}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
@@ -244,9 +244,9 @@ sparsity = 1 - X_count.nnz / (X_count.shape[0] * X_count.shape[1])
 print(f"sparsity: {sparsity:.2%}  (비어있는 칸의 비율)")
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{cv = CountVectorizer(max\_features=10000)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{2행}의 \inlinecode{X\_count = cv.fit\_transform(df["text"])}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{7행}의 \inlinecode{sparsity = 1 - X\_count.nnz / (X\_count.shape[0] * X\_coun...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{cv = CountVectorizer(max\_features=10000)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{2행}의 \inlinecode{X\_count = cv.fit\_transform(df["text"])}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{7행}의 \inlinecode{sparsity = 1 - X\_count.nnz / (X\_count.sha...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
@@ -267,9 +267,9 @@ print(f"입력 문장: {sample!r}")
 print(f"토큰화 결과: {analyzer(sample)}")
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{sample = "I love using Hugging Face!"}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{2행}의 \inlinecode{analyzer = cv.build\_analyzer()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{sample = "I love using Hugging Face!"}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{2행}의 \inlinecode{analyzer = cv.build\_analyzer()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
@@ -309,9 +309,9 @@ for i in top:
     print(f"  {vocab[i]:>15}  {word_counts[i]:>6,}")
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{vocab = cv.get\_feature\_names\_out()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{5행}의 \inlinecode{word\_counts = np.asarray(X\_count.sum(axis=0)).flatten()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{6행}의 \inlinecode{top = np.argsort(word\_counts)[::-1][:10]}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{8행}의 \inlinecode{for i in top:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{vocab = cv.get\_feature\_names\_out()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{5행}의 \inlinecode{word\_counts = np.asarray(X\_count.sum(axis...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{6행}의 \inlinecode{top = np.argsort(word\_counts)[::-1][:10]}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]

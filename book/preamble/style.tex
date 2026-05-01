@@ -219,6 +219,18 @@
   \colorbox{CodeBg}{\strut\ttfamily\small #1}%
   \endgroup
 }
+\newenvironment{codeRead}{%
+  \vspace{0.12em}%
+  \begingroup
+  \small
+  \raggedright
+  \setlength{\parskip}{0.25em}%
+  \noindent\textbf{위 코드 읽기.}\quad
+}{%
+  \par
+  \endgroup
+  \vspace{0.35em}%
+}
 \let\oldtexttt\texttt
 \renewcommand{\texttt}[1]{\inlinecode{#1}}
 \newenvironment{bookfigure}[2][htbp]

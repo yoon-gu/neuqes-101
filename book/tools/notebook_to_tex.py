@@ -594,8 +594,8 @@ def code_walkthrough(source: str) -> str:
     def summarize_code(content: list[str]) -> str:
         code_lines = [line.strip() for line in content if line.strip() and not line.strip().startswith("#")]
         joined = " ".join(code_lines)
-        if len(joined) > 58:
-            joined = joined[:55].rstrip() + "..."
+        if len(joined) > 44:
+            joined = joined[:41].rstrip() + "..."
         return f"\\inlinecode{{{latex_escape_text(joined)}}}"
 
     def imported_modules() -> list[str]:
@@ -625,7 +625,7 @@ def code_walkthrough(source: str) -> str:
     notes: list[str] = []
     import_note_added = False
     major_imports = imported_modules()
-    for start_line, end_line, content in statements[:8]:
+    for start_line, end_line, content in statements[:6]:
         text = " ".join(line.strip() for line in content)
         if text.startswith(("print(", "display(")) or " print(" in text:
             continue
@@ -667,10 +667,9 @@ def code_walkthrough(source: str) -> str:
         return ""
 
     return (
-        "\\vspace{0.12em}\n"
-        "\\noindent\\textbf{위 코드 읽기.}\\quad "
+        "\\begin{codeRead}\n"
         + " ".join(notes)
-        + "\n\\par\\vspace{0.35em}"
+        + "\n\\end{codeRead}"
     )
 
 

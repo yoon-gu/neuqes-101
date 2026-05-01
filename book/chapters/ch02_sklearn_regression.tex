@@ -144,9 +144,9 @@ mean_squared_error(y, model.predict(X))    # 평가
 !pip install -q datasets scikit-learn pandas matplotlib
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{!pip install -q datasets scikit-learn pandas matplotlib}에서는 Colab 실행에 필요한 패키지를 설치합니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{!pip install -q datasets scikit-learn pan...}에서는 Colab 실행에 필요한 패키지를 설치합니다.
+\end{codeRead}
 
 
 
@@ -169,9 +169,9 @@ df = ds.to_pandas()
 print(f"샘플 수: {len(df)}")
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{numpy, pandas, matplotlib, datasets, scikit-learn} 같은 주요 패키지를 불러옵니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\inlinecode{numpy, pandas, matplotlib, datasets, scikit-learn} 같은 주요 패키지를 불러옵니다.
+\end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
@@ -201,9 +201,9 @@ print(f"X_train: {X_train.shape}, y_train: {y_train.shape}")
 print(f"X_test:  {X_test.shape}, y_test:  {y_test.shape}")
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \textbf{2행}의 \inlinecode{df["star"] = df["label"] + 1}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{5--8행}의 \inlinecode{X\_text\_train, X\_text\_test, y\_train, y\_test = train\_test...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{11행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{12행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{13행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\textbf{2행}의 \inlinecode{df["star"] = df["label"] + 1}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{5--8행}의 \inlinecode{X\_text\_train, X\_text\_test, y\_train, y\_tes...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{11행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{12행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{13행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
+\end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
@@ -243,9 +243,9 @@ print(f"Test  MAE: {mean_absolute_error(y_test, y_pred_test):.4f}")
 print(f"Test  R²:  {r2_score(y_test, y_pred_test):.4f}")
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{model = LinearRegression()}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model.fit(X\_train, y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{y\_pred\_train = model.predict(X\_train)}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{5행}의 \inlinecode{y\_pred\_test = model.predict(X\_test)}에서는 학습된 모델로 최종 예측값을 만듭니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{model = LinearRegression()}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model.fit(X\_train, y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{y\_pred\_train = model.predict(X\_train)}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{5행}의 \inlinecode{y\_pred\_test = model.predict(X\_test)}에서는 학습된 모델로 최종 예측값을 만듭니다.
+\end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
@@ -306,9 +306,9 @@ print(f"sklearn MSE:   {sklearn_mse:.6f}")
 print(f"차이:           {abs(manual_mse - sklearn_mse):.2e}")
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \textbf{2행}의 \inlinecode{manual\_mse = ((y\_test - y\_pred\_test) ** 2).mean()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{3행}의 \inlinecode{sklearn\_mse = mean\_squared\_error(y\_test, y\_pred\_test)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\textbf{2행}의 \inlinecode{manual\_mse = ((y\_test - y\_pred\_test) ** 2...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{3행}의 \inlinecode{sklearn\_mse = mean\_squared\_error(y\_test,...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]

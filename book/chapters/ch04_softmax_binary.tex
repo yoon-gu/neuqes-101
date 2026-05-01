@@ -136,9 +136,9 @@ LogisticRegression(multi_class="multinomial", max_iter=1000)
 !pip install -q datasets scikit-learn pandas matplotlib
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{!pip install -q datasets scikit-learn pandas matplotlib}에서는 Colab 실행에 필요한 패키지를 설치합니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{!pip install -q datasets scikit-learn pan...}에서는 Colab 실행에 필요한 패키지를 설치합니다.
+\end{codeRead}
 
 
 
@@ -165,9 +165,9 @@ df = ds.to_pandas()
 df["star"] = df["label"] + 1   # 0-4 → 1-5
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{numpy, pandas, matplotlib, datasets, scikit-learn} 같은 주요 패키지를 불러옵니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\inlinecode{numpy, pandas, matplotlib, datasets, scikit-learn} 같은 주요 패키지를 불러옵니다.
+\end{codeRead}
 
 
 
@@ -187,9 +187,9 @@ X_test = tfidf.transform(X_text_test)
 print(f"X_train: {X_train.shape}, 긍정 비율: {y_train.mean():.1%}")
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \textbf{2행}의 \inlinecode{df\_bin = df[df["star"] != 3].copy()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{3행}의 \inlinecode{df\_bin["y"] = (df\_bin["star"] >= 4).astype(int)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{5--7행}의 \inlinecode{X\_text\_train, X\_text\_test, y\_train, y\_test = train\_test...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{9행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{10행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{11행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\textbf{2행}의 \inlinecode{df\_bin = df[df["star"] != 3].copy()}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{3행}의 \inlinecode{df\_bin["y"] = (df\_bin["star"] >= 4).astyp...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{5--7행}의 \inlinecode{X\_text\_train, X\_text\_test, y\_train, y\_tes...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{9행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{10행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{11행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
+\end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
@@ -231,9 +231,9 @@ print(f"방식 B (softmax + CE)   accuracy: {acc_b:.4f}")
 print(f"차이: {abs(acc_a - acc_b):.4f}")
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{model\_a = LogisticRegression(max\_iter=1000)...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model\_a.fit(X\_train, y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{model\_b = LogisticRegression(max\_iter=1000)  \# 방식 B}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{5행}의 \inlinecode{model\_b.fit(X\_train, y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{7행}의 \inlinecode{acc\_a = accuracy\_score(y\_test, model\_a.predict(X\_test))}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{8행}의 \inlinecode{acc\_b = accuracy\_score(y\_test, model\_b.predict(X\_test))}에서는 학습된 모델로 최종 예측값을 만듭니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{model\_a = LogisticRegression(max\_iter=100...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model\_a.fit(X\_train, y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{model\_b = LogisticRegression(max\_iter=100...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{5행}의 \inlinecode{model\_b.fit(X\_train, y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{7행}의 \inlinecode{acc\_a = accuracy\_score(y\_test, model\_a.pr...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{8행}의 \inlinecode{acc\_b = accuracy\_score(y\_test, model\_b.pr...}에서는 학습된 모델로 최종 예측값을 만듭니다.
+\end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
@@ -262,9 +262,9 @@ print(f"\n전체 max 차이: {np.abs(p_a - p_b).max():.4f}")
 print(f"전체 mean 차이: {np.abs(p_a - p_b).mean():.4f}")
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{proba\_a = model\_a.predict\_proba(X\_test)   \# (N, 2)}에서는 클래스별 예측 확률을 계산합니다. \textbf{2행}의 \inlinecode{proba\_b = model\_b.predict\_proba(X\_test)   \# (N, 2)}에서는 클래스별 예측 확률을 계산합니다. \textbf{8행}의 \inlinecode{p\_a, p\_b = proba\_a[:, 1], proba\_b[:, 1]}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{proba\_a = model\_a.predict\_proba(X\_test)...}에서는 클래스별 예측 확률을 계산합니다. \textbf{2행}의 \inlinecode{proba\_b = model\_b.predict\_proba(X\_test)...}에서는 클래스별 예측 확률을 계산합니다. \textbf{8행}의 \inlinecode{p\_a, p\_b = proba\_a[:, 1], proba\_b[:, 1]}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
@@ -328,9 +328,9 @@ for i in range(len(z0_arr)):
 print(f"\nmax 차이: {np.abs(softmax_p1 - sigmoid_diff).max():.2e}  (수치적 오차 수준)")
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \textbf{2행}의 \inlinecode{z0\_arr = np.array([-2.0, 0.0, 1.5, 3.0])}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{3행}의 \inlinecode{z1\_arr = np.array([ 1.0, 0.5, -0.5, 2.0])}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{5행}의 \inlinecode{softmax\_p1  = np.exp(z1\_arr) / (np.exp(z0\_arr) + np.exp...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{6행}의 \inlinecode{sigmoid\_diff = 1.0 / (1.0 + np.exp(-(z1\_arr - z0\_arr)))}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{10행}의 \inlinecode{for i in range(len(z0\_arr)):}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\textbf{2행}의 \inlinecode{z0\_arr = np.array([-2.0, 0.0, 1.5, 3.0])}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{3행}의 \inlinecode{z1\_arr = np.array([ 1.0, 0.5, -0.5, 2.0])}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{5행}의 \inlinecode{softmax\_p1  = np.exp(z1\_arr) / (np.exp(z0...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{6행}의 \inlinecode{sigmoid\_diff = 1.0 / (1.0 + np.exp(-(z1\_a...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]

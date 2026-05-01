@@ -113,9 +113,9 @@ L = -\frac{1}{N}\sum_{i=1}^{N} \log \hat p_{i,\, y_i}
 !pip install -q datasets scikit-learn pandas matplotlib
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{!pip install -q datasets scikit-learn pandas matplotlib}에서는 Colab 실행에 필요한 패키지를 설치합니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{!pip install -q datasets scikit-learn pan...}에서는 Colab 실행에 필요한 패키지를 설치합니다.
+\end{codeRead}
 
 
 
@@ -145,9 +145,9 @@ print("클래스 분포 (라벨 0-4 = 별점 1-5):")
 print(df["label"].value_counts().sort_index())
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \inlinecode{numpy, pandas, matplotlib, datasets, scikit-learn} 같은 주요 패키지를 불러옵니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\inlinecode{numpy, pandas, matplotlib, datasets, scikit-learn} 같은 주요 패키지를 불러옵니다.
+\end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
@@ -181,9 +181,9 @@ X_test = tfidf.transform(X_text_test)
 print(f"X_train: {X_train.shape}, y_train 분포: {pd.Series(y_train).value_counts().sort_index().tolist()}")
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \textbf{2행}의 \inlinecode{y\_5class = df["label"]}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{4--6행}의 \inlinecode{X\_text\_train, X\_text\_test, y\_train, y\_test = train\_test...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{8행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{9행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{10행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\textbf{2행}의 \inlinecode{y\_5class = df["label"]}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{4--6행}의 \inlinecode{X\_text\_train, X\_text\_test, y\_train, y\_tes...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{8행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{9행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{10행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
+\end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
@@ -213,9 +213,9 @@ print(f"baseline (균등 추측): {baseline:.4f}")
 print(f"baseline 대비 개선: {acc - baseline:+.4f}")
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{model\_5 = LogisticRegression(max\_iter=1000)}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model\_5.fit(X\_train, y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{y\_pred = model\_5.predict(X\_test)}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{5행}의 \inlinecode{acc = accuracy\_score(y\_test, y\_pred)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{6행}의 \inlinecode{baseline = 1 / 5}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{model\_5 = LogisticRegression(max\_iter=1000)}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model\_5.fit(X\_train, y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{y\_pred = model\_5.predict(X\_test)}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{5행}의 \inlinecode{acc = accuracy\_score(y\_test, y\_pred)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{6행}의 \inlinecode{baseline = 1 / 5}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
@@ -236,9 +236,9 @@ print(f"\n앞 3개 샘플의 확률 분포:")
 print(pd.DataFrame(proba_5[:3], columns=[f"P({i+1}★)" for i in range(5)]).round(3))
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{proba\_5 = model\_5.predict\_proba(X\_test)}에서는 클래스별 예측 확률을 계산합니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{proba\_5 = model\_5.predict\_proba(X\_test)}에서는 클래스별 예측 확률을 계산합니다.
+\end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
@@ -295,9 +295,9 @@ cm_df = pd.DataFrame(
 print(cm_df)
 \end{lstlisting}
 
-\vspace{0.12em}
-\noindent\textbf{위 코드 읽기.}\quad \textbf{1행}의 \inlinecode{cm = confusion\_matrix(y\_test, y\_pred)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{2--6행}의 \inlinecode{cm\_df = pd.DataFrame( cm, index=[f"true \{i+1\}★" for i i...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
-\par\vspace{0.35em}
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{cm = confusion\_matrix(y\_test, y\_pred)}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다. \textbf{2--6행}의 \inlinecode{cm\_df = pd.DataFrame( cm, index=[f"true \{...}에서는 이후 단계에서 재사용할 중간 값을 계산해 변수에 저장합니다.
+\end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
