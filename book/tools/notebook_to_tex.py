@@ -573,6 +573,18 @@ def display_math_to_numbered_equations(latex: str, chapter_number: int) -> str:
 def markdown_to_latex(markdown: str, chapter_number: int) -> str:
     markdown = sanitize_symbols(promote_headings(strip_heading_emoji(markdown)))
     markdown = escape_table_math_pipes(markdown)
+    raw_blocks: list[str] = []
+
+    def protect_raw_latex(match: re.Match[str]) -> str:
+        raw_blocks.append(match.group(0))
+        return f"\nRAWLATEXBLOCK{len(raw_blocks) - 1}END\n"
+
+    markdown = re.sub(
+        r"\\begin\{bookfigure\}.*?\\end\{bookfigure\}",
+        protect_raw_latex,
+        markdown,
+        flags=re.DOTALL,
+    )
     proc = subprocess.run(
         [
             "pandoc",
@@ -589,6 +601,8 @@ def markdown_to_latex(markdown: str, chapter_number: int) -> str:
         capture_output=True,
     )
     latex = proc.stdout
+    for idx, raw_block in enumerate(raw_blocks):
+        latex = latex.replace(f"RAWLATEXBLOCK{idx}END", raw_block)
     latex = strip_pandoc_targets(latex)
     latex = normalize_code_blocks(latex)
     latex = format_embedded_listings(latex)
