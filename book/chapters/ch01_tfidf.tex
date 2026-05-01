@@ -155,34 +155,19 @@ df.head(3)
 \textbf{1행}의 \inlinecode{SAMPLE\_SIZE = 5000}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{2행}의 \inlinecode{ds = dataset["train"].shuffle(seed=42).se...}에서는 전체 데이터에서 실습에 사용할 샘플만 추립니다. \textbf{3행}의 \inlinecode{df = ds.to\_pandas()}에서는 데이터셋을 표 형태로 바꿔 이후 셀에서 다루기 쉽게 합니다. \textbf{6행}의 \inlinecode{df.head(3)}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
-\par\noindent\textbf{출력 표.}\par\smallskip
-\begingroup\scriptsize
-\begin{adjustbox}{max width=.98\linewidth}
-\begin{tabularx}{.98\linewidth}{@{}YYY@{}}
-\toprule
- & metric & value \\
-\midrule
-0 & sample\_\allowbreak\{\}count & 5000 \\
-\bottomrule
-\end{tabularx}
-\end{adjustbox}
-\endgroup
-\par\vspace{0.9em}
-
-\par\noindent\textbf{출력 표.}\par\smallskip
-\begingroup\scriptsize
-\begin{adjustbox}{max width=.98\linewidth}
-\begin{tabularx}{.98\linewidth}{@{}YYY@{}}
-\toprule
- & label & text \\
-\midrule
-0 & 4 & I stalk this truck. I've been to industrial p... \\
-1 & 2 & who really knows if this is good pho or not, i... \\
-2 & 4 & I LOVE Bloom Salon... all of their stylist are... \\
-\bottomrule
-\end{tabularx}
-\end{adjustbox}
-\endgroup
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+metric  value
+0  sample_count   5000
+   label
+     text
+0      4  I stalk this truck.  I've been to industrial
+  p...
+1      2  who really knows if this is good pho or not,
+  i...
+2      4  I LOVE Bloom Salon... all of their stylist
+  are...
+\end{lstlisting}
 \par\vspace{0.9em}
 
 
@@ -202,22 +187,16 @@ display(counts.rename_axis("label").reset_index(name="count"))
 \textbf{1행}의 \inlinecode{counts = df["label"].value\_counts().sort\_...}에서는 라벨별 샘플 개수를 집계합니다. \textbf{2행}의 \inlinecode{labels = [f"\{i+1\} star" for i in counts.i...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
-\par\noindent\textbf{출력 표.}\par\smallskip
-\begingroup\scriptsize
-\begin{adjustbox}{max width=.98\linewidth}
-\begin{tabularx}{.98\linewidth}{@{}YYY@{}}
-\toprule
- & label & count \\
-\midrule
-0 & 0 & 1017 \\
-1 & 1 & 1027 \\
-2 & 2 & 960 \\
-3 & 3 & 1021 \\
-4 & 4 & 975 \\
-\bottomrule
-\end{tabularx}
-\end{adjustbox}
-\endgroup
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+<Figure size 640x480 with 1 Axes>
+   label  count
+0      0   1017
+1      1   1027
+2      2    960
+3      3   1021
+4      4    975
+\end{lstlisting}
 \par\vspace{0.9em}
 
 
@@ -280,22 +259,15 @@ display(count_summary)
 \textbf{1행}의 \inlinecode{cv = CountVectorizer(max\_features=10000)}에서는 단어 횟수 기반 벡터라이저를 만듭니다. \textbf{2행}의 \inlinecode{X\_count = cv.fit\_transform(df["text"])}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{3행}의 \inlinecode{sparsity = 1 - X\_count.nnz / (X\_count.sha...}에서는 행렬에서 0인 원소의 비율을 계산합니다. \textbf{5--11행}의 \inlinecode{count\_summary = pd.DataFrame([ \{"metric":...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
-\par\noindent\textbf{출력 표.}\par\smallskip
-\begingroup\scriptsize
-\begin{adjustbox}{max width=.98\linewidth}
-\begin{tabularx}{.98\linewidth}{@{}YYY@{}}
-\toprule
- & metric & value \\
-\midrule
-0 & n\_\allowbreak\{\}documents & 5000 \\
-1 & vocab\_\allowbreak\{\}size & 10000 \\
-2 & non\_\allowbreak\{\}zero\_\allowbreak\{\}entries & 405789 \\
-3 & total\_\allowbreak\{\}entries & 50000000 \\
-4 & sparsity & 99.19\% \\
-\bottomrule
-\end{tabularx}
-\end{adjustbox}
-\endgroup
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+metric     value
+0       n_documents      5000
+1        vocab_size     10000
+2  non_zero_entries    405789
+3     total_entries  50000000
+4          sparsity    99.19%
+\end{lstlisting}
 \par\vspace{0.9em}
 
 
@@ -316,19 +288,12 @@ display(tokenization_preview)
 \textbf{1행}의 \inlinecode{sample = "I love using Hugging Face!"}에서는 토큰화 예제로 사용할 문장을 정합니다. \textbf{2행}의 \inlinecode{analyzer = cv.build\_analyzer()}에서는 벡터라이저 내부의 토큰화 규칙을 직접 호출할 함수로 꺼냅니다. \textbf{4--7행}의 \inlinecode{tokenization\_preview = pd.DataFrame([ \{"i...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
-\par\noindent\textbf{출력 표.}\par\smallskip
-\begingroup\scriptsize
-\begin{adjustbox}{max width=.98\linewidth}
-\begin{tabularx}{.98\linewidth}{@{}YYY@{}}
-\toprule
- & item & value \\
-\midrule
-0 & input & 'I love using Hugging Face!' \\
-1 & tokens & [love, using, hugging, face] \\
-\bottomrule
-\end{tabularx}
-\end{adjustbox}
-\endgroup
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+item                         value
+0   input  'I love using Hugging Face!'
+1  tokens  [love, using, hugging, face]
+\end{lstlisting}
 \par\vspace{0.9em}
 
 
@@ -371,41 +336,26 @@ display(top_count_words)
 \textbf{1행}의 \inlinecode{vocab = cv.get\_feature\_names\_out()}에서는 벡터라이저가 학습한 어휘 목록을 가져옵니다. \textbf{2행}의 \inlinecode{word\_counts = np.asarray(X\_count.sum(axis...}에서는 열 방향으로 값을 더해 특성별 합계를 계산합니다. \textbf{3행}의 \inlinecode{top = np.argsort(word\_counts)[::-1][:10]}에서는 값이 큰 항목부터 볼 수 있도록 인덱스를 정렬합니다. \textbf{5행}의 \inlinecode{vocab\_summary = pd.DataFrame([\{"metric":...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{6행}의 \inlinecode{vocab\_preview = pd.DataFrame(\{"token": vo...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{7--10행}의 \inlinecode{top\_count\_words = pd.DataFrame(\{ "token":...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
-\par\noindent\textbf{출력 표.}\par\smallskip
-\begingroup\scriptsize
-\begin{adjustbox}{max width=.98\linewidth}
-\begin{tabularx}{.98\linewidth}{@{}YYY@{}}
-\toprule
- & metric & value \\
-\midrule
-0 & vocab\_\allowbreak\{\}size & 10000 \\
-\bottomrule
-\end{tabularx}
-\end{adjustbox}
-\endgroup
-\par\vspace{0.9em}
-
-\par\noindent\textbf{출력 표.}\par\smallskip
-\begingroup\scriptsize
-\begin{adjustbox}{max width=.98\linewidth}
-\begin{tabularx}{.98\linewidth}{@{}YYY@{}}
-\toprule
- & token & count \\
-\midrule
-0 & the & 33748 \\
-1 & and & 21311 \\
-2 & to & 16702 \\
-3 & was & 12295 \\
-4 & it & 10682 \\
-5 & of & 10226 \\
-6 & for & 7839 \\
-7 & is & 7760 \\
-8 & in & 7593 \\
-9 & that & 6756 \\
-\bottomrule
-\end{tabularx}
-\end{adjustbox}
-\endgroup
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+metric  value
+0  vocab_size  10000
+    token
+0      00
+1     000
+2    00am
+3    00pm
+4      05
+5      08
+6      09
+7      10
+8     100
+9    1000
+10  100th
+11    101
+12   10am
+...
+\end{lstlisting}
 \par\vspace{0.9em}
 
 
@@ -442,18 +392,11 @@ X_tfidf = tfidf.fit_transform(df["text"])
 display(pd.DataFrame([{"object": "X_tfidf", "shape": X_tfidf.shape}]))
 \end{lstlisting}
 
-\par\noindent\textbf{출력 표.}\par\smallskip
-\begingroup\scriptsize
-\begin{adjustbox}{max width=.98\linewidth}
-\begin{tabularx}{.98\linewidth}{@{}YYY@{}}
-\toprule
- & object & shape \\
-\midrule
-0 & X\_\allowbreak\{\}tfidf & (5000, 10000) \\
-\bottomrule
-\end{tabularx}
-\end{adjustbox}
-\endgroup
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+object          shape
+0  X_tfidf  (5000, 10000)
+\end{lstlisting}
 \par\vspace{0.9em}
 
 
@@ -480,27 +423,22 @@ display(review_preview)
 display(top_tfidf_words)
 \end{lstlisting}
 
-\par\noindent\textbf{출력 표.}\par\smallskip
-\begingroup\scriptsize
-\begin{adjustbox}{max width=.98\linewidth}
-\begin{tabularx}{.98\linewidth}{@{}YYYY@{}}
-\toprule
- & token & count & tfidf \\
-\midrule
-0 & stalk & 1 & 0.2418 \\
-1 & pretend & 1 & 0.2252 \\
-2 & industrial & 1 & 0.2212 \\
-3 & farmer & 1 & 0.2212 \\
-4 & parks & 1 & 0.2212 \\
-5 & divine & 1 & 0.2092 \\
-6 & tech & 1 & 0.2068 \\
-7 & pride & 1 & 0.2046 \\
-8 & bowls & 1 & 0.1988 \\
-9 & gotta & 1 & 0.1898 \\
-\bottomrule
-\end{tabularx}
-\end{adjustbox}
-\endgroup
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+review_preview_200_chars
+0  I stalk this truck.  I've been to industrial p...
+        token  count   tfidf
+0       stalk      1  0.2418
+1     pretend      1  0.2252
+2  industrial      1  0.2212
+3      farmer      1  0.2212
+4       parks      1  0.2212
+5      divine      1  0.2092
+6        tech      1  0.2068
+7       pride      1  0.2046
+8       bowls      1  0.1988
+9       gotta      1  0.1898
+\end{lstlisting}
 \par\vspace{0.9em}
 
 

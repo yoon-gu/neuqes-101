@@ -25,6 +25,7 @@ ROOT = Path(__file__).resolve().parents[2]
 BOOK = ROOT / "book"
 CHAPTER_DIR = BOOK / "chapters"
 GITHUB_RAW = "https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master"
+RENDER_DATAFRAME_TABLES = False
 
 
 @dataclass(frozen=True)
@@ -1171,7 +1172,7 @@ def output_interpretation(source: str, output: str) -> str:
 
 
 def output_to_latex(source: str, outputs: list[dict]) -> str:
-    tables = output_tables(outputs)
+    tables = output_tables(outputs) if RENDER_DATAFRAME_TABLES else []
     if tables:
         return "\n\n".join(tables)
     text = output_text(outputs)

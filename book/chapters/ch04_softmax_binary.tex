@@ -207,35 +207,16 @@ display(label_summary)
 \textbf{1행}의 \inlinecode{df\_bin = df[df["star"] != 3].copy()}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{2행}의 \inlinecode{df\_bin["y"] = (df\_bin["star"] >= 4).astyp...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{4--6행}의 \inlinecode{X\_text\_train, X\_text\_test, y\_train, y\_tes...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{8행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 TF-IDF 기반 벡터라이저를 만듭니다. \textbf{9행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{10행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
 \end{codeRead}
 
-\par\noindent\textbf{출력 표.}\par\smallskip
-\begingroup\scriptsize
-\begin{adjustbox}{max width=.98\linewidth}
-\begin{tabularx}{.98\linewidth}{@{}YYY@{}}
-\toprule
- & object & shape \\
-\midrule
-0 & X\_\allowbreak\{\}train & (3232, 10000) \\
-1 & X\_\allowbreak\{\}test & (808, 10000) \\
-2 & y\_\allowbreak\{\}train & (3232,) \\
-3 & y\_\allowbreak\{\}test & (808,) \\
-\bottomrule
-\end{tabularx}
-\end{adjustbox}
-\endgroup
-\par\vspace{0.9em}
-
-\par\noindent\textbf{출력 표.}\par\smallskip
-\begingroup\scriptsize
-\begin{adjustbox}{max width=.98\linewidth}
-\begin{tabularx}{.98\linewidth}{@{}YYY@{}}
-\toprule
- & metric & value \\
-\midrule
-0 & positive\_\allowbreak\{\}rate\_\allowbreak\{\}train & 0.494121 \\
-\bottomrule
-\end{tabularx}
-\end{adjustbox}
-\endgroup
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+object          shape
+0  X_train  (3232, 10000)
+1   X_test   (808, 10000)
+2  y_train        (3232,)
+3   y_test         (808,)
+                metric     value
+0  positive_rate_train  0.494121
+\end{lstlisting}
 \par\vspace{0.9em}
 
 
@@ -279,20 +260,13 @@ display(accuracy_comparison)
 \textbf{1행}의 \inlinecode{model\_a = LogisticRegression(max\_iter=1000)}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model\_a.fit(X\_train, y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{model\_b = LogisticRegression(max\_iter=1000)}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{5행}의 \inlinecode{model\_b.fit(X\_train, y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{7행}의 \inlinecode{acc\_a = accuracy\_score(y\_test, model\_a.pr...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{8행}의 \inlinecode{acc\_b = accuracy\_score(y\_test, model\_b.pr...}에서는 학습된 모델로 최종 예측값을 만듭니다.
 \end{codeRead}
 
-\par\noindent\textbf{출력 표.}\par\smallskip
-\begingroup\scriptsize
-\begin{adjustbox}{max width=.98\linewidth}
-\begin{tabularx}{.98\linewidth}{@{}YYY@{}}
-\toprule
- & method & accuracy \\
-\midrule
-0 & A\_\allowbreak\{\}sigmoid\_\allowbreak\{\}bce & 0.863861 \\
-1 & B\_\allowbreak\{\}softmax\_\allowbreak\{\}ce & 0.863861 \\
-2 & absolute\_\allowbreak\{\}difference & 0.000000 \\
-\bottomrule
-\end{tabularx}
-\end{adjustbox}
-\endgroup
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+method  accuracy
+0        A_sigmoid_bce  0.863861
+1         B_softmax_ce  0.863861
+2  absolute_difference  0.000000
+\end{lstlisting}
 \par\vspace{0.9em}
 
 
@@ -326,52 +300,21 @@ display(difference_summary)
 \textbf{1행}의 \inlinecode{proba\_a = model\_a.predict\_proba(X\_test)...}에서는 클래스별 예측 확률을 계산합니다. \textbf{2행}의 \inlinecode{proba\_b = model\_b.predict\_proba(X\_test)...}에서는 클래스별 예측 확률을 계산합니다. \textbf{4행}의 \inlinecode{p\_a, p\_b = proba\_a[:, 1], proba\_b[:, 1]}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6--9행}의 \inlinecode{shape\_comparison = pd.DataFrame([ \{"metho...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{10--13행}의 \inlinecode{probability\_preview = pd.DataFrame(\{ "P\_y...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{14--17행}의 \inlinecode{difference\_summary = pd.DataFrame([ \{"met...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다.
 \end{codeRead}
 
-\par\noindent\textbf{출력 표.}\par\smallskip
-\begingroup\scriptsize
-\begin{adjustbox}{max width=.98\linewidth}
-\begin{tabularx}{.98\linewidth}{@{}YYY@{}}
-\toprule
- & method & predict\_\allowbreak\{\}proba\_\allowbreak\{\}shape \\
-\midrule
-0 & A\_\allowbreak\{\}sigmoid\_\allowbreak\{\}bce & (808, 2) \\
-1 & B\_\allowbreak\{\}softmax\_\allowbreak\{\}ce & (808, 2) \\
-\bottomrule
-\end{tabularx}
-\end{adjustbox}
-\endgroup
-\par\vspace{0.9em}
-
-\par\noindent\textbf{출력 표.}\par\smallskip
-\begingroup\scriptsize
-\begin{adjustbox}{max width=.98\linewidth}
-\begin{tabularx}{.98\linewidth}{@{}YYY@{}}
-\toprule
- & P\_\allowbreak\{\}y1\_\allowbreak\{\}A & P\_\allowbreak\{\}y1\_\allowbreak\{\}B \\
-\midrule
-0 & 0.4485 & 0.4485 \\
-1 & 0.0999 & 0.0999 \\
-2 & 0.1638 & 0.1638 \\
-3 & 0.6661 & 0.6661 \\
-4 & 0.7578 & 0.7578 \\
-\bottomrule
-\end{tabularx}
-\end{adjustbox}
-\endgroup
-\par\vspace{0.9em}
-
-\par\noindent\textbf{출력 표.}\par\smallskip
-\begingroup\scriptsize
-\begin{adjustbox}{max width=.98\linewidth}
-\begin{tabularx}{.98\linewidth}{@{}YYY@{}}
-\toprule
- & metric & value \\
-\midrule
-0 & max\_\allowbreak\{\}absolute\_\allowbreak\{\}difference & 0.0 \\
-1 & mean\_\allowbreak\{\}absolute\_\allowbreak\{\}difference & 0.0 \\
-\bottomrule
-\end{tabularx}
-\end{adjustbox}
-\endgroup
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+method predict_proba_shape
+0  A_sigmoid_bce            (808, 2)
+1   B_softmax_ce            (808, 2)
+   P_y1_A  P_y1_B
+0  0.4485  0.4485
+1  0.0999  0.0999
+2  0.1638  0.1638
+3  0.6661  0.6661
+4  0.7578  0.7578
+                     metric  value
+0   max_absolute_difference    0.0
+1  mean_absolute_difference    0.0
+\end{lstlisting}
 \par\vspace{0.9em}
 
 
@@ -426,21 +369,19 @@ display(softmax_sigmoid_check)
 \textbf{1행}의 \inlinecode{z0\_arr = np.array([-2.0, 0.0, 1.5, 3.0])}에서는 비교 실험에 사용할 작은 배열을 만듭니다. \textbf{2행}의 \inlinecode{z1\_arr = np.array([ 1.0, 0.5, -0.5, 2.0])}에서는 비교 실험에 사용할 작은 배열을 만듭니다. \textbf{4행}의 \inlinecode{softmax\_p1  = np.exp(z1\_arr) / (np.exp(z0...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{sigmoid\_diff = 1.0 / (1.0 + np.exp(-(z1\_a...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{7--13행}의 \inlinecode{softmax\_sigmoid\_check = pd.DataFrame(\{ "z...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다.
 \end{codeRead}
 
-\par\noindent\textbf{출력 표.}\par\smallskip
-\begingroup\scriptsize
-\begin{adjustbox}{max width=.98\linewidth}
-\begin{tabularx}{.98\linewidth}{@{}YYYYYY@{}}
-\toprule
- & z0 & z1 & softmax\_\allowbreak\{\}p1 & sigmoid\_\allowbreak\{\}z1\_\allowbreak\{\}minus\_\allowbreak\{\}z0 & absolute\_\allowbreak\{\}difference \\
-\midrule
-0 & -2.0 & 1.0 & 0.952574 & 0.952574 & 2.220446e-16 \\
-1 & 0.0 & 0.5 & 0.622459 & 0.622459 & 0.000000e+00 \\
-2 & 1.5 & -0.5 & 0.119203 & 0.119203 & 2.775558e-17 \\
-3 & 3.0 & 2.0 & 0.268941 & 0.268941 & 0.000000e+00 \\
-\bottomrule
-\end{tabularx}
-\end{adjustbox}
-\endgroup
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+z0   z1  softmax_p1  sigmoid_z1_minus_z0
+  absolute_difference
+0 -2.0  1.0    0.952574             0.952574
+  2.220446e-16
+1  0.0  0.5    0.622459             0.622459
+  0.000000e+00
+2  1.5 -0.5    0.119203             0.119203
+  2.775558e-17
+3  3.0  2.0    0.268941             0.268941
+  0.000000e+00
+\end{lstlisting}
 \par\vspace{0.9em}
 
 
@@ -468,34 +409,15 @@ display(coef_shape_check)
 display(parameter_difference)
 \end{lstlisting}
 
-\par\noindent\textbf{출력 표.}\par\smallskip
-\begingroup\scriptsize
-\begin{adjustbox}{max width=.98\linewidth}
-\begin{tabularx}{.98\linewidth}{@{}YYYY@{}}
-\toprule
- & method & coef\_\allowbreak\{\}shape & intercept\_\allowbreak\{\}shape \\
-\midrule
-0 & A\_\allowbreak\{\}sigmoid\_\allowbreak\{\}bce & (1, 10000) & (1,) \\
-1 & B\_\allowbreak\{\}softmax\_\allowbreak\{\}ce & (1, 10000) & (1,) \\
-\bottomrule
-\end{tabularx}
-\end{adjustbox}
-\endgroup
-\par\vspace{0.9em}
-
-\par\noindent\textbf{출력 표.}\par\smallskip
-\begingroup\scriptsize
-\begin{adjustbox}{max width=.98\linewidth}
-\begin{tabularx}{.98\linewidth}{@{}YYY@{}}
-\toprule
- & metric & value \\
-\midrule
-0 & coef\_\allowbreak\{\}max\_\allowbreak\{\}absolute\_\allowbreak\{\}difference & 0.0 \\
-1 & intercept\_\allowbreak\{\}max\_\allowbreak\{\}absolute\_\allowbreak\{\}difference & 0.0 \\
-\bottomrule
-\end{tabularx}
-\end{adjustbox}
-\endgroup
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+method  coef_shape intercept_shape
+0  A_sigmoid_bce  (1, 10000)            (1,)
+1   B_softmax_ce  (1, 10000)            (1,)
+                              metric  value
+0       coef_max_absolute_difference    0.0
+1  intercept_max_absolute_difference    0.0
+\end{lstlisting}
 \par\vspace{0.9em}
 
 
