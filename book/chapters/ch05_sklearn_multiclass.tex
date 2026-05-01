@@ -415,25 +415,25 @@ true 5★  10        3         7         51        124
   note/.style={align=center, text=BookMuted, font=\sffamily\tiny},
   arrow/.style={->, line width=0.45pt, draw=BookMuted, shorten >=1.2pt, shorten <=1.2pt}
 ]
-\node[font=\sffamily\bfseries\small] at (4.75,0.48) {multinomial: one softmax over 5 logits};
-\node[box] (mx) at (0,-1.20) {입력\\$x$};
-\node[box] (mlin) at (1.45,-1.20) {Linear\\$V\to 5$};
-\node[soft] (msoft) at (5.40,-1.20) {softmax};
-\foreach \i/\y in {1/-0.30,2/-0.75,3/-1.20,4/-1.65,5/-2.10}{
-  \node[cell] (z\i) at (3.15,\y) {$z_\i$};
-  \node[cell] (mp\i) at (7.65,\y) {$p_\i$};
+\node[font=\sffamily\bfseries\small] at (4.75,0.58) {multinomial: one softmax over 5 logits};
+\node[box] (mx) at (-0.35,-1.20) {입력\\$x$};
+\node[box] (mlin) at (1.55,-1.20) {Linear\\$V\to 5$};
+\node[soft] (msoft) at (5.50,-1.20) {softmax};
+\foreach \i/\y in {1/-0.05,2/-0.625,3/-1.20,4/-1.775,5/-2.35}{
+  \node[cell] (z\i) at (3.25,\y) {$z_\i$};
+  \node[cell] (mp\i) at (7.75,\y) {$p_\i$};
   \draw[arrow] (z\i.east) -- (msoft.west);
   \draw[arrow] (msoft.east) -- (mp\i.west);
 }
 \draw[arrow] (mx) -- (mlin);
 \foreach \i in {1,2,3,4,5}{\draw[arrow] (mlin.east) -- (z\i.west);}
-\node[note] at (5.40,-2.58) {one normalization: $\sum_{k=1}^{5}p_k=1$};
+\node[note] at (5.50,-2.88) {one normalization: $\sum_{k=1}^{5}p_k=1$};
 
-\draw[CodeRule, line width=0.35pt] (-0.35,-3.08) -- (8.55,-3.08);
+\draw[CodeRule, line width=0.35pt] (-0.35,-3.38) -- (8.55,-3.38);
 
-\node[font=\sffamily\bfseries\small] at (4.75,-3.52) {OvR: 5 independent sigmoid outputs};
-\node[box] (ox) at (0,-4.95) {입력\\$x$};
-\foreach \i/\y in {1/-4.05,2/-4.50,3/-4.95,4/-5.40,5/-5.85}{
+\node[font=\sffamily\bfseries\small] at (4.75,-3.82) {OvR: 5 independent sigmoid outputs};
+\node[box] (ox) at (0,-5.25) {입력\\$x$};
+\foreach \i/\y in {1/-4.35,2/-4.80,3/-5.25,4/-5.70,5/-6.15}{
   \node[ovr] (c\i) at (2.75,\y) {분류기 \i: $\i\star$ vs rest};
   \node[soft] (s\i) at (5.45,\y) {sigmoid};
   \node[cell] (p\i) at (7.65,\y) {$P_\i$};
@@ -441,7 +441,7 @@ true 5★  10        3         7         51        124
   \draw[arrow] (c\i.east) -- (s\i.west);
   \draw[arrow] (s\i.east) -- (p\i.west);
 }
-\node[note] at (4.75,-6.32) {independent $P_k$; choose $\arg\max_k P_k$};
+\node[note] at (4.75,-6.62) {independent $P_k$; choose $\arg\max_k P_k$};
 \end{tikzpicture}
 \end{adjustbox}
 \end{bookfigure}
