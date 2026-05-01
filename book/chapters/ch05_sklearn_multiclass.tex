@@ -465,14 +465,54 @@ true 5★  10        3         7         51        124
 
 
 
-\Needspace{26\baselineskip}
+이제 그림~\ref{fig:ch05-ovr-sigmoid}의 구조를 실제 \inlinecode{sklearn} 객체로 확인해보겠습니다. \inlinecode{OneVsRestClassifier}는 겉으로는 하나의 모델처럼 보이지만, 내부에는 클래스 수만큼의 binary 분류기를 따로 보관합니다. 별점이 5개이므로 여기서는 다섯 개의 \inlinecode{LogisticRegression}이 만들어지는지 먼저 확인합니다.
+
+
+
+\Needspace{20\baselineskip}
 \begin{lstlisting}
 model_ovr = OneVsRestClassifier(LogisticRegression(max_iter=1000))
 model_ovr.fit(X_train, y_train)
 
-ovr_coef = np.vstack([est.coef_[0] for est in model_ovr.estimators_])
-# (5, V)
-ovr_intercept = np.array([est.intercept_[0] for est in model_ovr.estimators_]) # (5,)
+ovr_model_summary = pd.DataFrame([
+    {"metric": "n_estimators", "value": len(model_ovr.estimators_)},
+    {
+        "metric": "estimator_type",
+        "value": type(model_ovr.estimators_[0]).__name__,
+    },
+    {
+        "metric": "estimator_0_coef_shape",
+        "value": model_ovr.estimators_[0].coef_.shape,
+    },
+])
+
+display(ovr_model_summary)
+\end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+metric                  value
+-  ----------------------  ------------------
+0  n_estimators            5
+1  estimator_type          LogisticRegression
+2  estimator_0_coef_shape  (1, 10000)
+\end{lstlisting}
+\par\vspace{0.9em}
+
+
+
+위 출력에서 \inlinecode{n\_estimators}가 5라면 OvR이 정말로 다섯 개의 binary 분류기를 만들었다는 뜻입니다. \inlinecode{estimator\_0\_coef\_shape}는 첫 번째 binary 분류기가 하나의 weight 벡터를 가진다는 점을 보여줍니다. 즉 multinomial처럼 한 모델 안에서 5개 클래스를 동시에 경쟁시키는 구조가 아니라, 클래스별 판단기를 병렬로 세운 구조입니다.
+
+
+
+\Needspace{26\baselineskip}
+\begin{lstlisting}
+ovr_coef = np.vstack([
+    est.coef_[0] for est in model_ovr.estimators_
+])
+ovr_intercept = np.array([
+    est.intercept_[0] for est in model_ovr.estimators_
+])
 
 ovr_logits_all = np.asarray(X_test @ ovr_coef.T) + ovr_intercept
 ovr_sigmoid_all = 1.0 / (1.0 + np.exp(-ovr_logits_all))
@@ -485,12 +525,9 @@ p_multi = proba_5[sample_idx]
 p_ovr_raw = ovr_sigmoid_all[sample_idx]
 p_ovr_norm = model_ovr.predict_proba(X_test)[sample_idx]
 
-ovr_model_summary = pd.DataFrame([
-    {"metric": "n_estimators", "value": len(model_ovr.estimators_)},
-    {"metric": "estimator_type", "value": type(model_ovr.estimators_[0]).__name__},
-    {"metric": "estimator_0_coef_shape", "value": model_ovr.estimators_[0].coef_.shape},
+review_preview = pd.DataFrame([
+    {"review_preview_200_chars": sample_text[:200] + "..."}
 ])
-review_preview = pd.DataFrame([{"review_preview_200_chars": sample_text[:200] + "..."}])
 probability_comparison = pd.DataFrame({
     "class": [f"{k+1}★" for k in range(5)],
     "multinomial": p_multi.round(4),
@@ -503,7 +540,6 @@ probability_sums = pd.DataFrame([
     {"method": "ovr_normalized", "sum": p_ovr_norm.sum()},
 ])
 
-display(ovr_model_summary)
 display(review_preview)
 display(pd.DataFrame([{"target_star": true_label + 1}]))
 display(probability_comparison)
@@ -512,12 +548,7 @@ display(probability_sums)
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-metric                  value
--  ----------------------  ------------------
-0  n_estimators            5
-1  estimator_type          LogisticRegression
-2  estimator_0_coef_shape  (1, 10000)
-                            review_preview_200_chars
+review_preview_200_chars
 0  A friend suggested this.. and we met up here w...
    target_star
 0            2
@@ -528,7 +559,11 @@ metric                  value
 2  3★    0.1708       0.1581   0.1711
 3  4★    0.0842       0.0846   0.0916
 4  5★    0.0957       0.0925   0.1001
-...
+   method          sum
+-  --------------  --------
+0  multinomial     1.000000
+1  ovr_raw         0.924129
+2  ovr_normalized  1.000000
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -559,6 +594,10 @@ metric                  value
 \item
   그래서 OvR을 multi-class에서 미리 만나두는 게 다음 장의 다리가 됩니다.
 \end{itemize}
+
+
+
+한 샘플의 확률 모양을 확인했으니, 마지막으로 전체 테스트셋에서 두 방식의 예측 성능과 OvR raw 출력의 합을 함께 봅니다. 정확도는 비슷할 수 있지만, \inlinecode{ovr\_raw}의 합은 확률분포처럼 1에 고정되지 않습니다. 이 차이가 다음 장의 multi-label 분류로 넘어가는 중요한 연결고리입니다.
 
 
 
@@ -599,6 +638,10 @@ method               accuracy
 2  mean_raw_probability_sum  0.981771
 \end{lstlisting}
 \par\vspace{0.9em}
+
+
+
+정확도만 보면 두 방식은 거의 비슷하게 보일 수 있습니다. 하지만 \inlinecode{raw\_sum\_summary}를 보면 OvR raw 출력의 합은 샘플마다 달라집니다. 이 값이 1보다 작거나 클 수 있다는 사실이 핵심입니다. OvR은 확률분포를 만드는 모델이 아니라, 클래스별로 독립적인 "해당 여부" 점수를 만드는 모델입니다. 그래서 multi-class 문제에서는 보통 multinomial softmax가 더 자연스럽고, 다음 장의 multi-label 문제에서는 OvR식 독립 sigmoid가 더 자연스럽습니다.
 
 
 
