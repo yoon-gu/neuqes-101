@@ -250,6 +250,9 @@
 \newenvironment{bookfigure}[2][htbp]
   {\def\bookfigurecaption{#2}\begin{figure}[#1]\centering}
   {\caption{\bookfigurecaption}\end{figure}}
+\newenvironment{bookfigurelabel}[3][htbp]
+  {\def\bookfigurecaption{#2}\def\bookfigurelabel{#3}\begin{figure}[#1]\centering}
+  {\caption{\bookfigurecaption}\label{\bookfigurelabel}\end{figure}}
 \newenvironment{bookdiagram}[2][htbp]
   {\def\bookfigurecaption{#2}\begin{figure}[#1]\centering\begin{tikzpicture}}
   {\end{tikzpicture}\caption{\bookfigurecaption}\end{figure}}

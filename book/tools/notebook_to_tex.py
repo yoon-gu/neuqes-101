@@ -580,7 +580,7 @@ def markdown_to_latex(markdown: str, chapter_number: int) -> str:
         return f"\nRAWLATEXBLOCK{len(raw_blocks) - 1}END\n"
 
     markdown = re.sub(
-        r"\\begin\{bookfigure\}.*?\\end\{bookfigure\}",
+        r"\\begin\{bookfigure(?:label)?\}.*?\\end\{bookfigure(?:label)?\}",
         protect_raw_latex,
         markdown,
         flags=re.DOTALL,
@@ -609,6 +609,13 @@ def markdown_to_latex(markdown: str, chapter_number: int) -> str:
     latex = faq_subsections_to_questions(latex)
     latex = normalize_tables(latex)
     latex = normalize_inline_code(latex)
+    latex = re.sub(
+        r"\\textbackslash ref\\\{([^{}]+)\\\}",
+        r"\\ref{\1}",
+        latex,
+    )
+    latex = latex.replace(r"\textasciitilde\{\}\ref", r"~\ref")
+    latex = latex.replace(r"\textasciitilde\ref", r"~\ref")
     latex = wrap_faq_blocks(latex)
     latex = polish_book_prose(latex)
     latex = wrap_preview_blocks(latex)
