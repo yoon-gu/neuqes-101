@@ -15,6 +15,18 @@ Loss 축:    MSELoss ─→ BCEWithLogitsLoss ─→ CrossEntropyLoss ─→ BCE
 
 각 챕터는 레포 루트의 자체 폴더(예: `01_tfidf/`)에 노트북과 요약 `README.md`가 함께 들어 있습니다.
 
+## 출판용 PDF 원고
+
+현재 Phase 0(1-6장)은 LaTeX 기반 출판용 원고로도 정리되어 있습니다.
+
+- 제목: **Hugging Face로 시작하는 텍스트 분석 입문**
+- 저자: **황윤구**
+- 범위: Phase 0, 1-6장
+- 원고 주제: TF-IDF와 sklearn으로 Loss, Output Head, sigmoid/softmax, multi-class, multi-label의 핵심 감각을 정리
+- PDF 다운로드: [Phase 0 원고 PDF v0.1.0](https://github.com/yoon-gu/neuqes-101/releases/tag/phase0-manuscript-v0.1.0)
+
+PDF는 GitHub Release asset으로 배포합니다. 노트북은 실습용 원본이고, PDF는 같은 내용을 책처럼 읽을 수 있도록 표지, 목차, 그림/표 캡션, 색인, 코드 블록 조판을 정리한 원고판입니다.
+
 ## 챕터별 변화추적표
 
 각 행의 Colab 버튼을 누르면 해당 챕터 노트북이 Colab에서 바로 열립니다. **진행** 열은 사용자가 Colab에서 직접 실행해 끝까지 정상 동작함을 확인하면 `✅`으로 갱신합니다(미검증: `—`).
