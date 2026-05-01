@@ -252,11 +252,8 @@ md(r"""## 5. config 저장과 직렬화
 
 학습된 모델을 어디에 저장하든 `config.json` 이 함께 들어갑니다 — 다른 사람이 같은 모델을 재구성할 수 있게.""")
 
-code(r"""# dict 형태로 (모든 설정을 dict 객체로)
-cfg_dict = model.config.to_dict()
+code(r"""cfg_dict = model.config.to_dict()
 print(f"dict 키 개수: {len(cfg_dict)}")
-# num_labels는 id2label 길이로 계산되는 property라 to_dict() 결과에 없습니다 (KeyError 주의).
-# 그래서 num_labels는 model.config 에서 직접 읽고, problem_type은 dict에서 읽음.
 print(f"num_labels: {model.config.num_labels}, problem_type: {cfg_dict['problem_type']}")
 
 # JSON 문자열 (직렬화 가능)
