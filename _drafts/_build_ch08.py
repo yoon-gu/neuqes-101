@@ -391,21 +391,72 @@ md(r"""**정적 vs 동적 padding 비교**
 | `DataCollatorForTokenClassification` | NER 같은 토큰 단위 라벨링 — labels도 padding | NER, POS tagging |
 | `default_data_collator` | 단순 stacking — padding 없이 길이 같은 샘플들에 | 이미 padding 끝낸 데이터 |
 
-### `Trainer` 와 collator의 관계 (Ch 9 떡밥)
+### 향후 학습 코드 관점 — Ch 9-13에서 실제로 어떻게 쓰이나
+
+이번 챕터에서 만든 *데이터 파이프라인 부품들*이 다음 챕터부터 학습 코드에서 어떤 자리에 들어가는지 미리 그려두면, Ch 9 이후 코드가 훨씬 익숙해 보입니다.
+
+#### 패턴 A — `Trainer` (커리큘럼 기본, Ch 9-13 대부분)
 
 ```python
-# Ch 9에서 보게 될 패턴
+# Ch 9 회귀, Ch 10 binary, Ch 11 multi-class, Ch 12 multi-label
+# 모두 같은 골격. 바뀌는 건 num_labels / problem_type / 데이터뿐.
+
+# 1) 토크나이저 + 데이터셋 (이번 Ch 8에서 한 작업)
+tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
+def tok(b): return tokenizer(b["text"], truncation=True, max_length=128)
+train_ds = small.map(tok, batched=True).remove_columns(["text"])
+# ← padding 없이 둠. DataCollator가 매 배치 알아서 처리
+
+# 2) 모델 (Ch 7의 from_pretrained 패턴)
+model = AutoModelForSequenceClassification.from_pretrained(
+    "distilbert-base-uncased", num_labels=1, problem_type="regression",
+)
+
+# 3) Trainer 한 줄로 묶음
 trainer = Trainer(
     model=model,
-    args=training_args,
-    train_dataset=tokenized,         # padding 없는 Dataset 그대로
-    eval_dataset=eval_tokenized,
-    tokenizer=tokenizer,             # ← 이걸 넘기면 Trainer가 자동으로
-    # data_collator=DataCollatorWithPadding(tokenizer)   를 만들어 사용
+    args=TrainingArguments(...),
+    train_dataset=train_ds,
+    eval_dataset=eval_ds,
+    tokenizer=tokenizer,        # ← 이게 핵심: Trainer가 이걸 보고
+                                #   자동으로 DataCollatorWithPadding 만듦
 )
+trainer.train()
 ```
 
-즉, Ch 9-13에서 우리가 **collator 코드를 *직접* 쓸 일이 거의 없습니다** — `Trainer` 가 `tokenizer` 를 보고 적절한 collator를 자동 선택. 그래도 알아두면 디버깅·커스텀 학습 루프(직접 `DataLoader` 만들어 쓸 때)에서 큰 도움이 됩니다.""")
+**`tokenizer=...` 한 줄이 collator를 자동 생성합니다.** 학습자가 명시적으로 `data_collator=DataCollatorWithPadding(...)` 를 적을 일이 거의 없는 이유.
+
+#### 패턴 B — 직접 학습 루프 (커스텀이 필요할 때)
+
+```python
+# Ch 13 auxiliary loss 처럼 Trainer 자동 매핑이 안 맞을 때, 또는
+# 디버깅·연구용 커스텀 학습 코드를 짜야 할 때.
+
+train_ds = small.map(tok, batched=True).remove_columns(["text"])
+
+# DataLoader + collator 직접 조립 — Ch 8에서 본 패턴
+collator = DataCollatorWithPadding(tokenizer=tokenizer, padding=True)
+loader = DataLoader(train_ds, batch_size=16, shuffle=True, collate_fn=collator)
+
+for batch in loader:
+    batch = {k: v.to(model.device) for k, v in batch.items()}
+    outputs = model(**batch)
+    loss = outputs.loss          # 또는 직접 계산
+    loss.backward()
+    optimizer.step()
+    optimizer.zero_grad()
+```
+
+#### 두 패턴의 매핑
+
+| 이번 Ch 8에서 만든 것 | 패턴 A (Trainer) | 패턴 B (직접 루프) |
+|---|---|---|
+| `tokenizer = AutoTokenizer.from_pretrained(...)` | `Trainer(tokenizer=...)` | `DataCollatorWithPadding(tokenizer=...)` |
+| `dataset.map(tok, batched=True)` | `Trainer(train_dataset=...)` | `DataLoader(dataset, ...)` |
+| `DataCollatorWithPadding(...)` | (Trainer가 자동 생성) | `DataLoader(collate_fn=...)` |
+| `with_format("torch")` | (Trainer가 처리) | `DataLoader` 가 텐서 변환 |
+
+**요점**: 이번 챕터에서 익힌 부품들이 Ch 9-13에서 *그대로 입력으로* 들어갑니다. `Trainer` 는 그 부품들을 묶어 학습 루프를 자동화한 것뿐 — 안에서 일어나는 일은 패턴 B와 같습니다. 커스텀 학습이 필요해지면 패턴 B로 *분해해 다시 짜는* 게 어렵지 않다는 게, Ch 8 데이터 파이프라인을 손에 익혀두는 가장 큰 이유입니다.""")
 
 # ----- 24. library -----
 md(r"""## 📦 이번 챕터에 등장한 라이브러리·함수
