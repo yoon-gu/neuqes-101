@@ -26,7 +26,7 @@ Google Colab CPU 런타임으로 충분 (GPU 불필요). 약 5-10분.
 | 2 | `LinearRegression()` | `TfidfVectorizer()` | Yelp (별점 1-5) | 없음 | `MSELoss` |
 | **3** | `LogisticRegression()` | `TfidfVectorizer()` | Yelp 이진화 | **sigmoid** | **`BCEWithLogitsLoss`** |
 
-전체 18챕터 표는 [루트 README](../README.md#챕터별-변화추적표)를 참고하세요.
+전체 20챕터 표는 [루트 README](../README.md#챕터별-변화추적표)를 참고하세요.
 
 ## 다음 챕터
 [04_sklearn_multiclass](../04_sklearn_multiclass/) — sigmoid가 softmax로 바뀌고 출력이 1차원에서 5차원으로 늘어납니다. Loss는 BCE에서 `CrossEntropyLoss`로 일반화.

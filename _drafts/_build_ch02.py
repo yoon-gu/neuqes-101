@@ -60,7 +60,7 @@ md(r"""## 📊 변화추적표
 | 1 | (TF-IDF) | `TfidfVectorizer()` | Yelp 5,000 샘플 | — | — | — |
 | **2 ← 여기** | `LinearRegression()` | `TfidfVectorizer()` | Yelp (별점 1-5) | (1차원) | 없음 | `MSELoss` (sklearn: squared error) |
 
-전체 18챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.""")
+전체 20챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.""")
 
 # ----- 3. 변경점 -----
 md(r"""## 🔄 변경점 (Diff from Ch 1)

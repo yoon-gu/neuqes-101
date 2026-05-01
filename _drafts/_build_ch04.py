@@ -38,7 +38,7 @@ def code(text: str):
 # ----- 1. Title -----
 md(r"""# Chapter 4. Binary on softmax — CrossEntropy 등장 + sigmoid+BCE와의 동등성
 
-**목표**: Ch 3과 **완전히 같은 binary 데이터** 를 출력 차원 2로 늘리고 softmax + CrossEntropy로 다시 풀어봅니다. 두 방식이 수학적으로 동등하다는 것을 식과 코드로 직접 확인합니다 — 이 직관은 Ch 10에서 BERT binary로 옮길 때 곧장 재활용됩니다.
+**목표**: Ch 3과 **완전히 같은 binary 데이터** 를 출력 차원 2로 늘리고 softmax + CrossEntropy로 다시 풀어봅니다. 두 방식이 수학적으로 동등하다는 것을 식과 코드로 직접 확인합니다 — 이 직관은 Ch 10·11에서 BERT binary로 옮길 때 곧장 재활용됩니다.
 
 **환경**: Google Colab (GPU 불필요 — sklearn만 사용)
 
@@ -62,7 +62,7 @@ md(r"""## 📊 변화추적표
 | 3 | `LogisticRegression()` | `TfidfVectorizer()` | Yelp 이진화 | (1차원) | sigmoid | `BCEWithLogitsLoss` |
 | **4 ← 여기** | `LogisticRegression(multi_class="multinomial")` | `TfidfVectorizer()` | Yelp 이진화 (Ch 3과 동일) | **(2차원)** | **softmax** | **`CrossEntropyLoss`** |
 
-전체 19챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.""")
+전체 20챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.""")
 
 # ----- 3. 변경점 -----
 md(r"""## 🔄 변경점 (Diff from Ch 3)
@@ -76,7 +76,7 @@ md(r"""## 🔄 변경점 (Diff from Ch 3)
 | 데이터 | Yelp 이진화 | Yelp 이진화 (그대로) |
 | 토크나이저 | TF-IDF | TF-IDF (그대로) |
 
-**왜 같은 데이터에 같은 task인데 따로 챕터로 다루나?** 두 방식은 출력 차원·activation·loss가 모두 바뀌어 보이지만 *수학적으로 동등* 합니다. 이 동등성을 가장 단순한 sklearn 환경에서 미리 체험해두면, Ch 10에서 BERT binary가 두 방식 중 어느 쪽을 골라도 같다는 사실을 자연스럽게 받아들일 수 있습니다.
+**왜 같은 데이터에 같은 task인데 따로 챕터로 다루나?** 두 방식은 출력 차원·activation·loss가 모두 바뀌어 보이지만 *수학적으로 동등* 합니다. 이 동등성을 가장 단순한 sklearn 환경에서 미리 체험해두면, Ch 10·11에서 BERT binary가 두 방식 중 어느 쪽을 골라도 같다는 사실을 자연스럽게 받아들일 수 있습니다.
 
 또 K=2를 통과하면 같은 식이 K=5(다음 챕터)로 자연스럽게 일반화됩니다 — softmax/CE는 K가 무엇이든 작동합니다.""")
 
@@ -102,7 +102,7 @@ $$L = -\frac{1}{N}\sum_{i=1}^{N} \log \hat p_{i,\, y_i}$$
 **Ch 3 BCE 표와 비교해보면** 손실값이 *완전히 같습니다* (0.105 / 0.693 / 2.303). K=2에서 BCE와 CE가 동등하다는 첫 단서.
 
 ```python
-# PyTorch (Ch 10 이후, 방식 B)
+# PyTorch (Ch 11, 방식 B)
 criterion = nn.CrossEntropyLoss()
 loss = criterion(logits, targets)   # logits: (N, K), targets: (N,) 정수 인덱스
 
@@ -246,7 +246,7 @@ print(f"두 intercept_ 의 max 차이: {np.abs(model_a.intercept_ - model_b.inte
 print()
 print("(미세한 차이는 solver 수렴 기준의 차이일 뿐, 본질적으로 같은 모델)")
 print()
-print("진짜 (2, V) 두 logit head는 PyTorch가 '직접' 만들어주는 Ch 10 BERT binary에서 등장합니다.")""")
+print("진짜 (2, V) 두 logit head는 PyTorch가 '직접' 만들어주는 Ch 10·11 BERT binary에서 등장합니다.")""")
 
 # ----- 16. library -----
 md(r"""## 📦 이번 챕터에 등장한 라이브러리
@@ -290,7 +290,7 @@ $$\text{CE} = -\sum_{k=0}^{1} y_k \log \hat p_k = -[y \log \hat p_1 + (1-y) \log
 - **sigmoid+BCE (방식 A, num_labels=1)**: sklearn 기본, 통계학·의학 분야 표준. 출력 1개라 "확률 하나"라는 해석이 단순.
 - **softmax+CE (방식 B, num_labels=2)**: BERT/PyTorch 기본, 딥러닝 표준. 다중 클래스로 일반화하기 자연스럽고 라이브러리 코드가 단순(같은 헤드/같은 loss로 K가 2이든 N이든 호환).
 
-이 커리큘럼의 BERT 챕터(Ch 9-13)는 방식 B가 기본이라 이번 챕터에서 미리 익숙해지는 게 의미 있습니다. Ch 10에서 두 방식을 BERT로 다시 비교합니다.
+이 커리큘럼의 BERT 챕터(Ch 9-14)는 방식 B가 기본이라 이번 챕터에서 미리 익숙해지는 게 의미 있습니다. Ch 10·11에서 두 방식을 BERT로 별도 학습해 비교합니다.
 
 ### Q3. (이론) softmax 합=1 제약은 어디서 오나요?
 
@@ -311,7 +311,7 @@ LogisticRegression(multi_class="multinomial").fit(X, y_binary).coef_.shape  # (1
 LogisticRegression(multi_class="multinomial").fit(X, y_3class).coef_.shape  # (3, V) — K≥3에선 (K, V)
 ```
 
-그래서 방식 A와 방식 B가 sklearn 안에서는 사실상 같은 모델이고, predict_proba도 미세한 수치 오차 빼고 일치합니다. 진짜 *두 별개의 logit head* 가 살아 있는 형태는 프레임워크가 collapse하지 않는 환경 — PyTorch에서 `nn.Linear(H, 2)` 를 직접 만들 때 — 비로소 등장합니다 (Ch 10).
+그래서 방식 A와 방식 B가 sklearn 안에서는 사실상 같은 모델이고, predict_proba도 미세한 수치 오차 빼고 일치합니다. 진짜 *두 별개의 logit head* 가 살아 있는 형태는 프레임워크가 collapse하지 않는 환경 — PyTorch에서 `nn.Linear(H, 2)` 를 직접 만들 때 — 비로소 등장합니다 (Ch 10·11).
 
 ### Q5. (이론) sklearn `multi_class` 인자의 의미와 자동 선택 기준은?
 
@@ -340,7 +340,7 @@ AutoModelForSequenceClassification.from_pretrained(
 )
 ```
 
-이 커리큘럼의 Ch 10이 두 방식을 BERT로 다시 비교하는 챕터입니다. 이번 챕터에서 익힌 동등성이 그 비교의 출발점이 됩니다.""")
+이 커리큘럼의 Ch 10·11이 두 방식을 BERT로 *별도 학습* 해 비교하는 챕터입니다. 이번 챕터에서 익힌 동등성이 그 비교의 출발점이 됩니다.""")
 
 # ----- 19. 삽질 -----
 md(r"""## 🚀 삽질 코너 (선택)

@@ -29,7 +29,7 @@ Google Colab — **CPU도 OK** (이번 챕터는 추론만이라 학습이 없�
 | 6 | `OneVsRestClassifier(LogisticRegression())` | `TfidfVectorizer()` | Yelp + 측면 합성 | per-label `BCE` |
 | **7** | **`pipeline("sentiment-analysis")`** | **`AutoTokenizer.from_pretrained(...)`** | 간단 예시 | — (추론만) |
 
-전체 19챕터 표는 [루트 README](../README.md#챕터별-변화추적표)를 참고하세요.
+전체 20챕터 표는 [루트 README](../README.md#챕터별-변화추적표)를 참고하세요.
 
 ## 부록 노트북
 

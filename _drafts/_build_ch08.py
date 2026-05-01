@@ -62,7 +62,7 @@ md(r"""## 📊 변화추적표
 | 7 | `pipeline("sentiment-analysis")` | `AutoTokenizer.from_pretrained(...)` | 간단 영어 예시 | 사전학습 헤드 | softmax | — |
 | **8 ← 여기** | (모델 없음 — 토크나이저·데이터 파이프라인만) | `AutoTokenizer.from_pretrained(...)` | **Yelp 5,000 (Phase 0과 동일)** | — | — | — |
 
-전체 19챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.""")
+전체 20챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.""")
 
 # ----- 3. 변경점 -----
 md(r"""## 🔄 변경점 (Diff from Ch 7)

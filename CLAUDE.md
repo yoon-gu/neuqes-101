@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 레포 정체성
 
-이 레포는 **Hugging Face 입문 커리큘럼 (19챕터)** 의 산출물을 담는 곳입니다. 코드 라이브러리가 아니라 **Google Colab 노트북 학습 자료** 가 결과물입니다. 챕터마다 레포 루트에 자체 폴더가 있고, 그 안에 노트북과 요약 README.md가 함께 들어갑니다 — 예: `01_tfidf/01_tfidf.ipynb` + `01_tfidf/README.md`. 노트북은 학습자가 **Google Colab T4 (16GB VRAM)** 에서 그대로 열어 30분 이내에 끝까지 실행할 수 있어야 합니다.
+이 레포는 **Hugging Face 입문 커리큘럼 (20챕터)** 의 산출물을 담는 곳입니다. 코드 라이브러리가 아니라 **Google Colab 노트북 학습 자료** 가 결과물입니다. 챕터마다 레포 루트에 자체 폴더가 있고, 그 안에 노트북과 요약 README.md가 함께 들어갑니다 — 예: `01_tfidf/01_tfidf.ipynb` + `01_tfidf/README.md`. 노트북은 학습자가 **Google Colab T4 (16GB VRAM)** 에서 그대로 열어 30분 이내에 끝까지 실행할 수 있어야 합니다.
 
 루트 `README.md`에 **챕터별 변화추적표 + Colab 열기 버튼** 이 있습니다. 이 표가 챕터 메타정보(파일명, Loss/Head 변화 등)의 **단일 출처(source of truth)** 입니다. 새 챕터를 만들거나 파일명을 바꾸면 README.md의 행도 함께 갱신해야 Colab 버튼이 깨지지 않습니다.
 
@@ -17,7 +17,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - **태스크 축**: Regression → Binary → Multi-class → Multi-label
    - **Loss 축**: MSELoss → BCEWithLogitsLoss → CrossEntropyLoss → BCEWithLogitsLoss(per-label) → +Auxiliary(Combined)
 
-   한 챕터에서 한 축만 변하고 나머지는 고정. 두 축이 동시에 바뀌면 학습자가 효과를 분리해 이해할 수 없습니다. **Auxiliary는 task 신설이 아니라 loss에 보조 항을 더하는 변화** 이므로 Loss 축 끝에 위치합니다 — Ch 12/16의 메인 task는 직전 챕터(Multi-label)와 동일하고, 새 보조 헤드 + λ 가중치만 추가됩니다.
+   한 챕터에서 한 축만 변하고 나머지는 고정. 두 축이 동시에 바뀌면 학습자가 효과를 분리해 이해할 수 없습니다. **Auxiliary는 task 신설이 아니라 loss에 보조 항을 더하는 변화** 이므로 Loss 축 끝에 위치합니다 — Ch 14/18의 메인 task는 직전 챕터(Multi-label)와 동일하고, 새 보조 헤드 + λ 가중치만 추가됩니다.
 2. **T4 30분 제약** — 학습 코드는 30분 안에 끝나야 합니다. 기본 가이드: Yelp 5,000 샘플 / `max_length=128` / `batch_size=16-32` / 1-2 에폭 / `fp16=True`.
 3. **bf16 사용 금지** — T4(Compute Capability 7.5)는 bf16 미지원. **항상 `fp16=True`**. Flash Attention 2도 미지원.
 4. **용어 통일** — PyTorch/Hugging Face 용어를 메인으로, sklearn 용어는 괄호 안 보조로. 예: `BCEWithLogitsLoss` (sklearn: log loss).
@@ -40,22 +40,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 전체 추적표 (Loss / Head / Tokenizer / Data)
 
-19챕터의 변화 흐름과 Colab 링크가 담긴 단일 출처는 루트 `README.md`의 "챕터별 변화추적표" 입니다. 챕터를 작성할 때:
+20챕터의 변화 흐름과 Colab 링크가 담긴 단일 출처는 루트 `README.md`의 "챕터별 변화추적표" 입니다. 챕터를 작성할 때:
 - 노트북 도입부 추적표는 README.md 표에서 **현재 챕터까지의 행만 잘라** 그대로 사용 (현재 행 강조).
 - 챕터 추가/이름 변경/Loss 변화 시 README.md의 해당 행을 함께 갱신.
 - 챕터 폴더 경로 규약: 레포 루트의 `<NN>_<slug>/` (zero-pad 두 자리). 폴더 안에 같은 이름의 노트북(`<NN>_<slug>.ipynb`)과 요약 `README.md`가 함께 들어감. **상위 `notebooks/` 디렉터리는 두지 않음** — 챕터 폴더가 루트에 직접 위치.
 
 Phase 구분:
 - **Phase 0 (Ch 1-6)**: sklearn으로 태스크/loss의 본질. BERT 등장하지 않음. (Ch 4는 sigmoid↔softmax 동등성을 sklearn binary로 시연하는 다리 챕터.)
-- **Phase 1 (Ch 7-13)**: DistilBERT(영어)로 같은 태스크들을 다시. Auxiliary loss로 마무리.
-- **Phase 2 (Ch 14-17)**: 한국어로 압축 재방문 (klue/bert-base). **회귀 챕터는 생략** — 영어 Phase 1에서 이미 다뤘기 때문에 Binary부터 시작.
-- **Phase 3 (Ch 18-19)**: 토크나이저를 직접 학습. 사전학습 의존 없는 경험. **Phase 3가 클라이맥스가 되도록 토크나이저 시각을 Ch 1부터 일관되게 추적.**
+- **Phase 1 (Ch 7-14)**: DistilBERT(영어)로 같은 태스크들을 다시. **Ch 10·11은 BERT binary의 두 방식(sigmoid+BCE / softmax+CE)을 별도 챕터로 비교**, Auxiliary loss(Ch 14)로 마무리.
+- **Phase 2 (Ch 15-18)**: 한국어로 압축 재방문 (klue/bert-base). **회귀 챕터는 생략** — 영어 Phase 1에서 이미 다뤘기 때문에 Binary부터 시작.
+- **Phase 3 (Ch 19-20)**: 토크나이저를 직접 학습. 사전학습 의존 없는 경험. **Phase 3가 클라이맥스가 되도록 토크나이저 시각을 Ch 1부터 일관되게 추적.**
 
 ## 작업 흐름
 
 1. **미정 사항 1건은 작성 시작 전 사용자와 확정**:
-   - **Ch 17 보조 태스크 (한국어 Auxiliary)**: 라벨 개수 회귀(MSE)가 1순위 — Ch 13과 구조가 닮아 변경점이 "데이터 + 언어"로만 한정됨.
-   - (참고) **한국어 회귀 챕터는 의도적으로 생략**됨. Phase 2는 Binary(Ch 14)부터 시작.
+   - **Ch 18 보조 태스크 (한국어 Auxiliary)**: 라벨 개수 회귀(MSE)가 1순위 — Ch 14와 구조가 닮아 변경점이 "데이터 + 언어"로만 한정됨.
+   - (참고) **한국어 회귀 챕터는 의도적으로 생략**됨. Phase 2는 Binary(Ch 15)부터 시작.
 2. **챕터 단위 검증 사이클** — 한 챕터씩 다음 순서로 진행:
    1. Claude가 해당 챕터 폴더(`<NN>_<slug>/`)와 노트북(`<NN>_<slug>.ipynb`) 작성. 폴더 안 `README.md`에 챕터 요약을 함께 작성.
    2. **Claude가 곧바로 git commit + push.** Colab 버튼이 GitHub의 master 브랜치를 가리키므로 푸시 전엔 사용자가 노트북을 열 수 없음. 따라서 노트북 작성 직후 자동으로 커밋·푸시. 커밋 메시지는 챕터 단위로 의미 있게(`Add Ch <N>: <slug>` 등). 수정·재빌드 후에도 동일하게 커밋·푸시.
@@ -72,7 +72,7 @@ Phase 구분:
 - 수식은 LaTeX: `$L = -\sum y \log p$`.
 - 챕터 파일명: `<NN>_<slug>/<NN>_<slug>.ipynb` 두 자리 zero-pad.
 
-## 두 방식 동등성 (Ch 4 / Ch 10 핵심)
+## 두 방식 동등성 (Ch 4 / Ch 10·11 핵심)
 
 binary 분류는 두 방식 모두 가능:
 - 방식 A: 1차원 출력 + sigmoid + `BCEWithLogitsLoss` (sklearn 호환)
@@ -80,8 +80,8 @@ binary 분류는 두 방식 모두 가능:
 - z = z₁ − z₀로 두면 방식 B가 방식 A의 리파라미터화임을 보임.
 
 - **Ch 4** (sklearn): 동일 binary 데이터에 두 방식을 학습해 `predict_proba`가 일치함을 시연 + 수학적 동등성을 식과 코드로 직접 보임.
-- **Ch 10** (BERT): 같은 동등성을 BERT에서 다시 확인 (10a/10b 한 노트북). Ch 4의 sklearn 실험을 BERT로 일반화하는 위치.
-- 한국어 binary(Ch 14)는 방식 B만 사용 — 동등성은 Ch 4·10에서 이미 다뤘기 때문.
+- **Ch 10·11** (BERT): 같은 동등성을 BERT에서 다시 확인 — Ch 10이 sigmoid+BCE 방식, Ch 11이 softmax+CE 방식, 별도 챕터에서 학습 후 결과 비교. Ch 4의 sklearn 실험을 BERT로 일반화하는 위치.
+- 한국어 binary(Ch 15)는 방식 B만 사용 — 동등성은 Ch 4·10·11에서 이미 다뤘기 때문.
 
 ## `Trainer` `problem_type` 자동 매핑 (코드 작성 시 활용)
 
@@ -89,4 +89,4 @@ binary 분류는 두 방식 모두 가능:
 - `num_labels=1` 단독 → 회귀로 추정해 `MSELoss`. 명시적으로는 `problem_type="regression"`.
 - `problem_type="single_label_classification"` → `CrossEntropyLoss` (기본값, multi-class 표준).
 - `problem_type="multi_label_classification"` → `BCEWithLogitsLoss`. 라벨은 multi-hot float 텐서여야 함.
-- Ch 13, 17의 보조 헤드처럼 자동 매핑을 못 쓸 때만 `Trainer.compute_loss` 오버라이드.
+- Ch 14, 18의 보조 헤드처럼 자동 매핑을 못 쓸 때만 `Trainer.compute_loss` 오버라이드.

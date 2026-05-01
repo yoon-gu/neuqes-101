@@ -34,7 +34,7 @@ Google Colab CPU 런타임으로 충분 (GPU 불필요). 약 5-10분.
 | 3 | `LogisticRegression()` | Yelp 이진화 | (1차원) | sigmoid | `BCEWithLogitsLoss` |
 | **4** | `LogisticRegression(multi_class="multinomial")` | Yelp 이진화 | **(2차원)** | **softmax** | **`CrossEntropyLoss`** |
 
-전체 19챕터 표는 [루트 README](../README.md#챕터별-변화추적표)를 참고하세요.
+전체 20챕터 표는 [루트 README](../README.md#챕터별-변화추적표)를 참고하세요.
 
 ## 다음 챕터
 [05_sklearn_multiclass](../05_sklearn_multiclass/) — 같은 multinomial LogReg를 K=5로 그대로 확장. 코드 변화 거의 없음, 데이터만 5클래스로.

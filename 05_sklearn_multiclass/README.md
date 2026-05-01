@@ -35,7 +35,7 @@ Google Colab CPU 런타임으로 충분 (GPU 불필요). 약 5-10분.
 | 4 | `LogisticRegression(multi_class="multinomial")` | Yelp 이진화 | (2차원) | `CrossEntropyLoss` |
 | **5** | `LogisticRegression(multi_class="multinomial")` | **Yelp 5클래스** | **(5차원)** | `CrossEntropyLoss` |
 
-전체 19챕터 표는 [루트 README](../README.md#챕터별-변화추적표)를 참고하세요.
+전체 20챕터 표는 [루트 README](../README.md#챕터별-변화추적표)를 참고하세요.
 
 ## 다음 챕터
 [06_sklearn_multilabel](../06_sklearn_multilabel/) — softmax의 합=1 제약을 풀고 multi-label로 확장. K개 독립 sigmoid가 각 라벨을 따로 학습.

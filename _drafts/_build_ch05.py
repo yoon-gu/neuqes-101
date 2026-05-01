@@ -63,7 +63,7 @@ md(r"""## 📊 변화추적표
 | 4 | `LogisticRegression(multi_class="multinomial")` | `TfidfVectorizer()` | Yelp 이진화 (Ch 3과 동일) | (2차원) | softmax | `CrossEntropyLoss` |
 | **5 ← 여기** | `LogisticRegression(multi_class="multinomial")` | `TfidfVectorizer()` | Yelp 5클래스 (별점 0-4) | **(5차원)** | softmax | `CrossEntropyLoss` |
 
-전체 19챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.""")
+전체 20챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.""")
 
 # ----- 3. 변경점 -----
 md(r"""## 🔄 변경점 (Diff from Ch 4)
