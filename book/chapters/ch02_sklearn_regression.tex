@@ -145,7 +145,7 @@ mean_squared_error(y, model.predict(X))
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{!pip install -q datasets scikit-learn pan...}에서는 Colab 실행에 필요한 패키지를 설치합니다.
+\textbf{1행}의 \inlinecode{!pip install -q datasets...}에서는 Colab 실행에 필요한 패키지를 설치합니다.
 \end{codeRead}
 
 
@@ -176,8 +176,9 @@ display(pd.DataFrame([{"metric": "sample_count", "value": len(df)}]))
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-metric  value
-0  sample_count   5000
+metric        value
+-  ------------  -----
+0  sample_count  5000
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -205,14 +206,15 @@ display(split_summary)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{df["star"] = df["label"] + 1}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{4--7행}의 \inlinecode{X\_text\_train, X\_text\_test, y\_train, y\_tes...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{9행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 TF-IDF 기반 벡터라이저를 만듭니다. \textbf{10행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{11행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{13--16행}의 \inlinecode{split\_summary = pd.DataFrame([ \{"split":...}에서는 결과를 표로 보기 좋게 정리합니다.
+\textbf{1행}의 \inlinecode{df["star"] = df["label"] + 1}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{4--7행}의 \inlinecode{X\_text\_train, X\_text\_test...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{9행}의 \inlinecode{tfidf = ...}에서는 TF-IDF 기반 벡터라이저를 만듭니다. \textbf{10행}의 \inlinecode{X\_train = ...}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{11행}의 \inlinecode{X\_test = ...}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{13--16행}의 \inlinecode{split\_summary = ...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-split        X_shape  y_shape
+split  X_shape        y_shape
+-  -----  -------------  -------
 0  train  (4000, 10000)  (4000,)
-1   test  (1000, 10000)  (1000,)
+1  test   (1000, 10000)  (1000,)
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -251,16 +253,17 @@ display(regression_metrics.round(4))
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{model = LinearRegression()}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model.fit(X\_train, y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{y\_pred\_train = model.predict(X\_train)}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{5행}의 \inlinecode{y\_pred\_test = model.predict(X\_test)}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{7--12행}의 \inlinecode{regression\_metrics = pd.DataFrame([ \{"met...}에서는 결과를 표로 보기 좋게 정리합니다.
+\textbf{1행}의 \inlinecode{model = ...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model.fit(...)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{y\_pred\_train = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{5행}의 \inlinecode{y\_pred\_test = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{7--12행}의 \inlinecode{regression\_metrics = ...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-metric   value
+metric     value
+-  ---------  ------
 0  train_mse  0.0000
-1   test_mse  1.5522
-2   test_mae  0.9929
-3    test_r2  0.2161
+1  test_mse   1.5522
+2  test_mae   0.9929
+3  test_r2    0.2161
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -297,14 +300,15 @@ plt.show()
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1--4행}의 \inlinecode{range\_summary = pd.DataFrame([ \{"series":...}에서는 결과를 표로 보기 좋게 정리합니다.
+\textbf{1--4행}의 \inlinecode{range\_summary = ...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-series    min    max
-0  prediction -1.271  7.449
-1      target  1.000  5.000
+series      min     max
+-  ----------  ------  -----
+0  prediction  -1.271  7.449
+1  target      1.000   5.000
 <Figure size 640x480 with 1 Axes>
 \end{lstlisting}
 \par\vspace{0.9em}
@@ -335,14 +339,15 @@ display(mse_check)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{manual\_mse = ((y\_test - y\_pred\_test) ** 2...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다. \textbf{2행}의 \inlinecode{sklearn\_mse = mean\_squared\_error(y\_test,...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다. \textbf{4--8행}의 \inlinecode{mse\_check = pd.DataFrame([ \{"metric": "ma...}에서는 결과를 표로 보기 좋게 정리합니다.
+\textbf{1행}의 \inlinecode{manual\_mse = ...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다. \textbf{2행}의 \inlinecode{sklearn\_mse = ...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다. \textbf{4--8행}의 \inlinecode{mse\_check = ...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-metric    value
-0           manual_mse  1.55218
-1          sklearn_mse  1.55218
+metric               value
+-  -------------------  -------
+0  manual_mse           1.55218
+1  sklearn_mse          1.55218
 2  absolute_difference  0.00000
 \end{lstlisting}
 \par\vspace{0.9em}
@@ -385,10 +390,11 @@ display(normalization_metrics.round(4))
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-metric   value
-0       mse_normalized_space  0.0970
-1     mse_back_to_star_space  1.5522
-2  mse_without_normalization  1.5522
+metric                    value
+-  ------------------------  ------
+0  mse_normalized_space      0.0970
+1  mse_back_to_star_space    1.5522
+2  mse_without_normaliza...  1.5522
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -414,15 +420,16 @@ display(normalized_range_summary)
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-metric      value
+metric          value
+-  --------------  ---------
 0  prediction_min  -0.567737
-1  prediction_max   1.612202
-2       ideal_min   0.000000
-3       ideal_max   1.000000
-4   count_below_0  84.000000
-5   count_above_1  88.000000
-6    rate_below_0   0.084000
-7    rate_above_1   0.088000
+1  prediction_max  1.612202
+2  ideal_min       0.000000
+3  ideal_max       1.000000
+4  count_below_0   84.000000
+5  count_above_1   88.000000
+6  rate_below_0    0.084000
+7  rate_above_1    0.088000
 \end{lstlisting}
 \par\vspace{0.9em}
 

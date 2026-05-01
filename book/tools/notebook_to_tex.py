@@ -650,9 +650,18 @@ def code_walkthrough(source: str) -> str:
 
     def summarize_code(content: list[str]) -> str:
         code_lines = [line.strip() for line in content if line.strip() and not line.strip().startswith("#")]
-        joined = " ".join(code_lines)
-        if len(joined) > 44:
-            joined = joined[:41].rstrip() + "..."
+        joined = " ".join(code_lines).split("  # ", 1)[0].strip()
+        name = variable_name(joined)
+        if name:
+            joined = f"{name} = ..."
+        elif joined.startswith("display("):
+            joined = "display(...)"
+        elif "." in joined and "(" in joined:
+            match = re.match(r"([A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)?\()", joined)
+            if match:
+                joined = match.group(1) + "...)"
+        if len(joined) > 28:
+            joined = joined[:25].rstrip() + "..."
         return f"\\inlinecode{{{latex_escape_text(joined)}}}"
 
     def variable_name(text: str) -> str:
@@ -781,6 +790,14 @@ def output_text(outputs: list[dict]) -> str:
             chunks.append("".join(text) if isinstance(text, list) else str(text))
         elif output_type in {"execute_result", "display_data"}:
             data = output.get("data", {})
+            html = data.get("text/html")
+            if isinstance(html, list):
+                html = "".join(html)
+            if isinstance(html, str) and "<table" in html:
+                table_text = "\n\n".join(html_tables_to_plain_text(html))
+                if table_text:
+                    chunks.append(table_text)
+                    continue
             text = data.get("text/plain")
             if text:
                 chunks.append("".join(text) if isinstance(text, list) else str(text))
@@ -818,7 +835,7 @@ def output_text(outputs: list[dict]) -> str:
     compact = "\n".join(lines)
     if len(compact) > 1600:
         compact = compact[:1550].rstrip() + "\n..."
-    return wrap_listing_text(compact, width=58)
+    return fit_listing_text(compact, width=78)
 
 
 class PandasTableParser(HTMLParser):
@@ -935,8 +952,62 @@ def output_tables(outputs: list[dict]) -> list[str]:
     return tables
 
 
+def truncate_display(text: str, width: int) -> str:
+    text = re.sub(r"\s+", " ", str(text)).strip()
+    if display_width(text) <= width:
+        return text
+    ellipsis = "..."
+    result = ""
+    for char in text:
+        if display_width(result + char + ellipsis) > width:
+            break
+        result += char
+    return result.rstrip() + ellipsis
+
+
+def html_tables_to_plain_text(html: str, width: int = 78) -> list[str]:
+    parser = PandasTableParser()
+    parser.feed(html)
+    rendered: list[str] = []
+    for table in parser.tables:
+        headers = table["headers"]
+        rows = table["rows"]
+        if not headers or not rows:
+            continue
+        col_count = max(len(headers), *(len(row) for row in rows))
+        headers = (headers + [""] * col_count)[:col_count]
+        rows = [(row + [""] * col_count)[:col_count] for row in rows[:12]]
+        max_cell = max(8, min(30, (width - max(1, col_count - 1) * 2) // col_count))
+        table_rows = [headers] + rows
+        truncated = [[truncate_display(cell, max_cell) for cell in row] for row in table_rows]
+        col_widths = [
+            min(max(display_width(row[idx]) for row in truncated), max_cell)
+            for idx in range(col_count)
+        ]
+
+        def pad(cell: str, size: int) -> str:
+            return cell + " " * max(0, size - display_width(cell))
+
+        lines = []
+        for row_idx, row in enumerate(truncated):
+            lines.append("  ".join(pad(cell, col_widths[i]) for i, cell in enumerate(row)).rstrip())
+            if row_idx == 0:
+                lines.append("  ".join("-" * width for width in col_widths).rstrip())
+        if len(table["rows"]) > len(rows):
+            lines.append("...")
+        rendered.append("\n".join(lines))
+    return rendered
+
+
 def display_width(text: str) -> int:
     return sum(1 if ord(char) < 128 else 2 for char in text)
+
+
+def fit_listing_text(text: str, width: int = 78) -> str:
+    fitted: list[str] = []
+    for line in text.splitlines():
+        fitted.append(truncate_display(line, width) if display_width(line) > width else line)
+    return "\n".join(fitted)
 
 
 def wrap_listing_text(text: str, width: int = 58) -> str:

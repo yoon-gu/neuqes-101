@@ -168,7 +168,7 @@ model.fit(X, Y_multilabel)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{!pip install -q datasets scikit-learn pan...}에서는 Colab 실행에 필요한 패키지를 설치합니다.
+\textbf{1행}의 \inlinecode{!pip install -q datasets...}에서는 Colab 실행에 필요한 패키지를 설치합니다.
 \end{codeRead}
 
 
@@ -210,8 +210,9 @@ display(pd.DataFrame([{"metric": "sample_count", "value": len(df)}]))
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-metric  value
-0  sample_count   5000
+metric        value
+-  ------------  -----
+0  sample_count  5000
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -275,17 +276,19 @@ display(label_preview)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1--12행}의 \inlinecode{ASPECT\_KEYWORDS = \{ "food": ["food", "mea...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{13행}의 \inlinecode{ASPECTS = list(ASPECT\_KEYWORDS.keys())}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{14행}의 \inlinecode{K = len(ASPECTS)}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{16행}의 \inlinecode{def extract\_aspects(text: str) -> list[int]:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{17행}의 \inlinecode{tokens = set(re.findall(r"[a-z]+", text.l...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{18--21행}의 \inlinecode{return [ int(any(kw in tokens for kw in k...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\textbf{1--12행}의 \inlinecode{ASPECT\_KEYWORDS = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{13행}의 \inlinecode{ASPECTS = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{14행}의 \inlinecode{K = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{16행}의 \inlinecode{def extract\_aspects(text:...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{17행}의 \inlinecode{tokens = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{18--21행}의 \inlinecode{return [ int(any(kw in to...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-object      shape
-0      Y  (5000, 5)
+object  shape
+-  ------  ---------
+0  Y       (5000, 5)
    food  service  price  ambiance  location
-0     0        1      0         0         1
-1     0        0      0         0         1
-2     0        0      0         1         0
+-  ----  -------  -----  --------  --------
+0  0     1        0      0         1
+1  0     0        0      0         1
+2  0     0        0      1         0
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -313,26 +316,29 @@ display(label_count_distribution)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1--5행}의 \inlinecode{aspect\_activation = pd.DataFrame(\{ "aspec...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{7행}의 \inlinecode{n\_labels\_per\_sample = Y.sum(axis=1)}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{8--11행}의 \inlinecode{label\_count\_distribution = pd.DataFrame(\{...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{12행}의 \inlinecode{label\_count\_distribution["sample\_rate"] =...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{13행}의 \inlinecode{summary = pd.DataFrame([\{"metric": "mean\_...}에서는 결과를 표로 보기 좋게 정리합니다.
+\textbf{1--5행}의 \inlinecode{aspect\_activation = ...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{7행}의 \inlinecode{n\_labels\_per\_sample = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{8--11행}의 \inlinecode{label\_count\_distribution...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{12행}의 \inlinecode{label\_count\_distribution[...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{13행}의 \inlinecode{summary = ...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-aspect  activation_rate  active_count
-0      food           0.5556          2778
-1   service           0.4960          2480
-2     price           0.2944          1472
-3  ambiance           0.1810           905
-4  location           0.2190          1095
-                          metric  value
-0  mean_active_labels_per_sample  1.746
+aspect    activation_rate  active_count
+-  --------  ---------------  ------------
+0  food      0.5556           2778
+1  service   0.4960           2480
+2  price     0.2944           1472
+3  ambiance  0.1810           905
+4  location  0.2190           1095
+   metric                    value
+-  ------------------------  -----
+0  mean_active_labels_pe...  1.746
    n_active_labels  sample_count  sample_rate
-0                0           741       0.1482
-1                1          1464       0.2928
-2                2          1506       0.3012
-3                3           957       0.1914
-4                4           277       0.0554
-5                5            55       0.0110
+-  ---------------  ------------  -----------
+0  0                741           0.1482
+1  1                1464          0.2928
+2  2                1506          0.3012
+3  3                957           0.1914
+4  4                277           0.0554
+5  5                55            0.0110
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -357,14 +363,15 @@ display(split_summary)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1--4행}의 \inlinecode{X\_text\_train, X\_text\_test, Y\_train, Y\_tes...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{6행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 TF-IDF 기반 벡터라이저를 만듭니다. \textbf{7행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{8행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{10--13행}의 \inlinecode{split\_summary = pd.DataFrame([ \{"split":...}에서는 결과를 표로 보기 좋게 정리합니다.
+\textbf{1--4행}의 \inlinecode{X\_text\_train, X\_text\_test...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{6행}의 \inlinecode{tfidf = ...}에서는 TF-IDF 기반 벡터라이저를 만듭니다. \textbf{7행}의 \inlinecode{X\_train = ...}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{8행}의 \inlinecode{X\_test = ...}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{10--13행}의 \inlinecode{split\_summary = ...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-split        X_shape    Y_shape
+split  X_shape        Y_shape
+-  -----  -------------  ---------
 0  train  (4000, 10000)  (4000, 5)
-1   test  (1000, 10000)  (1000, 5)
+1  test   (1000, 10000)  (1000, 5)
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -401,14 +408,14 @@ display(pd.DataFrame([bare_result]))
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{bare\_model = LogisticRegression(max\_iter=...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{try:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{3행}의 \inlinecode{bare\_model.fit(X\_train, Y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{bare\_result = \{"status": "success", "deta...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{except ValueError as e:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{6행}의 \inlinecode{bare\_result = \{"status": "ValueError", "d...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\textbf{1행}의 \inlinecode{bare\_model = ...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{try:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{3행}의 \inlinecode{bare\_model.fit(...)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{bare\_result = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{except ValueError as e:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{6행}의 \inlinecode{bare\_result = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-status                                             detail
-0  ValueError  y should be a 1d array, got an array of
-  shape ...
+status      detail
+-  ----------  ------------------------
+0  ValueError  y should be a 1d arra...
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -478,28 +485,28 @@ display(proba_preview)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{model\_ml = OneVsRestClassifier(LogisticRe...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model\_ml.fit(X\_train, Y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{first\_estimator = model\_ml.estimators\_[0]}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5--9행}의 \inlinecode{first\_coef\_shape = getattr( getattr(first...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{10--14행}의 \inlinecode{estimator\_summary = pd.DataFrame([ \{"metr...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{15--23행}의 \inlinecode{label\_estimator\_summary = pd.DataFrame([...}에서는 결과를 표로 보기 좋게 정리합니다.
+\textbf{1행}의 \inlinecode{model\_ml = ...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model\_ml.fit(...)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{first\_estimator = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5--9행}의 \inlinecode{first\_coef\_shape = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{10--14행}의 \inlinecode{estimator\_summary = ...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{15--23행}의 \inlinecode{label\_estimator\_summary =...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-metric               value
-0     n_binary_estimators                   5
-1        estimator_0_type  LogisticRegression
-2  estimator_0_coef_shape          (1, 10000)
-   estimator    aspect  positive_count  positive_rate
-0          0      food            2214        0.55350
-1          1   service            1961        0.49025
-2          2     price            1196        0.29900
-3          3  ambiance             720        0.18000
-4          4  location             892        0.22300
-     object      shape
-0    Y_pred  (1000, 5)
+metric                  value
+-  ----------------------  ------------------
+0  n_binary_estimators     5
+1  estimator_0_type        LogisticRegression
+2  estimator_0_coef_shape  (1, 10000)
+   estimator  aspect    positive_count  positive_rate
+-  ---------  --------  --------------  -------------
+0  0          food      2214            0.55350
+1  1          service   1961            0.49025
+2  2          price     1196            0.29900
+3  3          ambiance  720             0.18000
+4  4          location  892             0.22300
+   object    shape
+-  --------  ---------
+0  Y_pred    (1000, 5)
 1  proba_ml  (1000, 5)
-     food  service   price  ambiance  location
-0  0.3002   0.3082  0.7970    0.1701    0.1122
-1  0.3607   0.3612  0.4585    0.1855    0.1662
-2  0.2121   0.2894  0.1212    0.1387    0.0692
+...
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -559,20 +566,16 @@ review_preview_200_chars
 0  Okay, so I just went to Vegas for the first ti...
    active_label_count
 0                   3
-     aspect  target  predicted_probability       loss_term
-       bce
-0      food       0                 0.4466  -log(1-0.4466)
-  0.5917
-1   service       1                 0.9027    -log(0.9027)
-  0.1024
-2     price       1                 0.7366    -log(0.7366)
-  0.3057
-3  ambiance       1                 0.5771    -log(0.5771)
-  0.5497
-4  location       0                 0.2620  -log(1-0.2620)
-  0.3038
-     metric   value
-0   sum_bce  1.8533
+   aspect    target  predicte...  loss_term    bce
+-  --------  ------  -----------  -----------  ------
+0  food      0       0.4466       -log(1-0...  0.5917
+1  service   1       0.9027       -log(0.9...  0.1024
+2  price     1       0.7366       -log(0.7...  0.3057
+3  ambiance  1       0.5771       -log(0.5...  0.5497
+4  location  0       0.2620       -log(1-0...  0.3038
+   metric    value
+-  --------  ------
+0  sum_bce   1.8533
 1  mean_bce  0.3707
 \end{lstlisting}
 \par\vspace{0.9em}
@@ -642,16 +645,17 @@ display(multi_label_metrics)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1--6행}의 \inlinecode{multi\_label\_metrics = pd.DataFrame([ \{"me...}에서는 결과를 표로 보기 좋게 정리합니다.
+\textbf{1--6행}의 \inlinecode{multi\_label\_metrics = ...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-metric     value
+metric           value
+-  ---------------  --------
 0  subset_accuracy  0.493000
-1     hamming_loss  0.138200
-2         micro_f1  0.773665
-3         macro_f1  0.646973
+1  hamming_loss     0.138200
+2  micro_f1         0.773665
+3  macro_f1         0.646973
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -671,21 +675,22 @@ display(report_df.round(4))
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1--7행}의 \inlinecode{report = classification\_report( Y\_test, Y...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{8행}의 \inlinecode{report\_df = pd.DataFrame(report).T}에서는 결과를 표로 보기 좋게 정리합니다.
+\textbf{1--7행}의 \inlinecode{report = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{8행}의 \inlinecode{report\_df = ...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
 precision  recall  f1-score  support
-food             0.8959  0.9007    0.8983    564.0
-service          0.8936  0.8574    0.8751    519.0
-price            0.9291  0.4275    0.5856    276.0
-ambiance         1.0000  0.2757    0.4322    185.0
-location         0.9365  0.2906    0.4436    203.0
-micro avg        0.9043  0.6760    0.7737   1747.0
-macro avg        0.9310  0.5504    0.6470   1747.0
-weighted avg     0.9162  0.6760    0.7398   1747.0
-samples avg      0.6832  0.5788    0.6082   1747.0
+------------  ---------  ------  --------  -------
+food          0.8959     0.9007  0.8983    564.0
+service       0.8936     0.8574  0.8751    519.0
+price         0.9291     0.4275  0.5856    276.0
+ambiance      1.0000     0.2757  0.4322    185.0
+location      0.9365     0.2906  0.4436    203.0
+micro avg     0.9043     0.6760  0.7737    1747.0
+macro avg     0.9310     0.5504  0.6470    1747.0
+weighted avg  0.9162     0.6760  0.7398    1747.0
+samples avg   0.6832     0.5788  0.6082    1747.0
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -719,12 +724,13 @@ display(df_t)
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
 threshold  subset_acc  hamming  micro_F1  macro_F1
-0        0.2       0.233   0.2696    0.7178    0.6984
-1        0.3       0.472   0.1468    0.8135    0.7877
-2        0.4       0.563   0.1136    0.8335    0.7697
-3        0.5       0.493   0.1382    0.7737    0.6470
-4        0.6       0.416   0.1658    0.6984    0.5129
-5        0.7       0.344   0.2028    0.5947    0.3919
+-  ---------  ----------  -------  --------  --------
+0  0.2        0.233       0.2696   0.7178    0.6984
+1  0.3        0.472       0.1468   0.8135    0.7877
+2  0.4        0.563       0.1136   0.8335    0.7697
+3  0.5        0.493       0.1382   0.7737    0.6470
+4  0.6        0.416       0.1658   0.6984    0.5129
+5  0.7        0.344       0.2028   0.5947    0.3919
 \end{lstlisting}
 \par\vspace{0.9em}
 

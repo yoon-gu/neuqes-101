@@ -140,7 +140,7 @@ model.fit(X, y)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{!pip install -q datasets scikit-learn pan...}에서는 Colab 실행에 필요한 패키지를 설치합니다.
+\textbf{1행}의 \inlinecode{!pip install -q datasets...}에서는 Colab 실행에 필요한 패키지를 설치합니다.
 \end{codeRead}
 
 
@@ -177,14 +177,16 @@ display(df["star"].value_counts().sort_index().rename_axis("star").reset_index(n
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-metric  value
-0  sample_count   5000
+metric        value
+-  ------------  -----
+0  sample_count  5000
    star  count
-0     1   1017
-1     2   1027
-2     3    960
-3     4   1021
-4     5    975
+-  ----  -----
+0  1     1017
+1  2     1027
+2  3     960
+3  4     1021
+4  5     975
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -206,17 +208,19 @@ display(class_counts)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{df\_bin = df[df["star"] != 3].copy()}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{2행}의 \inlinecode{df\_bin["y"] = (df\_bin["star"] >= 4).astyp...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{4--7행}의 \inlinecode{binary\_summary = pd.DataFrame([ \{"metric"...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{8행}의 \inlinecode{class\_counts = df\_bin["y"].value\_counts()...}에서는 라벨별 샘플 개수를 집계합니다.
+\textbf{1행}의 \inlinecode{df\_bin = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{2행}의 \inlinecode{df\_bin["y"] = (df\_bin["st...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{4--7행}의 \inlinecode{binary\_summary = ...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{8행}의 \inlinecode{class\_counts = ...}에서는 라벨별 샘플 개수를 집계합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-metric        value
-0  sample_count_after_filter  4040.000000
-1              positive_rate     0.494059
+metric                    value
+-  ------------------------  -----------
+0  sample_count_after_fi...  4040.000000
+1  positive_rate             0.494059
    class  count
-0      0   2044
-1      1   1996
+-  -----  -----
+0  0      2044
+1  1      1996
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -241,14 +245,15 @@ display(split_summary)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1--4행}의 \inlinecode{X\_text\_train, X\_text\_test, y\_train, y\_tes...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{6행}의 \inlinecode{tfidf = TfidfVectorizer(max\_features=10000)}에서는 TF-IDF 기반 벡터라이저를 만듭니다. \textbf{7행}의 \inlinecode{X\_train = tfidf.fit\_transform(X\_text\_train)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{8행}의 \inlinecode{X\_test = tfidf.transform(X\_text\_test)}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{10--13행}의 \inlinecode{split\_summary = pd.DataFrame([ \{"split":...}에서는 결과를 표로 보기 좋게 정리합니다.
+\textbf{1--4행}의 \inlinecode{X\_text\_train, X\_text\_test...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{6행}의 \inlinecode{tfidf = ...}에서는 TF-IDF 기반 벡터라이저를 만듭니다. \textbf{7행}의 \inlinecode{X\_train = ...}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{8행}의 \inlinecode{X\_test = ...}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{10--13행}의 \inlinecode{split\_summary = ...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-split        X_shape  y_shape
+split  X_shape        y_shape
+-  -----  -------------  -------
 0  train  (3232, 10000)  (3232,)
-1   test   (808, 10000)   (808,)
+1  test   (808, 10000)   (808,)
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -286,12 +291,13 @@ display(binary_accuracy)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{model = LogisticRegression(max\_iter=1000)}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model.fit(X\_train, y\_train)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{y\_pred = model.predict(X\_test)}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{5행}의 \inlinecode{y\_proba = model.predict\_proba(X\_test)}에서는 클래스별 예측 확률을 계산합니다. \textbf{7--9행}의 \inlinecode{binary\_accuracy = pd.DataFrame([ \{"metric...}에서는 결과를 표로 보기 좋게 정리합니다.
+\textbf{1행}의 \inlinecode{model = ...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model.fit(...)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{y\_pred = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{5행}의 \inlinecode{y\_proba = ...}에서는 클래스별 예측 확률을 계산합니다. \textbf{7--9행}의 \inlinecode{binary\_accuracy = ...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-metric     value
+metric         value
+-  -------------  --------
 0  test_accuracy  0.863861
 \end{lstlisting}
 \par\vspace{0.9em}
@@ -315,14 +321,16 @@ display(row_sum_check)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{y\_proba = model.predict\_proba(X\_test)}에서는 클래스별 예측 확률을 계산합니다. \textbf{3행}의 \inlinecode{proba\_shape = pd.DataFrame([\{"object": "y...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{4--7행}의 \inlinecode{proba\_preview = pd.DataFrame( y\_proba[:5]...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{8행}의 \inlinecode{row\_sum\_check = pd.DataFrame(\{"row\_sum":...}에서는 결과를 표로 보기 좋게 정리합니다.
+\textbf{1행}의 \inlinecode{y\_proba = ...}에서는 클래스별 예측 확률을 계산합니다. \textbf{3행}의 \inlinecode{proba\_shape = ...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{4--7행}의 \inlinecode{proba\_preview = ...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{8행}의 \inlinecode{row\_sum\_check = ...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-object     shape
+object   shape
+-  -------  --------
 0  y_proba  (808, 2)
    P(neg)  P(pos)
+-  ------  ------
 0  0.5515  0.4485
 1  0.9001  0.0999
 2  0.8362  0.1638
@@ -370,19 +378,21 @@ display(proba_check)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1--4행}의 \inlinecode{logits = X\_test @ model.coef\_.T + model.i...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{logits = logits.flatten()}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{7행}의 \inlinecode{proba\_manual = 1 / (1 + np.exp(-logits))}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{8행}의 \inlinecode{proba\_sklearn = y\_proba[:, 1]   \# P(y=1)}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{10행}의 \inlinecode{diff = np.abs(proba\_manual - proba\_sklear...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다. \textbf{11--14행}의 \inlinecode{proba\_check = pd.DataFrame(\{ "manual\_sigm...}에서는 결과를 표로 보기 좋게 정리합니다.
+\textbf{1--4행}의 \inlinecode{logits = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{logits = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{7행}의 \inlinecode{proba\_manual = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{8행}의 \inlinecode{proba\_sklearn = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{10행}의 \inlinecode{diff = ...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다. \textbf{11--14행}의 \inlinecode{proba\_check = ...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-metric  value
-0  max_absolute_difference    0.0
+metric                   value
+-  -----------------------  -----
+0  max_absolute_difference  0.0
    manual_sigmoid  sklearn_predict_proba
-0          0.4485                 0.4485
-1          0.0999                 0.0999
-2          0.1638                 0.1638
-3          0.6661                 0.6661
-4          0.7578                 0.7578
+-  --------------  ---------------------
+0  0.4485          0.4485
+1  0.0999          0.0999
+2  0.1638          0.1638
+3  0.6661          0.6661
+4  0.7578          0.7578
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -404,14 +414,15 @@ display(bce_check)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{y\_test\_arr = y\_test.values}에서는 계산에 바로 쓸 수 있도록 배열 형태로 변환합니다. \textbf{2행}의 \inlinecode{p = proba\_sklearn}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{manual\_bce = -(y\_test\_arr * np.log(p) + (...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다. \textbf{4행}의 \inlinecode{sklearn\_bce = log\_loss(y\_test, y\_proba)}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6--10행}의 \inlinecode{bce\_check = pd.DataFrame([ \{"metric": "ma...}에서는 결과를 표로 보기 좋게 정리합니다.
+\textbf{1행}의 \inlinecode{y\_test\_arr = ...}에서는 계산에 바로 쓸 수 있도록 배열 형태로 변환합니다. \textbf{2행}의 \inlinecode{p = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{manual\_bce = ...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다. \textbf{4행}의 \inlinecode{sklearn\_bce = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6--10행}의 \inlinecode{bce\_check = ...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-metric     value
-0           manual_bce  0.383475
-1     sklearn_log_loss  0.383475
+metric               value
+-  -------------------  --------
+0  manual_bce           0.383475
+1  sklearn_log_loss     0.383475
 2  absolute_difference  0.000000
 \end{lstlisting}
 \par\vspace{0.9em}
@@ -439,20 +450,22 @@ display(cm_df)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1--6행}의 \inlinecode{report = classification\_report( y\_test, y...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{7행}의 \inlinecode{report\_df = pd.DataFrame(report).T}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{8행}의 \inlinecode{cm = confusion\_matrix(y\_test, y\_pred)}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{9--13행}의 \inlinecode{cm\_df = pd.DataFrame( cm, index=["true\_ne...}에서는 결과를 표로 보기 좋게 정리합니다.
+\textbf{1--6행}의 \inlinecode{report = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{7행}의 \inlinecode{report\_df = ...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{8행}의 \inlinecode{cm = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{9--13행}의 \inlinecode{cm\_df = ...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-precision  recall  f1-score   support
-negative         0.8691  0.8606    0.8649  409.0000
-positive         0.8586  0.8672    0.8628  399.0000
-accuracy         0.8639  0.8639    0.8639    0.8639
-macro avg        0.8638  0.8639    0.8639  808.0000
-weighted avg     0.8639  0.8639    0.8639  808.0000
+precision  recall  f1-score  support
+------------  ---------  ------  --------  --------
+negative      0.8691     0.8606  0.8649    409.0000
+positive      0.8586     0.8672  0.8628    399.0000
+accuracy      0.8639     0.8639  0.8639    0.8639
+macro avg     0.8638     0.8639  0.8639    808.0000
+weighted avg  0.8639     0.8639  0.8639    808.0000
                pred_negative  pred_positive
-true_negative            352             57
-true_positive             53            346
+-------------  -------------  -------------
+true_negative  352            57
+true_positive  53             346
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -494,12 +507,13 @@ display(df_t)
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-threshold  accuracy  precision  recall      f1
-0        0.3    0.7686     0.6840  0.9875  0.8082
-1        0.4    0.8515     0.7925  0.9474  0.8630
-2        0.5    0.8639     0.8586  0.8672  0.8628
-3        0.6    0.8366     0.9159  0.7368  0.8167
-4        0.7    0.7772     0.9700  0.5664  0.7152
+threshold  accuracy  precision  recall  f1
+-  ---------  --------  ---------  ------  ------
+0  0.3        0.7686    0.6840     0.9875  0.8082
+1  0.4        0.8515    0.7925     0.9474  0.8630
+2  0.5        0.8639    0.8586     0.8672  0.8628
+3  0.6        0.8366    0.9159     0.7368  0.8167
+4  0.7        0.7772    0.9700     0.5664  0.7152
 \end{lstlisting}
 \par\vspace{0.9em}
 
