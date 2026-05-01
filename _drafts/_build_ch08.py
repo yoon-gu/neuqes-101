@@ -543,6 +543,72 @@ for orig, masked, lbl in zip(orig_ids, mask_ids, label_ids):
 print(pd.DataFrame(rows).to_string(index=False))
 print("\n✱ 가 붙은 행이 collator가 가리거나 바꾼 자리 — 모델은 그 자리의 원래 토큰을 맞히도록 학습됨")""")
 
+# ----- 23g+. CLM (GPT-style) 시연 도입 -----
+md(r"""### 실험 2b — GPT-style CLM 도 같은 collator로
+
+같은 `DataCollatorForLanguageModeling` 에 **`mlm=False`** 만 주면 GPT 같은 *autoregressive 사전학습* 용 collator가 됩니다. 차이는 단순합니다.
+
+| 비교 | MLM (BERT, `mlm=True`) | **CLM** (GPT, `mlm=False`) |
+|---|---|---|
+| 입력 | 일부 토큰을 `[MASK]` 로 가림 | 가리지 않음, 원본 그대로 |
+| labels | masked 자리만 원래 토큰, 나머지 `-100` | `input_ids` 와 동일 (padding은 `-100`) |
+| 학습 목적 | 양방향 문맥에서 가린 토큰 예측 | 왼쪽 문맥에서 *다음 토큰* 예측 |
+| 모델 구조 | 양방향 attention | causal mask (왼쪽만 보기) |
+| shift 처리 | 없음 | 모델 forward 내부에서 자동 shift-by-one |
+
+GPT-2 토크나이저는 BERT와 다른 점이 두 가지 있어 약간의 셋업이 필요합니다.
+
+1. `pad_token` 이 *없습니다*. 사전학습 시 패딩을 안 썼기 때문 — `eos_token` 을 pad로 재활용.
+2. WordPiece 대신 BPE라 `Ġ` (공백) 접두사 표기가 등장 (Ch 7에서 이미 봄).""")
+
+# ----- 23g++. CLM 시연 코드 -----
+code(r"""from transformers import AutoTokenizer
+
+# GPT-2 토크나이저 + pad_token 셋업
+gpt_tokenizer = AutoTokenizer.from_pretrained("gpt2")
+gpt_tokenizer.pad_token = gpt_tokenizer.eos_token
+
+# 작은 토큰화 데이터셋 (GPT-2 토크나이저 사용)
+def gpt_tokenize(batch):
+    return gpt_tokenizer(batch["text"], truncation=True, max_length=48)
+
+gpt_tokenized = small.select(range(20)).map(gpt_tokenize, batched=True).remove_columns(["text"])
+
+# CLM collator — mlm=False 가 핵심
+clm_collator = DataCollatorForLanguageModeling(
+    tokenizer=gpt_tokenizer,
+    mlm=False,
+)
+
+clm_batch = clm_collator([gpt_tokenized[i] for i in range(3)])
+print(f"input_ids shape:  {clm_batch['input_ids'].shape}")
+print(f"labels shape:     {clm_batch['labels'].shape}")
+
+# 핵심 관찰: input_ids 와 labels 가 (padding 제외하고) 동일
+i = 0
+real_len = (clm_batch["attention_mask"][i] == 1).sum().item()
+input_first = clm_batch["input_ids"][i][:real_len].tolist()
+label_first = clm_batch["labels"][i][:real_len].tolist()
+print(f"\n첫 샘플의 input_ids == labels?  (padding 외 모두 동일해야 함)")
+print(f"  같은 자리 수: {sum(int(a == b) for a, b in zip(input_first, label_first))} / {real_len}")""")
+
+# ----- 23g+++. CLM vs MLM 시각 비교 -----
+code(r"""# 첫 샘플 — input vs label (패딩 자리 -100 확인)
+i = 0
+ids = clm_batch["input_ids"][i][:20].tolist()
+lbls = clm_batch["labels"][i][:20].tolist()
+
+rows = []
+for tok_id, lbl in zip(ids, lbls):
+    tok = gpt_tokenizer.decode([tok_id])
+    lbl_str = "(무시)" if lbl == -100 else gpt_tokenizer.decode([lbl])
+    rows.append({"position 토큰": tok, "label": lbl_str})
+
+print(pd.DataFrame(rows).to_string(index=False))
+print("\n관찰: padding이 아닌 자리에서는 input_ids 와 label이 똑같습니다.")
+print("    모델은 forward 안에서 한 칸 shift해 *다음 토큰* 을 예측합니다.")
+print("    예: 'Hello world' → 'Hello' 자리에서 'world'를 맞히도록 학습.")""")
+
 # ----- 23h. 커스텀 collate_fn -----
 md(r"""### 실험 3 — 커스텀 `collate_fn` 직접 작성
 

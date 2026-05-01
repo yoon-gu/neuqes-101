@@ -181,7 +181,61 @@ print(f"파라미터 수:  {sum(p.numel() for p in model.parameters()):,}")
 print(f"분류 헤드:    {model.classifier}")
 print(f"problem_type: {model.config.problem_type}")""")
 
-md(r"""**경고 메시지를 보셨을 겁니다** — `Some weights of DistilBertForSequenceClassification were not initialized ...`. 분류 헤드(`Linear(768, 1)`)가 새로 만들어지면서 *랜덤 초기화* 됐다는 알림입니다. 이 부분이 학습으로 채워지고, BERT 본체는 사전학습 가중치를 미세 조정합니다 (transfer learning의 본 모습).""")
+md(r"""**경고 메시지를 보셨을 겁니다** — `Some weights of DistilBertForSequenceClassification were not initialized ...`. 분류 헤드(`Linear(768, 1)`)가 새로 만들어지면서 *랜덤 초기화* 됐다는 알림입니다. 이 부분이 학습으로 채워지고, BERT 본체는 사전학습 가중치를 미세 조정합니다 (transfer learning의 본 모습).
+
+### 학습되는 파라미터 vs 동결된 파라미터
+
+`from_pretrained()` 직후엔 *모든* 파라미터가 학습 대상입니다 (`requires_grad=True`). 그러나 데이터가 작거나 빠른 학습이 필요하면 BERT 본체를 *동결(freeze)* 하고 분류 헤드만 학습하기도 합니다. 학습 시작 전에 *전체 vs 학습되는 파라미터* 를 한 번 확인하는 게 좋은 습관입니다.""")
+
+code(r"""def param_summary(m):
+    total     = sum(p.numel() for p in m.parameters())
+    trainable = sum(p.numel() for p in m.parameters() if p.requires_grad)
+    frozen    = total - trainable
+    return total, trainable, frozen
+
+total, trainable, frozen = param_summary(model)
+print(f"전체 파라미터:     {total:>13,}  ({total/1e6:.1f} M)")
+print(f"학습되는 파라미터: {trainable:>13,}  ({trainable/1e6:.1f} M, {trainable/total:.1%})")
+print(f"동결된 파라미터:   {frozen:>13,}  ({frozen/1e6:.1f} M, {frozen/total:.1%})")
+print(f"\n현재 default — 모든 layer가 학습 대상")""")
+
+md(r"""### 시연: BERT 본체 동결 패턴
+
+본 학습은 *모든 파라미터* 를 학습하지만, 동결 패턴이 어떻게 적용되는지 *별도 모델 인스턴스* 로 한 번 보여드립니다 (이 시연 모델은 학습에 사용하지 않습니다).""")
+
+code(r"""# 시연용 — 같은 모델을 한 번 더 만들고 BERT 본체를 동결
+demo_model = AutoModelForSequenceClassification.from_pretrained(
+    "distilbert-base-uncased", num_labels=1, problem_type="regression",
+)
+
+# distilbert 본체의 모든 파라미터에 requires_grad=False 설정
+for p in demo_model.distilbert.parameters():
+    p.requires_grad = False
+
+# 분류 헤드는 학습 대상으로 그대로 둠 (default가 True)
+
+t, tr, fr = param_summary(demo_model)
+print(f"BERT 본체 동결 후:")
+print(f"  전체:        {t:>13,}")
+print(f"  학습되는:    {tr:>13,}  ({tr/t:.1%})  ← 분류 헤드만")
+print(f"  동결된:      {fr:>13,}  ({fr/t:.1%})  ← BERT 본체")
+print(f"\n분류 헤드 {tr:,}개 파라미터만 업데이트되므로 학습이 매우 빠르고 메모리도 적게 듭니다.")
+print(f"단점: BERT 본체가 task에 적응 못 함 — 데이터가 충분하면 보통 본체도 함께 학습.")
+print(f"\n(이 시연 모델은 본 학습에 사용하지 않습니다 — del demo_model 로 메모리 회수)")
+
+import gc
+del demo_model
+gc.collect()
+if torch.cuda.is_available():
+    torch.cuda.empty_cache()""")
+
+md(r"""**언제 동결을 쓰나**
+
+- **분류 헤드만 학습 (모든 본체 동결)**: 데이터 매우 작음 (수백 건), 빠른 baseline 필요.
+- **하위 N개 layer 동결**: 일반 언어 표현은 BERT 그대로, 상위 layer만 task 적응.
+- **모든 파라미터 학습 (default)**: 데이터 충분 (수천 건+), 본체도 task에 맞게 적응.
+
+이번 챕터는 4,000건이라 default(전체 학습)이 가장 좋은 선택입니다.""")
 
 code(r"""!nvidia-smi""")
 
@@ -225,7 +279,8 @@ code(r"""trainer = Trainer(
     args=training_args,
     train_dataset=train_tok,
     eval_dataset=eval_tok,
-    tokenizer=tokenizer,                # ← 이거 한 줄로 DataCollatorWithPadding 자동 생성
+    processing_class=tokenizer,         # ← 이 한 줄이 DataCollatorWithPadding 을 자동 생성
+                                        # (transformers 4.46+ 의 새 인자명. 그 이전엔 tokenizer=tokenizer)
     compute_metrics=compute_metrics,
 )
 
@@ -234,9 +289,15 @@ print(f"\n학습 완료 — 평균 train loss: {train_result.training_loss:.4f}"
 
 md(r"""학습이 진행되는 동안 step별 loss와 에폭별 평가 metric이 출력됩니다. **핵심 관찰**:
 
-- `loss` 가 처음 수 step에서 큰 값(흔히 0.3~0.5)이었다가 학습이 진행되면 줄어들어야 정상입니다.
+- `loss` 가 처음 수 step에서 큰 값(흔히 0.3-0.5)이었다가 학습이 진행되면 줄어들어야 정상입니다.
 - 에폭 끝에서 출력되는 `eval_mse`, `eval_mae`, `eval_r2` 가 우리가 정의한 평가 지표입니다.
-- `loss` 가 줄어들지 않거나 nan으로 가면 학습률을 낮추거나(`5e-6`), `fp16=False` 로 시도해 봅니다.""")
+- `loss` 가 줄어들지 않거나 nan으로 가면 학습률을 낮추거나(`5e-6`), `fp16=False` 로 시도해 봅니다.
+
+> 📒 **부록 노트북 두 편**
+>
+> 1. [`appendix_experiment_tracking.ipynb`](./appendix_experiment_tracking.ipynb) — `report_to` 인자로 **wandb · trackio · MLflow** 같은 experiment tracker를 붙이는 패턴. 학습 곡선·평가 metric을 dashboard에서 보고 여러 run을 한 화면에 비교. ([Colab으로](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/09_bert_regression/appendix_experiment_tracking.ipynb))
+>
+> 2. [`appendix_hpo.ipynb`](./appendix_hpo.ipynb) — **하이퍼파라미터 최적화(HPO)의 어려움**. `TrainingArguments` 인자 정리, HPO가 어려운 5가지 이유, `Trainer.hyperparameter_search` + Optuna 직접 시도, wandb sweeps · MLflow autolog 통합. ([Colab으로](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/09_bert_regression/appendix_hpo.ipynb))""")
 
 # ----- 15. nvidia-smi 학습 후 -----
 code(r"""!nvidia-smi""")
@@ -319,13 +380,13 @@ axes[0].scatter(eval_labels, bert_pred, alpha=0.3, s=10)
 axes[0].plot([1, 5], [1, 5], "r--", linewidth=1)
 axes[0].set_xlabel("Actual star (1-5)")
 axes[0].set_ylabel("BERT predicted")
-axes[0].set_title("BERT: 실제 vs 예측")
+axes[0].set_title("BERT: Actual vs Predicted")
 
 axes[1].scatter(eval_labels, sk_pred, alpha=0.3, s=10, color="orange")
 axes[1].plot([1, 5], [1, 5], "r--", linewidth=1)
 axes[1].set_xlabel("Actual star (1-5)")
 axes[1].set_ylabel("sklearn predicted")
-axes[1].set_title("sklearn LinearRegression: 실제 vs 예측")
+axes[1].set_title("sklearn LinearRegression: Actual vs Predicted")
 
 plt.tight_layout()
 plt.show()""")
