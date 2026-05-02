@@ -38,6 +38,7 @@
 
 \section{변화추적표}
 
+\begin{booktable}{2장 변화추적표}{tab:ch02-tracking}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lllllll@{}}
 \toprule
@@ -49,6 +50,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
+\end{booktable}
 
 전체 18개 장의 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
 
@@ -56,6 +58,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 
 \section{변경점: 1장 대비}
 
+\begin{booktable}{2장 변경점 요약}{tab:ch02-diff}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -69,6 +72,7 @@ Loss & 없음 & \textbf{\inlinecode{MSELoss}} ← 첫 등장 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
+\end{booktable}
 
 이 장에서 바뀌는 것은 \textbf{모델 + Loss} 두 가지입니다 --- 그러나 둘은 한 묶음으로 처음 등장하는 거라, 학습자 관점에선 사실상 "모델이 처음 생겼다"는 한 가지 변화입니다. 다음 장부터는 한 번에 하나씩 변합니다.
 
@@ -97,6 +101,7 @@ L = \frac{1}{N} \sum_{i=1}^{N} (y_i - \hat y_i)^2
 
 \textbf{숫자로 감 잡기} (정답이 별점 5인 한 샘플 기준, \(N=1\)이라 평균은 그대로):
 
+\begin{booktable}{MSELoss 수치 예시}{tab:ch02-mse-examples}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}llll@{}}
 \toprule
@@ -109,6 +114,7 @@ L = \frac{1}{N} \sum_{i=1}^{N} (y_i - \hat y_i)^2
 \bottomrule
 \end{tabular}
 \end{adjustbox}
+\end{booktable}
 
 오차가 2배가 되면 손실은 4배, 4배가 되면 16배로 \textbf{비선형으로} 증폭됩니다. 이 제곱 항이 MSE의 성격을 결정합니다 --- "조금씩 자주 틀리는 것" 보다 "어쩌다 크게 틀리는 것"을 모델이 더 강하게 회피합니다.
 
@@ -447,6 +453,7 @@ metric          value
 
 \section{이 장에 등장한 라이브러리}
 
+\begin{booktable}{2장 새로 등장한 라이브러리}{tab:ch02-libraries}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -461,6 +468,7 @@ metric          value
 \bottomrule
 \end{tabular}
 \end{adjustbox}
+\end{booktable}
 
 
 

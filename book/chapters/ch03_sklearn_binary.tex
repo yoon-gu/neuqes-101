@@ -38,6 +38,7 @@
 
 \section{변화추적표}
 
+\begin{booktable}{3장 변화추적표}{tab:ch03-tracking}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lllllll@{}}
 \toprule
@@ -50,6 +51,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
+\end{booktable}
 
 전체 18개 장의 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
 
@@ -57,6 +59,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 
 \section{변경점: 2장 대비}
 
+\begin{booktable}{3장 변경점 요약}{tab:ch03-diff}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -72,6 +75,7 @@ Loss & \inlinecode{MSELoss} & \textbf{\inlinecode{BCEWithLogitsLoss}} \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
+\end{booktable}
 
 겉보기엔 다섯 곳이 바뀌었지만, 한 가지 결정 --- \textbf{"회귀 → 이진 분류"} --- 이 자동으로 끌어오는 결과입니다. 분류 패러다임은 (출력 형태 = sigmoid, loss = BCE, 라벨 = 0/1, 데이터 = 이진화)가 한 묶음으로 따라옵니다.
 
@@ -94,6 +98,7 @@ L = -\frac{1}{N}\sum_{i=1}^{N}\left[\,y_i \log \hat p_i + (1 - y_i)\log(1 - \hat
 
 \textbf{숫자로 감 잡기} (정답이 \(y = 1\)인 샘플 한 개, \(N = 1\)):
 
+\begin{booktable}{BCEWithLogitsLoss 수치 예시}{tab:ch03-bce-examples}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -107,6 +112,7 @@ L = -\frac{1}{N}\sum_{i=1}^{N}\left[\,y_i \log \hat p_i + (1 - y_i)\log(1 - \hat
 \bottomrule
 \end{tabular}
 \end{adjustbox}
+\end{booktable}
 
 확률이 정답에서 멀어질수록 --- 특히 0에 가까워질수록 --- 손실이 \textbf{로그 스케일로 폭증} 합니다. 자신 있게 틀린 예측을 강하게 처벌하는 게 BCE의 성격입니다.
 
@@ -521,6 +527,7 @@ threshold  accuracy  precision  recall  f1
 
 \section{이 장에 등장한 라이브러리}
 
+\begin{booktable}{3장 새로 등장한 라이브러리}{tab:ch03-libraries}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -535,6 +542,7 @@ threshold  accuracy  precision  recall  f1
 \bottomrule
 \end{tabular}
 \end{adjustbox}
+\end{booktable}
 
 
 

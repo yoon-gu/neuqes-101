@@ -322,6 +322,75 @@ def normalize_tables(latex: str) -> str:
     return latex
 
 
+def clean_table_caption_title(section_title: str) -> str:
+    section_title = re.sub(
+        r"\\texorpdfstring\{.*?\}\{(.*?)\}",
+        r"\1",
+        section_title,
+        flags=re.DOTALL,
+    )
+    section_title = re.sub(r"\\inlinecode\{([^{}]+)\}", r"\1", section_title)
+    section_title = re.sub(r"\\[A-Za-z]+\*?(?:\[[^\]]*\])?\{([^{}]*)\}", r"\1", section_title)
+    section_title = section_title.replace("---", "-")
+    return re.sub(r"\s+", " ", section_title).strip()
+
+
+def caption_for_table(chapter_number: int, section_title: str, table_index: int) -> str:
+    title = clean_table_caption_title(section_title)
+    if "변화추적표" in title:
+        return f"{chapter_number}장 변화추적표"
+    if "변경점" in title:
+        return f"{chapter_number}장 변경점 요약"
+    if "등장한 라이브러리" in title:
+        return f"{chapter_number}장 새로 등장한 라이브러리"
+    if "Loss" in title or "수치 예시" in title:
+        return f"{chapter_number}장 Loss 수치 예시"
+    if title:
+        return f"{chapter_number}장 {title} 표"
+    return f"{chapter_number}장 표 {table_index}"
+
+
+def wrap_tabular_tables(latex: str, chapter_number: int) -> str:
+    lines = latex.splitlines()
+    wrapped: list[str] = []
+    section_title = ""
+    table_index = 0
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        section_match = re.match(r"\\(?:section|subsection)\{(.+)\}$", line)
+        if section_match:
+            section_title = section_match.group(1)
+
+        if line.startswith(r"\begin{adjustbox}"):
+            block = [line]
+            depth = 1
+            i += 1
+            while i < len(lines):
+                block.append(lines[i])
+                if lines[i].startswith(r"\begin{adjustbox}"):
+                    depth += 1
+                if lines[i].startswith(r"\end{adjustbox}"):
+                    depth -= 1
+                    if depth == 0:
+                        break
+                i += 1
+            block_text = "\n".join(block)
+            if r"\begin{tabular}" in block_text or r"\begin{tabularx}" in block_text:
+                table_index += 1
+                caption = caption_for_table(chapter_number, section_title, table_index)
+                label = f"tab:ch{chapter_number:02d}-{table_index:02d}"
+                wrapped.append(f"\\begin{{booktable}}{{{caption}}}{{{label}}}")
+                wrapped.extend(block)
+                wrapped.append(r"\end{booktable}")
+            else:
+                wrapped.extend(block)
+        else:
+            wrapped.append(line)
+        i += 1
+    return "\n".join(wrapped)
+
+
 def unescape_texttt_content(text: str) -> str:
     return (
         text.replace(r"\_", "_")
@@ -1367,6 +1436,7 @@ def chapter_tex(chapter: Chapter, execute: bool = False) -> str:
         chunks.append("")
 
     chapter_latex = "\n\n".join(chunks).rstrip() + "\n"
+    chapter_latex = wrap_tabular_tables(chapter_latex, chapter.number)
     chapter_latex = display_math_to_numbered_equations(chapter_latex, chapter.number)
     return chapter_latex
 

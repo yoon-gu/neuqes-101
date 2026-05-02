@@ -84,6 +84,21 @@
 \renewcommand{\tablename}{표}
 \renewcommand{\listfigurename}{그림 목록}
 \renewcommand{\listtablename}{표 목록}
+\captionsetup[table]{
+  justification=centering,
+  singlelinecheck=true,
+  labelfont=bf,
+  font=small,
+  skip=6pt
+}
+\newenvironment{booktable}[2]{%
+  \par\begin{center}
+  \captionsetup{type=table}%
+  \captionof{table}{#1}\label{#2}%
+  \vspace{2pt}\small
+}{%
+  \end{center}\par
+}
 
 \pagestyle{fancy}
 \fancyhf{}

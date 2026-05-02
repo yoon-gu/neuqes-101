@@ -32,6 +32,7 @@
 
 \section{변화추적표}
 
+\begin{booktable}{4장 변화추적표}{tab:ch04-tracking}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lllllll@{}}
 \toprule
@@ -45,6 +46,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
+\end{booktable}
 
 전체 19개 장의 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
 
@@ -52,6 +54,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 
 \section{변경점: 3장 대비}
 
+\begin{booktable}{4장 변경점 요약}{tab:ch04-diff}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -67,6 +70,7 @@ Loss & \inlinecode{BCEWithLogitsLoss} & \textbf{\inlinecode{CrossEntropyLoss}} \
 \bottomrule
 \end{tabular}
 \end{adjustbox}
+\end{booktable}
 
 \textbf{왜 같은 데이터에 같은 task인데 따로 장으로 다루나?} 두 방식은 출력 차원·activation·loss가 모두 바뀌어 보이지만 \emph{수학적으로 동등} 합니다. 이 동등성을 가장 단순한 sklearn 환경에서 미리 체험해두면, 10장에서 BERT binary가 두 방식 중 어느 쪽을 골라도 같다는 사실을 자연스럽게 받아들일 수 있습니다.
 
@@ -96,6 +100,7 @@ L = -\frac{1}{N}\sum_{i=1}^{N} \log \hat p_{i,\, y_i}
 
 \textbf{숫자로 감 잡기} (K=2, 정답 \(y = 1\)인 한 샘플):
 
+\begin{booktable}{CrossEntropyLoss 이진 분류 수치 예시}{tab:ch04-ce-binary-examples}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}llll@{}}
 \toprule
@@ -108,6 +113,7 @@ L = -\frac{1}{N}\sum_{i=1}^{N} \log \hat p_{i,\, y_i}
 \bottomrule
 \end{tabular}
 \end{adjustbox}
+\end{booktable}
 
 \textbf{3장 BCE 표와 비교해보면} 손실값이 \emph{완전히 같습니다} (0.105 / 0.693 / 2.303). K=2에서 BCE와 CE가 동등하다는 첫 단서.
 
@@ -225,6 +231,7 @@ object   shape
 
 \section{실습: 두 방식을 나란히 학습}
 
+\begin{booktable}{sigmoid 방식과 softmax 방식 비교}{tab:ch04-probability-comparison}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lllll@{}}
 \toprule
@@ -236,6 +243,7 @@ B (이 장) & \inlinecode{LogisticRegression(multi\_class="multinomial")} & 2 & 
 \bottomrule
 \end{tabular}
 \end{adjustbox}
+\end{booktable}
 
 
 
@@ -428,6 +436,7 @@ method         coef_shape  intercept_shape
 
 \section{이 장에 등장한 라이브러리}
 
+\begin{booktable}{4장 새로 등장한 라이브러리}{tab:ch04-libraries}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -439,6 +448,7 @@ method         coef_shape  intercept_shape
 \bottomrule
 \end{tabular}
 \end{adjustbox}
+\end{booktable}
 
 
 

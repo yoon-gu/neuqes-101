@@ -30,6 +30,7 @@
 
 \section{변화추적표}
 
+\begin{booktable}{5장 변화추적표}{tab:ch05-tracking}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lllllll@{}}
 \toprule
@@ -44,6 +45,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
+\end{booktable}
 
 전체 19개 장의 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
 
@@ -51,6 +53,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 
 \section{변경점: 4장 대비}
 
+\begin{booktable}{5장 변경점 요약}{tab:ch05-diff}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -64,6 +67,7 @@ Output Head & (2차원) & \textbf{(5차원)} \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
+\end{booktable}
 
 \textbf{한 가지 변화} --- K=2가 K=5로 늘어난 것. softmax/CE는 K가 무엇이든 같은 식이라 코드 변화도 거의 없습니다. 이게 softmax/CE의 진짜 가치 --- sigmoid+BCE는 K=2 전용이지만 softmax+CE는 자연스럽게 다중 클래스로 확장됩니다.
 
@@ -82,6 +86,7 @@ L = -\frac{1}{N}\sum_{i=1}^{N} \log \hat p_{i,\, y_i}
 
 \textbf{숫자로 감 잡기} (K=5, 정답 클래스 = 2 인 한 샘플):
 
+\begin{booktable}{CrossEntropyLoss 다중 클래스 수치 예시}{tab:ch05-ce-multiclass-examples}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -94,6 +99,7 @@ L = -\frac{1}{N}\sum_{i=1}^{N} \log \hat p_{i,\, y_i}
 \bottomrule
 \end{tabular}
 \end{adjustbox}
+\end{booktable}
 
 \textbf{baseline = \(\log K = \log 5 \approx 1.609\)}: 모델이 아무 정보 없이 균등 추측만 할 때의 손실. 학습된 모델은 이보다 작아야 하고, baseline을 초과하면 "정답이 \emph{아닌} 곳에 자신 있다"는 신호 --- gradient가 모델을 강하게 끌어당깁니다.
 
@@ -380,6 +386,7 @@ true 5★  10        3         7         51        124
 
 \textbf{회귀(2장)와 비교} --- 같은 데이터, 다른 관점:
 
+\begin{booktable}{다중 클래스 평가 지표 요약}{tab:ch05-metric-summary}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}llll@{}}
 \toprule
@@ -391,6 +398,7 @@ true 5★  10        3         7         51        124
 \bottomrule
 \end{tabular}
 \end{adjustbox}
+\end{booktable}
 
 회귀는 ordinal 정보를 loss에 반영하고, 분류는 클래스별 패턴(예: 1점 리뷰 욕설 vs 5점 리뷰 칭찬)에 더 집중합니다. 둘 중 어느 게 나은지는 케바케.
 
@@ -647,6 +655,7 @@ method               accuracy
 
 \section{이 장에 등장한 라이브러리}
 
+\begin{booktable}{5장 새로 등장한 라이브러리}{tab:ch05-libraries}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -659,6 +668,7 @@ method               accuracy
 \bottomrule
 \end{tabular}
 \end{adjustbox}
+\end{booktable}
 
 
 
@@ -693,6 +703,7 @@ method               accuracy
   \textbf{OvR (One-vs-Rest)}: K개 \emph{독립} binary 분류기 (\inlinecode{OneVsRestClassifier}로 명시적으로 구성). 클래스 0의 logit은 다른 클래스 학습에 영향 없음. 정규화 전 확률 합이 1이 아닐 수 있음.
 \end{itemize}
 
+\begin{booktable}{multinomial과 OvR 비교}{tab:ch05-multinomial-ovr-comparison}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}ll@{}}
 \toprule
@@ -705,6 +716,7 @@ method               accuracy
 \bottomrule
 \end{tabular}
 \end{adjustbox}
+\end{booktable}
 
 \end{faqBox}
 
