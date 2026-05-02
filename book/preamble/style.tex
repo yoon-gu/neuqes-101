@@ -94,9 +94,12 @@
 \newenvironment{booktable}[2]{%
   \par\begin{center}
   \captionsetup{type=table}%
-  \captionof{table}{#1}\label{#2}%
-  \vspace{2pt}\small
+  \small
+  \def\booktablecaption{#1}%
+  \def\booktablelabel{#2}%
 }{%
+  \vspace{4pt}%
+  \captionof{table}{\booktablecaption}\label{\booktablelabel}%
   \end{center}\par
 }
 
