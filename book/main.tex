@@ -1,4 +1,4 @@
-\documentclass[11pt,openany]{book}
+\documentclass[11pt]{book}
 
 \input{preamble/style}
 \input{preamble/index-terms}
@@ -16,7 +16,18 @@
 \tableofcontents
 
 \mainmatter
-\part{sklearn으로 배우는 Loss와 Head의 감각}
+\phasedivider{0}
+  {기초 다지기}
+  {sklearn · TF-IDF로 task와 loss의 본질}
+  {Foundations · before BERT}
+  {
+    \chapline{Ch 1}{TF-IDF}{텍스트를 벡터로 표현}
+    \chapline{Ch 2}{sklearn Regression}{LinearReg · MSELoss}
+    \chapline{Ch 3}{Binary classification}{sigmoid · BCE}
+    \chapline{Ch 4}{Softmax binary}{sigmoid와 softmax의 동등성}
+    \chapline{Ch 5}{Multi-class classification}{CrossEntropyLoss}
+    \chapline{Ch 6}{Multi-label classification}{per-label BCE}
+  }
 \input{chapters/ch01_tfidf}
 \input{chapters/ch02_sklearn_regression}
 \input{chapters/ch03_sklearn_binary}
