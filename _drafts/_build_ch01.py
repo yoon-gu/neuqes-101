@@ -195,7 +195,8 @@ print(f"shape: {X_tfidf.shape}")""")
 # ----- 19. 같은 문서 비교 -----
 code(r"""doc_id = 0
 review = df["text"].iloc[doc_id]
-print("리뷰 미리보기 200자:")\nprint(f"{review[:200]}...\n")
+print("리뷰 미리보기 200자:")
+print(f"{review[:200]}...\n")
 
 vocab_tf = tfidf.get_feature_names_out()
 cv_row = np.asarray(X_count[doc_id].todense()).flatten()

@@ -258,7 +258,8 @@ p_multi = proba_5[sample_idx]                                  # multinomial sof
 p_ovr_raw = ovr_sigmoid_all[sample_idx]                        # OvR 5개 독립 sigmoid (정규화 전)
 p_ovr_norm = model_ovr.predict_proba(X_test)[sample_idx]       # OvR 정규화 후 (sklearn 표시용)
 
-print("\n리뷰 미리보기 200자:")\nprint(f"{sample_text[:200]}...")
+print("\n리뷰 미리보기 200자:")
+print(f"{sample_text[:200]}...")
 print(f"실제 별점:     {true_label + 1}★\n")
 
 print(f"{'클래스':>8}  {'multinomial':>14}  {'OvR raw':>10}  {'OvR 정규화 후':>16}")
