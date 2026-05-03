@@ -17,13 +17,13 @@ Loss 축:    MSELoss ─→ BCEWithLogitsLoss ─→ CrossEntropyLoss ─→ BCE
 
 ## 출판용 PDF 원고
 
-현재 1-12장은 LaTeX 기반 출판용 원고로도 정리되어 있습니다.
+현재 1-14장은 LaTeX 기반 출판용 원고로도 정리되어 있습니다.
 
 - 제목: **Hugging Face로 시작하는 텍스트 분석 입문**
 - 저자: **황윤구**
-- 범위: Phase 0-1, 1-12장
-- 원고 주제: TF-IDF와 sklearn에서 시작해 DistilBERT 파인튜닝까지 Loss, Output Head, sigmoid/softmax, multi-class의 핵심 감각을 정리
-- PDF 다운로드: [Phase 1 원고 PDF v0.2.0](https://github.com/yoon-gu/neuqes-101/releases/tag/phase1-manuscript-v0.2.0)
+- 범위: Phase 0-1, 1-14장
+- 원고 주제: TF-IDF와 sklearn에서 시작해 DistilBERT 파인튜닝, multi-label, auxiliary loss까지 Loss와 Output Head의 핵심 감각을 정리
+- PDF 다운로드: [Phase 1 원고 PDF v0.3.0](https://github.com/yoon-gu/neuqes-101/releases/tag/phase1-manuscript-v0.3.0)
 
 PDF는 GitHub Release asset으로 배포합니다. 노트북은 실습용 원본이고, PDF는 같은 내용을 책처럼 읽을 수 있도록 표지, 목차, 그림/표 캡션, 색인, 코드 블록 조판을 정리한 원고판입니다.
 

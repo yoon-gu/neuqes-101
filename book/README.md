@@ -1,6 +1,6 @@
 # 출판용 LaTeX 원고
 
-이 폴더는 1-12장 Colab 노트북을 원천으로 만든 출판용 LaTeX 프로젝트입니다.
+이 폴더는 1-14장 Colab 노트북을 원천으로 만든 출판용 LaTeX 프로젝트입니다.
 
 ## 빌드
 
@@ -11,14 +11,14 @@ python3 book/tools/notebook_to_tex.py --execute
 latexmk -xelatex book/main.tex
 ```
 
-PDF는 `book/build/neuqes-101-ch01-12-manuscript.pdf`에 생성됩니다.
+PDF는 `book/build/neuqes-101-ch01-14-manuscript.pdf`에 생성됩니다.
 
 ## 구조
 
 - `main.tex`: 책 전체 진입점
 - `preamble/`: 폰트, 코드, 박스, 색인 스타일
 - `frontmatter/`: 표지, 속표지, 서문
-- `chapters/`: 1-12장 출판용 원고
+- `chapters/`: 1-14장 출판용 원고
 - `appendices/`: 검증 전 부록 노트북의 자리 표시 원고
 - `backmatter/`: 마무리와 색인
 - `tools/notebook_to_tex.py`: 노트북 원천에서 장 원고를 재생성하는 스크립트
@@ -39,3 +39,4 @@ PDF는 `book/build/neuqes-101-ch01-12-manuscript.pdf`에 생성됩니다.
 - 표시 수식은 번호가 있는 `equation` 환경으로 변환하고, 설명 문장에서 `eqref`로 참조합니다.
 - 수식 글꼴은 본문과 맞도록 sans-serif 계열로 통일합니다.
 - 이미지와 TikZ 다이어그램은 각각 `bookfigure`, `bookdiagram` 환경을 사용하면 LaTeX `figure` 번호와 캡션으로 관리됩니다.
+- `plt.show()`가 있는 실습 코드는 원칙적으로 대응하는 그림을 `book/assets/figures/`에 생성하거나 추출해 `bookfigurelabel`로 본문에 추가합니다.

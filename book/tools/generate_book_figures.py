@@ -4,6 +4,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import seaborn as sns
 
 
@@ -16,6 +17,7 @@ BLUE = "#5B8DEF"
 RED = "#F47272"
 GREEN = "#5BD17F"
 PAPER = "#f5f7f8"
+ASPECTS = ["food", "service", "price", "ambiance", "location"]
 
 
 def finish(name: str) -> None:
@@ -267,6 +269,147 @@ def ch12_compare_confusion() -> None:
     finish("ch12_confusion_compare.png")
 
 
+def multilabel_probs(seed: int = 13) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    rng = np.random.default_rng(seed)
+    n = 720
+    base = np.array([0.55, 0.48, 0.34, 0.28, 0.22])
+    labels = rng.random((n, len(ASPECTS))) < base
+    logits = rng.normal(np.where(labels, 2.3, -2.2), 1.15)
+    probs = 1 / (1 + np.exp(-logits))
+    return labels.astype(int), probs, (probs >= 0.5).astype(int)
+
+
+def cooccurrence_matrix(y: np.ndarray) -> np.ndarray:
+    y = y.astype(float)
+    matrix = np.zeros((y.shape[1], y.shape[1]))
+    for i in range(y.shape[1]):
+        row = y[:, i]
+        denom = row.sum()
+        if denom == 0:
+            continue
+        matrix[i] = (row[:, None] * y).sum(axis=0) / denom
+    return matrix
+
+
+def ch13_label_probability_facets() -> None:
+    labels, probs, _ = multilabel_probs(13)
+    rows = []
+    for k, aspect in enumerate(ASPECTS):
+        rows.extend(
+            {"aspect": aspect, "prob": float(probs[i, k]), "label": int(labels[i, k])}
+            for i in range(probs.shape[0])
+        )
+    df = pd.DataFrame(rows)
+    grid = sns.FacetGrid(df, col="aspect", col_wrap=3, height=2.45, aspect=1.35)
+    grid.map_dataframe(
+        sns.kdeplot,
+        x="prob",
+        hue="label",
+        fill=True,
+        common_norm=False,
+        alpha=0.46,
+        palette={0: BLUE, 1: RED},
+        clip=(0, 1),
+    )
+    for ax in grid.axes.flat:
+        ax.axvline(0.5, color="black", lw=0.8, ls="--", alpha=0.62)
+        ax.set_xlabel("sigmoid probability")
+    grid.add_legend(title="label")
+    grid.fig.suptitle("Per-label sigmoid probability distribution", y=1.03)
+    grid.fig.subplots_adjust(top=0.86)
+    grid.fig.savefig(OUT / "ch13_label_probability_facets.png", dpi=220, bbox_inches="tight")
+    plt.close(grid.fig)
+
+
+def ch13_cooccurrence() -> None:
+    labels, _, preds = multilabel_probs(14)
+    fig, axes = plt.subplots(1, 2, figsize=(10.4, 4.4))
+    for ax, matrix, title in [
+        (axes[0], cooccurrence_matrix(labels), "True co-occurrence P(j | i)"),
+        (axes[1], cooccurrence_matrix(preds), "Predicted co-occurrence P(j | i)"),
+    ]:
+        sns.heatmap(
+            matrix,
+            annot=True,
+            fmt=".2f",
+            cmap="Blues",
+            vmin=0,
+            vmax=1,
+            xticklabels=ASPECTS,
+            yticklabels=ASPECTS,
+            cbar=False,
+            ax=ax,
+        )
+        ax.set_title(title)
+        ax.set_xlabel("label j")
+        ax.set_ylabel("given label i")
+    finish("ch13_cooccurrence.png")
+
+
+def ch13_f1_compare() -> None:
+    x = np.arange(len(ASPECTS))
+    sk = np.array([0.72, 0.66, 0.58, 0.53, 0.48])
+    bert = np.array([0.78, 0.73, 0.64, 0.60, 0.55])
+    fig, ax = plt.subplots(figsize=(7.8, 4.1))
+    width = 0.38
+    ax.bar(x - width / 2, sk, width, label="sklearn (OvR)", color=BLUE, alpha=0.86)
+    ax.bar(x + width / 2, bert, width, label="BERT", color=RED, alpha=0.86)
+    ax.set_xticks(x)
+    ax.set_xticklabels(ASPECTS)
+    ax.set_ylim(0, 1)
+    ax.set_ylabel("Per-label F1")
+    ax.set_title("Per-label F1 - sklearn OvR vs BERT")
+    ax.legend(frameon=False)
+    finish("ch13_f1_compare.png")
+
+
+def ch14_f1_aux_compare() -> None:
+    x = np.arange(len(ASPECTS))
+    no_aux = np.array([0.76, 0.70, 0.61, 0.57, 0.52])
+    aux = np.array([0.78, 0.73, 0.66, 0.61, 0.56])
+    fig, ax = plt.subplots(figsize=(7.8, 4.1))
+    width = 0.38
+    ax.bar(x - width / 2, no_aux, width, label="lambda = 0", color=BLUE, alpha=0.86)
+    ax.bar(x + width / 2, aux, width, label="lambda = 1", color=RED, alpha=0.86)
+    ax.set_xticks(x)
+    ax.set_xticklabels(ASPECTS)
+    ax.set_ylim(0, 1)
+    ax.set_ylabel("Per-label F1")
+    ax.set_title("Per-label F1 - auxiliary loss effect")
+    ax.legend(frameon=False)
+    finish("ch14_aux_f1_compare.png")
+
+
+def ch14_aux_star_violin() -> None:
+    rng = np.random.default_rng(141)
+    stars = np.repeat(np.arange(1, 6), 130)
+    target = (stars - 1) / 4
+    pred = np.clip(target + rng.normal(0, 0.12, stars.size), -0.1, 1.1)
+    df = pd.DataFrame(
+        {
+            "True star": [f"{star}*" for star in stars],
+            "Predicted (0-1 scale)": pred,
+        }
+    )
+    fig, ax = plt.subplots(figsize=(7.4, 4.5))
+    sns.violinplot(
+        data=df,
+        x="True star",
+        y="Predicted (0-1 scale)",
+        order=[f"{i}*" for i in range(1, 6)],
+        inner="quart",
+        cut=0,
+        color=RED,
+        alpha=0.6,
+        ax=ax,
+    )
+    for i, value in enumerate([0.0, 0.25, 0.5, 0.75, 1.0]):
+        ax.hlines(value, i - 0.4, i + 0.4, color="black", lw=0.9, ls="--", alpha=0.65)
+    ax.set_ylim(-0.15, 1.15)
+    ax.set_title("Auxiliary star regression - predicted vs true")
+    finish("ch14_aux_star_violin.png")
+
+
 def main() -> None:
     theme()
     ch01_star_distribution()
@@ -281,6 +424,11 @@ def main() -> None:
     ch12_confusion()
     ch12_top1()
     ch12_compare_confusion()
+    ch13_label_probability_facets()
+    ch13_cooccurrence()
+    ch13_f1_compare()
+    ch14_f1_aux_compare()
+    ch14_aux_star_violin()
 
 
 if __name__ == "__main__":
