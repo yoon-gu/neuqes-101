@@ -50,7 +50,7 @@ md(r"""# Chapter 5. sklearn Multi-class — K=5로 진짜 일반화
 
 1. 🚀 **실습**: 별점 1-5를 5개 독립 클래스로 보고 multinomial LogReg로 분류
 2. 🔬 **해부**: 5×5 confusion matrix가 대각선 근처에 몰리는 ordinal 흔적 관찰
-3. 🛠️ **변형**: `multi_class="multinomial"` vs `"ovr"` 비교 — Ch 6 multi-label로 가는 다리""")
+3. 🛠️ **변형**: 모던 `LogisticRegression()` (multinomial 자동) vs `OneVsRestClassifier(LogisticRegression())` (OvR) 비교 — Ch 6 multi-label 로 가는 다리""")
 
 # ----- 2. 추적표 -----
 md(r"""## 📊 변화추적표
@@ -60,8 +60,8 @@ md(r"""## 📊 변화추적표
 | 1 | (TF-IDF) | `TfidfVectorizer()` | Yelp 5,000 | — | — | — |
 | 2 | `LinearRegression()` | `TfidfVectorizer()` | Yelp (별점 1-5) | (1차원) | 없음 | `MSELoss` |
 | 3 | `LogisticRegression()` | `TfidfVectorizer()` | Yelp 이진화 | (1차원) | sigmoid | `BCEWithLogitsLoss` |
-| 4 | `LogisticRegression(multi_class="multinomial")` | `TfidfVectorizer()` | Yelp 이진화 (Ch 3과 동일) | (2차원) | softmax | `CrossEntropyLoss` |
-| **5 ← 여기** | `LogisticRegression(multi_class="multinomial")` | `TfidfVectorizer()` | Yelp 5클래스 (별점 0-4) | **(5차원)** | softmax | `CrossEntropyLoss` |
+| 4 | `LogisticRegression()` (multinomial 자동) | `TfidfVectorizer()` | Yelp 이진화 (Ch 3과 동일) | (2차원) | softmax | `CrossEntropyLoss` |
+| **5 ← 여기** | `LogisticRegression()` (multinomial 자동) | `TfidfVectorizer()` | Yelp 5클래스 (별점 0-4) | **(5차원)** | softmax | `CrossEntropyLoss` |
 
 전체 20챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.""")
 
@@ -146,10 +146,12 @@ print(f"X_train: {X_train.shape}, y_train distribution: {pd.Series(y_train).valu
 # ----- 9. 실습 도입 -----
 md(r"""## 🚀 실습: 5클래스 분류
 
-코드는 Ch 4에서 `multi_class="multinomial"` 그대로 — sklearn은 K가 클래스 개수에 자동으로 맞춥니다.""")
+코드는 Ch 4와 동일 — `LogisticRegression()` 한 줄. sklearn은 *데이터의 클래스 개수* 를 보고 multinomial(softmax+CE)을 자동으로 적용합니다 (sklearn 1.5+ 에선 `multi_class=` 인자가 제거됨, FAQ 참조).""")
 
 # ----- 10. fit -----
-code(r"""model_5 = LogisticRegression(multi_class="multinomial", max_iter=1000)
+code(r"""# 데이터가 K=5 multi-class 이므로 sklearn 이 자동으로 multinomial(softmax+CE) 학습.
+# 구 sklearn 에선 multi_class="multinomial" 명시 필요했지만 1.5+ 에선 제거됨.
+model_5 = LogisticRegression(max_iter=1000)
 model_5.fit(X_train, y_train)
 
 y_pred = model_5.predict(X_test)
@@ -203,7 +205,7 @@ md(r"""**관찰**: confusion matrix의 오답이 **대각선 근처에 몰립니
 # ----- 16. multinomial vs OvR (개념) -----
 md(r"""## 🛠️ 변형: multinomial vs OvR
 
-`multi_class="multinomial"` 은 한 모델이 K개 logit을 **동시에** 학습합니다. softmax 한 번이라 합 = 1이 강제 — "K개 클래스 중 정확히 하나"라는 *상호배타* 가정.
+**multinomial** (`LogisticRegression()` 의 모던 sklearn 기본 동작) 은 한 모델이 K개 logit을 **동시에** 학습합니다. softmax 한 번이라 합 = 1이 강제 — "K개 클래스 중 정확히 하나"라는 *상호배타* 가정.
 
 또 다른 방식 **OvR (One-vs-Rest)** 은 K개의 *독립* binary 분류기. 각 분류기는 "이 클래스 vs 나머지 모든 클래스"만 학습합니다.
 
@@ -345,7 +347,6 @@ K=5 정도는 위 트릭이 필요 없는 작은 규모.
 
 ```python
 model = LogisticRegression(
-    multi_class="multinomial",
     class_weight="balanced",   # 빈도의 역수로 자동 가중치
     max_iter=1000,
 )

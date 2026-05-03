@@ -60,7 +60,7 @@ md(r"""## 📊 변화추적표
 | 1 | (TF-IDF) | `TfidfVectorizer()` | Yelp 5,000 | — | — | — |
 | 2 | `LinearRegression()` | `TfidfVectorizer()` | Yelp (별점 1-5) | (1차원) | 없음 | `MSELoss` |
 | 3 | `LogisticRegression()` | `TfidfVectorizer()` | Yelp 이진화 | (1차원) | sigmoid | `BCEWithLogitsLoss` |
-| **4 ← 여기** | `LogisticRegression(multi_class="multinomial")` | `TfidfVectorizer()` | Yelp 이진화 (Ch 3과 동일) | **(2차원)** | **softmax** | **`CrossEntropyLoss`** |
+| **4 ← 여기** | `LogisticRegression()` (multinomial 자동) | `TfidfVectorizer()` | Yelp 이진화 (Ch 3과 동일) | **(2차원)** | **softmax** | **`CrossEntropyLoss`** |
 
 전체 20챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.""")
 
@@ -106,8 +106,8 @@ $$L = -\frac{1}{N}\sum_{i=1}^{N} \log \hat p_{i,\, y_i}$$
 criterion = nn.CrossEntropyLoss()
 loss = criterion(logits, targets)   # logits: (N, K), targets: (N,) 정수 인덱스
 
-# sklearn (이번 챕터)
-LogisticRegression(multi_class="multinomial", max_iter=1000)
+# sklearn (이번 챕터) — 1.5+ 에선 multi_class 인자 제거. 데이터로 결정.
+LogisticRegression(max_iter=1000)
 ```""")
 
 # ----- 5. 토크나이저 노트 -----
@@ -163,13 +163,21 @@ md(r"""## 🚀 실습: 두 방식을 나란히 학습
 | 방식 | sklearn 인자 | 출력 차원 | 활성화 | loss |
 |---|---|---|---|---|
 | A (Ch 3 그대로) | `LogisticRegression()` | 1 | sigmoid | BCE |
-| B (이번 챕터) | `LogisticRegression(multi_class="multinomial")` | 2 | softmax | CE |""")
+| B (이번 챕터) | `LogisticRegression()` (multinomial 자동) | 2 | softmax | CE |""")
 
 # ----- 10. fit -----
-code(r"""model_a = LogisticRegression(max_iter=1000)                           # 방식 A
+code(r"""# 방식 A — 1차원 출력 + sigmoid + BCE.
+# sklearn binary 의 *기본 동작* (lbfgs solver) 자체가 sigmoid+BCE 라
+# 추가 옵션 없이 LogisticRegression() 만으로 곧 방식 A.
+model_a = LogisticRegression(max_iter=1000)
 model_a.fit(X_train, y_train)
 
-model_b = LogisticRegression(multi_class="multinomial", max_iter=1000)  # 방식 B
+# 방식 B — 2차원 출력 + softmax + CE.
+# sklearn 1.5+ 에선 multi_class= 인자가 제거됐고 *multi-class 데이터에 대해서는*
+# multinomial(softmax+CE) 이 default. binary(K=2) 에선 sklearn 이 자동으로
+# 1차원 사이즈로 떨어뜨려 방식 A 와 같은 결과로 만든다는 점이 특이 (FAQ Q4 참조).
+# 여기선 그래도 *명시적으로* 두 방식을 학습한 뒤 결과를 비교.
+model_b = LogisticRegression(max_iter=1000)
 model_b.fit(X_train, y_train)
 
 acc_a = accuracy_score(y_test, model_a.predict(X_test))
@@ -253,7 +261,7 @@ md(r"""## 📦 이번 챕터에 등장한 라이브러리
 
 | 이름 | 한 줄 설명 | 다음 챕터에서 |
 |---|---|---|
-| `LogisticRegression(multi_class="multinomial")` | softmax + CE 다중 분류 (이번 챕터엔 K=2) | Ch 5에서 K=5로 확장, Ch 11 BERT multi-class에서 같은 패러다임 |
+| `LogisticRegression()` | sklearn 1.5+ 에선 데이터가 multi-class 면 multinomial(softmax+CE) 자동 (이번 챕터엔 K=2) | Ch 5 에서 K=5 로 확장, Ch 11 BERT multi-class 에서 같은 패러다임 |
 | `sklearn.metrics.log_loss` | CE/BCE 평가 함수 (multi-class 호환) | — |""")
 
 # ----- 17. checkpoints -----
@@ -302,24 +310,25 @@ $$\text{softmax}(z)_k = \frac{e^{z_k}}{\sum_{j=1}^{K} e^{z_j}}$$
 
 **왜 이런 구조?** 모델 출력을 "확률 분포"로 해석하고 싶어서입니다. 확률 분포는 정의상 $\sum_k p_k = 1$ 이고 각 항이 [0, 1]. softmax는 임의 실수 logit 벡터를 그런 분포로 보내는 가장 자연스러운 변환 중 하나(지수 함수 = 단조증가 + 양수 보장 → 정규화).
 
-### Q4. (실무) sklearn에서 binary에 `multi_class="multinomial"` 을 줘도 `coef_.shape`가 `(1, V)` 인 이유는?
+### Q4. (실무) sklearn binary 에서 `coef_.shape` 가 왜 `(1, V)` 인가요? — 방식 A·B 가 왜 같은 결과로 수렴하는가
 
-위 본문에서 확인했듯 K=2 softmax는 두 logit 중 하나가 잉여(redundant)입니다 — $z_1 - z_0$ 만 의미가 있어요. sklearn은 이걸 알고 **K=2 multinomial을 자동으로 binary form으로 collapse** 시킵니다. 그래서 `coef_` 가 `(2, V)` 가 아니라 `(1, V)`, `intercept_` 도 `(1,)` 로 저장됩니다.
+위 본문에서 확인했듯 K=2 softmax 는 두 logit 중 하나가 잉여(redundant)입니다 — $z_1 - z_0$ 만 의미가 있어요. sklearn 은 이걸 알고 **K=2 multinomial 을 자동으로 binary form 으로 collapse** 시킵니다. 그래서 `coef_` 가 `(2, V)` 가 아니라 `(1, V)`, `intercept_` 도 `(1,)` 로 저장됩니다.
 
 ```python
-LogisticRegression(multi_class="multinomial").fit(X, y_binary).coef_.shape  # (1, V)
-LogisticRegression(multi_class="multinomial").fit(X, y_3class).coef_.shape  # (3, V) — K≥3에선 (K, V)
+LogisticRegression().fit(X, y_binary).coef_.shape  # (1, V)
+LogisticRegression().fit(X, y_3class).coef_.shape  # (3, V) — K≥3 에선 (K, V)
 ```
 
-그래서 방식 A와 방식 B가 sklearn 안에서는 사실상 같은 모델이고, predict_proba도 미세한 수치 오차 빼고 일치합니다. 진짜 *두 별개의 logit head* 가 살아 있는 형태는 프레임워크가 collapse하지 않는 환경 — PyTorch에서 `nn.Linear(H, 2)` 를 직접 만들 때 — 비로소 등장합니다 (Ch 10·11).
+그래서 방식 A와 방식 B가 sklearn 안에서는 사실상 같은 모델이고, predict_proba 도 미세한 수치 오차 빼고 일치합니다. 진짜 *두 별개의 logit head* 가 살아 있는 형태는 프레임워크가 collapse 하지 않는 환경 — PyTorch 에서 `nn.Linear(H, 2)` 를 직접 만들 때 — 비로소 등장합니다 (Ch 10·11).
 
-### Q5. (이론) sklearn `multi_class` 인자의 의미와 자동 선택 기준은?
+### Q5. (이론) sklearn 의 `multi_class` 인자는 왜 안 쓰나요?
 
-- `"multinomial"`: 모든 클래스를 한 번에 학습 (softmax). 이번 챕터.
-- `"ovr"` (One-vs-Rest): K개 독립 binary 분류기. Ch 6 multi-label로 가는 다리.
-- `"auto"` (기본값): solver와 데이터에 맞춰 자동 — 클래스 2개면 binary, 3개 이상이면 multinomial(`lbfgs`, `newton-cg`, `sag`, `saga` solver) 또는 OvR(`liblinear`).
+오랫동안 sklearn `LogisticRegression` 은 `multi_class` 인자로 *softmax(multinomial)* 와 *OvR(One-vs-Rest)* 중 학습 방식을 골라왔습니다. **sklearn 1.5 (2024) 부터 이 인자가 deprecated 되었고, 1.7+ 에선 완전히 제거** 됐습니다. 이제는 다음 규칙입니다:
 
-sklearn 1.5부터 `multi_class` 자체가 deprecated이고 multinomial이 기본 동작이 됩니다. 호환성을 위해 명시할 때만 `multi_class="multinomial"` 처럼 적습니다.
+- `LogisticRegression()` *기본 동작* — 데이터가 multi-class 면 softmax+CE, binary 면 sigmoid+BCE. 즉 *데이터로* 결정.
+- *OvR(K개 독립 binary)* 가 필요하면 `OneVsRestClassifier(LogisticRegression())` 로 명시적 wrap (Ch 6 에서 등장).
+
+이번 챕터의 방식 A와 방식 B 둘 다 `LogisticRegression()` 한 줄로 학습하는 이유 — 어차피 binary 데이터라 sklearn 이 같은 collapse 형태로 만들어 둘이 *수치적으로 동일* 한 결과를 줌 (FAQ Q4). 두 방식이 *진짜로 분리된* 학습이 되려면 PyTorch nn.Linear 를 직접 짜야 합니다 (Ch 10·11).
 
 ### Q6. (실무) Hugging Face `Trainer`도 두 방식이 가능한가요?
 
