@@ -17,6 +17,7 @@
 \usepackage{xltabular}
 \usepackage{adjustbox}
 \usepackage{caption}
+\usepackage{float}
 \usepackage{hyperref}
 \usepackage{fancyhdr}
 \usepackage[most]{tcolorbox}
@@ -287,10 +288,10 @@
 }
 \let\oldtexttt\texttt
 \renewcommand{\texttt}[1]{\inlinecode{#1}}
-\newenvironment{bookfigure}[2][!htbp]
+\newenvironment{bookfigure}[2][H]
   {\def\bookfigurecaption{#2}\begin{figure}[#1]\centering\begin{adjustbox}{max width=0.92\linewidth,max totalheight=0.46\textheight,keepaspectratio}}
   {\end{adjustbox}\caption{\bookfigurecaption}\end{figure}}
-\newenvironment{bookfigurelabel}[3][!htbp]
+\newenvironment{bookfigurelabel}[3][H]
   {\def\bookfigurecaption{#2}\def\bookfigurelabel{#3}\begin{figure}[#1]\centering\begin{adjustbox}{max width=0.92\linewidth,max totalheight=0.46\textheight,keepaspectratio}}
   {\end{adjustbox}\caption{\bookfigurecaption}\label{\bookfigurelabel}\end{figure}}
 \newenvironment{bookdiagram}[2][htbp]

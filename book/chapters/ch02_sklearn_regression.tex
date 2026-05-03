@@ -363,9 +363,11 @@ plt.title("Prediction distribution: actual vs predicted")
 plt.show()
 \end{lstlisting}
 
-\begin{bookfigurelabel}[htbp]{회귀 모델 예측값과 실제 별점의 분포 비교}{fig:ch02-prediction-distribution}
+\begin{bookfigurelabel}[H]{회귀 모델 예측값과 실제 별점의 분포 비교}{fig:ch02-prediction-distribution}
 \includegraphics[width=0.88\linewidth]{assets/figures/ch02_prediction_distribution.png}
 \end{bookfigurelabel}
+
+\textbf{그림 읽기} --- 그림~\ref{fig:ch02-prediction-distribution}에서 실제 별점은 1--5 사이의 정수 막대로만 존재하지만, 회귀 예측값은 연속적인 실수로 퍼집니다. 예측 분포가 1보다 작거나 5보다 큰 영역까지 뻗는다면, 선형 회귀 헤드가 출력 범위를 스스로 제한하지 않는다는 사실을 보여줍니다.
 
 \begin{codeRead}
 \textbf{1--4행}의 \inlinecode{range\_summary = ...}에서는 결과를 표로 보기 좋게 정리합니다.

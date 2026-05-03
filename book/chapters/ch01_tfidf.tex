@@ -235,9 +235,11 @@ plt.show()
 display(counts.rename_axis("label").reset_index(name="count"))
 \end{lstlisting}
 
-\begin{bookfigurelabel}[htbp]{샘플링된 Yelp 리뷰 5,000건의 별점 분포}{fig:ch01-star-distribution}
+\begin{bookfigurelabel}[H]{샘플링된 Yelp 리뷰 5,000건의 별점 분포}{fig:ch01-star-distribution}
 \includegraphics[width=0.86\linewidth]{assets/figures/ch01_star_distribution.png}
 \end{bookfigurelabel}
+
+\textbf{그림 읽기} --- 그림~\ref{fig:ch01-star-distribution}은 실습에 사용할 5,000개 샘플이 별점별로 크게 한쪽에 치우치지 않았는지 확인하는 첫 점검입니다. 막대 높이가 비슷하면 이후 모델 성능을 해석할 때 “특정 별점이 너무 많아서 맞춘 것”이라는 의심이 줄어듭니다.
 
 \begin{codeRead}
 \textbf{1행}의 \inlinecode{counts = ...}에서는 라벨별 샘플 개수를 집계합니다. \textbf{2행}의 \inlinecode{labels = ...}에서는 이후 분석에서 사용할 값을 준비합니다.

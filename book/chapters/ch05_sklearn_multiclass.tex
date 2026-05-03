@@ -476,7 +476,7 @@ true 5★  10        3         7         51        124
 
 \subsection{두 방식의 구조 비교}
 
-\begin{bookfigurelabel}[htbp]{Multinomial softmax의 출력 구조}{fig:ch05-multinomial-softmax}
+\begin{bookfigurelabel}[H]{Multinomial softmax의 출력 구조}{fig:ch05-multinomial-softmax}
 \begin{adjustbox}{width=.78\linewidth}
 \begin{tikzpicture}[
   font=\sffamily\scriptsize,
@@ -503,7 +503,9 @@ true 5★  10        3         7         51        124
 \end{adjustbox}
 \end{bookfigurelabel}
 
-\begin{bookfigurelabel}[htbp]{OvR의 독립 sigmoid 출력 구조}{fig:ch05-ovr-sigmoid}
+\textbf{그림 읽기} --- 그림~\ref{fig:ch05-multinomial-softmax}에서는 분류기 하나가 다섯 개의 logit \(z_1,\ldots,z_5\)를 한꺼번에 만들고, softmax 한 번이 이를 \(p_1,\ldots,p_5\)로 바꿉니다. 핵심은 \textbf{한 번의 정규화}입니다. 다섯 확률이 같은 분모를 공유하므로 \(\sum_k p_k=1\)이 되고, 한 클래스의 확률이 커지면 나머지 클래스 확률은 함께 줄어듭니다.
+
+\begin{bookfigurelabel}[H]{OvR의 독립 sigmoid 출력 구조}{fig:ch05-ovr-sigmoid}
 \begin{adjustbox}{width=.78\linewidth}
 \begin{tikzpicture}[
   font=\sffamily\scriptsize,

@@ -634,9 +634,11 @@ plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
-\begin{bookfigurelabel}[htbp]{방식 B의 softmax 확률 분포}{fig:ch11-probability-kde}
+\begin{bookfigurelabel}[H]{방식 B의 softmax 확률 분포}{fig:ch11-probability-kde}
 \includegraphics[width=0.88\linewidth]{assets/figures/ch11_probability_kde.png}
 \end{bookfigurelabel}
+
+\textbf{그림 읽기} --- 그림~\ref{fig:ch11-probability-kde}는 방식 B가 2차원 softmax를 쓰더라도 최종적으로 우리가 보는 값은 “positive 클래스 확률” 하나로 요약될 수 있음을 보여줍니다. 정답 0과 정답 1의 분포가 양끝으로 갈라질수록 모델이 확신을 갖고 있고, 0.5 근처에서 두 분포가 겹치는 영역은 방식 A와 마찬가지로 판단이 어려운 샘플입니다.
 
 
 
@@ -662,7 +664,7 @@ plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
-\begin{bookfigurelabel}[htbp]{방식 B를 1차원 logit 차이로 환산한 분포}{fig:ch11-logit-kde}
+\begin{bookfigurelabel}[H]{방식 B를 1차원 logit 차이로 환산한 분포}{fig:ch11-logit-kde}
 \includegraphics[width=0.88\linewidth]{assets/figures/ch11_logit_kde.png}
 \end{bookfigurelabel}
 
@@ -979,7 +981,7 @@ print(
 print(f"Mean abs diff |A-B|: {mae:.4f}")
 \end{lstlisting}
 
-\begin{bookfigurelabel}[htbp]{방식 A와 방식 B의 샘플별 확률 일치도}{fig:ch11-probability-scatter}
+\begin{bookfigurelabel}[H]{방식 A와 방식 B의 샘플별 확률 일치도}{fig:ch11-probability-scatter}
 \includegraphics[width=0.72\linewidth]{assets/figures/ch11_probability_scatter.png}
 \end{bookfigurelabel}
 
