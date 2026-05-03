@@ -60,7 +60,7 @@ $$L = L_\text{main}(\text{측면 BCE per-label}) + \lambda \cdot L_\text{aux}(\t
 
 > 📒 **사전 학습 자료**: Ch 9 (BERT 회귀 — MSELoss), Ch 13 (BERT multi-label — BCE per-label). 이번 챕터는 둘을 한 모델 안에 같이 넣습니다.
 
-> ⚠️ **이번 챕터에 *처음* 등장**: `Trainer.compute_loss` 오버라이드 — 자동 매핑이 다루지 못하는 *복합 loss* 를 위해 필요한 패턴 (CLAUDE.md 의 "자동 매핑을 못 쓸 때만 오버라이드" 규약).""")
+> ⚠️ **이번 챕터에 *처음* 등장**: `Trainer.compute_loss` 오버라이드 — `problem_type` 만으로 매핑할 수 없는 *복합 loss* 를 직접 계산하는 패턴.""")
 
 # ----- 2. 추적표 -----
 md(r"""## 📊 변화추적표
@@ -91,7 +91,7 @@ md(r"""## 🔄 변경점 (Diff from Ch 13)
 | 데이터 콜레이터 | `DataCollatorWithPadding` 자동 | **커스텀** — `aux_labels` 도 같이 batching |
 | 학습 hyperparams | (epoch=2, lr=2e-5, …) | (그대로) |
 
-> **변하는 축 — Loss 축 끝**: 메인 task와 모델 본체는 *완전히 동일*, *Loss에 보조 항이 가중합으로 추가* 됩니다 (CLAUDE.md "Loss 축: ... → BCE per-label → +Auxiliary"). 실무에서 *학습 데이터에 추가 신호가 있을 때* 이를 활용하는 정통 multi-task learning 패턴.
+> **변하는 축 — Loss 축 끝**: 메인 task와 모델 본체는 *완전히 동일*, *Loss에 보조 항이 가중합으로 추가* 됩니다. 실무에서 *학습 데이터에 추가 신호가 있을 때* 이를 활용하는 정통 multi-task learning 패턴.
 
 ### 왜 보조 task가 메인 task에 도움이 되는가 (한 줄 요약)
 

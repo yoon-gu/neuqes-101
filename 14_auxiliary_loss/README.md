@@ -8,7 +8,7 @@ Ch 13(BERT multi-label 측면 분류)에 **별점 회귀 보조 헤드** 를 추
 ## 다루는 핵심 개념
 - 결합 loss 수식: BCE per-label (메인) + λ · MSE (보조 별점 회귀)
 - 한 모델에 *두 헤드* — `model.aux_head = nn.Linear(H, 1)` 한 줄로 표준 BERT 모델에 보조 헤드 attach
-- `Trainer.compute_loss` 오버라이드 — 자동 매핑이 다루지 못하는 복합 loss 직접 계산 패턴 (CLAUDE.md 의 "자동 매핑 못 쓸 때만 오버라이드" 규약)
+- `Trainer.compute_loss` 오버라이드 — `problem_type` 만으로 매핑할 수 없는 복합 loss 를 직접 계산하는 패턴
 - 커스텀 `DataCollator` — `aux_labels` 같은 *비표준 라벨* 도 batch에 같이 담는 패턴
 - `remove_unused_columns=False` — model.forward 시그니처에 없는 컬럼 자동 제거 방지
 - λ 선택 가이드 (0.1 - 10 grid search) + uncertainty weighting 언급
