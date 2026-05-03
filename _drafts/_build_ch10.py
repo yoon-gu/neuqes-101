@@ -146,17 +146,25 @@ from sklearn.metrics import (
 
 plt.rcParams["axes.unicode_minus"] = False
 
+# 디바이스 자동 감지 — Colab T4(CUDA), Mac(MPS), 그 외는 CPU
+USE_CUDA = torch.cuda.is_available()
+USE_MPS  = torch.backends.mps.is_available()
+DEVICE_KIND = "cuda" if USE_CUDA else ("mps" if USE_MPS else "cpu")
+USE_FP16 = USE_CUDA  # fp16은 CUDA에서만, MPS에서는 fp32
+
 print(f"PyTorch:        {torch.__version__}")
-print(f"CUDA 사용 가능: {torch.cuda.is_available()}")
-if torch.cuda.is_available():
+print(f"디바이스:       {DEVICE_KIND}")
+if USE_CUDA:
     print(f"GPU:             {torch.cuda.get_device_name(0)}")
+elif USE_MPS:
+    print("Apple Silicon MPS 사용 — Colab T4 대비 약간 느릴 수 있어요 (fp16 비활성)")
 else:
-    print("⚠️  CPU 런타임에서는 학습이 매우 느립니다. T4로 변경 권장.")""")
+    print("⚠️  CPU 런타임 — 학습이 매우 느립니다. T4 또는 MPS 권장.")""")
 
 # ----- 7. nvidia-smi baseline -----
-md(r"""**baseline VRAM**:""")
+md(r"""**baseline VRAM** (CUDA에서만 의미; Mac MPS면 자동 skip):""")
 
-code(r"""!nvidia-smi""")
+code(r"""!command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi || echo '(nvidia-smi 없음 — Mac/CPU 환경)'""")
 
 # ----- 8. 데이터 준비 -----
 md(r"""## 1. 🚀 데이터 — Yelp 이진화 (Ch 3·4와 동일)
@@ -226,7 +234,7 @@ print(f"학습되는 파라미터:  {trainable:>13,}  ({trainable/total:.1%})")
 print(f"분류 헤드:          {model.classifier}")
 print(f"problem_type:       {model.config.problem_type}")""")
 
-code(r"""!nvidia-smi""")
+code(r"""!command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi || echo '(nvidia-smi 없음 — Mac/CPU 환경)'""")
 
 # ----- 11. 학습 -----
 md(r"""## 3. 학습 — Ch 9 골격 그대로
@@ -257,7 +265,7 @@ code(r"""training_args = TrainingArguments(
     per_device_train_batch_size=16,
     per_device_eval_batch_size=32,
     learning_rate=2e-5,
-    fp16=True,
+    fp16=USE_FP16,
     eval_strategy="epoch",
     logging_steps=50,
     save_strategy="no",
@@ -277,7 +285,7 @@ trainer = Trainer(
 train_result = trainer.train()
 print(f"\n학습 완료 — 평균 train loss: {train_result.training_loss:.4f}")""")
 
-code(r"""!nvidia-smi""")
+code(r"""!command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi || echo '(nvidia-smi 없음 — Mac/CPU 환경)'""")
 
 # ----- 12. 평가 -----
 md(r"""## 4. 🔬 평가 — sigmoid 확률 분포 직접 확인
