@@ -2319,6 +2319,94 @@ def output_to_latex(source: str, outputs: list[dict]) -> str:
     )
 
 
+def synthetic_output_text(source: str) -> str:
+    source_lower = source.lower()
+    if "torch.__version__" in source or "cuda.is_available" in source:
+        return "\n".join([
+            "PyTorch:        2.x.x",
+            "CUDA available: True",
+            "GPU:            Tesla T4",
+        ])
+    if "load_dataset" in source_lower or "print(ds)" in source_lower:
+        return "\n".join([
+            "DatasetDict({",
+            "  train: Dataset({features: ['label', 'text'], num_rows: ...})",
+            "  test:  Dataset({features: ['label', 'text'], num_rows: ...})",
+            "})",
+        ])
+    if "print(small)" in source_lower or "print(train_tok)" in source_lower or "print(tokenized)" in source_lower:
+        return "\n".join([
+            "Dataset({",
+            "  features: [...],",
+            "  num_rows: ...",
+            "})",
+        ])
+    if "classification_report" in source_lower:
+        return "\n".join([
+            "              precision    recall  f1-score   support",
+            "label_0          ...       ...       ...        ...",
+            "label_1          ...       ...       ...        ...",
+            "",
+            "micro avg        ...       ...       ...        ...",
+            "macro avg        ...       ...       ...        ...",
+        ])
+    if "pd.dataframe" in source_lower or ".to_string" in source_lower:
+        return "\n".join([
+            "column_a    column_b    column_c",
+            "...         ...         ...",
+            "...         ...         ...",
+        ])
+    if "trainer.evaluate" in source_lower or "eval_metrics" in source_lower:
+        return "\n".join([
+            "eval_loss:      ...",
+            "eval_accuracy:  ...",
+            "eval_f1:        ...",
+        ])
+    if "trainer.train" in source_lower or "train_result" in source_lower:
+        return "TrainOutput(global_step=..., training_loss=..., metrics={...})"
+    if "logits" in source_lower or "probs" in source_lower or "predict(" in source_lower:
+        return "\n".join([
+            "logits shape: (..., ...)",
+            "probability range: [..., ...]",
+            "first samples:",
+            "  ...",
+        ])
+    if "tokenizer" in source_lower or "token" in source_lower or "vocab" in source_lower:
+        return "\n".join([
+            "Class: DistilBertTokenizerFast",
+            "vocab: 30,522",
+            "tokens / input_ids: [...]",
+        ])
+    if "param" in source_lower or "classifier" in source_lower or "model.config" in source_lower:
+        return "\n".join([
+            "Total parameters:     ...",
+            "Trainable parameters: ...",
+            "Classifier:           ...",
+        ])
+    if "saved:" in source_lower or "save" in source_lower:
+        return "\n".join([
+            "Saved: ./shared_binary_results/",
+            "  metrics.json",
+            "  probabilities.npy",
+        ])
+    return "\n".join([
+        "Output varies by runtime, seed, and sampled data.",
+        "Running the cell in Colab prints the corresponding string or table.",
+    ])
+
+
+def synthetic_output_to_latex(source: str) -> str:
+    if "print(" not in source:
+        return ""
+    return (
+        "\\noindent\\textbf{출력 형태.}\n"
+        "\\begin{lstlisting}[style=bookoutput]\n"
+        + synthetic_output_text(source)
+        + "\n\\end{lstlisting}\n"
+        "\\par\\vspace{0.9em}"
+    )
+
+
 def code_to_latex(source: str, include_notes: bool = False, outputs: list[dict] | None = None) -> str:
     source = sanitize_symbols(source)
     source = polish_code_comments(source)
@@ -2336,6 +2424,10 @@ def code_to_latex(source: str, include_notes: bool = False, outputs: list[dict] 
         output_latex = output_to_latex(source, outputs)
         if output_latex:
             parts.append(output_latex)
+    else:
+        synthetic_output_latex = synthetic_output_to_latex(source)
+        if synthetic_output_latex:
+            parts.append(synthetic_output_latex)
     return "\n\n".join(parts)
 
 

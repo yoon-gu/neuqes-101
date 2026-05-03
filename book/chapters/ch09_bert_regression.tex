@@ -225,6 +225,14 @@ else:
     )
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+PyTorch:        2.x.x
+CUDA available: True
+GPU:            Tesla T4
+\end{lstlisting}
+\par\vspace{0.9em}
+
 \begin{codeRead}
 \inlinecode{numpy, pandas, matplotlib, PyTorch, datasets} 같은 주요 패키지를 불러옵니다.
 \end{codeRead}
@@ -294,6 +302,15 @@ print(
 )
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Dataset({
+  features: [...],
+  num_rows: ...
+})
+\end{lstlisting}
+\par\vspace{0.9em}
+
 
 
 \section{\texorpdfstring{모델 로드}{모델 로드}}
@@ -316,6 +333,14 @@ print(
 print(f"Classifier:    {model.classifier}")
 print(f"problem_type:  {model.config.problem_type}")
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Total parameters:     ...
+Trainable parameters: ...
+Classifier:           ...
+\end{lstlisting}
+\par\vspace{0.9em}
 
 
 
@@ -347,6 +372,14 @@ print(
 print(
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Total parameters:     ...
+Trainable parameters: ...
+Classifier:           ...
+\end{lstlisting}
+\par\vspace{0.9em}
+
 \noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
 \Needspace{6\baselineskip}
@@ -356,6 +389,14 @@ print(
 )
 print(f"\nDefault — all layers are trainable")
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Total parameters:     ...
+Trainable parameters: ...
+Classifier:           ...
+\end{lstlisting}
+\par\vspace{0.9em}
 
 
 
@@ -385,6 +426,14 @@ print(
     f"  Frozen:      {fr:>13,}  ("
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Total parameters:     ...
+Trainable parameters: ...
+Classifier:           ...
+\end{lstlisting}
+\par\vspace{0.9em}
+
 \noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
 \Needspace{10\baselineskip}
@@ -398,6 +447,14 @@ print(
 print(
     f"Tradeoff: BERT body cannot adapt to the task — "
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Total parameters:     ...
+Trainable parameters: ...
+Classifier:           ...
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 필요한 라이브러리와 기본 설정을 준비하는 단계로 넘어갑니다.}
 
@@ -416,6 +473,14 @@ gc.collect()
 if torch.cuda.is_available():
     torch.cuda.empty_cache()
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+PyTorch:        2.x.x
+CUDA available: True
+GPU:            Tesla T4
+\end{lstlisting}
+\par\vspace{0.9em}
 
 
 
@@ -480,6 +545,13 @@ print(
 )
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Output varies by runtime, seed, and sampled data.
+Running the cell in Colab prints the corresponding string or table.
+\end{lstlisting}
+\par\vspace{0.9em}
+
 
 
 \Needspace{10\baselineskip}
@@ -514,6 +586,12 @@ print(
     f"{train_result.training_loss:.4f}"
 )
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+TrainOutput(global_step=..., training_loss=..., metrics={...})
+\end{lstlisting}
+\par\vspace{0.9em}
 
 
 
@@ -591,6 +669,14 @@ for k, v in bert_metrics.items():
         print(f"  {k:>20}: {v:.4f}")
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+eval_loss:      ...
+eval_accuracy:  ...
+eval_f1:        ...
+\end{lstlisting}
+\par\vspace{0.9em}
+
 
 
 \Needspace{11\baselineskip}
@@ -626,6 +712,13 @@ print(
 )
 print(f"  r2:  {r2_score(eval_labels, sk_pred):.4f}")
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Output varies by runtime, seed, and sampled data.
+Running the cell in Colab prints the corresponding string or table.
+\end{lstlisting}
+\par\vspace{0.9em}
 
 
 

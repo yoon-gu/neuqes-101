@@ -246,6 +246,14 @@ else:
     )
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+PyTorch:        2.x.x
+CUDA available: True
+GPU:            Tesla T4
+\end{lstlisting}
+\par\vspace{0.9em}
+
 \begin{codeRead}
 \inlinecode{numpy, pandas, matplotlib, PyTorch, datasets} 같은 주요 패키지를 불러옵니다.
 \end{codeRead}
@@ -317,6 +325,13 @@ print(
 )
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Output varies by runtime, seed, and sampled data.
+Running the cell in Colab prints the corresponding string or table.
+\end{lstlisting}
+\par\vspace{0.9em}
+
 
 
 \Needspace{11\baselineskip}
@@ -352,6 +367,15 @@ print(
     f"{train_tok[0]['labels']}  (length-1 float vector)"
 )
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Dataset({
+  features: [...],
+  num_rows: ...
+})
+\end{lstlisting}
+\par\vspace{0.9em}
 
 
 
@@ -394,6 +418,14 @@ print(
     f"{model.config.problem_type}"
 )
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Total parameters:     ...
+Trainable parameters: ...
+Classifier:           ...
+\end{lstlisting}
+\par\vspace{0.9em}
 
 
 
@@ -486,6 +518,12 @@ print(
 )
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+TrainOutput(global_step=..., training_loss=..., metrics={...})
+\end{lstlisting}
+\par\vspace{0.9em}
+
 
 
 \Needspace{5\baselineskip}
@@ -510,6 +548,14 @@ for k, v in eval_metrics.items():
         print(f"  {k:>20}: {v:.4f}")
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+eval_loss:      ...
+eval_accuracy:  ...
+eval_f1:        ...
+\end{lstlisting}
+\par\vspace{0.9em}
+
 
 
 \Needspace{11\baselineskip}
@@ -532,6 +578,15 @@ print(
     f"{(probs >= 0.5).mean():.1%}"
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+logits shape: (..., ...)
+probability range: [..., ...]
+first samples:
+  ...
+\end{lstlisting}
+\par\vspace{0.9em}
+
 \noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 모델 출력을 확률이나 예측값으로 바꾸는 단계로 넘어갑니다.}
 
 \Needspace{10\baselineskip}
@@ -545,6 +600,14 @@ print(pd.DataFrame({
     "pred":  (probs[:5] >= 0.5).astype(int),
 }).to_string(index=False))
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+column_a    column_b    column_c
+...         ...         ...
+...         ...         ...
+\end{lstlisting}
+\par\vspace{0.9em}
 
 
 
@@ -661,6 +724,17 @@ print(classification_report(
 ))
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+              precision    recall  f1-score   support
+label_0          ...       ...       ...        ...
+label_1          ...       ...       ...        ...
+
+micro avg        ...       ...       ...        ...
+macro avg        ...       ...       ...        ...
+\end{lstlisting}
+\par\vspace{0.9em}
+
 
 
 \section{결과 저장}
@@ -711,6 +785,14 @@ for f in sorted(os.listdir("./shared_binary_results")):
     size_kb = os.path.getsize(f"./shared_binary_results/{f}") / 1024
     print(f"  {f}  ({size_kb:.1f} KB)")
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Saved: ./shared_binary_results/
+  metrics.json
+  probabilities.npy
+\end{lstlisting}
+\par\vspace{0.9em}
 
 
 

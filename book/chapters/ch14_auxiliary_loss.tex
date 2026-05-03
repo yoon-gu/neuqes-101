@@ -371,6 +371,14 @@ else:
     )
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+PyTorch:        2.x.x
+CUDA available: True
+GPU:            Tesla T4
+\end{lstlisting}
+\par\vspace{0.9em}
+
 \begin{codeRead}
 \inlinecode{numpy, pandas, matplotlib, PyTorch, datasets} 같은 주요 패키지를 불러옵니다.
 \end{codeRead}
@@ -439,6 +447,13 @@ def extract_aspects(text: str) -> list[float]:
 print(f"K (aspects): {K}, aspects: {ASPECTS}")
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Output varies by runtime, seed, and sampled data.
+Running the cell in Colab prints the corresponding string or table.
+\end{lstlisting}
+\par\vspace{0.9em}
+
 
 
 \Needspace{11\baselineskip}
@@ -488,6 +503,13 @@ print(
 )
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Output varies by runtime, seed, and sampled data.
+Running the cell in Colab prints the corresponding string or table.
+\end{lstlisting}
+\par\vspace{0.9em}
+
 
 
 \Needspace{11\baselineskip}
@@ -505,6 +527,13 @@ print(
 print(f"\nAux score distribution (train):")
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Output varies by runtime, seed, and sampled data.
+Running the cell in Colab prints the corresponding string or table.
+\end{lstlisting}
+\par\vspace{0.9em}
+
 \noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
 \Needspace{9\baselineskip}
@@ -517,6 +546,13 @@ for v in [0.0, 0.25, 0.5, 0.75, 1.0]:
         f"{cnt/len(aux_train):.1%})"
     )
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Output varies by runtime, seed, and sampled data.
+Running the cell in Colab prints the corresponding string or table.
+\end{lstlisting}
+\par\vspace{0.9em}
 
 
 
@@ -559,6 +595,15 @@ print(
     f"{train_tok[0]['aux_labels']:.2f}"
 )
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Dataset({
+  features: [...],
+  num_rows: ...
+})
+\end{lstlisting}
+\par\vspace{0.9em}
 
 
 
@@ -610,6 +655,13 @@ for k, v in batch.items():
         f"{v.dtype}"
     )
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Output varies by runtime, seed, and sampled data.
+Running the cell in Colab prints the corresponding string or table.
+\end{lstlisting}
+\par\vspace{0.9em}
 
 
 
@@ -673,6 +725,14 @@ print(
 print(f"Main classifier:      {model.classifier}")
 print(f"Aux head:             {model.aux_head}")
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Total parameters:     ...
+Trainable parameters: ...
+Classifier:           ...
+\end{lstlisting}
+\par\vspace{0.9em}
 
 
 
@@ -760,6 +820,13 @@ print(
     "교체."
 )
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Output varies by runtime, seed, and sampled data.
+Running the cell in Colab prints the corresponding string or table.
+\end{lstlisting}
+\par\vspace{0.9em}
 
 
 
@@ -859,6 +926,12 @@ print(
 )
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+TrainOutput(global_step=..., training_loss=..., metrics={...})
+\end{lstlisting}
+\par\vspace{0.9em}
+
 
 
 \textbf{중요: \inlinecode{remove\_unused\_columns=False}} --- Trainer는 기본으로 \emph{model.forward 시그니처에 없는 컬럼} 을 제거합니다. \inlinecode{aux\_labels} 는 모델 시그니처에 없어 자동 제거되면 우리 \inlinecode{compute\_loss} 가 받을 수 없습니다. 이 옵션을 꺼야 함.
@@ -886,6 +959,14 @@ for k, v in eval_metrics_aux.items():
     if k.startswith("eval_") and isinstance(v, float):
         print(f"  {k:>22}: {v:.4f}")
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+eval_loss:      ...
+eval_accuracy:  ...
+eval_f1:        ...
+\end{lstlisting}
+\par\vspace{0.9em}
 
 
 
@@ -937,6 +1018,13 @@ print(f"  R^2:     {r2_aux:.4f}")
 print(f"  Pearson: {pear_aux:.4f}")
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Output varies by runtime, seed, and sampled data.
+Running the cell in Colab prints the corresponding string or table.
+\end{lstlisting}
+\par\vspace{0.9em}
+
 
 
 \Needspace{11\baselineskip}
@@ -952,6 +1040,15 @@ preds_main_aux = (probs_aux >= 0.5).astype(int)
 print(f"Main logits shape: {logits_aux.shape}")
 print(f"Eval samples:      {len(labels_eval)}")
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+logits shape: (..., ...)
+probability range: [..., ...]
+first samples:
+  ...
+\end{lstlisting}
+\par\vspace{0.9em}
 
 
 
@@ -1007,6 +1104,12 @@ print(
 )
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+TrainOutput(global_step=..., training_loss=..., metrics={...})
+\end{lstlisting}
+\par\vspace{0.9em}
+
 
 
 \Needspace{11\baselineskip}
@@ -1024,6 +1127,14 @@ if isinstance(logits_no_aux, tuple):
 probs_no_aux = 1.0 / (1.0 + np.exp(-logits_no_aux))
 preds_main_no_aux = (probs_no_aux >= 0.5).astype(int)
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+eval_loss:      ...
+eval_accuracy:  ...
+eval_f1:        ...
+\end{lstlisting}
+\par\vspace{0.9em}
 
 
 
@@ -1061,6 +1172,14 @@ cmp = pd.DataFrame({
 cmp["delta (aux - no_aux)"] = cmp["with aux (lambda=1)"] - cmp["no aux (lambda=0)"]
 print(cmp.round(4).to_string(index=False))
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+column_a    column_b    column_c
+...         ...         ...
+...         ...         ...
+\end{lstlisting}
+\par\vspace{0.9em}
 
 
 
@@ -1112,6 +1231,14 @@ label_cmp = pd.DataFrame({
 })
 print(label_cmp.round(4).to_string(index=False))
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+column_a    column_b    column_c
+...         ...         ...
+...         ...         ...
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
 
@@ -1296,6 +1423,14 @@ for lam in [0.1, 0.3, 1.0, 3.0, 10.0]:
         f"{metrics['eval_macro_f1']:.4f}"
     )
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+eval_loss:      ...
+eval_accuracy:  ...
+eval_f1:        ...
+\end{lstlisting}
+\par\vspace{0.9em}
 
 흔한 패턴:
 

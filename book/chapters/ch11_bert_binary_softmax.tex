@@ -220,6 +220,14 @@ else:
     )
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+PyTorch:        2.x.x
+CUDA available: True
+GPU:            Tesla T4
+\end{lstlisting}
+\par\vspace{0.9em}
+
 \begin{codeRead}
 \inlinecode{numpy, pandas, matplotlib, PyTorch, datasets} 같은 주요 패키지를 불러옵니다.
 \end{codeRead}
@@ -280,6 +288,13 @@ print(
 )
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Output varies by runtime, seed, and sampled data.
+Running the cell in Colab prints the corresponding string or table.
+\end{lstlisting}
+\par\vspace{0.9em}
+
 
 
 \textbf{\ref{ch:10}장과의 한 줄 차이}: \texttt{out{[}“labels”{]}\ =\ {[}{[}float(b){]}\ for\ b\ in\ batch{[}“binary”{]}{]}} → \texttt{out{[}“labels”{]}\ =\ {[}int(b)\ for\ b\ in\ batch{[}“binary”{]}{]}}. 라벨이 \emph{길이 1짜리 float 리스트} 가 아니라 \emph{int 스칼라} 입니다.
@@ -318,6 +333,15 @@ print(
     f"{train_tok[0]['labels']}  (int scalar)"
 )
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Dataset({
+  features: [...],
+  num_rows: ...
+})
+\end{lstlisting}
+\par\vspace{0.9em}
 
 
 
@@ -480,6 +504,12 @@ print(
 )
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+TrainOutput(global_step=..., training_loss=..., metrics={...})
+\end{lstlisting}
+\par\vspace{0.9em}
+
 
 
 \Needspace{5\baselineskip}
@@ -503,6 +533,14 @@ for k, v in eval_metrics.items():
     if k.startswith("eval_") and isinstance(v, float):
         print(f"  {k:>20}: {v:.4f}")
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+eval_loss:      ...
+eval_accuracy:  ...
+eval_f1:        ...
+\end{lstlisting}
+\par\vspace{0.9em}
 
 
 
@@ -540,6 +578,14 @@ print(f"\nFirst 5 samples:")
 print(pd.DataFrame({
     "label":   labels[:5],
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+column_a    column_b    column_c
+...         ...         ...
+...         ...         ...
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \noindent\emph{앞뒤 블록은 모두 모델 출력을 확률이나 예측값으로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
@@ -692,6 +738,13 @@ print(
 )
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Output varies by runtime, seed, and sampled data.
+Running the cell in Colab prints the corresponding string or table.
+\end{lstlisting}
+\par\vspace{0.9em}
+
 
 
 \Needspace{11\baselineskip}
@@ -741,6 +794,14 @@ print(
 )
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Total parameters:     ...
+Trainable parameters: ...
+Classifier:           ...
+\end{lstlisting}
+\par\vspace{0.9em}
+
 
 
 \Needspace{11\baselineskip}
@@ -786,6 +847,12 @@ print(
 )
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+TrainOutput(global_step=..., training_loss=..., metrics={...})
+\end{lstlisting}
+\par\vspace{0.9em}
+
 
 
 \Needspace{11\baselineskip}
@@ -803,6 +870,14 @@ for k, v in eval_metrics_A.items():
     if k.startswith("eval_") and isinstance(v, float):
         print(f"  {k:>20}: {v:.4f}")
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+eval_loss:      ...
+eval_accuracy:  ...
+eval_f1:        ...
+\end{lstlisting}
+\par\vspace{0.9em}
 
 
 
@@ -842,6 +917,14 @@ cmp = pd.DataFrame({
 cmp["|A-B|"] = (cmp["method A (sigmoid+BCE)"] - cmp["method B (softmax+CE)"]).abs()
 print(cmp.round(4).to_string(index=False))
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+column_a    column_b    column_c
+...         ...         ...
+...         ...         ...
+\end{lstlisting}
+\par\vspace{0.9em}
 
 
 

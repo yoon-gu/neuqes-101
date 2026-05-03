@@ -250,6 +250,14 @@ else:
     )
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+PyTorch:        2.x.x
+CUDA available: True
+GPU:            Tesla T4
+\end{lstlisting}
+\par\vspace{0.9em}
+
 \begin{codeRead}
 \inlinecode{numpy, pandas, matplotlib, PyTorch, datasets} 같은 주요 패키지를 불러옵니다.
 \end{codeRead}
@@ -332,6 +340,13 @@ print(f"K (number of aspects): {K}")
 print(f"aspects: {ASPECTS}")
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Output varies by runtime, seed, and sampled data.
+Running the cell in Colab prints the corresponding string or table.
+\end{lstlisting}
+\par\vspace{0.9em}
+
 
 
 \Needspace{11\baselineskip}
@@ -368,6 +383,13 @@ print(
 )
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Output varies by runtime, seed, and sampled data.
+Running the cell in Colab prints the corresponding string or table.
+\end{lstlisting}
+\par\vspace{0.9em}
+
 
 
 \Needspace{11\baselineskip}
@@ -384,6 +406,13 @@ for k, aspect in enumerate(ASPECTS):
     )
 
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Output varies by runtime, seed, and sampled data.
+Running the cell in Colab prints the corresponding string or table.
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
@@ -402,6 +431,13 @@ for n in range(K + 1):
         f"{cnt/len(Y_train):.1%})"
     )
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Output varies by runtime, seed, and sampled data.
+Running the cell in Colab prints the corresponding string or table.
+\end{lstlisting}
+\par\vspace{0.9em}
 
 
 
@@ -442,6 +478,15 @@ print(
     f"{train_tok[0]['labels']}  (length-5 multi-hot float vector)"
 )
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Dataset({
+  features: [...],
+  num_rows: ...
+})
+\end{lstlisting}
+\par\vspace{0.9em}
 
 
 
@@ -487,6 +532,14 @@ print(
 )
 print(f"id2label:             {model.config.id2label}")
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+Total parameters:     ...
+Trainable parameters: ...
+Classifier:           ...
+\end{lstlisting}
+\par\vspace{0.9em}
 
 
 
@@ -598,6 +651,12 @@ print(
 )
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+TrainOutput(global_step=..., training_loss=..., metrics={...})
+\end{lstlisting}
+\par\vspace{0.9em}
+
 
 
 \Needspace{5\baselineskip}
@@ -621,6 +680,14 @@ for k, v in eval_metrics.items():
     if k.startswith("eval_") and isinstance(v, float):
         print(f"  {k:>22}: {v:.4f}")
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+eval_loss:      ...
+eval_accuracy:  ...
+eval_f1:        ...
+\end{lstlisting}
+\par\vspace{0.9em}
 
 
 
@@ -657,6 +724,15 @@ for k, a in enumerate(ASPECTS):
     )
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+logits shape: (..., ...)
+probability range: [..., ...]
+first samples:
+  ...
+\end{lstlisting}
+\par\vspace{0.9em}
+
 
 
 \Needspace{8\baselineskip}
@@ -668,6 +744,17 @@ print(classification_report(
     digits=4, zero_division=0,
 ))
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+              precision    recall  f1-score   support
+label_0          ...       ...       ...        ...
+label_1          ...       ...       ...        ...
+
+micro avg        ...       ...       ...        ...
+macro avg        ...       ...       ...        ...
+\end{lstlisting}
+\par\vspace{0.9em}
 
 
 
@@ -879,6 +966,15 @@ print(
     f"{hamming_loss(Y_eval_bin, preds_sk):.4f}"
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+logits shape: (..., ...)
+probability range: [..., ...]
+first samples:
+  ...
+\end{lstlisting}
+\par\vspace{0.9em}
+
 \noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
 \Needspace{5\baselineskip}
@@ -934,6 +1030,14 @@ cmp["BERT - sklearn"] = cmp["BERT (this chapter)"] - cmp["sklearn (OvR)"]
 print(cmp.round(4).to_string(index=False))
 \end{lstlisting}
 
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+column_a    column_b    column_c
+...         ...         ...
+...         ...         ...
+\end{lstlisting}
+\par\vspace{0.9em}
+
 
 
 \subsection{라벨별 F1 비교}
@@ -968,6 +1072,14 @@ label_cmp = pd.DataFrame({
 label_cmp["BERT - sklearn"] = label_cmp["BERT F1"] - label_cmp["sklearn F1"]
 print(label_cmp.round(4).to_string(index=False))
 \end{lstlisting}
+
+\noindent\textbf{출력 형태.}
+\begin{lstlisting}[style=bookoutput]
+column_a    column_b    column_c
+...         ...         ...
+...         ...         ...
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
 
