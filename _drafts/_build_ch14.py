@@ -52,7 +52,7 @@ $$L = L_\text{main}(\text{측면 BCE per-label}) + \lambda \cdot L_\text{aux}(\t
 
 ## 학습 흐름
 
-1. 🚀 **실습**: Ch 13의 데이터 + *별점 정규화 회귀 라벨* 추가. `AutoModelForSequenceClassification` (`num_labels=5`, multi-label) 에 `aux_head = Linear(H, 1)` 한 줄 추가, `Trainer.compute_loss` 오버라이드.
+1. 🚀 **실습**: Ch 13의 데이터 + *별점 보조 회귀 라벨* (1★→0.0, 5★→1.0 스케일) 추가. `AutoModelForSequenceClassification` (`num_labels=5`, multi-label) 에 `aux_head = Linear(H, 1)` 한 줄 추가, `Trainer.compute_loss` 오버라이드.
 2. 🔬 **해부**: 메인 metric (per-label F1, hamming, AUC) + 보조 metric (RMSE, Pearson r) 동시 측정.
 3. 🛠️ **클라이맥스**: 같은 노트북 안에서 **λ=0 baseline** (= Ch 13 재현)을 학습한 뒤 λ=1 결과와 비교 — *보조 loss가 메인 task에 도움이 됐는가?* 라벨별 F1 차이로 시각화.
 
@@ -84,7 +84,7 @@ md(r"""## 🔄 변경점 (Diff from Ch 13)
 | `problem_type` | `multi_label_classification` | (그대로 — 자동 매핑은 메인 loss 만 처리) |
 | 메인 활성화 / loss | per-label sigmoid / BCE | (그대로) |
 | **보조 head** | 없음 | **새로 추가**: `Linear(H, 1)` linear regressor |
-| **보조 라벨** | 없음 | **새로 추가**: 별점 정규화 0-1 (`label / 4`) |
+| **보조 라벨** | 없음 | **새로 추가**: 별점 0-1 스케일 (`label / 4`, 1★→0.0, 5★→1.0) |
 | **보조 loss** | — | **`MSELoss`** (Ch 9 그대로) |
 | **결합 loss** | `outputs.loss` 자동 | **`L_main + λ·L_aux`** 직접 계산 |
 | `Trainer.compute_loss` | 자동 (오버라이드 X) | **오버라이드 필수** |
@@ -193,7 +193,7 @@ $$L = \underbrace{\frac{1}{N \cdot K}\sum_{i,k}\text{BCE}(z_{i,k}^{main}, y_{i,k
 
 이번 챕터에선 **λ=1** 로 학습하고 λ=0 baseline과 비교. 실무에선 validation set에서 λ를 grid search (0.1, 0.3, 1, 3, 10).
 
-**숫자로 감 잡기 (단일 샘플)** — 측면 multi-hot $\mathbf{y}^\text{main} = [1, 0, 1, 0, 1]$, 별점 정규화 $y^\text{aux} = 0.75$ (4★/4):
+**숫자로 감 잡기 (단일 샘플)** — 측면 multi-hot $\mathbf{y}^\text{main} = [1, 0, 1, 0, 1]$, 별점 보조 라벨 $y^\text{aux} = 0.75$ (4★/4):
 
 | 단계 | 값 |
 |---|---|
@@ -251,12 +251,12 @@ md(r"""**baseline VRAM**:""")
 code(r"""!nvidia-smi""")
 
 # ----- 8. 데이터 + 측면 + 별점 -----
-md(r"""## 1. 🚀 데이터 — Yelp + 측면 (Ch 13) + 별점 정규화
+md(r"""## 1. 🚀 데이터 — Yelp + 측면 (Ch 13) + 별점 보조 라벨
 
-Ch 13의 측면 합성 라벨을 그대로 쓰고, *별점 정규화* 보조 라벨을 추가합니다.
+Ch 13의 측면 합성 라벨을 그대로 쓰고, **별점 보조 회귀 라벨** 을 추가합니다. 별점은 1-5 정수지만 회귀 헤드와 MSE를 자연스럽게 쓰기 위해 *0-1 스케일* 로 변환만 해 둡니다 (학습 정규화 효과를 위한 데이터 가공이 아니라, 그냥 단위만 맞추는 작업).
 
 - 메인 라벨 $\mathbf{y}^\text{main} \in \{0, 1\}^5$ — 측면 multi-hot.
-- 보조 라벨 $y^\text{aux} = (\text{label} + 1 - 1) / 4 = \text{label} / 4 \in [0, 1]$ — 별점을 0-1로 정규화 (1★ → 0.0, 5★ → 1.0).""")
+- 보조 라벨 $y^\text{aux} = \text{label} / 4 \in [0, 1]$ — 1★ → 0.0, 5★ → 1.0.""")
 
 code(r"""ASPECT_KEYWORDS = {
     "food": ["food", "meal", "dish", "taste", "delicious", "flavor", "menu",
@@ -307,7 +307,7 @@ print(f"  text: {train_full[0]['text'][:120]}...")
 print(f"  aspects (multi-hot): {train_full[0]['aspects']}")
 print(f"  aux_score (star/4): {train_full[0]['aux_score']:.2f}  (star = {train_full[0]['label'] + 1})")""")
 
-code(r"""# 보조 라벨 분포 (별점 정규화)
+code(r"""# 보조 라벨 분포 (별점 0-1 스케일)
 import numpy as np
 aux_train = np.array(train_full["aux_score"])
 print(f"aux score range: [{aux_train.min():.2f}, {aux_train.max():.2f}]")
@@ -561,7 +561,7 @@ rmse_aux = float(np.sqrt(mean_squared_error(aux_true, aux_preds_aux)))
 r2_aux   = float(r2_score(aux_true, aux_preds_aux))
 pear_aux = float(np.corrcoef(aux_true, aux_preds_aux)[0, 1])
 
-print("\nWith-aux (λ=1) — aux task metrics (star regression, normalized 0-1):")
+print("\nWith-aux (λ=1) — aux task metrics (star regression, 0-1 scale):")
 print(f"  RMSE:    {rmse_aux:.4f}")
 print(f"  R^2:     {r2_aux:.4f}")
 print(f"  Pearson: {pear_aux:.4f}")""")
@@ -708,27 +708,33 @@ md(r"""### 8-3. 보조 task 자체는 얼마나 잘 학습됐나
 
 별점 회귀가 잘 됐다는 건 BERT 본체가 *별점 신호도 효율적으로 인코딩* 하고 있다는 뜻 — 메인 task 표현에도 그 신호가 들어가 있을 가능성.""")
 
-code(r"""fig, ax = plt.subplots(figsize=(7, 6))
-sns.scatterplot(
-    x=aux_true, y=aux_preds_aux, ax=ax,
-    color="#F47272", alpha=0.55, s=35,
+code(r"""# True star 별로 예측값 분포를 violin 으로 — 정답이 5개 정수 라벨에서만 나오므로
+# scatter 보다 분포가 훨씬 깔끔하게 보임
+true_star = np.round(np.array(aux_true) * 4).astype(int) + 1   # 0-1 스케일을 1-5 별점으로
+star_label = [f"{s}*" for s in true_star]
+df_aux = pd.DataFrame({"True star": star_label, "Predicted (0-1 scale)": aux_preds_aux})
+order = ["1*", "2*", "3*", "4*", "5*"]
+
+fig, ax = plt.subplots(figsize=(8.5, 5.5))
+sns.violinplot(
+    data=df_aux, x="True star", y="Predicted (0-1 scale)",
+    order=order, inner="quart", cut=0,
+    color="#F47272", alpha=0.6, ax=ax,
 )
-ax.plot([0, 1], [0, 1], color="black", lw=1.3, ls="--", alpha=0.7,
-        label="y = x (perfect)")
-ax.set_xlim(-0.05, 1.05)
+# 정답이 있는 위치를 점선 가이드로 표시 (1* -> 0.0, 5* -> 1.0)
+for i, target in enumerate([0.0, 0.25, 0.5, 0.75, 1.0]):
+    ax.hlines(target, i - 0.4, i + 0.4, color="black", lw=1.1, ls="--", alpha=0.7)
 ax.set_ylim(-0.2, 1.2)
-ax.set_xlabel("True normalized star  (0=1*, 1=5*)")
-ax.set_ylabel("Predicted by aux head")
-ax.set_title(f"Aux task — star regression (RMSE={rmse_aux:.3f}, r={pear_aux:.3f})")
-ax.legend(loc="upper left")
+ax.set_title(f"Aux task — predicted vs true star  (RMSE={rmse_aux:.3f}, r={pear_aux:.3f})")
 plt.tight_layout()
 plt.show()""")
 
 md(r"""**해석**
 
-- 점들이 $y=x$ 직선 *주변에 몰려 있으면* 보조 head 가 별점 신호를 잘 학습한 것.
-- 0/0.25/0.5/0.75/1.0 5개 *세로 띠* 가 나타남 (정답이 5개 별점 정수에서만 나오므로). 각 띠 안에서 예측이 분산되는 정도가 *그 별점에서의 모델 불확실성*.
-- 점들이 직선과 멀어지면 보조 head 학습 부족 — λ를 더 크게 두거나 학습량을 늘려야 함.""")
+- 각 violin이 *해당 별점의 정답 위치* (점선 가이드: 1★=0.0, 2★=0.25, 3★=0.5, 4★=0.75, 5★=1.0) 에 *중심* 하면 보조 head 가 별점 신호를 잘 학습한 것.
+- violin 의 *너비* = 그 별점 내 예측 분산. 너비가 좁을수록 모델이 자신 있게 회귀 — 모든 별점에서 좁으면 calibration 이 좋음.
+- 가장 어려운 별점은 보통 *3★* (중간값) — 사람도 모호한 평가라 violin 이 길게 늘어지거나 인접 별점 위치까지 침범하면 자연스러움.
+- 1★/5★ 양 끝 violin 이 정답 위치에서 *체계적으로 안쪽* 으로 치우치면 *극단값에 보수적* 인 회귀 — MSE 가 양 끝에서 손실이 작아지는 특성과 결부된 일반적 경향.""")
 
 # ----- 20. library -----
 md(r"""## 📦 이번 챕터에 등장한 라이브러리·함수

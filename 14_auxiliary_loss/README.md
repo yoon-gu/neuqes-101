@@ -18,7 +18,7 @@ Ch 13(BERT multi-label 측면 분류)에 **별점 회귀 보조 헤드** 를 추
 **`BCEWithLogitsLoss + λ·MSELoss`** — 자동 매핑은 메인 BCE만 처리, 보조 MSE는 우리가 `compute_loss` 안에서 직접 계산해 가중합.
 
 ## 데이터
-Ch 13의 측면 합성 라벨(food/service/price/ambiance/location, multi-hot 5차원) **+** 별점 정규화(0-1 float, `label / 4`).
+Ch 13의 측면 합성 라벨(food/service/price/ambiance/location, multi-hot 5차원) **+** 별점 보조 회귀 라벨(0-1 스케일, `label / 4`, 1★→0.0, 5★→1.0).
 
 ## 환경
 Google Colab **T4 GPU 필수**. 약 22분 (보조 ON 학습 ~9분 + λ=0 baseline 학습 ~9분 + 평가/시각화).
