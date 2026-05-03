@@ -578,9 +578,72 @@ $$\mathrm{softmax}(z + c \cdot \mathbf 1)_k = \dfrac{e^{z_k + c}}{\sum_j e^{z_j 
 - **학습 시간**: BERT는 GPU 5-10분. sklearn은 CPU 5-30초. 실험 cycle 100배 차이.
 - **유연성**: BERT는 fine-tune이 가능 (도메인 특화 추가 학습). sklearn은 *처음부터 다시* 학습.
 
-규칙: **5%p 이내 차이면 sklearn**, **10%p 이상이면 BERT 고려**. 운영 환경, 트래픽, 정확도 가치에 따라 다릅니다.
+단순 *정확도-vs-비용* 만 보면 **5%p 이내 차이면 sklearn**, **10%p 이상이면 BERT 고려** 같은 룰이 무난합니다. 별점 task처럼 *단어 빈도가 강한 신호* 인 도메인은 sklearn 유리, *부정·반어·다단계 추론* 이 중요한 NLI/감성분석 도메인은 BERT 유리.
 
-별점 task처럼 *단어 빈도가 강한 신호* 인 도메인은 sklearn 유리, *부정·반어·다단계 추론* 이 중요한 NLI/감성분석 도메인은 BERT 유리.
+**그런데 정확도 너머의 가치가 있습니다.** 다음 시나리오에서는 정확도 차이가 *2-3%p* 만 나도 BERT가 압도적으로 유리합니다 — sklearn으로는 *애초에 불가능* 하거나 별도 파이프라인을 통째로 다시 만들어야 하기 때문.
+
+**(1) 새 도메인으로의 빠른 적응 — *transfer learning***
+
+영어 일반 리뷰로 학습한 BERT를 *의료 환자 리뷰* 100-500건만으로 fine-tune해 즉시 도메인 모델을 얻을 수 있습니다. sklearn은 도메인이 바뀌면 *어휘 통계가 처음부터 다시* — 의료 용어 빈도가 일반 리뷰와 달라 TF-IDF가 새 분포에서 학습돼야 하고, 100건은 통계적으로 너무 적습니다.
+
+```python
+# 일반 리뷰 BERT 체크포인트를 의료 도메인으로 추가 학습
+model = AutoModelForSequenceClassification.from_pretrained("yelp-finetuned-bert")
+model.train_on(medical_reviews_500)   # ← 적은 데이터로도 잘 됨 (사전학습+yelp 지식 보존)
+```
+
+**(2) 다국어 / cross-lingual — 같은 코드로 한국어·일본어·영어**
+
+`xlm-roberta-base` 같은 다국어 BERT는 *동일 모델 + 동일 코드* 로 100+ 언어 동작. 영어 Yelp로 학습한 모델이 *한국어 리뷰에도 그대로 generalize* 합니다 (zero-shot cross-lingual transfer). sklearn은 언어마다 토크나이저(형태소 분석기), 불용어 사전, TF-IDF vocabulary를 *각각* 만들어야 합니다.
+
+```python
+# 영어로 학습한 모델을 한국어 평가 셋에 그대로
+tok = AutoTokenizer.from_pretrained("xlm-roberta-base")     # 100+ 언어 공통
+model.predict(tok("이 식당 음식이 정말 별로였어요"))     # ← 한 번도 한국어 학습 안 했지만 동작
+```
+
+**(3) 분류 너머의 task로 확장 — 같은 백본, 다른 헤드**
+
+같은 `distilbert-base-uncased` 본체로:
+
+| Task | 모델 클래스 | 예시 |
+|---|---|---|
+| 분류 (이번 챕터) | `AutoModelForSequenceClassification` | 별점 1-5 분류 |
+| 토큰 분류 (NER) | `AutoModelForTokenClassification` | "*Bob* 가 *Apple* 에서 *iPhone* 을 샀다" → 사람/회사/제품 추출 |
+| 질의응답 | `AutoModelForQuestionAnswering` | "이 리뷰의 만족도는?" 답: "음식은 좋지만 서비스가" |
+| 텍스트 생성 | `AutoModelForCausalLM` | 자동 답변 생성 |
+| 임베딩 | `AutoModel` (CLS hidden state) | 문장 의미 벡터 |
+
+sklearn LogReg는 *분류 한 가지* 만. 다른 task는 모델 자체가 달라져야 합니다.
+
+**(4) 임베딩 기반 의미 검색·중복 제거**
+
+BERT [CLS] 임베딩은 *문장 의미를 768-dim 벡터* 로 만듭니다. 단어가 달라도 *의미가 비슷하면 가까운 벡터*. TF-IDF는 *같은 단어* 가 있어야 매칭 — "맛있다" 와 "delicious" 는 거리 1, BERT는 거의 거리 0.
+
+```python
+# 의미 기반 중복 리뷰 찾기
+emb1 = model(tok("맛있고 친절했어요"))[:, 0, :]        # CLS
+emb2 = model(tok("음식 훌륭하고 직원 좋았음"))[:, 0, :]
+cos_sim(emb1, emb2)   # ≈ 0.92 (의미 유사)
+# TF-IDF로는 cos_sim ≈ 0.0 (공통 단어 없음)
+```
+
+리뷰 수만 건 중 *의미 중복* 을 제거하거나, 새 리뷰가 들어왔을 때 *비슷한 과거 리뷰* 를 검색하는 시스템 — sklearn으로는 거의 불가능.
+
+**(5) Zero-shot 분류 — 학습 데이터 없이도 동작**
+
+NLI(natural language inference)로 fine-tune된 BERT (`facebook/bart-large-mnli` 등)는 *임의의 라벨* 에 대해 학습 *없이* 분류합니다.
+
+```python
+from transformers import pipeline
+zsc = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+zsc("음식이 별로였다", candidate_labels=["positive", "negative", "neutral"])
+# {"labels": ["negative", "neutral", "positive"], "scores": [0.91, 0.07, 0.02]}
+```
+
+새 라벨 카테고리가 생길 때마다 학습 데이터 라벨링 비용이 없습니다. 빠른 프로토타이핑·콜드스타트에 강력. sklearn은 *학습 데이터 필수*.
+
+**정리** — sklearn은 *오늘의 task* 를 가장 빠르고 싸게 푸는 도구. BERT는 *task 자체가 진화하거나, 도메인이 늘어나거나, 분류 외 응용으로 확장될 때* 의 자산. 정확도 비교만으로 BERT 가치를 판단하기 부족한 이유입니다.
 
 ### Q6. (실무) 한 모델로 *binary와 5-class를 동시에* 풀 수 있나요?
 
