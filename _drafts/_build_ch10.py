@@ -133,6 +133,7 @@ warnings.filterwarnings("ignore")
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 import torch
 from datasets import load_dataset
 from transformers import (
@@ -146,25 +147,17 @@ from sklearn.metrics import (
 
 plt.rcParams["axes.unicode_minus"] = False
 
-# 디바이스 자동 감지 — Colab T4(CUDA), Mac(MPS), 그 외는 CPU
-USE_CUDA = torch.cuda.is_available()
-USE_MPS  = torch.backends.mps.is_available()
-DEVICE_KIND = "cuda" if USE_CUDA else ("mps" if USE_MPS else "cpu")
-USE_FP16 = USE_CUDA  # fp16은 CUDA에서만, MPS에서는 fp32
-
 print(f"PyTorch:        {torch.__version__}")
-print(f"디바이스:       {DEVICE_KIND}")
-if USE_CUDA:
+print(f"CUDA 사용 가능: {torch.cuda.is_available()}")
+if torch.cuda.is_available():
     print(f"GPU:             {torch.cuda.get_device_name(0)}")
-elif USE_MPS:
-    print("Apple Silicon MPS 사용 — Colab T4 대비 약간 느릴 수 있어요 (fp16 비활성)")
 else:
-    print("⚠️  CPU 런타임 — 학습이 매우 느립니다. T4 또는 MPS 권장.")""")
+    print("⚠️  CPU 런타임에서는 학습이 매우 느립니다. T4로 변경 권장.")""")
 
 # ----- 7. nvidia-smi baseline -----
-md(r"""**baseline VRAM** (CUDA에서만 의미; Mac MPS면 자동 skip):""")
+md(r"""**baseline VRAM**:""")
 
-code(r"""!command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi || echo '(nvidia-smi 없음 — Mac/CPU 환경)'""")
+code(r"""!nvidia-smi""")
 
 # ----- 8. 데이터 준비 -----
 md(r"""## 1. 🚀 데이터 — Yelp 이진화 (Ch 3·4와 동일)
@@ -234,7 +227,7 @@ print(f"학습되는 파라미터:  {trainable:>13,}  ({trainable/total:.1%})")
 print(f"분류 헤드:          {model.classifier}")
 print(f"problem_type:       {model.config.problem_type}")""")
 
-code(r"""!command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi || echo '(nvidia-smi 없음 — Mac/CPU 환경)'""")
+code(r"""!nvidia-smi""")
 
 # ----- 11. 학습 -----
 md(r"""## 3. 학습 — Ch 9 골격 그대로
@@ -265,7 +258,7 @@ code(r"""training_args = TrainingArguments(
     per_device_train_batch_size=16,
     per_device_eval_batch_size=32,
     learning_rate=2e-5,
-    fp16=USE_FP16,
+    fp16=True,
     eval_strategy="epoch",
     logging_steps=50,
     save_strategy="no",
@@ -285,7 +278,7 @@ trainer = Trainer(
 train_result = trainer.train()
 print(f"\n학습 완료 — 평균 train loss: {train_result.training_loss:.4f}")""")
 
-code(r"""!command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi || echo '(nvidia-smi 없음 — Mac/CPU 환경)'""")
+code(r"""!nvidia-smi""")
 
 # ----- 12. 평가 -----
 md(r"""## 4. 🔬 평가 — sigmoid 확률 분포 직접 확인
@@ -316,17 +309,68 @@ print(pd.DataFrame({
     "pred":  (probs[:5] >= 0.5).astype(int),
 }).to_string(index=False))""")
 
-code(r"""# 확률 분포 시각화 — 정답 0/1 별로 따로
-fig, ax = plt.subplots(figsize=(8, 4))
-ax.hist(probs[labels == 0], bins=30, alpha=0.6, label="actual=0 (negative)", color="C0")
-ax.hist(probs[labels == 1], bins=30, alpha=0.6, label="actual=1 (positive)", color="C1")
-ax.axvline(0.5, color="red", linestyle="--", linewidth=1, label="threshold=0.5")
+md(r"""### 4-1. 메인 그림 — *확률 공간* 에서 라벨별 분포 (`seaborn.kdeplot`)
+
+`seaborn.kdeplot` 으로 *부드러운* 분포를 그립니다. histogram이 막대로 끊기는 반면 KDE는 연속 곡선이라 두 분포가 어디서 만나는지(=오분류 영역)가 한눈에 들어옵니다.
+
+이 그림에서 봐야 할 세 가지:
+
+- **양 끝 봉우리**: 학습이 잘 되면 라벨 0의 확률은 0 근처에, 라벨 1의 확률은 1 근처에 몰립니다 — sigmoid가 큰 음수 logit을 0에, 큰 양수 logit을 1에 *압착* 시키기 때문 ($\sigma(z) = 1/(1+e^{-z})$ 의 양 극단 포화).
+- **0.5 근처의 교차 영역**: 두 곡선이 만나는 부분이 모델이 헷갈려하는 샘플들. 면적이 작을수록 분리가 잘 된 것.
+- **반대쪽 꼬리**: 라벨 0인데 확률 1쪽에, 라벨 1인데 확률 0쪽에 잡히는 작은 봉우리는 *오분류*. 이 두 꼬리가 학습 손실(BCE)이 가장 크게 잡히는 영역.""")
+
+code(r"""# 메인: 확률 공간 KDE — seaborn으로 부드러운 분포 + 라벨별 hue
+sns.set_theme(style="whitegrid", context="talk")
+
+df = pd.DataFrame({"prob": probs, "logit": logits, "label": labels})
+PAL = {0: "#5B8DEF", 1: "#F47272"}  # 파랑=negative, 빨강=positive
+
+fig, ax = plt.subplots(figsize=(9, 5))
+sns.kdeplot(
+    data=df, x="prob", hue="label",
+    fill=True, common_norm=False, alpha=0.5,
+    palette=PAL, clip=(0, 1), ax=ax,
+)
+ax.axvline(0.5, color="black", lw=1.2, ls="--", alpha=0.7)
+ax.set_title("Method A — Probability Distribution by Actual Label")
 ax.set_xlabel("Predicted probability  P(y=1)")
-ax.set_ylabel("Count")
-ax.set_title("Method A (sigmoid + BCE) — Probability Distribution")
-ax.legend()
+ax.set_ylabel("Density")
 plt.tight_layout()
 plt.show()""")
+
+md(r"""**설명 — 왜 양 끝이 솟아 있나?** sigmoid는 logit이 ±5만 넘어가도 거의 0 또는 1로 수렴합니다 ($\sigma(5) \approx 0.993$, $\sigma(-5) \approx 0.007$). BERT가 학습 후 어느 정도 자신감을 갖게 되면 logit이 ±5-10 범위로 뻗어 나가고, 결과적으로 확률 공간에서는 **양 끝에 압착된 U자 분포**가 나옵니다. 가운데(0.3-0.7)는 모델이 *판단을 망설이는* 샘플 — 진짜 어려운 케이스이거나 라벨 노이즈일 가능성이 큽니다.
+
+**`common_norm=False` 의 의미**: 라벨별로 *각자* 적분이 1이 되도록 정규화. 이렇게 해야 라벨 0 샘플 수와 라벨 1 샘플 수가 다를 때도 *분포의 모양* 만 비교됩니다 (개수 차이는 빠짐).""")
+
+# ----- 12b. 보조 — logit 공간 -----
+md(r"""### 4-2. 보조 그림 — *logit 공간* 에서 같은 분포 (`BCE가 실제로 동작하는 자리`)
+
+방금 본 확률 공간 그림은 사용자 눈에 보이는 결과지만, **`BCEWithLogitsLoss` 가 실제로 손실을 계산하는 자리** 는 *logit 공간* 입니다 ($z$, sigmoid를 통과하기 *전*). 같은 데이터를 logit 축에서 다시 그려보면 사뭇 다른 풍경이 펼쳐집니다.
+
+확률 공간(4-1)에서는 분포가 0과 1 양 끝에 *압착*되어 안쪽 모양을 알 수 없었는데, logit 공간에서는 **두 개의 정규분포-비슷한 봉우리**가 결정 경계 $z = 0$ 양옆에 깔끔하게 분리됩니다. 이게 BERT가 학습한 *진짜 표상*에 더 가깝습니다.""")
+
+code(r"""# 보조: logit 공간 KDE — sigmoid를 통과하기 전 모습
+fig, ax = plt.subplots(figsize=(9, 5))
+sns.kdeplot(
+    data=df, x="logit", hue="label",
+    fill=True, common_norm=False, alpha=0.5,
+    palette=PAL, ax=ax,
+)
+ax.axvline(0.0, color="black", lw=1.2, ls="--", alpha=0.7,
+           label="decision boundary z=0")
+ax.set_title("Method A — Logit Distribution (pre-sigmoid)")
+ax.set_xlabel("Logit  z")
+ax.set_ylabel("Density")
+plt.tight_layout()
+plt.show()""")
+
+md(r"""**두 그림을 함께 보는 법 — sigmoid가 한 일**
+
+- 확률 공간(4-1)의 *양 끝 압착* 은 logit 공간(4-2)의 *바깥쪽 꼬리* 에서 옵니다. logit이 +6 이든 +10 이든 sigmoid 통과 후엔 모두 0.99 이상이라 구분이 안 됨 — 정보가 *압축* 되는 것.
+- 결정 경계는 두 그림 모두 *같은 자리*: 확률에서 0.5, logit에서 0. 단지 좌표축이 다를 뿐.
+- 두 봉우리의 **거리** 는 logit 공간에서만 의미가 있습니다. 거리가 멀수록 모델이 두 클래스를 자신 있게 구분하는 것. 확률 공간에서는 이 거리가 양 끝 압착 때문에 안 보입니다.
+
+**왜 `BCEWithLogitsLoss` 인가** — BCE를 *확률* 위에서 계산하면 ($p = \sigma(z)$), $\log p$ 와 $\log(1-p)$ 가 양 극단에서 0에 매우 가까운 수가 되어 로그 안의 수치가 폭주합니다 (`log(0)` 발산). 반면 logit 위에서 직접 계산하면 ($\text{BCE}(z, y) = \max(z, 0) - z y + \log(1 + e^{-|z|})$) 로그-합-지수(log-sum-exp) 트릭으로 **수치적으로 안정**. 그래서 우리는 모델 출력 logit을 sigmoid 통과 *없이* 그대로 `BCEWithLogitsLoss` 에 넣습니다.""")
 
 code(r"""# 상세 분류 리포트
 print(classification_report(
@@ -384,14 +428,15 @@ md(r"""## 📦 이번 챕터에 등장한 라이브러리·함수
 | `AutoModelForSequenceClassification(num_labels=1, problem_type="multi_label_classification")` | num_labels=1 + multi_label로 BCE 자동 매핑 | Ch 12-13에서 multi-hot 라벨로 재사용 |
 | `sklearn.metrics.precision_recall_fscore_support` | 이진 분류 지표 한 묶음 | Ch 11·15·17에서 동일 |
 | `sklearn.metrics.roc_auc_score` | AUC 계산 (확률 임계값 무관) | 분류 챕터마다 사용 |
-| `numpy 1/(1+exp(-x))` | sigmoid 직접 구현 (모델 logit → 확률) | Ch 7에서 본 동일 패턴 |""")
+| `numpy 1/(1+exp(-x))` | sigmoid 직접 구현 (모델 logit → 확률) | Ch 7에서 본 동일 패턴 |
+| `seaborn.kdeplot(..., hue=, fill=True, common_norm=False)` | 라벨별 부드러운 분포를 *각자* 정규화해 모양만 비교 | 분류 챕터마다 동일 패턴으로 재등장 |""")
 
 # ----- 15. checkpoints -----
 md(r"""## 🎯 체크포인트 질문
 
 1. `num_labels=1` 인데 왜 `problem_type="single_label_classification"` 이 아닌 `"multi_label_classification"` 으로 두나요?
 2. `BCEWithLogitsLoss` 의 *Logits* 가 의미하는 바는? sigmoid를 따로 적용하지 않는 이유는?
-3. 학습 후 sigmoid 확률 분포가 정답 0과 정답 1 그룹에서 어떻게 다르게 보이나요? (시각화 그래프 해석)
+3. 학습 후 *확률 공간* 에서 라벨별 분포가 양 끝에 압착되는 이유는? 같은 분포를 *logit 공간* 에서 보면 무엇이 달라지나요? (4-1, 4-2 그래프 비교)
 4. 같은 binary 분류를 sklearn `LogisticRegression()` 으로 풀 때(Ch 3)와 BERT로 풀 때(Ch 10), accuracy 차이가 어디서 오나요?""")
 
 # ----- 16. FAQ -----
