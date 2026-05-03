@@ -42,5 +42,6 @@ PDF는 `book/build/neuqes-101-ch01-14-manuscript.pdf`에 생성됩니다.
 - 넓은 표는 `adjustbox`로 페이지 폭 안에 맞춥니다.
 - 표시 수식은 번호가 있는 `equation` 환경으로 변환하고, 설명 문장에서 `eqref`로 참조합니다.
 - 수식 글꼴은 본문과 맞도록 sans-serif 계열로 통일합니다.
+- 유니코드 수학 기호는 가능한 한 LaTeX 명령으로 씁니다. 예: `λ` 대신 `$\lambda$`, `Δ` 대신 `$\Delta$`, `≈` 대신 `$\approx$`. 코드와 출력 문자열에서는 `lambda`, `delta`, `<=`, `->` 같은 ASCII 표기를 우선합니다.
 - 이미지와 TikZ 다이어그램은 각각 `bookfigure`, `bookdiagram` 환경을 사용하면 LaTeX `figure` 번호와 캡션으로 관리됩니다.
 - `plt.show()`가 있는 실습 코드는 원칙적으로 대응하는 그림을 `book/assets/figures/`에 생성하거나 추출해 `bookfigurelabel`로 본문에 추가합니다.
