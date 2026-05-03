@@ -1,4 +1,4 @@
-# 05_sklearn_multiclass — 다중 클래스 분류와 교차 엔트로피
+# 05_sklearn_multiclass — 다중 클래스 분류 (Multi-class Classification & CE)
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/05_sklearn_multiclass/05_sklearn_multiclass.ipynb)
 

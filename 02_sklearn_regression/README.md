@@ -1,4 +1,4 @@
-# 02_sklearn_regression — 회귀 분석과 평균제곱오차
+# 02_sklearn_regression — 회귀 분석 (Regression & MSE)
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/02_sklearn_regression/02_sklearn_regression.ipynb)
 

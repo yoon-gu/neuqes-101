@@ -1,4 +1,4 @@
-# 06_sklearn_multilabel — 다중 라벨 분류와 라벨별 이진 교차 엔트로피
+# 06_sklearn_multilabel — 다중 라벨 분류 (Multi-label Classification & Per-label BCE)
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/06_sklearn_multilabel/06_sklearn_multilabel.ipynb)
 

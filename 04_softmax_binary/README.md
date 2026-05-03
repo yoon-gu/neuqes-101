@@ -1,4 +1,4 @@
-# 04_softmax_binary — 이진 분류: sigmoid와 softmax는 어떻게 같은가
+# 04_softmax_binary — sigmoid와 softmax의 동등성 (Binary Classification)
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/04_softmax_binary/04_softmax_binary.ipynb)
 

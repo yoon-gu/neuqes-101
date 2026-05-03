@@ -1,4 +1,4 @@
-# 01_tfidf — TF-IDF로 텍스트 벡터 만들기
+# 01_tfidf — 텍스트 벡터화 (TF-IDF)
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/01_tfidf/01_tfidf.ipynb)
 
