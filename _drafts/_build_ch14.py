@@ -348,7 +348,10 @@ loss = outputs.loss + λ · MSE(aux_head(CLS), aux_labels)
 - `outputs.loss` 는 `problem_type="multi_label_classification"` 자동 매핑으로 이미 BCE per-label 평균이 계산됨.
 - 보조 loss는 우리가 *직접 계산* — `output_hidden_states=True` 로 받은 마지막 layer의 CLS 표현을 `aux_head` 에 통과.""")
 
-code(r"""class AuxTrainer(Trainer):
+code(r"""from transformers.modeling_outputs import SequenceClassifierOutput
+
+
+class AuxTrainer(Trainer):
     def __init__(self, *args, lambda_aux: float = 1.0, **kwargs):
         super().__init__(*args, **kwargs)
         self.lambda_aux = lambda_aux
@@ -366,12 +369,13 @@ code(r"""class AuxTrainer(Trainer):
 
         loss = main_loss + self.lambda_aux * aux_loss
 
-        # 로깅용으로 두 loss 분리해서 저장 (compute_loss 가 매 step 호출됨)
-        if hasattr(self, "_loss_log"):
-            self._loss_log["main"].append(main_loss.item())
-            self._loss_log["aux"].append(aux_loss.item())
-
-        return (loss, outputs) if return_outputs else loss
+        if return_outputs:
+            # 평가 단계에서 Trainer 가 outputs.hidden_states/attentions 를 prediction 로 모아
+            # tuple 로 반환하거나 메모리 폭주를 일으키는 걸 방지 — logits 만 가진 깔끔한
+            # SequenceClassifierOutput 으로 교체해서 돌려줌.
+            clean = SequenceClassifierOutput(loss=loss, logits=outputs.logits)
+            return (loss, clean)
+        return loss
 
 
 print("AuxTrainer 정의 완료 — Trainer 의 compute_loss 만 교체.")""")
@@ -382,6 +386,10 @@ md(r"""**평가용 metric 함수** — 메인 (Ch 13과 동일) + 보조 (RMSE, 
 code(r"""def compute_metrics_main(eval_pred):
     # 메인 task 평가 — Ch 13과 동일
     logits, labels = eval_pred
+    # 방어적 처리: Trainer 가 hidden_states 까지 collected 하면 logits 가 tuple 이 됨.
+    # AuxTrainer.compute_loss 가 clean output 으로 막지만 안전장치로 한 번 더.
+    if isinstance(logits, tuple):
+        logits = logits[0]
     probs = 1.0 / (1.0 + np.exp(-logits))
     preds = (probs >= 0.5).astype(int)
 
@@ -490,6 +498,8 @@ print(f"  Pearson: {pear_aux:.4f}")""")
 code(r"""# 메인 task per-sample 예측 (다음 비교 단계에서 사용)
 preds_output_aux = trainer_aux.predict(eval_tok)
 logits_aux = preds_output_aux.predictions
+if isinstance(logits_aux, tuple):
+    logits_aux = logits_aux[0]
 labels_eval = preds_output_aux.label_ids.astype(int)
 probs_aux = 1.0 / (1.0 + np.exp(-logits_aux))
 preds_main_aux = (probs_aux >= 0.5).astype(int)
@@ -545,7 +555,10 @@ for k, v in eval_metrics_no_aux.items():
 
 # baseline 메인 per-sample 예측
 preds_output_no_aux = trainer_no_aux.predict(eval_tok)
-probs_no_aux = 1.0 / (1.0 + np.exp(-preds_output_no_aux.predictions))
+logits_no_aux = preds_output_no_aux.predictions
+if isinstance(logits_no_aux, tuple):
+    logits_no_aux = logits_no_aux[0]
+probs_no_aux = 1.0 / (1.0 + np.exp(-logits_no_aux))
 preds_main_no_aux = (probs_no_aux >= 0.5).astype(int)""")
 
 # ----- 18. 비교 시각화 -----
