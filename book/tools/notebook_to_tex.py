@@ -328,6 +328,11 @@ EMOJI_PATTERN = re.compile(
     "]+",
     flags=re.UNICODE,
 )
+HANGUL_PATTERN = re.compile(r"[가-힣]")
+
+
+def index_sort_prefix(term: str) -> str:
+    return "0" if HANGUL_PATTERN.search(term) else "1"
 
 
 def strip_heading_emoji(text: str) -> str:
@@ -1591,7 +1596,7 @@ def chapter_tex(chapter: Chapter, execute: bool = False) -> str:
     chapter_index_terms = tuple(dict.fromkeys(chapter.indexes + EXTRA_INDEXES.get(chapter.number, ())))
     for term in chapter_index_terms:
         safe = term.replace("_", "\\_")
-        chunks.append(f"\\index{{{safe}}}")
+        chunks.append(f"\\index{{{index_sort_prefix(term)}{safe}@{safe}}}")
     chunks.append("")
     explain_code = False
 
