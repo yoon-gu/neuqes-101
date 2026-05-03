@@ -112,7 +112,7 @@ Activation / Loss & softmax / CE & (그대로) \\
 
 
 
-\section{\texorpdfstring{손실 노트 --- \inlinecode{CrossEntropyLoss} 가 K=5 에서 어떻게 보이나}{손실 노트 --- CrossEntropyLoss 가 K=5 에서 어떻게 보이나}}
+\section{\texorpdfstring{손실 노트}{손실 노트}}
 
 수식은 4-5장·11과 동일:
 
@@ -125,7 +125,7 @@ L = -\frac{1}{N}\sum_{i=1}^{N}\log \hat p_{i, y_i} \quad\text{where}\quad \hat p
 
 K가 늘어나면 \emph{random baseline 손실} 도 같이 커집니다 --- 학습 초반 모델이 logit을 거의 0으로 출력하면 softmax는 균등 \((1/K, \ldots, 1/K)\) 가 되고 정답 클래스의 손실은 \(-\log(1/K) = \log K\).
 
-\begin{booktable}{12장 손실 수치 예시}{tab:ch12-03}
+\begin{booktable}{12장 손실 노트 표}{tab:ch12-03}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -143,7 +143,7 @@ K & random baseline loss \(-\log(1/K)\) & 의미 \\
 
 \textbf{숫자로 감 잡기 (K=5, 정답=클래스 4)} --- logits에서 정답 클래스가 얼마나 커야 손실이 얼마인지:
 
-\begin{booktable}{12장 손실 수치 예시}{tab:ch12-04}
+\begin{booktable}{12장 손실 노트 표}{tab:ch12-04}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -244,7 +244,7 @@ else:
 
 
 
-\section{1. 데이터 --- Yelp 별점 1-5 (5장와 동일)}
+\section{데이터 준비}
 
 별점 3 제외 같은 전처리 \emph{없이} 그대로 사용. 라벨은 \texttt{dataset{[}“label”{]}} 가 이미 0-4 int 인덱스 (Yelp 데이터셋의 기본 형식).
 
@@ -311,7 +311,7 @@ print(
 
 
 
-\section{\texorpdfstring{2. 모델 로드 --- \inlinecode{num\_labels=5} 만 바뀜}{2. 모델 로드 --- num\_labels=5 만 바뀜}}
+\section{\texorpdfstring{모델 로드}{모델 로드}}
 
 11장 셋업에서 K=2 → K=5 한 줄 변화.
 
@@ -355,7 +355,7 @@ print(f"id2label:             {model.config.id2label}")
 
 \textbf{파라미터 수 비교 --- K가 늘어나도 거의 변하지 않습니다}
 
-\begin{booktable}{12장 2. 모델 로드 - num\_labels=5 만 바뀜 표}{tab:ch12-05}
+\begin{booktable}{12장 모델 로드 표}{tab:ch12-05}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -382,7 +382,7 @@ classifier (\inlinecode{Linear(768→K)}) & 1,538 & \textbf{3,845} \\
 
 
 
-\section{3. 학습 --- 11장과 동일한 hyperparams}
+\section{학습}
 
 11장과 \emph{완전히 같은} learning rate, batch size, epoch 수, seed. 변하는 건 모델의 출력 차원 (5)과 평가 metric의 average 방식 (\inlinecode{"macro"}, multi-class AUC는 \inlinecode{multi\_class="ovr"}).
 
@@ -465,7 +465,7 @@ print(f"random baseline loss (K=5): {np.log(5):.4f}")
 
 
 
-\section{4. 평가 --- softmax 확률 분포와 혼동 패턴}
+\section{평가}
 
 11장 패턴 그대로 --- \inlinecode{Trainer.predict()} 로 logits를 받아 softmax → argmax. K=5에선 \emph{클래스마다} 정밀도·재현율이 다를 수 있어서 \emph{macro} 평균과 \emph{클래스별} 분해를 같이 봅니다.
 
@@ -519,7 +519,7 @@ print(pd.DataFrame({
 
 
 
-\subsection{\texorpdfstring{4-1. 메인 그림 --- 혼동 행렬 (\inlinecode{seaborn.heatmap})}{4-1. 메인 그림 --- 혼동 행렬 (seaborn.heatmap)}}
+\subsection{\texorpdfstring{혼동 행렬}{혼동 행렬}}
 
 5클래스 분류의 \emph{어디에서 혼동이 일어나는지} 한눈에 보는 가장 강력한 도구입니다. 행은 정답 별점, 열은 예측 별점, 셀의 숫자는 해당 (정답, 예측) 조합의 샘플 수.
 
@@ -580,7 +580,7 @@ plt.show()
 
 
 
-\subsection{4-2. 보조 그림 --- top-1 확률의 분포 (정답/오답 갈림)}
+\subsection{최상위 확률 분포}
 
 K=5에서는 \emph{어느 한 클래스에 압도적인 자신감} 이 있는 경우와 \emph{2-3 클래스 사이에서 갈피를 못 잡는} 경우가 나뉩니다. 정답·오답을 구분해 그리면 모델 자신감이 \emph{얼마나 calibration 됐는지} 가 드러납니다.
 
@@ -643,7 +643,7 @@ print(classification_report(
 
 
 
-\section{5. 클라이맥스 --- sklearn TF-IDF + LogReg 와의 비교 (5장의 BERT 검증)}
+\section{BERT와 TF-IDF 비교}
 
 같은 데이터에 5장 셋업(TF-IDF + multinomial LogReg)을 \emph{이 노트북 안에서} 다시 학습해 비교합니다. \textbf{BERT 67M 파라미터가 진짜로 도움이 되는가?} 가 이 비교의 핵심 질문 --- sklearn은 GPU 없이도 몇 초 만에 끝나기 때문에 self-contained로 부담 없이 포함됩니다.
 
@@ -693,7 +693,7 @@ print(f"  AUC (OvR):          {auc_sk:.4f}")
 
 
 
-\subsection{5-1. 두 모델의 metric 표 비교}
+\subsection{평가지표 비교}
 
 
 
@@ -727,7 +727,7 @@ print(cmp.round(4).to_string(index=False))
 
 
 
-\subsection{5-2. 두 모델의 혼동 행렬 비교}
+\subsection{혼동 행렬 비교}
 
 같은 평가 데이터에 sklearn은 어디서, BERT는 어디서 혼동하는지 \emph{나란히} 봅니다.
 

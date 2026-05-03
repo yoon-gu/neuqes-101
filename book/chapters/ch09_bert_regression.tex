@@ -131,7 +131,7 @@ GPU & 옵션 & \textbf{필수} --- fp16, 옵티마이저+gradient가 VRAM에 추
 
 
 
-\section{\texorpdfstring{손실 노트 --- \inlinecode{MSELoss} 그대로, 최소화 방식만 바뀜}{손실 노트 --- MSELoss 그대로, 최소화 방식만 바뀜}}
+\section{\texorpdfstring{손실 노트}{손실 노트}}
 
 수식은 2장과 동일합니다.
 
@@ -144,7 +144,7 @@ L = \frac{1}{N} \sum_{i=1}^{N} (y_i - \hat y_i)^2
 
 다른 점은 \emph{어떻게 이 \(L\)을 최소화하느냐} 입니다.
 
-\begin{booktable}{9장 손실 수치 예시}{tab:ch09-03}
+\begin{booktable}{9장 손실 노트 표}{tab:ch09-03}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -239,7 +239,7 @@ else:
 
 
 
-\section{1. 데이터 준비}
+\section{데이터 준비}
 
 8장에서 익힌 \inlinecode{datasets} + 토크나이저 패턴을 그대로 적용합니다. 차이는 라벨을 \emph{float} 형으로 바꾼다는 점입니다 --- 회귀이므로 정답이 정수 클래스가 아닌 실수입니다.
 
@@ -284,7 +284,7 @@ print(
 
 
 
-\section{\texorpdfstring{2. 모델 로드 --- \inlinecode{num\_labels=1}, \inlinecode{problem\_type="regression"}}{2. 모델 로드 --- num\_labels=1, problem\_type=“regression”}}
+\section{\texorpdfstring{모델 로드}{모델 로드}}
 
 7장에서는 사전학습된 분류 헤드(\inlinecode{distilbert-base-uncased-finetuned-sst-2-english}, num\_labels=2)를 그대로 썼습니다. 이번엔 본체 모델만 받고 \textbf{분류 헤드를 새로} 만듭니다 --- \inlinecode{num\_labels=1} 이라 출력 차원이 1, \inlinecode{problem\_type="regression"} 이라 \inlinecode{Trainer} 가 자동으로 MSELoss 사용.
 
@@ -309,7 +309,7 @@ print(f"problem_type:  {model.config.problem_type}")
 
 \textbf{경고 메시지를 보셨을 겁니다} --- \inlinecode{Some\ weights\ of\ DistilBertForSequenceClassification\ were\ not\ initialized\ ...}. 분류 헤드(\inlinecode{Linear(768,\ 1)})가 새로 만들어지면서 \emph{랜덤 초기화} 됐다는 알림입니다. 이 부분이 학습으로 채워지고, BERT 본체는 사전학습 가중치를 미세 조정합니다 (transfer learning의 본 모습).
 
-\subsection{학습되는 파라미터 vs 동결된 파라미터}
+\subsection{학습 파라미터}
 
 \inlinecode{from\_pretrained()} 직후엔 \emph{모든} 파라미터가 학습 대상입니다 (\inlinecode{requires\_grad=True}). 그러나 데이터가 작거나 빠른 학습이 필요하면 BERT 본체를 \emph{동결(freeze)} 하고 분류 헤드만 학습하기도 합니다. 학습 시작 전에 \emph{전체 vs 학습되는 파라미터} 를 한 번 확인하는 게 좋은 습관입니다.
 
@@ -341,7 +341,7 @@ print(f"\nDefault — all layers are trainable")
 
 
 
-\subsection{시연: BERT 본체 동결 패턴}
+\subsection{BERT 본체 동결}
 
 본 학습은 \emph{모든 파라미터} 를 학습하지만, 동결 패턴이 어떻게 적용되는지 \emph{별도 모델 인스턴스} 로 한 번 보여드립니다 (이 시연 모델은 학습에 사용하지 않습니다).
 
@@ -416,7 +416,7 @@ if torch.cuda.is_available():
 
 
 
-\section{\texorpdfstring{3. \inlinecode{TrainingArguments} + \inlinecode{Trainer}}{3. TrainingArguments + Trainer}}
+\section{\texorpdfstring{Trainer 설정}{Trainer 설정}}
 
 6장 끝에서 미리 본 코드 형태가 이제 실제로 등장합니다. \inlinecode{TrainingArguments} 한 객체에 학습 하이퍼파라미터를 모두 모으고, \inlinecode{Trainer} 가 학습 루프·평가·로그·체크포인트를 자동화합니다.
 
@@ -518,7 +518,7 @@ print(
 
 \textbf{학습 시 VRAM 구성 (fp16 기준)}:
 
-\begin{booktable}{9장 3. TrainingArguments + Trainer 표}{tab:ch09-04}
+\begin{booktable}{9장 Trainer 설정 표}{tab:ch09-04}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}ll@{}}
 \toprule
@@ -540,7 +540,7 @@ Activation (배치 16, max\_len 128) & \textasciitilde 수백 MB \\
 
 
 
-\section{4. 평가 --- sklearn(2장)과 직접 비교}
+\section{평가}
 
 학습된 BERT의 평가 지표를 같은 데이터에 sklearn \inlinecode{LinearRegression}(2장 방식)으로 학습한 결과와 비교합니다. BERT가 더 정확하면 \emph{문맥 정보가 단어 독립 가정을 깬다} 는 가설이 검증됩니다.
 
@@ -634,7 +634,7 @@ df_compare["Residual"] = df_compare["Predicted"] - df_compare["Actual star"]
 
 
 
-\subsection{시각 1 --- 예측 분포 per actual class}
+\subsection{예측 분포}
 
 각 actual class에 대해 BERT와 sklearn이 \emph{어떤 값을 출력했는지} 의 분포를 split violin으로 좌우에 둡니다. 빨간 점선이 ideal (정답 = 예측). 분포 중심이 그 선 근처에 모이고 좌우 폭이 좁을수록 정확합니다.
 
@@ -679,7 +679,7 @@ plt.show()
 
 
 
-\subsection{시각 2 --- 잔차(Residual = Predicted − Actual) 분포 per actual class}
+\subsection{잔차 분포}
 
 \inlinecode{Predicted\ −\ Actual} 을 y축에 두고 0 기준선을 긋습니다. 잔차가 0 근처에 좁게 모일수록 정확하고, 양/음 한 쪽으로 치우치면 \emph{bias} 가 있다는 뜻.
 
@@ -726,11 +726,11 @@ plt.show()
 
 
 
-\section{5. 변형 --- 학습이 어디서 망가지는지 (개념만)}
+\section{변형: 학습 실패 요인}
 
 직접 다 돌리진 않고 \emph{어떤 인자를 바꾸면 무슨 일이 일어나는지} 짚습니다.
 
-\begin{booktable}{9장 5. 변형 - 학습이 어디서 망가지는지 (개념만) 표}{tab:ch09-05}
+\begin{booktable}{9장 변형: 학습 실패 요인 표}{tab:ch09-05}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}ll@{}}
 \toprule
@@ -755,7 +755,7 @@ plt.show()
 
 \section{이 장에 등장한 라이브러리·함수}
 
-\subsection{\texorpdfstring{\inlinecode{transformers} 학습 도구}{transformers 학습 도구}}
+\subsection{\texorpdfstring{transformers 학습 도구}{transformers 학습 도구}}
 
 \begin{booktable}{9장 transformers 학습 도구 표}{tab:ch09-06}
 \begin{adjustbox}{max width=\textwidth}
@@ -773,7 +773,7 @@ plt.show()
 \end{adjustbox}
 \end{booktable}
 
-\subsection{Trainer가 자동으로 해주는 일}
+\subsection{Trainer의 역할}
 
 \begin{itemize}
 \tightlist
@@ -795,7 +795,7 @@ plt.show()
   learning rate scheduler (기본 linear warmup → linear decay)
 \end{itemize}
 
-\subsection{\texorpdfstring{\inlinecode{compute\_metrics} 함수 시그니처}{compute\_metrics 함수 시그니처}}
+\subsection{\texorpdfstring{compute\_metrics}{compute\_metrics 함수 시그니처}}
 
 \Needspace{7\baselineskip}
 \begin{lstlisting}
