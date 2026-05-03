@@ -805,6 +805,9 @@ plt.show()
 \includegraphics[width=0.92\linewidth]{assets/figures/ch09_predicted_violin.png}
 \end{bookfigurelabel}
 
+\textbf{그림 읽기} --- 그림~\ref{fig:ch09-predicted-violin}은 같은 정답 별점 안에서 BERT와 sklearn 회귀 모델의 예측값이 얼마나 좁게 모이는지 비교합니다. 분포가 실제 별점 위치에 가깝고 폭이 좁을수록, 그 모델이 해당 별점 구간을 안정적으로 예측한다는 뜻입니다.
+
+
 
 
 \textbf{무엇이 보이나}
@@ -859,6 +862,9 @@ plt.show()
 \begin{bookfigurelabel}[H]{정답 별점별 잔차 분포 비교}{fig:ch09-residual-violin}
 \includegraphics[width=0.92\linewidth]{assets/figures/ch09_residual_violin.png}
 \end{bookfigurelabel}
+
+\textbf{그림 읽기} --- 그림~\ref{fig:ch09-residual-violin}은 예측값에서 정답을 뺀 잔차를 별점별로 나눠 보여줍니다. 중심이 0에 가까울수록 편향이 작고, 폭이 좁을수록 같은 별점 안에서 오차가 안정적입니다.
+
 
 
 

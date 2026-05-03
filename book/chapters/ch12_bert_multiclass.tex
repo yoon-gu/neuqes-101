@@ -686,6 +686,9 @@ plt.show()
 \includegraphics[width=0.76\linewidth]{assets/figures/ch12_confusion_matrix.png}
 \end{bookfigurelabel}
 
+\textbf{그림 읽기} --- 그림~\ref{fig:ch12-confusion-matrix}는 5개 별점 클래스 사이에서 어떤 오분류가 자주 일어나는지 보여줍니다. 대각선은 정답, 대각선 주변 셀은 별점이 하나 정도 어긋난 인접 클래스 혼동입니다.
+
+
 
 
 \textbf{해석 가이드}
@@ -753,6 +756,9 @@ plt.show()
 \begin{bookfigurelabel}[H]{정답 여부에 따른 최상위 예측 확률 분포}{fig:ch12-top1-probability}
 \includegraphics[width=0.88\linewidth]{assets/figures/ch12_top1_probability.png}
 \end{bookfigurelabel}
+
+\textbf{그림 읽기} --- 그림~\ref{fig:ch12-top1-probability}는 모델이 맞힌 샘플과 틀린 샘플에서 최상위 softmax 확률이 어떻게 다른지 비교합니다. 맞힌 샘플의 확률은 높고 틀린 샘플의 확률은 낮게 분리될수록 calibration이 좋습니다.
+
 
 
 
@@ -963,6 +969,9 @@ plt.show()
 \begin{bookfigurelabel}[H]{sklearn TF-IDF와 BERT의 혼동 행렬 비교}{fig:ch12-confusion-compare}
 \includegraphics[width=0.96\linewidth]{assets/figures/ch12_confusion_compare.png}
 \end{bookfigurelabel}
+
+\textbf{그림 읽기} --- 그림~\ref{fig:ch12-confusion-compare}는 같은 평가 데이터를 sklearn TF-IDF 모델과 BERT 모델이 어떻게 다르게 헷갈리는지 나란히 보여줍니다. 두 행렬의 대각선과 인접 클래스 혼동을 비교하면 문맥 모델이 어디에서 이득을 주는지 볼 수 있습니다.
+
 
 
 

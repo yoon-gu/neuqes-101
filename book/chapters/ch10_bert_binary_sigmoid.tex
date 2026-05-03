@@ -660,6 +660,9 @@ plt.show()
 \includegraphics[width=0.88\linewidth]{assets/figures/ch10_probability_kde.png}
 \end{bookfigurelabel}
 
+\textbf{그림 읽기} --- 그림~\ref{fig:ch10-probability-kde}는 sigmoid 이후 확률이 정답 라벨에 따라 어디에 몰리는지 보여줍니다. 두 분포가 0과 1 쪽으로 분리될수록 binary head가 긍정/부정 신호를 잘 나누고 있다는 뜻입니다.
+
+
 
 
 \textbf{설명 --- 왜 양 끝이 솟아 있나?} sigmoid는 logit이 ±5만 넘어가도 거의 0 또는 1로 수렴합니다 (\(\sigma(5) \approx 0.993\), \(\sigma(-5) \approx 0.007\)). BERT가 학습 후 어느 정도 자신감을 갖게 되면 logit이 ±5-10 범위로 뻗어 나가고, 결과적으로 확률 공간에서는 \textbf{양 끝에 압착된 U자 분포}가 나옵니다. 가운데(0.3-0.7)는 모델이 \emph{판단을 망설이는} 샘플 --- 진짜 어려운 케이스이거나 라벨 노이즈일 가능성이 큽니다.
@@ -696,6 +699,9 @@ plt.show()
 \begin{bookfigurelabel}[H]{방식 A의 sigmoid 이전 logit 분포}{fig:ch10-logit-kde}
 \includegraphics[width=0.88\linewidth]{assets/figures/ch10_logit_kde.png}
 \end{bookfigurelabel}
+
+\textbf{그림 읽기} --- 그림~\ref{fig:ch10-logit-kde}는 sigmoid를 통과하기 전 logit 공간에서 같은 현상을 봅니다. 확률 그림에서 0.5였던 결정 경계는 여기서 0이고, 양쪽으로 멀어질수록 모델의 확신이 커집니다.
+
 
 
 

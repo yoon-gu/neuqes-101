@@ -668,6 +668,9 @@ plt.show()
 \includegraphics[width=0.88\linewidth]{assets/figures/ch11_logit_kde.png}
 \end{bookfigurelabel}
 
+\textbf{그림 읽기} --- 그림~\ref{fig:ch11-logit-kde}는 2차원 softmax logit을 \(z_1-z_0\) 하나로 접어 방식 A의 logit과 같은 좌표에서 본 결과입니다. 이 그림이 \ref{ch:10}장의 logit 분포와 비슷하면 두 방식의 동등성이 시각적으로도 확인됩니다.
+
+
 
 
 \textbf{여기까지 정리} --- 4-1과 4-2의 그림은 \ref{ch:10}장의 것과 \emph{모양} 이 거의 같아야 합니다. 봉우리 높이나 위치가 미세하게 다를 순 있어도, 양 끝 압착 / 가운데 혼동 영역 / 결정 경계 자리 같은 \emph{큰 그림} 은 동일. 이게 두 방식 동등성의 \emph{시각적} 증거.
@@ -984,6 +987,9 @@ print(f"Mean abs diff |A-B|: {mae:.4f}")
 \begin{bookfigurelabel}[H]{방식 A와 방식 B의 샘플별 확률 일치도}{fig:ch11-probability-scatter}
 \includegraphics[width=0.72\linewidth]{assets/figures/ch11_probability_scatter.png}
 \end{bookfigurelabel}
+
+\textbf{그림 읽기} --- 그림~\ref{fig:ch11-probability-scatter}는 방식 A와 방식 B가 같은 샘플에 부여한 positive 확률을 일대일로 비교합니다. 점들이 대각선 가까이에 모일수록 두 head 표현이 실제 예측에서도 거의 같은 결정을 내린다는 뜻입니다.
+
 
 
 
