@@ -162,7 +162,7 @@ logits \((z_0, z_1)\) & softmax → \((p_0, p_1)\) & 정답=1일 때 손실 \(-\
 
 
 
-\Needspace{8\baselineskip}
+\Needspace{5\baselineskip}
 \begin{lstlisting}
 !pip install -q transformers datasets
 \end{lstlisting}
@@ -173,7 +173,7 @@ logits \((z_0, z_1)\) & softmax → \((p_0, p_1)\) & 정답=1일 때 손실 \(-\
 
 
 
-\Needspace{26\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 import warnings
 warnings.filterwarnings("ignore")
@@ -191,10 +191,21 @@ from transformers import (
 from sklearn.metrics import (
     accuracy_score, precision_recall_fscore_support,
     classification_report, roc_auc_score,
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
+
+\Needspace{5\baselineskip}
+\begin{lstlisting}[firstnumber=17]
 )
 
 plt.rcParams["axes.unicode_minus"] = False
+\end{lstlisting}
 
+\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=21]
 print(f"PyTorch:        {torch.__version__}")
 print(f"CUDA available: {torch.cuda.is_available()}")
 if torch.cuda.is_available():
@@ -219,7 +230,7 @@ else:
 
 
 
-\Needspace{8\baselineskip}
+\Needspace{5\baselineskip}
 \begin{lstlisting}
 !nvidia-smi
 \end{lstlisting}
@@ -236,7 +247,7 @@ else:
 
 
 
-\Needspace{26\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
 
@@ -252,6 +263,12 @@ def add_binary(batch):
     batch["binary"] = bins
     return batch
 
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 데이터를 불러오고 학습에 맞는 형태로 정리하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=15]
 train_bin = train_full.filter(lambda x: (x["label"] + 1) != 3).map(add_binary, batched=True)
 eval_bin  = eval_full.filter(lambda x:  (x["label"] + 1) != 3).map(add_binary, batched=True)
 
@@ -269,7 +286,7 @@ print(
 
 
 
-\Needspace{26\baselineskip}
+\Needspace{10\baselineskip}
 \begin{lstlisting}
 def tokenize_fn(batch):
     out = tokenizer(
@@ -280,6 +297,12 @@ def tokenize_fn(batch):
     out["labels"] = [int(b) for b in batch["binary"]]
     return out
 
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=10]
 train_tok = train_bin.map(
     tokenize_fn,
     batched=True).remove_columns(["text", "label", "binary"],
@@ -304,7 +327,7 @@ print(
 
 
 
-\Needspace{26\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 model = AutoModelForSequenceClassification.from_pretrained(
     "distilbert-base-uncased",
@@ -318,7 +341,12 @@ def param_summary(m):
     total     = sum(p.numel() for p in m.parameters())
     trainable = sum(p.numel() for p in m.parameters() if p.requires_grad)
     return total, trainable
+\end{lstlisting}
 
+\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=14]
 total, trainable = param_summary(model)
 print(
     f"Parameters:           {total:>13,}  ("
@@ -360,7 +388,7 @@ classifier (\inlinecode{Linear(768→K)}) & \textbf{769} (=768+1) & \textbf{1,53
 
 
 
-\Needspace{8\baselineskip}
+\Needspace{5\baselineskip}
 \begin{lstlisting}
 !nvidia-smi
 \end{lstlisting}
@@ -373,7 +401,7 @@ classifier (\inlinecode{Linear(768→K)}) & \textbf{769} (=768+1) & \textbf{1,53
 
 
 
-\Needspace{26\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 def compute_metrics(eval_pred):
     logits, labels = eval_pred
@@ -386,6 +414,12 @@ def compute_metrics(eval_pred):
     probs = probs_full[:, 1]
     preds = probs_full.argmax(axis=1)
 
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 예측 결과를 지표와 표로 요약하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=12]
     p, r, f1, _ = precision_recall_fscore_support(
         labels,
         preds,
@@ -403,7 +437,7 @@ def compute_metrics(eval_pred):
 
 
 
-\Needspace{26\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 training_args = TrainingArguments(
     output_dir="./ch11_output",
@@ -419,6 +453,12 @@ training_args = TrainingArguments(
     seed=42,
 )
 
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
+
+\Needspace{10\baselineskip}
+\begin{lstlisting}[firstnumber=15]
 trainer = Trainer(
     model=model,
     args=training_args,
@@ -427,7 +467,12 @@ trainer = Trainer(
     processing_class=tokenizer,
     compute_metrics=compute_metrics,
 )
+\end{lstlisting}
 
+\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 학습 설정을 만들고 학습 루프를 실행하는 단계로 넘어갑니다.}
+
+\Needspace{7\baselineskip}
+\begin{lstlisting}[firstnumber=24]
 train_result = trainer.train()
 print(
     f"\nTraining done — mean train loss: "
@@ -437,7 +482,7 @@ print(
 
 
 
-\Needspace{8\baselineskip}
+\Needspace{5\baselineskip}
 \begin{lstlisting}
 !nvidia-smi
 \end{lstlisting}
@@ -450,7 +495,7 @@ print(
 
 
 
-\Needspace{9\baselineskip}
+\Needspace{7\baselineskip}
 \begin{lstlisting}
 eval_metrics = trainer.evaluate()
 print("BERT method B evaluation:")
@@ -461,7 +506,7 @@ for k, v in eval_metrics.items():
 
 
 
-\Needspace{26\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 preds_output = trainer.predict(eval_tok)
 logits2 = preds_output.predictions          # (B, 2)
@@ -472,7 +517,12 @@ probs_full = exp / exp.sum(axis=1, keepdims=True)
 probs = probs_full[:, 1]
 
 logits = logits2[:, 1] - logits2[:, 0]      # (B,)
+\end{lstlisting}
 
+\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 모델 출력을 확률이나 예측값으로 바꾸는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=11]
 print(f"logits2 (raw)  shape: {logits2.shape}")
 print(
     f"logit z = z1-z0 range: [{logits.min():.2f}, "
@@ -489,6 +539,12 @@ print(
 print(f"\nFirst 5 samples:")
 print(pd.DataFrame({
     "label":   labels[:5],
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 모델 출력을 확률이나 예측값으로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{8\baselineskip}
+\begin{lstlisting}[firstnumber=27]
     "z0":      logits2[:5, 0].round(2),
     "z1":      logits2[:5, 1].round(2),
     "z=z1-z0": logits[:5].round(2),
@@ -505,7 +561,7 @@ print(pd.DataFrame({
 
 
 
-\Needspace{21\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 sns.set_theme(style="whitegrid", context="talk")
 
@@ -523,6 +579,12 @@ ax.set_title("Method B — Probability Distribution by Actual Label")
 ax.set_xlabel("Predicted probability  P(y=1) = softmax(logits)[1]")
 ax.set_ylabel("Density")
 plt.tight_layout()
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{5\baselineskip}
+\begin{lstlisting}[firstnumber=17]
 plt.show()
 \end{lstlisting}
 
@@ -538,7 +600,7 @@ plt.show()
 
 
 
-\Needspace{16\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 fig, ax = plt.subplots(figsize=(9, 5))
 sns.kdeplot(
@@ -564,7 +626,7 @@ plt.show()
 
 
 
-\Needspace{9\baselineskip}
+\Needspace{7\baselineskip}
 \begin{lstlisting}
 print(classification_report(
     labels, probs_full.argmax(axis=1),
@@ -599,7 +661,7 @@ T4 기준 추가 \textasciitilde8분. 학습이 끝나면 같은 eval 셋의 \(p
 
 
 
-\Needspace{25\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 def to_method_a_labels(batch):
     batch["labels"] = [[float(l)] for l in batch["labels"]]
@@ -614,6 +676,12 @@ eval_tok_A  = eval_tok.map(
     batched=True,
 )
 
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{10\baselineskip}
+\begin{lstlisting}[firstnumber=14]
 print(
     f"Method A first sample label: "
     f"{train_tok_A[0]['labels']}  (length-1 float vector)"
@@ -626,7 +694,7 @@ print(
 
 
 
-\Needspace{26\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 model_A = AutoModelForSequenceClassification.from_pretrained(
     "distilbert-base-uncased",
@@ -644,6 +712,12 @@ def compute_metrics_A(eval_pred):
         lbl,
         preds,
         average="binary",
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{10\baselineskip}
+\begin{lstlisting}[firstnumber=17]
         zero_division=0,
     )
     return {
@@ -652,6 +726,12 @@ def compute_metrics_A(eval_pred):
         "recall":    float(r),
         "f1":        float(f1),
         "auc":       float(roc_auc_score(lbl, p_hat)),
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{9\baselineskip}
+\begin{lstlisting}[firstnumber=25]
     }
 
 print(f"Method A classifier:    {model_A.classifier}")
@@ -663,7 +743,7 @@ print(
 
 
 
-\Needspace{26\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 training_args_A = TrainingArguments(
     output_dir="./ch11_method_a_output",
@@ -679,6 +759,12 @@ training_args_A = TrainingArguments(
     seed=42,
 )
 
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
+
+\Needspace{10\baselineskip}
+\begin{lstlisting}[firstnumber=15]
 trainer_A = Trainer(
     model=model_A,
     args=training_args_A,
@@ -687,7 +773,12 @@ trainer_A = Trainer(
     processing_class=tokenizer,
     compute_metrics=compute_metrics_A,
 )
+\end{lstlisting}
 
+\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 학습 설정을 만들고 학습 루프를 실행하는 단계로 넘어갑니다.}
+
+\Needspace{7\baselineskip}
+\begin{lstlisting}[firstnumber=24]
 train_result_A = trainer_A.train()
 print(
     f"\nMethod A training done — train loss: "
@@ -697,7 +788,7 @@ print(
 
 
 
-\Needspace{16\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 preds_A_out = trainer_A.predict(eval_tok_A)
 logits_A    = preds_A_out.predictions.flatten()
@@ -721,7 +812,7 @@ for k, v in eval_metrics_A.items():
 
 
 
-\Needspace{25\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 metrics_A = {k.replace(
     "eval_",
@@ -736,6 +827,12 @@ metrics_B = {k.replace(
 )
              if k.startswith("eval_") and isinstance(v, float)}
 
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 예측 결과를 지표와 표로 요약하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{10\baselineskip}
+\begin{lstlisting}[firstnumber=14]
 common = [k for k in metrics_A if k in metrics_B]
 cmp = pd.DataFrame({
     "metric":                  common,
@@ -756,7 +853,7 @@ x축 = 방식 A의 \(p_A\), y축 = 방식 B의 \(p_B\). 점 색은 정답 라벨
 
 
 
-\Needspace{26\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 df_cmp = pd.DataFrame({
     "prob_A": probs_A,
@@ -774,11 +871,22 @@ ax.plot([0, 1], [0, 1], color="black", lw=1.3, ls="--", alpha=0.7,
 ax.set_xlim(-0.02, 1.02); ax.set_ylim(-0.02, 1.02)
 ax.set_xlabel("Method A — P(y=1) = sigmoid(z_A)")
 ax.set_ylabel("Method B — P(y=1) = softmax(z_0, z_1)[1]")
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{6\baselineskip}
+\begin{lstlisting}[firstnumber=17]
 ax.set_title("Method A vs Method B — per-sample probability agreement")
 ax.legend(loc="upper left")
 plt.tight_layout()
 plt.show()
+\end{lstlisting}
 
+\noindent\emph{앞 블록은 숫자 결과를 그림으로 확인하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{9\baselineskip}
+\begin{lstlisting}[firstnumber=22]
 corr = float(np.corrcoef(probs_A, probs)[0, 1])
 mae  = float(np.abs(probs_A - probs).mean())
 print(
@@ -814,7 +922,7 @@ print(f"Mean abs diff |A-B|: {mae:.4f}")
 
 
 
-\Needspace{20\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 pred_A = (probs_A >= 0.5).astype(int)
 pred_B = (probs   >= 0.5).astype(int)
@@ -888,7 +996,7 @@ print(f"  both wrong:             {both_wrong:.1%}")
 
 네, 99\%의 경우 방식 B가 답입니다.
 
-\Needspace{9\baselineskip}
+\Needspace{7\baselineskip}
 \begin{lstlisting}
 model = AutoModelForSequenceClassification.from_pretrained(
     "bert-base-uncased",
@@ -926,7 +1034,7 @@ model = AutoModelForSequenceClassification.from_pretrained(
 
 써도 됩니다. 단, \inlinecode{compute\_metrics} 가 받는 \inlinecode{logits} 는 \emph{numpy 배열} 이라 \inlinecode{torch.from\_numpy} 로 한 번 감싸야 합니다.
 
-\Needspace{9\baselineskip}
+\Needspace{7\baselineskip}
 \begin{lstlisting}
 import torch
 probs_full = torch.softmax(
@@ -974,7 +1082,7 @@ sklearn에서는 두 \emph{방식} 의 차이가 BERT보다 훨씬 작습니다.
 
 만약 \textbf{같은 표현력을 유지하면서} 변환하고 싶다면, 방식 A의 \(w_A, b_A\) 로부터 방식 B의 헤드를 다음과 같이 만들 수 있습니다 --- 한쪽 클래스 logit을 0으로 고정하면 됩니다.
 
-\Needspace{12\baselineskip}
+\Needspace{10\baselineskip}
 \begin{lstlisting}
 W_A = model_A.classifier.weight    # shape (1, 768)
 b_A = model_A.classifier.bias      # shape (1,)
@@ -994,7 +1102,7 @@ b_B = torch.cat(
 
 학습·평가 자체에는 영향 없지만 \textbf{추론 시 편리} 합니다.
 
-\Needspace{10\baselineskip}
+\Needspace{8\baselineskip}
 \begin{lstlisting}
 pipe = pipeline(
     "text-classification",
@@ -1013,7 +1121,7 @@ pipe("Great food!")
 
 다음 코드를 돌려보면 어떤 에러가 날까요?
 
-\Needspace{12\baselineskip}
+\Needspace{10\baselineskip}
 \begin{lstlisting}
 def tokenize_wrong(batch):
     out = tokenizer(

@@ -141,6 +141,13 @@
 \sloppy
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{0.68em}
+\renewcommand{\topfraction}{0.88}
+\renewcommand{\bottomfraction}{0.75}
+\renewcommand{\textfraction}{0.12}
+\renewcommand{\floatpagefraction}{0.82}
+\setcounter{topnumber}{3}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{5}
 
 \lstdefinestyle{bookpython}{
   language=Python,
@@ -166,7 +173,7 @@
   xleftmargin=1.4em,
   framexleftmargin=1.1em,
   framesep=6pt,
-  aboveskip=12pt,
+  aboveskip=9pt,
   belowskip=3pt
 }
 \lstdefinestyle{bookoutput}{
@@ -280,12 +287,12 @@
 }
 \let\oldtexttt\texttt
 \renewcommand{\texttt}[1]{\inlinecode{#1}}
-\newenvironment{bookfigure}[2][htbp]
-  {\def\bookfigurecaption{#2}\begin{figure}[#1]\centering}
-  {\caption{\bookfigurecaption}\end{figure}}
-\newenvironment{bookfigurelabel}[3][htbp]
-  {\def\bookfigurecaption{#2}\def\bookfigurelabel{#3}\begin{figure}[#1]\centering}
-  {\caption{\bookfigurecaption}\label{\bookfigurelabel}\end{figure}}
+\newenvironment{bookfigure}[2][!htbp]
+  {\def\bookfigurecaption{#2}\begin{figure}[#1]\centering\begin{adjustbox}{max width=0.92\linewidth,max totalheight=0.46\textheight,keepaspectratio}}
+  {\end{adjustbox}\caption{\bookfigurecaption}\end{figure}}
+\newenvironment{bookfigurelabel}[3][!htbp]
+  {\def\bookfigurecaption{#2}\def\bookfigurelabel{#3}\begin{figure}[#1]\centering\begin{adjustbox}{max width=0.92\linewidth,max totalheight=0.46\textheight,keepaspectratio}}
+  {\end{adjustbox}\caption{\bookfigurecaption}\label{\bookfigurelabel}\end{figure}}
 \newenvironment{bookdiagram}[2][htbp]
   {\def\bookfigurecaption{#2}\begin{figure}[#1]\centering\begin{tikzpicture}}
   {\end{tikzpicture}\caption{\bookfigurecaption}\end{figure}}

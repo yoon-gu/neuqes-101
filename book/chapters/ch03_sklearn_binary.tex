@@ -162,7 +162,7 @@ L = -\frac{1}{N}\sum_{i=1}^{N}\left[\,y_i \log \hat p_i + (1 - y_i)\log(1 - \hat
 
 \textbf{\inlinecode{BCEWithLogits}의 “Logits” 의미}: 모델 마지막 단의 raw 점수(logit) \(z = w^\top x + b\)를 sigmoid에 넣기 \emph{전} 의 값을 의미합니다. PyTorch의 \inlinecode{BCEWithLogitsLoss}는 logit을 받아 내부에서 sigmoid + BCE를 한 번에 계산하는데, 따로 sigmoid를 통과시킨 뒤 BCE를 적용하는 것보다 수치적으로 안정적입니다.
 
-\Needspace{10\baselineskip}
+\Needspace{8\baselineskip}
 \begin{lstlisting}
 criterion = nn.BCEWithLogitsLoss()
 loss = criterion(logits, targets.float())
@@ -184,7 +184,7 @@ model.fit(X, y)
 
 
 
-\Needspace{8\baselineskip}
+\Needspace{5\baselineskip}
 \begin{lstlisting}
 !pip install -q datasets scikit-learn pandas matplotlib
 \end{lstlisting}
@@ -195,7 +195,7 @@ model.fit(X, y)
 
 
 
-\Needspace{26\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 import numpy as np
 import pandas as pd
@@ -211,6 +211,12 @@ from sklearn.metrics import (
 
 plt.rcParams["axes.unicode_minus"] = False
 
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 데이터를 불러오고 학습에 맞는 형태로 정리하는 단계로 넘어갑니다.}
+
+\Needspace{10\baselineskip}
+\begin{lstlisting}[firstnumber=15]
 dataset = load_dataset("yelp_review_full")
 SAMPLE_SIZE = 5000
 ds = dataset["train"].shuffle(seed=42).select(range(SAMPLE_SIZE))
@@ -242,7 +248,7 @@ metric        value
 
 
 
-\Needspace{15\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 df_bin = df[df["star"] != 3].copy()
 df_bin["y"] = (df_bin["star"] >= 4).astype(int)
@@ -276,7 +282,7 @@ metric                    value
 
 
 
-\Needspace{18\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 X_text_train, X_text_test, y_train, y_test = train_test_split(
     df_bin["text"], df_bin["y"],
@@ -326,7 +332,7 @@ split  X_shape        y_shape
 
 
 
-\Needspace{14\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 model = LogisticRegression(max_iter=1000)
 model.fit(X_train, y_train)
@@ -354,7 +360,7 @@ metric         value
 
 
 
-\Needspace{16\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 y_proba = model.predict_proba(X_test)
 
@@ -405,7 +411,7 @@ object   shape
 
 
 
-\Needspace{22\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 logits = X_test @ model.coef_.T + model.intercept_   # shape: (
     N,
@@ -423,6 +429,12 @@ proba_check = pd.DataFrame({
 })
 diff_summary = pd.DataFrame([{"metric": "max_absolute_difference", "value": diff}])
 
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 모델 출력을 확률이나 예측값으로 바꾸는 단계로 넘어갑니다.}
+
+\Needspace{5\baselineskip}
+\begin{lstlisting}[firstnumber=17]
 display(diff_summary)
 display(proba_check)
 \end{lstlisting}
@@ -448,7 +460,7 @@ metric                   value
 
 
 
-\Needspace{15\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 y_test_arr = y_test.values
 p = proba_sklearn
@@ -479,7 +491,7 @@ metric               value
 
 
 
-\Needspace{20\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 report = classification_report(
     y_test,
@@ -537,7 +549,7 @@ true_positive  53             346
 
 
 
-\Needspace{18\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 thresholds = [0.3, 0.4, 0.5, 0.6, 0.7]
 proba_pos = y_proba[:, 1]
@@ -650,7 +662,7 @@ threshold  accuracy  precision  recall  f1
   \textbf{\texttt{class\_weight=\textquotesingle{}balanced\textquotesingle{}}}: sklearn에 한 줄로 적용. 소수 클래스의 손실에 더 큰 가중치.
 \end{enumerate}
 
-\Needspace{8\baselineskip}
+\Needspace{6\baselineskip}
 \begin{lstlisting}
 model = LogisticRegression(
     class_weight="balanced",
@@ -673,7 +685,7 @@ model = LogisticRegression(
 
 \inlinecode{predict\_proba}로 확률을 얻은 뒤 직접 자르면 됩니다.
 
-\Needspace{6\baselineskip}
+\Needspace{5\baselineskip}
 \begin{lstlisting}
 proba_pos = model.predict_proba(X_test)[:, 1]
 y_pred_custom = (proba_pos >= 0.3).astype(int)
@@ -681,7 +693,7 @@ y_pred_custom = (proba_pos >= 0.3).astype(int)
 
 최적 임계값은 보통 검증 데이터에서 F1이 최대가 되는 지점, 또는 ROC 곡선의 Youden\textquotesingle s J 통계량(\inlinecode{tpr\ -\ fpr}이 최대인 지점)으로 잡습니다.
 
-\Needspace{8\baselineskip}
+\Needspace{6\baselineskip}
 \begin{lstlisting}
 from sklearn.metrics import roc_curve
 fpr, tpr, thr = roc_curve(y_test, proba_pos)
@@ -715,7 +727,7 @@ display(pd.DataFrame([{"metric": "best_threshold_youden_j", "value": best_thr}])
 
 \inlinecode{penalty=None}(0.22 이상) 또는 \inlinecode{C} 값을 매우 크게 설정합니다.
 
-\Needspace{6\baselineskip}
+\Needspace{5\baselineskip}
 \begin{lstlisting}
 LogisticRegression(penalty=None, max_iter=1000)
 LogisticRegression(C=1e10, max_iter=1000)
@@ -730,7 +742,7 @@ LogisticRegression(C=1e10, max_iter=1000)
 
 다음 코드를 돌려보고 결과를 예측해보세요. 0/1 라벨에 \inlinecode{LinearRegression}을 그대로 적용하면 무슨 일이 일어날까요?
 
-\Needspace{24\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 from sklearn.linear_model import LinearRegression
 
@@ -743,6 +755,12 @@ acc_lpm = accuracy_score(
     (pred_lpm >= 0.5).astype(int),
 )
 
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 예측 결과를 지표와 표로 요약하는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=12]
 lpm_summary = pd.DataFrame([
     {"metric": "prediction_min", "value": pred_lpm.min()},
     {"metric": "prediction_max", "value": pred_lpm.max()},

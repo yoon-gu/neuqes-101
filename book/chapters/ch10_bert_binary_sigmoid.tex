@@ -188,7 +188,7 @@ L = -\frac{1}{N}\sum_{i=1}^{N}\left[\,y_i \log \hat p_i + (1 - y_i)\log(1 - \hat
 
 
 
-\Needspace{8\baselineskip}
+\Needspace{5\baselineskip}
 \begin{lstlisting}
 !pip install -q transformers datasets
 \end{lstlisting}
@@ -199,7 +199,7 @@ L = -\frac{1}{N}\sum_{i=1}^{N}\left[\,y_i \log \hat p_i + (1 - y_i)\log(1 - \hat
 
 
 
-\Needspace{26\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 import warnings
 warnings.filterwarnings("ignore")
@@ -217,10 +217,21 @@ from transformers import (
 from sklearn.metrics import (
     accuracy_score, precision_recall_fscore_support,
     classification_report, roc_auc_score,
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
+
+\Needspace{5\baselineskip}
+\begin{lstlisting}[firstnumber=17]
 )
 
 plt.rcParams["axes.unicode_minus"] = False
+\end{lstlisting}
 
+\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=21]
 print(f"PyTorch:        {torch.__version__}")
 print(f"CUDA available: {torch.cuda.is_available()}")
 if torch.cuda.is_available():
@@ -245,7 +256,7 @@ else:
 
 
 
-\Needspace{8\baselineskip}
+\Needspace{5\baselineskip}
 \begin{lstlisting}
 !nvidia-smi
 \end{lstlisting}
@@ -262,7 +273,7 @@ else:
 
 
 
-\Needspace{26\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
 
@@ -276,6 +287,12 @@ def to_binary(example):
         return False
     return True
 
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 데이터를 불러오고 학습에 맞는 형태로 정리하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=13]
 def add_binary(batch):
     bins = []
     for lbl in batch["label"]:
@@ -286,7 +303,12 @@ def add_binary(batch):
 
 train_bin = train_full.filter(lambda x: (x["label"] + 1) != 3).map(add_binary, batched=True)
 eval_bin  = eval_full.filter(lambda x:  (x["label"] + 1) != 3).map(add_binary, batched=True)
+\end{lstlisting}
 
+\noindent\emph{앞 블록은 데이터를 불러오고 학습에 맞는 형태로 정리하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{8\baselineskip}
+\begin{lstlisting}[firstnumber=24]
 print(f"train (after excluding 3-star): {len(train_bin)}")
 print(f"eval  (after excluding 3-star): {len(eval_bin)}")
 print(
@@ -297,7 +319,7 @@ print(
 
 
 
-\Needspace{26\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 def tokenize_fn(batch):
     out = tokenizer(
@@ -309,6 +331,12 @@ def tokenize_fn(batch):
     out["labels"] = [[float(b)] for b in batch["binary"]]
     return out
 
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=11]
 train_tok = train_bin.map(
     tokenize_fn,
     batched=True).remove_columns(["text", "label", "binary"],
@@ -333,7 +361,7 @@ print(
 
 
 
-\Needspace{26\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 model = AutoModelForSequenceClassification.from_pretrained(
     "distilbert-base-uncased",
@@ -345,7 +373,12 @@ def param_summary(m):
     total     = sum(p.numel() for p in m.parameters())
     trainable = sum(p.numel() for p in m.parameters() if p.requires_grad)
     return total, trainable
+\end{lstlisting}
 
+\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=12]
 total, trainable = param_summary(model)
 print(
     f"Parameters:           {total:>13,}  ("
@@ -364,7 +397,7 @@ print(
 
 
 
-\Needspace{8\baselineskip}
+\Needspace{5\baselineskip}
 \begin{lstlisting}
 !nvidia-smi
 \end{lstlisting}
@@ -377,7 +410,7 @@ print(
 
 
 
-\Needspace{25\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 def compute_metrics(eval_pred):
     logits, labels = eval_pred
@@ -395,6 +428,12 @@ def compute_metrics(eval_pred):
     )
     return {
         "accuracy":  float(accuracy_score(labels, preds)),
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{7\baselineskip}
+\begin{lstlisting}[firstnumber=17]
         "precision": float(p),
         "recall":    float(r),
         "f1":        float(f1),
@@ -404,7 +443,7 @@ def compute_metrics(eval_pred):
 
 
 
-\Needspace{26\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 training_args = TrainingArguments(
     output_dir="./ch10_output",
@@ -420,6 +459,12 @@ training_args = TrainingArguments(
     seed=42,
 )
 
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
+
+\Needspace{10\baselineskip}
+\begin{lstlisting}[firstnumber=15]
 trainer = Trainer(
     model=model,
     args=training_args,
@@ -428,7 +473,12 @@ trainer = Trainer(
     processing_class=tokenizer,
     compute_metrics=compute_metrics,
 )
+\end{lstlisting}
 
+\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 학습 설정을 만들고 학습 루프를 실행하는 단계로 넘어갑니다.}
+
+\Needspace{7\baselineskip}
+\begin{lstlisting}[firstnumber=24]
 train_result = trainer.train()
 print(
     f"\nTraining done — mean train loss: "
@@ -438,7 +488,7 @@ print(
 
 
 
-\Needspace{8\baselineskip}
+\Needspace{5\baselineskip}
 \begin{lstlisting}
 !nvidia-smi
 \end{lstlisting}
@@ -451,7 +501,7 @@ print(
 
 
 
-\Needspace{9\baselineskip}
+\Needspace{7\baselineskip}
 \begin{lstlisting}
 eval_metrics = trainer.evaluate()
 print("BERT method A evaluation:")
@@ -462,7 +512,7 @@ for k, v in eval_metrics.items():
 
 
 
-\Needspace{26\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 preds_output = trainer.predict(eval_tok)
 logits = preds_output.predictions.flatten()
@@ -480,6 +530,12 @@ print(
 print(
     f"Positive prediction rate (prob >= 0.5): "
     f"{(probs >= 0.5).mean():.1%}"
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 모델 출력을 확률이나 예측값으로 바꾸는 단계로 넘어갑니다.}
+
+\Needspace{10\baselineskip}
+\begin{lstlisting}[firstnumber=17]
 )
 print(f"\nFirst 5 samples:")
 print(pd.DataFrame({
@@ -510,7 +566,7 @@ print(pd.DataFrame({
 
 
 
-\Needspace{21\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 sns.set_theme(style="whitegrid", context="talk")
 
@@ -528,6 +584,12 @@ ax.set_title("Method A — Probability Distribution by Actual Label")
 ax.set_xlabel("Predicted probability  P(y=1)")
 ax.set_ylabel("Density")
 plt.tight_layout()
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{5\baselineskip}
+\begin{lstlisting}[firstnumber=17]
 plt.show()
 \end{lstlisting}
 
@@ -551,7 +613,7 @@ plt.show()
 
 
 
-\Needspace{17\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 fig, ax = plt.subplots(figsize=(9, 5))
 sns.kdeplot(
@@ -590,7 +652,7 @@ plt.show()
 
 
 
-\Needspace{9\baselineskip}
+\Needspace{7\baselineskip}
 \begin{lstlisting}
 print(classification_report(
     labels, (probs >= 0.5).astype(int),
@@ -607,7 +669,7 @@ print(classification_report(
 
 
 
-\Needspace{26\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 import json, os
 
@@ -622,6 +684,12 @@ np.save(
     labels,
 )
 
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 예측 결과를 지표와 표로 요약하는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=14]
 method_a_summary = {
     "method": "A (sigmoid + BCE, num_labels=1)",
     "metrics": {
@@ -632,7 +700,12 @@ method_a_summary = {
 }
 with open("./shared_binary_results/method_a_summary.json", "w") as f:
     json.dump(method_a_summary, f, indent=2)
+\end{lstlisting}
 
+\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{6\baselineskip}
+\begin{lstlisting}[firstnumber=25]
 print("Saved: ./shared_binary_results/")
 for f in sorted(os.listdir("./shared_binary_results")):
     size_kb = os.path.getsize(f"./shared_binary_results/{f}") / 1024
@@ -643,7 +716,7 @@ for f in sorted(os.listdir("./shared_binary_results")):
 
 \textbf{참고}: Colab은 세션이 끝나면 \inlinecode{./shared\_binary\_results/} 가 사라집니다. \emph{Drive에 보존} 하려면 다음과 같이 마운트.
 
-\Needspace{11\baselineskip}
+\Needspace{9\baselineskip}
 \begin{lstlisting}
 from google.colab import drive
 drive.mount("/content/drive")
@@ -710,7 +783,7 @@ shutil.copytree(
 
 \inlinecode{BCEWithLogitsLoss} 가 \emph{logits 와 같은 shape의 float 텐서} 를 라벨로 받기 때문입니다.
 
-\Needspace{7\baselineskip}
+\Needspace{5\baselineskip}
 \begin{lstlisting}
 # logits.shape = (batch, num_labels=1)
 
@@ -776,7 +849,7 @@ loss = BCEWithLogitsLoss()(logits, labels)
 
 \inlinecode{Trainer} 는 기본으로 \emph{linear warmup → linear decay} 스케줄러를 적용합니다. \inlinecode{lr\_scheduler\_type} 으로 바꿀 수 있습니다.
 
-\Needspace{9\baselineskip}
+\Needspace{7\baselineskip}
 \begin{lstlisting}
 TrainingArguments(
     ...,
@@ -794,7 +867,7 @@ TrainingArguments(
 
 다음 코드를 돌려보면 어떤 에러가 날까요?
 
-\Needspace{12\baselineskip}
+\Needspace{10\baselineskip}
 \begin{lstlisting}
 def tokenize_wrong(batch):
     out = tokenizer(

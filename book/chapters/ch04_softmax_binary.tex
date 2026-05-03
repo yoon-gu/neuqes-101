@@ -153,7 +153,7 @@ L = -\frac{1}{N}\sum_{i=1}^{N} \log \hat p_{i,\, y_i}
 
 \textbf{\ref{ch:03}장 BCE 표와 비교해보면} 손실값이 \emph{완전히 같습니다} (0.105 / 0.693 / 2.303). K=2에서 BCE와 CE가 동등하다는 첫 단서.
 
-\Needspace{11\baselineskip}
+\Needspace{9\baselineskip}
 \begin{lstlisting}
 criterion = nn.CrossEntropyLoss()
 loss = criterion(logits, targets)
@@ -176,7 +176,7 @@ LogisticRegression(
 
 
 
-\Needspace{8\baselineskip}
+\Needspace{5\baselineskip}
 \begin{lstlisting}
 !pip install -q datasets scikit-learn pandas matplotlib
 \end{lstlisting}
@@ -187,7 +187,7 @@ LogisticRegression(
 
 
 
-\Needspace{26\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -205,6 +205,12 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, log_loss
 
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 데이터를 불러오고 학습에 맞는 형태로 정리하는 단계로 넘어갑니다.}
+
+\Needspace{9\baselineskip}
+\begin{lstlisting}[firstnumber=17]
 plt.rcParams["axes.unicode_minus"] = False
 
 dataset = load_dataset("yelp_review_full")
@@ -220,7 +226,7 @@ df["star"] = df["label"] + 1   # 0-4 → 1-5
 
 
 
-\Needspace{25\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 df_bin = df[df["star"] != 3].copy()
 df_bin["y"] = (df_bin["star"] >= 4).astype(int)
@@ -233,6 +239,12 @@ tfidf = TfidfVectorizer(max_features=10000)
 X_train = tfidf.fit_transform(X_text_train)
 X_test = tfidf.transform(X_text_test)
 
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 데이터를 불러오고 학습에 맞는 형태로 정리하는 단계입니다. 이어지는 블록에서는 예측 결과를 지표와 표로 요약하는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=12]
 setup_summary = pd.DataFrame([
     {"object": "X_train", "shape": X_train.shape},
     {"object": "X_test", "shape": X_test.shape},
@@ -283,7 +295,7 @@ B (이 장) & \inlinecode{LogisticRegression(multi\_class="multinomial")} & 2 & 
 
 
 
-\Needspace{19\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 model_a = LogisticRegression(max_iter=1000)
 model_a.fit(X_train, y_train)
@@ -318,7 +330,7 @@ method               accuracy
 
 
 
-\Needspace{25\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 proba_a = model_a.predict_proba(X_test)   # (N, 2)
 proba_b = model_b.predict_proba(X_test)   # (N, 2)
@@ -336,6 +348,12 @@ probability_preview = pd.DataFrame({
 difference_summary = pd.DataFrame([
     {"metric": "max_absolute_difference", "value": np.abs(p_a - p_b).max()},
     {"metric": "mean_absolute_difference", "value": np.abs(p_a - p_b).mean()},
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 모델 출력을 확률이나 예측값으로 바꾸는 단계로 넘어갑니다.}
+
+\Needspace{7\baselineskip}
+\begin{lstlisting}[firstnumber=17]
 ])
 
 display(shape_comparison)
@@ -397,7 +415,7 @@ CE 쪽도 K=2에서 BCE와 같은 식이 됩니다 (one-hot이라 \(y_1 = y\), \
 
 
 
-\Needspace{18\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 z0_arr = np.array([-2.0, 0.0, 1.5, 3.0])
 z1_arr = np.array([ 1.0, 0.5, -0.5, 2.0])
@@ -440,7 +458,7 @@ z0    z1    softmax_p1  sigmoid_...  absolute...
 
 
 
-\Needspace{15\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 coef_shape_check = pd.DataFrame([
     {"method": "A_sigmoid_bce", "coef_shape": model_a.coef_.shape, "intercept_shape": model_a.intercept_.shape},
@@ -572,7 +590,7 @@ method         coef_shape  intercept_shape
 
 위 본문에서 확인했듯 K=2 softmax는 두 logit 중 하나가 잉여(redundant)입니다 --- \(z_1 - z_0\) 만 의미가 있어요. sklearn은 이걸 알고 \textbf{K=2 multinomial을 자동으로 binary form으로 collapse} 시킵니다. 그래서 \inlinecode{coef\_} 가 \inlinecode{(2,\ V)} 가 아니라 \inlinecode{(1,\ V)}, \inlinecode{intercept\_} 도 \inlinecode{(1,)} 로 저장됩니다.
 
-\Needspace{7\baselineskip}
+\Needspace{5\baselineskip}
 \begin{lstlisting}
 LogisticRegression(multi_class="multinomial").fit(X, y_binary).coef_.shape
 # (1, V)
@@ -603,7 +621,7 @@ sklearn 1.5부터 \inlinecode{multi\_class} 자체가 deprecated이고 multinomi
 
 가능하고, \inlinecode{AutoModelForSequenceClassification} 인자 한 줄 차이입니다.
 
-\Needspace{14\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 AutoModelForSequenceClassification.from_pretrained(
     "distilbert-base-uncased",
@@ -626,7 +644,7 @@ AutoModelForSequenceClassification.from_pretrained(
 
 다음 코드는 sklearn 없이 numpy만으로 softmax의 \textbf{shift invariance} 를 보여줍니다 --- 모든 logit에 같은 상수를 더해도 출력 분포가 변하지 않는다는 성질입니다. 이게 K=2일 때 sklearn이 collapse를 하는 \emph{정확한 이유} 입니다.
 
-\Needspace{16\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 z = np.array([1.0, 2.0])
 

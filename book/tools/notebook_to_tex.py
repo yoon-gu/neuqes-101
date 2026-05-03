@@ -754,6 +754,139 @@ def normalize_code_blocks(latex: str) -> str:
     return latex
 
 
+MAX_CODE_LINES_PER_BLOCK = 16
+
+
+def semantic_code_chunks(source: str, max_lines: int = MAX_CODE_LINES_PER_BLOCK) -> list[list[str]]:
+    """Split long listings into smaller reading units without changing code."""
+    lines = source.splitlines()
+    chunks: list[list[str]] = []
+    start = 0
+    while start < len(lines):
+        remaining = len(lines) - start
+        if remaining <= max_lines:
+            chunks.append(lines[start:])
+            break
+
+        lower = start + 8
+        upper = min(start + max_lines, len(lines))
+        split_at: int | None = None
+
+        for idx in range(upper, lower, -1):
+            if not lines[idx - 1].strip():
+                split_at = idx
+                break
+        if split_at is None:
+            for idx in range(upper, lower, -1):
+                stripped = lines[idx].lstrip() if idx < len(lines) else ""
+                if stripped.startswith((
+                    "def ",
+                    "class ",
+                    "for ",
+                    "if ",
+                    "with ",
+                    "trainer.",
+                    "model.",
+                    "plt.",
+                    "fig,",
+                    "ax.",
+                    "g.",
+                    "sns.",
+                    "records",
+                    "df_",
+                )):
+                    split_at = idx
+                    break
+        if split_at is None:
+            split_at = upper
+
+        chunks.append(lines[start:split_at])
+        start = split_at
+        while start < len(lines) and not lines[start].strip():
+            start += 1
+    return chunks
+
+
+def code_chunk_summary(lines: list[str]) -> str:
+    joined = "\n".join(lines).lower()
+    if re.search(r"^\s*(import|from)\s+", joined, flags=re.MULTILINE):
+        return "필요한 라이브러리와 기본 설정을 준비하는 단계"
+    if "load_dataset" in joined or "read_csv" in joined or "to_pandas" in joined or "train_test_split" in joined:
+        return "데이터를 불러오고 학습에 맞는 형태로 정리하는 단계"
+    if "tokenizer" in joined or "tokenize" in joined or "data_collator" in joined:
+        return "텍스트를 모델 입력 텐서로 바꾸는 단계"
+    if "trainingarguments" in joined or "trainer" in joined or ".train(" in joined:
+        return "학습 설정을 만들고 학습 루프를 실행하는 단계"
+    if "metric" in joined or "classification_report" in joined or "confusion_matrix" in joined or "precision_recall" in joined:
+        return "예측 결과를 지표와 표로 요약하는 단계"
+    if "plt." in joined or "sns." in joined or "figure" in joined:
+        return "숫자 결과를 그림으로 확인하는 단계"
+    if "predict" in joined or "logits" in joined or "proba" in joined:
+        return "모델 출력을 확률이나 예측값으로 바꾸는 단계"
+    return "앞에서 만든 중간 값을 다음 계산으로 넘기는 단계"
+
+
+def code_transition(previous: list[str], next_chunk: list[str]) -> str:
+    before = code_chunk_summary(previous)
+    after = code_chunk_summary(next_chunk)
+    if before == after:
+        return (
+            "\\noindent\\emph{앞뒤 블록은 모두 "
+            + before
+            + "입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}"
+        )
+    return (
+        "\\noindent\\emph{앞 블록은 "
+        + before
+        + "입니다. 이어지는 블록에서는 "
+        + after
+        + "로 넘어갑니다.}"
+    )
+
+
+def listing_needspace(line_count: int) -> int:
+    return max(5, min(line_count + 2, 11))
+
+
+def listing_block(source: str, options: str = "", firstnumber: int | None = None) -> str:
+    lines = source.splitlines()
+    option_text = options or ""
+    if firstnumber is not None and firstnumber > 1 and "style=bookoutput" not in option_text:
+        if option_text:
+            option_text = option_text[:-1] + f",firstnumber={firstnumber}]"
+        else:
+            option_text = f"[firstnumber={firstnumber}]"
+    return (
+        f"\\Needspace{{{listing_needspace(len(lines))}\\baselineskip}}\n"
+        f"\\begin{{lstlisting}}{option_text}\n"
+        + source
+        + "\n\\end{lstlisting}"
+    )
+
+
+def split_listing_for_book(source: str, options: str = "") -> str:
+    base_first_line = 1
+    firstnumber_match = re.search(r"firstnumber\s*=\s*(\d+)", options)
+    if firstnumber_match:
+        base_first_line = int(firstnumber_match.group(1))
+        cleaned = re.sub(r",?\s*firstnumber\s*=\s*\d+\s*", "", options[1:-1]).strip()
+        options = f"[{cleaned}]" if cleaned else ""
+
+    line_count = len(source.splitlines())
+    if "style=bookoutput" in options or line_count <= MAX_CODE_LINES_PER_BLOCK:
+        return listing_block(source, options, base_first_line)
+
+    chunks = semantic_code_chunks(source)
+    blocks: list[str] = []
+    first_line = base_first_line
+    for idx, chunk in enumerate(chunks):
+        blocks.append(listing_block("\n".join(chunk), options, first_line))
+        first_line += len(chunk)
+        if idx < len(chunks) - 1:
+            blocks.append(code_transition(chunk, chunks[idx + 1]))
+    return "\n\n".join(blocks)
+
+
 def format_embedded_listings(latex: str) -> str:
     """Apply book code wrapping to fenced code blocks embedded in markdown."""
 
@@ -763,14 +896,7 @@ def format_embedded_listings(latex: str) -> str:
         if not source.strip():
             return match.group(0)
         formatted = format_code_for_book(source)
-        line_count = len(formatted.splitlines())
-        needspace = max(6, min(line_count + 4, 24))
-        return (
-            f"\\Needspace{{{needspace}\\baselineskip}}\n"
-            f"\\begin{{lstlisting}}{options}\n"
-            f"{formatted}\n"
-            "\\end{lstlisting}"
-        )
+        return split_listing_for_book(formatted, options)
 
     return re.sub(
         r"\\begin\{lstlisting\}(\[[^\]]*\])?\n(.*?)\n\\end\{lstlisting\}",
@@ -2200,14 +2326,7 @@ def code_to_latex(source: str, include_notes: bool = False, outputs: list[dict] 
     if not source:
         return ""
     display_source = format_code_for_book(source)
-    display_line_count = len(display_source.splitlines())
-    needspace = max(8, min(display_line_count + 4, 26))
-    listing = (
-        f"\\Needspace{{{needspace}\\baselineskip}}\n"
-        "\\begin{lstlisting}\n"
-        + display_source
-        + "\n\\end{lstlisting}"
-    )
+    listing = split_listing_for_book(display_source)
     parts = [listing]
     if include_notes:
         notes = code_walkthrough(display_source)

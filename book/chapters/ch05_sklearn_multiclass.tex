@@ -163,7 +163,7 @@ L = -\frac{1}{N}\sum_{i=1}^{N} \log \hat p_{i,\, y_i}
 
 
 
-\Needspace{8\baselineskip}
+\Needspace{5\baselineskip}
 \begin{lstlisting}
 !pip install -q datasets scikit-learn pandas matplotlib
 \end{lstlisting}
@@ -174,7 +174,7 @@ L = -\frac{1}{N}\sum_{i=1}^{N} \log \hat p_{i,\, y_i}
 
 
 
-\Needspace{26\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -192,14 +192,24 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+\end{lstlisting}
 
+\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 데이터를 불러오고 학습에 맞는 형태로 정리하는 단계로 넘어갑니다.}
+
+\Needspace{8\baselineskip}
+\begin{lstlisting}[firstnumber=17]
 plt.rcParams["axes.unicode_minus"] = False
 
 dataset = load_dataset("yelp_review_full")
 SAMPLE_SIZE = 5000
 ds = dataset["train"].shuffle(seed=42).select(range(SAMPLE_SIZE))
 df = ds.to_pandas()
+\end{lstlisting}
 
+\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 예측 결과를 지표와 표로 요약하는 단계로 넘어갑니다.}
+
+\Needspace{7\baselineskip}
+\begin{lstlisting}[firstnumber=25]
 sample_summary = pd.DataFrame([{"metric": "sample_count", "value": len(df)}])
 class_distribution = df["label"].value_counts().sort_index().rename_axis("label_0_to_4").reset_index(name="count")
 
@@ -228,7 +238,7 @@ metric        value
 
 
 
-\Needspace{22\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 y_5class = df["label"]
 
@@ -246,6 +256,12 @@ split_summary = pd.DataFrame([
 ])
 train_label_distribution = pd.Series(y_train).value_counts().sort_index().rename_axis("label_0_to_4").reset_index(name="count")
 
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 데이터를 불러오고 학습에 맞는 형태로 정리하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{5\baselineskip}
+\begin{lstlisting}[firstnumber=17]
 display(split_summary)
 display(train_label_distribution)
 \end{lstlisting}
@@ -278,7 +294,7 @@ split  X_shape        y_shape
 
 
 
-\Needspace{17\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 model_5 = LogisticRegression(max_iter=1000)
 model_5.fit(X_train, y_train)
@@ -311,7 +327,7 @@ metric            value
 
 
 
-\Needspace{16\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 proba_5 = model_5.predict_proba(X_test)
 
@@ -358,7 +374,7 @@ object   shape
 
 
 
-\Needspace{12\baselineskip}
+\Needspace{10\baselineskip}
 \begin{lstlisting}
 report = classification_report(
     y_test,
@@ -391,7 +407,7 @@ weighted avg  0.4965     0.5080  0.5000    1000.000
 
 
 
-\Needspace{11\baselineskip}
+\Needspace{9\baselineskip}
 \begin{lstlisting}
 cm = confusion_matrix(y_test, y_pred)
 cm_df = pd.DataFrame(
@@ -525,7 +541,7 @@ true 5★  10        3         7         51        124
 
 
 
-\Needspace{20\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 model_ovr = OneVsRestClassifier(LogisticRegression(max_iter=1000))
 model_ovr.fit(X_train, y_train)
@@ -561,7 +577,7 @@ metric                  value
 
 
 
-\Needspace{26\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 ovr_coef = np.vstack([
     est.coef_[0] for est in model_ovr.estimators_
@@ -577,10 +593,21 @@ sample_idx = 0
 sample_text = X_text_test.iloc[sample_idx]
 true_label = y_test.iloc[sample_idx]
 
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 모델 출력을 확률이나 예측값으로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{5\baselineskip}
+\begin{lstlisting}[firstnumber=15]
 p_multi = proba_5[sample_idx]
 p_ovr_raw = ovr_sigmoid_all[sample_idx]
 p_ovr_norm = model_ovr.predict_proba(X_test)[sample_idx]
+\end{lstlisting}
 
+\noindent\emph{앞뒤 블록은 모두 모델 출력을 확률이나 예측값으로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=19]
 review_preview = pd.DataFrame([
     {"review_preview_200_chars": sample_text[:200] + "..."}
 ])
@@ -596,6 +623,12 @@ probability_sums = pd.DataFrame([
     {"method": "ovr_normalized", "sum": p_ovr_norm.sum()},
 ])
 
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 모델 출력을 확률이나 예측값으로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{6\baselineskip}
+\begin{lstlisting}[firstnumber=34]
 display(review_preview)
 display(pd.DataFrame([{"target_star": true_label + 1}]))
 display(probability_comparison)
@@ -657,7 +690,7 @@ review_preview_200_chars
 
 
 
-\Needspace{23\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 acc_ovr = accuracy_score(
     y_test,
@@ -675,7 +708,12 @@ raw_sum_summary = pd.DataFrame([
     {"metric": "max_raw_probability_sum", "value": raw_sums.max()},
     {"metric": "mean_raw_probability_sum", "value": raw_sums.mean()},
 ])
+\end{lstlisting}
 
+\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{5\baselineskip}
+\begin{lstlisting}[firstnumber=17]
 display(model_accuracy_comparison)
 display(raw_sum_summary)
 \end{lstlisting}
@@ -789,7 +827,7 @@ K=5 정도는 위 트릭이 필요 없는 작은 규모.
 
 \begin{faqBox}{Q3. (실무) 클래스 불균형이 심한데 \inlinecode{class\_weight}를 어떻게 적용하나요?}
 
-\Needspace{9\baselineskip}
+\Needspace{7\baselineskip}
 \begin{lstlisting}
 model = LogisticRegression(
     multi_class="multinomial",
@@ -806,7 +844,7 @@ model = LogisticRegression(
 
 \inlinecode{seaborn.heatmap}이 명확합니다.
 
-\Needspace{9\baselineskip}
+\Needspace{7\baselineskip}
 \begin{lstlisting}
 import seaborn as sns
 sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
@@ -817,7 +855,7 @@ plt.xlabel("Predicted"); plt.ylabel("True")
 
 \textbf{행 정규화}(recall 관점)도 자주 봅니다.
 
-\Needspace{6\baselineskip}
+\Needspace{5\baselineskip}
 \begin{lstlisting}
 cm_norm = cm / cm.sum(axis=1, keepdims=True)
 sns.heatmap(cm_norm, annot=True, fmt=".2f", cmap="Blues")
@@ -871,7 +909,7 @@ K=5에서 baseline ≈ 1.609. 학습 도중 loss가 이 값 근처에서 정체�
 
 같은 5클래스 데이터에서 회귀 모델(\ref{ch:02}장 방식)과 분류 모델(이 장)이 4★를 3★로 예측하는 비율과 4★를 1★로 예측하는 비율의 비를 각각 계산해보세요. 회귀가 더 큰 실수를 더 강하게 회피하는지 확인할 수 있습니다.
 
-\Needspace{21\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 from sklearn.linear_model import LinearRegression
 
@@ -885,6 +923,12 @@ pred_reg = np.clip(
 
 pred_clf = y_pred
 
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{7\baselineskip}
+\begin{lstlisting}[firstnumber=13]
 for name, pred in [("회귀 후 round/clip", pred_reg), ("분류", pred_clf)]:
     mask4 = (y_test == 3)
     n_4to3 = ((pred == 2) & mask4).sum()
