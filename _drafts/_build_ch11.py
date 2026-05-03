@@ -42,7 +42,7 @@ md(r"""# Chapter 11. BERT Binary 방식 B — softmax + CrossEntropyLoss
 
 **환경**: Google Colab **T4 GPU 필수**.
 
-**예상 소요 시간**: 약 10분 (모델 다운로드 + 2 에폭 학습 + 평가 + Ch 10 결과와의 비교)
+**예상 소요 시간**: 약 20분 (방식 B 학습 ~8분 + 방식 A 비교용 학습 ~8분 + 평가/시각화/비교)
 
 ---
 
@@ -50,11 +50,11 @@ md(r"""# Chapter 11. BERT Binary 방식 B — softmax + CrossEntropyLoss
 
 1. 🚀 **실습**: Ch 10과 같은 데이터를 BERT로 다시 학습 — 이번엔 `num_labels=2` + softmax + `CrossEntropyLoss`
 2. 🔬 **해부**: 학습 후 softmax 확률 분포를 sigmoid (방식 A) 와 같은 KDE 그림으로 비교. logit 공간에서는 $z = z_1 - z_0$ 으로 변환.
-3. 🛠️ **클라이맥스**: Ch 10에서 저장한 `method_a_probs.npy` 와 이번 챕터의 `prob_B` 를 *샘플 단위로* 비교 — scatter plot과 agreement metric.
+3. 🛠️ **클라이맥스**: *이 노트북 안에서* 방식 A도 한 번 더 학습한 뒤 *샘플 단위로* 비교 — scatter plot과 agreement metric. 노트북이 self-contained라 Ch 10 세션이 살아 있을 필요가 없습니다.
 
 ---
 
-> 📒 **사전 학습 자료**: Ch 4 (sklearn 두 방식 동등성), Ch 10 (BERT 방식 A). Ch 10 노트북을 *같은 세션* 에서 미리 돌려 `./shared_binary_results/` 에 결과를 저장해 두면 마지막 비교 섹션이 바로 동작합니다.""")
+> 📒 **사전 학습 자료**: Ch 4 (sklearn 두 방식 동등성), Ch 10 (BERT 방식 A — 방식 A의 단독 학습/시각화는 거기서 자세히). 이번 챕터는 Ch 10에 *의존하지 않습니다* — 5장 비교를 위해 같은 노트북 안에서 방식 A를 한 번 더 학습합니다.""")
 
 # ----- 2. 추적표 -----
 md(r"""## 📊 변화추적표
@@ -371,56 +371,116 @@ print(classification_report(
     digits=4,
 ))""")
 
-# ----- 13. 동등성 비교 (CLIMAX) -----
-md(r"""## 5. 🛠️ 클라이맥스 — 방식 A 와의 직접 비교
+# ----- 13. 동등성 비교 (CLIMAX) — 방식 A를 inline 재학습 -----
+md(r"""## 5. 🛠️ 클라이맥스 — 방식 A 를 *이 노트북 안에서* 다시 학습해 비교
 
-Ch 10에서 저장한 `./shared_binary_results/method_a_probs.npy` 를 불러와 *샘플 단위* 로 비교합니다. 같은 eval 데이터 1,000개에 대해 두 모델이 만든 확률 $p_A^{(i)}$ 와 $p_B^{(i)}$ 가 거의 같다면 — 두 점이 $y = x$ 직선 위에 거의 붙어 있어야 합니다.
+이전 챕터(Ch 10)의 결과 파일에 의존하지 않도록, 같은 데이터·같은 hyperparams·같은 seed로 방식 A를 *바로 여기서* 한 번 더 학습합니다. 변하는 것은 **모델 셋업과 라벨 형식뿐** (Ch 10에서 본 그대로):
 
-> **사전 조건**: Ch 10 노트북을 *같은 Colab 세션* 에서 미리 끝까지 돌려 `./shared_binary_results/` 폴더가 만들어져 있어야 합니다. 세션이 끊겼다면 Drive 백업 또는 Ch 10 재실행이 필요합니다.""")
+| 셋업 | 방식 B (§3-4에서 학습) | 방식 A (지금 inline 재학습) |
+|---|---|---|
+| `num_labels` | 2 | **1** |
+| `problem_type` | `single_label_classification` | **`multi_label_classification`** |
+| 라벨 형식 | int 스칼라 (`0` / `1`) | **길이 1 multi-hot float (`[0.0]` / `[1.0]`)** |
+| 학습 hyperparams | (epoch=2, lr=2e-5, seed=42 …) | **그대로** |
 
-code(r"""# Ch 10 결과 로드
-import os, json
+T4 기준 추가 ~8분. 학습이 끝나면 같은 eval 셋의 $p_A^{(i)}$ 와 §4에서 구한 $p_B^{(i)}$ 를 1,000개 점으로 비교할 수 있게 됩니다.""")
 
-shared = "./shared_binary_results"
-have_method_a = os.path.exists(f"{shared}/method_a_probs.npy")
+code(r"""# 방식 A용 라벨 변환 — int 0/1 → 길이 1 multi-hot float [0.0]/[1.0]
+def to_method_a_labels(batch):
+    batch["labels"] = [[float(l)] for l in batch["labels"]]
+    return batch
 
-if have_method_a:
-    probs_A  = np.load(f"{shared}/method_a_probs.npy")
-    labels_A = np.load(f"{shared}/method_a_labels.npy")
-    with open(f"{shared}/method_a_summary.json") as f:
-        summary_A = json.load(f)
-    assert len(probs_A) == len(probs), f"방식 A({len(probs_A)})와 방식 B({len(probs)}) 샘플 수 불일치"
-    assert (labels_A == labels).all(), "방식 A와 방식 B의 라벨 순서 불일치 — 같은 seed/데이터 확인 필요"
-    print(f"✓ 방식 A 결과 로드 — {len(probs_A)} samples")
-    print(f"  방식 A accuracy: {summary_A['metrics']['accuracy']:.4f}")
-    print(f"  방식 B accuracy: {eval_metrics['eval_accuracy']:.4f}")
-else:
-    print("⚠️  ./shared_binary_results/ 가 없습니다.")
-    print("    Ch 10 노트북을 같은 세션에서 미리 돌려 주세요.")
-    print("    이 셀 이후의 비교는 skip 됩니다.")
-    probs_A = None""")
+# 텍스트·attention_mask는 그대로, labels만 바꿔서 새 데이터셋
+train_tok_A = train_tok.map(to_method_a_labels, batched=True)
+eval_tok_A  = eval_tok.map(to_method_a_labels,  batched=True)
+
+print(f"방식 A 첫 샘플 라벨: {train_tok_A[0]['labels']}  (길이 1짜리 float 벡터)")
+print(f"방식 B 첫 샘플 라벨: {train_tok[0]['labels']}    (int 스칼라)")""")
+
+code(r"""# 방식 A 모델 — Ch 10과 동일 셋업
+model_A = AutoModelForSequenceClassification.from_pretrained(
+    "distilbert-base-uncased",
+    num_labels=1,
+    problem_type="multi_label_classification",
+)
+
+def compute_metrics_A(eval_pred):
+    logits, lbl = eval_pred
+    logits = logits.flatten()
+    lbl    = lbl.flatten().astype(int)
+    p_hat  = 1.0 / (1.0 + np.exp(-logits))
+    preds  = (p_hat >= 0.5).astype(int)
+    p, r, f1, _ = precision_recall_fscore_support(lbl, preds, average="binary", zero_division=0)
+    return {
+        "accuracy":  float(accuracy_score(lbl, preds)),
+        "precision": float(p),
+        "recall":    float(r),
+        "f1":        float(f1),
+        "auc":       float(roc_auc_score(lbl, p_hat)),
+    }
+
+print(f"방식 A 분류 헤드: {model_A.classifier}")
+print(f"방식 A problem_type: {model_A.config.problem_type}")""")
+
+code(r"""# 방식 A 학습 — Ch 10과 동일한 hyperparams (방식 B와도 동일)
+training_args_A = TrainingArguments(
+    output_dir="./ch11_method_a_output",
+    num_train_epochs=2,
+    per_device_train_batch_size=16,
+    per_device_eval_batch_size=32,
+    learning_rate=2e-5,
+    fp16=True,
+    eval_strategy="epoch",
+    logging_steps=50,
+    save_strategy="no",
+    report_to="none",
+    seed=42,
+)
+
+trainer_A = Trainer(
+    model=model_A,
+    args=training_args_A,
+    train_dataset=train_tok_A,
+    eval_dataset=eval_tok_A,
+    processing_class=tokenizer,
+    compute_metrics=compute_metrics_A,
+)
+
+train_result_A = trainer_A.train()
+print(f"\n방식 A 학습 완료 — train loss: {train_result_A.training_loss:.4f}")""")
+
+code(r"""# 방식 A 예측 추출
+preds_A_out = trainer_A.predict(eval_tok_A)
+logits_A    = preds_A_out.predictions.flatten()
+probs_A     = 1.0 / (1.0 + np.exp(-logits_A))
+labels_A    = preds_A_out.label_ids.flatten().astype(int)
+
+# eval_tok과 eval_tok_A는 라벨 형식만 다르고 샘플 순서는 동일 → 라벨 일치해야 함
+assert (labels_A == labels).all(), "샘플 순서 불일치 — eval_tok / eval_tok_A 파생 관계 확인 필요"
+
+eval_metrics_A = trainer_A.evaluate()
+print("방식 A 평가:")
+for k, v in eval_metrics_A.items():
+    if k.startswith("eval_") and isinstance(v, float):
+        print(f"  {k:>20}: {v:.4f}")""")
 
 md(r"""### 5-1. 두 방식의 metric 표 비교
 
 같은 데이터에 같은 모델 본체로 학습했고 hyperparams도 같으니, accuracy/F1/AUC 같은 평가 지표가 *거의 같은* 값이어야 합니다. 차이가 있다면 random init과 dropout 같은 *학습 경로* 차이에서 옵니다.""")
 
-code(r"""if probs_A is not None:
-    metrics_B = {
-        k.replace("eval_", ""): v
-        for k, v in eval_metrics.items()
-        if k.startswith("eval_") and isinstance(v, float)
-    }
-    metrics_A = summary_A["metrics"]
+code(r"""metrics_A = {k.replace("eval_", ""): v for k, v in eval_metrics_A.items()
+             if k.startswith("eval_") and isinstance(v, float)}
+metrics_B = {k.replace("eval_", ""): v for k, v in eval_metrics.items()
+             if k.startswith("eval_") and isinstance(v, float)}
 
-    cmp = pd.DataFrame({
-        "metric":   list(metrics_A.keys()),
-        "방식 A (sigmoid+BCE)":   [metrics_A[k] for k in metrics_A],
-        "방식 B (softmax+CE)":    [metrics_B.get(k, float("nan")) for k in metrics_A],
-    })
-    cmp["차이 |A-B|"] = (cmp["방식 A (sigmoid+BCE)"] - cmp["방식 B (softmax+CE)"]).abs()
-    print(cmp.round(4).to_string(index=False))
-else:
-    print("(skip)")""")
+common = [k for k in metrics_A if k in metrics_B]
+cmp = pd.DataFrame({
+    "metric":               common,
+    "방식 A (sigmoid+BCE)": [metrics_A[k] for k in common],
+    "방식 B (softmax+CE)":  [metrics_B[k] for k in common],
+})
+cmp["차이 |A-B|"] = (cmp["방식 A (sigmoid+BCE)"] - cmp["방식 B (softmax+CE)"]).abs()
+print(cmp.round(4).to_string(index=False))""")
 
 md(r"""### 5-2. 샘플 단위 확률 비교 — scatter plot
 
@@ -428,35 +488,31 @@ x축 = 방식 A의 $p_A$, y축 = 방식 B의 $p_B$. 점 색은 정답 라벨.
 
 **완전히 동등하면 모든 점이 $y = x$ 직선 위**. 실제로는 random init·dropout·optimizer 비결정성 때문에 약간 흩어지지만, 직선에서 크게 벗어나면 안 됩니다.""")
 
-code(r"""if probs_A is not None:
-    df_cmp = pd.DataFrame({
-        "prob_A": probs_A,
-        "prob_B": probs,
-        "label":  labels.astype(int),
-    })
+code(r"""df_cmp = pd.DataFrame({
+    "prob_A": probs_A,
+    "prob_B": probs,
+    "label":  labels.astype(int),
+})
 
-    fig, ax = plt.subplots(figsize=(7, 7))
-    sns.scatterplot(
-        data=df_cmp, x="prob_A", y="prob_B", hue="label",
-        palette={0: "#5B8DEF", 1: "#F47272"}, alpha=0.55, s=35, ax=ax,
-    )
-    ax.plot([0, 1], [0, 1], color="black", lw=1.3, ls="--", alpha=0.7,
-            label="y = x (perfect equivalence)")
-    ax.set_xlim(-0.02, 1.02); ax.set_ylim(-0.02, 1.02)
-    ax.set_xlabel("Method A — P(y=1) = sigmoid(z_A)")
-    ax.set_ylabel("Method B — P(y=1) = softmax(z_0, z_1)[1]")
-    ax.set_title("Method A vs Method B — per-sample probability agreement")
-    ax.legend(loc="upper left")
-    plt.tight_layout()
-    plt.show()
+fig, ax = plt.subplots(figsize=(7, 7))
+sns.scatterplot(
+    data=df_cmp, x="prob_A", y="prob_B", hue="label",
+    palette={0: "#5B8DEF", 1: "#F47272"}, alpha=0.55, s=35, ax=ax,
+)
+ax.plot([0, 1], [0, 1], color="black", lw=1.3, ls="--", alpha=0.7,
+        label="y = x (perfect equivalence)")
+ax.set_xlim(-0.02, 1.02); ax.set_ylim(-0.02, 1.02)
+ax.set_xlabel("Method A — P(y=1) = sigmoid(z_A)")
+ax.set_ylabel("Method B — P(y=1) = softmax(z_0, z_1)[1]")
+ax.set_title("Method A vs Method B — per-sample probability agreement")
+ax.legend(loc="upper left")
+plt.tight_layout()
+plt.show()
 
-    # 상관계수와 평균 절대 차
-    corr = float(np.corrcoef(probs_A, probs)[0, 1])
-    mae  = float(np.abs(probs_A - probs).mean())
-    print(f"Pearson 상관:        {corr:.4f}  (1.0이면 완전 동등)")
-    print(f"평균 절대 차 |A-B|:  {mae:.4f}")
-else:
-    print("(skip)")""")
+corr = float(np.corrcoef(probs_A, probs)[0, 1])
+mae  = float(np.abs(probs_A - probs).mean())
+print(f"Pearson 상관:        {corr:.4f}  (1.0이면 완전 동등)")
+print(f"평균 절대 차 |A-B|:  {mae:.4f}")""")
 
 md(r"""**해석**
 
@@ -469,25 +525,22 @@ md(r"""### 5-3. 예측 일치율 (threshold 0.5)
 
 확률을 0/1 예측으로 떨어뜨린 뒤 두 방식의 예측이 얼마나 일치하는지 봅니다. 일치율이 95% 이상이면 *실질적으로* 같은 분류기로 봐도 됩니다.""")
 
-code(r"""if probs_A is not None:
-    pred_A = (probs_A >= 0.5).astype(int)
-    pred_B = (probs   >= 0.5).astype(int)
+code(r"""pred_A = (probs_A >= 0.5).astype(int)
+pred_B = (probs   >= 0.5).astype(int)
 
-    agree = (pred_A == pred_B).mean()
-    both_correct  = ((pred_A == labels) & (pred_B == labels)).mean()
-    only_A_correct = ((pred_A == labels) & (pred_B != labels)).mean()
-    only_B_correct = ((pred_A != labels) & (pred_B == labels)).mean()
-    both_wrong    = ((pred_A != labels) & (pred_B != labels)).mean()
+agree         = (pred_A == pred_B).mean()
+both_correct  = ((pred_A == labels) & (pred_B == labels)).mean()
+only_A_right  = ((pred_A == labels) & (pred_B != labels)).mean()
+only_B_right  = ((pred_A != labels) & (pred_B == labels)).mean()
+both_wrong    = ((pred_A != labels) & (pred_B != labels)).mean()
 
-    print(f"두 방식의 예측 일치율: {agree:.1%}")
-    print()
-    print(f"분류 결과 4분면:")
-    print(f"  둘 다 정답:        {both_correct:.1%}")
-    print(f"  A만 정답 (B 틀림): {only_A_correct:.1%}")
-    print(f"  B만 정답 (A 틀림): {only_B_correct:.1%}")
-    print(f"  둘 다 오답:        {both_wrong:.1%}")
-else:
-    print("(skip)")""")
+print(f"두 방식의 예측 일치율: {agree:.1%}")
+print()
+print(f"분류 결과 4분면:")
+print(f"  둘 다 정답:        {both_correct:.1%}")
+print(f"  A만 정답 (B 틀림): {only_A_right:.1%}")
+print(f"  B만 정답 (A 틀림): {only_B_right:.1%}")
+print(f"  둘 다 오답:        {both_wrong:.1%}")""")
 
 md(r"""**여기까지 보고 결론** — 식으로 본 동등성 ($\sigma(z) = \mathrm{softmax}(z_0, z_1)[1]$ when $z = z_1 - z_0$)이 BERT에서도 그대로 성립합니다. 차이가 있어 봐야 random init / dropout 같은 *학습 경로 차이* 정도. 두 방식은 **수식이 다른 같은 모델**, 라이브러리·코드 컨벤션이 강요하는 표현 차이일 뿐입니다.
 
