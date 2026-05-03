@@ -68,10 +68,40 @@ def patch_cell_source(src: str, quick: bool) -> str:
     return src
 
 
+SETUP_CELL_SOURCE = (
+    "# === _local Mac compatibility setup (auto-injected by _drafts/_local_patch.py) ===\n"
+    "# macOS + ipykernel + safetensors mmap = SIGBUS during model loading on M-series.\n"
+    "# Force PreTrainedModel.from_pretrained to default use_safetensors=False so all\n"
+    "# from_pretrained / pipeline() calls below load via .bin (no mmap).\n"
+    "import os\n"
+    "os.environ.setdefault('SAFETENSORS_FAST_GPU', '0')\n"
+    "import transformers as _tf\n"
+    "_orig_fp = _tf.PreTrainedModel.from_pretrained.__func__\n"
+    "def _patched_fp(cls, *args, **kw):\n"
+    "    kw.setdefault('use_safetensors', False)\n"
+    "    return _orig_fp(cls, *args, **kw)\n"
+    "_tf.PreTrainedModel.from_pretrained = classmethod(_patched_fp)\n"
+    "del _patched_fp, _tf"
+)
+
+
 def patch_notebook(nb_path: Path, out_path: Path, quick: bool) -> dict:
     """Read .ipynb, patch code cells, write to out_path. Return per-pattern hit counts."""
     nb = json.loads(nb_path.read_text(encoding="utf-8"))
-    stats = {"cells_patched": 0, "fp16": 0, "pip": 0, "nvidia": 0, "range": 0, "epoch": 0}
+    stats = {"cells_patched": 0, "fp16": 0, "pip": 0, "nvidia": 0, "range": 0, "epoch": 0,
+             "setup_injected": 0}
+
+    # Inject the setup cell at the very top so the monkey-patch runs before any imports
+    setup_cell = {
+        "cell_type": "code",
+        "id": "local_setup",
+        "execution_count": None,
+        "metadata": {},
+        "outputs": [],
+        "source": SETUP_CELL_SOURCE,
+    }
+    nb["cells"].insert(0, setup_cell)
+    stats["setup_injected"] = 1
 
     for cell in nb.get("cells", []):
         if cell.get("cell_type") != "code":
