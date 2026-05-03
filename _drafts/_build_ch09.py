@@ -116,6 +116,7 @@ warnings.filterwarnings("ignore")
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 import torch
 from datasets import load_dataset
 from transformers import (
@@ -375,21 +376,50 @@ code(r"""# BERT 예측값 직접 받기 (별도 evaluate 호출이지만 빠름)
 preds_output = trainer.predict(eval_tok)
 bert_pred = preds_output.predictions.flatten()
 
-fig, axes = plt.subplots(1, 2, figsize=(11, 4))
-axes[0].scatter(eval_labels, bert_pred, alpha=0.3, s=10)
-axes[0].plot([1, 5], [1, 5], "r--", linewidth=1)
-axes[0].set_xlabel("Actual star (1-5)")
-axes[0].set_ylabel("BERT predicted")
-axes[0].set_title("BERT: Actual vs Predicted")
+# seaborn 으로 두 모델 예측을 한 그래프에서 비교
+# - 왼쪽: 예측 분포 자체 (predicted star per actual class)
+# - 오른쪽: 잔차 분포 (predicted - actual per actual class)
+df_compare = pd.DataFrame({
+    "Actual star": np.concatenate([eval_labels, eval_labels]),
+    "Predicted":   np.concatenate([bert_pred,   sk_pred]),
+    "Model":       ["BERT"] * len(eval_labels) + ["sklearn"] * len(eval_labels),
+})
+df_compare["Residual"] = df_compare["Predicted"] - df_compare["Actual star"]
 
-axes[1].scatter(eval_labels, sk_pred, alpha=0.3, s=10, color="orange")
-axes[1].plot([1, 5], [1, 5], "r--", linewidth=1)
-axes[1].set_xlabel("Actual star (1-5)")
-axes[1].set_ylabel("sklearn predicted")
-axes[1].set_title("sklearn LinearRegression: Actual vs Predicted")
+fig, axes = plt.subplots(1, 2, figsize=(13, 5))
+
+# 왼쪽 — 예측 분포
+sns.violinplot(data=df_compare, x="Actual star", y="Predicted", hue="Model",
+               split=True, inner="quart", ax=axes[0])
+for i, x_val in enumerate([1, 2, 3, 4, 5]):
+    axes[0].plot([i - 0.4, i + 0.4], [x_val, x_val], "r--", linewidth=1, alpha=0.7)
+axes[0].set_title("Predicted star distribution per actual class")
+axes[0].legend(loc="upper left")
+
+# 오른쪽 — 잔차 분포
+sns.violinplot(data=df_compare, x="Actual star", y="Residual", hue="Model",
+               split=True, inner="quart", ax=axes[1])
+axes[1].axhline(0, color="red", linestyle="--", linewidth=1, alpha=0.7)
+axes[1].set_title("Residual = Predicted − Actual")
+axes[1].legend(loc="upper left")
 
 plt.tight_layout()
 plt.show()""")
+
+md(r"""**두 패널 읽는 법** — 같은 데이터를 두 시점에서 봅니다.
+
+| 패널 | 보여주는 것 | 무엇을 읽나 |
+|---|---|---|
+| 왼쪽 (Predicted) | 각 actual class에 대해 두 모델이 *어떤 값을 출력했는지* 의 분포 | 분포의 중심이 빨간 점선(이상)에 가까운지, 좌우 폭(spread)이 좁은지 |
+| 오른쪽 (Residual) | 잔차(예측 − 실제)의 분포, 0 기준선 | 0 근처에 좁게 모여 있을수록 정확. 양/음 방향 *치우침(bias)* 도 한눈에 |
+
+**관찰 포인트**
+
+- **BERT 쪽이 더 좁다**: 같은 actual class 안에서 예측이 ideal 선 근처에 더 모입니다 (왼쪽 violin이 더 가늘다 / 오른쪽 잔차가 0 근처에 더 집중).
+- **두 끝 class(1점, 5점) 에서의 편향**: 모델은 보통 *중앙 쪽으로 회귀(regression to the mean)* 하는 경향이 있어서 1점은 약간 위로(잔차 +), 5점은 약간 아래로(잔차 −) 치우치는 모양이 잘 나타납니다. 두 모델 모두에서 같은 패턴이 보일 수 있고, 그 정도가 모델별로 얼마나 다른지가 비교 포인트.
+- **sklearn은 outlier 꼬리가 김**: 잔차 양 끝(±2 이상)으로 늘어지는 꼬리가 sklearn 쪽에 더 두드러져, 일부 샘플에서 큰 오차를 내고 있다는 신호.
+
+이 두 뷰가 맞물려 있어서 *왼쪽에서 분포의 모양*, *오른쪽에서 오차의 크기·방향* 을 동시에 본 뒤 정량 지표(MSE/MAE/R²) 표와 함께 해석하면 회귀 평가가 입체적으로 됩니다.""")
 
 # ----- 18. 변형 -----
 md(r"""## 5. 🛠️ 변형 — 학습이 어디서 망가지는지 (개념만)
