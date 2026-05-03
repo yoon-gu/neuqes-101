@@ -231,7 +231,7 @@
         ([xshift=20mm, yshift=-22mm]current page.north west) -- ++(5mm, 0);
       \node[anchor=west, text=taSubtext, font=\sffamily\fontsize{8}{10}\selectfont]
         at ([xshift=27mm, yshift=-22mm]current page.north west)
-        {NLP\ \ \textbf{·}\ \ DEEP LEARNING\ \ \textbf{·}\ \ TRANSFORMERS};
+        {NLP\ \ \textbf{·}\ \ TRANSFORMERS};
       % 부제 (위)
       \node[anchor=north west, text=taSlate, font=\fontsize{15}{18}\selectfont]
         at ([xshift=20mm, yshift=-50mm]current page.north west)
@@ -253,18 +253,18 @@
       % 한글 부제
       \node[anchor=north west, text=taSlate, font=\fontsize{10}{12}\selectfont]
         at ([xshift=20mm, yshift=-123mm]current page.north west)
-        {전 20강\ \ \textbf{·}\ \ sklearn에서 huggingface까지};
+        {현재 원고: 1--14장\ \ \textbf{·}\ \ Phase 1 마무리};
       % CURRICULUM 라벨
       \draw[taSlate, line width=0.6pt]
         ([xshift=20mm, yshift=-145mm]current page.north west) -- ++(8mm, 0);
       \node[anchor=west, text=taSubtext, font=\sffamily\fontsize{7}{9}\selectfont]
         at ([xshift=30mm, yshift=-145mm]current page.north west)
-        {CURRICULUM\ \ \textbf{·}\ \ 4 PHASES\ \ \textbf{·}\ \ 20 CHAPTERS};
+        {CURRENT MANUSCRIPT\ \ \textbf{·}\ \ PHASE 1 COMPLETE\ \ \textbf{·}\ \ CH 1--14};
       
       % --- Phase 막대 4개 (15mm 간격, 챕터 비례 너비) ---
       % 최대 너비 130mm = 8 챕터 → 챕터당 16.25mm
       
-      % Phase 0 (Ch 1-6 → 97.5mm)
+      % Phase 0 (Ch 1-6 완료)
       \node[anchor=north west, text=taInk, font=\fontsize{10}{12}\selectfont\bfseries]
         at ([xshift=20mm, yshift=-155mm]current page.north west)
         {PHASE 0\ \ \textbf{·}\ \ 기초 다지기};
@@ -279,9 +279,9 @@
         ([xshift=20mm+130mm, yshift=-167.5mm]current page.north west);
       \fill[taPhaseZero]
         ([xshift=20mm, yshift=-166mm]current page.north west) rectangle
-        ([xshift=20mm+97.5mm, yshift=-167.5mm]current page.north west);
+        ([xshift=20mm+130mm, yshift=-167.5mm]current page.north west);
       
-      % Phase 1 (Ch 7-14 → 130mm full)
+      % Phase 1 (Ch 7-14 완료 / 현재 원고의 끝)
       \node[anchor=north west, text=taInk, font=\fontsize{10}{12}\selectfont\bfseries]
         at ([xshift=20mm, yshift=-174mm]current page.north west)
         {PHASE 1\ \ \textbf{·}\ \ 영어 BERT 파인튜닝};
@@ -298,7 +298,7 @@
         ([xshift=20mm, yshift=-185mm]current page.north west) rectangle
         ([xshift=20mm+130mm, yshift=-186.5mm]current page.north west);
       
-      % Phase 2 (Ch 15-18 → 65mm)
+      % Phase 2 (Ch 15-18 예정)
       \node[anchor=north west, text=taInk, font=\fontsize{10}{12}\selectfont\bfseries]
         at ([xshift=20mm, yshift=-193mm]current page.north west)
         {PHASE 2\ \ \textbf{·}\ \ 한국어 BERT 재방문};
@@ -313,9 +313,9 @@
         ([xshift=20mm+130mm, yshift=-205.5mm]current page.north west);
       \fill[taPhaseTwo]
         ([xshift=20mm, yshift=-204mm]current page.north west) rectangle
-        ([xshift=20mm+65mm, yshift=-205.5mm]current page.north west);
+        ([xshift=20mm, yshift=-205.5mm]current page.north west);
       
-      % Phase 3 (Ch 19-20 → 32.5mm)
+      % Phase 3 (Ch 19-20 예정)
       \node[anchor=north west, text=taInk, font=\fontsize{10}{12}\selectfont\bfseries]
         at ([xshift=20mm, yshift=-212mm]current page.north west)
         {PHASE 3\ \ \textbf{·}\ \ 토크나이저 직접 학습};
@@ -330,7 +330,7 @@
         ([xshift=20mm+130mm, yshift=-224.5mm]current page.north west);
       \fill[taPhaseThree]
         ([xshift=20mm, yshift=-223mm]current page.north west) rectangle
-        ([xshift=20mm+32.5mm, yshift=-224.5mm]current page.north west);
+        ([xshift=20mm, yshift=-224.5mm]current page.north west);
       
       % 저자 / 푸터
       \draw[taSlate, line width=1.5pt]

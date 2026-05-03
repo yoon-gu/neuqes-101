@@ -47,15 +47,15 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 Phase 구분:
 - **Phase 0 (Ch 1-6)**: sklearn으로 태스크/loss의 본질. BERT 등장하지 않음. (Ch 4는 sigmoid↔softmax 동등성을 sklearn binary로 시연하는 다리 챕터.)
-- **Phase 1 (Ch 7-13)**: DistilBERT(영어)로 같은 태스크들을 다시. Auxiliary loss로 마무리.
-- **Phase 2 (Ch 14-17)**: 한국어로 압축 재방문 (klue/bert-base). **회귀 챕터는 생략** — 영어 Phase 1에서 이미 다뤘기 때문에 Binary부터 시작.
-- **Phase 3 (Ch 18-19)**: 토크나이저를 직접 학습. 사전학습 의존 없는 경험. **Phase 3가 클라이맥스가 되도록 토크나이저 시각을 Ch 1부터 일관되게 추적.**
+- **Phase 1 (Ch 7-14)**: DistilBERT(영어)로 같은 태스크들을 다시. Auxiliary loss로 마무리.
+- **Phase 2 (Ch 15-18)**: 한국어로 압축 재방문 (klue/bert-base). **회귀 챕터는 생략** — 영어 Phase 1에서 이미 다뤘기 때문에 Binary부터 시작.
+- **Phase 3 (Ch 19-20)**: 토크나이저를 직접 학습. 사전학습 의존 없는 경험. **Phase 3가 클라이맥스가 되도록 토크나이저 시각을 Ch 1부터 일관되게 추적.**
 
 ## 작업 흐름
 
 1. **미정 사항 1건은 작성 시작 전 사용자와 확정**:
    - **Ch 17 보조 태스크 (한국어 Auxiliary)**: 라벨 개수 회귀(MSE)가 1순위 — Ch 13과 구조가 닮아 변경점이 "데이터 + 언어"로만 한정됨.
-   - (참고) **한국어 회귀 챕터는 의도적으로 생략**됨. Phase 2는 Binary(Ch 14)부터 시작.
+   - (참고) **한국어 회귀 챕터는 의도적으로 생략**됨. Phase 2는 Binary(Ch 15)부터 시작.
 2. **챕터 단위 검증 사이클** — 한 챕터씩 다음 순서로 진행:
    1. Codex가 해당 챕터 폴더(`<NN>_<slug>/`)와 노트북(`<NN>_<slug>.ipynb`) 작성. 폴더 안 `README.md`에 챕터 요약을 함께 작성.
    2. **Codex가 곧바로 git commit + push.** Colab 버튼이 GitHub의 master 브랜치를 가리키므로 푸시 전엔 사용자가 노트북을 열 수 없음. 따라서 노트북 작성 직후 자동으로 커밋·푸시. 커밋 메시지는 챕터 단위로 의미 있게(`Add Ch <N>: <slug>` 등). 수정·재빌드 후에도 동일하게 커밋·푸시.
