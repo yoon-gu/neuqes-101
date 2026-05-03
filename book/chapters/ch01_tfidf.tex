@@ -233,6 +233,10 @@ plt.show()
 display(counts.rename_axis("label").reset_index(name="count"))
 \end{lstlisting}
 
+\begin{bookfigurelabel}[htbp]{샘플링된 Yelp 리뷰 5,000건의 별점 분포}{fig:ch01-star-distribution}
+\includegraphics[width=0.86\linewidth]{assets/figures/ch01_star_distribution.png}
+\end{bookfigurelabel}
+
 \begin{codeRead}
 \textbf{1행}의 \inlinecode{counts = ...}에서는 라벨별 샘플 개수를 집계합니다. \textbf{2행}의 \inlinecode{labels = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}

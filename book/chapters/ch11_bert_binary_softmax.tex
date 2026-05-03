@@ -524,6 +524,10 @@ plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
+\begin{bookfigurelabel}[htbp]{방식 B의 softmax 확률 분포}{fig:ch11-probability-kde}
+\includegraphics[width=0.88\linewidth]{assets/figures/ch11_probability_kde.png}
+\end{bookfigurelabel}
+
 
 
 \subsection{\texorpdfstring{로짓 차이 분포}{z = z\_1 - z\_0 의 logit 공간 분포}}
@@ -547,6 +551,10 @@ ax.set_ylabel("Density")
 plt.tight_layout()
 plt.show()
 \end{lstlisting}
+
+\begin{bookfigurelabel}[htbp]{방식 B를 1차원 logit 차이로 환산한 분포}{fig:ch11-logit-kde}
+\includegraphics[width=0.88\linewidth]{assets/figures/ch11_logit_kde.png}
+\end{bookfigurelabel}
 
 
 
@@ -777,6 +785,10 @@ print(
 )
 print(f"Mean abs diff |A-B|: {mae:.4f}")
 \end{lstlisting}
+
+\begin{bookfigurelabel}[htbp]{방식 A와 방식 B의 샘플별 확률 일치도}{fig:ch11-probability-scatter}
+\includegraphics[width=0.72\linewidth]{assets/figures/ch11_probability_scatter.png}
+\end{bookfigurelabel}
 
 
 
