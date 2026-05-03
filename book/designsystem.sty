@@ -1,0 +1,519 @@
+% designsystem.sty
+% Theme-neutral book UI commands. Load a theme before this package.
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{designsystem}[2026/05/04 v0.1 Text Analysis book design system]
+
+\RequirePackage{xcolor}
+\RequirePackage{tikz}
+\RequirePackage{adjustbox}
+\RequirePackage{caption}
+\RequirePackage[most]{tcolorbox}
+\RequirePackage{listings}
+\RequirePackage{etoolbox}
+\tcbuselibrary{listings, skins}
+\usetikzlibrary{calc, positioning}
+
+\colorlet{BookInk}{taInk}
+\colorlet{BookMuted}{taSubtext}
+\colorlet{BookBlue}{taSlate}
+\colorlet{BookCyan}{taSlateLight}
+\colorlet{BookGreen}{taPhaseOne}
+\colorlet{BookOrange}{taPhaseTwo}
+\colorlet{BookRed}{taPhaseThree}
+\colorlet{BookPaper}{taPaper}
+\colorlet{CodeBg}{taPaper}
+\colorlet{CodeRule}{taPaperDeep}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=taSlate,
+  urlcolor=taSlate,
+  citecolor=taSlate,
+  pdftitle={Hugging Face로 시작하는 텍스트 분석 입문},
+  pdfauthor={황윤구}
+}
+
+\renewcommand{\figurename}{그림}
+\renewcommand{\tablename}{표}
+\renewcommand{\listfigurename}{그림 목록}
+\renewcommand{\listtablename}{표 목록}
+
+\captionsetup[table]{
+  justification=centering,
+  singlelinecheck=true,
+  labelfont=bf,
+  font=small,
+  skip=6pt
+}
+
+\newenvironment{booktable}[2]{%
+  \par\begin{center}
+  \captionsetup{type=table}%
+  \small
+  \def\booktablecaption{#1}%
+  \def\booktablelabel{#2}%
+}{%
+  \vspace{4pt}%
+  \captionof{table}{\booktablecaption}\label{\booktablelabel}%
+  \end{center}\par
+}
+
+\lstdefinestyle{bookpython}{
+  language=Python,
+  basicstyle=\small\ttfamily,
+  keywordstyle=\color{taSlate}\bfseries,
+  commentstyle=\color{taSubtext}\upshape,
+  stringstyle=\color{taPhaseOne},
+  numberstyle=\tiny\color{taSubtext},
+  numbers=left,
+  stepnumber=1,
+  numbersep=8pt,
+  showstringspaces=false,
+  breaklines=true,
+  breakatwhitespace=false,
+  breakautoindent=true,
+  breakindent=1.8em,
+  columns=fullflexible,
+  keepspaces=true,
+  frame=leftline,
+  rulecolor=\color{taPhaseOne},
+  backgroundcolor=\color{taPaper},
+  frameround=ffff,
+  xleftmargin=1.4em,
+  framexleftmargin=1.1em,
+  framesep=6pt,
+  aboveskip=9pt,
+  belowskip=3pt
+}
+
+\lstdefinestyle{bookoutput}{
+  language={},
+  basicstyle=\small\ttfamily,
+  keywordstyle=\color{taInk},
+  commentstyle=\color{taInk},
+  stringstyle=\color{taInk},
+  numbers=none,
+  showstringspaces=false,
+  breaklines=true,
+  breakatwhitespace=false,
+  breakautoindent=true,
+  breakindent=1.4em,
+  columns=fullflexible,
+  keepspaces=true,
+  frame=leftline,
+  rulecolor=\color{taSlateMute},
+  backgroundcolor=\color{taPaper},
+  frameround=ffff,
+  xleftmargin=1.4em,
+  framexleftmargin=0.8em,
+  framesep=6pt,
+  aboveskip=4pt,
+  belowskip=4pt
+}
+\lstset{style=bookpython}
+
+\tcbset{
+  taboxbase/.style={
+    enhanced, breakable,
+    sharp corners,
+    boxrule=0pt,
+    left=12pt, right=12pt, top=10pt, bottom=10pt,
+    fontupper=\color{taInk},
+  }
+}
+
+\newtcolorbox{noteBox}[1][]{
+  enhanced,
+  breakable,
+  width=\linewidth,
+  colback=taPaper,
+  colframe=taSlate,
+  boxrule=0pt,
+  leftrule=2.5pt,
+  sharp corners,
+  left=12pt,right=12pt,top=10pt,bottom=10pt,
+  before upper={%
+    \ifstrempty{#1}{}{\noindent{\sffamily\small\bfseries\color{taSlate}#1}\par\vspace{6pt}}%
+  }
+}
+
+\newtcolorbox{faqBox}[1]{
+  enhanced,
+  breakable,
+  width=\linewidth,
+  colback=white,
+  colframe=taSlate,
+  boxrule=0.6pt,
+  sharp corners,
+  left=12pt,right=12pt,top=10pt,bottom=10pt,
+  before upper={%
+    \noindent{\sffamily\small\bfseries\color{taSlate}\raggedright #1\par}
+    \vspace{3pt}{\color{taSlateLight}\hrule height 0.4pt}\vspace{7pt}%
+  },
+  before skip=10pt,
+  after skip=8pt
+}
+
+\newtcolorbox{previewBox}[1]{
+  enhanced,
+  breakable,
+  width=\linewidth,
+  colback=taPaper,
+  colframe=taPhaseZero,
+  fontupper=\rmfamily\small,
+  boxrule=0pt,
+  leftrule=2.5pt,
+  sharp corners,
+  left=10pt,right=10pt,top=8pt,bottom=8pt,
+  before upper={%
+    \noindent{\sffamily\small\bfseries\color{taPhaseZero}#1}\par\vspace{6pt}%
+  },
+  before skip=12pt,
+  after skip=10pt
+}
+
+\newtcolorbox{codeReadBox}[1]{
+  enhanced,
+  breakable,
+  width=\linewidth,
+  colback=white,
+  colframe=taPaperDeep,
+  boxrule=0.4pt,
+  sharp corners,
+  left=9pt,right=9pt,top=7pt,bottom=7pt,
+  before upper={%
+    \noindent{\sffamily\bfseries\normalsize\color{taSubtext}#1}\par\vspace{4pt}%
+  },
+  before skip=7pt,
+  after skip=10pt
+}
+
+\newtcolorbox{practiceBox}[1][]{
+  enhanced,
+  width=\linewidth,
+  colback=white,
+  colframe=taPhaseOne,
+  title={#1},
+  fonttitle=\sffamily\bfseries\color{taPhaseOne},
+  boxrule=0.6pt,
+  sharp corners,
+  left=8pt,right=8pt,top=7pt,bottom=7pt
+}
+
+\newtcolorbox{warningBox}[1][]{
+  enhanced,
+  width=\linewidth,
+  colback=taPaper,
+  colframe=taPhaseTwo,
+  title={#1},
+  fonttitle=\sffamily\bfseries\color{taPhaseTwo},
+  boxrule=0pt,
+  leftrule=3pt,
+  sharp corners,
+  left=8pt,right=8pt,top=7pt,bottom=7pt
+}
+
+% Future-facing aliases from the original bundle.
+\newtcolorbox{tanote}[1][참고]{taboxbase,
+  colback=taPaper, colframe=taSlate,
+  leftrule=2.5pt,
+  before upper={\noindent{\sffamily\small\bfseries\color{taSlate}#1}\par\vspace{6pt}},
+}
+\newtcolorbox{tadefine}[1][정의]{taboxbase,
+  colback=white, colframe=taSlate,
+  boxrule=0.6pt,
+  arc=2pt,
+  before upper={%
+    \noindent{\sffamily\small\bfseries\color{taSlate}#1}\par
+    \vspace{3pt}{\color{taSlateLight}\hrule height 0.4pt}\vspace{6pt}%
+  },
+}
+\newtcolorbox{tatip}[1][팁]{taboxbase,
+  colback=taPaper, colframe=taPaper,
+  before upper={\noindent{\itshape\small\color{taSlate}\textbullet\ #1}\par\vspace{4pt}},
+}
+\newtcolorbox{taimportant}[1][중요]{taboxbase,
+  colback=taPaper, colframe=taPhaseTwo,
+  leftrule=3pt,
+  before upper={\noindent{\sffamily\small\bfseries\color{taPhaseTwo}#1}\par\vspace{6pt}},
+}
+\newtcolorbox{tainsight}{taboxbase,
+  colback=white, colframe=white,
+  boxrule=0pt, toprule=0.6pt, bottomrule=0.6pt,
+  frame style={taSlate},
+  fontupper=\itshape\color{taInk},
+  left=18pt, right=18pt, top=12pt, bottom=12pt,
+}
+\newtcblisting{tacode}[1][코드]{%
+  enhanced, breakable,
+  colback=taPaper, colframe=taPhaseOne,
+  sharp corners,
+  boxrule=0pt, leftrule=2pt,
+  arc=0pt, outer arc=0pt,
+  left=12pt, right=12pt, top=22pt, bottom=10pt,
+  fonttitle=\sffamily\footnotesize\bfseries,
+  coltitle=taPhaseOne,
+  colbacktitle=taPaper,
+  title={#1},
+  attach boxed title to top left={xshift=12pt, yshift=-12pt},
+  boxed title style={
+    colback=taPaper, colframe=taPaper,
+    sharp corners, boxrule=0pt,
+  },
+  listing only,
+  listing options={
+    basicstyle=\ttfamily\small\color{taInk},
+    breaklines=true,
+    keepspaces=true,
+    columns=flexible,
+    showstringspaces=false,
+  },
+}
+
+\newcommand{\inlinecode}[1]{%
+  \begingroup
+  \setlength{\fboxsep}{1.6pt}%
+  \colorbox{taPaper}{\strut\ttfamily\small #1}%
+  \endgroup
+}
+
+\newenvironment{codeRead}{%
+  \vspace{0.12em}%
+  \begingroup
+  \small
+  \raggedright
+  \setlength{\parskip}{0.25em}%
+  \noindent\textbf{위 코드 읽기.}\quad
+}{%
+  \par
+  \endgroup
+  \vspace{0.35em}%
+}
+
+\let\oldtexttt\texttt
+\renewcommand{\texttt}[1]{\inlinecode{#1}}
+
+\newenvironment{bookfigure}[2][H]
+  {\def\bookfigurecaption{#2}\begin{figure}[#1]\centering\begin{adjustbox}{max width=0.92\linewidth,max totalheight=0.46\textheight,keepaspectratio}}
+  {\end{adjustbox}\caption{\bookfigurecaption}\end{figure}}
+
+\newenvironment{bookfigurelabel}[3][H]
+  {\def\bookfigurecaption{#2}\def\bookfigurelabel{#3}\begin{figure}[#1]\centering\begin{adjustbox}{max width=0.92\linewidth,max totalheight=0.46\textheight,keepaspectratio}}
+  {\end{adjustbox}\caption{\bookfigurecaption}\label{\bookfigurelabel}\end{figure}}
+
+\newenvironment{bookdiagram}[2][htbp]
+  {\def\bookfigurecaption{#2}\begin{figure}[#1]\centering\begin{tikzpicture}}
+  {\end{tikzpicture}\caption{\bookfigurecaption}\end{figure}}
+
+\newcommand{\code}[1]{\inlinecode{#1}}
+\newcommand{\concept}[1]{#1\index{0#1@#1}}
+\newcommand{\api}[1]{\inlinecode{#1}\index{1#1@\oldtexttt{#1}}}
+\newcommand{\dataset}[1]{\inlinecode{#1}\index{1#1@\oldtexttt{#1}}}
+
+\newcommand{\chaptermeta}[3]{%
+  \begin{noteBox}[Chapter map]
+  \textbf{원천 노트북}: \texttt{\detokenize{#1}}\\
+  \textbf{Colab}: \href{#2}{바로 열기}\\
+  \textbf{이 장의 초점}: #3
+  \end{noteBox}
+}
+
+\newcounter{taphasecur}
+
+\newcommand{\chapline}[3]{%
+  \noindent
+  \makebox[20mm][l]{\itshape\small\color{\taphasecolor{\thetaphasecur}}#1}%
+  {\sffamily\bfseries\color{taInk}#2}%
+  {\sffamily\color{taSubtext}\ \,\textbf{·}\,\ #3}\par
+  \vspace{6pt}%
+}
+
+\newcommand{\phasedivider}[5]{%
+  \setcounter{taphasecur}{#1}%
+  \cleardoublepage
+  \thispagestyle{empty}
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[taPaper]
+      (current page.north west) rectangle (current page.south east);
+    \fill[\taphasecolor{#1}]
+      (current page.north west) rectangle ([yshift=-2.5mm]current page.north east);
+    \node[anchor=north west, text=taSubtext, font=\sffamily\fontsize{7}{9}\selectfont]
+      at ([xshift=20mm, yshift=-15mm]current page.north west)
+      {HUGGING FACE 텍스트 분석 입문};
+    \node[anchor=north east, text=taSubtext, font=\sffamily\fontsize{7}{9}\selectfont]
+      at ([xshift=-20mm, yshift=-15mm]current page.north east)
+      {0\the\value{taphasecur}\,/\,04};
+    \draw[taInk, line width=0.3pt, opacity=0.18]
+      ([xshift=20mm, yshift=-19mm]current page.north west) --
+      ([xshift=-20mm, yshift=-19mm]current page.north east);
+    \node[anchor=center, text=taSubtext, font=\sffamily\fontsize{10}{12}\selectfont]
+      at ([yshift=-50mm]current page.north)
+      {P\,H\,A\,S\,E};
+    \node[anchor=center, text=\taphasecolor{#1}, font=\bfseries\fontsize{120}{120}\selectfont]
+      at ([yshift=-95mm]current page.north)
+      {#1};
+    \node[anchor=center, text=taInk, font=\bfseries\fontsize{30}{34}\selectfont]
+      at ([yshift=-130mm]current page.north) {#2};
+    \node[anchor=center, text=taSlate, font=\fontsize{11}{13}\selectfont]
+      at ([yshift=-138mm]current page.north) {#3};
+    \node[anchor=center, text=taSlateMute, font=\itshape\fontsize{10}{12}\selectfont]
+      at ([yshift=-144mm]current page.north) {#4};
+    \draw[\taphasecolor{#1}, line width=1.2pt]
+      ([xshift=-7mm, yshift=-150mm]current page.north) -- ++(14mm, 0);
+    \node[anchor=north, inner sep=0pt]
+      at ([yshift=-160mm]current page.north)
+      {\begin{minipage}{120mm}#5\end{minipage}};
+    \foreach \i in {0, 1, 2, 3} {
+      \pgfmathsetmacro{\xpos}{(\i - 1.5) * 6}
+      \ifnum\i=#1\relax
+        \fill[\taphasecolor{#1}]
+          ([xshift=\xpos mm, yshift=-220mm]current page.north) circle (1.5pt);
+      \else
+        \draw[taSubtext, line width=0.4pt, opacity=0.5]
+          ([xshift=\xpos mm, yshift=-220mm]current page.north) circle (1.1pt);
+      \fi
+    }
+    \node[anchor=center, text=taSubtext, font=\sffamily\fontsize{7}{9}\selectfont]
+      at ([yshift=-228mm]current page.north)
+      {PHASE #1\ \ \textbf{·}\ \ #2};
+  \end{tikzpicture}
+  \cleardoublepage
+}
+
+\newcommand{\textbookcover}{%
+  \begin{titlepage}
+    \thispagestyle{empty}
+    \begin{tikzpicture}[remember picture, overlay]
+      \fill[taPaper]
+        (current page.north west) rectangle (current page.south east);
+      \fill[taPhaseOne]
+        (current page.north west) rectangle ([yshift=-2.5mm]current page.north east);
+      \fill[taSlateLight]
+        ([yshift=-2.5mm]current page.north west) rectangle ([yshift=-3.5mm]current page.north east);
+
+      \draw[taSlate, line width=0.6pt]
+        ([xshift=20mm, yshift=-22mm]current page.north west) -- ++(5mm, 0);
+      \node[anchor=west, text=taSubtext, font=\sffamily\fontsize{8}{10}\selectfont]
+        at ([xshift=27mm, yshift=-22mm]current page.north west)
+        {NLP\ \ \textbf{·}\ \ TRANSFORMERS};
+
+      \node[anchor=north west, text=taSlate, font=\fontsize{15}{18}\selectfont]
+        at ([xshift=20mm, yshift=-50mm]current page.north west)
+        {Hugging Face로 시작하는};
+      \node[anchor=north west, text=taInk, font=\bfseries\fontsize{42}{48}\selectfont]
+        at ([xshift=20mm, yshift=-65mm]current page.north west)
+        {텍스트 분석};
+      \node[anchor=north west, text=taInk, font=\bfseries\fontsize{42}{48}\selectfont]
+        at ([xshift=20mm, yshift=-85mm]current page.north west)
+        {입문};
+      \draw[taSlate, line width=2pt]
+        ([xshift=20mm, yshift=-110mm]current page.north west) -- ++(20mm, 0);
+      \node[anchor=north west, text=taSlateMute, font=\itshape\fontsize{11}{13}\selectfont]
+        at ([xshift=20mm, yshift=-115mm]current page.north west)
+        {Introduction to Text Analysis with Hugging Face};
+      \node[anchor=north west, text=taSlate, font=\fontsize{10}{12}\selectfont]
+        at ([xshift=20mm, yshift=-123mm]current page.north west)
+        {현재 원고: 1--14장\ \ \textbf{·}\ \ Phase 1 마무리};
+
+      \draw[taSlate, line width=0.6pt]
+        ([xshift=20mm, yshift=-144mm]current page.north west) -- ++(8mm, 0);
+      \node[anchor=west, text=taSubtext, font=\sffamily\fontsize{7}{9}\selectfont]
+        at ([xshift=30mm, yshift=-144mm]current page.north west)
+        {CURRENT MANUSCRIPT\ \ \textbf{·}\ \ PHASE 1 COMPLETE\ \ \textbf{·}\ \ CH 1--14};
+
+      \node[anchor=north west, text=taInk, font=\fontsize{10}{12}\selectfont\bfseries]
+        at ([xshift=20mm, yshift=-153mm]current page.north west)
+        {PHASE 0\ \ \textbf{·}\ \ 기초 다지기};
+      \node[anchor=north east, text=taSubtext, font=\itshape\fontsize{8}{10}\selectfont]
+        at ([xshift=150mm, yshift=-153mm]current page.north west)
+        {Ch 1--6};
+      \node[anchor=north west, text=taSubtext, font=\fontsize{8}{10}\selectfont]
+        at ([xshift=20mm, yshift=-158mm]current page.north west)
+        {sklearn\ \ \textbf{·}\ \ TF-IDF로 task와 loss의 본질};
+      \fill[taTrack, opacity=0.08]
+        ([xshift=20mm, yshift=-164mm]current page.north west) rectangle
+        ([xshift=150mm, yshift=-165.5mm]current page.north west);
+      \fill[taPhaseZero]
+        ([xshift=20mm, yshift=-164mm]current page.north west) rectangle
+        ([xshift=150mm, yshift=-165.5mm]current page.north west);
+
+      \node[anchor=north west, text=taInk, font=\fontsize{10}{12}\selectfont\bfseries]
+        at ([xshift=20mm, yshift=-172mm]current page.north west)
+        {PHASE 1\ \ \textbf{·}\ \ BERT 기반 태스크 재정식화};
+      \node[anchor=north east, text=taSubtext, font=\itshape\fontsize{8}{10}\selectfont]
+        at ([xshift=150mm, yshift=-172mm]current page.north west)
+        {Ch 7--14};
+      \node[anchor=north west, text=taSubtext, font=\fontsize{8}{10}\selectfont]
+        at ([xshift=20mm, yshift=-177mm]current page.north west)
+        {DistilBERT와 Trainer로 Loss·Head 재해석};
+      \fill[taTrack, opacity=0.08]
+        ([xshift=20mm, yshift=-183mm]current page.north west) rectangle
+        ([xshift=150mm, yshift=-184.5mm]current page.north west);
+      \fill[taPhaseOne]
+        ([xshift=20mm, yshift=-183mm]current page.north west) rectangle
+        ([xshift=150mm, yshift=-184.5mm]current page.north west);
+
+      \node[anchor=north west, text=taInk, font=\fontsize{10}{12}\selectfont\bfseries]
+        at ([xshift=20mm, yshift=-191mm]current page.north west)
+        {PHASE 2\ \ \textbf{·}\ \ 한국어 BERT 재방문};
+      \node[anchor=north east, text=taSubtext, font=\itshape\fontsize{8}{10}\selectfont]
+        at ([xshift=150mm, yshift=-191mm]current page.north west)
+        {Ch 15--18};
+      \node[anchor=north west, text=taSubtext, font=\fontsize{8}{10}\selectfont]
+        at ([xshift=20mm, yshift=-196mm]current page.north west)
+        {klue/bert-base\ \ \textbf{·}\ \ NSMC\ \ \textbf{·}\ \ KLUE-YNAT};
+      \fill[taTrack, opacity=0.08]
+        ([xshift=20mm, yshift=-202mm]current page.north west) rectangle
+        ([xshift=150mm, yshift=-203.5mm]current page.north west);
+      \fill[taPhaseTwo]
+        ([xshift=20mm, yshift=-202mm]current page.north west) rectangle
+        ([xshift=20mm, yshift=-203.5mm]current page.north west);
+
+      \node[anchor=north west, text=taInk, font=\fontsize{10}{12}\selectfont\bfseries]
+        at ([xshift=20mm, yshift=-210mm]current page.north west)
+        {PHASE 3\ \ \textbf{·}\ \ 토크나이저 직접 학습};
+      \node[anchor=north east, text=taSubtext, font=\itshape\fontsize{8}{10}\selectfont]
+        at ([xshift=150mm, yshift=-210mm]current page.north west)
+        {Ch 19--20};
+      \node[anchor=north west, text=taSubtext, font=\fontsize{8}{10}\selectfont]
+        at ([xshift=20mm, yshift=-215mm]current page.north west)
+        {워드레벨\,\textbf{·}\,형태소 토크나이저 직접 학습};
+      \fill[taTrack, opacity=0.08]
+        ([xshift=20mm, yshift=-221mm]current page.north west) rectangle
+        ([xshift=150mm, yshift=-222.5mm]current page.north west);
+      \fill[taPhaseThree]
+        ([xshift=20mm, yshift=-221mm]current page.north west) rectangle
+        ([xshift=20mm, yshift=-222.5mm]current page.north west);
+
+      \draw[taSlate, line width=1.5pt]
+        ([xshift=20mm, yshift=-235mm]current page.north west) -- ++(13mm, 0);
+      \node[anchor=north west, text=taInk, font=\bfseries\fontsize{14}{16}\selectfont]
+        at ([xshift=20mm, yshift=-240mm]current page.north west)
+        {황윤구 지음};
+      \node[anchor=north west, text=taSubtext, font=\sffamily\fontsize{7}{9}\selectfont]
+        at ([xshift=20mm, yshift=-248mm]current page.north west)
+        {PYTHON\ \ \textbf{·}\ \ COLAB\ \ \textbf{·}\ \ HUGGINGFACE};
+      \node[anchor=north east, text=taSlate, font=\itshape\fontsize{10}{12}\selectfont]
+        at ([xshift=-20mm, yshift=-248mm]current page.north east)
+        {v0.3.0};
+    \end{tikzpicture}
+  \end{titlepage}
+}
+
+\newcommand{\partdivider}[3]{%
+  \cleardoublepage
+  \thispagestyle{empty}
+  \begin{tikzpicture}[remember picture,overlay]
+    \fill[#1] (current page.south west) rectangle (current page.north east);
+    \fill[white,opacity=.10] ([xshift=-2cm,yshift=-3cm]current page.north east) circle (6cm);
+    \fill[white,opacity=.08] ([xshift=1cm,yshift=2cm]current page.south west) circle (7cm);
+  \end{tikzpicture}
+  \vspace*{0.22\textheight}
+  {\color{white}\sffamily\bfseries\fontsize{34}{40}\selectfont #2\par}
+  \vspace{1.2em}
+  {\color{white}\sffamily\Large #3\par}
+  \cleardoublepage
+}
+
+\endinput

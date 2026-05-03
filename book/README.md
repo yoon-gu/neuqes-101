@@ -16,7 +16,9 @@ PDF는 `book/build/neuqes-101-ch01-14-manuscript.pdf`에 생성됩니다.
 ## 구조
 
 - `main.tex`: 책 전체 진입점
-- `preamble/`: 폰트, 코드, 박스, 색인 스타일
+- `designsystem.sty`: 박스, 코드 블록, 표/그림, 표지, Phase 속지 명령
+- `themes/`: 색상 팔레트 테마. 현재 기본값은 `slate.sty` (Cool Slate)
+- `preamble/`: 폰트, 페이지 레이아웃, 색인 스타일
 - `frontmatter/`: 표지, 속표지, 서문
 - `chapters/`: 1-14장 출판용 원고
 - `appendices/`: 검증 전 부록 노트북의 자리 표시 원고
@@ -24,6 +26,8 @@ PDF는 `book/build/neuqes-101-ch01-14-manuscript.pdf`에 생성됩니다.
 - `tools/notebook_to_tex.py`: 노트북 원천에서 장 원고를 재생성하는 스크립트
 
 본문 폰트는 `NanumGothic`, 코드 폰트는 `NanumGothicCoding` 파일을 직접 지정합니다.
+
+테마는 `main.tex`의 `\booktheme` 값으로 선택합니다. 지금은 `slate` 한 벌만 유지하며, 본문 원고는 그대로 두고 `themes/<name>.sty`만 추가하면 다른 색상 테마를 실험할 수 있게 분리해 두었습니다.
 
 ## 조판 규칙
 

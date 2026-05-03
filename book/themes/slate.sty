@@ -1,0 +1,35 @@
+% themes/slate.sty
+% Cool Slate theme tokens for the text analysis manuscript.
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{themes/slate}[2026/05/04 v0.1 Cool Slate theme]
+
+\RequirePackage{xcolor}
+
+% Base surface and text tokens.
+\definecolor{taPaper}{HTML}{ECEEED}
+\definecolor{taPaperDeep}{HTML}{D5D9D8}
+\definecolor{taInk}{HTML}{1B2733}
+\definecolor{taSubtext}{HTML}{4F5A6A}
+\definecolor{taSlateMute}{HTML}{6B7986}
+\definecolor{taTrack}{HTML}{1B2733}
+
+% Main accent tokens.
+\definecolor{taSlate}{HTML}{4F6D8C}
+\definecolor{taSlateLight}{HTML}{6E8AA6}
+
+% Phase tokens.
+\definecolor{taPhaseZero}{HTML}{8DA3B8}
+\definecolor{taPhaseOne}{HTML}{5E7D9C}
+\definecolor{taPhaseTwo}{HTML}{3F5E80}
+\definecolor{taPhaseThree}{HTML}{243F62}
+
+% Numeric aliases for TikZ key-value usage.
+\colorlet{taPhase0}{taPhaseZero}
+\colorlet{taPhase1}{taPhaseOne}
+\colorlet{taPhase2}{taPhaseTwo}
+\colorlet{taPhase3}{taPhaseThree}
+
+\newcommand{\taphasecolor}[1]{taPhase#1}
+
+\endinput
