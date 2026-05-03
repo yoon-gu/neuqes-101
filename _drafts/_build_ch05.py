@@ -146,11 +146,10 @@ print(f"X_train: {X_train.shape}, y_train distribution: {pd.Series(y_train).valu
 # ----- 9. 실습 도입 -----
 md(r"""## 🚀 실습: 5클래스 분류
 
-코드는 Ch 4와 동일 — `LogisticRegression()` 한 줄. sklearn은 *데이터의 클래스 개수* 를 보고 multinomial(softmax+CE)을 자동으로 적용합니다 (sklearn 1.5+ 에선 `multi_class=` 인자가 제거됨, FAQ 참조).""")
+코드는 Ch 4 와 동일한 `LogisticRegression()` 한 줄. sklearn 은 *학습 데이터의 클래스 개수* 를 보고, K=5 multi-class 라 자동으로 multinomial(softmax+CE)을 적용합니다.""")
 
 # ----- 10. fit -----
-code(r"""# 데이터가 K=5 multi-class 이므로 sklearn 이 자동으로 multinomial(softmax+CE) 학습.
-# 구 sklearn 에선 multi_class="multinomial" 명시 필요했지만 1.5+ 에선 제거됨.
+code(r"""# K=5 multi-class 데이터 → sklearn 이 자동으로 multinomial(softmax+CE) 학습
 model_5 = LogisticRegression(max_iter=1000)
 model_5.fit(X_train, y_train)
 

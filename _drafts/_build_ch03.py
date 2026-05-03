@@ -384,10 +384,10 @@ md(r"""## 다음 챕터 예고
 
 **Chapter 4. sklearn Multi-class — sigmoid가 softmax로**
 
-- 별점 1-5를 5개 독립 클래스로 보고 `LogisticRegression(multi_class="multinomial")`로 분류
+- 별점 1-5 를 5개 독립 클래스로 보고 `LogisticRegression()` 한 줄로 분류 (sklearn 이 multi-class 데이터에 자동으로 multinomial+softmax 적용)
 - 출력이 1차원에서 **5차원** 으로 늘어나고, sigmoid 대신 **softmax** 가 붙음 (합 = 1 강제)
-- Loss는 BCE에서 **`CrossEntropyLoss`** (sklearn: multinomial log loss)로 일반화
-- `multinomial` vs `ovr`(One-vs-Rest) 비교 — `ovr`이 Ch 5 multi-label로 가는 다리""")
+- Loss 는 BCE 에서 **`CrossEntropyLoss`** (sklearn: multinomial log loss) 로 일반화
+- multinomial(softmax+CE) vs OvR(One-vs-Rest, K개 독립 binary) 비교 — OvR 이 Ch 6 multi-label 로 가는 다리""")
 
 
 nb = {

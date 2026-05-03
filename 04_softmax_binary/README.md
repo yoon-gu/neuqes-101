@@ -10,7 +10,7 @@ Ch 3과 **완전히 같은 binary 데이터** 를 출력 차원 2로 늘리고 s
 - 두 방식 비교: 같은 데이터에 sigmoid+BCE / softmax+CE 학습 → predict_proba 거의 일치
 - **수학적 동등성**: $\sigma(z) = \text{softmax}([z_0, z_1])_1 = \sigma(z_1 - z_0)$, K=2 CE → BCE
 - 동등성 코드 시연: 임의의 logit 쌍에서 `softmax([z_0,z_1])_1 == sigmoid(z_1-z_0)` 직접 확인 (max 차이 ~1e-16)
-- sklearn 동작 관찰: `multi_class="multinomial"` 을 줘도 K=2이면 `coef_.shape`가 `(1, V)` — sklearn이 K=2 multinomial을 binary form으로 자동 collapse하기 때문. 진짜 (2, V) 두 logit head는 Ch 10 PyTorch에서 등장
+- sklearn 동작 관찰: 모던 `LogisticRegression()` 도 K=2 binary 데이터에서는 `coef_.shape` 가 `(1, V)` — sklearn 이 K=2 multinomial 을 binary form 으로 자동 collapse 하기 때문. 진짜 (2, V) 두 logit head 는 Ch 10 PyTorch 에서 등장
 
 ## 손실 수치 예시 (K=2, 정답 y=1)
 | 예측 분포 | 정답 확률 | 손실 |
@@ -32,7 +32,7 @@ Google Colab CPU 런타임으로 충분 (GPU 불필요). 약 5-10분.
 | Ch | 모델 | 데이터 | Output | Activation | Loss |
 |---|---|---|---|---|---|
 | 3 | `LogisticRegression()` | Yelp 이진화 | (1차원) | sigmoid | `BCEWithLogitsLoss` |
-| **4** | `LogisticRegression(multi_class="multinomial")` | Yelp 이진화 | **(2차원)** | **softmax** | **`CrossEntropyLoss`** |
+| **4** | `LogisticRegression()` (multinomial 자동) | Yelp 이진화 | **(2차원)** | **softmax** | **`CrossEntropyLoss`** |
 
 전체 20챕터 표는 [루트 README](../README.md#챕터별-변화추적표)를 참고하세요.
 

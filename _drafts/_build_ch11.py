@@ -62,7 +62,7 @@ md(r"""## 📊 변화추적표
 | Ch | 모델 | 토크나이저 | 데이터 | Output Head | Activation | Loss |
 |---|---|---|---|---|---|---|
 | 3 | `LogisticRegression()` | `TfidfVectorizer()` | Yelp 이진화 | (1차원) | sigmoid | `BCEWithLogitsLoss` |
-| 4 | `LogisticRegression(multi_class="multinomial")` | `TfidfVectorizer()` | Yelp 이진화 (Ch 3과 동일) | (2차원) | softmax | `CrossEntropyLoss` |
+| 4 | `LogisticRegression()` (multinomial 자동) | `TfidfVectorizer()` | Yelp 이진화 (Ch 3과 동일) | (2차원) | softmax | `CrossEntropyLoss` |
 | 9 | DistilBERT 파인튜닝 | `AutoTokenizer.from_pretrained(...)` | Yelp (별점 1-5) | `Linear(H, 1)` | 없음 | `MSELoss` |
 | 10 | DistilBERT 파인튜닝 | 같음 | Yelp 이진화 | `Linear(H, 1)` | sigmoid | `BCEWithLogitsLoss` |
 | **11 ← 여기** | DistilBERT 파인튜닝 | 같음 | Yelp 이진화 (Ch 10과 동일) | **`Linear(H, 2)`** | **softmax** | **`CrossEntropyLoss`** |
@@ -603,7 +603,9 @@ probs_full = torch.softmax(torch.from_numpy(logits), dim=-1).numpy()
 
 이 챕터에선 *softmax가 어떻게 동작하는지* 노출하기 위해 `np.exp / sum` 으로 직접 짰습니다 — `max` 빼서 안정화하는 부분이 곧 PyTorch 내부 구현과 동일한 트릭입니다.
 
-### Q4. (이론) 방식 A는 sklearn `LogisticRegression()` 과 같은 셋업이고, 방식 B는 `LogisticRegression(multi_class="multinomial")` 같은 셋업이라고 했는데 — 그러면 sklearn에서도 두 모델의 학습 결과가 BERT처럼 다른가요?
+### Q4. (이론) 방식 A·B 가 sklearn 안에선 사실상 같은 모델이라고 했는데, 그러면 BERT 에서도 두 학습 결과가 같아야 하지 않나요?
+
+sklearn 의 binary `LogisticRegression()` 은 modern 기본 동작이 *softmax+CE* 든 *sigmoid+BCE* 든 동일한 형태로 학습 (Ch 4 FAQ Q4 — `coef_.shape=(1, V)` 로 collapse). 즉 sklearn 에선 두 방식이 거의 *수치적 등가*. BERT 에선 그렇지 않은 이유는 다음입니다.
 
 sklearn에서는 두 *방식* 의 차이가 BERT보다 훨씬 작습니다. 이유는:
 

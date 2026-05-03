@@ -62,8 +62,8 @@ md(r"""## 📊 변화추적표
 | 1 | (TF-IDF) | `TfidfVectorizer()` | Yelp 5,000 | — | — | — |
 | 2 | `LinearRegression()` | `TfidfVectorizer()` | Yelp (별점 1-5) | (1차원) | 없음 | `MSELoss` |
 | 3 | `LogisticRegression()` | `TfidfVectorizer()` | Yelp 이진화 | (1차원) | sigmoid | `BCEWithLogitsLoss` |
-| 4 | `LogisticRegression(multi_class="multinomial")` | `TfidfVectorizer()` | Yelp 이진화 (Ch 3과 동일) | (2차원) | softmax | `CrossEntropyLoss` |
-| 5 | `LogisticRegression(multi_class="multinomial")` | `TfidfVectorizer()` | Yelp 5클래스 | (5차원) | softmax | `CrossEntropyLoss` |
+| 4 | `LogisticRegression()` (multinomial 자동) | `TfidfVectorizer()` | Yelp 이진화 (Ch 3과 동일) | (2차원) | softmax | `CrossEntropyLoss` |
+| 5 | `LogisticRegression()` (multinomial 자동) | `TfidfVectorizer()` | Yelp 5클래스 | (5차원) | softmax | `CrossEntropyLoss` |
 | **6 ← 여기** | `OneVsRestClassifier(LogisticRegression())` | `TfidfVectorizer()` | Yelp + 측면 키워드 합성 | (5차원) | **sigmoid (각각 독립)** | **`BCEWithLogitsLoss` per-label** |
 
 전체 20챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.""")
@@ -507,27 +507,21 @@ print(f"라벨별 최적 임계값: {dict(zip(ASPECTS, best_thresholds))}")
 
 ⚠️ 주의: 위 코드는 *test set* 으로 임계값을 정해 보여준 것 — 실무에선 *별도 검증 데이터셋* 으로 임계값을 정하고 test에는 적용만 해야 합니다 (안 그러면 test에 누설).
 
-### Q7. (실무) `LogisticRegression(multi_class="ovr")` (Ch 5)와 `OneVsRestClassifier(LogisticRegression())` (이번 챕터)은 정확히 어떻게 다른가요?
+### Q7. (실무) sklearn 에서 OvR 을 어떻게 구현하나요?
 
-겉보기엔 같은 OvR 알고리즘인데, 두 도구가 *다른 위치* 에 있는 이유가 있습니다.
+**한 줄 답**: `OneVsRestClassifier(LogisticRegression())` 로 wrap. multi-class·multi-label 양쪽에 통하는 *표준 패턴* 입니다.
 
-| 비교 항목 | `LogisticRegression(multi_class="ovr")` (Ch 5) | `OneVsRestClassifier(LogisticRegression())` (Ch 6) |
-|---|---|---|
-| 정체 | 모델 *인자(flag)* | 별도 *wrapper class* (`sklearn.multiclass`) |
-| 받는 Y 형식 | **1D만** (multi-class 인덱스 0~K-1) | **1D + 2D 둘 다** (multi-class 또는 multi-label) |
-| 내부 저장 | 단일 `coef_` shape `(K, V)` | K개 *별도* estimator를 `.estimators_` 리스트로, 각자 `coef_` shape `(1, V)` |
-| base classifier | `LogisticRegression` 전용 (+ `LogisticRegressionCV`, `LinearSVC` 등 일부 선형 모델) | **임의 binary 분류기** 가능 (`SVC`, `RandomForestClassifier`, ...) |
-| multi-label 지원 | ❌ (1D Y만 받으니 불가능) | ✅ |
-| sklearn 향후 | `multi_class` 인자 deprecated 진행 중 (1.7+에서 제거 예정) | 표준 클래스로 그대로 유지 |
+`OneVsRestClassifier` wrapper 의 특징:
 
-**핵심 차이**: `multi_class="ovr"`은 *multi-class 분류 안에서의 옵션* 이고, `OneVsRestClassifier`는 *multi-class와 multi-label 둘 다 처리하는 일반 wrapper* 입니다.
+| 비교 항목 | `OneVsRestClassifier(LogisticRegression())` |
+|---|---|
+| 받는 Y 형식 | **1D + 2D 둘 다** (multi-class 또는 multi-label) |
+| 내부 저장 | K개 *별도* estimator 를 `.estimators_` 리스트로, 각자 `coef_` shape `(1, V)` |
+| base classifier | **임의 binary 분류기** 가능 (`SVC`, `RandomForestClassifier`, ...) |
+| multi-label 지원 | ✅ |
 
 ```python
-# Ch 5에서: multi-class만 가능 (1D Y)
-LogisticRegression(multi_class="ovr").fit(X, y_1d)        # ✅ 동작
-LogisticRegression(multi_class="ovr").fit(X, y_multihot)  # ❌ ValueError (1D 아님)
-
-# Ch 6에서: multi-class와 multi-label 모두
+# multi-class 와 multi-label 모두 같은 패턴
 OneVsRestClassifier(LogisticRegression()).fit(X, y_1d)        # ✅ multi-class
 OneVsRestClassifier(LogisticRegression()).fit(X, y_multihot)  # ✅ multi-label
 
@@ -536,11 +530,7 @@ from sklearn.svm import SVC
 OneVsRestClassifier(SVC(probability=True)).fit(X, y_multihot)  # ✅
 ```
 
-**언제 무엇을 쓰나**:
-- multi-class에서 LogReg의 *내장 OvR* 동작을 잠깐 비교하고 싶다면 `multi_class="ovr"` (단, 향후 deprecated이라 신규 코드는 비추).
-- multi-label, 또는 base 분류기를 바꿔야 하거나, K개 binary 모델을 *명시적으로* 다루고 싶다면 `OneVsRestClassifier` (안정적, 미래에도 그대로).
-
-이 커리큘럼은 Ch 5에서 **개념 비교용으로** `multi_class="ovr"` 을 잠깐 썼고, Ch 6의 multi-label에서는 **표준 도구인** `OneVsRestClassifier` 로 정착합니다.""")
+이 커리큘럼은 Ch 5 에선 *모던 `LogisticRegression()` (multinomial 자동)* 으로 multi-class softmax 를 하고, Ch 6 의 multi-label 에서는 `OneVsRestClassifier` 로 *명시적* 으로 K개 binary 학습을 표현합니다.""")
 
 # ----- 23. 삽질 -----
 md(r"""## 🚀 삽질 코너 (선택)
@@ -554,7 +544,8 @@ y_pseudo_class = Y[mask_nonempty].argmax(axis=1)   # 0-4 사이 정수, "가장 
 texts = df["text"][mask_nonempty]
 
 X_pseudo = tfidf.transform(texts)
-model_pseudo = LogisticRegression(multi_class="multinomial", max_iter=1000)
+# 모던 sklearn — multi-class 데이터면 multinomial(softmax) 자동
+model_pseudo = LogisticRegression(max_iter=1000)
 model_pseudo.fit(X_pseudo[:4000], y_pseudo_class[:4000])
 acc_pseudo = (model_pseudo.predict(X_pseudo[4000:]) == y_pseudo_class[4000:]).mean()
 print(f"강제로 multi-class화 한 경우 accuracy: {acc_pseudo:.4f}")
