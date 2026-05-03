@@ -69,3 +69,14 @@ PDF는 GitHub Release asset으로 배포합니다. 노트북은 실습용 원본
 - 챕터당 30분 이내
 - bf16 미지원(T4 Compute Capability 7.5) → `fp16=True` 만 사용
 - Flash Attention 2 미지원
+
+## 개발 (저자용)
+
+새로 clone한 직후 한 번만 실행:
+
+```bash
+git config core.hooksPath .githooks
+python3 -m pip install --user --break-system-packages pyflakes
+```
+
+이 설정 후 `git push` 직전에 `.githooks/pre-push` 가 자동으로 `_drafts/_lint_notebooks.py` 를 실행해 노트북에 실행 안 되는 파이썬 코드가 있는지 점검합니다. 실패하면 push가 막히고, 의도적으로 우회하려면 `git push --no-verify`.

@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# pre-push hook — runs the notebook lint before allowing a push.
+#
+# Bypass (use only when intentional):
+#   git push --no-verify
+
+set -e
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+# Only lint when notebooks or build scripts are part of what's being pushed.
+# Fall through quickly otherwise (docs-only / book/ pushes shouldn't pay the cost).
+RANGE_FILES=""
+while read local_ref local_sha remote_ref remote_sha; do
+  [ -z "$local_sha" ] && continue
+  [ "$local_sha" = "0000000000000000000000000000000000000000" ] && continue
+  if [ "$remote_sha" = "0000000000000000000000000000000000000000" ]; then
+    # New branch — diff against the default upstream
+    RANGE="$local_sha"
+  else
+    RANGE="$remote_sha..$local_sha"
+  fi
+  RANGE_FILES+="$(git diff --name-only $RANGE 2>/dev/null || true)"$'\n'
+done
+
+if ! echo "$RANGE_FILES" | grep -qE '\.ipynb$|_drafts/_build_.*\.py$|_drafts/_lint_notebooks\.py$'; then
+  exit 0
+fi
+
+echo "▶ pre-push: linting notebooks…"
+cd "$REPO_ROOT"
+python3 _drafts/_lint_notebooks.py
