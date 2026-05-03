@@ -175,6 +175,159 @@ CHAPTERS = [
             "측면 라벨",
         ),
     ),
+    Chapter(
+        7,
+        "bert_pipeline",
+        "BERT 첫 만남 (Pipeline)",
+        "BERT 첫 만남 (Pipeline)",
+        "pipeline 한 줄 뒤의 tokenizer, model, post-processing 분해",
+        (
+            "BERT",
+            "DistilBERT",
+            "pipeline",
+            "AutoTokenizer",
+            "AutoModelForSequenceClassification",
+            "WordPiece",
+            "pretrained model",
+            "special token",
+            "post-processing",
+            "BERT 첫 만남",
+            "사전학습 모델",
+            "파이프라인",
+            "워드피스",
+            "특수 토큰",
+            "토크나이저",
+            "추론",
+        ),
+    ),
+    Chapter(
+        8,
+        "tokenizer_datasets",
+        "토크나이저 옵션과 데이터셋 (Tokenizer \\& Datasets)",
+        "토크나이저 옵션과 데이터셋 (Tokenizer \\& Datasets)",
+        "padding, truncation, max_length와 datasets 입력 파이프라인",
+        (
+            "Tokenizer",
+            "datasets",
+            "load_dataset",
+            "Dataset.map",
+            "Dataset.filter",
+            "padding",
+            "truncation",
+            "max_length",
+            "attention_mask",
+            "DataCollatorWithPadding",
+            "DataLoader",
+            "Apache Arrow",
+            "토크나이저 옵션",
+            "패딩",
+            "잘림",
+            "최대 길이",
+            "어텐션 마스크",
+            "데이터셋",
+            "입력 파이프라인",
+        ),
+    ),
+    Chapter(
+        9,
+        "bert_regression",
+        "BERT 회귀 분석 (Regression \\& Trainer)",
+        "BERT 회귀 분석 (Regression \\& Trainer)",
+        "DistilBERT 파인튜닝과 Trainer의 첫 사용",
+        (
+            "BERT regression",
+            "DistilBERT",
+            "Trainer",
+            "TrainingArguments",
+            "problem_type",
+            "regression",
+            "MSELoss",
+            "fp16",
+            "Adam",
+            "compute_metrics",
+            "fine-tuning",
+            "파인튜닝",
+            "트레이너",
+            "학습 인자",
+            "회귀 헤드",
+            "평균제곱오차",
+            "혼합 정밀도",
+            "GPU 메모리",
+        ),
+    ),
+    Chapter(
+        10,
+        "bert_binary_sigmoid",
+        "BERT 이진 분류 A (Sigmoid \\& BCE)",
+        "BERT 이진 분류 A (Sigmoid \\& BCE)",
+        "num_labels=1, sigmoid, BCEWithLogitsLoss 방식의 BERT 이진 분류",
+        (
+            "BERT binary classification",
+            "sigmoid",
+            "BCEWithLogitsLoss",
+            "num_labels=1",
+            "multi_label_classification",
+            "binary threshold",
+            "ROC AUC",
+            "precision_recall_fscore_support",
+            "prediction cache",
+            "이진 분류",
+            "시그모이드",
+            "이진 교차 엔트로피",
+            "확률 임계값",
+            "예측 저장",
+            "AUC",
+        ),
+    ),
+    Chapter(
+        11,
+        "bert_binary_softmax",
+        "BERT 이진 분류 B (Softmax \\& CE)",
+        "BERT 이진 분류 B (Softmax \\& CE)",
+        "num_labels=2, softmax, CrossEntropyLoss 표준 BERT 분류 방식",
+        (
+            "BERT binary softmax",
+            "softmax",
+            "CrossEntropyLoss",
+            "num_labels=2",
+            "single_label_classification",
+            "id2label",
+            "label2id",
+            "logit difference",
+            "prediction agreement",
+            "소프트맥스",
+            "교차 엔트로피",
+            "라벨 매핑",
+            "로짓 차이",
+            "예측 일치율",
+            "이진 분류 동등성",
+        ),
+    ),
+    Chapter(
+        12,
+        "bert_multiclass",
+        "BERT 다중 클래스 분류 (Multi-class \\& CE)",
+        "BERT 다중 클래스 분류 (Multi-class \\& CE)",
+        "Yelp 5클래스 분류로 확장한 DistilBERT softmax 분류",
+        (
+            "BERT multi-class classification",
+            "multi-class classification",
+            "CrossEntropyLoss",
+            "num_labels=5",
+            "confusion_matrix",
+            "classification_report",
+            "roc_auc_score",
+            "macro F1",
+            "calibration",
+            "random baseline",
+            "다중 클래스 분류",
+            "혼동 행렬",
+            "분류 리포트",
+            "매크로 F1",
+            "캘리브레이션",
+            "랜덤 기준선",
+        ),
+    ),
 ]
 
 
@@ -317,6 +470,100 @@ EXTRA_INDEXES = {
         "라벨 불균형",
         "이진 관련성",
     ),
+    7: (
+        "transformers",
+        "pipeline(\"sentiment-analysis\")",
+        "from_pretrained",
+        "model.forward",
+        "logits",
+        "softmax",
+        "argmax",
+        "[CLS]",
+        "[SEP]",
+        "WordPiece prefix",
+        "WordPiece 접두사",
+        "SST-2",
+        "sentiment analysis",
+        "감성 분석",
+        "모델 다운로드",
+        "캐시",
+        "토큰 ID",
+        "후처리",
+    ),
+    8: (
+        "memory mapping",
+        "Dataset.select",
+        "Dataset.shuffle",
+        "with_format",
+        "torch format",
+        "token length distribution",
+        "95th percentile",
+        "padding=True",
+        "padding=\"max_length\"",
+        "truncation=True",
+        "input_ids",
+        "토큰 길이 분포",
+        "메모리 매핑",
+        "배치 패딩",
+        "고정 길이 패딩",
+        "동적 패딩",
+    ),
+    9: (
+        "AutoModelForSequenceClassification",
+        "num_labels=1",
+        "problem_type=\"regression\"",
+        "TrainingArguments",
+        "evaluation_strategy",
+        "save_strategy",
+        "learning_rate",
+        "per_device_train_batch_size",
+        "weight_decay",
+        "VRAM",
+        "nvidia-smi",
+        "정규방정식",
+        "경사하강법",
+        "학습률",
+        "배치 크기",
+        "가중치 감쇠",
+    ),
+    10: (
+        "problem_type=\"multi_label_classification\"",
+        "sigmoid probability",
+        "threshold=0.5",
+        "roc_auc_score",
+        "seaborn.kdeplot",
+        "probability distribution",
+        "positive class",
+        "negative class",
+        "확률 분포",
+        "양성 클래스",
+        "음성 클래스",
+        "결과 캐시",
+    ),
+    11: (
+        "problem_type=\"single_label_classification\"",
+        "stable softmax",
+        "exp(x - max)",
+        "scatter plot",
+        "correlation",
+        "four-quadrant analysis",
+        "표준 분류 셋업",
+        "안정 소프트맥스",
+        "상관계수",
+        "4분면 분석",
+    ),
+    12: (
+        "seaborn.heatmap",
+        "row-normalized confusion matrix",
+        "multi-class AUC",
+        "top-1 probability",
+        "log K baseline",
+        "ordinal label",
+        "행 정규화 혼동 행렬",
+        "다중 클래스 AUC",
+        "최상위 확률",
+        "순서형 라벨",
+    ),
 }
 
 
@@ -333,6 +580,12 @@ HANGUL_PATTERN = re.compile(r"[가-힣]")
 
 def index_sort_prefix(term: str) -> str:
     return "0" if HANGUL_PATTERN.search(term) else "1"
+
+
+def index_sort_key(term: str) -> str:
+    normalized = re.sub(r"[^0-9A-Za-z가-힣]+", " ", term).strip()
+    normalized = re.sub(r"\s+", " ", normalized)
+    return f"{index_sort_prefix(term)}{normalized}"
 
 
 def strip_heading_emoji(text: str) -> str:
@@ -353,6 +606,20 @@ def sanitize_symbols(text: str) -> str:
         .replace("⚠", "주의")
         .replace("\ufe0f", "")
     )
+
+
+def latex_escape_prose(text: str) -> str:
+    """Escape prose that is inserted directly into LaTeX macro arguments."""
+    replacements = {
+        "&": r"\&",
+        "%": r"\%",
+        "$": r"\$",
+        "#": r"\#",
+        "_": r"\_",
+        "{": r"\{",
+        "}": r"\}",
+    }
+    return "".join(replacements.get(char, char) for char in text)
 
 
 def escape_table_math_pipes(markdown: str) -> str:
@@ -696,6 +963,17 @@ def polish_book_prose(latex: str) -> str:
         "Loss 함수의 변화 --- BCEWithLogitsLoss per-label": "손실 함수의 변화 --- 라벨별 이진 교차 엔트로피",
         "Loss 노트 --- 같은 CE, K=5 수치 예시": "손실 노트 --- 같은 교차 엔트로피, K=5 수치 예시",
         "Loss 한 단계 더: 학습된 모델의 실제 예측으로 BCE 분해": "손실 한 단계 더: 학습된 모델의 실제 예측으로 BCE 분해",
+        "7장. BERT 첫 만남 --- \\inlinecode{pipeline} 한 줄과 그 안의 4단계": "7장. BERT 첫 만남 (Pipeline) --- 한 줄 뒤의 4단계",
+        "8장. Tokenizer 깊게 보기 + Datasets 라이브러리": "8장. 토크나이저 옵션과 데이터셋 (Tokenizer \\& Datasets)",
+        "8장. Tokenizer 옵션 깊이 + \\inlinecode{datasets} 라이브러리": "8장. 토크나이저 옵션과 데이터셋 (Tokenizer \\& Datasets)",
+        "9장. BERT 회귀 --- 첫 파인튜닝, 첫 \\inlinecode{Trainer}": "9장. BERT 회귀 분석 (Regression \\& Trainer)",
+        "10장. BERT Binary 방식 A --- sigmoid+BCE": "10장. BERT 이진 분류 A (Sigmoid \\& BCE)",
+        "10장. BERT Binary 방식 A --- sigmoid + BCEWithLogitsLoss": "10장. BERT 이진 분류 A (Sigmoid \\& BCE)",
+        "11장. BERT Binary 방식 B --- softmax+CE": "11장. BERT 이진 분류 B (Softmax \\& CE)",
+        "11장. BERT Binary 방식 B --- softmax + CrossEntropyLoss": "11장. BERT 이진 분류 B (Softmax \\& CE)",
+        "12장. BERT Multi-class --- Yelp 5클래스": "12장. BERT 다중 클래스 분류 (Multi-class \\& CE)",
+        "13장. BERT Multi-label --- Yelp 측면 키워드": "13장. BERT 다중 라벨 분류 (Multi-label \\& Per-label BCE)",
+        "Loss 노트": "손실 노트",
     }
     for before, after in replacements.items():
         latex = latex.replace(before, after)
@@ -1613,15 +1891,15 @@ def chapter_tex(chapter: Chapter, execute: bool = False) -> str:
         + "}{"
         + chapter.colab_url
         + "}{"
-        + chapter.focus
+        + latex_escape_prose(chapter.focus)
         + "}",
         "",
     ]
 
     chapter_index_terms = tuple(dict.fromkeys(chapter.indexes + EXTRA_INDEXES.get(chapter.number, ())))
     for term in chapter_index_terms:
-        safe = term.replace("_", "\\_")
-        chunks.append(f"\\index{{{index_sort_prefix(term)}{safe}@{safe}}}")
+        safe = latex_escape_prose(term)
+        chunks.append(f"\\index{{{index_sort_key(term)}@{safe}}}")
     chunks.append("")
     explain_code = False
 
@@ -1655,10 +1933,19 @@ def main() -> None:
         action="store_true",
         help="execute notebooks in memory and include saved outputs in the generated LaTeX",
     )
+    parser.add_argument(
+        "--chapters",
+        nargs="*",
+        type=int,
+        help="chapter numbers to regenerate; defaults to every configured chapter",
+    )
     args = parser.parse_args()
 
+    selected = set(args.chapters or [chapter.number for chapter in CHAPTERS])
     CHAPTER_DIR.mkdir(parents=True, exist_ok=True)
     for chapter in CHAPTERS:
+        if chapter.number not in selected:
+            continue
         if not chapter.notebook.exists():
             raise FileNotFoundError(chapter.notebook)
         out = CHAPTER_DIR / chapter.tex_name

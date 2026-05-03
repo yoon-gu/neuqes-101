@@ -1,0 +1,15 @@
+\chapter{모델 설정 읽기 (Model Config)}
+
+\begin{noteBox}[부록 원고 상태]
+이 부록은 \texttt{07\_bert\_pipeline/appendix\_model\_config.ipynb}를 바탕으로 나중에 확장할 자리입니다. 현재 부록 노트북은 책 원고 검증 대상에서 제외했으므로, 이 장에서는 본문에서 참조할 수 있는 범위와 목적만 정리합니다.
+\end{noteBox}
+
+\section*{다룰 내용}
+\addcontentsline{toc}{section}{다룰 내용}
+
+이 부록은 \inlinecode{model.config}를 읽는 방법을 다룹니다. \inlinecode{num\_labels}, \inlinecode{id2label}, \inlinecode{label2id}, hidden size, dropout, model type처럼 모델 동작과 출력 헤드 해석에 영향을 주는 설정을 확인하는 것이 목표입니다.
+
+\section*{본문과의 연결}
+\addcontentsline{toc}{section}{본문과의 연결}
+
+7장에서 \inlinecode{pipeline} 한 줄을 분해할 때 모델 설정은 잠깐만 지나갑니다. 본문은 추론 흐름을 우선하고, 이 부록은 설정 파일을 천천히 읽는 참고 자료로 남겨 둡니다.
