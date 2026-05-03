@@ -85,7 +85,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 10 & DistilBERT 파인튜닝 & \inlinecode{AutoTokenizer.from\_pretrained(...)} & Yelp 이진화 & \inlinecode{Linear(H,\ 1)} & sigmoid & \inlinecode{BCEWithLogitsLoss} \\
 12 & DistilBERT 파인튜닝 & 같음 & Yelp 5클래스 & \inlinecode{Linear(H,\ 5)} & softmax & \inlinecode{CrossEntropyLoss} \\
 \textbf{13 ← 여기} & DistilBERT 파인튜닝 & 같음 & \textbf{Yelp + 측면 키워드 합성} & \textbf{\inlinecode{Linear(H,\ 5)}} & \textbf{sigmoid (per-label)} & \textbf{\inlinecode{BCEWithLogitsLoss} (per-label)} \\
-14 (다음) & DistilBERT 파인튜닝 & 같음 & Yelp + 측면 + 별점 보조 & \inlinecode{Linear(H,\ 5)} 메인 + \inlinecode{Linear(H,\ 1)} 보조 & sigmoid + 없음 & \inlinecode{BCE(per-label)\ +\ λ·MSE} \\
+14 (다음) & DistilBERT 파인튜닝 & 같음 & Yelp + 측면 + 별점 보조 & \inlinecode{Linear(H,\ 5)} 메인 + \inlinecode{Linear(H,\ 1)} 보조 & sigmoid + 없음 & \inlinecode{BCE(per-label)} + $\lambda\cdot$\inlinecode{MSE} \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -1386,7 +1386,7 @@ def tokenize_wrong(batch):
 \item
   추가: \emph{보조 헤드} \inlinecode{Linear(H,\ 1)} 로 별점 점수 회귀 (별점 정규화 0-1)
 \item
-  손실: \inlinecode{L\ =\ BCE\_per\_label(메인)\ +\ λ\ ·\ MSE(보조)} 가중합 (λ는 hyperparameter)
+  손실: \inlinecode{L\ =\ BCE\_per\_label(메인)} + $\lambda\cdot$\inlinecode{MSE(보조)} 가중합 ($\lambda$는 hyperparameter)
 \item
   \inlinecode{Trainer.compute\_loss} 오버라이드로 두 헤드를 동시 학습
 \item

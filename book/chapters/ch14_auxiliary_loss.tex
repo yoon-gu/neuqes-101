@@ -85,7 +85,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 
 9 & DistilBERT 파인튜닝 & WordPiece & Yelp 별점 & \inlinecode{Linear(H,\ 1)} & 없음 & \inlinecode{MSELoss} \\
 13 & DistilBERT 파인튜닝 & WordPiece & Yelp + 측면 합성 & \inlinecode{Linear(H,\ 5)} & sigmoid (각각) & \inlinecode{BCEWithLogitsLoss} \\
-\textbf{14 ← 여기} & DistilBERT + \textbf{보조 헤드} & WordPiece & Yelp + 측면 + \textbf{별점} & \textbf{메인(5) + 보조(1)} & 메인 sigmoid + 보조 없음 & \textbf{\inlinecode{BCE\ per-label\ +\ λ·MSE}} \\
+\textbf{14 ← 여기} & DistilBERT + \textbf{보조 헤드} & WordPiece & Yelp + 측면 + \textbf{별점} & \textbf{메인(5) + 보조(1)} & 메인 sigmoid + 보조 없음 & \textbf{\inlinecode{BCE\ per-label} + $\lambda\cdot$\inlinecode{MSE}} \\
 15 (다음 Phase 2) & klue/bert-base & WordPiece (한국어) & NSMC & \inlinecode{Linear(H,\ 2)} & softmax & \inlinecode{CrossEntropyLoss} \\
 \bottomrule
 \end{tabular}
@@ -112,7 +112,7 @@ Task (메인) & 5라벨 multi-label & (그대로) \\
 \textbf{보조 head} & 없음 & \textbf{새로 추가}: \inlinecode{Linear(H,\ 1)} linear regressor \\
 \textbf{보조 라벨} & 없음 & \textbf{새로 추가}: 별점 0-1 스케일 (\inlinecode{label\ /\ 4}, 1★→0.0, 5★→1.0) \\
 \textbf{보조 loss} & --- & \textbf{\inlinecode{MSELoss}} (\ref{ch:09}장 그대로) \\
-\textbf{결합 loss} & \inlinecode{outputs.loss} 자동 & \textbf{\inlinecode{L\_main\ +\ λ·L\_aux}} 직접 계산 \\
+\textbf{결합 loss} & \inlinecode{outputs.loss} 자동 & \textbf{\inlinecode{L\_main} + $\lambda\cdot$\inlinecode{L\_aux}} 직접 계산 \\
 \inlinecode{Trainer.compute\_loss} & 자동 (오버라이드 X) & \textbf{오버라이드 필수} \\
 데이터 콜레이터 & \inlinecode{DataCollatorWithPadding} 자동 & \textbf{커스텀} --- \inlinecode{aux\_labels} 도 같이 batching \\
 학습 hyperparams & (epoch=2, lr=2e-5, \ldots) & (그대로) \\
@@ -218,10 +218,10 @@ BERT는 12-24 layer로 \emph{그리} 깊지 않아 이 목적은 약합니다. C
 조건 & 결과 & 진단 신호 \\
 \midrule
 
-보조가 메인과 \emph{반대 신호} & gradient 충돌, 학습 발산 & 두 loss가 \emph{둘 다 정체}, λ 키울수록 메인 metric 하락 \\
+보조가 메인과 \emph{반대 신호} & gradient 충돌, 학습 발산 & 두 loss가 \emph{둘 다 정체}, $\lambda$ 키울수록 메인 metric 하락 \\
 보조 라벨이 \emph{극도로 sparse} & 학습 신호 부족 & aux loss가 거의 0, 메인엔 영향 없음 \\
 보조가 메인보다 \emph{훨씬 어려움} & 학습량 부족으로 둘 다 학습 안 됨 & 두 metric 모두 baseline 이하 \\
-λ 튜닝 비용을 감당 못 함 & 잘못된 λ로 메인이 망가짐 & 단순히 단일 task가 더 안전 \\
+$\lambda$ 튜닝 비용을 감당 못 함 & 잘못된 $\lambda$로 메인이 망가짐 & 단순히 단일 task가 더 안전 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -232,7 +232,7 @@ BERT는 12-24 layer로 \emph{그리} 깊지 않아 이 목적은 약합니다. C
 BERT 자체가 \emph{MLM + NSP (Next Sentence Prediction)} 이라는 멀티태스크 사전학습으로 만들어졌습니다 --- MLM이 메인, NSP가 보조였던 셈. 그런데 \textbf{RoBERTa (2019)} 가 \emph{NSP를 빼면 오히려 성능이 좋아진다} 는 걸 발견하고 NSP를 제거. 이후 거의 모든 BERT 후속 모델 (DeBERTa, ELECTRA \ldots)이 NSP 없이 학습됨.
 
 \begin{quote}
-\textbf{시사점}: 보조 task가 \emph{직관적으로} 도움 될 것 같아도 \emph{실제로 도움이 되는지는 측정} 해야 합니다. 그래서 이 장의 §8 클라이맥스가 λ=0 baseline과의 \emph{직접 비교} 인 것 --- “직관” 대신 “측정”.
+\textbf{시사점}: 보조 task가 \emph{직관적으로} 도움 될 것 같아도 \emph{실제로 도움이 되는지는 측정} 해야 합니다. 그래서 이 장의 §8 클라이맥스가 $\lambda=0$ baseline과의 \emph{직접 비교} 인 것 --- “직관” 대신 “측정”.
 \end{quote}
 
 
@@ -256,13 +256,13 @@ L = \underbrace{\frac{1}{N \cdot K}\sum_{i,k}\text{BCE}(z_{i,k}^{main}, y_{i,k}^
   \(\lambda\) --- 보조 loss의 가중치 (hyperparameter, 보통 0.1-10 범위 탐색).
 \end{itemize}
 
-\textbf{λ 선택 가이드 --- 숫자로 감 잡기}
+\textbf{$\lambda$ 선택 가이드 --- 숫자로 감 잡기}
 
 \begin{booktable}{14장 손실 노트 표}{tab:ch14-05}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
-λ & 의미 & 효과 (예상) \\
+$\lambda$ & 의미 & 효과 (예상) \\
 \midrule
 
 0.0 & 보조 loss 무시 & \ref{ch:13}장과 \emph{완전히 동일} (이 장 §5 baseline) \\
@@ -275,7 +275,7 @@ L = \underbrace{\frac{1}{N \cdot K}\sum_{i,k}\text{BCE}(z_{i,k}^{main}, y_{i,k}^
 \end{adjustbox}
 \end{booktable}
 
-이 장에선 \textbf{λ=1} 로 학습하고 λ=0 baseline과 비교. 실무에선 validation set에서 λ를 grid search (0.1, 0.3, 1, 3, 10).
+이 장에선 \textbf{$\lambda=1$} 로 학습하고 $\lambda=0$ baseline과 비교. 실무에선 validation set에서 $\lambda$를 grid search (0.1, 0.3, 1, 3, 10).
 
 \textbf{숫자로 감 잡기 (단일 샘플)} --- 측면 multi-hot \(\mathbf{y}^\text{main} = [1, 0, 1, 0, 1]\), 별점 보조 라벨 \(y^\text{aux} = 0.75\) (4★/4):
 
@@ -288,14 +288,14 @@ L = \underbrace{\frac{1}{N \cdot K}\sum_{i,k}\text{BCE}(z_{i,k}^{main}, y_{i,k}^
 
 \(L_\text{main}\) (\ref{ch:13}장의 BCE per-label 평균) & 0.45 \\
 \(L_\text{aux}\) (\((z^\text{aux} - 0.75)^2\), 가정 \(z^\text{aux} = 0.55\)) & \((0.55 - 0.75)^2 = 0.04\) \\
-\(L\) (λ=1) & \(0.45 + 1 \cdot 0.04 = 0.49\) \\
-\(L\) (λ=10) & \(0.45 + 10 \cdot 0.04 = 0.85\) ← 보조 항이 메인보다 큼 \\
+\(L\) ($\lambda=1$) & \(0.45 + 1 \cdot 0.04 = 0.49\) \\
+\(L\) ($\lambda=10$) & \(0.45 + 10 \cdot 0.04 = 0.85\) ← 보조 항이 메인보다 큼 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
-λ가 너무 크면 \emph{메인 신호 자체가 보조에 묻힙니다}. 반대로 너무 작으면 \emph{보조 신호가 학습에 영향 안 줌}. λ=1이 균형의 기본 출발점.
+$\lambda$가 너무 크면 \emph{메인 신호 자체가 보조에 묻힙니다}. 반대로 너무 작으면 \emph{보조 신호가 학습에 영향 안 줌}. $\lambda=1$이 균형의 기본 출발점.
 
 
 
@@ -746,7 +746,7 @@ Classifier:           ...
 
 \Needspace{5\baselineskip}
 \begin{lstlisting}
-loss = outputs.loss + λ · MSE(aux_head(CLS), aux_labels)
+loss = outputs.loss + lambda_aux * MSE(aux_head(CLS), aux_labels)
 \end{lstlisting}
 
 \begin{itemize}
@@ -954,7 +954,7 @@ TrainOutput(global_step=..., training_loss=..., metrics={...})
 \Needspace{7\baselineskip}
 \begin{lstlisting}
 eval_metrics_aux = trainer_aux.evaluate()
-print("With-aux (λ=1) — main task metrics:")
+print("With-aux (lambda=1) — main task metrics:")
 for k, v in eval_metrics_aux.items():
     if k.startswith("eval_") and isinstance(v, float):
         print(f"  {k:>22}: {v:.4f}")
@@ -1010,7 +1010,7 @@ r2_aux   = float(r2_score(aux_true, aux_preds_aux))
 pear_aux = float(np.corrcoef(aux_true, aux_preds_aux)[0, 1])
 
 print(
-    "\nWith-aux (λ=1) — aux task metrics (star "
+    "\nWith-aux (lambda=1) — aux task metrics (star "
     "regression, 0-1 scale):"
 )
 print(f"  RMSE:    {rmse_aux:.4f}")
@@ -1099,7 +1099,7 @@ trainer_no_aux = AuxTrainer(
 
 train_result_no_aux = trainer_no_aux.train()
 print(
-    f"\nNo-aux (λ=0) baseline training done — mean train loss: "
+    f"\nNo-aux (lambda=0) baseline training done — mean train loss: "
     f"{train_result_no_aux.training_loss:.4f}"
 )
 \end{lstlisting}
@@ -1115,7 +1115,7 @@ TrainOutput(global_step=..., training_loss=..., metrics={...})
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 eval_metrics_no_aux = trainer_no_aux.evaluate()
-print("No-aux (λ=0) baseline — main task metrics:")
+print("No-aux (lambda=0) baseline — main task metrics:")
 for k, v in eval_metrics_no_aux.items():
     if k.startswith("eval_") and isinstance(v, float):
         print(f"  {k:>22}: {v:.4f}")
@@ -1190,7 +1190,7 @@ column_a    column_b    column_c
 \item
   \inlinecode{delta} \textgreater{} 0 --- 보조 loss 가 메인 task 에 \emph{도움} 이 됨 (멀티태스크의 정통 효과).
 \item
-  \inlinecode{delta} \textless{} 0 --- 보조 loss 가 메인 task 를 \emph{방해} 함 (λ가 너무 큼 / 보조 task 가 메인과 상관 약함).
+  \inlinecode{delta} \textless{} 0 --- 보조 loss 가 메인 task 를 \emph{방해} 함 ($\lambda$가 너무 큼 / 보조 task 가 메인과 상관 약함).
 \item
   \inlinecode{delta} ≈ 0 --- 별 영향 없음 (보조 신호가 메인 표현에 의미 없는 추가).
 \end{itemize}
@@ -1401,7 +1401,7 @@ plt.show()
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
 \item
-  λ를 0.1에서 10까지 grid search한다고 할 때 \emph{작은 λ} 와 \emph{큰 λ} 가 각각 어떤 학습 양상을 만드는지 한 줄로 설명하세요.
+  $\lambda$를 0.1에서 10까지 grid search한다고 할 때 \emph{작은 $\lambda$} 와 \emph{큰 $\lambda$} 가 각각 어떤 학습 양상을 만드는지 한 줄로 설명하세요.
 \item
   \inlinecode{remove\_unused\_columns=False} 를 빠뜨리면 어떤 에러가 나나요? \inlinecode{aux\_labels} 가 어디로 사라지는지 추적해 보세요.
 \item
@@ -1414,7 +1414,7 @@ plt.show()
 
 \section{FAQ}
 
-\begin{faqBox}{Q1. (실무) λ는 어떻게 정하나요? 단순히 1.0으로 두면 되나요?}
+\begin{faqBox}{Q1. (실무) $\lambda$는 어떻게 정하나요? 단순히 1.0으로 두면 되나요?}
 
 1.0은 \emph{시작점} 일 뿐 거의 항상 grid search가 필요합니다.
 
@@ -1443,14 +1443,14 @@ eval_f1:        ...
 \begin{itemize}
 \tightlist
 \item
-  메인 task가 분류, 보조가 회귀 → λ=0.1-1.0 (회귀 MSE는 보통 분류 BCE 보다 작아 균형이 자연스러움)
+  메인 task가 분류, 보조가 회귀 → $\lambda=0.1$--$1.0$ (회귀 MSE는 보통 분류 BCE 보다 작아 균형이 자연스러움)
 \item
-  메인이 복잡하고 보조가 \emph{미세} 보조 → λ=0.01-0.1
+  메인이 복잡하고 보조가 \emph{미세} 보조 → $\lambda=0.01$--$0.1$
 \item
-  메인과 보조가 비슷한 중요도 → λ=1.0
+  메인과 보조가 비슷한 중요도 → $\lambda=1.0$
 \end{itemize}
 
-또 다른 패턴: \textbf{uncertainty weighting} --- λ를 \emph{학습 가능한 파라미터} 로 두고 모델이 직접 결정하게 함 (Kendall et al. 2018).
+또 다른 패턴: \textbf{uncertainty weighting} --- $\lambda$를 \emph{학습 가능한 파라미터} 로 두고 모델이 직접 결정하게 함 (Kendall et al. 2018).
 
 \end{faqBox}
 
@@ -1532,7 +1532,7 @@ class DistilBertForSequenceClassification:
 \item
   두 task의 train loss 가 \emph{둘 다 정체} (서로 상쇄)
 \item
-  λ 를 키울수록 메인 metric 이 \emph{떨어짐}
+  $\lambda$ 를 키울수록 메인 metric 이 \emph{떨어짐}
 \end{itemize}
 
 해결: 보조 task가 메인과 같은 방향 신호인지 \emph{간단한 sklearn baseline} 부터 확인. 별점이 측면 분류와 양의 상관이면 보조로 쓸 만함.
