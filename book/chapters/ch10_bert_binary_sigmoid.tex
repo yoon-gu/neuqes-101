@@ -2,6 +2,8 @@
 
 \chapter[BERT 이진 분류: Sigmoid (BCE)]{BERT 이진 분류: Sigmoid (BCE)}
 
+\label{ch:10}
+
 \markboth{BERT 이진 분류: Sigmoid (BCE)}{BERT 이진 분류: Sigmoid (BCE)}
 
 \chaptermeta{10_bert_binary_sigmoid/10_bert_binary_sigmoid.ipynb}{https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/10_bert_binary_sigmoid/10_bert_binary_sigmoid.ipynb}{num\_labels=1, sigmoid, BCEWithLogitsLoss 방식의 BERT 이진 분류}
@@ -74,7 +76,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 \midrule
 
 3 & \inlinecode{LogisticRegression()} & \inlinecode{TfidfVectorizer()} & Yelp 이진화 & (1차원) & sigmoid & \inlinecode{BCEWithLogitsLoss} \\
-4 & \inlinecode{LogisticRegression(multi\_class="multinomial")} & \inlinecode{TfidfVectorizer()} & Yelp 이진화 (3장과 동일) & (2차원) & softmax & \inlinecode{CrossEntropyLoss} \\
+4 & \inlinecode{LogisticRegression(multi\_class="multinomial")} & \inlinecode{TfidfVectorizer()} & Yelp 이진화 (\ref{ch:03}장과 동일) & (2차원) & softmax & \inlinecode{CrossEntropyLoss} \\
 9 & DistilBERT 파인튜닝 & \inlinecode{AutoTokenizer.from\_pretrained(...)} & Yelp (별점 1-5) & \inlinecode{Linear(H,\ 1)} & 없음 & \inlinecode{MSELoss} \\
 \textbf{10 ← 여기} & DistilBERT 파인튜닝 & \inlinecode{AutoTokenizer.from\_pretrained(...)} & Yelp 이진화 & \textbf{\inlinecode{Linear(H,\ 1)}} & \textbf{sigmoid} & \textbf{\inlinecode{BCEWithLogitsLoss}} \\
 11 (다음) & DistilBERT 파인튜닝 & 같음 & Yelp 이진화 & \inlinecode{Linear(H,\ 2)} & softmax & \inlinecode{CrossEntropyLoss} \\
@@ -87,13 +89,13 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 
 
 
-\section{변경점: 9장 대비}
+\section{변경점: \ref{ch:09}장 대비}
 
 \begin{booktable}{10장 변경점 요약}{tab:ch10-02}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
-축 & 9장 & 10장 \\
+축 & \ref{ch:09}장 & \ref{ch:10}장 \\
 \midrule
 
 Task & 회귀 & \textbf{이진 분류 (방식 A)} \\
@@ -110,7 +112,7 @@ Loss & \inlinecode{MSELoss} & \textbf{\inlinecode{BCEWithLogitsLoss}} \\
 
 \subsection{\texorpdfstring{\inlinecode{num\_labels=1} + \inlinecode{problem\_type="multi\_label\_classification"} 의 트릭}{num\_labels=1 + problem\_type=“multi\_label\_classification” 의 트릭}}
 
-\inlinecode{Trainer} 의 자동 loss 매핑은 이렇게 작동합니다 (\href{../09_bert_regression/09_bert_regression.ipynb}{9장에서 본 표}).
+\inlinecode{Trainer} 의 자동 loss 매핑은 이렇게 작동합니다 (\ref{ch:09}장에서 본 표).
 
 \begin{booktable}{10장 num\_labels=1 + problem\_type=“multi\_label\_classification” 의 트릭 표}{tab:ch10-03}
 \begin{adjustbox}{max width=\textwidth}
@@ -133,7 +135,7 @@ Loss & \inlinecode{MSELoss} & \textbf{\inlinecode{BCEWithLogitsLoss}} \\
 
 \section{\texorpdfstring{손실 노트}{손실 노트}}
 
-수식과 직관은 3장에서 봤습니다.
+수식과 직관은 \ref{ch:03}장에서 봤습니다.
 
 \begin{equation}
 \label{eq:ch10-01}
@@ -155,7 +157,7 @@ L = -\frac{1}{N}\sum_{i=1}^{N}\left[\,y_i \log \hat p_i + (1 - y_i)\log(1 - \hat
   \inlinecode{Trainer} 가 \inlinecode{problem\_type="multi\_label\_classification"} 만 보고 자동으로 BCE를 골라줍니다. 우리는 라벨을 \texttt{{[}0.0{]}} 또는 \texttt{{[}1.0{]}} float 형태로 두기만 하면 됩니다.
 \end{enumerate}
 
-\textbf{숫자로 감 잡기} --- 3장 표 그대로:
+\textbf{숫자로 감 잡기} --- \ref{ch:03}장 표 그대로:
 
 \begin{booktable}{10장 손실 노트 표}{tab:ch10-04}
 \begin{adjustbox}{max width=\textwidth}
@@ -178,10 +180,10 @@ L = -\frac{1}{N}\sum_{i=1}^{N}\left[\,y_i \log \hat p_i + (1 - y_i)\log(1 - \hat
 
 \section{토크나이저 노트}
 
-7-9장와 같은 \inlinecode{distilbert-base-uncased} WordPiece 토크나이저. 토크나이저·데이터 가공 파이프라인은 8장에서 익힌 패턴을 그대로 적용합니다.
+\ref{ch:07}--\ref{ch:09}장와 같은 \inlinecode{distilbert-base-uncased} WordPiece 토크나이저. 토크나이저·데이터 가공 파이프라인은 \ref{ch:08}장에서 익힌 패턴을 그대로 적용합니다.
 
 \begin{previewBox}{미리보기}
-\textbf{다음 장(11장)}: 같은 토크나이저, 같은 데이터, 같은 BERT 본체. 변하는 건 출력 헤드가 1차원에서 2차원으로 늘어나고 sigmoid가 softmax로 바뀐다는 점뿐입니다.
+\textbf{다음 장(\ref{ch:11}장)}: 같은 토크나이저, 같은 데이터, 같은 BERT 본체. 변하는 건 출력 헤드가 1차원에서 2차원으로 늘어나고 sigmoid가 softmax로 바뀐다는 점뿐입니다.
 \end{previewBox}
 
 
@@ -601,7 +603,7 @@ print(classification_report(
 
 \section{결과 저장}
 
-다음 장 11장에서 같은 데이터에 \emph{방식 B} (softmax+CE)로 학습한 뒤 \emph{이번 방식 A} 의 결과와 비교합니다. 평가 지표와 확률 예측을 디스크에 저장해 두면 비교가 깔끔해집니다.
+다음 장 \ref{ch:11}장에서 같은 데이터에 \emph{방식 B} (softmax+CE)로 학습한 뒤 \emph{이번 방식 A} 의 결과와 비교합니다. 평가 지표와 확률 예측을 디스크에 저장해 두면 비교가 깔끔해집니다.
 
 
 
@@ -652,7 +654,7 @@ shutil.copytree(
 )
 \end{lstlisting}
 
-11장 노트북은 같은 세션에서 이어 돌리거나, 같은 데이터·seed·모델로 다시 학습해서 결과를 만든 뒤 비교합니다.
+\ref{ch:11}장 노트북은 같은 세션에서 이어 돌리거나, 같은 데이터·seed·모델로 다시 학습해서 결과를 만든 뒤 비교합니다.
 
 
 
@@ -665,10 +667,10 @@ shutil.copytree(
 이름 & 한 줄 설명 & 다음 장에서 \\
 \midrule
 
-\inlinecode{AutoModelForSequenceClassification(num\_labels=1,\ problem\_type="multi\_label\_classification")} & num\_labels=1 + multi\_label로 BCE 자동 매핑 & 12-13장에서 multi-hot 라벨로 재사용 \\
+\inlinecode{AutoModelForSequenceClassification(num\_labels=1,\ problem\_type="multi\_label\_classification")} & num\_labels=1 + multi\_label로 BCE 자동 매핑 & \ref{ch:12}--\ref{ch:13}장에서 multi-hot 라벨로 재사용 \\
 \inlinecode{sklearn.metrics.precision\_recall\_fscore\_support} & 이진 분류 지표 한 묶음 & 11·15장·17에서 동일 \\
 \inlinecode{sklearn.metrics.roc\_auc\_score} & AUC 계산 (확률 임계값 무관) & 분류 장마다 사용 \\
-\inlinecode{numpy\ 1/(1+exp(-x))} & sigmoid 직접 구현 (모델 logit → 확률) & 7장에서 본 동일 패턴 \\
+\inlinecode{numpy\ 1/(1+exp(-x))} & sigmoid 직접 구현 (모델 logit → 확률) & \ref{ch:07}장에서 본 동일 패턴 \\
 \inlinecode{seaborn.kdeplot(...,\ hue=,\ fill=True,\ common\_norm=False)} & 라벨별 부드러운 분포를 \emph{각자} 정규화해 모양만 비교 & 분류 장마다 동일 패턴으로 재등장 \\
 \bottomrule
 \end{tabular}
@@ -689,7 +691,7 @@ shutil.copytree(
 \item
   학습 후 \emph{확률 공간} 에서 라벨별 분포가 양 끝에 압착되는 이유는? 같은 분포를 \emph{logit 공간} 에서 보면 무엇이 달라지나요? (4-1, 4-2 그래프 비교)
 \item
-  같은 binary 분류를 sklearn \inlinecode{LogisticRegression()} 으로 풀 때(3장)와 BERT로 풀 때(10장), accuracy 차이가 어디서 오나요?
+  같은 binary 분류를 sklearn \inlinecode{LogisticRegression()} 으로 풀 때(\ref{ch:03}장)와 BERT로 풀 때(\ref{ch:10}장), accuracy 차이가 어디서 오나요?
 \end{enumerate}
 
 
@@ -728,14 +730,14 @@ loss = BCEWithLogitsLoss()(logits, labels)
 \item
   방식 A (이 장, num\_labels=1): shape \inlinecode{(batch,\ 1)}. flatten 후 sigmoid 적용 → 확률.
 \item
-  방식 B (11장, num\_labels=2): shape \inlinecode{(batch,\ 2)}. softmax 적용 → 두 확률.
+  방식 B (\ref{ch:11}장, num\_labels=2): shape \inlinecode{(batch,\ 2)}. softmax 적용 → 두 확률.
 \end{itemize}
 
 \inlinecode{compute\_metrics} 안에서 우리가 sigmoid·argmax·threshold 같은 후처리를 직접 합니다.
 
 \end{faqBox}
 
-\begin{faqBox}{Q4. (이론) sklearn LogReg(3장)와 BERT(10장)의 accuracy 차이는 어디서?}
+\begin{faqBox}{Q4. (이론) sklearn LogReg(\ref{ch:03}장)와 BERT(\ref{ch:10}장)의 accuracy 차이는 어디서?}
 
 세 가지 layer에서 차이가 옵니다.
 
@@ -810,7 +812,7 @@ def tokenize_wrong(batch):
 
 \begin{previewBox}{미리보기: 다음 장}
 
-\textbf{11장. BERT 이진 분류 B (Softmax \& CE)}
+\textbf{\ref{ch:11}장. BERT 이진 분류 B (Softmax \& CE)}
 
 \begin{itemize}
 \tightlist
@@ -821,7 +823,7 @@ def tokenize_wrong(batch):
 \item
   Activation은 softmax, Loss는 \inlinecode{CrossEntropyLoss}
 \item
-  학습 후 \emph{방식 A의 저장된 결과} 와 직접 비교 --- 두 방식이 거의 같은 확률 분포를 만들어내는지 확인 (4장의 sklearn 동등성을 BERT에서 다시)
+  학습 후 \emph{방식 A의 저장된 결과} 와 직접 비교 --- 두 방식이 거의 같은 확률 분포를 만들어내는지 확인 (\ref{ch:04}장의 sklearn 동등성을 BERT에서 다시)
 \item
   학습된 가중치 비교, 두 방식의 prediction agreement 측정
 \end{itemize}

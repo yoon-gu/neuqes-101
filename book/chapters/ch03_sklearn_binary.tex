@@ -2,6 +2,8 @@
 
 \chapter[이진 분류 (Binary Classification \& BCE)]{이진 분류 (Binary Classification \& BCE)}
 
+\label{ch:03}
+
 \markboth{이진 분류 (Binary Classification \& BCE)}{이진 분류 (Binary Classification \& BCE)}
 
 \chaptermeta{03_sklearn_binary/03_sklearn_binary.ipynb}{https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/03_sklearn_binary/03_sklearn_binary.ipynb}{logit, sigmoid, BCE가 만나는 방식}
@@ -99,13 +101,13 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 
 
 
-\section{변경점: 2장 대비}
+\section{변경점: \ref{ch:02}장 대비}
 
 \begin{booktable}{3장 변경점 요약}{tab:ch03-diff}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
-축 & 2장 & 3장 \\
+축 & \ref{ch:02}장 & \ref{ch:03}장 \\
 \midrule
 
 모델 & \inlinecode{LinearRegression} & \textbf{\inlinecode{LogisticRegression}} (출력에 sigmoid 내장) \\
@@ -174,10 +176,10 @@ model.fit(X, y)
 
 \section{토크나이저 노트}
 
-이 장의 토크나이저는 \textbf{1·2장과 동일한 \inlinecode{TfidfVectorizer}} 입니다. 입력 표현은 그대로고, 변화는 모델 출력단·loss·라벨에서만 일어납니다.
+이 장의 토크나이저는 \textbf{\ref{ch:01}·\ref{ch:02}장과 동일한 \inlinecode{TfidfVectorizer}} 입니다. 입력 표현은 그대로고, 변화는 모델 출력단·loss·라벨에서만 일어납니다.
 
 \begin{previewBox}{미리보기}
-\textbf{다음 장(4장)}: 같은 TF-IDF 그대로. 변하는 건 출력이 5차원으로 늘어나고 sigmoid가 softmax로 바뀌는 것뿐.
+\textbf{다음 장(\ref{ch:04}장)}: 같은 TF-IDF 그대로. 변하는 건 출력이 5차원으로 늘어나고 sigmoid가 softmax로 바뀌는 것뿐.
 \end{previewBox}
 
 
@@ -315,7 +317,7 @@ split  X_shape        y_shape
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
 \item
-  logit 계산: \(z = w^\top x + b\) (2장과 똑같은 선형 결합)
+  logit 계산: \(z = w^\top x + b\) (\ref{ch:02}장과 똑같은 선형 결합)
 \item
   sigmoid로 확률 변환: \(\hat p = \sigma(z) = \dfrac{1}{1 + e^{-z}}\)
 \end{enumerate}
@@ -397,7 +399,7 @@ object   shape
 
 \section{해부: sigmoid는 logit을 어떻게 확률로 바꾸나}
 
-\inlinecode{LogisticRegression}의 \inlinecode{coef\_}와 \inlinecode{intercept\_}는 2장 \inlinecode{LinearRegression}과 동일한 선형 가중치입니다. 차이는 그 위에 sigmoid가 한 번 더 붙는다는 것뿐.
+\inlinecode{LogisticRegression}의 \inlinecode{coef\_}와 \inlinecode{intercept\_}는 \ref{ch:02}장 \inlinecode{LinearRegression}과 동일한 선형 가중치입니다. 차이는 그 위에 sigmoid가 한 번 더 붙는다는 것뿐.
 
 직접 재현해 봅시다 --- sklearn의 \inlinecode{predict\_proba}가 정말 sigmoid에 logit을 넣은 결과인지 확인합니다.
 
@@ -576,10 +578,10 @@ threshold  accuracy  precision  recall  f1
 이름 & 한 줄 설명 & 다음 장에서 \\
 \midrule
 
-\inlinecode{sklearn.linear\_model.LogisticRegression} & sigmoid + BCE 내장 이진/다중 분류 & 4장에서 multi-class로 확장 \\
+\inlinecode{sklearn.linear\_model.LogisticRegression} & sigmoid + BCE 내장 이진/다중 분류 & \ref{ch:04}장에서 multi-class로 확장 \\
 \inlinecode{sklearn.metrics.classification\_report} & accuracy/precision/recall/F1 한 번에 & 분류 장마다 계속 사용 \\
 \inlinecode{sklearn.metrics.confusion\_matrix} & 혼동 행렬 & 다중 분류에서도 활용 \\
-\inlinecode{sklearn.metrics.log\_loss} & BCE 평가 & 9장 이후 BERT binary에서도 \\
+\inlinecode{sklearn.metrics.log\_loss} & BCE 평가 & \ref{ch:09}장 이후 BERT binary에서도 \\
 \inlinecode{sklearn.metrics.precision\_recall\_fscore\_support} & 임계값별 지표 추적 & --- \\
 \bottomrule
 \end{tabular}
@@ -630,7 +632,7 @@ threshold  accuracy  precision  recall  f1
 \item
   \textbf{tanh}: 출력 범위가 \([-1, 1]\)입니다. 라벨을 -1/+1로 매핑하고 hinge loss 등을 쓰면 SVM과 비슷한 모델이 됩니다. 수학적으로는 \(\tanh(z) = 2\sigma(2z) - 1\)이라 sigmoid의 단순 변환이지만 라벨 컨벤션이 다릅니다.
 \item
-  \textbf{softmax}: 다중 클래스용 일반화. binary에 softmax를 쓰려면 출력 차원을 2로 늘리고 라벨도 one-hot으로 바꿔야 합니다 → 이게 정확히 9장에서 다룰 “방식 B”입니다 (방식 A=sigmoid 1차원, 방식 B=softmax 2차원이 수학적으로 동등).
+  \textbf{softmax}: 다중 클래스용 일반화. binary에 softmax를 쓰려면 출력 차원을 2로 늘리고 라벨도 one-hot으로 바꿔야 합니다 → 이게 정확히 \ref{ch:09}장에서 다룰 “방식 B”입니다 (방식 A=sigmoid 1차원, 방식 B=softmax 2차원이 수학적으로 동등).
 \item
   \textbf{ReLU/identity}: 출력이 {[}0, 1{]} 보장이 안 됩니다 --- 음수도 1 초과도 가능 → BCE의 \(\log\)가 정의되지 않습니다.
 \end{itemize}
@@ -758,7 +760,7 @@ display(lpm_summary)
 
 \begin{previewBox}{미리보기: 다음 장}
 
-\textbf{4장. sigmoid와 softmax의 동등성 (Binary Classification) --- 같은 문제, 다른 표현}
+\textbf{\ref{ch:04}장. sigmoid와 softmax의 동등성 (Binary Classification) --- 같은 문제, 다른 표현}
 
 \begin{itemize}
 \tightlist
@@ -769,6 +771,6 @@ display(lpm_summary)
 \item
   Loss는 BCE 관점과 \textbf{\inlinecode{CrossEntropyLoss}} 관점이 어떻게 같은 예측 확률로 이어지는지 확인합니다.
 \item
-  이 다리 장을 지나면 5장에서 같은 softmax/CE 구조를 K=5 다중 클래스 분류로 확장합니다.
+  이 다리 장을 지나면 \ref{ch:05}장에서 같은 softmax/CE 구조를 K=5 다중 클래스 분류로 확장합니다.
 \end{itemize}
 \end{previewBox}

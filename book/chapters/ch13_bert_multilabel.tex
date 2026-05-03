@@ -2,6 +2,8 @@
 
 \chapter[BERT 다중 라벨 분류 (Multi-label \& Per-label BCE)]{BERT 다중 라벨 분류 (Multi-label \& Per-label BCE)}
 
+\label{ch:13}
+
 \markboth{BERT 다중 라벨 분류 (Multi-label \& Per-label BCE)}{BERT 다중 라벨 분류 (Multi-label \& Per-label BCE)}
 
 \chaptermeta{13_bert_multilabel/13_bert_multilabel.ipynb}{https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/13_bert_multilabel/13_bert_multilabel.ipynb}{Yelp 측면 합성 라벨을 BERT의 라벨별 sigmoid와 BCE로 학습}
@@ -93,13 +95,13 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 
 
 
-\section{변경점: 12장 대비}
+\section{변경점: \ref{ch:12}장 대비}
 
 \begin{booktable}{13장 변경점 요약}{tab:ch13-02}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
-축 & 12장 (multi-class) & 13장 (multi-label) \\
+축 & \ref{ch:12}장 (multi-class) & \ref{ch:13}장 (multi-label) \\
 \midrule
 
 \textbf{Task} & 5클래스 \emph{single-label} (서로 배타적) & \textbf{5라벨 \emph{multi-label}} (동시 활성 가능) ← 본질적 변화 \\
@@ -133,7 +135,7 @@ softmax는 출력의 \emph{합 = 1} 을 강제합니다 (\(\sum_k \mathrm{softma
   \textbf{per-label sigmoid 모델은 표현 가능}: 각 라벨이 독립이라 P(food)=0.9 와 P(service)=0.85 가 동시에 자연스러움.
 \end{itemize}
 
-즉 task가 \emph{진짜 multi-label} 이라면 loss/activation 선택이 강제됩니다 (6장 에서 본 동일한 논리, BERT로 옮겨옴).
+즉 task가 \emph{진짜 multi-label} 이라면 loss/activation 선택이 강제됩니다 (\ref{ch:06}장 에서 본 동일한 논리, BERT로 옮겨옴).
 
 
 
@@ -177,10 +179,10 @@ location & 1 & -0.5 & 0.378 & \(-\log 0.378 = 0.974\) \\
 
 \section{토크나이저 노트}
 
-12장과 동일 --- \inlinecode{distilbert-base-uncased} WordPiece, \inlinecode{max\_length=128}. 토크나이저는 라벨 \emph{형식} 에 무관하므로 single-label 이든 multi-label 이든 변화 없음.
+\ref{ch:12}장과 동일 --- \inlinecode{distilbert-base-uncased} WordPiece, \inlinecode{max\_length=128}. 토크나이저는 라벨 \emph{형식} 에 무관하므로 single-label 이든 multi-label 이든 변화 없음.
 
 \begin{previewBox}{미리보기}
-\textbf{다음 장(14장)}: 토크나이저 그대로. 변하는 건 \emph{모델에 보조 헤드} 가 추가되고 \emph{loss에 보조 항} 이 가중합으로 더해지는 점.
+\textbf{다음 장(\ref{ch:14}장)}: 토크나이저 그대로. 변하는 건 \emph{모델에 보조 헤드} 가 추가되고 \emph{loss에 보조 항} 이 가중합으로 더해지는 점.
 \end{previewBox}
 
 
@@ -260,7 +262,7 @@ else:
 
 \section{데이터 준비}
 
-Yelp 리뷰엔 multi-label 정답이 없습니다. 6장에서처럼 5개 측면(aspect)별 키워드 사전을 만들어 텍스트에서 매칭 --- 어떤 키워드라도 등장하면 해당 측면을 1로 활성. 5차원 multi-hot 벡터가 합성됩니다.
+Yelp 리뷰엔 multi-label 정답이 없습니다. \ref{ch:06}장에서처럼 5개 측면(aspect)별 키워드 사전을 만들어 텍스트에서 매칭 --- 어떤 키워드라도 등장하면 해당 측면을 1로 활성. 5차원 multi-hot 벡터가 합성됩니다.
 
 \begin{booktable}{13장 데이터 준비 표}{tab:ch13-04}
 \begin{adjustbox}{max width=\textwidth}
@@ -374,7 +376,7 @@ for n in range(K + 1):
 
 
 
-\textbf{12장과의 한 줄 차이}: \texttt{out{[}“labels”{]}\ =\ {[}int(l)\ for\ l\ in\ batch{[}“label”{]}{]}} → \texttt{out{[}“labels”{]}\ =\ {[}list(map(float,\ a))\ for\ a\ in\ batch{[}“aspects”{]}{]}}. 라벨이 \emph{int 스칼라} 가 아니라 \emph{길이 5 multi-hot float 벡터}. 이 형식 + \inlinecode{problem\_type="multi\_label\_classification"} 두 가지가 BCE per-label 자동 매핑의 트리거.
+\textbf{\ref{ch:12}장과의 한 줄 차이}: \texttt{out{[}“labels”{]}\ =\ {[}int(l)\ for\ l\ in\ batch{[}“label”{]}{]}} → \texttt{out{[}“labels”{]}\ =\ {[}list(map(float,\ a))\ for\ a\ in\ batch{[}“aspects”{]}{]}}. 라벨이 \emph{int 스칼라} 가 아니라 \emph{길이 5 multi-hot float 벡터}. 이 형식 + \inlinecode{problem\_type="multi\_label\_classification"} 두 가지가 BCE per-label 자동 매핑의 트리거.
 
 
 
@@ -410,7 +412,7 @@ print(
 
 \section{\texorpdfstring{모델 로드}{모델 로드}}
 
-12장과 \emph{모델 아키텍처는 동일} (\inlinecode{Linear(H,\ 5)} 분류 헤드). 변하는 한 가지 --- \inlinecode{problem\_type="multi\_label\_classification"} --- 가 자동 매핑되는 loss를 BCE per-label 로 바꿉니다.
+\ref{ch:12}장과 \emph{모델 아키텍처는 동일} (\inlinecode{Linear(H,\ 5)} 분류 헤드). 변하는 한 가지 --- \inlinecode{problem\_type="multi\_label\_classification"} --- 가 자동 매핑되는 loss를 BCE per-label 로 바꿉니다.
 
 
 
@@ -448,7 +450,7 @@ print(f"id2label:             {model.config.id2label}")
 
 
 
-\textbf{12장과 파라미터 수가 \emph{완전히 동일}} --- 차이는 \inlinecode{problem\_type} 한 줄뿐. 같은 모델이 \emph{어떻게 해석되고 어떤 loss로 학습되는가} 만 바뀝니다.
+\textbf{\ref{ch:12}장과 파라미터 수가 \emph{완전히 동일}} --- 차이는 \inlinecode{problem\_type} 한 줄뿐. 같은 모델이 \emph{어떻게 해석되고 어떤 loss로 학습되는가} 만 바뀝니다.
 
 
 
@@ -461,7 +463,7 @@ print(f"id2label:             {model.config.id2label}")
 
 \section{학습}
 
-12장과 \emph{완전히 같은} learning rate, batch size, epoch 수, seed. 평가 metric만 multi-label용으로 새로 짭니다.
+\ref{ch:12}장과 \emph{완전히 같은} learning rate, batch size, epoch 수, seed. 평가 metric만 multi-label용으로 새로 짭니다.
 
 
 
@@ -545,7 +547,7 @@ print(
 
 \section{평가}
 
-10장의 sigmoid+BCE 평가 패턴을 \emph{5번 반복} 한 셈입니다 --- 각 라벨에 대해 독립적으로 확률 분포·정확도·F1을 계산.
+\ref{ch:10}장의 sigmoid+BCE 평가 패턴을 \emph{5번 반복} 한 셈입니다 --- 각 라벨에 대해 독립적으로 확률 분포·정확도·F1을 계산.
 
 
 
@@ -600,7 +602,7 @@ print(classification_report(
 
 \subsection{라벨별 확률 분포}
 
-10장에서 봤던 \emph{확률 공간 KDE} 를 5개 라벨에 대해 \emph{각각} 그립니다. 라벨이 \emph{독립} 이라는 multi-label의 본질이 시각적으로 드러나는 그림입니다 --- 라벨마다 학습 난이도와 분리도가 \emph{다를 수} 있습니다.
+\ref{ch:10}장에서 봤던 \emph{확률 공간 KDE} 를 5개 라벨에 대해 \emph{각각} 그립니다. 라벨이 \emph{독립} 이라는 multi-label의 본질이 시각적으로 드러나는 그림입니다 --- 라벨마다 학습 난이도와 분리도가 \emph{다를 수} 있습니다.
 
 
 
@@ -730,7 +732,7 @@ plt.show()
 
 \section{\texorpdfstring{BERT와 sklearn 비교}{BERT와 sklearn 비교}}
 
-6장의 sklearn 셋업을 \emph{이 노트북 안에서} 다시 학습해 라벨별로 BERT와 비교합니다. \textbf{multi-label에서도 BERT의 67M이 sklearn 대비 어디서 이기는가?}
+\ref{ch:06}장의 sklearn 셋업을 \emph{이 노트북 안에서} 다시 학습해 라벨별로 BERT와 비교합니다. \textbf{multi-label에서도 BERT의 67M이 sklearn 대비 어디서 이기는가?}
 
 
 
@@ -896,7 +898,7 @@ plt.show()
 이름 & 한 줄 설명 & 다음 장에서 \\
 \midrule
 
-\inlinecode{AutoModelForSequenceClassification(num\_labels=5,\ problem\_type="multi\_label\_classification")} & 12장 셋업에서 problem\_type만 변경 → BCE per-label 자동 매핑 & 14장에서 메인 헤드로 그대로 \\
+\inlinecode{AutoModelForSequenceClassification(num\_labels=5,\ problem\_type="multi\_label\_classification")} & \ref{ch:12}장 셋업에서 problem\_type만 변경 → BCE per-label 자동 매핑 & \ref{ch:14}장에서 메인 헤드로 그대로 \\
 \inlinecode{sklearn.metrics.hamming\_loss} & 전체 (sample × label) 위치에서 틀린 비율 & multi-label 장마다 \\
 \inlinecode{precision\_recall\_fscore\_support(...,\ average="micro"/"macro")} & multi-label용 F1 --- micro는 라벨 합산, macro는 라벨 평균 & 14·17장·18 \\
 \inlinecode{roc\_auc\_score(...,\ average="macro")} & 라벨별 AUC를 평균 & 17·18장 \\
@@ -917,7 +919,7 @@ plt.show()
 \item
   multi-label 문제를 \emph{softmax + CrossEntropyLoss} 로 풀려고 하면 무엇이 잘못되나요? 수식으로 한 줄 설명할 수 있나요?
 \item
-  \inlinecode{num\_labels=5} 가 12장과 13장에서 \emph{같은 숫자} 인데 \emph{모델이 학습하는 의미} 는 어떻게 다른가요?
+  \inlinecode{num\_labels=5} 가 \ref{ch:12}장과 \ref{ch:13}장에서 \emph{같은 숫자} 인데 \emph{모델이 학습하는 의미} 는 어떻게 다른가요?
 \item
   Macro F1과 Micro F1의 차이는 무엇이고, 어느 한쪽이 \emph{훨씬} 낮으면 무엇을 의심해야 하나요?
 \item
@@ -983,7 +985,7 @@ confidence 의미 & 항상 합 = 1, 명확 & 5개 라벨의 sigmoid 확률, \emp
 \end{adjustbox}
 \end{booktable}
 
-multi-class가 \emph{명확히 single-label} 이면 CE가 정답. multi-label로 푸는 건 \emph{어떤 이유로 두 task를 통합해야 할 때} (예: 14장 보조 헤드처럼).
+multi-class가 \emph{명확히 single-label} 이면 CE가 정답. multi-label로 푸는 건 \emph{어떤 이유로 두 task를 통합해야 할 때} (예: \ref{ch:14}장 보조 헤드처럼).
 
 \end{faqBox}
 
@@ -1109,12 +1111,12 @@ def tokenize_wrong(batch):
 
 \begin{previewBox}{미리보기: 다음 장}
 
-\textbf{14장. BERT Auxiliary Loss --- 측면 분류 + 별점 보조 회귀}
+\textbf{\ref{ch:14}장. BERT Auxiliary Loss --- 측면 분류 + 별점 보조 회귀}
 
 \begin{itemize}
 \tightlist
 \item
-  메인 task: 13장의 multi-label 측면 분류 (\inlinecode{num\_labels=5} + BCE per-label) --- \emph{완전히 동일}
+  메인 task: \ref{ch:13}장의 multi-label 측면 분류 (\inlinecode{num\_labels=5} + BCE per-label) --- \emph{완전히 동일}
 \item
   추가: \emph{보조 헤드} \inlinecode{Linear(H,\ 1)} 로 별점 점수 회귀 (별점 정규화 0-1)
 \item

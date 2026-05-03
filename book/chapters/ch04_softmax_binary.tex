@@ -2,6 +2,8 @@
 
 \chapter[sigmoid와 softmax의 동등성 (Binary Classification)]{sigmoid와 softmax의 동등성 (Binary Classification)}
 
+\label{ch:04}
+
 \markboth{sigmoid와 softmax의 동등성 (Binary Classification)}{sigmoid와 softmax의 동등성 (Binary Classification)}
 
 \chaptermeta{04_softmax_binary/04_softmax_binary.ipynb}{https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/04_softmax_binary/04_softmax_binary.ipynb}{2차원 softmax 이진 분류와 1차원 sigmoid의 관계}
@@ -76,7 +78,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 1 & (TF-IDF) & \inlinecode{TfidfVectorizer()} & Yelp 5,000 & --- & --- & --- \\
 2 & \inlinecode{LinearRegression()} & \inlinecode{TfidfVectorizer()} & Yelp (별점 1-5) & (1차원) & 없음 & \inlinecode{MSELoss} \\
 3 & \inlinecode{LogisticRegression()} & \inlinecode{TfidfVectorizer()} & Yelp 이진화 & (1차원) & sigmoid & \inlinecode{BCEWithLogitsLoss} \\
-\textbf{4 ← 여기} & \inlinecode{LogisticRegression(multi\_class="multinomial")} & \inlinecode{TfidfVectorizer()} & Yelp 이진화 (3장과 동일) & \textbf{(2차원)} & \textbf{softmax} & \textbf{\inlinecode{CrossEntropyLoss}} \\
+\textbf{4 ← 여기} & \inlinecode{LogisticRegression(multi\_class="multinomial")} & \inlinecode{TfidfVectorizer()} & Yelp 이진화 (\ref{ch:03}장과 동일) & \textbf{(2차원)} & \textbf{softmax} & \textbf{\inlinecode{CrossEntropyLoss}} \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -86,13 +88,13 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 
 
 
-\section{변경점: 3장 대비}
+\section{변경점: \ref{ch:03}장 대비}
 
 \begin{booktable}{4장 변경점 요약}{tab:ch04-diff}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
-축 & 3장 & 4장 \\
+축 & \ref{ch:03}장 & \ref{ch:04}장 \\
 \midrule
 
 Output Head & (1차원) & \textbf{(2차원)} \\
@@ -106,7 +108,7 @@ Loss & \inlinecode{BCEWithLogitsLoss} & \textbf{\inlinecode{CrossEntropyLoss}} \
 \end{adjustbox}
 \end{booktable}
 
-\textbf{왜 같은 데이터에 같은 task인데 따로 장으로 다루나?} 두 방식은 출력 차원·activation·loss가 모두 바뀌어 보이지만 \emph{수학적으로 동등} 합니다. 이 동등성을 가장 단순한 sklearn 환경에서 미리 체험해두면, 10장에서 BERT binary가 두 방식 중 어느 쪽을 골라도 같다는 사실을 자연스럽게 받아들일 수 있습니다.
+\textbf{왜 같은 데이터에 같은 task인데 따로 장으로 다루나?} 두 방식은 출력 차원·activation·loss가 모두 바뀌어 보이지만 \emph{수학적으로 동등} 합니다. 이 동등성을 가장 단순한 sklearn 환경에서 미리 체험해두면, \ref{ch:10}장에서 BERT binary가 두 방식 중 어느 쪽을 골라도 같다는 사실을 자연스럽게 받아들일 수 있습니다.
 
 또 K=2를 통과하면 같은 식이 K=5(다음 장)로 자연스럽게 일반화됩니다 --- softmax/CE는 K가 무엇이든 작동합니다.
 
@@ -149,7 +151,7 @@ L = -\frac{1}{N}\sum_{i=1}^{N} \log \hat p_{i,\, y_i}
 \end{adjustbox}
 \end{booktable}
 
-\textbf{3장 BCE 표와 비교해보면} 손실값이 \emph{완전히 같습니다} (0.105 / 0.693 / 2.303). K=2에서 BCE와 CE가 동등하다는 첫 단서.
+\textbf{\ref{ch:03}장 BCE 표와 비교해보면} 손실값이 \emph{완전히 같습니다} (0.105 / 0.693 / 2.303). K=2에서 BCE와 CE가 동등하다는 첫 단서.
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -166,10 +168,10 @@ LogisticRegression(
 
 \section{토크나이저 노트}
 
-이 장의 토크나이저는 \textbf{1-3장과 동일한 \inlinecode{TfidfVectorizer}} 입니다. 모델·loss·데이터까지 3장과 같고, 변하는 건 출력 차원과 활성화 함수뿐.
+이 장의 토크나이저는 \textbf{\ref{ch:01}--\ref{ch:03}장과 동일한 \inlinecode{TfidfVectorizer}} 입니다. 모델·loss·데이터까지 \ref{ch:03}장과 같고, 변하는 건 출력 차원과 활성화 함수뿐.
 
 \begin{previewBox}{미리보기}
-\textbf{다음 장(5장)}: 같은 TF-IDF, 같은 multinomial LogReg. 변하는 건 데이터가 binary에서 5클래스로, K가 2에서 5로.
+\textbf{다음 장(\ref{ch:05}장)}: 같은 TF-IDF, 같은 multinomial LogReg. 변하는 건 데이터가 binary에서 5클래스로, K가 2에서 5로.
 \end{previewBox}
 
 
@@ -272,7 +274,7 @@ object   shape
 방식 & sklearn 인자 & 출력 차원 & 활성화 & loss \\
 \midrule
 
-A (3장 그대로) & \inlinecode{LogisticRegression()} & 1 & sigmoid & BCE \\
+A (\ref{ch:03}장 그대로) & \inlinecode{LogisticRegression()} & 1 & sigmoid & BCE \\
 B (이 장) & \inlinecode{LogisticRegression(multi\_class="multinomial")} & 2 & softmax & CE \\
 \bottomrule
 \end{tabular}
@@ -477,7 +479,7 @@ method         coef_shape  intercept_shape
 이름 & 한 줄 설명 & 다음 장에서 \\
 \midrule
 
-\inlinecode{LogisticRegression(multi\_class="multinomial")} & softmax + CE 다중 분류 (이 장엔 K=2) & 5장에서 K=5로 확장, 11장 BERT multi-class에서 같은 패러다임 \\
+\inlinecode{LogisticRegression(multi\_class="multinomial")} & softmax + CE 다중 분류 (이 장엔 K=2) & \ref{ch:05}장에서 K=5로 확장, \ref{ch:11}장 BERT multi-class에서 같은 패러다임 \\
 \inlinecode{sklearn.metrics.log\_loss} & CE/BCE 평가 함수 (multi-class 호환) & --- \\
 \bottomrule
 \end{tabular}
@@ -545,7 +547,7 @@ method         coef_shape  intercept_shape
   \textbf{softmax+CE (방식 B, num\_labels=2)}: BERT/PyTorch 기본, 딥러닝 표준. 다중 클래스로 일반화하기 자연스럽고 라이브러리 코드가 단순(같은 헤드/같은 loss로 K가 2이든 N이든 호환).
 \end{itemize}
 
-이 커리큘럼의 BERT 장(9-13장)는 방식 B가 기본이라 이 장에서 미리 익숙해지는 게 의미 있습니다. 10장에서 두 방식을 BERT로 다시 비교합니다.
+이 커리큘럼의 BERT 장(\ref{ch:09}--\ref{ch:13}장)는 방식 B가 기본이라 이 장에서 미리 익숙해지는 게 의미 있습니다. \ref{ch:10}장에서 두 방식을 BERT로 다시 비교합니다.
 
 \end{faqBox}
 
@@ -577,7 +579,7 @@ LogisticRegression(multi_class="multinomial").fit(X, y_binary).coef_.shape
 LogisticRegression(multi_class="multinomial").fit(X, y_3class).coef_.shape
 \end{lstlisting}
 
-그래서 방식 A와 방식 B가 sklearn 안에서는 사실상 같은 모델이고, predict\_proba도 미세한 수치 오차 빼고 일치합니다. 진짜 \emph{두 별개의 logit head} 가 살아 있는 형태는 프레임워크가 collapse하지 않는 환경 --- PyTorch에서 \inlinecode{nn.Linear(H,\ 2)} 를 직접 만들 때 --- 비로소 등장합니다 (10장).
+그래서 방식 A와 방식 B가 sklearn 안에서는 사실상 같은 모델이고, predict\_proba도 미세한 수치 오차 빼고 일치합니다. 진짜 \emph{두 별개의 logit head} 가 살아 있는 형태는 프레임워크가 collapse하지 않는 환경 --- PyTorch에서 \inlinecode{nn.Linear(H,\ 2)} 를 직접 만들 때 --- 비로소 등장합니다 (\ref{ch:10}장).
 
 \end{faqBox}
 
@@ -588,7 +590,7 @@ LogisticRegression(multi_class="multinomial").fit(X, y_3class).coef_.shape
 \item
   \inlinecode{"multinomial"}: 모든 클래스를 한 번에 학습 (softmax). 이 장.
 \item
-  \inlinecode{"ovr"} (One-vs-Rest): K개 독립 binary 분류기. 6장 multi-label로 가는 다리.
+  \inlinecode{"ovr"} (One-vs-Rest): K개 독립 binary 분류기. \ref{ch:06}장 multi-label로 가는 다리.
 \item
   \inlinecode{"auto"} (기본값): solver와 데이터에 맞춰 자동 --- 클래스 2개면 binary, 3개 이상이면 multinomial(\inlinecode{lbfgs}, \inlinecode{newton-cg}, \inlinecode{sag}, \inlinecode{saga} solver) 또는 OvR(\inlinecode{liblinear}).
 \end{itemize}
@@ -615,7 +617,7 @@ AutoModelForSequenceClassification.from_pretrained(
 )
 \end{lstlisting}
 
-이 커리큘럼의 10장이 두 방식을 BERT로 다시 비교하는 장입니다. 이 장에서 익힌 동등성이 그 비교의 출발점이 됩니다.
+이 커리큘럼의 \ref{ch:10}장이 두 방식을 BERT로 다시 비교하는 장입니다. 이 장에서 익힌 동등성이 그 비교의 출발점이 됩니다.
 \end{faqBox}
 
 
@@ -646,7 +648,7 @@ display(shift_check)
 
 \begin{previewBox}{미리보기: 다음 장}
 
-\textbf{5장. 다중 클래스 분류 (Multi-class Classification \& CE) --- K=5로 일반화}
+\textbf{\ref{ch:05}장. 다중 클래스 분류 (Multi-class Classification \& CE) --- K=5로 일반화}
 
 \begin{itemize}
 \tightlist
@@ -657,6 +659,6 @@ display(shift_check)
 \item
   5×5 confusion matrix가 대각선 근처에 몰리는 ordinal 흔적 관찰
 \item
-  multinomial vs OvR 비교 (6장 multi-label로 가는 다리)
+  multinomial vs OvR 비교 (\ref{ch:06}장 multi-label로 가는 다리)
 \end{itemize}
 \end{previewBox}
