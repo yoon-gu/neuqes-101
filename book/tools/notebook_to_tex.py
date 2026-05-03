@@ -559,6 +559,39 @@ def normalize_inline_code(latex: str) -> str:
     return re.sub(r"\\texttt\{([^{}]*)\}", repl, latex)
 
 
+def normalize_prose_quotes(latex: str) -> str:
+    """Use directional quotes in prose while preserving code-like fragments."""
+
+    protected_pattern = re.compile(r"\\(?:inlinecode|texttt)\{[^{}]*\}")
+
+    def normalize_segment(segment: str) -> str:
+        protected: list[str] = []
+
+        def protect(match: re.Match[str]) -> str:
+            protected.append(match.group(0))
+            return f"PROTECTEDQUOTE{len(protected) - 1}END"
+
+        segment = protected_pattern.sub(protect, segment)
+        segment = re.sub(r'"([^"\n]+)"', r"“\1”", segment)
+        for idx, original in enumerate(protected):
+            segment = segment.replace(f"PROTECTEDQUOTE{idx}END", original)
+        return segment
+
+    normalized: list[str] = []
+    in_listing = False
+    for line in latex.splitlines():
+        if line.startswith(r"\begin{lstlisting}"):
+            in_listing = True
+            normalized.append(line)
+            continue
+        if line.startswith(r"\end{lstlisting}"):
+            in_listing = False
+            normalized.append(line)
+            continue
+        normalized.append(line if in_listing else normalize_segment(line))
+    return "\n".join(normalized)
+
+
 def polish_book_prose(latex: str) -> str:
     """Normalize notebook-style shorthand and informal wording for book prose."""
 
@@ -829,6 +862,7 @@ def markdown_to_latex(markdown: str, chapter_number: int) -> str:
     latex = latex.replace(r"\textasciitilde\ref", r"~\ref")
     latex = wrap_faq_blocks(latex)
     latex = polish_book_prose(latex)
+    latex = normalize_prose_quotes(latex)
     latex = wrap_preview_blocks(latex)
     latex = latex.replace("\\begin{Shaded}", "\\begin{noteBox}[코드]")
     latex = latex.replace("\\end{Shaded}", "\\end{noteBox}")

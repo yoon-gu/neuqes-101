@@ -112,9 +112,9 @@ Loss & 없음 & \textbf{\inlinecode{MSELoss}} ← 첫 등장 \\
 \end{adjustbox}
 \end{booktable}
 
-이 장에서 바뀌는 것은 \textbf{모델 + Loss} 두 가지입니다 --- 그러나 둘은 한 묶음으로 처음 등장하는 거라, 학습자 관점에선 사실상 "모델이 처음 생겼다"는 한 가지 변화입니다. 다음 장부터는 한 번에 하나씩 변합니다.
+이 장에서 바뀌는 것은 \textbf{모델 + Loss} 두 가지입니다 --- 그러나 둘은 한 묶음으로 처음 등장하는 거라, 학습자 관점에선 사실상 “모델이 처음 생겼다”는 한 가지 변화입니다. 다음 장부터는 한 번에 하나씩 변합니다.
 
-\textbf{왜 회귀부터?} 모델 출력은 본질적으로 비활성 스칼라 출력입니다. 분류·다중라벨·multi-task 같은 복합적인 형태들은 모두 "그 숫자를 어떻게 가공해서 어떤 loss를 매길 것인가"의 변주일 뿐입니다. 가장 단순한 형태 --- 활성화 함수도 없는 1차원 출력 --- 부터 시작합니다.
+\textbf{왜 회귀부터?} 모델 출력은 본질적으로 비활성 스칼라 출력입니다. 분류·다중라벨·multi-task 같은 복합적인 형태들은 모두 “그 숫자를 어떻게 가공해서 어떤 loss를 매길 것인가”의 변주일 뿐입니다. 가장 단순한 형태 --- 활성화 함수도 없는 1차원 출력 --- 부터 시작합니다.
 
 
 
@@ -154,7 +154,7 @@ L = \frac{1}{N} \sum_{i=1}^{N} (y_i - \hat y_i)^2
 \end{adjustbox}
 \end{booktable}
 
-오차가 2배가 되면 손실은 4배, 4배가 되면 16배로 \textbf{비선형으로} 증폭됩니다. 이 제곱 항이 MSE의 성격을 결정합니다 --- "조금씩 자주 틀리는 것" 보다 "어쩌다 크게 틀리는 것"을 모델이 더 강하게 회피합니다.
+오차가 2배가 되면 손실은 4배, 4배가 되면 16배로 \textbf{비선형으로} 증폭됩니다. 이 제곱 항이 MSE의 성격을 결정합니다 --- “조금씩 자주 틀리는 것” 보다 “어쩌다 크게 틀리는 것”을 모델이 더 강하게 회피합니다.
 
 PyTorch에서는 \inlinecode{nn.MSELoss}, sklearn에서는 같은 개념이 \inlinecode{LinearRegression}에 내장돼 있고 평가 함수로는 \inlinecode{mean\_squared\_error}로 따로 부릅니다.
 
@@ -359,11 +359,11 @@ series      min     max
 
 
 
-\section{해부: "출력은 활성화 함수가 없는 스칼라 값이다"}
+\section{해부: “출력은 활성화 함수가 없는 스칼라 값이다”}
 
 위 분포를 보면 모델이 0.4점이나 5.7점 같은 \textbf{별점 범위 밖} 의 값도 출력합니다. 이상해 보이지만 자연스러운 결과입니다.
 
-\inlinecode{LinearRegression}이 학습한 것은 단지 "MSE를 최소화하는 가중합"이지, "출력값이 1과 5 사이여야 한다"는 제약을 포함하지 않습니다. 모델은 활성화 함수 없이 \(w^\top x + b\)를 그대로 출력할 뿐이라 음수도 5 초과도 모두 가능한 결과입니다.
+\inlinecode{LinearRegression}이 학습한 것은 단지 “MSE를 최소화하는 가중합”이지, “출력값이 1과 5 사이여야 한다”는 제약을 포함하지 않습니다. 모델은 활성화 함수 없이 \(w^\top x + b\)를 그대로 출력할 뿐이라 음수도 5 초과도 모두 가능한 결과입니다.
 
 이게 \textbf{회귀의 본질} 입니다. 출력 범위 제약은 모델이 아니라 사람이 따로 입혀야 합니다 --- clipping 같은 후처리, 혹은 sigmoid 같은 활성화 함수로요.
 
@@ -572,7 +572,7 @@ mean_absolute_error(y_test, y_pred_test)
 \item
   \textbf{다른 loss와 호환}: BCE/sigmoid는 {[}0, 1{]} 라벨이 필요. 이 장의 정규화는 다음 장을 위한 다리.
 \item
-  \textbf{해석 편의}: {[}0, 1{]}은 "확률"처럼 읽혀 다른 점수와 비교할 때 편함.
+  \textbf{해석 편의}: {[}0, 1{]}은 “확률”처럼 읽혀 다른 점수와 비교할 때 편함.
 \end{itemize}
 
 \end{faqBox}
@@ -594,9 +594,9 @@ w = (X^\top X)^{-1} X^\top y
 
 \begin{faqBox}{Q4. (이론) \inlinecode{LinearRegression}은 왜 활성화 함수가 없나요?}
 
-회귀의 정의가 "임의의 실수를 예측한다"이기 때문입니다. 활성화 함수는 출력 범위에 제약을 거는 도구라(sigmoid → {[}0,1{]}, tanh → {[}-1,1{]}, softmax → 확률 분포), 범위 제약이 필요 없는 회귀에서는 자연스럽게 빠집니다.
+회귀의 정의가 “임의의 실수를 예측한다”이기 때문입니다. 활성화 함수는 출력 범위에 제약을 거는 도구라(sigmoid → {[}0,1{]}, tanh → {[}-1,1{]}, softmax → 확률 분포), 범위 제약이 필요 없는 회귀에서는 자연스럽게 빠집니다.
 
-오히려 혼동하기 쉬운 건 분류 쪽입니다. 분류는 출력이 "확률"이어야 하므로 sigmoid/softmax가 강제로 들어가는 거지, 활성화 함수가 더 "원본" 형태인 게 아닙니다. \textbf{회귀의 비활성 출력이 가장 단순한 형태} 라고 보면 됩니다.
+오히려 혼동하기 쉬운 건 분류 쪽입니다. 분류는 출력이 “확률”이어야 하므로 sigmoid/softmax가 강제로 들어가는 거지, 활성화 함수가 더 “원본” 형태인 게 아닙니다. \textbf{회귀의 비활성 출력이 가장 단순한 형태} 라고 보면 됩니다.
 
 \end{faqBox}
 
@@ -679,7 +679,7 @@ display(pd.DataFrame([{"metric": "max_prediction_difference", "value": np.abs(pr
 \item
   \inlinecode{LogisticRegression}: 출력에 \textbf{sigmoid} 가 붙고, loss는 \textbf{\inlinecode{BCEWithLogitsLoss}} (sklearn: log loss)로 바뀜
 \item
-  처음으로 "확률"을 출력하는 모델 --- \inlinecode{predict\_proba}로 확인
+  처음으로 “확률”을 출력하는 모델 --- \inlinecode{predict\_proba}로 확인
 \item
   변경점은 \textbf{출력 형태 + Loss} 두 가지 (모델·토크나이저는 그대로, 데이터는 이진화로 가공)
 \end{itemize}
