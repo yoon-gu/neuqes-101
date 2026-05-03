@@ -1,4 +1,4 @@
-# 03_sklearn_binary — 출력에 sigmoid가 붙다
+# 03_sklearn_binary — 이진 분류 (Binary Classification & BCE)
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/03_sklearn_binary/03_sklearn_binary.ipynb)
 

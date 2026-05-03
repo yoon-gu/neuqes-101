@@ -1,4 +1,4 @@
-# 05_sklearn_multiclass — K=5로 진짜 일반화
+# 05_sklearn_multiclass — 다중 클래스 분류 (Multi-class Classification & CE)
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/05_sklearn_multiclass/05_sklearn_multiclass.ipynb)
 
@@ -13,7 +13,7 @@ Ch 4의 multinomial LogReg를 K=2에서 K=5로 그대로 확장합니다. softma
 - 회귀(Ch 2) vs 5클래스 분류(Ch 5) 비교 — 같은 데이터, 다른 관점
 - multinomial vs OvR 비교 — `OneVsRestClassifier`로 K개 독립 binary 모델을 직접 노출, 한 샘플의 (multinomial / OvR raw / OvR 정규화 후) 출력을 나란히 비교 (Ch 6 multi-label로 가는 다리)
 
-## Loss 수치 예시 (K=5, 정답 클래스 = 2)
+## 손실 수치 예시 (K=5, 정답 클래스 = 2)
 | 예측 분포 | 정답 확률 | 손실 |
 |---|---|---|
 | 정답 집중 `[0.05, 0.05, 0.80, 0.05, 0.05]` | 0.80 | 0.223 |

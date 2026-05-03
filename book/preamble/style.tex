@@ -84,6 +84,24 @@
 \renewcommand{\tablename}{표}
 \renewcommand{\listfigurename}{그림 목록}
 \renewcommand{\listtablename}{표 목록}
+\captionsetup[table]{
+  justification=centering,
+  singlelinecheck=true,
+  labelfont=bf,
+  font=small,
+  skip=6pt
+}
+\newenvironment{booktable}[2]{%
+  \par\begin{center}
+  \captionsetup{type=table}%
+  \small
+  \def\booktablecaption{#1}%
+  \def\booktablelabel{#2}%
+}{%
+  \vspace{4pt}%
+  \captionof{table}{\booktablecaption}\label{\booktablelabel}%
+  \end{center}\par
+}
 
 \pagestyle{fancy}
 \fancyhf{}
@@ -293,9 +311,9 @@
 }
 
 \newcommand{\code}[1]{\inlinecode{#1}}
-\newcommand{\concept}[1]{#1\index{#1}}
-\newcommand{\api}[1]{\inlinecode{#1}\index{#1@\oldtexttt{#1}}}
-\newcommand{\dataset}[1]{\inlinecode{#1}\index{#1@\oldtexttt{#1}}}
+\newcommand{\concept}[1]{#1\index{0#1@#1}}
+\newcommand{\api}[1]{\inlinecode{#1}\index{1#1@\oldtexttt{#1}}}
+\newcommand{\dataset}[1]{\inlinecode{#1}\index{1#1@\oldtexttt{#1}}}
 
 \newcommand{\chaptermeta}[3]{%
   \begin{noteBox}[Chapter map]

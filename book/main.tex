@@ -14,6 +14,12 @@
 \input{frontmatter/titlepage}
 \input{frontmatter/preface}
 \tableofcontents
+\cleardoublepage
+\addcontentsline{toc}{chapter}{그림 목록}
+\listoffigures
+\cleardoublepage
+\addcontentsline{toc}{chapter}{표 목록}
+\listoftables
 
 \mainmatter
 \phasedivider{0}
@@ -21,12 +27,12 @@
   {sklearn · TF-IDF로 task와 loss의 본질}
   {Foundations · before BERT}
   {
-    \chapline{Ch 1}{TF-IDF}{텍스트를 벡터로 표현}
-    \chapline{Ch 2}{sklearn Regression}{LinearReg · MSELoss}
-    \chapline{Ch 3}{Binary classification}{sigmoid · BCE}
-    \chapline{Ch 4}{Softmax binary}{sigmoid와 softmax의 동등성}
-    \chapline{Ch 5}{Multi-class classification}{CrossEntropyLoss}
-    \chapline{Ch 6}{Multi-label classification}{per-label BCE}
+    \chapline{Ch 1}{텍스트 벡터화}{TF-IDF}
+    \chapline{Ch 2}{회귀 분석}{Regression \& MSE}
+    \chapline{Ch 3}{이진 분류}{Binary Classification \& BCE}
+    \chapline{Ch 4}{sigmoid와 softmax}{Binary Classification}
+    \chapline{Ch 5}{다중 클래스 분류}{Multi-class Classification \& CE}
+    \chapline{Ch 6}{다중 라벨 분류}{Multi-label Classification \& Per-label BCE}
   }
 \input{chapters/ch01_tfidf}
 \input{chapters/ch02_sklearn_regression}
@@ -37,6 +43,8 @@
 
 \backmatter
 \input{backmatter/afterword}
+\cleardoublepage
+\addcontentsline{toc}{chapter}{색인}
 \printindex
 
 \end{document}

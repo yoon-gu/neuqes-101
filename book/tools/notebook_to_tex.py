@@ -55,8 +55,8 @@ CHAPTERS = [
     Chapter(
         1,
         "tfidf",
-        "TF-IDF로 만나는 첫 벡터",
-        "TF-IDF",
+        "텍스트 벡터화 (TF-IDF)",
+        "텍스트 벡터화 (TF-IDF)",
         "텍스트를 숫자 벡터로 바꾸는 첫 관문",
         (
             "TF-IDF",
@@ -74,9 +74,9 @@ CHAPTERS = [
     Chapter(
         2,
         "sklearn_regression",
-        "회귀와 MSELoss",
-        "Regression",
-        "별점 예측을 통해 첫 Loss인 MSE를 관찰",
+        "회귀 분석 (Regression \\& MSE)",
+        "회귀 분석 (Regression \\& MSE)",
+        "별점 예측을 통해 첫 손실인 평균제곱오차를 관찰",
         (
             "Regression",
             "MSELoss",
@@ -96,8 +96,8 @@ CHAPTERS = [
     Chapter(
         3,
         "sklearn_binary",
-        "이진 분류와 BCEWithLogitsLoss",
-        "Binary",
+        "이진 분류 (Binary Classification \\& BCE)",
+        "이진 분류 (Binary Classification \\& BCE)",
         "logit, sigmoid, BCE가 만나는 방식",
         (
             "Binary classification",
@@ -118,8 +118,8 @@ CHAPTERS = [
     Chapter(
         4,
         "softmax_binary",
-        "sigmoid와 softmax의 동등성",
-        "Softmax Binary",
+        "sigmoid와 softmax의 동등성 (Binary Classification)",
+        "sigmoid와 softmax의 동등성 (Binary Classification)",
         "2차원 softmax 이진 분류와 1차원 sigmoid의 관계",
         (
             "softmax",
@@ -137,8 +137,8 @@ CHAPTERS = [
     Chapter(
         5,
         "sklearn_multiclass",
-        "다중 클래스와 CrossEntropyLoss",
-        "Multi-class",
+        "다중 클래스 분류 (Multi-class Classification \\& CE)",
+        "다중 클래스 분류 (Multi-class Classification \\& CE)",
         "K=5 출력 헤드와 softmax 일반화",
         (
             "Multi-class classification",
@@ -155,8 +155,8 @@ CHAPTERS = [
     Chapter(
         6,
         "sklearn_multilabel",
-        "다중 라벨과 per-label BCE",
-        "Multi-label",
+        "다중 라벨 분류 (Multi-label Classification \\& Per-label BCE)",
+        "다중 라벨 분류 (Multi-label Classification \\& Per-label BCE)",
         "softmax의 합=1 제약을 풀고 라벨별 sigmoid로 확장",
         (
             "Multi-label classification",
@@ -178,6 +178,148 @@ CHAPTERS = [
 ]
 
 
+EXTRA_INDEXES = {
+    1: (
+        "Bag of Words",
+        "BoW",
+        "n-gram",
+        "token_pattern",
+        "fit_transform",
+        "get_feature_names_out",
+        "vocabulary_",
+        "max_features",
+        "min_df",
+        "max_df",
+        "OOV",
+        "out-of-vocabulary",
+        "CSR matrix",
+        "dense matrix",
+        "load_dataset",
+        "Yelp review full",
+        "pandas DataFrame",
+        "단어 가방",
+        "엔그램",
+        "토큰 패턴",
+        "어휘 사전",
+        "어휘 수",
+        "어휘 밖 단어",
+        "밀집 행렬",
+        "데이터 샘플링",
+    ),
+    2: (
+        "train_test_split",
+        "mean_absolute_error",
+        "r2_score",
+        "MAE",
+        "R2 score",
+        "residual",
+        "prediction clipping",
+        "target normalization",
+        "np.clip",
+        "regression head",
+        "continuous target",
+        "잔차",
+        "타깃 정규화",
+        "예측값 클리핑",
+        "연속 타깃",
+        "회귀 헤드",
+        "평가 지표",
+        "과대 예측",
+        "과소 예측",
+    ),
+    3: (
+        "binary cross entropy",
+        "log loss",
+        "probability threshold",
+        "threshold tuning",
+        "precision_score",
+        "recall_score",
+        "f1_score",
+        "accuracy_score",
+        "class_weight",
+        "decision boundary",
+        "positive class",
+        "negative class",
+        "이진 교차 엔트로피",
+        "로그 손실",
+        "확률 임계값",
+        "임계값 튜닝",
+        "양성 클래스",
+        "음성 클래스",
+        "결정 경계",
+        "정확도",
+        "F1 점수",
+    ),
+    4: (
+        "logit difference",
+        "2-logit softmax",
+        "1-logit sigmoid",
+        "softmax CE",
+        "log-sum-exp",
+        "coef_",
+        "intercept_",
+        "multi_class",
+        "predict_proba",
+        "binary equivalence",
+        "one-hot label",
+        "두 로짓 차이",
+        "2차원 출력",
+        "1차원 출력",
+        "소프트맥스 CE",
+        "원-핫 라벨",
+        "동등성 증명",
+    ),
+    5: (
+        "multinomial logistic regression",
+        "OvR",
+        "One-vs-Rest",
+        "argmax",
+        "weighted F1",
+        "macro average",
+        "weighted average",
+        "baseline",
+        "log K",
+        "precision",
+        "recall",
+        "F1",
+        "class_weight",
+        "multi_class",
+        "다항 로지스틱 회귀",
+        "일대나머지",
+        "상호배타 클래스",
+        "클래스 경쟁",
+        "가중 F1",
+        "매크로 평균",
+        "가중 평균",
+        "기준선",
+        "분류 리포트",
+    ),
+    6: (
+        "per-label sigmoid",
+        "subset accuracy",
+        "label cardinality",
+        "label density",
+        'average="micro"',
+        'average="macro"',
+        "multi-hot vector",
+        "aspect label",
+        "label-wise threshold",
+        "independent labels",
+        "binary relevance",
+        "label imbalance",
+        "라벨별 시그모이드",
+        "서브셋 정확도",
+        "라벨 카디널리티",
+        "라벨 밀도",
+        "라벨별 임계값",
+        "독립 라벨",
+        "측면 키워드",
+        "라벨 불균형",
+        "이진 관련성",
+    ),
+}
+
+
 EMOJI_PATTERN = re.compile(
     "["
     "\U0001F300-\U0001FAFF"
@@ -186,6 +328,11 @@ EMOJI_PATTERN = re.compile(
     "]+",
     flags=re.UNICODE,
 )
+HANGUL_PATTERN = re.compile(r"[가-힣]")
+
+
+def index_sort_prefix(term: str) -> str:
+    return "0" if HANGUL_PATTERN.search(term) else "1"
 
 
 def strip_heading_emoji(text: str) -> str:
@@ -322,6 +469,75 @@ def normalize_tables(latex: str) -> str:
     return latex
 
 
+def clean_table_caption_title(section_title: str) -> str:
+    section_title = re.sub(
+        r"\\texorpdfstring\{.*?\}\{(.*?)\}",
+        r"\1",
+        section_title,
+        flags=re.DOTALL,
+    )
+    section_title = re.sub(r"\\inlinecode\{([^{}]+)\}", r"\1", section_title)
+    section_title = re.sub(r"\\[A-Za-z]+\*?(?:\[[^\]]*\])?\{([^{}]*)\}", r"\1", section_title)
+    section_title = section_title.replace("---", "-")
+    return re.sub(r"\s+", " ", section_title).strip()
+
+
+def caption_for_table(chapter_number: int, section_title: str, table_index: int) -> str:
+    title = clean_table_caption_title(section_title)
+    if "변화추적표" in title:
+        return f"{chapter_number}장 변화추적표"
+    if "변경점" in title:
+        return f"{chapter_number}장 변경점 요약"
+    if "등장한 라이브러리" in title:
+        return f"{chapter_number}장 새로 등장한 라이브러리"
+    if "Loss" in title or "수치 예시" in title:
+        return f"{chapter_number}장 손실 수치 예시"
+    if title:
+        return f"{chapter_number}장 {title} 표"
+    return f"{chapter_number}장 표 {table_index}"
+
+
+def wrap_tabular_tables(latex: str, chapter_number: int) -> str:
+    lines = latex.splitlines()
+    wrapped: list[str] = []
+    section_title = ""
+    table_index = 0
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        section_match = re.match(r"\\(?:section|subsection)\{(.+)\}$", line)
+        if section_match:
+            section_title = section_match.group(1)
+
+        if line.startswith(r"\begin{adjustbox}"):
+            block = [line]
+            depth = 1
+            i += 1
+            while i < len(lines):
+                block.append(lines[i])
+                if lines[i].startswith(r"\begin{adjustbox}"):
+                    depth += 1
+                if lines[i].startswith(r"\end{adjustbox}"):
+                    depth -= 1
+                    if depth == 0:
+                        break
+                i += 1
+            block_text = "\n".join(block)
+            if r"\begin{tabular}" in block_text or r"\begin{tabularx}" in block_text:
+                table_index += 1
+                caption = caption_for_table(chapter_number, section_title, table_index)
+                label = f"tab:ch{chapter_number:02d}-{table_index:02d}"
+                wrapped.append(f"\\begin{{booktable}}{{{caption}}}{{{label}}}")
+                wrapped.extend(block)
+                wrapped.append(r"\end{booktable}")
+            else:
+                wrapped.extend(block)
+        else:
+            wrapped.append(line)
+        i += 1
+    return "\n".join(wrapped)
+
+
 def unescape_texttt_content(text: str) -> str:
     return (
         text.replace(r"\_", "_")
@@ -346,6 +562,39 @@ def normalize_inline_code(latex: str) -> str:
         return "\\inlinecode{" + content + "}"
 
     return re.sub(r"\\texttt\{([^{}]*)\}", repl, latex)
+
+
+def normalize_prose_quotes(latex: str) -> str:
+    """Use directional quotes in prose while preserving code-like fragments."""
+
+    protected_pattern = re.compile(r"\\(?:inlinecode|texttt)\{[^{}]*\}")
+
+    def normalize_segment(segment: str) -> str:
+        protected: list[str] = []
+
+        def protect(match: re.Match[str]) -> str:
+            protected.append(match.group(0))
+            return f"PROTECTEDQUOTE{len(protected) - 1}END"
+
+        segment = protected_pattern.sub(protect, segment)
+        segment = re.sub(r'"([^"\n]+)"', r"“\1”", segment)
+        for idx, original in enumerate(protected):
+            segment = segment.replace(f"PROTECTEDQUOTE{idx}END", original)
+        return segment
+
+    normalized: list[str] = []
+    in_listing = False
+    for line in latex.splitlines():
+        if line.startswith(r"\begin{lstlisting}"):
+            in_listing = True
+            normalized.append(line)
+            continue
+        if line.startswith(r"\end{lstlisting}"):
+            in_listing = False
+            normalized.append(line)
+            continue
+        normalized.append(line if in_listing else normalize_segment(line))
+    return "\n".join(normalized)
 
 
 def polish_book_prose(latex: str) -> str:
@@ -422,6 +671,31 @@ def polish_book_prose(latex: str) -> str:
         "다음 장를": "다음 장을",
         "1·2장와": "1·2장과",
         "2장와": "2장과",
+        "2장. sklearn Regression --- 시작점": "2장. 회귀 분석 (Regression \\& MSE) --- 첫 모델과 손실",
+        "3장. sklearn Binary --- 출력에 sigmoid가 붙다": "3장. 이진 분류 (Binary Classification \\& BCE) --- 출력에 sigmoid가 붙다",
+        "4장. sklearn Multi-class --- sigmoid가 softmax로": "4장. sigmoid와 softmax의 동등성 (Binary Classification) --- 같은 문제, 다른 표현",
+        "5장. sklearn Multi-class --- K=5로 진짜 일반화": "5장. 다중 클래스 분류 (Multi-class Classification \\& CE) --- K=5로 일반화",
+        "6장. sklearn Multi-label --- softmax 합=1 제약을 푼다": "6장. 다중 라벨 분류 (Multi-label Classification \\& Per-label BCE) --- softmax 합=1 제약을 푼다",
+        "2장. 회귀 분석과 MSELoss --- 첫 모델과 Loss": "2장. 회귀 분석 (Regression \\& MSE) --- 첫 모델과 손실",
+        "3장. 이진 분류와 BCEWithLogitsLoss --- 출력에 sigmoid가 붙다": "3장. 이진 분류 (Binary Classification \\& BCE) --- 출력에 sigmoid가 붙다",
+        "4장. 이진 분류의 sigmoid-softmax 동등성 --- 같은 문제, 다른 표현": "4장. sigmoid와 softmax의 동등성 (Binary Classification) --- 같은 문제, 다른 표현",
+        "5장. 다중 클래스 분류와 CrossEntropyLoss --- K=5로 일반화": "5장. 다중 클래스 분류 (Multi-class Classification \\& CE) --- K=5로 일반화",
+        "6장. 다중 라벨 분류와 per-label BCE --- softmax 합=1 제약을 푼다": "6장. 다중 라벨 분류 (Multi-label Classification \\& Per-label BCE) --- softmax 합=1 제약을 푼다",
+        "2장. 회귀 분석과 평균제곱오차 --- 첫 모델과 손실": "2장. 회귀 분석 (Regression \\& MSE) --- 첫 모델과 손실",
+        "3장. 이진 분류와 이진 교차 엔트로피 --- 출력에 sigmoid가 붙다": "3장. 이진 분류 (Binary Classification \\& BCE) --- 출력에 sigmoid가 붙다",
+        "4장. 이진 분류: sigmoid와 softmax는 어떻게 같은가 --- 같은 문제, 다른 표현": "4장. sigmoid와 softmax의 동등성 (Binary Classification) --- 같은 문제, 다른 표현",
+        "5장. 다중 클래스 분류와 교차 엔트로피 --- K=5로 일반화": "5장. 다중 클래스 분류 (Multi-class Classification \\& CE) --- K=5로 일반화",
+        "6장. 다중 라벨 분류와 라벨별 이진 교차 엔트로피 --- softmax 합=1 제약을 푼다": "6장. 다중 라벨 분류 (Multi-label Classification \\& Per-label BCE) --- softmax 합=1 제약을 푼다",
+        "Loss 함수의 변화 --- \\inlinecode{MSELoss} 등장": "손실 함수의 변화 --- 평균제곱오차 등장",
+        "Loss 함수의 변화 --- \\inlinecode{BCEWithLogitsLoss} 등장": "손실 함수의 변화 --- 이진 교차 엔트로피 등장",
+        "Loss 함수의 변화 --- \\inlinecode{CrossEntropyLoss} 등장": "손실 함수의 변화 --- 교차 엔트로피 등장",
+        "Loss 함수의 변화 --- \\inlinecode{BCEWithLogitsLoss} per-label": "손실 함수의 변화 --- 라벨별 이진 교차 엔트로피",
+        "Loss 함수의 변화 --- MSELoss 등장": "손실 함수의 변화 --- 평균제곱오차 등장",
+        "Loss 함수의 변화 --- BCEWithLogitsLoss 등장": "손실 함수의 변화 --- 이진 교차 엔트로피 등장",
+        "Loss 함수의 변화 --- CrossEntropyLoss 등장": "손실 함수의 변화 --- 교차 엔트로피 등장",
+        "Loss 함수의 변화 --- BCEWithLogitsLoss per-label": "손실 함수의 변화 --- 라벨별 이진 교차 엔트로피",
+        "Loss 노트 --- 같은 CE, K=5 수치 예시": "손실 노트 --- 같은 교차 엔트로피, K=5 수치 예시",
+        "Loss 한 단계 더: 학습된 모델의 실제 예측으로 BCE 분해": "손실 한 단계 더: 학습된 모델의 실제 예측으로 BCE 분해",
     }
     for before, after in replacements.items():
         latex = latex.replace(before, after)
@@ -618,6 +892,7 @@ def markdown_to_latex(markdown: str, chapter_number: int) -> str:
     latex = latex.replace(r"\textasciitilde\ref", r"~\ref")
     latex = wrap_faq_blocks(latex)
     latex = polish_book_prose(latex)
+    latex = normalize_prose_quotes(latex)
     latex = wrap_preview_blocks(latex)
     latex = latex.replace("\\begin{Shaded}", "\\begin{noteBox}[코드]")
     latex = latex.replace("\\end{Shaded}", "\\end{noteBox}")
@@ -1343,9 +1618,10 @@ def chapter_tex(chapter: Chapter, execute: bool = False) -> str:
         "",
     ]
 
-    for term in chapter.indexes:
+    chapter_index_terms = tuple(dict.fromkeys(chapter.indexes + EXTRA_INDEXES.get(chapter.number, ())))
+    for term in chapter_index_terms:
         safe = term.replace("_", "\\_")
-        chunks.append(f"\\index{{{safe}}}")
+        chunks.append(f"\\index{{{index_sort_prefix(term)}{safe}@{safe}}}")
     chunks.append("")
     explain_code = False
 
@@ -1367,6 +1643,7 @@ def chapter_tex(chapter: Chapter, execute: bool = False) -> str:
         chunks.append("")
 
     chapter_latex = "\n\n".join(chunks).rstrip() + "\n"
+    chapter_latex = wrap_tabular_tables(chapter_latex, chapter.number)
     chapter_latex = display_math_to_numbered_equations(chapter_latex, chapter.number)
     return chapter_latex
 

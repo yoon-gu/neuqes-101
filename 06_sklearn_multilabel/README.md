@@ -1,4 +1,4 @@
-# 06_sklearn_multilabel — softmax 합=1 제약을 푼다
+# 06_sklearn_multilabel — 다중 라벨 분류 (Multi-label Classification & Per-label BCE)
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/06_sklearn_multilabel/06_sklearn_multilabel.ipynb)
 
@@ -13,7 +13,7 @@
 - 라벨별 임계값 조정 (단일 임계값 sweep + 라벨별 최적 임계값 FAQ)
 - **합성의 한계** 솔직히 짚기 — 부정·반어 무시, 사전 협소, 모델이 휴리스틱을 다시 학습
 
-## Loss 수치 예시 (K=5, 정답 [1, 0, 1, 0, 1])
+## 손실 수치 예시 (K=5, 정답 [1, 0, 1, 0, 1])
 | 시나리오 | 예측 확률 | 평균 BCE |
 |---|---|---|
 | 잘 맞춤 | `[0.9, 0.1, 0.8, 0.2, 0.6]` | 0.233 |

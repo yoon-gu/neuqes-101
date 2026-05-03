@@ -1,1 +1,117 @@
-\textbookcover
+\begin{titlepage}
+  \thispagestyle{empty}
+  \begin{tikzpicture}[remember picture, overlay]
+    \fill[taPaper]
+      (current page.north west) rectangle (current page.south east);
+    \fill[taPhaseTwo]
+      (current page.north west) rectangle ([yshift=-2.5mm]current page.north east);
+    \fill[taSlateLight]
+      ([yshift=-2.5mm]current page.north west) rectangle ([yshift=-3.5mm]current page.north east);
+
+    \draw[taSlate, line width=0.6pt]
+      ([xshift=20mm, yshift=-22mm]current page.north west) -- ++(5mm, 0);
+    \node[anchor=west, text=taSubtext, font=\sffamily\fontsize{8}{10}\selectfont]
+      at ([xshift=27mm, yshift=-22mm]current page.north west)
+      {NLP\ \ \textbf{·}\ \ TRANSFORMERS};
+
+    \node[anchor=north west, text=taSlate, font=\fontsize{15}{18}\selectfont]
+      at ([xshift=20mm, yshift=-50mm]current page.north west)
+      {Hugging Face로 시작하는};
+    \node[anchor=north west, text=taInk, font=\bfseries\fontsize{42}{48}\selectfont]
+      at ([xshift=20mm, yshift=-65mm]current page.north west)
+      {텍스트 분석};
+    \node[anchor=north west, text=taInk, font=\bfseries\fontsize{42}{48}\selectfont]
+      at ([xshift=20mm, yshift=-85mm]current page.north west)
+      {입문};
+    \draw[taSlate, line width=2pt]
+      ([xshift=20mm, yshift=-110mm]current page.north west) -- ++(20mm, 0);
+    \node[anchor=north west, text=taSlateMute, font=\itshape\fontsize{11}{13}\selectfont]
+      at ([xshift=20mm, yshift=-115mm]current page.north west)
+      {Introduction to Text Analysis with Hugging Face};
+    \node[anchor=north west, text=taSlate, font=\fontsize{10}{12}\selectfont]
+      at ([xshift=20mm, yshift=-123mm]current page.north west)
+      {전 20강\ \ \textbf{·}\ \ sklearn에서 huggingface까지};
+
+    \draw[taSlate, line width=0.6pt]
+      ([xshift=20mm, yshift=-144mm]current page.north west) -- ++(8mm, 0);
+    \node[anchor=west, text=taSubtext, font=\sffamily\fontsize{7}{9}\selectfont]
+      at ([xshift=30mm, yshift=-144mm]current page.north west)
+      {CURRICULUM\ \ \textbf{·}\ \ 4 PHASES\ \ \textbf{·}\ \ 20 CHAPTERS};
+
+    \node[anchor=north west, text=taInk, font=\fontsize{10}{12}\selectfont\bfseries]
+      at ([xshift=20mm, yshift=-153mm]current page.north west)
+      {PHASE 0\ \ \textbf{·}\ \ 기초 다지기};
+    \node[anchor=north east, text=taSubtext, font=\itshape\fontsize{8}{10}\selectfont]
+      at ([xshift=150mm, yshift=-153mm]current page.north west)
+      {Ch 1--6};
+    \node[anchor=north west, text=taSubtext, font=\fontsize{8}{10}\selectfont]
+      at ([xshift=20mm, yshift=-158mm]current page.north west)
+      {sklearn\ \ \textbf{·}\ \ TF-IDF로 task와 loss의 본질};
+    \fill[taTrack, opacity=0.08]
+      ([xshift=20mm, yshift=-164mm]current page.north west) rectangle
+      ([xshift=150mm, yshift=-165.5mm]current page.north west);
+    \fill[taPhaseZero]
+      ([xshift=20mm, yshift=-164mm]current page.north west) rectangle
+      ([xshift=117.5mm, yshift=-165.5mm]current page.north west);
+
+    \node[anchor=north west, text=taInk, font=\fontsize{10}{12}\selectfont\bfseries]
+      at ([xshift=20mm, yshift=-172mm]current page.north west)
+      {PHASE 1\ \ \textbf{·}\ \ 영어 BERT 파인튜닝};
+    \node[anchor=north east, text=taSubtext, font=\itshape\fontsize{8}{10}\selectfont]
+      at ([xshift=150mm, yshift=-172mm]current page.north west)
+      {Ch 7--14};
+    \node[anchor=north west, text=taSubtext, font=\fontsize{8}{10}\selectfont]
+      at ([xshift=20mm, yshift=-177mm]current page.north west)
+      {DistilBERT로 같은 태스크 재방문\ \ \textbf{·}\ \ Auxiliary loss};
+    \fill[taTrack, opacity=0.08]
+      ([xshift=20mm, yshift=-183mm]current page.north west) rectangle
+      ([xshift=150mm, yshift=-184.5mm]current page.north west);
+    \fill[taPhaseOne]
+      ([xshift=20mm, yshift=-183mm]current page.north west) rectangle
+      ([xshift=150mm, yshift=-184.5mm]current page.north west);
+
+    \node[anchor=north west, text=taInk, font=\fontsize{10}{12}\selectfont\bfseries]
+      at ([xshift=20mm, yshift=-191mm]current page.north west)
+      {PHASE 2\ \ \textbf{·}\ \ 한국어 BERT 재방문};
+    \node[anchor=north east, text=taSubtext, font=\itshape\fontsize{8}{10}\selectfont]
+      at ([xshift=150mm, yshift=-191mm]current page.north west)
+      {Ch 15--18};
+    \node[anchor=north west, text=taSubtext, font=\fontsize{8}{10}\selectfont]
+      at ([xshift=20mm, yshift=-196mm]current page.north west)
+      {klue/bert-base\ \ \textbf{·}\ \ NSMC\ \ \textbf{·}\ \ KLUE-YNAT};
+    \fill[taTrack, opacity=0.08]
+      ([xshift=20mm, yshift=-202mm]current page.north west) rectangle
+      ([xshift=150mm, yshift=-203.5mm]current page.north west);
+    \fill[taPhaseTwo]
+      ([xshift=20mm, yshift=-202mm]current page.north west) rectangle
+      ([xshift=85mm, yshift=-203.5mm]current page.north west);
+
+    \node[anchor=north west, text=taInk, font=\fontsize{10}{12}\selectfont\bfseries]
+      at ([xshift=20mm, yshift=-210mm]current page.north west)
+      {PHASE 3\ \ \textbf{·}\ \ 토크나이저 직접 학습};
+    \node[anchor=north east, text=taSubtext, font=\itshape\fontsize{8}{10}\selectfont]
+      at ([xshift=150mm, yshift=-210mm]current page.north west)
+      {Ch 19--20};
+    \node[anchor=north west, text=taSubtext, font=\fontsize{8}{10}\selectfont]
+      at ([xshift=20mm, yshift=-215mm]current page.north west)
+      {워드레벨\,\textbf{·}\,형태소 토크나이저 직접 학습};
+    \fill[taTrack, opacity=0.08]
+      ([xshift=20mm, yshift=-221mm]current page.north west) rectangle
+      ([xshift=150mm, yshift=-222.5mm]current page.north west);
+    \fill[taPhaseThree]
+      ([xshift=20mm, yshift=-221mm]current page.north west) rectangle
+      ([xshift=52.5mm, yshift=-222.5mm]current page.north west);
+
+    \draw[taSlate, line width=1.5pt]
+      ([xshift=20mm, yshift=-235mm]current page.north west) -- ++(13mm, 0);
+    \node[anchor=north west, text=taInk, font=\bfseries\fontsize{14}{16}\selectfont]
+      at ([xshift=20mm, yshift=-240mm]current page.north west)
+      {황윤구 지음};
+    \node[anchor=north west, text=taSubtext, font=\sffamily\fontsize{7}{9}\selectfont]
+      at ([xshift=20mm, yshift=-248mm]current page.north west)
+      {PYTHON\ \ \textbf{·}\ \ COLAB\ \ \textbf{·}\ \ HUGGINGFACE};
+    \node[anchor=north east, text=taSlate, font=\itshape\fontsize{10}{12}\selectfont]
+      at ([xshift=-20mm, yshift=-248mm]current page.north east)
+      {v0.1.0};
+  \end{tikzpicture}
+\end{titlepage}
