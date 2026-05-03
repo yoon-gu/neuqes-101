@@ -34,7 +34,7 @@
 
 % Phase 색상 (옅음 → 깊음 진행)
 \definecolor{taPhaseZero}{HTML}{8DA3B8}    % Phase 0 (기초)
-\definecolor{taPhaseOne}{HTML}{5E7D9C}     % Phase 1 (영어 BERT)
+\definecolor{taPhaseOne}{HTML}{5E7D9C}     % Phase 1 (BERT 기반 태스크 재정식화)
 \definecolor{taPhaseTwo}{HTML}{3F5E80}     % Phase 2 (한국어 BERT)
 \definecolor{taPhaseThree}{HTML}{243F62}   % Phase 3 (토크나이저)
 
@@ -284,13 +284,13 @@
       % Phase 1 (Ch 7-14 완료 / 현재 원고의 끝)
       \node[anchor=north west, text=taInk, font=\fontsize{10}{12}\selectfont\bfseries]
         at ([xshift=20mm, yshift=-174mm]current page.north west)
-        {PHASE 1\ \ \textbf{·}\ \ 영어 BERT 파인튜닝};
+        {PHASE 1\ \ \textbf{·}\ \ BERT 기반 태스크 재정식화};
       \node[anchor=north east, text=taSubtext, font=\itshape\fontsize{8}{10}\selectfont]
         at ([xshift=20mm+130mm, yshift=-174mm]current page.north west)
         {Ch 7–14};
       \node[anchor=north west, text=taSubtext, font=\fontsize{8}{10}\selectfont]
         at ([xshift=20mm, yshift=-179mm]current page.north west)
-        {DistilBERT로 같은 태스크 재방문\ \ \textbf{·}\ \ Auxiliary loss};
+        {DistilBERT와 Trainer로 Loss·Head 재해석};
       \fill[taTrack, opacity=0.08]
         ([xshift=20mm, yshift=-185mm]current page.north west) rectangle
         ([xshift=20mm+130mm, yshift=-186.5mm]current page.north west);

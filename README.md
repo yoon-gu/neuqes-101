@@ -59,7 +59,7 @@ PDF는 GitHub Release asset으로 배포합니다. 노트북은 실습용 원본
 ## Phase 구분
 
 - **Phase 0 (Ch 1-6)** — sklearn으로 태스크/loss의 본질 학습. BERT 등장하지 않음.
-- **Phase 1 (Ch 7-14)** — DistilBERT(영어)로 같은 태스크들을 다시. Ch 10·11이 binary 두 방식을 별도 학습으로 비교, Auxiliary loss(Ch 14)로 마무리.
+- **Phase 1 (Ch 7-14)** — DistilBERT와 Trainer로 Loss/Head 구조를 재정식화합니다. Ch 10·11이 binary 두 방식을 별도 학습으로 비교, Auxiliary loss(Ch 14)로 마무리.
 - **Phase 2 (Ch 15-18)** — 한국어로 압축 재방문 (klue/bert-base). Binary부터 시작 (회귀는 영어에서 다뤘으므로 생략).
 - **Phase 3 (Ch 19-20)** — 토크나이저를 직접 학습. 사전학습 의존 없는 경험. Phase 3가 클라이맥스가 되도록 토크나이저 시각을 Ch 1부터 일관되게 추적합니다.
 
