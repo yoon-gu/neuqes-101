@@ -376,50 +376,62 @@ code(r"""# BERT 예측값 직접 받기 (별도 evaluate 호출이지만 빠름)
 preds_output = trainer.predict(eval_tok)
 bert_pred = preds_output.predictions.flatten()
 
-# seaborn 으로 두 모델 예측을 한 그래프에서 비교
-# - 왼쪽: 예측 분포 자체 (predicted star per actual class)
-# - 오른쪽: 잔차 분포 (predicted - actual per actual class)
+# seaborn 비교용 long-form DataFrame
 df_compare = pd.DataFrame({
     "Actual star": np.concatenate([eval_labels, eval_labels]),
     "Predicted":   np.concatenate([bert_pred,   sk_pred]),
     "Model":       ["BERT"] * len(eval_labels) + ["sklearn"] * len(eval_labels),
 })
-df_compare["Residual"] = df_compare["Predicted"] - df_compare["Actual star"]
+df_compare["Residual"] = df_compare["Predicted"] - df_compare["Actual star"]""")
 
-fig, axes = plt.subplots(1, 2, figsize=(13, 5))
+md(r"""### 시각 1 — 예측 분포 per actual class
 
-# 왼쪽 — 예측 분포
-sns.violinplot(data=df_compare, x="Actual star", y="Predicted", hue="Model",
-               split=True, inner="quart", ax=axes[0])
+각 actual class에 대해 BERT와 sklearn이 *어떤 값을 출력했는지* 의 분포를 split violin으로 좌우에 둡니다. 빨간 점선이 ideal (정답 = 예측). 분포 중심이 그 선 근처에 모이고 좌우 폭이 좁을수록 정확합니다.""")
+
+code(r"""fig, ax = plt.subplots(figsize=(11, 5))
+sns.violinplot(
+    data=df_compare, x="Actual star", y="Predicted", hue="Model",
+    split=True, inner="quart", ax=ax,
+)
 for i, x_val in enumerate([1, 2, 3, 4, 5]):
-    axes[0].plot([i - 0.4, i + 0.4], [x_val, x_val], "r--", linewidth=1, alpha=0.7)
-axes[0].set_title("Predicted star distribution per actual class")
-axes[0].legend(loc="upper left")
-
-# 오른쪽 — 잔차 분포
-sns.violinplot(data=df_compare, x="Actual star", y="Residual", hue="Model",
-               split=True, inner="quart", ax=axes[1])
-axes[1].axhline(0, color="red", linestyle="--", linewidth=1, alpha=0.7)
-axes[1].set_title("Residual = Predicted − Actual")
-axes[1].legend(loc="upper left")
-
+    ax.plot([i - 0.4, i + 0.4], [x_val, x_val], "r--", linewidth=1, alpha=0.7)
+ax.set_title("Predicted star distribution per actual class")
+ax.legend(loc="upper left")
 plt.tight_layout()
 plt.show()""")
 
-md(r"""**두 패널 읽는 법** — 같은 데이터를 두 시점에서 봅니다.
+md(r"""**무엇이 보이나**
 
-| 패널 | 보여주는 것 | 무엇을 읽나 |
-|---|---|---|
-| 왼쪽 (Predicted) | 각 actual class에 대해 두 모델이 *어떤 값을 출력했는지* 의 분포 | 분포의 중심이 빨간 점선(이상)에 가까운지, 좌우 폭(spread)이 좁은지 |
-| 오른쪽 (Residual) | 잔차(예측 − 실제)의 분포, 0 기준선 | 0 근처에 좁게 모여 있을수록 정확. 양/음 방향 *치우침(bias)* 도 한눈에 |
+- BERT 쪽 violin이 더 가늘고 빨간 점선 근처에 모이면 같은 actual class 안에서 예측 일관성이 높다는 뜻.
+- 두 끝(1점, 5점)에서 분포 중심이 안쪽으로 살짝 치우치는 모양이 자주 보입니다 — 모델이 *중앙 쪽으로 회귀(regression to the mean)* 하는 경향.
+- sklearn 쪽 violin이 더 두텁고 길게 늘어진다면 outlier 예측이 많다는 신호.
 
-**관찰 포인트**
+이 그래프는 "모델이 무엇을 출력하나"의 *raw 분포* 를 봅니다. 다음 그래프는 *오차 자체* 에 집중합니다.""")
 
-- **BERT 쪽이 더 좁다**: 같은 actual class 안에서 예측이 ideal 선 근처에 더 모입니다 (왼쪽 violin이 더 가늘다 / 오른쪽 잔차가 0 근처에 더 집중).
-- **두 끝 class(1점, 5점) 에서의 편향**: 모델은 보통 *중앙 쪽으로 회귀(regression to the mean)* 하는 경향이 있어서 1점은 약간 위로(잔차 +), 5점은 약간 아래로(잔차 −) 치우치는 모양이 잘 나타납니다. 두 모델 모두에서 같은 패턴이 보일 수 있고, 그 정도가 모델별로 얼마나 다른지가 비교 포인트.
-- **sklearn은 outlier 꼬리가 김**: 잔차 양 끝(±2 이상)으로 늘어지는 꼬리가 sklearn 쪽에 더 두드러져, 일부 샘플에서 큰 오차를 내고 있다는 신호.
+md(r"""### 시각 2 — 잔차(Residual = Predicted − Actual) 분포 per actual class
 
-이 두 뷰가 맞물려 있어서 *왼쪽에서 분포의 모양*, *오른쪽에서 오차의 크기·방향* 을 동시에 본 뒤 정량 지표(MSE/MAE/R²) 표와 함께 해석하면 회귀 평가가 입체적으로 됩니다.""")
+`Predicted − Actual` 을 y축에 두고 0 기준선을 긋습니다. 잔차가 0 근처에 좁게 모일수록 정확하고, 양/음 한 쪽으로 치우치면 *bias* 가 있다는 뜻.""")
+
+code(r"""fig, ax = plt.subplots(figsize=(11, 5))
+sns.violinplot(
+    data=df_compare, x="Actual star", y="Residual", hue="Model",
+    split=True, inner="quart", ax=ax,
+)
+ax.axhline(0, color="red", linestyle="--", linewidth=1, alpha=0.7)
+ax.set_title("Residual = Predicted − Actual, per actual class")
+ax.set_ylabel("Residual (predicted − actual)")
+ax.legend(loc="upper left")
+plt.tight_layout()
+plt.show()""")
+
+md(r"""**무엇이 보이나**
+
+- 잔차의 *중심* 이 0 위/아래 어디에 있는지가 *bias의 방향*. 1점 class에서 잔차 중심이 +쪽이면 모델이 "1점인데 1점보다 높게" 예측하는 경향이 있다는 뜻.
+- 잔차의 *폭* 이 그 class에서의 일반적 오차 크기. BERT가 sklearn보다 좁다면 더 정확.
+- 두 끝 class(1점, 5점)에서 잔차 중심이 *반대 방향* (1점은 +, 5점은 −)으로 치우치는 패턴이 자주 보입니다 — 위에서 본 *regression to the mean* 의 잔차 시각화 형태.
+- 0 기준선에서 멀리 늘어진 꼬리는 큰 오차를 내는 outlier 샘플들. 어느 모델이 꼬리가 더 두꺼운지 비교.
+
+**두 시각을 함께 보는 이유**: 시각 1은 *모델이 무엇을 출력하나* (raw 분포), 시각 2는 *얼마나 틀렸나* (오차 분포). 같은 데이터의 다른 시점이라 한쪽만 봐서는 놓치는 패턴이 있습니다. 정량 지표(MSE/MAE/R²) 표와 이 두 시각을 함께 읽으면 회귀 평가가 입체적이 됩니다.""")
 
 # ----- 18. 변형 -----
 md(r"""## 5. 🛠️ 변형 — 학습이 어디서 망가지는지 (개념만)
