@@ -157,6 +157,10 @@ ENV/
 env.bak/
 venv.bak/
 
+# Local Mac runs — patched copies of chapter notebooks for venv execution
+# (see _drafts/_local_patch.py)
+_local/
+
 # Spyder project settings
 .spyderproject
 .spyproject

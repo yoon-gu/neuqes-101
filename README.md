@@ -68,3 +68,20 @@ python3 -m pip install --user --break-system-packages pyflakes
 ```
 
 이 설정 후 `git push` 직전에 `.githooks/pre-push` 가 자동으로 `_drafts/_lint_notebooks.py` 를 실행해 노트북에 실행 안 되는 파이썬 코드가 있는지 점검합니다. 실패하면 push가 막히고, 의도적으로 우회하려면 `git push --no-verify`.
+
+### 로컬 Mac 검증 (Apple Silicon)
+
+배포용 노트북은 Colab T4 기준이지만, 로컬에서도 검증할 수 있도록 *원본을 건드리지 않는* 패치 사본 워크플로가 있습니다.
+
+```bash
+# 패치 사본 생성 — _local/ 은 gitignore됨, 원본 .ipynb 무수정
+python3 _drafts/_local_patch.py 14            # Ch 14 만
+python3 _drafts/_local_patch.py 14 --quick    # + sample/epoch 축소 (빠른 검증)
+python3 _drafts/_local_patch.py all           # 전체 챕터
+
+# 패치된 사본 열기 (venv 커널 필요 — 위에서 만든 'neuqes-101 (3.12, MPS)')
+.venv/bin/jupyter lab _local/14_auxiliary_loss/14_auxiliary_loss.ipynb
+# 또는 VS Code에서 열고 'Select Kernel' → 'neuqes-101 (3.12, MPS)'
+```
+
+자동 적용되는 패치: `fp16=True → False`, `!nvidia-smi` 가드, `!pip install` no-op (venv에 이미 설치됨). `--quick` 옵션은 추가로 `range(N) → range(N//10)` 과 `num_train_epochs=1` 로 축소.
