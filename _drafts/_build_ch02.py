@@ -138,7 +138,7 @@ dataset = load_dataset("yelp_review_full")
 SAMPLE_SIZE = 5000
 ds = dataset["train"].shuffle(seed=42).select(range(SAMPLE_SIZE))
 df = ds.to_pandas()
-print(f"샘플 수: {len(df)}")""")
+print(f"Sample count: {len(df)}")""")
 
 # ----- 8. TF-IDF + split -----
 code(r"""# 별점은 0-4로 저장돼 있으니 1-5로 변환
@@ -181,8 +181,8 @@ print(f"Test  R²:  {r2_score(y_test, y_pred_test):.4f}")""")
 
 # ----- 11. 예측값 분포 -----
 code(r"""# 예측값이 1-5 범위를 얼마나 벗어나는지 확인
-print(f"예측값 범위: [{y_pred_test.min():.2f}, {y_pred_test.max():.2f}]")
-print(f"정답   범위: [{y_test.min():.0f}, {y_test.max():.0f}]")
+print(f"Pred range: [{y_pred_test.min():.2f}, {y_pred_test.max():.2f}]")
+print(f"True range: [{y_test.min():.0f}, {y_test.max():.0f}]")
 
 plt.hist(y_pred_test, bins=40, alpha=0.6, label="predicted")
 plt.hist(y_test, bins=5, alpha=0.6, label="actual")
@@ -208,9 +208,9 @@ code(r"""# sklearn의 mean_squared_error가 내부에서 뭘 계산하는지 직
 manual_mse = ((y_test - y_pred_test) ** 2).mean()
 sklearn_mse = mean_squared_error(y_test, y_pred_test)
 
-print(f"수동 계산 MSE: {manual_mse:.6f}")
-print(f"sklearn MSE:   {sklearn_mse:.6f}")
-print(f"차이:           {abs(manual_mse - sklearn_mse):.2e}")""")
+print(f"Manual MSE: {manual_mse:.6f}")
+print(f"sklearn MSE: {sklearn_mse:.6f}")
+print(f"Diff:        {abs(manual_mse - sklearn_mse):.2e}")""")
 
 # ----- 14. 변형 도입 -----
 md(r"""## 🛠️ 변형: 별점을 [0, 1]로 정규화
@@ -231,22 +231,22 @@ model_norm.fit(X_train, y_train_norm)
 y_pred_norm = model_norm.predict(X_test)
 
 # 정규화 공간에서의 MSE
-print(f"Test MSE (정규화 공간): {mean_squared_error(y_test_norm, y_pred_norm):.4f}")
+print(f"Test MSE (normalized space): {mean_squared_error(y_test_norm, y_pred_norm):.4f}")
 
 # 원래 별점 공간으로 되돌렸을 때 MSE 비교
 y_pred_back = y_pred_norm * 4 + 1
-print(f"Test MSE (원래 별점 공간으로 환원): {mean_squared_error(y_test, y_pred_back):.4f}")
-print(f"Test MSE (정규화 없이 학습한 모델):    {mean_squared_error(y_test, y_pred_test):.4f}")""")
+print(f"Test MSE (back to star space): {mean_squared_error(y_test, y_pred_back):.4f}")
+print(f"Test MSE (no normalization):    {mean_squared_error(y_test, y_pred_test):.4f}")""")
 
 # ----- 16. 정규화 후에도 [0,1] 벗어남 -----
 code(r"""# 정규화한 모델도 여전히 [0, 1]을 벗어나는 값을 뱉는가?
-print(f"정규화 모델 예측값 범위: [{y_pred_norm.min():.3f}, {y_pred_norm.max():.3f}]")
-print(f"이상적 범위: [0, 1]")
+print(f"Normalized model pred range: [{y_pred_norm.min():.3f}, {y_pred_norm.max():.3f}]")
+print(f"Ideal range: [0, 1]")
 
 n_below = (y_pred_norm < 0).sum()
 n_above = (y_pred_norm > 1).sum()
-print(f"\n0 미만 예측: {n_below}개 ({n_below / len(y_pred_norm):.1%})")
-print(f"1 초과 예측: {n_above}개 ({n_above / len(y_pred_norm):.1%})")""")
+print(f"\nPredictions < 0: {n_below} ({n_below / len(y_pred_norm):.1%})")
+print(f"Predictions > 1: {n_above} ({n_above / len(y_pred_norm):.1%})")""")
 
 # ----- 17. 떡밥 -----
 md(r"""**관찰**: 정답 라벨을 [0, 1]로 압축해도 모델 출력은 여전히 그 범위를 벗어납니다. 가중합을 그대로 뱉는 한 어떤 라벨 스케일링으로도 [0, 1] 안에 가둘 수 없습니다.

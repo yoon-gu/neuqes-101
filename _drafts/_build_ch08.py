@@ -109,11 +109,11 @@ import torch
 from datasets import load_dataset
 from transformers import AutoTokenizer
 
-print(f"PyTorch:       {torch.__version__}")
-print(f"CUDA 사용 가능: {torch.cuda.is_available()}")
+print(f"PyTorch:        {torch.__version__}")
+print(f"CUDA available: {torch.cuda.is_available()}")
 if torch.cuda.is_available():
     print(f"GPU:            {torch.cuda.get_device_name(0)}")
-print("\n이번 챕터는 모델 가중치 로드 없음 → VRAM 거의 변화 없습니다.")""")
+print("\nNo model weights loaded in this chapter; VRAM stays roughly flat.")""")
 
 # ----- 7. Yelp 로드 도입 -----
 md(r"""## 1. 🚀 `datasets` 로 Yelp 로드
@@ -128,11 +128,11 @@ print(ds)""")
 
 # ----- 9. 데이터 구조 -----
 code(r"""# train split의 첫 샘플 + features 확인
-print(f"train 샘플 수: {len(ds['train']):,}")
-print(f"test 샘플 수:  {len(ds['test']):,}")
+print(f"train samples: {len(ds['train']):,}")
+print(f"test samples:  {len(ds['test']):,}")
 print(f"\nfeatures: {ds['train'].features}")
-print(f"\n첫 샘플:")
-print(f"  label: {ds['train'][0]['label']}  (0-4 = 별점 1-5)")
+print(f"\nFirst sample:")
+print(f"  label: {ds['train'][0]['label']}  (0-4 = stars 1-5)")
 print(f"  text:  {ds['train'][0]['text'][:200]}...")""")
 
 # ----- 10. subsample -----
@@ -147,7 +147,7 @@ md(r"""## 2. 🔬 토크나이저 옵션 직접 실험
 Ch 7과 같은 `distilbert-base-uncased` 토크나이저로 시작합니다 (사전학습 모델 그대로).""")
 
 code(r"""tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
-print(f"클래스:    {type(tokenizer).__name__}")
+print(f"Class:     {type(tokenizer).__name__}")
 print(f"vocab:     {tokenizer.vocab_size:,}")
 print(f"pad_token: {tokenizer.pad_token}  (id={tokenizer.pad_token_id})")""")
 
@@ -160,12 +160,12 @@ tokenizer(text)
 """)
 
 code(r"""sample = small[0]["text"]
-print(f"입력 (앞 150자): {sample[:150]}...\n")
+print(f"Input (first 150 chars): {sample[:150]}...\n")
 
 out = tokenizer(sample)
-print(f"input_ids 길이: {len(out['input_ids'])}")
-print(f"앞 30개 ID:    {out['input_ids'][:30]}")
-print(f"디코딩 앞 30개: {tokenizer.decode(out['input_ids'][:30])}")""")
+print(f"input_ids length: {len(out['input_ids'])}")
+print(f"First 30 IDs:      {out['input_ids'][:30]}")
+print(f"Decoded first 30:  {tokenizer.decode(out['input_ids'][:30])}")""")
 
 # ----- 13. 두 문장 + padding=True -----
 md(r"""### 두 문장 배치 + `padding=True` — *동적 패딩*
@@ -181,14 +181,14 @@ texts = [short_text, long_text]
 out_no_pad = tokenizer(texts, padding=False)
 print(f"padding=False:")
 for i, ids in enumerate(out_no_pad["input_ids"]):
-    print(f"  문장 {i}: {len(ids)}개 토큰")
+    print(f"  sentence {i}: {len(ids)} tokens")
 
 # padding=True: 가장 긴 길이까지만 padding
 out_dyn = tokenizer(texts, padding=True, return_tensors="pt")
 print(f"\npadding=True (return_tensors='pt'):")
 print(f"  input_ids shape: {out_dyn['input_ids'].shape}")
-print(f"  attention_mask 첫 문장: {out_dyn['attention_mask'][0][:20]}")
-print(f"  attention_mask 둘째 문장: {out_dyn['attention_mask'][1][:20]}")""")
+print(f"  attention_mask sentence 0: {out_dyn['attention_mask'][0][:20]}")
+print(f"  attention_mask sentence 1: {out_dyn['attention_mask'][1][:20]}")""")
 
 # ----- 14. padding=max_length -----
 md(r"""### `padding="max_length"`, `max_length=128` — *고정 길이*
@@ -196,12 +196,12 @@ md(r"""### `padding="max_length"`, `max_length=128` — *고정 길이*
 배치마다 길이가 달라지는 게 싫을 때 (TPU·정적 그래프 환경) 항상 `max_length` 까지 padding합니다.""")
 
 code(r"""out_fixed = tokenizer(texts, padding="max_length", max_length=128, return_tensors="pt")
-print(f"shape: {out_fixed['input_ids'].shape}  (배치 2, max_length=128)")
+print(f"shape: {out_fixed['input_ids'].shape}  (batch 2, max_length=128)")
 
 # attention_mask에서 1의 비율 = 실제 토큰 비율
 real_ratio = out_fixed["attention_mask"].sum().item() / out_fixed["attention_mask"].numel()
-print(f"\nattention_mask=1 비율: {real_ratio:.1%}")
-print(f"  → 짧은 문장은 거의 패딩만 (계산 낭비)")""")
+print(f"\nattention_mask=1 ratio: {real_ratio:.1%}")
+print(f"  → short sentence is mostly padding (compute wasted)")""")
 
 # ----- 15. truncation -----
 md(r"""### `truncation=True` — 긴 입력 자르기
@@ -213,12 +213,12 @@ very_long = "Hello world! This is a sentence. " * 200
 
 # truncation 없이 (경고 또는 에러)
 out_full = tokenizer(very_long)
-print(f"truncation=False: {len(out_full['input_ids'])} 토큰  (BERT 한도 512 초과 가능)")
+print(f"truncation=False: {len(out_full['input_ids'])} tokens  (may exceed BERT limit 512)")
 
 # truncation=True + max_length=128
 out_trunc = tokenizer(very_long, truncation=True, max_length=128)
-print(f"truncation=True, max_length=128: {len(out_trunc['input_ids'])} 토큰")
-print(f"  마지막 토큰: {tokenizer.decode([out_trunc['input_ids'][-1]])} (= [SEP], 항상 끝에 붙음)")""")
+print(f"truncation=True, max_length=128: {len(out_trunc['input_ids'])} tokens")
+print(f"  Last token: {tokenizer.decode([out_trunc['input_ids'][-1]])} (= [SEP], always appended)")""")
 
 # ----- 16. attention_mask 깊이 -----
 md(r"""### attention_mask가 self-attention에서 하는 일
@@ -249,7 +249,7 @@ for i in range(min(1000, len(small))):
     lengths.append(n)
 lengths = np.array(lengths)
 
-print(f"1,000개 샘플의 토큰 길이 분포:")
+print(f"Token length distribution over 1,000 samples:")
 print(f"  min:    {lengths.min()}")
 print(f"  mean:   {lengths.mean():.0f}")
 print(f"  median: {int(np.median(lengths))}")
@@ -258,10 +258,10 @@ print(f"  p95:    {int(np.percentile(lengths, 95))}")
 print(f"  p99:    {int(np.percentile(lengths, 99))}")
 print(f"  max:    {lengths.max()}")
 
-print(f"\n다양한 max_length에서 잘리는 비율:")
+print(f"\nFraction truncated at various max_length:")
 for max_len in [64, 128, 256, 512]:
     truncated_pct = (lengths > max_len).mean() * 100
-    print(f"  max_length={max_len}: {truncated_pct:5.1f}% 가 잘림")""")
+    print(f"  max_length={max_len}: {truncated_pct:5.1f}% truncated")""")
 
 # ----- 18. max_length 해석 -----
 md(r"""**해석**: 학습 시 `max_length=128` 로 두면 95% 이상 정상, 5% 정도만 잘립니다 (Yelp 리뷰가 대부분 짧음). `max_length=512` 면 거의 모든 리뷰를 보존하지만 평균 패딩 비율이 60-70%라 메모리·시간 낭비.
@@ -286,19 +286,19 @@ code(r"""def tokenize_fn(batch):
 tokenized = small.map(tokenize_fn, batched=True, batch_size=200)
 
 print(tokenized)
-print(f"\n첫 샘플의 input_ids 길이: {len(tokenized[0]['input_ids'])}  (= 128, 고정)")
-print(f"첫 샘플의 attention_mask 합: {sum(tokenized[0]['attention_mask'])}  (실제 토큰 수)")""")
+print(f"\nFirst sample input_ids length: {len(tokenized[0]['input_ids'])}  (= 128, fixed)")
+print(f"First sample attention_mask sum: {sum(tokenized[0]['attention_mask'])}  (real tokens)")""")
 
 # ----- 20. .filter -----
 md(r"""### `dataset.filter` — 조건에 맞는 샘플만 선별""")
 
 code(r"""# 별점 4-5 (label 3-4) 만
 positive = small.filter(lambda x: x["label"] >= 3)
-print(f"긍정 샘플: {len(positive):,} / {len(small):,} = {len(positive)/len(small):.1%}")
+print(f"Positive samples: {len(positive):,} / {len(small):,} = {len(positive)/len(small):.1%}")
 
 # 짧은 텍스트만 (예: 100단어 이하)
 short = small.filter(lambda x: len(x["text"].split()) <= 100)
-print(f"짧은 샘플: {len(short):,} / {len(small):,} = {len(short)/len(small):.1%}")""")
+print(f"Short samples:    {len(short):,} / {len(small):,} = {len(short)/len(small):.1%}")""")
 
 # ----- 21. with_format -----
 md(r"""### `with_format("torch")` — 텐서 형식으로""")
@@ -312,7 +312,7 @@ tokenized_torch = tokenized.with_format(
 sample = tokenized_torch[0]
 print(f"input_ids:      {type(sample['input_ids']).__name__}, dtype={sample['input_ids'].dtype}, shape={sample['input_ids'].shape}")
 print(f"attention_mask: {type(sample['attention_mask']).__name__}, shape={sample['attention_mask'].shape}")
-print(f"label:          {sample['label']}  (0-4 = 별점 1-5)")""")
+print(f"label:          {sample['label']}  (0-4 = stars 1-5)")""")
 
 # ----- 22. DataLoader 도입 -----
 md(r"""## 4. `DataLoader` 변환 — Ch 9 학습 입력 미리보기
@@ -329,7 +329,7 @@ print(f"batch keys:           {list(batch.keys())}")
 print(f"input_ids shape:      {batch['input_ids'].shape}      (= [batch_size, max_length])")
 print(f"attention_mask shape: {batch['attention_mask'].shape}")
 print(f"label shape:          {batch['label'].shape}")
-print(f"label 값:             {batch['label'].tolist()}")""")
+print(f"label values:         {batch['label'].tolist()}")""")
 
 # ----- 23. DataCollator 도입 -----
 md(r"""## 5. `DataCollator` — 동적 padding을 배치 시점에
@@ -352,8 +352,8 @@ tokenized_dyn = tokenized_dyn.remove_columns(["text"])  # 깔끔하게 input만
 
 # 각 샘플의 input_ids 길이는 모두 다름 (padding 없으니까)
 sample_lens = [len(tokenized_dyn[i]["input_ids"]) for i in range(10)]
-print(f"앞 10개 샘플 토큰 길이: {sample_lens}")
-print(f"  → 각자 다름 — 그대로는 텐서 배치가 안 됨")""")
+print(f"First 10 sample token lengths: {sample_lens}")
+print(f"  → all different — cannot batch as-is into a tensor")""")
 
 # ----- 23c. DataCollator로 동적 padding -----
 code(r"""# DataCollatorWithPadding이 collate_fn 자리에서 매 배치 동적 padding
@@ -363,8 +363,8 @@ dyn_loader = DataLoader(
     collate_fn=collator,
 )
 
-print(f"배치별 shape (batch_size=8, 매번 다름):")
-print(f"{'batch':>6}  {'shape':>16}  {'실제 토큰':>10}  {'전체':>6}  {'채움률':>6}")
+print(f"Per-batch shape (batch_size=8, varies):")
+print(f"{'batch':>6}  {'shape':>16}  {'real_tok':>10}  {'total':>6}  {'fill':>6}")
 for i, batch in enumerate(dyn_loader):
     real = batch["attention_mask"].sum().item()
     total = batch["attention_mask"].numel()
@@ -483,18 +483,18 @@ def loader_stats(loader, name):
     for batch in loader:
         real_total += batch["attention_mask"].sum().item()
         grid_total += batch["attention_mask"].numel()
-    return {"방식": name, "실제 토큰": real_total, "전체 토큰": grid_total, "채움률": real_total / grid_total}
+    return {"method": name, "real_tokens": real_total, "total_tokens": grid_total, "fill_rate": real_total / grid_total}
 
-stats_static = loader_stats(static_loader, "정적 (max_length=128)")
-stats_dyn    = loader_stats(dyn_loader,    "동적 (DataCollator)")
+stats_static = loader_stats(static_loader, "static (max_length=128)")
+stats_dyn    = loader_stats(dyn_loader,    "dynamic (DataCollator)")
 
 df_stats = pd.DataFrame([stats_static, stats_dyn])
-df_stats["채움률"] = df_stats["채움률"].apply(lambda r: f"{r:.1%}")
+df_stats["fill_rate"] = df_stats["fill_rate"].apply(lambda r: f"{r:.1%}")
 print(df_stats.to_string(index=False))
 
-ratio = stats_dyn["전체 토큰"] / stats_static["전체 토큰"]
-print(f"\n동적 방식의 전체 토큰 수가 정적 대비 {ratio:.1%} → 약 {1-ratio:.0%} 감소")
-print("(이만큼 self-attention 계산이 줄어들어 학습 시간·메모리 모두 이득)")""")
+ratio = stats_dyn["total_tokens"] / stats_static["total_tokens"]
+print(f"\nDynamic vs static total tokens: {ratio:.1%} → ~{1-ratio:.0%} reduction")
+print("(this much self-attention compute saved → faster training, less memory)")""")
 
 # ----- 23g. MLM collator 시연 -----
 md(r"""### 실험 2 — `DataCollatorForLanguageModeling` 으로 MLM masking 직접 보기
@@ -514,14 +514,14 @@ small_batch = [tokenized_dyn[i] for i in range(3)]
 mlm_out = mlm_collator(small_batch)
 
 print(f"input_ids shape: {mlm_out['input_ids'].shape}")
-print(f"labels shape:    {mlm_out['labels'].shape}  (-100인 자리는 loss 계산에서 무시)")
+print(f"labels shape:    {mlm_out['labels'].shape}  (-100 positions ignored by loss)")
 
 # masked 위치 통계
 mask_id = tokenizer.mask_token_id
 n_mask = (mlm_out["input_ids"] == mask_id).sum().item()
 n_total = mlm_out["input_ids"].numel()
-print(f"\n[MASK] 토큰 수: {n_mask} / {n_total} ({n_mask/n_total:.1%})")
-print("  (15% 중 80%만 [MASK], 10%는 무작위 토큰, 10%는 원래 토큰 그대로 — 그래서 [MASK] 비율은 12% 안팎)")""")
+print(f"\n[MASK] tokens: {n_mask} / {n_total} ({n_mask/n_total:.1%})")
+print("  (of the 15% masked: 80% [MASK], 10% random token, 10% kept — so [MASK] rate ~12%)")""")
 
 code(r"""# 첫 샘플 — 원래 vs masked vs label 비교
 i = 0
@@ -534,14 +534,14 @@ for orig, masked, lbl in zip(orig_ids, mask_ids, label_ids):
     orig_tok = tokenizer.decode([orig])
     masked_tok = tokenizer.decode([masked])
     if lbl == -100:
-        label_str = "(무시)"
+        label_str = "(ignored)"
     else:
         label_str = tokenizer.decode([lbl])
-    changed = "✱" if orig != masked else ""
-    rows.append({"원래": orig_tok, "masked": masked_tok, "label": label_str, "변경": changed})
+    changed = "*" if orig != masked else ""
+    rows.append({"original": orig_tok, "masked": masked_tok, "label": label_str, "changed": changed})
 
 print(pd.DataFrame(rows).to_string(index=False))
-print("\n✱ 가 붙은 행이 collator가 가리거나 바꾼 자리 — 모델은 그 자리의 원래 토큰을 맞히도록 학습됨")""")
+print("\nRows marked * are positions where the collator masked or replaced the token — the model learns to predict the original token there.")""")
 
 # ----- 23g+. CLM (GPT-style) 시연 도입 -----
 md(r"""### 실험 2b — GPT-style CLM 도 같은 collator로
@@ -589,8 +589,8 @@ i = 0
 real_len = (clm_batch["attention_mask"][i] == 1).sum().item()
 input_first = clm_batch["input_ids"][i][:real_len].tolist()
 label_first = clm_batch["labels"][i][:real_len].tolist()
-print(f"\n첫 샘플의 input_ids == labels?  (padding 외 모두 동일해야 함)")
-print(f"  같은 자리 수: {sum(int(a == b) for a, b in zip(input_first, label_first))} / {real_len}")""")
+print(f"\nFirst sample: input_ids == labels?  (excluding padding, all should match)")
+print(f"  Matching positions: {sum(int(a == b) for a, b in zip(input_first, label_first))} / {real_len}")""")
 
 # ----- 23g+++. CLM vs MLM 시각 비교 -----
 code(r"""# 첫 샘플 — input vs label (패딩 자리 -100 확인)
@@ -601,13 +601,13 @@ lbls = clm_batch["labels"][i][:20].tolist()
 rows = []
 for tok_id, lbl in zip(ids, lbls):
     tok = gpt_tokenizer.decode([tok_id])
-    lbl_str = "(무시)" if lbl == -100 else gpt_tokenizer.decode([lbl])
-    rows.append({"position 토큰": tok, "label": lbl_str})
+    lbl_str = "(ignored)" if lbl == -100 else gpt_tokenizer.decode([lbl])
+    rows.append({"position_token": tok, "label": lbl_str})
 
 print(pd.DataFrame(rows).to_string(index=False))
-print("\n관찰: padding이 아닌 자리에서는 input_ids 와 label이 똑같습니다.")
-print("    모델은 forward 안에서 한 칸 shift해 *다음 토큰* 을 예측합니다.")
-print("    예: 'Hello world' → 'Hello' 자리에서 'world'를 맞히도록 학습.")""")
+print("\nObservation: at non-padding positions, input_ids and labels match.")
+print("    The model shifts by one inside forward() and predicts the *next token*.")
+print("    e.g. 'Hello world' → at 'Hello' position learn to predict 'world'.")""")
 
 # ----- 23h. 커스텀 collate_fn -----
 md(r"""### 실험 3 — 커스텀 `collate_fn` 직접 작성
@@ -646,8 +646,8 @@ custom_loader = DataLoader(
 batch = next(iter(custom_loader))
 print(f"input_ids shape:        {batch['input_ids'].shape}")
 print(f"attention_mask shape:   {batch['attention_mask'].shape}")
-print(f"main_label (정수):      {batch['main_label'].tolist()}")
-print(f"aux_score (float 정규화): {[round(x, 3) for x in batch['aux_score'].tolist()]}")""")
+print(f"main_label (int):       {batch['main_label'].tolist()}")
+print(f"aux_score (float):      {[round(x, 3) for x in batch['aux_score'].tolist()]}")""")
 
 # ----- 23i. 커스텀 collate 정리 -----
 md(r"""**관찰**: `collate_fn` 한 함수가 *batch 단위 변환의 집결지* 입니다. 라벨 형식 변환, 추가 메타정보 부착, 다중 라벨 dict 등 무엇이든 여기서 처리할 수 있습니다.

@@ -162,7 +162,7 @@ dataset = load_dataset("yelp_review_full")
 SAMPLE_SIZE = 5000
 ds = dataset["train"].shuffle(seed=42).select(range(SAMPLE_SIZE))
 df = ds.to_pandas()
-print(f"전체 샘플 수: {len(df)}")""")
+print(f"Total samples: {len(df)}")""")
 
 # ----- 8. 합성 도입 -----
 md(r"""## 🚀 실습 1: 측면 라벨 합성
@@ -205,20 +205,20 @@ def extract_aspects(text: str) -> list[int]:
 # 5,000건에 적용
 df["aspects"] = df["text"].apply(extract_aspects)
 Y = np.array(df["aspects"].tolist())   # (N, 5) multi-hot
-print(f"Y shape: {Y.shape}  (샘플 수, 측면 수)")
-print(f"앞 3개 샘플의 multi-hot 라벨:\n{Y[:3]}")""")
+print(f"Y shape: {Y.shape}  (n_samples, n_aspects)")
+print(f"First 3 multi-hot labels:\n{Y[:3]}")""")
 
 # ----- 10. 합성 통계 -----
-code(r"""print("측면별 활성 비율 (전체 5,000건 기준):")
+code(r"""print("Per-aspect activation rate (over all 5,000 samples):")
 for k, aspect in enumerate(ASPECTS):
-    print(f"  {aspect:>9}: {Y[:, k].mean():.1%}  ({Y[:, k].sum()}건)")
+    print(f"  {aspect:>9}: {Y[:, k].mean():.1%}  ({Y[:, k].sum()} samples)")
 
 n_labels_per_sample = Y.sum(axis=1)
-print(f"\n샘플당 평균 활성 라벨 수: {n_labels_per_sample.mean():.2f}")
-print(f"활성 라벨 분포:")
+print(f"\nMean active labels per sample: {n_labels_per_sample.mean():.2f}")
+print(f"Active label distribution:")
 for n in range(K + 1):
     count = (n_labels_per_sample == n).sum()
-    print(f"  {n}개: {count}건  ({count/len(Y):.1%})")""")
+    print(f"  {n} labels: {count} samples  ({count/len(Y):.1%})")""")
 
 # ----- 11. TF-IDF + split -----
 code(r"""X_text_train, X_text_test, Y_train, Y_test = train_test_split(
@@ -249,10 +249,10 @@ code(r"""# 먼저 wrapper 없이 그냥 LogisticRegression() 에 multi-hot Y를 
 bare_model = LogisticRegression(max_iter=1000)
 try:
     bare_model.fit(X_train, Y_train)
-    print(f"성공? coef_ shape: {bare_model.coef_.shape}")
+    print(f"Succeeded? coef_ shape: {bare_model.coef_.shape}")
 except ValueError as e:
-    print(f"❌ 실패: {type(e).__name__}")
-    print(f"   메시지: {e}")""")
+    print(f"Failed: {type(e).__name__}")
+    print(f"   Message: {e}")""")
 
 # ----- 13b. 해설 -----
 md(r"""**왜 실패했나?** sklearn `LogisticRegression` 은 *1D Y* (각 샘플당 한 클래스 인덱스)만 받습니다. 우리의 `Y_train.shape == (N, 5)` 는 "한 샘플에 여러 라벨"이라는 의미인데 *형식 자체* 가 호환되지 않아요. fit이 첫 줄에서 죽습니다.
@@ -270,14 +270,14 @@ code(r"""# 위 실패와 대비: wrapper 한 줄로 K개 LogReg가 자동 분할
 model_ml = OneVsRestClassifier(LogisticRegression(max_iter=1000))
 model_ml.fit(X_train, Y_train)
 
-print(f"OvR fit 성공!")
-print(f"  학습된 binary 분류기 수: {len(model_ml.estimators_)}")
-print(f"  각 estimator 타입:       {type(model_ml.estimators_[0]).__name__}")
-print(f"  각 estimator coef shape: {model_ml.estimators_[0].coef_.shape}  (1, V — 한 라벨용 binary)")
-print(f"\n각 분류기가 학습한 라벨:")
+print(f"OvR fit succeeded!")
+print(f"  Number of binary classifiers: {len(model_ml.estimators_)}")
+print(f"  Each estimator type:          {type(model_ml.estimators_[0]).__name__}")
+print(f"  Each estimator coef shape:    {model_ml.estimators_[0].coef_.shape}  (1, V — one binary per label)")
+print(f"\nLabel for each classifier:")
 for k, aspect in enumerate(ASPECTS):
     n_pos = Y_train[:, k].sum()
-    print(f"  estimator[{k}] = '{aspect}': positive {n_pos}건 ({n_pos/len(Y_train):.1%})")
+    print(f"  estimator[{k}] = '{aspect}': {n_pos} positives ({n_pos/len(Y_train):.1%})")
 
 # 예측 + 확률
 Y_pred = model_ml.predict(X_test)         # (N, K) multi-hot 0/1 (threshold 0.5 자동 적용)
@@ -285,7 +285,7 @@ proba_ml = model_ml.predict_proba(X_test) # (N, K) per-label probability (정규
 
 print(f"\nY_pred shape: {Y_pred.shape}")
 print(f"proba shape:  {proba_ml.shape}")
-print(f"\n앞 3개 샘플의 예측 확률 (per-label):")
+print(f"\nFirst 3 sample predicted probabilities (per-label):")
 print(pd.DataFrame(proba_ml[:3], columns=ASPECTS).round(4))""")
 
 # ----- 14a. Loss 분해 도입 -----
@@ -302,11 +302,11 @@ y_true = Y_test[sample_idx]
 p_pred = proba_ml[sample_idx]
 text = X_text_test.iloc[sample_idx]
 
-print("리뷰 미리보기 200자:")
+print("Review preview (200 chars):")
 print(f"{text[:200]}...")
-print(f"활성 라벨 수: {y_true.sum()}\n")
+print(f"Active labels: {y_true.sum()}\n")
 
-print(f"{'측면':>10}  {'정답 y':>6}  {'예측 p':>10}  {'기여 항':>20}  {'손실':>10}")
+print(f"{'aspect':>10}  {'y_true':>6}  {'pred p':>10}  {'term':>20}  {'loss':>10}")
 print("-" * 64)
 total_loss = 0.0
 for k, aspect in enumerate(ASPECTS):
@@ -320,8 +320,8 @@ for k, aspect in enumerate(ASPECTS):
     total_loss += loss_k
     print(f"{aspect:>10}  {y_k:>6d}  {p_k:>10.4f}  {formula:>20}  {loss_k:>10.4f}")
 print("-" * 64)
-print(f"{'합':>10}  {'':>6}  {'':>10}  {'':>20}  {total_loss:>10.4f}")
-print(f"{'평균 BCE':>10}  {'':>6}  {'':>10}  {'÷ 5':>20}  {total_loss/5:>10.4f}")""")
+print(f"{'sum':>10}  {'':>6}  {'':>10}  {'':>20}  {total_loss:>10.4f}")
+print(f"{'mean BCE':>10}  {'':>6}  {'':>10}  {'/ 5':>20}  {total_loss/5:>10.4f}")""")
 
 # ----- 14c. Loss 분해 해석 + multinomial 못 쓰는 이유 -----
 md(r"""**관찰**
@@ -353,8 +353,8 @@ multi-class에서 자주 쓰던 accuracy는 multi-label에서 의미가 미묘�
 - **macro F1**: 라벨별 F1을 단순 평균 — 모든 라벨 동등 가중.""")
 
 # ----- 15. 평가 지표 코드 -----
-code(r"""print(f"Subset accuracy (모두 일치): {accuracy_score(Y_test, Y_pred):.4f}")
-print(f"Hamming loss (라벨별 평균 오답): {hamming_loss(Y_test, Y_pred):.4f}")
+code(r"""print(f"Subset accuracy (all match): {accuracy_score(Y_test, Y_pred):.4f}")
+print(f"Hamming loss (mean per-label error): {hamming_loss(Y_test, Y_pred):.4f}")
 print(f"micro F1: {f1_score(Y_test, Y_pred, average='micro', zero_division=0):.4f}")
 print(f"macro F1: {f1_score(Y_test, Y_pred, average='macro', zero_division=0):.4f}")""")
 

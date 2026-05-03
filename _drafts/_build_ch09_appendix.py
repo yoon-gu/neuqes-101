@@ -175,8 +175,8 @@ trainer_wb.train()
 trainer_wb.evaluate()
 wandb.finish()   # 명시적으로 종료해야 다음 학습이 새 run으로 잡힘
 
-print("\n학습 완료. WANDB_MODE=offline 이면 ./wandb/offline-run-*/ 에 결과 저장.")
-print("dashboard 보려면 'wandb sync ./wandb/offline-run-*' 명령으로 업로드.")""")
+print("\nTraining done. With WANDB_MODE=offline results are saved under ./wandb/offline-run-*/.")
+print("To view the dashboard, run 'wandb sync ./wandb/offline-run-*' to upload.")""")
 
 # ----- 7. wandb 결과 안내 -----
 md(r"""**무엇을 볼 수 있나** (온라인 모드 기준):
@@ -305,7 +305,7 @@ trainer_mf = Trainer(
 trainer_mf.train()
 trainer_mf.evaluate()
 
-print("\n학습 완료. ./mlruns/ 디렉터리에 run이 저장됐습니다.")""")
+print("\nTraining done. Runs saved under ./mlruns/.")""")
 
 # ----- 10c. MLflow dashboard -----
 md(r"""### dashboard 띄우기
@@ -322,8 +322,8 @@ mlflow ui --backend-store-uri ./mlruns --port 5000
 
 code(r"""# 가장 최근 run의 metric을 직접 조회
 runs = mlflow.search_runs(experiment_names=["ch09-appendix-mlflow"], order_by=["start_time DESC"])
-print(f"run 수: {len(runs)}")
-print(f"\n앞 run의 주요 metric:")
+print(f"Run count: {len(runs)}")
+print(f"\nLatest run main metrics:")
 if len(runs) > 0:
     latest = runs.iloc[0]
     metric_cols = [c for c in runs.columns if c.startswith("metrics.")]

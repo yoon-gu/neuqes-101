@@ -142,7 +142,7 @@ SAMPLE_SIZE = 5000
 ds = dataset["train"].shuffle(seed=42).select(range(SAMPLE_SIZE))
 df = ds.to_pandas()
 df["star"] = df["label"] + 1   # 0-4 → 1-5
-print(f"전체 샘플 수: {len(df)}")
+print(f"Total samples: {len(df)}")
 print(df["star"].value_counts().sort_index())""")
 
 # ----- 8. 이진화 -----
@@ -150,9 +150,9 @@ code(r"""# 별점 3은 애매하므로 제외, 4-5 → 1 (positive), 1-2 → 0 (
 df_bin = df[df["star"] != 3].copy()
 df_bin["y"] = (df_bin["star"] >= 4).astype(int)
 
-print(f"이진화 후 샘플 수: {len(df_bin)}  (3점 제외)")
-print(f"클래스 분포:\n{df_bin['y'].value_counts().sort_index()}")
-print(f"긍정 비율: {df_bin['y'].mean():.1%}")""")
+print(f"Binarized samples: {len(df_bin)}  (3-star excluded)")
+print(f"Class distribution:\n{df_bin['y'].value_counts().sort_index()}")
+print(f"Positive rate: {df_bin['y'].mean():.1%}")""")
 
 # ----- 9. TF-IDF + split -----
 code(r"""X_text_train, X_text_test, y_train, y_test = train_test_split(
@@ -187,12 +187,12 @@ print(f"Test accuracy: {accuracy_score(y_test, y_pred):.4f}")""")
 # ----- 12. predict_proba -----
 code(r"""# predict_proba는 [P(y=0), P(y=1)] 형태로 두 확률을 모두 줌
 y_proba = model.predict_proba(X_test)
-print(f"y_proba shape: {y_proba.shape}  (각 샘플마다 [P(0), P(1)])")
-print(f"\n앞 5개 예측 확률:")
+print(f"y_proba shape: {y_proba.shape}  (per sample: [P(0), P(1)])")
+print(f"\nFirst 5 predicted probabilities:")
 print(pd.DataFrame(y_proba[:5], columns=["P(neg)", "P(pos)"]).round(4))
 
 # 두 확률을 합치면 항상 1
-print(f"\n행 합 (1이어야 함): {y_proba.sum(axis=1)[:5]}")""")
+print(f"\nRow sums (should be 1): {y_proba.sum(axis=1)[:5]}")""")
 
 # ----- 13. 해부 -----
 md(r"""## 🔬 해부: sigmoid는 logit을 어떻게 확률로 바꾸나
@@ -213,10 +213,10 @@ proba_sklearn = y_proba[:, 1]   # P(y=1)
 
 # 둘이 같은가?
 diff = np.abs(proba_manual - proba_sklearn).max()
-print(f"수동 계산 vs sklearn 최대 차이: {diff:.2e}")
+print(f"Max diff (manual vs sklearn): {diff:.2e}")
 
-print(f"\n수동 계산 앞 5개: {proba_manual[:5].round(4)}")
-print(f"sklearn 앞 5개:    {proba_sklearn[:5].round(4)}")""")
+print(f"\nManual first 5:  {proba_manual[:5].round(4)}")
+print(f"sklearn first 5: {proba_sklearn[:5].round(4)}")""")
 
 # ----- 15. log_loss 직접 재현 -----
 code(r"""# BCE(log loss)도 직접 계산 가능
@@ -226,9 +226,9 @@ p = proba_sklearn
 manual_bce = -(y_test_arr * np.log(p) + (1 - y_test_arr) * np.log(1 - p)).mean()
 sklearn_bce = log_loss(y_test, y_proba)
 
-print(f"수동 BCE:    {manual_bce:.6f}")
+print(f"Manual BCE:  {manual_bce:.6f}")
 print(f"sklearn BCE: {sklearn_bce:.6f}")
-print(f"차이:         {abs(manual_bce - sklearn_bce):.2e}")""")
+print(f"Diff:        {abs(manual_bce - sklearn_bce):.2e}")""")
 
 # ----- 16. classification_report -----
 code(r"""print(classification_report(y_test, y_pred, target_names=["negative", "positive"]))

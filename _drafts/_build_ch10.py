@@ -148,11 +148,11 @@ from sklearn.metrics import (
 plt.rcParams["axes.unicode_minus"] = False
 
 print(f"PyTorch:        {torch.__version__}")
-print(f"CUDA 사용 가능: {torch.cuda.is_available()}")
+print(f"CUDA available: {torch.cuda.is_available()}")
 if torch.cuda.is_available():
     print(f"GPU:             {torch.cuda.get_device_name(0)}")
 else:
-    print("⚠️  CPU 런타임에서는 학습이 매우 느립니다. T4로 변경 권장.")""")
+    print("Warning: CPU runtime — training will be very slow. Switch to T4 recommended.")""")
 
 # ----- 7. nvidia-smi baseline -----
 md(r"""**baseline VRAM**:""")
@@ -188,9 +188,9 @@ def add_binary(batch):
 train_bin = train_full.filter(lambda x: (x["label"] + 1) != 3).map(add_binary, batched=True)
 eval_bin  = eval_full.filter(lambda x:  (x["label"] + 1) != 3).map(add_binary, batched=True)
 
-print(f"train (별점 3 제외 후): {len(train_bin)}")
-print(f"eval  (별점 3 제외 후): {len(eval_bin)}")
-print(f"train 긍정 비율: {sum(train_bin['binary']) / len(train_bin):.1%}")""")
+print(f"train (after excluding 3-star): {len(train_bin)}")
+print(f"eval  (after excluding 3-star): {len(eval_bin)}")
+print(f"train positive rate: {sum(train_bin['binary']) / len(train_bin):.1%}")""")
 
 # ----- 9. 토큰화 -----
 code(r"""def tokenize_fn(batch):
@@ -203,7 +203,7 @@ train_tok = train_bin.map(tokenize_fn, batched=True).remove_columns(["text", "la
 eval_tok  = eval_bin.map(tokenize_fn,  batched=True).remove_columns(["text", "label", "binary"])
 
 print(train_tok)
-print(f"\n첫 샘플 라벨: {train_tok[0]['labels']}  (길이 1짜리 float 벡터)")""")
+print(f"\nFirst sample label: {train_tok[0]['labels']}  (length-1 float vector)")""")
 
 # ----- 10. 모델 로드 -----
 md(r"""## 2. 모델 로드 — 방식 A 셋업
@@ -222,10 +222,10 @@ def param_summary(m):
     return total, trainable
 
 total, trainable = param_summary(model)
-print(f"파라미터 수:        {total:>13,}  ({total/1e6:.1f} M)")
-print(f"학습되는 파라미터:  {trainable:>13,}  ({trainable/total:.1%})")
-print(f"분류 헤드:          {model.classifier}")
-print(f"problem_type:       {model.config.problem_type}")""")
+print(f"Parameters:           {total:>13,}  ({total/1e6:.1f} M)")
+print(f"Trainable parameters: {trainable:>13,}  ({trainable/total:.1%})")
+print(f"Classifier:           {model.classifier}")
+print(f"problem_type:         {model.config.problem_type}")""")
 
 code(r"""!nvidia-smi""")
 
@@ -276,7 +276,7 @@ trainer = Trainer(
 )
 
 train_result = trainer.train()
-print(f"\n학습 완료 — 평균 train loss: {train_result.training_loss:.4f}")""")
+print(f"\nTraining done — mean train loss: {train_result.training_loss:.4f}")""")
 
 code(r"""!nvidia-smi""")
 
@@ -287,7 +287,7 @@ md(r"""## 4. 🔬 평가 — sigmoid 확률 분포 직접 확인
 
 code(r"""# 평가 metric
 eval_metrics = trainer.evaluate()
-print("BERT 방식 A 평가:")
+print("BERT method A evaluation:")
 for k, v in eval_metrics.items():
     if k.startswith("eval_") and isinstance(v, float):
         print(f"  {k:>20}: {v:.4f}")""")
@@ -298,10 +298,10 @@ logits = preds_output.predictions.flatten()
 probs  = 1.0 / (1.0 + np.exp(-logits))
 labels = preds_output.label_ids.flatten().astype(int)
 
-print(f"logit 범위:       [{logits.min():.2f}, {logits.max():.2f}]")
-print(f"확률 범위:        [{probs.min():.4f}, {probs.max():.4f}]")
-print(f"긍정 예측 비율 (확률 ≥ 0.5): {(probs >= 0.5).mean():.1%}")
-print(f"\n앞 5개 샘플:")
+print(f"Logit range: [{logits.min():.2f}, {logits.max():.2f}]")
+print(f"Prob range:  [{probs.min():.4f}, {probs.max():.4f}]")
+print(f"Positive prediction rate (prob >= 0.5): {(probs >= 0.5).mean():.1%}")
+print(f"\nFirst 5 samples:")
 print(pd.DataFrame({
     "label": labels[:5],
     "logit": logits[:5].round(2),
@@ -404,7 +404,7 @@ method_a_summary = {
 with open("./shared_binary_results/method_a_summary.json", "w") as f:
     json.dump(method_a_summary, f, indent=2)
 
-print("저장 완료: ./shared_binary_results/")
+print("Saved: ./shared_binary_results/")
 for f in sorted(os.listdir("./shared_binary_results")):
     size_kb = os.path.getsize(f"./shared_binary_results/{f}") / 1024
     print(f"  {f}  ({size_kb:.1f} KB)")""")

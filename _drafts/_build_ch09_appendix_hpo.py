@@ -256,7 +256,7 @@ best_run = trainer.hyperparameter_search(
     compute_objective=compute_objective,
 )
 
-print(f"\n최적 trial:")
+print(f"\nBest trial:")
 print(f"  objective(eval_mse): {best_run.objective:.4f}")
 print(f"  hyperparameters:     {best_run.hyperparameters}")""")
 
@@ -332,7 +332,7 @@ mlflow.transformers.autolog()    # transformers Trainer 자동 로깅
 # 학습 metric이 ./mlruns/ 에 자동 저장됩니다.
 # autolog가 켜져 있으면 manual log 호출 없이 작동.
 
-print("autolog 켜짐 — 다음 trainer.train() 호출부터 ./mlruns/ 에 자동 기록")""")
+print("autolog enabled — subsequent trainer.train() calls auto-log to ./mlruns/")""")
 
 # ----- 14. 함정 -----
 md(r"""## 7. 흔한 함정

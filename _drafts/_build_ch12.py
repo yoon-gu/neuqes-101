@@ -145,11 +145,11 @@ from sklearn.linear_model import LogisticRegression
 plt.rcParams["axes.unicode_minus"] = False
 
 print(f"PyTorch:        {torch.__version__}")
-print(f"CUDA 사용 가능: {torch.cuda.is_available()}")
+print(f"CUDA available: {torch.cuda.is_available()}")
 if torch.cuda.is_available():
     print(f"GPU:             {torch.cuda.get_device_name(0)}")
 else:
-    print("⚠️  CPU 런타임에서는 학습이 매우 느립니다. T4로 변경 권장.")""")
+    print("Warning: CPU runtime — training will be very slow. Switch to T4 recommended.")""")
 
 # ----- 7. nvidia-smi baseline -----
 md(r"""**baseline VRAM**:""")
@@ -169,15 +169,15 @@ eval_full  = ds["test"].shuffle(seed=42).select(range(1000))
 
 print(f"train: {len(train_full)} samples")
 print(f"eval:  {len(eval_full)} samples")
-print(f"\n클래스 분포 (train):")
+print(f"\nClass distribution (train):")
 for k in range(5):
     n = sum(1 for x in train_full["label"] if x == k)
-    print(f"  별점 {k + 1} (라벨 {k}): {n} ({n / len(train_full):.1%})")
+    print(f"  star {k + 1} (label {k}): {n} ({n / len(train_full):.1%})")
 
 # 첫 샘플 미리보기
-print(f"\n첫 샘플:")
-print(f"  라벨: {train_full[0]['label']}  (별점 {train_full[0]['label'] + 1})")
-print(f"  텍스트: {train_full[0]['text'][:200]}…")""")
+print(f"\nFirst sample:")
+print(f"  label: {train_full[0]['label']}  (star {train_full[0]['label'] + 1})")
+print(f"  text:  {train_full[0]['text'][:200]}...")""")
 
 # ----- 9. 토큰화 -----
 md(r"""**Ch 11 과의 한 줄 차이**: `out["labels"] = [int(b) for b in batch["binary"]]` → `out["labels"] = [int(l) for l in batch["label"]]`. 별점-1 인덱스를 그대로 라벨로 사용.""")
@@ -191,7 +191,7 @@ train_tok = train_full.map(tokenize_fn, batched=True).remove_columns(["text", "l
 eval_tok  = eval_full.map(tokenize_fn,  batched=True).remove_columns(["text", "label"])
 
 print(train_tok)
-print(f"\n첫 샘플 라벨: {train_tok[0]['labels']}  (int 스칼라, 0-4 범위)")""")
+print(f"\nFirst sample label: {train_tok[0]['labels']}  (int scalar in 0-4)")""")
 
 # ----- 10. 모델 로드 -----
 md(r"""## 2. 모델 로드 — `num_labels=5` 만 바뀜
@@ -214,11 +214,11 @@ def param_summary(m):
     return total, trainable
 
 total, trainable = param_summary(model)
-print(f"파라미터 수:        {total:>13,}  ({total/1e6:.1f} M)")
-print(f"학습되는 파라미터:  {trainable:>13,}  ({trainable/total:.1%})")
-print(f"분류 헤드:          {model.classifier}")
-print(f"problem_type:       {model.config.problem_type}")
-print(f"id2label:           {model.config.id2label}")""")
+print(f"Parameters:           {total:>13,}  ({total/1e6:.1f} M)")
+print(f"Trainable parameters: {trainable:>13,}  ({trainable/total:.1%})")
+print(f"Classifier:           {model.classifier}")
+print(f"problem_type:         {model.config.problem_type}")
+print(f"id2label:             {model.config.id2label}")""")
 
 md(r"""**파라미터 수 비교 — K가 늘어나도 거의 변하지 않습니다**
 
@@ -283,7 +283,7 @@ trainer = Trainer(
 )
 
 train_result = trainer.train()
-print(f"\n학습 완료 — 평균 train loss: {train_result.training_loss:.4f}")
+print(f"\nTraining done — mean train loss: {train_result.training_loss:.4f}")
 print(f"random baseline loss (K=5): {np.log(5):.4f}")""")
 
 code(r"""!nvidia-smi""")
@@ -295,7 +295,7 @@ Ch 11 패턴 그대로 — `Trainer.predict()` 로 logits를 받아 softmax → 
 
 code(r"""# 평가 metric
 eval_metrics = trainer.evaluate()
-print("BERT 5-class 평가:")
+print("BERT 5-class evaluation:")
 for k, v in eval_metrics.items():
     if k.startswith("eval_") and isinstance(v, float):
         print(f"  {k:>22}: {v:.4f}")""")
@@ -314,14 +314,14 @@ top1_prob = probs_full.max(axis=1)
 correct = (preds == labels)
 
 print(f"logits shape: {logits.shape}")
-print(f"top-1 확률 범위: [{top1_prob.min():.4f}, {top1_prob.max():.4f}]")
-print(f"top-1 확률 평균: 정답일 때 {top1_prob[correct].mean():.4f}, 오답일 때 {top1_prob[~correct].mean():.4f}")
-print(f"\n앞 5개 샘플:")
+print(f"top-1 prob range: [{top1_prob.min():.4f}, {top1_prob.max():.4f}]")
+print(f"top-1 prob mean: correct={top1_prob[correct].mean():.4f}, wrong={top1_prob[~correct].mean():.4f}")
+print(f"\nFirst 5 samples:")
 print(pd.DataFrame({
-    "label (별점-1)": labels[:5],
-    "pred (별점-1)":  preds[:5],
+    "label (star-1)": labels[:5],
+    "pred (star-1)":  preds[:5],
     "top-1 prob":     top1_prob[:5].round(4),
-    "맞음?":          correct[:5],
+    "correct?":       correct[:5],
 }).to_string(index=False))""")
 
 # ----- 12a. 메인 시각화: confusion matrix -----
@@ -426,7 +426,7 @@ auc_sk = float(roc_auc_score(labels_eval, probs_sk, multi_class="ovr"))
 
 print(f"sklearn TF-IDF + LogReg:")
 print(f"  vocabulary size:    {len(vec.vocabulary_):,}")
-print(f"  학습 파라미터:      {clf.coef_.size + clf.intercept_.size:,}  (~{clf.coef_.size/1e3:.0f} K)")
+print(f"  trained parameters: {clf.coef_.size + clf.intercept_.size:,}  (~{clf.coef_.size/1e3:.0f} K)")
 print(f"  accuracy:           {acc_sk:.4f}")
 print(f"  macro F1:           {f1s:.4f}")
 print(f"  AUC (OvR):          {auc_sk:.4f}")""")
@@ -449,9 +449,9 @@ common = [k for k in metrics_bert if k in metrics_sk]
 cmp = pd.DataFrame({
     "metric":             common,
     "sklearn (TF-IDF)":   [metrics_sk[k]   for k in common],
-    "BERT (이번 챕터)":   [metrics_bert[k] for k in common],
+    "BERT":               [metrics_bert[k] for k in common],
 })
-cmp["BERT − sklearn"] = cmp["BERT (이번 챕터)"] - cmp["sklearn (TF-IDF)"]
+cmp["BERT - sklearn"] = cmp["BERT"] - cmp["sklearn (TF-IDF)"]
 print(cmp.round(4).to_string(index=False))""")
 
 md(r"""### 5-2. 두 모델의 혼동 행렬 비교
@@ -467,7 +467,7 @@ cm_sk_n   = cm_sk   / cm_sk.sum(axis=1, keepdims=True)
 fig, axes = plt.subplots(1, 2, figsize=(13, 5.5))
 for ax, cm_n, cm_raw, title in [
     (axes[0], cm_sk_n,   cm_sk,   "sklearn TF-IDF + LogReg"),
-    (axes[1], cm_bert_n, cm_bert, "BERT (이번 챕터)"),
+    (axes[1], cm_bert_n, cm_bert, "BERT"),
 ]:
     sns.heatmap(
         cm_n, annot=cm_raw, fmt="d", cmap="Blues", vmin=0, vmax=1,

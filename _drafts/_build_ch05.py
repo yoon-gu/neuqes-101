@@ -125,8 +125,8 @@ dataset = load_dataset("yelp_review_full")
 SAMPLE_SIZE = 5000
 ds = dataset["train"].shuffle(seed=42).select(range(SAMPLE_SIZE))
 df = ds.to_pandas()
-print(f"전체 샘플 수: {len(df)}")
-print("클래스 분포 (라벨 0-4 = 별점 1-5):")
+print(f"Total samples: {len(df)}")
+print("Class distribution (label 0-4 = star 1-5):")
 print(df["label"].value_counts().sort_index())""")
 
 # ----- 8. 5-class 데이터 -----
@@ -141,7 +141,7 @@ tfidf = TfidfVectorizer(max_features=10000)
 X_train = tfidf.fit_transform(X_text_train)
 X_test = tfidf.transform(X_text_test)
 
-print(f"X_train: {X_train.shape}, y_train 분포: {pd.Series(y_train).value_counts().sort_index().tolist()}")""")
+print(f"X_train: {X_train.shape}, y_train distribution: {pd.Series(y_train).value_counts().sort_index().tolist()}")""")
 
 # ----- 9. 실습 도입 -----
 md(r"""## 🚀 실습: 5클래스 분류
@@ -157,14 +157,14 @@ acc = accuracy_score(y_test, y_pred)
 baseline = 1 / 5
 
 print(f"Test accuracy: {acc:.4f}")
-print(f"baseline (균등 추측): {baseline:.4f}")
-print(f"baseline 대비 개선: {acc - baseline:+.4f}")""")
+print(f"baseline (uniform guess): {baseline:.4f}")
+print(f"Improvement over baseline: {acc - baseline:+.4f}")""")
 
 # ----- 11. predict_proba shape -----
 code(r"""proba_5 = model_5.predict_proba(X_test)
 print(f"predict_proba shape: {proba_5.shape}  (N, K=5)")
-print(f"행 합 (모두 1이어야 함): {proba_5.sum(axis=1)[:5].round(4)}")
-print(f"\n앞 3개 샘플의 확률 분포:")
+print(f"Row sums (should be 1): {proba_5.sum(axis=1)[:5].round(4)}")
+print(f"\nFirst 3 sample probability distributions:")
 print(pd.DataFrame(proba_5[:3], columns=[f"P({i+1}★)" for i in range(5)]).round(3))""")
 
 # ----- 12. 해부 -----
@@ -238,9 +238,9 @@ code(r"""# OvR은 sklearn.multiclass.OneVsRestClassifier로 만듭니다.
 model_ovr = OneVsRestClassifier(LogisticRegression(max_iter=1000))
 model_ovr.fit(X_train, y_train)
 
-print(f"OvR estimators 개수: {len(model_ovr.estimators_)}")
-print(f"각 estimator는 'class k vs rest'를 학습한 별도의 LogisticRegression")
-print(f"  estimator 0 의 coef_ shape: {model_ovr.estimators_[0].coef_.shape}  (1, V)")
+print(f"OvR estimators count: {len(model_ovr.estimators_)}")
+print(f"Each estimator is a separate LogisticRegression for 'class k vs rest'")
+print(f"  estimator 0 coef_ shape: {model_ovr.estimators_[0].coef_.shape}  (1, V)")
 
 # 5개 binary 모델의 coef를 (5, V)로 쌓아 한 번에 행렬 곱
 ovr_coef = np.vstack([est.coef_[0] for est in model_ovr.estimators_])         # (5, V)
@@ -258,16 +258,16 @@ p_multi = proba_5[sample_idx]                                  # multinomial sof
 p_ovr_raw = ovr_sigmoid_all[sample_idx]                        # OvR 5개 독립 sigmoid (정규화 전)
 p_ovr_norm = model_ovr.predict_proba(X_test)[sample_idx]       # OvR 정규화 후 (sklearn 표시용)
 
-print("\n리뷰 미리보기 200자:")
+print("\nReview preview (200 chars):")
 print(f"{sample_text[:200]}...")
-print(f"실제 별점:     {true_label + 1}★\n")
+print(f"True star:    {true_label + 1}★\n")
 
-print(f"{'클래스':>8}  {'multinomial':>14}  {'OvR raw':>10}  {'OvR 정규화 후':>16}")
+print(f"{'class':>8}  {'multinomial':>14}  {'OvR raw':>10}  {'OvR normalized':>16}")
 print("-" * 56)
 for k in range(5):
     print(f"  {k+1}★    {p_multi[k]:>14.4f}  {p_ovr_raw[k]:>10.4f}  {p_ovr_norm[k]:>16.4f}")
 print("-" * 56)
-print(f"  합     {p_multi.sum():>14.4f}  {p_ovr_raw.sum():>10.4f}  {p_ovr_norm.sum():>16.4f}")""")
+print(f"  sum    {p_multi.sum():>14.4f}  {p_ovr_raw.sum():>10.4f}  {p_ovr_norm.sum():>16.4f}")""")
 
 # ----- 18. 해석 + multi-label 떡밥 -----
 md(r"""**관찰**
@@ -288,15 +288,15 @@ code(r"""# 전체 test set 정확도 비교
 acc_ovr = accuracy_score(y_test, model_ovr.predict(X_test))
 print(f"multinomial accuracy: {acc:.4f}")
 print(f"OvR accuracy:         {acc_ovr:.4f}")
-print(f"차이: {abs(acc - acc_ovr):.4f}")
+print(f"Diff: {abs(acc - acc_ovr):.4f}")
 
 # OvR raw 확률 행 합 분포 (정규화 전)
 raw_sums = ovr_sigmoid_all.sum(axis=1)
-print(f"\nOvR raw 행 합 분포 (정규화 전):")
+print(f"\nOvR raw row sum distribution (pre-normalization):")
 print(f"  min:  {raw_sums.min():.3f}")
 print(f"  max:  {raw_sums.max():.3f}")
 print(f"  mean: {raw_sums.mean():.3f}")
-print(f"  → 5개 sigmoid가 독립적이라 합이 정확히 1로 떨어지지 않음")""")
+print(f"  → 5 independent sigmoids; rows do not sum to exactly 1")""")
 
 # ----- 18. library -----
 md(r"""## 📦 이번 챕터에 등장한 라이브러리

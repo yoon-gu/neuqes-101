@@ -155,7 +155,7 @@ tfidf = TfidfVectorizer(max_features=10000)
 X_train = tfidf.fit_transform(X_text_train)
 X_test = tfidf.transform(X_text_test)
 
-print(f"X_train: {X_train.shape}, 긍정 비율: {y_train.mean():.1%}")""")
+print(f"X_train: {X_train.shape}, positive rate: {y_train.mean():.1%}")""")
 
 # ----- 9. 두 방식 학습 -----
 md(r"""## 🚀 실습: 두 방식을 나란히 학습
@@ -175,24 +175,24 @@ model_b.fit(X_train, y_train)
 acc_a = accuracy_score(y_test, model_a.predict(X_test))
 acc_b = accuracy_score(y_test, model_b.predict(X_test))
 
-print(f"방식 A (sigmoid + BCE)  accuracy: {acc_a:.4f}")
-print(f"방식 B (softmax + CE)   accuracy: {acc_b:.4f}")
-print(f"차이: {abs(acc_a - acc_b):.4f}")""")
+print(f"Method A (sigmoid + BCE) accuracy: {acc_a:.4f}")
+print(f"Method B (softmax + CE)  accuracy: {acc_b:.4f}")
+print(f"Diff: {abs(acc_a - acc_b):.4f}")""")
 
 # ----- 11. predict_proba 비교 -----
 code(r"""proba_a = model_a.predict_proba(X_test)   # (N, 2)
 proba_b = model_b.predict_proba(X_test)   # (N, 2)
 
-print(f"방식 A predict_proba shape: {proba_a.shape}")
-print(f"방식 B predict_proba shape: {proba_b.shape}")
-print(f"  (방식 A도 sklearn이 내부적으로 [P(0), P(1)]을 내줌 — sigmoid 결과를 두 열로 펼친 것)")
+print(f"Method A predict_proba shape: {proba_a.shape}")
+print(f"Method B predict_proba shape: {proba_b.shape}")
+print(f"  (sklearn returns [P(0), P(1)] for both — sigmoid output expanded to two columns)")
 
 p_a, p_b = proba_a[:, 1], proba_b[:, 1]
-print(f"\n앞 5개 P(y=1):")
-print(f"방식 A: {p_a[:5].round(4)}")
-print(f"방식 B: {p_b[:5].round(4)}")
-print(f"\n전체 max 차이: {np.abs(p_a - p_b).max():.4f}")
-print(f"전체 mean 차이: {np.abs(p_a - p_b).mean():.4f}")""")
+print(f"\nFirst 5 P(y=1):")
+print(f"Method A: {p_a[:5].round(4)}")
+print(f"Method B: {p_b[:5].round(4)}")
+print(f"\nMax diff:  {np.abs(p_a - p_b).max():.4f}")
+print(f"Mean diff: {np.abs(p_a - p_b).mean():.4f}")""")
 
 # ----- 12. 동등성 도출 -----
 md(r"""## 🔬 해부: 수학적 동등성
@@ -224,7 +224,7 @@ print("-" * 60)
 for i in range(len(z0_arr)):
     print(f"{z0_arr[i]:>6.1f} {z1_arr[i]:>6.1f}    {softmax_p1[i]:>22.8f}    {sigmoid_diff[i]:>16.8f}")
 
-print(f"\nmax 차이: {np.abs(softmax_p1 - sigmoid_diff).max():.2e}  (수치적 오차 수준)")""")
+print(f"\nMax diff: {np.abs(softmax_p1 - sigmoid_diff).max():.2e}  (numerical noise)")""")
 
 # ----- 14. 변형: sklearn coef shape 관찰 -----
 md(r"""## 🛠️ 변형: sklearn은 왜 K=2 multinomial에서 `(2, V)` coef를 안 만드나?
@@ -234,19 +234,19 @@ md(r"""## 🛠️ 변형: sklearn은 왜 K=2 multinomial에서 `(2, V)` coef를 
 직접 두 모델의 `coef_` 모양을 확인합니다.""")
 
 # ----- 15. coef shape 비교 코드 -----
-code(r"""print(f"방식 A coef_ shape:      {model_a.coef_.shape}")
-print(f"방식 B coef_ shape:      {model_b.coef_.shape}")
-print(f"방식 A intercept_ shape: {model_a.intercept_.shape}")
-print(f"방식 B intercept_ shape: {model_b.intercept_.shape}")
+code(r"""print(f"Method A coef_ shape:      {model_a.coef_.shape}")
+print(f"Method B coef_ shape:      {model_b.coef_.shape}")
+print(f"Method A intercept_ shape: {model_a.intercept_.shape}")
+print(f"Method B intercept_ shape: {model_b.intercept_.shape}")
 print()
-print("→ 둘 다 (1, V) — sklearn이 K=2 multinomial을 binary form으로 collapse")
+print("→ both (1, V) — sklearn collapses K=2 multinomial to binary form")
 print()
-print(f"두 coef_ 의 max 차이:      {np.abs(model_a.coef_ - model_b.coef_).max():.2e}")
-print(f"두 intercept_ 의 max 차이: {np.abs(model_a.intercept_ - model_b.intercept_).max():.2e}")
+print(f"coef_ max diff:      {np.abs(model_a.coef_ - model_b.coef_).max():.2e}")
+print(f"intercept_ max diff: {np.abs(model_a.intercept_ - model_b.intercept_).max():.2e}")
 print()
-print("(미세한 차이는 solver 수렴 기준의 차이일 뿐, 본질적으로 같은 모델)")
+print("(small difference is only solver convergence noise; same model essentially)")
 print()
-print("진짜 (2, V) 두 logit head는 PyTorch가 '직접' 만들어주는 Ch 10·11 BERT binary에서 등장합니다.")""")
+print("True (2, V) two-logit head appears in PyTorch (Ch 10/11 BERT binary).")""")
 
 # ----- 16. library -----
 md(r"""## 📦 이번 챕터에 등장한 라이브러리

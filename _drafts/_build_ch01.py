@@ -113,7 +113,7 @@ code(r"""SAMPLE_SIZE = 5000
 ds = dataset["train"].shuffle(seed=42).select(range(SAMPLE_SIZE))
 df = ds.to_pandas()
 
-print(f"샘플 수: {len(df)}")
+print(f"Sample count: {len(df)}")
 df.head(3)""")
 
 # ----- 10. 별점 분포 -----
@@ -142,17 +142,17 @@ md(r"""## 🔬 해부: CountVectorizer — 텍스트를 "단어 횟수"로
 code(r"""cv = CountVectorizer(max_features=10000)
 X_count = cv.fit_transform(df["text"])
 
-print(f"shape: {X_count.shape}  (문서 수, 어휘 크기)")
+print(f"shape: {X_count.shape}  (n_docs, vocab_size)")
 print(f"non-zero entries: {X_count.nnz:,}")
-print(f"전체 칸 수: {X_count.shape[0] * X_count.shape[1]:,}")
+print(f"total cells: {X_count.shape[0] * X_count.shape[1]:,}")
 sparsity = 1 - X_count.nnz / (X_count.shape[0] * X_count.shape[1])
-print(f"sparsity: {sparsity:.2%}  (비어있는 칸의 비율)")""")
+print(f"sparsity: {sparsity:.2%}  (fraction of empty cells)")""")
 
 # ----- 14. 같은 문장 토큰화 -----
 code(r"""sample = "I love using Hugging Face!"
 analyzer = cv.build_analyzer()
-print(f"입력 문장: {sample!r}")
-print(f"토큰화 결과: {analyzer(sample)}")""")
+print(f"Input sentence: {sample!r}")
+print(f"Tokenized: {analyzer(sample)}")""")
 
 # ----- 15. 토큰화 관찰 -----
 md(r"""**관찰 포인트**
@@ -164,12 +164,12 @@ md(r"""**관찰 포인트**
 
 # ----- 16. 어휘 살펴보기 -----
 code(r"""vocab = cv.get_feature_names_out()
-print(f"어휘 크기: {len(vocab):,}")
-print(f"처음 20개: {list(vocab[:20])}")
+print(f"Vocab size: {len(vocab):,}")
+print(f"First 20: {list(vocab[:20])}")
 
 word_counts = np.asarray(X_count.sum(axis=0)).flatten()
 top = np.argsort(word_counts)[::-1][:10]
-print("\n가장 자주 등장한 단어 top 10")
+print("\nTop 10 most frequent words")
 for i in top:
     print(f"  {vocab[i]:>15}  {word_counts[i]:>6,}")""")
 
@@ -195,7 +195,7 @@ print(f"shape: {X_tfidf.shape}")""")
 # ----- 19. 같은 문서 비교 -----
 code(r"""doc_id = 0
 review = df["text"].iloc[doc_id]
-print("리뷰 미리보기 200자:")
+print("Review preview (200 chars):")
 print(f"{review[:200]}...\n")
 
 vocab_tf = tfidf.get_feature_names_out()
@@ -204,7 +204,7 @@ tfidf_row = np.asarray(X_tfidf[doc_id].todense()).flatten()
 
 top = np.argsort(tfidf_row)[::-1][:10]
 
-print(f"{'단어':>15}  {'count':>6}  {'tfidf':>8}")
+print(f"{'word':>15}  {'count':>6}  {'tfidf':>8}")
 print("-" * 35)
 for i in top:
     print(f"{vocab_tf[i]:>15}  {cv_row[i]:>6}  {tfidf_row[i]:>8.4f}")""")

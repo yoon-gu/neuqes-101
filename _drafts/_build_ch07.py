@@ -110,12 +110,12 @@ code(r"""!pip install -q transformers""")
 
 # ----- 7. GPU check -----
 code(r"""import torch
-print(f"PyTorch:       {torch.__version__}")
-print(f"CUDA 사용 가능: {torch.cuda.is_available()}")
+print(f"PyTorch:        {torch.__version__}")
+print(f"CUDA available: {torch.cuda.is_available()}")
 if torch.cuda.is_available():
     print(f"GPU:            {torch.cuda.get_device_name(0)}")
 else:
-    print("CPU로 실행됩니다 (이번 챕터는 추론만이라 동작은 함, 다만 nvidia-smi 셀은 건너뛰세요)")""")
+    print("Running on CPU (inference works in this chapter; skip the nvidia-smi cells)")""")
 
 # ----- 7b. nvidia-smi 도입 -----
 md(r"""### `!nvidia-smi` — GPU 메모리(VRAM) 실시간 추적
@@ -181,9 +181,9 @@ code(r"""def model_size_summary(model, dtype_bytes=4):
     return n_params, size_mb
 
 n, size_mb = model_size_summary(classifier.model)
-print(f"DistilBERT (SST-2) 파라미터:")
-print(f"  개수:           {n:>13,}  ({n/1e6:.1f} M)")
-print(f"  fp32 예상 크기: {size_mb:>10.1f} MB  (= 파라미터 수 × 4 bytes)")""")
+print(f"DistilBERT (SST-2) parameters:")
+print(f"  count:           {n:>13,}  ({n/1e6:.1f} M)")
+print(f"  fp32 size:       {size_mb:>10.1f} MB  (= params × 4 bytes)")""")
 
 # ----- 9d. param ↔ VRAM 관계 설명 -----
 md(r"""**파라미터 수와 VRAM의 관계**
@@ -249,7 +249,7 @@ code(r"""models_info = {
     "BERT-base-uncased":        unmasker.model,
 }
 
-print(f"{'모델':>30}  {'파라미터':>12}  {'fp32 크기':>14}")
+print(f"{'model':>30}  {'params':>12}  {'fp32 size':>14}")
 print("-" * 65)
 total_params, total_size = 0, 0.0
 for name, m in models_info.items():
@@ -258,8 +258,8 @@ for name, m in models_info.items():
     total_size += sz
     print(f"{name:>30}  {n/1e6:>9.1f} M  {sz:>11.1f} MB")
 print("-" * 65)
-print(f"{'합계':>30}  {total_params/1e6:>9.1f} M  {total_size:>11.1f} MB")
-print(f"{'GB 환산':>30}  {' '*12}  {total_size/1024:>11.2f} GB")""")
+print(f"{'total':>30}  {total_params/1e6:>9.1f} M  {total_size:>11.1f} MB")
+print(f"{'in GB':>30}  {' '*12}  {total_size/1024:>11.2f} GB")""")
 
 # ----- 14d. 해석 -----
 md(r"""**실제 nvidia-smi VRAM 사용량과 비교** — 위 합계(~수백 MB)에 **PyTorch CUDA 컨텍스트 + 캐시 할당자 ~ 200-400 MB** 를 더한 값이 nvidia-smi 의 `Memory-Usage` 와 비슷할 겁니다.
@@ -307,10 +307,10 @@ logits
 현재 `classifier` 객체가 어떤 모델/토크나이저를 사용하는지 확인합니다.""")
 
 # ----- 16. classifier 내부 확인 -----
-code(r"""print(f"모델:               {classifier.model.config._name_or_path}")
-print(f"모델 클래스:         {type(classifier.model).__name__}")
-print(f"토크나이저 클래스:   {type(classifier.tokenizer).__name__}")
-print(f"라벨 매핑:           {classifier.model.config.id2label}")""")
+code(r"""print(f"Model:               {classifier.model.config._name_or_path}")
+print(f"Model class:         {type(classifier.model).__name__}")
+print(f"Tokenizer class:     {type(classifier.tokenizer).__name__}")
+print(f"Label mapping:       {classifier.model.config.id2label}")""")
 
 # ----- 17. 모델 정체 설명 -----
 md(r"""기본 모델은 **`distilbert-base-uncased-finetuned-sst-2-english`** 입니다.
@@ -338,10 +338,10 @@ model = AutoModelForSequenceClassification.from_pretrained(model_name)
 if torch.cuda.is_available():
     model = model.to("cuda")
 
-print("로드 완료")
-print(f"  tokenizer 클래스: {type(tokenizer).__name__}")
-print(f"  model 클래스:     {type(model).__name__}")
-print(f"  model device:     {next(model.parameters()).device}")""")
+print("Loaded")
+print(f"  tokenizer class: {type(tokenizer).__name__}")
+print(f"  model class:     {type(model).__name__}")
+print(f"  model device:    {next(model.parameters()).device}")""")
 
 # ----- 19b. nvidia-smi after direct load -----
 md(r"""**`pipeline` 위에 추가로 *같은 DistilBERT* 가 올라간 상태** — VRAM이 또 한 번 늘어났습니다. 같은 가중치라도 별도 객체이면 별도 메모리.""")
@@ -367,11 +367,11 @@ code(r"""text = "I love using Hugging Face!"
 
 # 토큰화 결과 살펴보기
 tokens = tokenizer.tokenize(text)
-print(f"토큰들: {tokens}")
+print(f"Tokens: {tokens}")
 
 # 모델 입력용 텐서 만들기
 inputs = tokenizer(text, return_tensors="pt")
-print("\n모델 입력:")
+print("\nModel inputs:")
 for key, value in inputs.items():
     print(f"  {key}: {value}")""")
 
@@ -383,7 +383,7 @@ md(r"""**관찰 포인트**
 
 # ----- 24. ID 디코딩 -----
 code(r"""# input_ids를 다시 토큰으로 디코딩해서 확인
-print(f"{'ID':>5}    토큰")
+print(f"{'ID':>5}    token")
 print("-" * 30)
 for token_id in inputs["input_ids"][0]:
     token = tokenizer.decode([token_id])
@@ -400,10 +400,10 @@ inputs_on_device = {k: v.to(model.device) for k, v in inputs.items()}
 with torch.no_grad():
     outputs = model(**inputs_on_device)
 
-print(f"출력 객체:    {type(outputs).__name__}")
-print(f"로짓 shape:   {outputs.logits.shape}  (배치 1개, 클래스 2개: NEGATIVE, POSITIVE)")
-print(f"로짓 값:      {outputs.logits}")
-print(f"로짓 device:  {outputs.logits.device}")""")
+print(f"Output object: {type(outputs).__name__}")
+print(f"Logits shape:  {outputs.logits.shape}  (batch=1, classes=2: NEGATIVE, POSITIVE)")
+print(f"Logits:        {outputs.logits}")
+print(f"Logits device: {outputs.logits.device}")""")
 
 # ----- 27. 로짓 설명 -----
 md(r"""로짓(logits)은 모델이 뱉은 **정규화되지 않은 점수**. shape `[1, 2]`는 "배치 1개, 클래스 2개"를 의미합니다.
@@ -416,14 +416,14 @@ md(r"""### Step 4: 로짓 → 확률/라벨 (Post-processing)""")
 # ----- 29. softmax + argmax -----
 code(r"""# softmax로 확률 변환
 probs = torch.softmax(outputs.logits, dim=-1)
-print(f"확률: {probs}")
+print(f"Probabilities: {probs}")
 
 # 가장 높은 확률의 클래스 인덱스
 predicted_class_id = probs.argmax(dim=-1).item()
 predicted_label = model.config.id2label[predicted_class_id]
 predicted_score = probs[0, predicted_class_id].item()
 
-print(f"\n최종 결과: {{'label': '{predicted_label}', 'score': {predicted_score:.4f}}}")""")
+print(f"\nFinal result: {{'label': '{predicted_label}', 'score': {predicted_score:.4f}}}")""")
 
 # ----- 29b. softmax 변형 비교 -----
 md(r"""**잠깐 — `transformers` 안에는 softmax 함수가 없나요?**
@@ -445,10 +445,10 @@ p2 = F.softmax(outputs.logits, dim=-1)
 softmax_module = torch.nn.Softmax(dim=-1)
 p3 = softmax_module(outputs.logits)
 
-print(f"세 형태가 같은 결과를 주는가?")
+print(f"Do all three forms agree?")
 print(f"  torch.softmax vs F.softmax:    {torch.allclose(p1, p2)}")
 print(f"  torch.softmax vs nn.Softmax:   {torch.allclose(p1, p3)}")
-print(f"\n  값: {p1}")""")
+print(f"\n  values: {p1}")""")
 
 # ----- 29d. log_softmax 보너스 -----
 md(r"""**보너스 — 학습 코드에서 자주 보이는 `log_softmax`**
@@ -467,8 +467,8 @@ log_probs_stable = F.log_softmax(logits, dim=-1)
 
 # ----- 30. pipeline 결과와 비교 -----
 code(r"""# pipeline이 한 줄로 해주던 일을 4단계로 직접 재현했습니다. 결과를 비교해봅시다.
-print(f"pipeline 결과:    {classifier(text)}")
-print(f"직접 구현 결과:   [{{'label': '{predicted_label}', 'score': {predicted_score:.4f}}}]")""")
+print(f"pipeline result:    {classifier(text)}")
+print(f"manual 4-step:      [{{'label': '{predicted_label}', 'score': {predicted_score:.4f}}}]")""")
 
 # ----- 31. 보너스 — 토크나이저별 어휘 비교 -----
 md(r"""## 🔍 보너스: 토크나이저마다 어휘가 다르다
@@ -493,7 +493,7 @@ tokenizer_specs = {
     "gpt2":                    AutoTokenizer.from_pretrained("gpt2"),
 }
 
-print(f"{'모델':>28}  {'vocab_size':>10}  {'클래스':>32}")
+print(f"{'model':>28}  {'vocab_size':>10}  {'class':>32}")
 print("-" * 76)
 for name, tok in tokenizer_specs.items():
     print(f"{name:>28}  {tok.vocab_size:>10,}  {type(tok).__name__:>32}")""")
@@ -505,10 +505,10 @@ code(r"""sample_sentences = [
 ]
 
 for sent in sample_sentences:
-    print(f"입력: {sent!r}")
+    print(f"Input: {sent!r}")
     for name, tok in tokenizer_specs.items():
         tokens = tok.tokenize(sent)
-        print(f"  {name:>28}  ({len(tokens)}개) {tokens}")
+        print(f"  {name:>28}  ({len(tokens)} tokens) {tokens}")
     print()""")
 
 # ----- 31c2. 특수 토큰 의미 정리 -----
@@ -530,7 +530,7 @@ md(r"""### 특수 토큰(special token)이란
 
 # ----- 31d. 특수 토큰 비교 -----
 code(r"""# 특수 토큰: 모델마다 어떤 token을 [CLS]/[SEP]/[PAD]/[UNK] 자리에 두는지
-print(f"{'모델':>28}  {'BOS/CLS':>16}  {'EOS/SEP':>16}  {'PAD':>10}  {'UNK':>10}")
+print(f"{'model':>28}  {'BOS/CLS':>16}  {'EOS/SEP':>16}  {'PAD':>10}  {'UNK':>10}")
 print("-" * 90)
 for name, tok in tokenizer_specs.items():
     cls = tok.cls_token if tok.cls_token else (tok.bos_token or "—")
@@ -572,17 +572,17 @@ md(r"""## 🧩 보너스: `model.config` 안에 뭐가 있나
 code(r"""cfg = model.config
 n_params, size_mb = model_size_summary(model)   # 앞에서 정의한 헬퍼 재사용
 
-print(f"모델 이름·경로:           {cfg._name_or_path}")
-print(f"모델 타입:                {cfg.model_type}")
-print(f"파라미터 수:              {n_params:,}  ({n_params/1e6:.1f} M)")
-print(f"파라미터 fp32 크기:       {size_mb:.1f} MB  (= 파라미터 × 4 bytes)")
-print(f"hidden_size:             {cfg.hidden_size}        (BERT-base/DistilBERT는 768)")
-print(f"vocab_size:              {cfg.vocab_size:,}     (토크나이저 어휘 크기와 일치)")
-print(f"max_position_embeddings: {cfg.max_position_embeddings}  (입력 길이 상한)")
-print(f"num_labels:              {cfg.num_labels}          (분류 헤드 출력 차원)")
+print(f"Model name/path:          {cfg._name_or_path}")
+print(f"Model type:               {cfg.model_type}")
+print(f"Parameters:               {n_params:,}  ({n_params/1e6:.1f} M)")
+print(f"fp32 size:                {size_mb:.1f} MB  (= params x 4 bytes)")
+print(f"hidden_size:             {cfg.hidden_size}        (BERT-base/DistilBERT: 768)")
+print(f"vocab_size:              {cfg.vocab_size:,}     (matches tokenizer vocab)")
+print(f"max_position_embeddings: {cfg.max_position_embeddings}  (input length cap)")
+print(f"num_labels:              {cfg.num_labels}          (classification head dim)")
 print(f"id2label:                {cfg.id2label}")
 print(f"label2id:                {cfg.label2id}")
-print(f"problem_type:            {cfg.problem_type!r}    (None이면 num_labels로 자동 추론)")""")
+print(f"problem_type:            {cfg.problem_type!r}    (None → auto-inferred from num_labels)")""")
 
 # ----- 31h. config 해석 -----
 md(r"""> 📒 **더 깊이 보고 싶다면 — 부록 노트북**

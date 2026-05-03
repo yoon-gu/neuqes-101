@@ -128,11 +128,11 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 plt.rcParams["axes.unicode_minus"] = False
 
 print(f"PyTorch:        {torch.__version__}")
-print(f"CUDA 사용 가능: {torch.cuda.is_available()}")
+print(f"CUDA available: {torch.cuda.is_available()}")
 if torch.cuda.is_available():
     print(f"GPU:             {torch.cuda.get_device_name(0)}")
 else:
-    print("⚠️  CPU 런타임에서는 학습이 매우 오래 걸립니다. T4로 변경 권장.")""")
+    print("Warning: CPU runtime — training will be very slow. Switch to T4 recommended.")""")
 
 # ----- 7. nvidia-smi baseline -----
 md(r"""**baseline VRAM** — 모델 로드 전:""")
@@ -165,7 +165,7 @@ train_tok = train_ds.map(tokenize_fn, batched=True).remove_columns(["text", "lab
 eval_tok  = eval_ds.map(tokenize_fn,  batched=True).remove_columns(["text", "label"])
 
 print(train_tok)
-print(f"\n첫 샘플 라벨: {train_tok[0]['labels']}  (float)")""")
+print(f"\nFirst sample label: {train_tok[0]['labels']}  (float)")""")
 
 # ----- 10. 모델 로드 도입 -----
 md(r"""## 2. 모델 로드 — `num_labels=1`, `problem_type="regression"`
@@ -178,9 +178,9 @@ code(r"""model = AutoModelForSequenceClassification.from_pretrained(
     num_labels=1,
     problem_type="regression",
 )
-print(f"파라미터 수:  {sum(p.numel() for p in model.parameters()):,}")
-print(f"분류 헤드:    {model.classifier}")
-print(f"problem_type: {model.config.problem_type}")""")
+print(f"Parameters:    {sum(p.numel() for p in model.parameters()):,}")
+print(f"Classifier:    {model.classifier}")
+print(f"problem_type:  {model.config.problem_type}")""")
 
 md(r"""**경고 메시지를 보셨을 겁니다** — `Some weights of DistilBertForSequenceClassification were not initialized ...`. 분류 헤드(`Linear(768, 1)`)가 새로 만들어지면서 *랜덤 초기화* 됐다는 알림입니다. 이 부분이 학습으로 채워지고, BERT 본체는 사전학습 가중치를 미세 조정합니다 (transfer learning의 본 모습).
 
@@ -195,10 +195,10 @@ code(r"""def param_summary(m):
     return total, trainable, frozen
 
 total, trainable, frozen = param_summary(model)
-print(f"전체 파라미터:     {total:>13,}  ({total/1e6:.1f} M)")
-print(f"학습되는 파라미터: {trainable:>13,}  ({trainable/1e6:.1f} M, {trainable/total:.1%})")
-print(f"동결된 파라미터:   {frozen:>13,}  ({frozen/1e6:.1f} M, {frozen/total:.1%})")
-print(f"\n현재 default — 모든 layer가 학습 대상")""")
+print(f"Total parameters:     {total:>13,}  ({total/1e6:.1f} M)")
+print(f"Trainable parameters: {trainable:>13,}  ({trainable/1e6:.1f} M, {trainable/total:.1%})")
+print(f"Frozen parameters:    {frozen:>13,}  ({frozen/1e6:.1f} M, {frozen/total:.1%})")
+print(f"\nDefault — all layers are trainable")""")
 
 md(r"""### 시연: BERT 본체 동결 패턴
 
@@ -216,13 +216,13 @@ for p in demo_model.distilbert.parameters():
 # 분류 헤드는 학습 대상으로 그대로 둠 (default가 True)
 
 t, tr, fr = param_summary(demo_model)
-print(f"BERT 본체 동결 후:")
-print(f"  전체:        {t:>13,}")
-print(f"  학습되는:    {tr:>13,}  ({tr/t:.1%})  ← 분류 헤드만")
-print(f"  동결된:      {fr:>13,}  ({fr/t:.1%})  ← BERT 본체")
-print(f"\n분류 헤드 {tr:,}개 파라미터만 업데이트되므로 학습이 매우 빠르고 메모리도 적게 듭니다.")
-print(f"단점: BERT 본체가 task에 적응 못 함 — 데이터가 충분하면 보통 본체도 함께 학습.")
-print(f"\n(이 시연 모델은 본 학습에 사용하지 않습니다 — del demo_model 로 메모리 회수)")
+print(f"After freezing BERT body:")
+print(f"  Total:       {t:>13,}")
+print(f"  Trainable:   {tr:>13,}  ({tr/t:.1%})  ← classification head only")
+print(f"  Frozen:      {fr:>13,}  ({fr/t:.1%})  ← BERT body")
+print(f"\nOnly {tr:,} classification head parameters update — fast, low memory.")
+print(f"Tradeoff: BERT body cannot adapt to the task — usually train the body too if data is sufficient.")
+print(f"\n(This demo model is not used for the actual training — del demo_model frees memory.)")
 
 import gc
 del demo_model
@@ -261,7 +261,7 @@ code(r"""training_args = TrainingArguments(
     seed=42,
 )
 
-print(f"전체 학습 step 수: {len(train_tok) // training_args.per_device_train_batch_size * training_args.num_train_epochs}")""")
+print(f"Total training steps: {len(train_tok) // training_args.per_device_train_batch_size * training_args.num_train_epochs}")""")
 
 # ----- 13. compute_metrics -----
 code(r"""# 평가 지표를 직접 정의 — sklearn 헬퍼 그대로 활용
@@ -286,7 +286,7 @@ code(r"""trainer = Trainer(
 )
 
 train_result = trainer.train()
-print(f"\n학습 완료 — 평균 train loss: {train_result.training_loss:.4f}")""")
+print(f"\nTraining done — mean train loss: {train_result.training_loss:.4f}")""")
 
 md(r"""학습이 진행되는 동안 step별 loss와 에폭별 평가 metric이 출력됩니다. **핵심 관찰**:
 
@@ -325,7 +325,7 @@ md(r"""## 4. 🔬 평가 — sklearn(Ch 2)과 직접 비교
 
 code(r"""# BERT 최종 평가 (eval_dataset 기준)
 bert_metrics = trainer.evaluate()
-print("BERT 평가:")
+print("BERT evaluation:")
 for k, v in bert_metrics.items():
     if k.startswith("eval_") and isinstance(v, float):
         print(f"  {k:>20}: {v:.4f}")""")
@@ -347,18 +347,18 @@ X_ev = tfidf.transform(eval_texts)
 linreg = LinearRegression().fit(X_tr, train_labels)
 sk_pred = linreg.predict(X_ev)
 
-print("sklearn LinearRegression 평가:")
+print("sklearn LinearRegression evaluation:")
 print(f"  mse: {mean_squared_error(eval_labels, sk_pred):.4f}")
 print(f"  mae: {mean_absolute_error(eval_labels, sk_pred):.4f}")
 print(f"  r2:  {r2_score(eval_labels, sk_pred):.4f}")""")
 
 code(r"""# 한 표로 비교
 rows = [
-    {"모델": "sklearn LinearRegression",
+    {"model": "sklearn LinearRegression",
      "mse": mean_squared_error(eval_labels, sk_pred),
      "mae": mean_absolute_error(eval_labels, sk_pred),
      "r2":  r2_score(eval_labels, sk_pred)},
-    {"모델": "DistilBERT 파인튜닝",
+    {"model": "DistilBERT fine-tuned",
      "mse": bert_metrics["eval_mse"],
      "mae": bert_metrics["eval_mae"],
      "r2":  bert_metrics["eval_r2"]},

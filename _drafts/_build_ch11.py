@@ -142,11 +142,11 @@ from sklearn.metrics import (
 plt.rcParams["axes.unicode_minus"] = False
 
 print(f"PyTorch:        {torch.__version__}")
-print(f"CUDA 사용 가능: {torch.cuda.is_available()}")
+print(f"CUDA available: {torch.cuda.is_available()}")
 if torch.cuda.is_available():
     print(f"GPU:             {torch.cuda.get_device_name(0)}")
 else:
-    print("⚠️  CPU 런타임에서는 학습이 매우 느립니다. T4로 변경 권장.")""")
+    print("Warning: CPU runtime — training will be very slow. Switch to T4 recommended.")""")
 
 # ----- 7. nvidia-smi baseline -----
 md(r"""**baseline VRAM**:""")
@@ -176,9 +176,9 @@ def add_binary(batch):
 train_bin = train_full.filter(lambda x: (x["label"] + 1) != 3).map(add_binary, batched=True)
 eval_bin  = eval_full.filter(lambda x:  (x["label"] + 1) != 3).map(add_binary, batched=True)
 
-print(f"train (별점 3 제외 후): {len(train_bin)}")
-print(f"eval  (별점 3 제외 후): {len(eval_bin)}")
-print(f"train 긍정 비율: {sum(train_bin['binary']) / len(train_bin):.1%}")""")
+print(f"train (after excluding 3-star): {len(train_bin)}")
+print(f"eval  (after excluding 3-star): {len(eval_bin)}")
+print(f"train positive rate: {sum(train_bin['binary']) / len(train_bin):.1%}")""")
 
 # ----- 9. 토큰화 -----
 md(r"""**Ch 10과의 한 줄 차이**: `out["labels"] = [[float(b)] for b in batch["binary"]]` → `out["labels"] = [int(b) for b in batch["binary"]]`. 라벨이 *길이 1짜리 float 리스트* 가 아니라 *int 스칼라* 입니다.""")
@@ -192,7 +192,7 @@ train_tok = train_bin.map(tokenize_fn, batched=True).remove_columns(["text", "la
 eval_tok  = eval_bin.map(tokenize_fn,  batched=True).remove_columns(["text", "label", "binary"])
 
 print(train_tok)
-print(f"\n첫 샘플 라벨: {train_tok[0]['labels']}  (int 스칼라)")""")
+print(f"\nFirst sample label: {train_tok[0]['labels']}  (int scalar)")""")
 
 # ----- 10. 모델 로드 -----
 md(r"""## 2. 모델 로드 — 방식 B 셋업
@@ -213,11 +213,11 @@ def param_summary(m):
     return total, trainable
 
 total, trainable = param_summary(model)
-print(f"파라미터 수:        {total:>13,}  ({total/1e6:.1f} M)")
-print(f"학습되는 파라미터:  {trainable:>13,}  ({trainable/total:.1%})")
-print(f"분류 헤드:          {model.classifier}")
-print(f"problem_type:       {model.config.problem_type}")
-print(f"id2label:           {model.config.id2label}")""")
+print(f"Parameters:           {total:>13,}  ({total/1e6:.1f} M)")
+print(f"Trainable parameters: {trainable:>13,}  ({trainable/total:.1%})")
+print(f"Classifier:           {model.classifier}")
+print(f"problem_type:         {model.config.problem_type}")
+print(f"id2label:             {model.config.id2label}")""")
 
 md(r"""**파라미터 수 비교 — 방식 A vs 방식 B**
 
@@ -278,7 +278,7 @@ trainer = Trainer(
 )
 
 train_result = trainer.train()
-print(f"\n학습 완료 — 평균 train loss: {train_result.training_loss:.4f}")""")
+print(f"\nTraining done — mean train loss: {train_result.training_loss:.4f}")""")
 
 code(r"""!nvidia-smi""")
 
@@ -289,7 +289,7 @@ Ch 10과 같은 패턴 — Ch 10에서는 sigmoid로 1차원 logit을 확률로 
 
 code(r"""# 평가 metric
 eval_metrics = trainer.evaluate()
-print("BERT 방식 B 평가:")
+print("BERT method B evaluation:")
 for k, v in eval_metrics.items():
     if k.startswith("eval_") and isinstance(v, float):
         print(f"  {k:>20}: {v:.4f}")""")
@@ -308,10 +308,10 @@ probs = probs_full[:, 1]                    # (B,) 클래스 1 확률
 logits = logits2[:, 1] - logits2[:, 0]      # (B,)
 
 print(f"logits2 (raw)  shape: {logits2.shape}")
-print(f"logit z = z1-z0 범위: [{logits.min():.2f}, {logits.max():.2f}]")
-print(f"확률 범위:           [{probs.min():.4f}, {probs.max():.4f}]")
-print(f"긍정 예측 비율 (확률 ≥ 0.5): {(probs >= 0.5).mean():.1%}")
-print(f"\n앞 5개 샘플:")
+print(f"logit z = z1-z0 range: [{logits.min():.2f}, {logits.max():.2f}]")
+print(f"Prob range:            [{probs.min():.4f}, {probs.max():.4f}]")
+print(f"Positive prediction rate (prob >= 0.5): {(probs >= 0.5).mean():.1%}")
+print(f"\nFirst 5 samples:")
 print(pd.DataFrame({
     "label":   labels[:5],
     "z0":      logits2[:5, 0].round(2),
@@ -394,8 +394,8 @@ def to_method_a_labels(batch):
 train_tok_A = train_tok.map(to_method_a_labels, batched=True)
 eval_tok_A  = eval_tok.map(to_method_a_labels,  batched=True)
 
-print(f"방식 A 첫 샘플 라벨: {train_tok_A[0]['labels']}  (길이 1짜리 float 벡터)")
-print(f"방식 B 첫 샘플 라벨: {train_tok[0]['labels']}    (int 스칼라)")""")
+print(f"Method A first sample label: {train_tok_A[0]['labels']}  (length-1 float vector)")
+print(f"Method B first sample label: {train_tok[0]['labels']}    (int scalar)")""")
 
 code(r"""# 방식 A 모델 — Ch 10과 동일 셋업
 model_A = AutoModelForSequenceClassification.from_pretrained(
@@ -419,8 +419,8 @@ def compute_metrics_A(eval_pred):
         "auc":       float(roc_auc_score(lbl, p_hat)),
     }
 
-print(f"방식 A 분류 헤드: {model_A.classifier}")
-print(f"방식 A problem_type: {model_A.config.problem_type}")""")
+print(f"Method A classifier:    {model_A.classifier}")
+print(f"Method A problem_type:  {model_A.config.problem_type}")""")
 
 code(r"""# 방식 A 학습 — Ch 10과 동일한 hyperparams (방식 B와도 동일)
 training_args_A = TrainingArguments(
@@ -447,7 +447,7 @@ trainer_A = Trainer(
 )
 
 train_result_A = trainer_A.train()
-print(f"\n방식 A 학습 완료 — train loss: {train_result_A.training_loss:.4f}")""")
+print(f"\nMethod A training done — train loss: {train_result_A.training_loss:.4f}")""")
 
 code(r"""# 방식 A 예측 추출
 preds_A_out = trainer_A.predict(eval_tok_A)
@@ -456,10 +456,10 @@ probs_A     = 1.0 / (1.0 + np.exp(-logits_A))
 labels_A    = preds_A_out.label_ids.flatten().astype(int)
 
 # eval_tok과 eval_tok_A는 라벨 형식만 다르고 샘플 순서는 동일 → 라벨 일치해야 함
-assert (labels_A == labels).all(), "샘플 순서 불일치 — eval_tok / eval_tok_A 파생 관계 확인 필요"
+assert (labels_A == labels).all(), "Sample order mismatch — check eval_tok / eval_tok_A derivation"
 
 eval_metrics_A = trainer_A.evaluate()
-print("방식 A 평가:")
+print("Method A evaluation:")
 for k, v in eval_metrics_A.items():
     if k.startswith("eval_") and isinstance(v, float):
         print(f"  {k:>20}: {v:.4f}")""")
@@ -475,11 +475,11 @@ metrics_B = {k.replace("eval_", ""): v for k, v in eval_metrics.items()
 
 common = [k for k in metrics_A if k in metrics_B]
 cmp = pd.DataFrame({
-    "metric":               common,
-    "방식 A (sigmoid+BCE)": [metrics_A[k] for k in common],
-    "방식 B (softmax+CE)":  [metrics_B[k] for k in common],
+    "metric":                  common,
+    "method A (sigmoid+BCE)":  [metrics_A[k] for k in common],
+    "method B (softmax+CE)":   [metrics_B[k] for k in common],
 })
-cmp["차이 |A-B|"] = (cmp["방식 A (sigmoid+BCE)"] - cmp["방식 B (softmax+CE)"]).abs()
+cmp["|A-B|"] = (cmp["method A (sigmoid+BCE)"] - cmp["method B (softmax+CE)"]).abs()
 print(cmp.round(4).to_string(index=False))""")
 
 md(r"""### 5-2. 샘플 단위 확률 비교 — scatter plot
@@ -511,8 +511,8 @@ plt.show()
 
 corr = float(np.corrcoef(probs_A, probs)[0, 1])
 mae  = float(np.abs(probs_A - probs).mean())
-print(f"Pearson 상관:        {corr:.4f}  (1.0이면 완전 동등)")
-print(f"평균 절대 차 |A-B|:  {mae:.4f}")""")
+print(f"Pearson corr:        {corr:.4f}  (1.0 = perfect equivalence)")
+print(f"Mean abs diff |A-B|: {mae:.4f}")""")
 
 md(r"""**해석**
 
@@ -534,13 +534,13 @@ only_A_right  = ((pred_A == labels) & (pred_B != labels)).mean()
 only_B_right  = ((pred_A != labels) & (pred_B == labels)).mean()
 both_wrong    = ((pred_A != labels) & (pred_B != labels)).mean()
 
-print(f"두 방식의 예측 일치율: {agree:.1%}")
+print(f"Agreement rate (A vs B predictions): {agree:.1%}")
 print()
-print(f"분류 결과 4분면:")
-print(f"  둘 다 정답:        {both_correct:.1%}")
-print(f"  A만 정답 (B 틀림): {only_A_right:.1%}")
-print(f"  B만 정답 (A 틀림): {only_B_right:.1%}")
-print(f"  둘 다 오답:        {both_wrong:.1%}")""")
+print(f"Prediction quadrants:")
+print(f"  both correct:           {both_correct:.1%}")
+print(f"  only A correct (B wrong): {only_A_right:.1%}")
+print(f"  only B correct (A wrong): {only_B_right:.1%}")
+print(f"  both wrong:             {both_wrong:.1%}")""")
 
 md(r"""**여기까지 보고 결론** — 식으로 본 동등성 ($\sigma(z) = \mathrm{softmax}(z_0, z_1)[1]$ when $z = z_1 - z_0$)이 BERT에서도 그대로 성립합니다. 차이가 있어 봐야 random init / dropout 같은 *학습 경로 차이* 정도. 두 방식은 **수식이 다른 같은 모델**, 라이브러리·코드 컨벤션이 강요하는 표현 차이일 뿐입니다.
 
