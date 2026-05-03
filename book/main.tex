@@ -14,6 +14,12 @@
 \input{frontmatter/titlepage}
 \input{frontmatter/preface}
 \tableofcontents
+\cleardoublepage
+\addcontentsline{toc}{chapter}{그림 목록}
+\listoffigures
+\cleardoublepage
+\addcontentsline{toc}{chapter}{표 목록}
+\listoftables
 
 \mainmatter
 \phasedivider{0}
@@ -37,6 +43,8 @@
 
 \backmatter
 \input{backmatter/afterword}
+\cleardoublepage
+\addcontentsline{toc}{chapter}{색인}
 \printindex
 
 \end{document}
