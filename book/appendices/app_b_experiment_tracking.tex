@@ -1,0 +1,16 @@
+\chapter{실험 기록과 재현성 (Experiment Tracking)}
+
+\begin{noteBox}[부록 원고 상태]
+이 부록은 \texttt{09\_bert\_regression/appendix\_experiment\_tracking.ipynb}를 바탕으로 나중에 확장할 자리입니다. 현재 부록 노트북은 아직 별도 검증하지 않았으므로, 본문에는 실험 기록의 필요성과 다룰 범위만 형식적으로 남깁니다.
+\end{noteBox}
+
+\section*{다룰 내용}
+\addcontentsline{toc}{section}{다룰 내용}
+
+이 부록은 seed, metric 로그, checkpoint 이름, 학습 인자 기록, 외부 트래커 연동을 다룹니다. 본문 9장부터 \inlinecode{Trainer}가 등장하므로, 같은 실험을 다시 실행했을 때 무엇을 비교해야 하는지 정리하는 보조 장으로 사용할 예정입니다.
+
+\section*{본문과의 연결}
+\addcontentsline{toc}{section}{본문과의 연결}
+
+9-12장의 BERT 파인튜닝은 실행 시간이 길고 결과가 seed와 하이퍼파라미터에 영향을 받습니다. 따라서 실험 기록은 성능 향상 이전에 재현 가능한 비교를 가능하게 하는 기본 도구입니다.
+

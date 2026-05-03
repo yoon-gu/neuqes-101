@@ -1,0 +1,16 @@
+\chapter{하이퍼파라미터 탐색 (Hyperparameter Search)}
+
+\begin{noteBox}[부록 원고 상태]
+이 부록은 \texttt{09\_bert\_regression/appendix\_hpo.ipynb}를 바탕으로 나중에 확장할 자리입니다. 현재는 T4 30분 제약 안에서 본문 흐름을 우선하므로, 부록은 정식 검증 후 원고화합니다.
+\end{noteBox}
+
+\section*{다룰 내용}
+\addcontentsline{toc}{section}{다룰 내용}
+
+이 부록은 learning rate, batch size, epoch, weight decay처럼 BERT 파인튜닝 결과를 크게 바꾸는 하이퍼파라미터를 작게 탐색하는 방법을 다룰 예정입니다. 핵심은 큰 탐색이 아니라, 비용을 통제하면서 비교 가능한 실험을 만드는 것입니다.
+
+\section*{본문과의 연결}
+\addcontentsline{toc}{section}{본문과의 연결}
+
+본문에서는 각 장의 변경점이 한 가지씩만 보이도록 하이퍼파라미터를 되도록 고정합니다. 이 부록은 그 고정값을 바꾸고 싶을 때 어떤 순서로, 어떤 기준으로 탐색할지 안내하는 역할을 맡습니다.
+

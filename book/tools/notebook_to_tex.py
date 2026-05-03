@@ -175,6 +175,159 @@ CHAPTERS = [
             "측면 라벨",
         ),
     ),
+    Chapter(
+        7,
+        "bert_pipeline",
+        "BERT 파이프라인 (Pipeline)",
+        "BERT 파이프라인 (Pipeline)",
+        "pipeline 한 줄 뒤의 tokenizer, model, post-processing 분해",
+        (
+            "BERT",
+            "DistilBERT",
+            "pipeline",
+            "AutoTokenizer",
+            "AutoModelForSequenceClassification",
+            "WordPiece",
+            "pretrained model",
+            "special token",
+            "post-processing",
+            "BERT 첫 만남",
+            "사전학습 모델",
+            "파이프라인",
+            "워드피스",
+            "특수 토큰",
+            "토크나이저",
+            "추론",
+        ),
+    ),
+    Chapter(
+        8,
+        "tokenizer_datasets",
+        "토크나이저와 데이터셋 (Tokenizer \\& Datasets)",
+        "토크나이저와 데이터셋 (Tokenizer \\& Datasets)",
+        "padding, truncation, max_length와 datasets 입력 파이프라인",
+        (
+            "Tokenizer",
+            "datasets",
+            "load_dataset",
+            "Dataset.map",
+            "Dataset.filter",
+            "padding",
+            "truncation",
+            "max_length",
+            "attention_mask",
+            "DataCollatorWithPadding",
+            "DataLoader",
+            "Apache Arrow",
+            "토크나이저 옵션",
+            "패딩",
+            "잘림",
+            "최대 길이",
+            "어텐션 마스크",
+            "데이터셋",
+            "입력 파이프라인",
+        ),
+    ),
+    Chapter(
+        9,
+        "bert_regression",
+        "BERT 회귀 분석 (Regression \\& Trainer)",
+        "BERT 회귀 분석 (Regression \\& Trainer)",
+        "DistilBERT 파인튜닝과 Trainer의 첫 사용",
+        (
+            "BERT regression",
+            "DistilBERT",
+            "Trainer",
+            "TrainingArguments",
+            "problem_type",
+            "regression",
+            "MSELoss",
+            "fp16",
+            "Adam",
+            "compute_metrics",
+            "fine-tuning",
+            "파인튜닝",
+            "트레이너",
+            "학습 인자",
+            "회귀 헤드",
+            "평균제곱오차",
+            "혼합 정밀도",
+            "GPU 메모리",
+        ),
+    ),
+    Chapter(
+        10,
+        "bert_binary_sigmoid",
+        "BERT 이진 분류: Sigmoid (BCE)",
+        "BERT 이진 분류: Sigmoid (BCE)",
+        "num_labels=1, sigmoid, BCEWithLogitsLoss 방식의 BERT 이진 분류",
+        (
+            "BERT binary classification",
+            "sigmoid",
+            "BCEWithLogitsLoss",
+            "num_labels=1",
+            "multi_label_classification",
+            "binary threshold",
+            "ROC AUC",
+            "precision_recall_fscore_support",
+            "prediction cache",
+            "이진 분류",
+            "시그모이드",
+            "이진 교차 엔트로피",
+            "확률 임계값",
+            "예측 저장",
+            "AUC",
+        ),
+    ),
+    Chapter(
+        11,
+        "bert_binary_softmax",
+        "BERT 이진 분류: Softmax (CE)",
+        "BERT 이진 분류: Softmax (CE)",
+        "num_labels=2, softmax, CrossEntropyLoss 표준 BERT 분류 방식",
+        (
+            "BERT binary softmax",
+            "softmax",
+            "CrossEntropyLoss",
+            "num_labels=2",
+            "single_label_classification",
+            "id2label",
+            "label2id",
+            "logit difference",
+            "prediction agreement",
+            "소프트맥스",
+            "교차 엔트로피",
+            "라벨 매핑",
+            "로짓 차이",
+            "예측 일치율",
+            "이진 분류 동등성",
+        ),
+    ),
+    Chapter(
+        12,
+        "bert_multiclass",
+        "BERT 다중 클래스 분류 (Multi-class \\& CE)",
+        "BERT 다중 클래스 분류 (Multi-class \\& CE)",
+        "Yelp 5클래스 분류로 확장한 DistilBERT softmax 분류",
+        (
+            "BERT multi-class classification",
+            "multi-class classification",
+            "CrossEntropyLoss",
+            "num_labels=5",
+            "confusion_matrix",
+            "classification_report",
+            "roc_auc_score",
+            "macro F1",
+            "calibration",
+            "random baseline",
+            "다중 클래스 분류",
+            "혼동 행렬",
+            "분류 리포트",
+            "매크로 F1",
+            "캘리브레이션",
+            "랜덤 기준선",
+        ),
+    ),
 ]
 
 
@@ -317,6 +470,100 @@ EXTRA_INDEXES = {
         "라벨 불균형",
         "이진 관련성",
     ),
+    7: (
+        "transformers",
+        "pipeline(\"sentiment-analysis\")",
+        "from_pretrained",
+        "model.forward",
+        "logits",
+        "softmax",
+        "argmax",
+        "[CLS]",
+        "[SEP]",
+        "WordPiece prefix",
+        "WordPiece 접두사",
+        "SST-2",
+        "sentiment analysis",
+        "감성 분석",
+        "모델 다운로드",
+        "캐시",
+        "토큰 ID",
+        "후처리",
+    ),
+    8: (
+        "memory mapping",
+        "Dataset.select",
+        "Dataset.shuffle",
+        "with_format",
+        "torch format",
+        "token length distribution",
+        "95th percentile",
+        "padding=True",
+        "padding=\"max_length\"",
+        "truncation=True",
+        "input_ids",
+        "토큰 길이 분포",
+        "메모리 매핑",
+        "배치 패딩",
+        "고정 길이 패딩",
+        "동적 패딩",
+    ),
+    9: (
+        "AutoModelForSequenceClassification",
+        "num_labels=1",
+        "problem_type=\"regression\"",
+        "TrainingArguments",
+        "evaluation_strategy",
+        "save_strategy",
+        "learning_rate",
+        "per_device_train_batch_size",
+        "weight_decay",
+        "VRAM",
+        "nvidia-smi",
+        "정규방정식",
+        "경사하강법",
+        "학습률",
+        "배치 크기",
+        "가중치 감쇠",
+    ),
+    10: (
+        "problem_type=\"multi_label_classification\"",
+        "sigmoid probability",
+        "threshold=0.5",
+        "roc_auc_score",
+        "seaborn.kdeplot",
+        "probability distribution",
+        "positive class",
+        "negative class",
+        "확률 분포",
+        "양성 클래스",
+        "음성 클래스",
+        "결과 캐시",
+    ),
+    11: (
+        "problem_type=\"single_label_classification\"",
+        "stable softmax",
+        "exp(x - max)",
+        "scatter plot",
+        "correlation",
+        "four-quadrant analysis",
+        "표준 분류 셋업",
+        "안정 소프트맥스",
+        "상관계수",
+        "4분면 분석",
+    ),
+    12: (
+        "seaborn.heatmap",
+        "row-normalized confusion matrix",
+        "multi-class AUC",
+        "top-1 probability",
+        "log K baseline",
+        "ordinal label",
+        "행 정규화 혼동 행렬",
+        "다중 클래스 AUC",
+        "최상위 확률",
+        "순서형 라벨",
+    ),
 }
 
 
@@ -333,6 +580,12 @@ HANGUL_PATTERN = re.compile(r"[가-힣]")
 
 def index_sort_prefix(term: str) -> str:
     return "0" if HANGUL_PATTERN.search(term) else "1"
+
+
+def index_sort_key(term: str) -> str:
+    normalized = re.sub(r"[^0-9A-Za-z가-힣]+", " ", term).strip()
+    normalized = re.sub(r"\s+", " ", normalized)
+    return f"{index_sort_prefix(term)}{normalized}"
 
 
 def strip_heading_emoji(text: str) -> str:
@@ -353,6 +606,20 @@ def sanitize_symbols(text: str) -> str:
         .replace("⚠", "주의")
         .replace("\ufe0f", "")
     )
+
+
+def latex_escape_prose(text: str) -> str:
+    """Escape prose that is inserted directly into LaTeX macro arguments."""
+    replacements = {
+        "&": r"\&",
+        "%": r"\%",
+        "$": r"\$",
+        "#": r"\#",
+        "_": r"\_",
+        "{": r"\{",
+        "}": r"\}",
+    }
+    return "".join(replacements.get(char, char) for char in text)
 
 
 def escape_table_math_pipes(markdown: str) -> str:
@@ -696,6 +963,17 @@ def polish_book_prose(latex: str) -> str:
         "Loss 함수의 변화 --- BCEWithLogitsLoss per-label": "손실 함수의 변화 --- 라벨별 이진 교차 엔트로피",
         "Loss 노트 --- 같은 CE, K=5 수치 예시": "손실 노트 --- 같은 교차 엔트로피, K=5 수치 예시",
         "Loss 한 단계 더: 학습된 모델의 실제 예측으로 BCE 분해": "손실 한 단계 더: 학습된 모델의 실제 예측으로 BCE 분해",
+        "7장. BERT 첫 만남 --- \\inlinecode{pipeline} 한 줄과 그 안의 4단계": "7장. BERT 첫 만남 (Pipeline) --- 한 줄 뒤의 4단계",
+        "8장. Tokenizer 깊게 보기 + Datasets 라이브러리": "8장. 토크나이저 옵션과 데이터셋 (Tokenizer \\& Datasets)",
+        "8장. Tokenizer 옵션 깊이 + \\inlinecode{datasets} 라이브러리": "8장. 토크나이저 옵션과 데이터셋 (Tokenizer \\& Datasets)",
+        "9장. BERT 회귀 --- 첫 파인튜닝, 첫 \\inlinecode{Trainer}": "9장. BERT 회귀 분석 (Regression \\& Trainer)",
+        "10장. BERT Binary 방식 A --- sigmoid+BCE": "10장. BERT 이진 분류 A (Sigmoid \\& BCE)",
+        "10장. BERT Binary 방식 A --- sigmoid + BCEWithLogitsLoss": "10장. BERT 이진 분류 A (Sigmoid \\& BCE)",
+        "11장. BERT Binary 방식 B --- softmax+CE": "11장. BERT 이진 분류 B (Softmax \\& CE)",
+        "11장. BERT Binary 방식 B --- softmax + CrossEntropyLoss": "11장. BERT 이진 분류 B (Softmax \\& CE)",
+        "12장. BERT Multi-class --- Yelp 5클래스": "12장. BERT 다중 클래스 분류 (Multi-class \\& CE)",
+        "13장. BERT Multi-label --- Yelp 측면 키워드": "13장. BERT 다중 라벨 분류 (Multi-label \\& Per-label BCE)",
+        "Loss 노트": "손실 노트",
     }
     for before, after in replacements.items():
         latex = latex.replace(before, after)
@@ -705,7 +983,207 @@ def polish_book_prose(latex: str) -> str:
     latex = latex.replace("전체 18장 표", "전체 18개 장의 표")
     latex = latex.replace("전체 19장 표", "전체 19개 장의 표")
     latex = latex.replace(r"\#장별-변화추적표", r"\#챕터별-변화추적표")
+    latex = normalize_heading_titles(latex)
     return latex
+
+
+def split_latex_group(text: str, start: int) -> tuple[str, int] | None:
+    if start >= len(text) or text[start] != "{":
+        return None
+    depth = 0
+    for idx in range(start, len(text)):
+        char = text[idx]
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start + 1 : idx], idx + 1
+    return None
+
+
+def clean_heading_title(title: str) -> str:
+    replacements = {
+        "0. 환경 준비": "환경 준비",
+        "1. 실습: 일단 돌려봅시다": "실습: 파이프라인 실행",
+        "실습: 일단 돌려봅시다": "실습: 파이프라인 실행",
+        "2. 해부: pipeline 안에서는 뭐가 일어났을까?": "해부: 파이프라인 내부",
+        "해부: pipeline 안에서는 뭐가 일어났을까?": "해부: 파이프라인 내부",
+        "3. 변형: pipeline 없이 직접 해보기": "변형: 직접 추론",
+        "변형: pipeline 없이 직접 해보기": "변형: 직접 추론",
+        "보너스: 토크나이저마다 어휘가 다르다": "토크나이저 어휘 비교",
+        "보너스: \\inlinecode{model.config} 안에 뭐가 있나": "모델 설정 확인",
+        "보너스: model.config 안에 뭐가 있나": "모델 설정 확인",
+        "다른 task도 같은 패턴": "다른 태스크의 파이프라인",
+        "\\inlinecode{!nvidia-smi} --- GPU 메모리(VRAM) 실시간 추적": "GPU 메모리 확인",
+        "!nvidia-smi --- GPU 메모리(VRAM) 실시간 추적": "GPU 메모리 확인",
+        "등장 인물 정리": "구성 요소",
+        "Tokenizer와 Model 직접 로드": "토크나이저와 모델 로드",
+        "텍스트 → 숫자 (Tokenization)": "토큰화",
+        "숫자 → 로짓 (Model forward)": "모델 추론",
+        "로짓 → 확률/라벨 (Post-processing)": "후처리",
+        "특수 토큰(special token)이란": "특수 토큰",
+        "\\inlinecode{model.config} 의 자주 쓰는 속성": "모델 설정 속성",
+        "model.config 의 자주 쓰는 속성": "모델 설정 속성",
+        "\\inlinecode{torch} 의 후처리·연산 함수": "후처리 연산",
+        "torch 의 후처리·연산 함수": "후처리 연산",
+        "\\inlinecode{torch} 자체": "PyTorch",
+        "torch 자체": "PyTorch",
+        "토크나이저 노트 --- \\inlinecode{padding} / \\inlinecode{truncation} / \\inlinecode{max\\_length}": "토크나이저 노트",
+        "토크나이저 노트 --- padding / truncation / max\\_length": "토크나이저 노트",
+        "\\inlinecode{datasets} 로 Yelp 로드": "데이터셋 로드",
+        "datasets 로 Yelp 로드": "데이터셋 로드",
+        "토크나이저 옵션 직접 실험": "토크나이저 옵션",
+        "옵션 없이 --- 한 문장 토큰화 (기본 동작)": "기본 토큰화",
+        "두 문장 배치 + \\inlinecode{padding=True} --- \\emph{동적 패딩}": "동적 패딩",
+        "두 문장 배치 + padding=True --- 동적 패딩": "동적 패딩",
+        "\\inlinecode{padding=\"max\\_length\"}, \\inlinecode{max\\_length=128} --- \\emph{고정 길이}": "고정 길이 패딩",
+        "padding=“max\\_length”, max\\_length=128 --- 고정 길이": "고정 길이 패딩",
+        "\\inlinecode{truncation=True} --- 긴 입력 자르기": "긴 입력 자르기",
+        "truncation=True --- 긴 입력 자르기": "긴 입력 자르기",
+        "attention\\_mask가 self-attention에서 하는 일": "attention mask",
+        "\\inlinecode{max\\_length} 결정 --- 데이터 길이 분포 보고 정하기": "max\\_length 결정",
+        "max\\_length 결정 --- 데이터 길이 분포 보고 정하기": "max\\_length 결정",
+        "\\inlinecode{datasets.map} --- 5,000건 일괄 토큰화": "일괄 토큰화",
+        "datasets.map --- 5,000건 일괄 토큰화": "일괄 토큰화",
+        "\\inlinecode{dataset.filter} --- 조건에 맞는 샘플만 선별": "샘플 필터링",
+        "dataset.filter --- 조건에 맞는 샘플만 선별": "샘플 필터링",
+        "\\inlinecode{with\\_format(\"torch\")} --- 텐서 형식으로": "텐서 형식 변환",
+        "with\\_format(“torch”) --- 텐서 형식으로": "텐서 형식 변환",
+        "\\inlinecode{DataLoader} 변환 --- 9장 학습 입력 미리보기": "DataLoader 변환",
+        "DataLoader 변환 --- 9장 학습 입력 미리보기": "DataLoader 변환",
+        "\\inlinecode{DataCollator} --- 동적 padding을 배치 시점에": "DataCollator",
+        "DataCollator --- 동적 padding을 배치 시점에": "DataCollator",
+        "향후 학습 코드 관점 --- 9-13장에서 실제로 어떻게 쓰이나": "학습 코드와의 연결",
+        "Collator 추가 실습": "Collator 실습",
+        "실험 1 --- 정적 vs 동적 padding 효율을 숫자로": "정적 패딩과 동적 패딩",
+        "실험 2 --- \\inlinecode{DataCollatorForLanguageModeling} 으로 MLM masking 직접 보기": "MLM 마스킹",
+        "실험 2 --- DataCollatorForLanguageModeling 으로 MLM masking 직접 보기": "MLM 마스킹",
+        "실험 2b --- GPT-style CLM 도 같은 collator로": "CLM 입력 구성",
+        "실험 3 --- 커스텀 \\inlinecode{collate\\_fn} 직접 작성": "커스텀 collate\\_fn",
+        "실험 3 --- 커스텀 collate\\_fn 직접 작성": "커스텀 collate\\_fn",
+        "손실 노트 --- \\inlinecode{MSELoss} 그대로, 최소화 방식만 바뀜": "손실 노트",
+        "손실 노트 --- MSELoss 그대로, 최소화 방식만 바뀜": "손실 노트",
+        "데이터 준비": "데이터 준비",
+        "\\inlinecode{num\\_labels=1}, \\inlinecode{problem\\_type=\"regression\"}": "모델 로드",
+        "모델 로드 --- num\\_labels=1, problem\\_type=“regression”": "모델 로드",
+        "\\inlinecode{TrainingArguments} + \\inlinecode{Trainer}": "Trainer 설정",
+        "TrainingArguments + Trainer": "Trainer 설정",
+        "평가 --- sklearn(2장)과 직접 비교": "평가",
+        "시각 1 --- 예측 분포 per actual class": "예측 분포",
+        "시각 2 --- 잔차(Residual = Predicted − Actual) 분포 per actual class": "잔차 분포",
+        "변형 --- 학습이 어디서 망가지는지 (개념만)": "변형: 학습 실패 요인",
+        "학습되는 파라미터 vs 동결된 파라미터": "학습 파라미터",
+        "시연: BERT 본체 동결 패턴": "BERT 본체 동결",
+        "\\inlinecode{transformers} 학습 도구": "transformers 학습 도구",
+        "Trainer가 자동으로 해주는 일": "Trainer의 역할",
+        "\\inlinecode{compute\\_metrics} 함수 시그니처": "compute\\_metrics",
+        "num\\_labels=1 + problem\\_type=“multi\\_label\\_classification” 의 트릭": "Sigmoid 방식의 설정",
+        "손실 노트 --- \\inlinecode{BCEWithLogitsLoss} (3장 그대로, BERT 맥락에서 다시)": "손실 노트",
+        "손실 노트 --- BCEWithLogitsLoss (3장 그대로, BERT 맥락에서 다시)": "손실 노트",
+        "데이터 --- Yelp 이진화 (3·4장와 동일)": "데이터 준비",
+        "모델 로드 --- 방식 A 셋업": "모델 로드",
+        "학습 --- 9장 골격 그대로": "학습",
+        "평가 --- sigmoid 확률 분포 직접 확인": "평가",
+        "메인 그림 --- \\emph{확률 공간} 에서 라벨별 분포 (\\inlinecode{seaborn.kdeplot})": "확률 분포",
+        "메인 그림 --- 확률 공간 에서 라벨별 분포 (seaborn.kdeplot)": "확률 분포",
+        "보조 그림 --- \\emph{logit 공간} 에서 같은 분포 (\\inlinecode{BCE가\\ 실제로\\ 동작하는\\ 자리})": "로짓 분포",
+        "보조 그림 --- logit 공간 에서 같은 분포 (BCE가 실제로 동작하는 자리)": "로짓 분포",
+        "결과 저장 --- 11장에서 비교용": "결과 저장",
+        "왜 두 방식이 거의 같은 결과를 내야 하는가 (수식 한 줄)": "두 방식의 동등성",
+        "손실 노트 --- \\inlinecode{CrossEntropyLoss} (4장 그대로, BERT 맥락)": "손실 노트",
+        "손실 노트 --- CrossEntropyLoss (4장 그대로, BERT 맥락)": "손실 노트",
+        "데이터 --- Yelp 이진화 (10장과 정확히 동일)": "데이터 준비",
+        "모델 로드 --- 방식 B 셋업": "모델 로드",
+        "학습 --- 10장과 동일한 hyperparams": "학습",
+        "평가 --- softmax 확률 분포": "평가",
+        "메인 그림 --- \\emph{확률 공간} 분포 (10장과 같은 KDE)": "확률 분포",
+        "메인 그림 --- 확률 공간 분포 (10장과 같은 KDE)": "확률 분포",
+        "보조 그림 --- \\(z = z_1 - z_0\\) 의 logit 공간 분포": "로짓 차이 분포",
+        "클라이맥스 --- 방식 A 를 \\emph{이 노트북 안에서} 다시 학습해 비교": "방식 A/B 비교",
+        "클라이맥스 --- 방식 A 를 이 노트북 안에서 다시 학습해 비교": "방식 A/B 비교",
+        "두 방식의 metric 표 비교": "평가지표 비교",
+        "샘플 단위 확률 비교 --- scatter plot": "확률 산점도",
+        "예측 일치율 (threshold 0.5)": "예측 일치율",
+        "손실 노트 --- \\inlinecode{CrossEntropyLoss} 가 K=5 에서 어떻게 보이나": "손실 노트",
+        "손실 노트 --- CrossEntropyLoss 가 K=5 에서 어떻게 보이나": "손실 노트",
+        "데이터 --- Yelp 별점 1-5 (5장와 동일)": "데이터 준비",
+        "모델 로드 --- \\inlinecode{num\\_labels=5} 만 바뀜": "모델 로드",
+        "모델 로드 --- num\\_labels=5 만 바뀜": "모델 로드",
+        "학습 --- 11장과 동일한 hyperparams": "학습",
+        "평가 --- softmax 확률 분포와 혼동 패턴": "평가",
+        "메인 그림 --- 혼동 행렬 (\\inlinecode{seaborn.heatmap})": "혼동 행렬",
+        "메인 그림 --- 혼동 행렬 (seaborn.heatmap)": "혼동 행렬",
+        "보조 그림 --- top-1 확률의 분포 (정답/오답 갈림)": "최상위 확률 분포",
+        "클라이맥스 --- sklearn TF-IDF + LogReg 와의 비교 (5장의 BERT 검증)": "BERT와 TF-IDF 비교",
+        "두 모델의 metric 표 비교": "평가지표 비교",
+        "두 모델의 혼동 행렬 비교": "혼동 행렬 비교",
+    }
+    title = re.sub(r"^\s*(?:[0-9]+(?:-[0-9]+)?|[0-9]+[A-Za-z]?)\.\s*", "", title)
+    title = re.sub(r"^\s*Step\s+[0-9]+:\s*", "", title)
+    title = replacements.get(title, title)
+    generic_prefixes = {
+        "토크나이저 노트 ---": "토크나이저 노트",
+        "데이터 ---": "데이터 준비",
+        "모델 로드 ---": "모델 로드",
+        "학습 ---": "학습",
+        "평가 ---": "평가",
+        "메인 그림 ---": "",
+        "보조 그림 ---": "",
+        "클라이맥스 ---": "비교 실험",
+        "변형 ---": "변형",
+    }
+    for prefix, replacement in generic_prefixes.items():
+        if title.startswith(prefix):
+            tail = title[len(prefix) :].strip()
+            if replacement in {"데이터 준비", "모델 로드", "학습", "평가", "토크나이저 노트"}:
+                title = replacement
+            elif replacement:
+                title = replacement if not tail else f"{replacement}: {tail}"
+            else:
+                title = tail
+            break
+    return title.strip()
+
+
+def normalize_heading_content(content: str) -> str:
+    if content.startswith(r"\texorpdfstring"):
+        pos = len(r"\texorpdfstring")
+        first = split_latex_group(content, pos)
+        if first is None:
+            return clean_heading_title(content)
+        first_text, first_end = first
+        second = split_latex_group(content, first_end)
+        if second is None:
+            return clean_heading_title(content)
+        second_text, second_end = second
+        return (
+            r"\texorpdfstring"
+            + "{"
+            + clean_heading_title(first_text)
+            + "}{"
+            + clean_heading_title(second_text)
+            + "}"
+            + content[second_end:]
+        )
+    return clean_heading_title(content)
+
+
+def normalize_heading_titles(latex: str) -> str:
+    normalized: list[str] = []
+    for line in latex.splitlines():
+        match = re.match(r"^(\\(?:section|subsection|subsubsection)\*?)(.*)$", line)
+        if not match:
+            normalized.append(line)
+            continue
+        command, rest = match.groups()
+        group = split_latex_group(rest, 0)
+        if group is None:
+            normalized.append(line)
+            continue
+        content, end = group
+        normalized.append(command + "{" + normalize_heading_content(content) + "}" + rest[end:])
+    return "\n".join(normalized)
 
 
 def polish_code_comments(source: str) -> str:
@@ -1613,15 +2091,15 @@ def chapter_tex(chapter: Chapter, execute: bool = False) -> str:
         + "}{"
         + chapter.colab_url
         + "}{"
-        + chapter.focus
+        + latex_escape_prose(chapter.focus)
         + "}",
         "",
     ]
 
     chapter_index_terms = tuple(dict.fromkeys(chapter.indexes + EXTRA_INDEXES.get(chapter.number, ())))
     for term in chapter_index_terms:
-        safe = term.replace("_", "\\_")
-        chunks.append(f"\\index{{{index_sort_prefix(term)}{safe}@{safe}}}")
+        safe = latex_escape_prose(term)
+        chunks.append(f"\\index{{{index_sort_key(term)}@{safe}}}")
     chunks.append("")
     explain_code = False
 
@@ -1655,10 +2133,19 @@ def main() -> None:
         action="store_true",
         help="execute notebooks in memory and include saved outputs in the generated LaTeX",
     )
+    parser.add_argument(
+        "--chapters",
+        nargs="*",
+        type=int,
+        help="chapter numbers to regenerate; defaults to every configured chapter",
+    )
     args = parser.parse_args()
 
+    selected = set(args.chapters or [chapter.number for chapter in CHAPTERS])
     CHAPTER_DIR.mkdir(parents=True, exist_ok=True)
     for chapter in CHAPTERS:
+        if chapter.number not in selected:
+            continue
         if not chapter.notebook.exists():
             raise FileNotFoundError(chapter.notebook)
         out = CHAPTER_DIR / chapter.tex_name
