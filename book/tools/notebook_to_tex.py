@@ -55,8 +55,8 @@ CHAPTERS = [
     Chapter(
         1,
         "tfidf",
-        "TF-IDF로 만나는 첫 벡터",
-        "TF-IDF 벡터화",
+        "TF-IDF로 텍스트 벡터 만들기",
+        "TF-IDF로 텍스트 벡터 만들기",
         "텍스트를 숫자 벡터로 바꾸는 첫 관문",
         (
             "TF-IDF",
@@ -74,9 +74,9 @@ CHAPTERS = [
     Chapter(
         2,
         "sklearn_regression",
-        "회귀 분석과 MSELoss",
-        "회귀 분석과 MSELoss",
-        "별점 예측을 통해 첫 Loss인 MSE를 관찰",
+        "회귀 분석과 평균제곱오차",
+        "회귀 분석과 평균제곱오차",
+        "별점 예측을 통해 첫 손실인 평균제곱오차를 관찰",
         (
             "Regression",
             "MSELoss",
@@ -96,8 +96,8 @@ CHAPTERS = [
     Chapter(
         3,
         "sklearn_binary",
-        "이진 분류와 BCEWithLogitsLoss",
-        "이진 분류와 BCEWithLogitsLoss",
+        "이진 분류와 이진 교차 엔트로피",
+        "이진 분류와 이진 교차 엔트로피",
         "logit, sigmoid, BCE가 만나는 방식",
         (
             "Binary classification",
@@ -118,8 +118,8 @@ CHAPTERS = [
     Chapter(
         4,
         "softmax_binary",
-        "sigmoid와 softmax의 동등성",
-        "이진 분류의 sigmoid-softmax 동등성",
+        "이진 분류: sigmoid와 softmax는 어떻게 같은가",
+        "이진 분류: sigmoid와 softmax는 어떻게 같은가",
         "2차원 softmax 이진 분류와 1차원 sigmoid의 관계",
         (
             "softmax",
@@ -137,8 +137,8 @@ CHAPTERS = [
     Chapter(
         5,
         "sklearn_multiclass",
-        "다중 클래스와 CrossEntropyLoss",
-        "다중 클래스 분류와 CrossEntropyLoss",
+        "다중 클래스 분류와 교차 엔트로피",
+        "다중 클래스 분류와 교차 엔트로피",
         "K=5 출력 헤드와 softmax 일반화",
         (
             "Multi-class classification",
@@ -155,8 +155,8 @@ CHAPTERS = [
     Chapter(
         6,
         "sklearn_multilabel",
-        "다중 라벨과 per-label BCE",
-        "다중 라벨 분류와 per-label BCE",
+        "다중 라벨 분류와 라벨별 이진 교차 엔트로피",
+        "다중 라벨 분류와 라벨별 이진 교차 엔트로피",
         "softmax의 합=1 제약을 풀고 라벨별 sigmoid로 확장",
         (
             "Multi-label classification",
@@ -491,7 +491,7 @@ def caption_for_table(chapter_number: int, section_title: str, table_index: int)
     if "등장한 라이브러리" in title:
         return f"{chapter_number}장 새로 등장한 라이브러리"
     if "Loss" in title or "수치 예시" in title:
-        return f"{chapter_number}장 Loss 수치 예시"
+        return f"{chapter_number}장 손실 수치 예시"
     if title:
         return f"{chapter_number}장 {title} 표"
     return f"{chapter_number}장 표 {table_index}"
@@ -671,11 +671,26 @@ def polish_book_prose(latex: str) -> str:
         "다음 장를": "다음 장을",
         "1·2장와": "1·2장과",
         "2장와": "2장과",
-        "2장. sklearn Regression --- 시작점": "2장. 회귀 분석과 MSELoss --- 첫 모델과 Loss",
-        "3장. sklearn Binary --- 출력에 sigmoid가 붙다": "3장. 이진 분류와 BCEWithLogitsLoss --- 출력에 sigmoid가 붙다",
-        "4장. sklearn Multi-class --- sigmoid가 softmax로": "4장. 이진 분류의 sigmoid-softmax 동등성 --- 같은 문제, 다른 표현",
-        "5장. sklearn Multi-class --- K=5로 진짜 일반화": "5장. 다중 클래스 분류와 CrossEntropyLoss --- K=5로 일반화",
-        "6장. sklearn Multi-label --- softmax 합=1 제약을 푼다": "6장. 다중 라벨 분류와 per-label BCE --- softmax 합=1 제약을 푼다",
+        "2장. sklearn Regression --- 시작점": "2장. 회귀 분석과 평균제곱오차 --- 첫 모델과 손실",
+        "3장. sklearn Binary --- 출력에 sigmoid가 붙다": "3장. 이진 분류와 이진 교차 엔트로피 --- 출력에 sigmoid가 붙다",
+        "4장. sklearn Multi-class --- sigmoid가 softmax로": "4장. 이진 분류: sigmoid와 softmax는 어떻게 같은가 --- 같은 문제, 다른 표현",
+        "5장. sklearn Multi-class --- K=5로 진짜 일반화": "5장. 다중 클래스 분류와 교차 엔트로피 --- K=5로 일반화",
+        "6장. sklearn Multi-label --- softmax 합=1 제약을 푼다": "6장. 다중 라벨 분류와 라벨별 이진 교차 엔트로피 --- softmax 합=1 제약을 푼다",
+        "2장. 회귀 분석과 MSELoss --- 첫 모델과 Loss": "2장. 회귀 분석과 평균제곱오차 --- 첫 모델과 손실",
+        "3장. 이진 분류와 BCEWithLogitsLoss --- 출력에 sigmoid가 붙다": "3장. 이진 분류와 이진 교차 엔트로피 --- 출력에 sigmoid가 붙다",
+        "4장. 이진 분류의 sigmoid-softmax 동등성 --- 같은 문제, 다른 표현": "4장. 이진 분류: sigmoid와 softmax는 어떻게 같은가 --- 같은 문제, 다른 표현",
+        "5장. 다중 클래스 분류와 CrossEntropyLoss --- K=5로 일반화": "5장. 다중 클래스 분류와 교차 엔트로피 --- K=5로 일반화",
+        "6장. 다중 라벨 분류와 per-label BCE --- softmax 합=1 제약을 푼다": "6장. 다중 라벨 분류와 라벨별 이진 교차 엔트로피 --- softmax 합=1 제약을 푼다",
+        "Loss 함수의 변화 --- \\inlinecode{MSELoss} 등장": "손실 함수의 변화 --- 평균제곱오차 등장",
+        "Loss 함수의 변화 --- \\inlinecode{BCEWithLogitsLoss} 등장": "손실 함수의 변화 --- 이진 교차 엔트로피 등장",
+        "Loss 함수의 변화 --- \\inlinecode{CrossEntropyLoss} 등장": "손실 함수의 변화 --- 교차 엔트로피 등장",
+        "Loss 함수의 변화 --- \\inlinecode{BCEWithLogitsLoss} per-label": "손실 함수의 변화 --- 라벨별 이진 교차 엔트로피",
+        "Loss 함수의 변화 --- MSELoss 등장": "손실 함수의 변화 --- 평균제곱오차 등장",
+        "Loss 함수의 변화 --- BCEWithLogitsLoss 등장": "손실 함수의 변화 --- 이진 교차 엔트로피 등장",
+        "Loss 함수의 변화 --- CrossEntropyLoss 등장": "손실 함수의 변화 --- 교차 엔트로피 등장",
+        "Loss 함수의 변화 --- BCEWithLogitsLoss per-label": "손실 함수의 변화 --- 라벨별 이진 교차 엔트로피",
+        "Loss 노트 --- 같은 CE, K=5 수치 예시": "손실 노트 --- 같은 교차 엔트로피, K=5 수치 예시",
+        "Loss 한 단계 더: 학습된 모델의 실제 예측으로 BCE 분해": "손실 한 단계 더: 학습된 모델의 실제 예측으로 BCE 분해",
     }
     for before, after in replacements.items():
         latex = latex.replace(before, after)

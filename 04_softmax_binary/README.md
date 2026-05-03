@@ -1,4 +1,4 @@
-# 04_softmax_binary — CrossEntropy 등장 + sigmoid+BCE와의 동등성
+# 04_softmax_binary — 이진 분류: sigmoid와 softmax는 어떻게 같은가
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/04_softmax_binary/04_softmax_binary.ipynb)
 
@@ -12,7 +12,7 @@ Ch 3과 **완전히 같은 binary 데이터** 를 출력 차원 2로 늘리고 s
 - 동등성 코드 시연: 임의의 logit 쌍에서 `softmax([z_0,z_1])_1 == sigmoid(z_1-z_0)` 직접 확인 (max 차이 ~1e-16)
 - sklearn 동작 관찰: `multi_class="multinomial"` 을 줘도 K=2이면 `coef_.shape`가 `(1, V)` — sklearn이 K=2 multinomial을 binary form으로 자동 collapse하기 때문. 진짜 (2, V) 두 logit head는 Ch 10 PyTorch에서 등장
 
-## Loss 수치 예시 (K=2, 정답 y=1)
+## 손실 수치 예시 (K=2, 정답 y=1)
 | 예측 분포 | 정답 확률 | 손실 |
 |---|---|---|
 | `[0.1, 0.9]` | 0.9 | 0.105 |
