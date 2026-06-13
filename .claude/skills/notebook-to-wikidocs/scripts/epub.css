@@ -1,0 +1,20 @@
+/* WikiDocs 전자책(EPUB) 빌드용 스타일 — 변환기의 fenced-div(.output) 출력 박스를
+   코드와 구분되는 색깔 박스로 렌더하고, 긴 출력은 잘리지 않게 reflow 한다.
+   (인쇄책 출력 색깔 바와 동일 의도. PDF 경로에선 pandoc-latex-environment 가 .output→tcolorbox 로 칠함.) */
+div.output {
+  background: #eef3fb;
+  border-left: 4px solid #5B8DEF;
+  padding: 0.3em 0.9em;
+  border-radius: 4px;
+  margin: 0.6em 0;
+}
+div.output pre {
+  background: transparent;
+  border: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.92em;
+  line-height: 1.45;
+  white-space: pre-wrap;   /* 긴 줄을 자르지 않고 wrap → e-reader reflow */
+  word-break: break-word;
+}

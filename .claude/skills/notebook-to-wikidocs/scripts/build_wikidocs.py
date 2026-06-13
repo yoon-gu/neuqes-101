@@ -1,0 +1,791 @@
+#!/usr/bin/env python3
+"""노트북(.ipynb)을 WikiDocs 연동용 "장→절" 다중 페이지 마크다운으로 변환합니다.
+
+`book/tools/notebook_to_md.py`의 장→절 분할 규칙을 이어받되, 핵심 차이는
+**코드 실행 결과(표·로그·그림)를 함께 싣는다**는 점입니다. 노트북은 보통 출력이
+비어 있으므로(Colab용 clean 상태), 다음 우선순위로 "실제 결과"를 확보합니다.
+
+출력 원천 우선순위 (챕터별 자동):
+  1) --executed-notebook PATH    : (단일 챕터) 미리 실행해 outputs를 담은 노트북
+  2) executed/<폴더>.ipynb 존재   : 자동으로 출력 원천으로 사용
+                                    (Colab/GPU에서 끝까지 돌린 뒤 저장·커밋한 실행본)
+  3) --execute                   : 이 자리에서 nbclient로 직접 실행(주로 CPU 챕터).
+                                    --save-executed 면 결과를 executed/<폴더>.ipynb 로 저장.
+  4) (없음)                      : 노트북에 든 outputs만 사용. 없으면 코드만 출력하고
+                                    "<!-- 실행 결과 없음 -->" 주석을 남겨 누락을 드러냄
+                                    (가짜 출력을 지어내지 않음 — "파싱만" 금지 요구의 핵심).
+
+실행본 보관 규약: GPU 챕터의 진짜 결과는 Colab T4에서 끝까지 돌린 뒤
+"파일 > .ipynb 다운로드"(출력 포함)한 노트북을 `executed/<폴더>.ipynb` 로 커밋해 둔다.
+챕터 폴더에는 clean 노트북만 남긴다(Colab 버튼 대상). 자세한 건 executed/README.md.
+
+챕터 지정 (동적):
+  - 위치 인자로 챕터를 받음: 폴더명(`07_bert_pipeline`), 번호(`7`/`07`) 모두 허용. 여러 개 가능.
+  - 아무 챕터도 안 주고 `--all`도 없으면 에러 — 호출자가 의도(전체/일부)를 명시하게 함.
+  - `--all` 이면 레포 루트의 `NN_slug/NN_slug.ipynb` 를 전부 자동 발견해 변환.
+  - 챕터 메타(제목): book/tools/notebook_to_tex.py 의 CHAPTERS 레지스트리 → 노트북 첫 H1
+    ("Chapter N." 접두 제거) → 슬러그 순으로 해석. 레지스트리에 없는 새 챕터도 동작.
+
+사용:
+  # 전체 (호출자가 사용자 확인 후)
+  python3 build_wikidocs.py --all --execute
+  # 일부
+  python3 build_wikidocs.py 1 7 15 --execute
+  python3 build_wikidocs.py 07_bert_pipeline --executed-notebook 07_bert_pipeline/07_bert_pipeline.executed.ipynb
+"""
+
+from __future__ import annotations
+
+import argparse
+import base64
+import json
+import re
+import sys
+import traceback
+from html import unescape
+from html.parser import HTMLParser
+from pathlib import Path
+
+# 레포 루트: 이 스크립트는 .claude/skills/notebook-to-wikidocs/scripts/ 아래 있음 → parents[4]
+ROOT = Path(__file__).resolve().parents[4]
+
+COLAB_BADGE_RE = re.compile(r"^\s*\[!\[.*?Colab.*?\]\(.*?\)\]\(.*?\)\s*$", re.IGNORECASE)
+HEADER_RE = re.compile(r"^(#{1,6})\s+(.*)$")
+EMOJI_RE = re.compile(r"^[\s←-⇿⌀-➿⬀-⯿️\U0001F000-\U0001FAFF]+")
+ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
+CHAPTER_FOLDER_RE = re.compile(r"^(\d{2})_(.+)$")
+H1_CHAPTER_PREFIX_RE = re.compile(r"^\s*Chapter\s+\d+\s*[.．]\s*")
+
+SKIP_PATTERNS = (
+    "TqdmWarning:",
+    "IProgress not found",
+    "Requirement already satisfied:",
+    "WARNING: Running pip",
+    "[notice] A new release of pip",
+    "notice] A new release of pip",
+    "To update, run:",
+)
+
+MAX_OUTPUT_LINES = 40
+MAX_OUTPUT_CHARS = 2000
+
+SECTION_RULES: list[tuple[str, str]] = [
+    ("삽질", "wrapup"),
+    ("라이브러리", "wrapup"),
+    ("체크포인트", "wrapup"),
+    ("FAQ", "wrapup"),
+    ("다음 챕터", "wrapup"),
+    ("다음 장", "wrapup"),
+    ("예고", "wrapup"),
+    ("실습", "practice"),
+    ("해부", "anatomy"),
+    ("변형", "variation"),
+]
+
+SUBPAGES = [
+    ("practice", "practice", "실습"),
+    ("anatomy", "anatomy", "해부"),
+    ("variation", "variation", "변형"),
+    ("wrapup", "wrapup", "정리와 FAQ"),
+]
+
+DEFAULT_BOOK_TITLE = "neuqes-101 — Hugging Face 입문 커리큘럼"
+
+
+# --------------------------------------------------------------------------- #
+# 텍스트 유틸
+# --------------------------------------------------------------------------- #
+def _cell_text(cell: dict) -> str:
+    src = cell.get("source", "")
+    return src if isinstance(src, str) else "".join(src)
+
+
+def _strip_emoji(text: str) -> str:
+    return EMOJI_RE.sub("", text).strip()
+
+
+def _clean_heading_text(text: str) -> str:
+    """헤더 텍스트 정리: 선두 'N.'/'N)' 순번 제거 → 선두 이모지 제거.
+    절 제목 중복("07-1. 1. 🚀 실습")과 이모지 잔존을 막는다. (예: '1. 🚀 실습: …' → '실습: …')
+    """
+    text = re.sub(r"^\s*\d+[.)]\s*", "", text.strip())
+    return EMOJI_RE.sub("", text).strip()
+
+
+def _first_header(md: str) -> tuple[int, str] | None:
+    for line in md.splitlines():
+        m = HEADER_RE.match(line)
+        if m:
+            return len(m.group(1)), m.group(2).strip()
+    return None
+
+
+def _classify(header_text: str) -> str:
+    for kw, group in SECTION_RULES:
+        if kw in header_text:
+            return group
+    return "overview"
+
+
+def _strip_colab_badge(md: str) -> str:
+    return "\n".join(ln for ln in md.splitlines() if not COLAB_BADGE_RE.match(ln)).strip("\n")
+
+
+def _demote_first_header(md: str) -> str:
+    lines = md.splitlines()
+    for i, line in enumerate(lines):
+        if HEADER_RE.match(line):
+            del lines[i]
+            break
+    return "\n".join(lines).strip("\n")
+
+
+def _strip_header_emoji(md: str) -> str:
+    out = []
+    for line in md.splitlines():
+        m = HEADER_RE.match(line)
+        if m:
+            out.append(f"{m.group(1)} {_clean_heading_text(m.group(2))}")
+        else:
+            out.append(line)
+    return "\n".join(out)
+
+
+# 전자책 작성 규칙([wikidocs 전자책 작성시 주의할 점](https://wikidocs.net/198723)) 방어용 패턴
+HR_LINE_RE = re.compile(r"^\s*(-{3,}|\*{3,}|_{3,})\s*$")
+H1_LINE_RE = re.compile(r"^#\s+(.*)$")
+RAW_HTML_RE = re.compile(r"</?[a-zA-Z][a-zA-Z0-9]*(?:\s[^<>]*)?/?>")
+EXT_IMG_RE = re.compile(r"!\[[^\]]*\]\((https?://[^)\s]+)")
+INLINE_CODE_RE = re.compile(r"`[^`]*`")
+FOOTNOTE_RE = re.compile(r"\[\^([^\]]+)\]")
+
+
+def _sanitize_md_cell(md: str, stem: str, stats: dict) -> str:
+    """마크다운 셀을 전자책 규칙([wikidocs 전자책 작성시 주의할 점](https://wikidocs.net/198723))에 맞게 방어 정리한다. 코드펜스 안은 손대지 않음.
+
+    - [11] 코드펜스 밖 수평선(---/***/___) 제거 (앞이 빈 줄일 때만 — setext 헤딩 오인 방지).
+    - [1]  2번째 이후 H1(#) → H2(##) 강등 (본문 H1 금지; 첫 제목 H1은 convert 가 따로 제거).
+    - [10] 각주 이름에 챕터 stem 접두 → 전자책이 전 페이지를 한 문서로 통합할 때 충돌 방지.
+    - [6]/[3] raw HTML·외부 이미지는 자동 수정이 어려워 stats 에 경고만 모은다(인라인 코드는 제외).
+    """
+    out: list[str] = []
+    fence = False
+    for ln in md.split("\n"):
+        if ln.lstrip().startswith("```"):
+            fence = not fence
+            out.append(ln)
+            continue
+        if fence:
+            out.append(ln)
+            continue
+        if HR_LINE_RE.match(ln) and (not out or out[-1].strip() == ""):
+            stats["hr_removed"] += 1
+            continue
+        m = H1_LINE_RE.match(ln)
+        if m:
+            stats["h1_demoted"] += 1
+            ln = "## " + m.group(1)
+        if "[^" in ln:
+            new = FOOTNOTE_RE.sub(lambda x: f"[^{stem}-{x.group(1)}]", ln)
+            if new != ln:
+                stats["footnotes"] += 1
+                ln = new
+        scan = INLINE_CODE_RE.sub("", ln)
+        stats["html_warn"].extend(RAW_HTML_RE.findall(scan))
+        stats["extimg_warn"].extend(EXT_IMG_RE.findall(scan))
+        out.append(ln)
+    return "\n".join(out)
+
+
+def _clean_text_output(text: str) -> str:
+    text = ANSI_RE.sub("", text)
+    lines = [seg.split("\r")[-1] for seg in text.split("\n")]
+    lines = [
+        ln for ln in lines
+        if not any(p in ln for p in SKIP_PATTERNS)
+        and not ln.strip().startswith("from .autonotebook import tqdm")
+    ]
+    while lines and not lines[0].strip():
+        lines.pop(0)
+    while lines and not lines[-1].strip():
+        lines.pop()
+    if len(lines) > MAX_OUTPUT_LINES:
+        lines = lines[: MAX_OUTPUT_LINES - 1] + [
+            f"... (출력 {len(lines) - MAX_OUTPUT_LINES + 1}줄 생략) ..."
+        ]
+    text = "\n".join(lines)
+    if len(text) > MAX_OUTPUT_CHARS:
+        text = text[: MAX_OUTPUT_CHARS - 4].rstrip() + "\n..."
+    return text
+
+
+def latex_title_to_plain(title: str) -> str:
+    """레지스트리 제목의 LaTeX 이스케이프 해제: '\\&' → '&', '\\_' → '_' 등."""
+    return (
+        title.replace("\\&", "&").replace("\\_", "_")
+        .replace("\\%", "%").replace("\\#", "#").replace("\\$", "$")
+    )
+
+
+# --------------------------------------------------------------------------- #
+# HTML 표 → 마크다운 표
+# --------------------------------------------------------------------------- #
+class _PandasTableParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.tables: list[dict[str, list]] = []
+        self.in_table = self.in_row = self.in_cell = False
+        self.cell_is_header = False
+        self.current_cell: list[str] = []
+        self.current_row: list[tuple[bool, str]] = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "table":
+            self.in_table = True
+            self.tables.append({"headers": [], "rows": []})
+        elif self.in_table and tag == "tr":
+            self.in_row = True
+            self.current_row = []
+        elif self.in_table and self.in_row and tag in {"th", "td"}:
+            self.in_cell = True
+            self.cell_is_header = tag == "th"
+            self.current_cell = []
+        elif self.in_cell and tag == "br":
+            self.current_cell.append(" ")
+
+    def handle_endtag(self, tag):
+        if tag in {"th", "td"} and self.in_cell:
+            text = unescape("".join(self.current_cell))
+            text = re.sub(r"\s+", " ", text).strip()
+            self.current_row.append((self.cell_is_header, text))
+            self.in_cell = False
+            self.current_cell = []
+        elif tag == "tr" and self.in_row:
+            if self.current_row and self.tables:
+                values = [v for _, v in self.current_row]
+                header_count = sum(1 for is_h, _ in self.current_row if is_h)
+                data_count = len(self.current_row) - header_count
+                table = self.tables[-1]
+                if header_count >= data_count:
+                    table["headers"] = values
+                else:
+                    table["rows"].append(values)
+            self.in_row = False
+            self.current_row = []
+        elif tag == "table":
+            self.in_table = False
+
+    def handle_data(self, data):
+        if self.in_cell:
+            self.current_cell.append(data)
+
+
+def _html_tables_to_text(html: str) -> list[str]:
+    """HTML 표 → 공백 정렬된 모노스페이스 텍스트(코드펜스에 넣어 블록인용 안전).
+    text/plain이 없을 때의 폴백."""
+    parser = _PandasTableParser()
+    parser.feed(html)
+    out: list[str] = []
+    for table in parser.tables:
+        headers, rows = table["headers"], table["rows"]
+        if not rows:
+            continue
+        width = max([len(headers)] + [len(r) for r in rows])
+        headers = (headers + [""] * width)[:width] if headers else [""] * width
+        shown = [(r + [""] * width)[:width] for r in rows[:30]]
+        grid = [headers] + shown
+        colw = [max(len(str(row[c])) for row in grid) for c in range(width)]
+        def fmt(row): return "  ".join(str(row[c]).ljust(colw[c]) for c in range(width)).rstrip()
+        lines = [fmt(headers)] + [fmt(r) for r in shown]
+        if len(rows) > 30:
+            lines.append("...")
+        out.append("\n".join(lines))
+    return out
+
+
+# --------------------------------------------------------------------------- #
+# 셀 출력 렌더링
+# --------------------------------------------------------------------------- #
+# 실행 결과 박스 스타일 — 회색 코드블록과 구분되도록 왼쪽 색깔 바 + 옅은 배경.
+# WikiDocs는 HTML+style 을 지원하고 highlight.js로 코드만 색칠하므로, 출력은 <pre>로 둔다.
+# (블록인용 안 코드펜스는 WikiDocs에서 ``` 가 노출되어 사용 불가.)
+OUTPUT_PRE_STYLE = (
+    "background:#eef3fb;border-left:4px solid #5B8DEF;"
+    "padding:0.7em 1em;border-radius:4px;overflow-x:auto;"
+    "font-size:0.92em;line-height:1.45;"
+)
+OUTPUT_LABEL = "▶ 실행 결과"
+SYNTH_LABEL = "▶ 출력 형태"
+
+# 출력 박스 표현 방식 (변환 타깃별). 실측(DESIGN_NOTES §7-5~7-8) 결과 세 타깃(웹/PDF/EPUB)을
+# 모두 만족하는 건 code 뿐이라 기본값으로 둔다:
+#   code       : 평범한 코드펜스(```text) + "▶ 실행 결과" 라벨. 웹·PDF·EPUB 모두 정상 동작.
+#                색깔 박스는 없지만 라벨 + (코드는 python 하이라이트 / 출력은 plain)로 구분. → 기본값.
+#   fenced-div : "::: {.output}" + 코드펜스. EPUB/PDF(pandoc)에선 색깔 박스로 살아나나,
+#                WikiDocs '웹' 마크다운은 fenced div 를 몰라 ::: 가 글자로 노출됨(2026-06-11 실측 확인).
+#   html-box   : "<pre style>" 색깔 박스. WikiDocs '웹'에선 잘 보이나 전자책(pandoc)에선 드롭/깨짐
+#                (공식 문서 [wikidocs 전자책 작성시 주의할 점](https://wikidocs.net/198723): "HTML 코드는 전자책 변환 시 정상 표시되지 않습니다").
+OUTPUT_STYLES = ("code", "fenced-div", "html-box")
+DEFAULT_OUTPUT_STYLE = "code"
+
+
+def _html_escape(text: str) -> str:
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def _output_box(text: str, style: str) -> str:
+    """출력 텍스트 한 덩어리를 선택된 스타일의 박스로 감싼다.
+
+    fenced-div / code 는 내부 코드펜스가 출력의 공백·`<`·`>` 를 이스케이프 없이 보존한다
+    (표 정렬 OK). 출력에 ``` 가 들어 있으면 더 긴 펜스로 회피한다.
+    """
+    if style == "html-box":
+        return f'<pre style="{OUTPUT_PRE_STYLE}">{_html_escape(text)}</pre>'
+    fence = "```"
+    while fence in text:
+        fence += "`"
+    if style == "code":
+        return f"{fence}text\n{text}\n{fence}"
+    # fenced-div (기본)
+    return f"::: {{.output}}\n{fence}text\n{text}\n{fence}\n:::"
+
+
+_SYNTH_FN = "uninit"  # notebook_to_tex.synthetic_output_text (지연 import, 캐시)
+
+
+def _synthetic_output_text(source: str) -> str:
+    """기존 ipynb→tex 합성 로직 재사용. tex와 동일하게 `print(`가 있는 셀에만 적용.
+
+    실제 실행 결과가 없을 때 '출력은 이런 모양' 골격(값은 ...)을 보여준다.
+    로직을 복제하지 않고 book/tools/notebook_to_tex.py 의 함수를 그대로 가져온다.
+    """
+    global _SYNTH_FN
+    if _SYNTH_FN == "uninit":
+        try:
+            sys.path.insert(0, str(ROOT / "book" / "tools"))
+            import notebook_to_tex as t  # noqa: E402
+            _SYNTH_FN = t.synthetic_output_text
+        except Exception:
+            _SYNTH_FN = None
+    if _SYNTH_FN is None or "print(" not in source:
+        return ""
+    try:
+        return _SYNTH_FN(source) or ""
+    except Exception:
+        return ""
+
+
+def _synthetic_block(source: str, style: str = DEFAULT_OUTPUT_STYLE) -> str:
+    text = _clean_text_output(_synthetic_output_text(source))
+    if not text.strip():
+        return ""
+    return f"**{SYNTH_LABEL}**\n\n" + _output_box(text, style)
+
+
+def _render_outputs(cell: dict, assets_dir: Path | None, stem: str, counter: list[int],
+                    style: str = DEFAULT_OUTPUT_STYLE) -> str:
+    """실행 결과를 코드와 구분되는 **색깔 박스**(HTML <pre>)로 렌더링.
+
+    WikiDocs에서 출력 펜스가 코드 펜스와 같은 회색 박스로 보여 헷갈리던 문제를 해결한다.
+    <pre>는 공백·줄바꿈을 그대로 보존(표 정렬 OK)하고 highlight.js 색칠 대상이 아니라
+    코드블록과 확실히 구분된다. 이미지는 <pre>에 못 넣으므로 라벨 + 마크다운 이미지로.
+    """
+    items: list[tuple[str, str]] = []  # ("text", str) | ("image", name)
+    for out in cell.get("outputs", []):
+        otype = out.get("output_type")
+        if otype == "stream":
+            text = _clean_text_output("".join(out.get("text", [])))
+            if text.strip():
+                items.append(("text", text))
+        elif otype in ("execute_result", "display_data"):
+            data = out.get("data", {})
+            if "image/png" in data:
+                counter[0] += 1
+                img_name = f"{stem}-out{counter[0]}.png"
+                if assets_dir is not None:
+                    assets_dir.mkdir(parents=True, exist_ok=True)
+                    raw = data["image/png"]
+                    raw = raw if isinstance(raw, str) else "".join(raw)
+                    (assets_dir / img_name).write_bytes(base64.b64decode(raw))
+                items.append(("image", img_name))
+                continue
+            text = data.get("text/plain")
+            if text:
+                text = _clean_text_output("".join(text) if isinstance(text, list) else str(text))
+                if text.strip():
+                    items.append(("text", text))
+                continue
+            html = data.get("text/html")
+            if isinstance(html, list):
+                html = "".join(html)
+            if isinstance(html, str) and "<table" in html:
+                for t in _html_tables_to_text(html):
+                    items.append(("text", t))
+        elif otype == "error":
+            tb = out.get("traceback", [])
+            if tb:
+                text = _clean_text_output("\n".join(str(l) for l in tb[-8:]))
+            else:
+                text = f"{out.get('ename', 'Error')}: {out.get('evalue', '')}"
+            if text.strip():
+                items.append(("text", text))
+
+    if not items:
+        return ""
+
+    # 라벨은 셀당 1번만 맨 위에. 연속 text는 하나의 <pre>로 합치고 image는 그대로(순서 보존).
+    blocks: list[str] = [f"**{OUTPUT_LABEL}**"]
+    buf: list[str] = []
+
+    def flush_text():
+        if buf:
+            blocks.append(_output_box("\n".join(buf), style))
+            buf.clear()
+
+    for kind, val in items:
+        if kind == "text":
+            buf.append(val)
+        else:
+            flush_text()
+            blocks.append(f"![output](../assets/{val})")
+    flush_text()
+    return "\n\n".join(blocks)
+
+
+# --------------------------------------------------------------------------- #
+# 노트북 실행 (선택)
+# --------------------------------------------------------------------------- #
+def execute_notebook(path: Path, timeout: int = 1800) -> dict:
+    import nbformat
+    from nbclient import NotebookClient
+
+    nb = nbformat.read(path, as_version=4)
+    client = NotebookClient(
+        nb, timeout=timeout, kernel_name="python3",
+        resources={"metadata": {"path": str(path.parent)}},
+    )
+    client.execute()
+    return nb
+
+
+def _has_any_outputs(nb: dict) -> bool:
+    return any(c.get("cell_type") == "code" and c.get("outputs") for c in nb.get("cells", []))
+
+
+def chapter_h1_title(nb: dict) -> str:
+    for cell in nb.get("cells", []):
+        if cell.get("cell_type") != "markdown":
+            continue
+        m = _first_header(_cell_text(cell))
+        if m and m[0] == 1:
+            return H1_CHAPTER_PREFIX_RE.sub("", m[1]).strip()
+    return ""
+
+
+# --------------------------------------------------------------------------- #
+# 변환
+# --------------------------------------------------------------------------- #
+def convert(nb: dict, num: int, slug: str, title: str,
+            pages_dir: Path, assets_dir: Path | None,
+            style: str = DEFAULT_OUTPUT_STYLE) -> tuple[list[tuple[str, str]], dict]:
+    stem = f"{num:02d}-{slug}"
+    img_counter = [0]
+    stats = {"code_cells": 0, "code_with_output": 0, "synthetic": 0, "images": 0,
+             "hr_removed": 0, "h1_demoted": 0, "footnotes": 0,
+             "html_warn": [], "extimg_warn": []}
+
+    groups: dict[str, list[str]] = {
+        "overview": [], "practice": [], "anatomy": [], "variation": [], "wrapup": []
+    }
+    sub_titles: dict[str, str] = {}
+    overview_intro: list[str] = []
+    setup_code: list[str] = []
+
+    current = "overview"
+    seen_h1 = False
+
+    for cell in nb.get("cells", []):
+        ctype = cell.get("cell_type")
+        if ctype == "markdown":
+            md = _strip_colab_badge(_cell_text(cell))
+            if not md.strip():
+                continue
+            hdr = _first_header(md)
+            if hdr and hdr[0] == 1 and not seen_h1:
+                seen_h1 = True
+                body = "\n".join(md.splitlines()[1:]).strip("\n")
+                if body.strip():
+                    overview_intro.append(_sanitize_md_cell(body, stem, stats))
+                continue
+            if hdr and hdr[0] == 2:
+                current = _classify(hdr[1])
+                if current in ("practice", "anatomy", "variation"):
+                    sub_titles[current] = _clean_heading_text(hdr[1])
+            groups[current].append(_strip_header_emoji(_sanitize_md_cell(md, stem, stats)))
+        elif ctype == "code":
+            code = _cell_text(cell).rstrip("\n")
+            if not code.strip():
+                continue
+            stats["code_cells"] += 1
+            block = "```python\n" + code + "\n```"
+            outs = _render_outputs(cell, assets_dir, stem, img_counter, style)
+            if outs:
+                stats["code_with_output"] += 1  # 실제 실행 결과 (executed/ 또는 --execute)
+            else:
+                # 실제 출력이 없으면 기존 tex 합성 로직 재사용(print 셀에 한해 ... 골격).
+                syn = _synthetic_block(code, style)
+                if syn:
+                    outs = syn
+                    stats["synthetic"] += 1
+                # 그 외(함수 정의·import 등)는 코드만 남김.
+            piece = block + ("\n\n" + outs if outs else "")
+            if current == "overview":
+                setup_code.append(piece)
+            else:
+                groups[current].append(piece)
+
+    stats["images"] = img_counter[0]
+    pages_dir.mkdir(parents=True, exist_ok=True)
+    toc_entries: list[tuple[str, str]] = []
+
+    ov: list[str] = []
+    ov.extend(overview_intro)
+    ov.extend(groups["overview"])
+    present_subs = [(g, sl, sub_titles.get(g, dt)) for g, sl, dt in SUBPAGES
+                    if groups[g] or (g == "practice" and setup_code)]
+    roadmap = ["## 이 장의 구성", ""]  # 헤딩 아래 빈 줄 — 전자책 PDF 변환 오류 방지([wikidocs 전자책 작성시 주의할 점](https://wikidocs.net/198723))
+    for idx, (g, sl, t) in enumerate(present_subs, 1):
+        roadmap.append(f"- [{num:02d}-{idx}. {t}]({stem}-{sl}.md)")
+    ov.append("\n".join(roadmap))
+    (pages_dir / f"{stem}.md").write_text("\n\n".join(ov).strip() + "\n", encoding="utf-8")
+    toc_entries.append((f"{num:02d}. {title}", f"pages/{stem}.md"))
+
+    for idx, (g, sl, dt) in enumerate(present_subs, 1):
+        parts: list[str] = []
+        body_blocks = list(groups[g])
+        if g == "practice" and setup_code:
+            parts.append("## 환경 준비\n\n" + "\n\n".join(setup_code))
+        if g in ("practice", "anatomy", "variation") and body_blocks:
+            body_blocks[0] = _demote_first_header(body_blocks[0])
+        parts.extend(body_blocks)
+        (pages_dir / f"{stem}-{sl}.md").write_text(
+            "\n\n".join(p for p in parts if p).strip() + "\n", encoding="utf-8")
+        t = sub_titles.get(g, dt)
+        toc_entries.append((f"{num:02d}-{idx}. {t}", f"pages/{stem}-{sl}.md"))
+
+    return toc_entries, stats
+
+
+# --------------------------------------------------------------------------- #
+# TOC
+# --------------------------------------------------------------------------- #
+def upsert_toc(toc_path: Path, book_title: str, num: int, entries: list[tuple[str, str]]) -> None:
+    """TOC.md에서 이 장(NN. / NN-N.) 블록만 교체하거나 추가. 다른 장은 보존."""
+    nn = f"{num:02d}"
+    new_lines = []
+    for title, path in entries:
+        indent = "" if re.match(r"^\d+\.\s", title) else "  "
+        new_lines.append(f"{indent}* [{title}]({path})")
+
+    if not toc_path.exists():
+        toc_path.write_text(f"# {book_title}\n\n" + "\n".join(new_lines) + "\n", encoding="utf-8")
+        return
+
+    lines = toc_path.read_text(encoding="utf-8").splitlines()
+    chapter_re = re.compile(rf"^\s*\*\s*\[{nn}[.\-]")
+    start = end = None
+    for i, ln in enumerate(lines):
+        if chapter_re.match(ln):
+            if start is None:
+                start = i
+            end = i
+    if start is None:
+        # 번호 오름차순 유지: 다음으로 큰 장 앞에 삽입, 없으면 끝에 추가
+        insert_at = len(lines)
+        any_chapter = re.compile(r"^\s*\*\s*\[(\d{2})[.\-]")
+        for i, ln in enumerate(lines):
+            m = any_chapter.match(ln)
+            if m and int(m.group(1)) > num:
+                insert_at = i
+                break
+        out = lines[:insert_at] + new_lines + lines[insert_at:]
+    else:
+        out = lines[:start] + new_lines + lines[end + 1:]
+    toc_path.write_text("\n".join(out).rstrip("\n") + "\n", encoding="utf-8")
+
+
+# --------------------------------------------------------------------------- #
+# 챕터 발견 / 선택 / 메타
+# --------------------------------------------------------------------------- #
+def discover_chapters() -> dict[int, tuple[str, str, Path]]:
+    """{num: (folder, slug, nb_path)} — 레포 루트의 NN_slug/NN_slug.ipynb 자동 발견."""
+    found: dict[int, tuple[str, str, Path]] = {}
+    for d in sorted(ROOT.iterdir()):
+        if not d.is_dir():
+            continue
+        m = CHAPTER_FOLDER_RE.match(d.name)
+        if not m:
+            continue
+        nb = d / f"{d.name}.ipynb"
+        if nb.exists():
+            found[int(m.group(1))] = (d.name, m.group(2), nb)
+    return found
+
+
+def load_registry_titles() -> dict[int, str]:
+    """book/tools/notebook_to_tex.py 의 CHAPTERS 에서 {num: plain_title}."""
+    try:
+        sys.path.insert(0, str(ROOT / "book" / "tools"))
+        import notebook_to_tex as t  # noqa: E402
+        return {c.number: latex_title_to_plain(c.title) for c in t.CHAPTERS}
+    except Exception:
+        return {}
+
+
+def resolve_title(num: int, slug: str, nb: dict, registry: dict[int, str]) -> str:
+    if num in registry and registry[num].strip():
+        return registry[num]
+    h1 = chapter_h1_title(nb)
+    if h1:
+        return h1
+    return slug.replace("_", " ")
+
+
+def parse_chapter_args(tokens: list[str], available: dict[int, tuple]) -> list[int]:
+    """'7' / '07' / '07_bert_pipeline' → 정렬된 챕터 번호 리스트."""
+    nums: list[int] = []
+    for tok in tokens:
+        m = CHAPTER_FOLDER_RE.match(tok)
+        if m:
+            n = int(m.group(1))
+        elif tok.isdigit():
+            n = int(tok)
+        else:
+            raise SystemExit(f"챕터 인자를 해석할 수 없습니다: {tok!r} (예: 7, 07, 07_bert_pipeline)")
+        if n not in available:
+            raise SystemExit(f"챕터 {n:02d} 를 찾을 수 없습니다 (NN_slug/NN_slug.ipynb 없음)")
+        if n not in nums:
+            nums.append(n)
+    return sorted(nums)
+
+
+def pick_source_notebook(folder: str, slug: str, nb_path: Path,
+                         executed_dir: Path, args) -> tuple[dict, str]:
+    """출력 원천 우선순위에 따라 (노트북 dict, 원천설명) 반환.
+
+    --execute 로 새로 실행했고 --save-executed 면 executed/<폴더>.ipynb 로 저장한다.
+    """
+    if args.executed_notebook:
+        p = Path(args.executed_notebook)
+        p = p if p.is_absolute() else ROOT / p
+        return json.loads(p.read_text(encoding="utf-8")), f"executed-notebook({p.name})"
+    archived = executed_dir / f"{folder}.ipynb"
+    if archived.exists():
+        return json.loads(archived.read_text(encoding="utf-8")), f"executed/{archived.name}"
+    if args.execute:
+        nb = execute_notebook(nb_path, timeout=args.timeout)
+        if args.save_executed:
+            import nbformat
+            executed_dir.mkdir(parents=True, exist_ok=True)
+            nbformat.write(nb, str(executed_dir / f"{folder}.ipynb"))
+        return nb, "live --execute" + (" (executed/ 저장됨)" if args.save_executed else "")
+    return json.loads(nb_path.read_text(encoding="utf-8")), "clean(출력없음 가능)"
+
+
+# --------------------------------------------------------------------------- #
+# main
+# --------------------------------------------------------------------------- #
+def main() -> None:
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("chapters", nargs="*",
+                    help="변환할 챕터(폴더명/번호). 비우고 --all 로 전체 지정.")
+    ap.add_argument("--all", action="store_true", help="발견된 모든 챕터를 변환")
+    ap.add_argument("--pages-dir", default="pages")
+    ap.add_argument("--assets", default="assets")
+    ap.add_argument("--toc", default="TOC.md")
+    ap.add_argument("--book-title", default=DEFAULT_BOOK_TITLE)
+    ap.add_argument("--output-style", choices=OUTPUT_STYLES, default=DEFAULT_OUTPUT_STYLE,
+                    help="실행 결과 박스 표현: code(기본, 웹·PDF·EPUB 모두 안전) | "
+                         "fenced-div(전자책 색 박스, 웹에선 ::: 노출) | html-box(웹 전용 색 박스, 전자책 깨짐)")
+    ap.add_argument("--execute", action="store_true",
+                    help="nbclient로 실행해 실제 출력을 채움 (CPU 챕터용; GPU 챕터엔 비권장)")
+    ap.add_argument("--executed-notebook", default=None,
+                    help="(단일 챕터) 출력이 담긴 실행본 .ipynb 경로")
+    ap.add_argument("--executed-dir", default="executed",
+                    help="실행본 보관 폴더 (executed/<폴더>.ipynb 를 출력 원천으로 자동 사용)")
+    ap.add_argument("--save-executed", action="store_true",
+                    help="--execute 결과를 executed/<폴더>.ipynb 로 저장")
+    ap.add_argument("--timeout", type=int, default=1800)
+    args = ap.parse_args()
+
+    available = discover_chapters()
+    if not available:
+        raise SystemExit("변환할 챕터를 찾지 못했습니다 (NN_slug/NN_slug.ipynb 없음)")
+
+    if args.chapters:
+        selected = parse_chapter_args(args.chapters, available)
+    elif args.all:
+        selected = sorted(available)
+    else:
+        raise SystemExit(
+            "변환할 챕터를 지정하거나 --all 을 주세요.\n"
+            f"  발견된 챕터: {', '.join(f'{n:02d}' for n in sorted(available))}"
+        )
+
+    if args.executed_notebook and len(selected) != 1:
+        raise SystemExit("--executed-notebook 은 챕터 1개만 지정했을 때 씁니다.")
+
+    def _abs(p: str) -> Path:
+        pp = Path(p)
+        return pp if pp.is_absolute() else ROOT / pp
+
+    pages_dir = _abs(args.pages_dir)
+    assets_dir = _abs(args.assets) if args.assets else None
+    toc_path = _abs(args.toc)
+    executed_dir = _abs(args.executed_dir)
+    registry = load_registry_titles()
+
+    print(f"변환 대상 {len(selected)}개 챕터: {', '.join(f'{n:02d}' for n in selected)}\n")
+    ok, failed = [], []
+    for num in selected:
+        folder, slug, nb_path = available[num]
+        try:
+            nb, source = pick_source_notebook(folder, slug, nb_path, executed_dir, args)
+            title = resolve_title(num, slug, nb, registry)
+            entries, stats = convert(nb, num, slug, title, pages_dir, assets_dir,
+                                     args.output_style)
+            upsert_toc(toc_path, args.book_title, num, entries)
+            print(f"[{num:02d}] {title}")
+            print(f"     원천={source}  코드셀 {stats['code_cells']}개 "
+                  f"(실제출력 {stats['code_with_output']} / 합성 {stats['synthetic']}) "
+                  f"이미지 {stats['images']}")
+            fixes = []
+            if stats["hr_removed"]:
+                fixes.append(f"수평선 {stats['hr_removed']} 제거")
+            if stats["h1_demoted"]:
+                fixes.append(f"H1→H2 {stats['h1_demoted']}")
+            if stats["footnotes"]:
+                fixes.append(f"각주 {stats['footnotes']} 유니크화")
+            if fixes:
+                print("     방어(전자책 규칙):", " / ".join(fixes))
+            if stats["html_warn"]:
+                print(f"     ⚠ 마크다운 셀 raw HTML {len(stats['html_warn'])}건(전자책에서 깨질 수 있음): "
+                      f"{stats['html_warn'][:4]}")
+            if stats["extimg_warn"]:
+                print(f"     ⚠ 외부 이미지 {len(stats['extimg_warn'])}건(PDF 누락 위험, 위키독스 업로드 필요): "
+                      f"{stats['extimg_warn'][:3]}")
+            ok.append(num)
+        except Exception as e:  # 챕터별 실패 격리
+            failed.append((num, e))
+            print(f"[{num:02d}] 실패: {e}")
+            traceback.print_exc(limit=2)
+
+    print(f"\n완료: 성공 {len(ok)} / 실패 {len(failed)}")
+    if failed:
+        print("실패 챕터: " + ", ".join(f"{n:02d}" for n, _ in failed))
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
