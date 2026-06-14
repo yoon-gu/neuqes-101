@@ -40,6 +40,7 @@ GIF_RE = re.compile(r"\.gif\b", re.IGNORECASE)
 RAW_HTML_RE = re.compile(r"</?[a-zA-Z][a-zA-Z0-9]*(?:\s[^<>]*)?/?>")
 HR_RE = re.compile(r"^\s*(-{3,}|\*{3,}|_{3,})\s*$")
 WIN_PATH_RE = re.compile(r"[A-Za-z]:\\")
+MATH_RE = re.compile(r"\$[^$]+\$")  # LaTeX 인라인 수식 — W1 오탐(수식 속 i:\ 등) 방지용 제외
 INLINE_CODE_RE = re.compile(r"`[^`]*`")
 FOOTNOTE_RE = re.compile(r"\[\^([^\]]+)\]")
 
@@ -98,7 +99,7 @@ def check_file(path: Path, footnotes: dict):
             errors.append(f"{rel}:{lineno}: raw HTML [E6] → 마크다운으로: {tag}")
         if HR_RE.match(ln):
             errors.append(f"{rel}:{lineno}: 수평선 [E7] → 제거 권장")
-        if WIN_PATH_RE.search(scan):
+        if WIN_PATH_RE.search(MATH_RE.sub("", scan)):  # 수식 제외 후 검사 (i:\ 류 오탐 방지)
             warnings.append(f"{rel}:{lineno}: 윈도우 경로 [W1] → 코드블록/슬래시 권장")
 
         for name in FOOTNOTE_RE.findall(ln):

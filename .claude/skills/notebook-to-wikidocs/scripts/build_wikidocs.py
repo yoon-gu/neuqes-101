@@ -64,7 +64,48 @@ SKIP_PATTERNS = (
     "[notice] A new release of pip",
     "notice] A new release of pip",
     "To update, run:",
+    # Hugging Face Hub 인증/다운로드 경고 (Colab 환경 노이즈 — 책 내용 아님)
+    "huggingface_hub/utils/_auth.py",
+    "secret value from your vault",
+    "not authenticated with the Hugging Face Hub",
+    "If the error persists, please let us know",
+    "warnings.warn(",
+    "unauthenticated requests to the HF Hub",
+    # transformers 생성(generation) 보일러플레이트 경고 — 교육적 의미 없음.
+    # (주의: "Some weights … newly initialized … should TRAIN" 류는 의도적 교육 포인트일 수
+    #  있어 일부러 제외함 — 노이즈로 싸잡아 지우지 않는다.)
+    "Setting `pad_token_id`",
+    "`max_new_tokens`",
+    "clean_up_tokenization_spaces",
+    "Passing `generation_config`",
+    "aligned accordingly, being updated with the tokenizer",  # genconfig 정렬 보일러플레이트(노이즈)
 )
+
+# tqdm 진행바(다운로드·맵핑 등): `README.md:  0%|...| [00:00<?, ?B/s]` 류 — 책 내용 아님.
+TQDM_BAR_RE = re.compile(r"\d+%\s*\|")
+
+# 긴 '산문' 출력 줄(리뷰 샘플·생성문 등)은 트렁케이트 — EPUB 은 <pre> 안을 안 접어 잘림.
+# 표(정렬 컬럼)는 자르면 정렬이 깨지므로 제외한다. 한 블록에 표와 산문이 섞여 있어도
+# 줄별로 판별: 표 행은 토큰이 적고(숫자 몇 개), 산문은 공백 분리 단어가 많다.
+MAX_OUTPUT_LINE_CHARS = 160      # 이보다 길면 트렁케이트 대상
+TRUNC_KEEP_CHARS = 140           # 자른 뒤 남기는 앞부분 길이
+PROSE_MIN_TOKENS = 12            # 공백 분리 토큰 이만큼+ 면 산문으로 보고 자름(표는 토큰 적음)
+
+# 트렁케이트 opt-out 챕터 — '출력 자체가 학습 내용'인 토큰화 메커니즘 챕터.
+# (근거: 출력 자체가 학습 내용인 챕터 — ch08 의 1602>512 indexing 경고·토큰 ID 리스트,
+#  ch15 의 한국어 토큰 분절 비교가 잘리면 챕터 교훈이 깨짐. 향후 ch19·22 등 추가.)
+NO_TRUNCATE_CHAPTERS = {"08_tokenizer_datasets", "15_ko_binary", "22_ko_bert_pretrain"}
+
+
+def _truncate_long_lines(lines: list[str]) -> list[str]:
+    out = []
+    for ln in lines:
+        if (len(ln) > MAX_OUTPUT_LINE_CHARS and "|" not in ln
+                and len(ln.split()) >= PROSE_MIN_TOKENS):  # 산문 줄만 (표 행은 보존)
+            omitted = len(ln) - TRUNC_KEEP_CHARS
+            ln = ln[:TRUNC_KEEP_CHARS].rstrip() + f" …(뒤 {omitted}자 생략)"
+        out.append(ln)
+    return out
 
 MAX_OUTPUT_LINES = 40
 MAX_OUTPUT_CHARS = 2000
@@ -154,10 +195,36 @@ def _strip_header_emoji(md: str) -> str:
 # 전자책 작성 규칙([wikidocs 전자책 작성시 주의할 점](https://wikidocs.net/198723)) 방어용 패턴
 HR_LINE_RE = re.compile(r"^\s*(-{3,}|\*{3,}|_{3,})\s*$")
 H1_LINE_RE = re.compile(r"^#\s+(.*)$")
+HEADING_RE = re.compile(r"^#{1,6}\s")  # [2] 모든 헤딩 (위아래 빈 줄 보장용)
+WIN_PATH_RE = re.compile(r"[A-Za-z]:\\[\w.\\-]+")   # [W1] 진짜 윈도우 경로 (LaTeX \, 등 제외)
+CODE_MATH_RE = re.compile(r"`[^`]*`|\$[^$]+\$")     # 인라인 코드/수식 (경로 방어 시 마스킹)
 RAW_HTML_RE = re.compile(r"</?[a-zA-Z][a-zA-Z0-9]*(?:\s[^<>]*)?/?>")
 EXT_IMG_RE = re.compile(r"!\[[^\]]*\]\((https?://[^)\s]+)")
 INLINE_CODE_RE = re.compile(r"`[^`]*`")
 FOOTNOTE_RE = re.compile(r"\[\^([^\]]+)\]")
+
+
+def _wrap_win_paths(ln: str, stats: dict) -> str:
+    """코드/수식 밖의 진짜 윈도우 경로(C:\\...)를 인라인 코드로 감싼다 (W1).
+    LaTeX 수식 속 `i:\\,` 류는 코드/수식 마스킹으로 건너뛴다."""
+    spans: list[str] = []
+
+    def _stash(m):
+        spans.append(m.group(0))
+        return f"\x00{len(spans) - 1}\x00"
+
+    masked = CODE_MATH_RE.sub(_stash, ln)
+    cnt = [0]
+
+    def _wrap(m):
+        cnt[0] += 1
+        return f"`{m.group(0)}`"
+
+    masked = WIN_PATH_RE.sub(_wrap, masked)
+    if not cnt[0]:
+        return ln
+    stats["win_paths"] += cnt[0]
+    return re.sub(r"\x00(\d+)\x00", lambda m: spans[int(m.group(1))], masked)
 
 
 def _sanitize_md_cell(md: str, stem: str, stats: dict) -> str:
@@ -170,7 +237,13 @@ def _sanitize_md_cell(md: str, stem: str, stats: dict) -> str:
     """
     out: list[str] = []
     fence = False
+    pending_blank = False  # 직전이 헤딩 → 다음 비공백 줄 앞 빈 줄 보장 [2]
     for ln in md.split("\n"):
+        if pending_blank:  # [2] 헤딩 아래 빈 줄 (이미 빈 줄이면 중복 삽입 안 함)
+            if ln.strip() != "":
+                out.append("")
+                stats["heading_blanks"] += 1
+            pending_blank = False
         if ln.lstrip().startswith("```"):
             fence = not fence
             out.append(ln)
@@ -185,6 +258,13 @@ def _sanitize_md_cell(md: str, stem: str, stats: dict) -> str:
         if m:
             stats["h1_demoted"] += 1
             ln = "## " + m.group(1)
+        if HEADING_RE.match(ln):  # [2] 헤딩 위 빈 줄 + 아래 빈 줄 예약
+            if out and out[-1].strip() != "":
+                out.append("")
+                stats["heading_blanks"] += 1
+            pending_blank = True
+        if ":\\" in ln:  # [W1] 코드/수식 밖 윈도우 경로 → 인라인 코드
+            ln = _wrap_win_paths(ln, stats)
         if "[^" in ln:
             new = FOOTNOTE_RE.sub(lambda x: f"[^{stem}-{x.group(1)}]", ln)
             if new != ln:
@@ -197,18 +277,21 @@ def _sanitize_md_cell(md: str, stem: str, stats: dict) -> str:
     return "\n".join(out)
 
 
-def _clean_text_output(text: str) -> str:
+def _clean_text_output(text: str, truncate: bool = True) -> str:
     text = ANSI_RE.sub("", text)
     lines = [seg.split("\r")[-1] for seg in text.split("\n")]
     lines = [
         ln for ln in lines
         if not any(p in ln for p in SKIP_PATTERNS)
         and not ln.strip().startswith("from .autonotebook import tqdm")
+        and not TQDM_BAR_RE.search(ln)
     ]
     while lines and not lines[0].strip():
         lines.pop(0)
     while lines and not lines[-1].strip():
         lines.pop()
+    if truncate:
+        lines = _truncate_long_lines(lines)
     if len(lines) > MAX_OUTPUT_LINES:
         lines = lines[: MAX_OUTPUT_LINES - 1] + [
             f"... (출력 {len(lines) - MAX_OUTPUT_LINES + 1}줄 생략) ..."
@@ -383,7 +466,7 @@ def _synthetic_block(source: str, style: str = DEFAULT_OUTPUT_STYLE) -> str:
 
 
 def _render_outputs(cell: dict, assets_dir: Path | None, stem: str, counter: list[int],
-                    style: str = DEFAULT_OUTPUT_STYLE) -> str:
+                    style: str = DEFAULT_OUTPUT_STYLE, truncate: bool = True) -> str:
     """실행 결과를 코드와 구분되는 **색깔 박스**(HTML <pre>)로 렌더링.
 
     WikiDocs에서 출력 펜스가 코드 펜스와 같은 회색 박스로 보여 헷갈리던 문제를 해결한다.
@@ -394,7 +477,7 @@ def _render_outputs(cell: dict, assets_dir: Path | None, stem: str, counter: lis
     for out in cell.get("outputs", []):
         otype = out.get("output_type")
         if otype == "stream":
-            text = _clean_text_output("".join(out.get("text", [])))
+            text = _clean_text_output("".join(out.get("text", [])), truncate)
             if text.strip():
                 items.append(("text", text))
         elif otype in ("execute_result", "display_data"):
@@ -411,7 +494,7 @@ def _render_outputs(cell: dict, assets_dir: Path | None, stem: str, counter: lis
                 continue
             text = data.get("text/plain")
             if text:
-                text = _clean_text_output("".join(text) if isinstance(text, list) else str(text))
+                text = _clean_text_output("".join(text) if isinstance(text, list) else str(text), truncate)
                 if text.strip():
                     items.append(("text", text))
                 continue
@@ -424,7 +507,7 @@ def _render_outputs(cell: dict, assets_dir: Path | None, stem: str, counter: lis
         elif otype == "error":
             tb = out.get("traceback", [])
             if tb:
-                text = _clean_text_output("\n".join(str(l) for l in tb[-8:]))
+                text = _clean_text_output("\n".join(str(l) for l in tb[-8:]), truncate)
             else:
                 text = f"{out.get('ename', 'Error')}: {out.get('evalue', '')}"
             if text.strip():
@@ -489,9 +572,10 @@ def convert(nb: dict, num: int, slug: str, title: str,
             pages_dir: Path, assets_dir: Path | None,
             style: str = DEFAULT_OUTPUT_STYLE) -> tuple[list[tuple[str, str]], dict]:
     stem = f"{num:02d}-{slug}"
+    truncate = f"{num:02d}_{slug}" not in NO_TRUNCATE_CHAPTERS  # 토큰화 챕터는 원본 길이 유지
     img_counter = [0]
     stats = {"code_cells": 0, "code_with_output": 0, "synthetic": 0, "images": 0,
-             "hr_removed": 0, "h1_demoted": 0, "footnotes": 0,
+             "hr_removed": 0, "h1_demoted": 0, "footnotes": 0, "heading_blanks": 0, "win_paths": 0,
              "html_warn": [], "extimg_warn": []}
 
     groups: dict[str, list[str]] = {
@@ -528,7 +612,7 @@ def convert(nb: dict, num: int, slug: str, title: str,
                 continue
             stats["code_cells"] += 1
             block = "```python\n" + code + "\n```"
-            outs = _render_outputs(cell, assets_dir, stem, img_counter, style)
+            outs = _render_outputs(cell, assets_dir, stem, img_counter, style, truncate)
             if outs:
                 stats["code_with_output"] += 1  # 실제 실행 결과 (executed/ 또는 --execute)
             else:
@@ -767,6 +851,10 @@ def main() -> None:
                 fixes.append(f"H1→H2 {stats['h1_demoted']}")
             if stats["footnotes"]:
                 fixes.append(f"각주 {stats['footnotes']} 유니크화")
+            if stats.get("heading_blanks"):
+                fixes.append(f"헤딩 빈 줄 {stats['heading_blanks']}")
+            if stats.get("win_paths"):
+                fixes.append(f"윈도우 경로 {stats['win_paths']} 코드화")
             if fixes:
                 print("     방어(전자책 규칙):", " / ".join(fixes))
             if stats["html_warn"]:
