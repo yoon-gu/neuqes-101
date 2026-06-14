@@ -34,7 +34,7 @@ disable-model-invocation: true
 **이 러너 실행은 사람이 한다 — Claude(스킬)가 대신 돌리지 않는다.**
 
 - **멱등·재개**: clean 노트북 해시를 실행본에 도장 → 안 바뀐 챕터는 skip, 세션이 끊겨도 이어 채운다. 챕터별·총 소요시간 출력.
-- **repo-agnostic**: 설정 셀 `REPO`에 본인 fork만 지정(원본 push 권한 불필요). PAT은 `getpass`(미저장). 러너 생성기 `scripts/make_colab_runner.py`.
+- **repo-agnostic**: 설정 셀 `REPO`에 본인 fork만 지정(원본 push 권한 불필요). PAT은 `getpass`(미저장).
 
 **변환 전 반드시 확인**: 변환할 챕터의 `executed/<폴더>.ipynb` 가 있는지 먼저 본다.
 **없으면 합성으로 조용히 넘어가지 말고, 사용자에게 알리고 멈춘다** — `executed/README.md` 를 참고해

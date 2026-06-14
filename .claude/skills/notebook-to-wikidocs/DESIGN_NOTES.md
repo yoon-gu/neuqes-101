@@ -320,7 +320,7 @@ Colab T4에서 여는 단일 러너 노트북 (레포에 체크인, GitHub→Col
 - **A. Colab에서 직접 git push (채택)** — 러너가 PAT(getpass 입력, 저장 안 함)로 `executed/`만 커밋·푸시.
   본인 포크라 blast radius 작음. 전 챕터 자동화에 최적. push URL `https://<token>@github.com/...`.
 - (기각) B. zip 다운로드 → 로컬 커밋 — 토큰 불필요하나 세션마다 수동 한 단계.
-- 구현: 러너 노트북 `executed/run_on_colab.ipynb` (생성기 `scripts/make_colab_runner.py`).
+- 구현: 러너 노트북 `executed/run_on_colab.ipynb`.
   소스 해시를 executed 메타데이터(`executed_from.source_sha256`)에 심어 멱등/재개. 대상 `all|gpu|stale|리스트`.
 
 ### 8-4. 결정론 / 신뢰성 메모

@@ -33,8 +33,6 @@ WikiDocs 변환 시 **코드의 실제 실행 결과**(표·로그·그림)를 �
 - **멱등·재개**: clean 노트북 해시를 executed 메타데이터에 심어, 안 바뀐 챕터는 건너뜁니다.
   Colab 세션 한계(아이들·~12h) 때문에 **여러 번 나눠 돌려도 이어집니다.**
 - 푸시에는 `contents:write` 권한의 GitHub PAT 가 필요(getpass 입력, 저장 안 됨).
-- 러너는 생성기로 다시 만들 수 있습니다:
-  `python3 .claude/skills/notebook-to-wikidocs/scripts/make_colab_runner.py`
 
 ### B. 수동 1챕터 (가끔 한 챕터만)
 
