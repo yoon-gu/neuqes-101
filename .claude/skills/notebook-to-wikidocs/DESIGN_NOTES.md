@@ -337,8 +337,65 @@ Colab T4에서 여는 단일 러너 노트북 (레포에 체크인, GitHub→Col
 - **남은 실행분: 16~32**(한국어/사전학습/SFT/DPO/GRPO/diffusion). `TARGET="stale"` 로 이어서 채우면 됨.
 - 다음: executed/ 가 채워진 **01~15 페이지를 실제 결과(`▶ 실행 결과`)로 재생성** + 린터 통과 + TOC 갱신(고민 7-9 후속).
 
+### 8-6. CLI 러너 `executed/run_via_cli.sh` 추가 (2026-06-15, upstream 제안 반영)
+계기: upstream(yoongu) 디스코드 공유 — [`googlecolab/google-colab-cli`](https://github.com/googlecolab/google-colab-cli)
+("구글 코랩 매번 손으로 실행하는걸 없앨 수 있을 것 같아요"). §8-1 노트북 러너는 브라우저에서
+"모두 실행"을 손으로 눌러야 하는데, CLI 로 그 단계를 없앨 수 있는지 검토 → 채택(폴백 유지).
+
+- **무료 T4 실측(2026-06-15)**: 무료 Colab 계정에서 `colab new --gpu T4` → READY, `torch.cuda.is_available()==True`(Tesla T4).
+  결제·compute-unit 요구 없음. CLI 문서 `docs/demos.md` 는 "GPU 프로비저닝은 계정 quota 게이팅, 대부분 안 됨"이라
+  보수적으로 적었으나 실계정에선 됨. 단 **무료 GPU 가용성·일일 한도**가 있어 *항상* 보장은 아님 → A(브라우저)를 폴백으로 유지.
+- **구조**: VM 위 `colab_cli_exec.py`(§8-1 노트북과 동일 실행 로직 — 해시 멱등·`executed_from` 도장·챕터별 소요시간) +
+  로컬 래퍼 `run_via_cli.sh`. `colab run --keep` 로 VM 할당→실행, `colab download` 로 결과 회수, `trap` 으로 VM 자동 종료.
+- **§8-3 B 의 부활**: 결정 #8 에서 기각했던 "다운로드→로컬 커밋"(B)을 CLI 가 자동화하니 **PAT 불필요**가 장점이 됨.
+  A(노트북, PAT push)와 C(CLI, download→로컬 커밋)는 산출물·실행 로직 동일, 회수 방식만 다름.
+- **인증 함정(실측)**: 이 CLI 는 토큰 refresh 때 6개 스코프 전체(openid/profile/email/cloud-platform/colaboratory/drive.file)를
+  재요구 → Colab 하나만 허가하면 첫 실행은 되나 다음에 `invalid_scope`. 동의 화면 **"모두 선택"** 필요.
+  `OAUTHLIB_RELAX_TOKEN_SCOPE=1` 은 최초 파싱만 풀 뿐 refresh 는 못 고침. 깨진 토큰은 `rm ~/.config/colab-cli/token.json`.
+- **제약**: CLI 는 macOS/Linux 전용(Windows 미지원) — 단 실행은 유지보수자 작업이라 학습자 영향 없음.
+
+### 8-7. 전 챕터 CLI 실행 실측 — 한계와 버그 3건 (2026-06-16)
+01~32 전체를 CLI(FORCE)로 돌려보며 발견·수정한 것들. **결론: CLI 경로는 가벼운~중간 챕터엔 잘 되나, 무료 티어의 VM 수명 한계로 무거운 챕터는 못 끝낸다.**
+
+- **사실 ⓪: `colab exec -f <노트북>` 은 출력 노트북을 만들지 않는다.** (upstream 이슈 #17 의 핵심 가정 정정)
+  exec 은 실행만 하고 stdout 을 스트리밍할 뿐 — 출력이 임베드된 `*_output.ipynb` 를 생성하지 않는다(이미지는 `--output-image` 로만).
+  게다가 `run_on_colab.ipynb` 는 getpass·설정 셀이 있는 대화형이라 비대화형 exec 에선 멈춘다. → "노트북을 exec 로 돌려 executed 를 얻는다"는 불가.
+  그래서 **VM 위 `nbclient` 로 챕터를 실행해 출력을 임베드 + `colab download` 회수**(`colab_cli_exec.py`)가 본질적으로 필요했다.
+- **버그 ①: `colab download` 가 `.ipynb` 를 깨뜨림.** colab-cli 의 download(contents.py)는 Jupyter Contents API 를 쓰는데,
+  `.ipynb` 는 API 가 **파싱된 dict**(`format:json`)로 돌려준다. CLI 는 base64 가 아니면 `str(content)` 로 저장 → **Python repr**(작은따옴표)
+  이 되어 JSON 파싱 불가. → **회피: VM 에서 노트북을 base64 사본(`*.ipynb.b64`)으로 떨궈 받아 로컬에서 무손실 디코드.**
+  (평문·base64 만 무손실. manifest 같은 `.txt` 는 멀쩡.)
+- **한계 ②: 무료 CLI 세션 ~11분 수명 캡.** 한 VM 을 `colab new` 후 `colab exec` 로 여러 챕터를 순차 실행하면
+  **두 번 모두 정확히 ~11분 만에** `Connection lost`로 세션이 끊겼다(일일 한도 아님 — 분 단위, 재로그인해도 동일).
+  → **한 VM 재사용 포기, 챕터마다 새 VM**(`colab run` per chapter, 각자 신선한 11분 예산). 클론은 `--depth 1`.
+- **버그 ③: 죽은 VM 에서 10시간 hang.** 실행기가 nbclient **자식 커널**로 챕터를 돌려 부모(run 커널)는 무출력 →
+  `colab run --timeout 36000` 이 "죽은 세션"과 "조용히 일하는 중"을 구분 못 해, VM 이 11분에 죽어도 **10h 비활성 타임아웃까지 대기**(ch25 에서 40분+ 멈춤).
+  → **수정: 실행기에 하트비트(20초마다 1줄) + `--timeout` 을 120초로.** 정상 챕터는 하트비트로 안 끊기고, VM 이 죽으면 출력이 멈춰 2분 내 빠르게 실패.
+- **최종 실측(2026-06-16)**: **30/32 CLI 성공** — 25·27 제외 전부. GPU 학습 챕터 다수 포함(07 BERT, 20 en_bert_pretrain,
+  22 ko_bert_pretrain, 24 gpt_tinystories, 26 ko_tiny_gpt, 28 SFT, 30 DPO, 31 GRPO, 32 diffusion). 전수 검증: 유효 JSON·status=ok·err 0.
+- **CLI 로 못 끝낸 챕터는 단 2개** — 사용자 제공 코랩 실측 소요시간상 단일 실행이 11분 캡을 넘는 것:
+  **25 gpt2_continual_pretrain(21분 6초), 27 ko_gpt2_continual_pretrain(18분 54초).** → **`git show origin/master:executed/<…> > …` 로 충당**(동일 포맷, runtime=colab-t4). 변환 테스트엔 지장 없음.
+  (참고 소요시간: 가장 무거운 합격 챕터도 28 SFT 3:20·30 DPO 3:30·24 GPT 3:29 수준 — 25·27만 두 자릿수 분.)
+- **`Connection was lost` 일시 드롭**: 17·20·26·29 가 첫 시도엔 이 에러로 미완 → **재시도 1회로 전부 성공**. 무료 Colab 웹소켓 플레이크라 캡 초과와 구분해 **재시도로 처리**(hang 방지책 덕에 빠르게 실패하고 넘어가므로 재시도 비용 작음).
+- **함의(중간 결론, §8-8에서 정정됨)**: 위 시점엔 11분 캡을 무료 T4의 본질적 한계로 봤으나, **사실은 colab-cli 버그였다 → §8-8 참조.**
+
+### 8-8. ★정정★ "11분 캡"의 정체 = colab-cli keep-alive 버그(issue #14) (2026-06-16)
+계기: 25·27을 정말 CLI 로 못 돌리는지 커밋 전 재확인. **단일 새 VM 에서 ch25 를 직접 끝까지 돌려본 적이 없었음**(여태 OVER_CAP 으로 스킵만).
+
+- **생존 테스트**: ch25 를 돌리고 stop 하지 않은 채 VM 상태를 폴링 → **VM 이 ~10분33초에 DEAD**(connection 만 끊긴 게 아니라 실제 회수). keep-alive 데몬(60s ping)도 못 막음.
+- **문서에서 원인 발견**: `colab-cli/docs/01_session_management.md`(표준 idle timeout ~90분) + `AGENTS.md`/issue #14 — 옛 keep-alive RPC(`colab.pa.googleapis.com/.../KeepAliveAssignment`)는 **일반 계정에 403 `USER_PROJECT_DENIED`** → 세션이 **몇 분 내 idle-prune**. **2026-06-15 TFE 터널 핑(`GET /tun/m/<endpoint>/keep-alive/`, `X-Colab-Tunnel`)으로 수정**. 그런데 설치본 **v0.5.11**(PyPI/최신 태그)은 옛 RPC 그대로 — 데몬이 연속 4xx 로 루프 중단 → VM 이 ~11분에 prune. **우리가 본 캡과 정확히 일치.**
+- **수정 후 실증**: `uv tool install git+.../google-colab-cli`(main, v0.5.12.dev2, TFE 핑) 로 교체 후 ch25 재실행 → **VM 이 24분 생존, 완주**(`status=ok`, elapsed 1437s, 마지막 하트비트 1420s). ch27(19분)도 동일(※ 1회는 로컬 DNS 블립으로 즉시 실패 — 캡 무관 — 재시도로 완주).
+- **결론**: **11분 캡은 무료 T4 한계가 아니라 v0.5.11 의 keep-alive 버그.** issue #14 수정본부터 **전 32챕터 CLI 완주 가능** → `OVER_CAP` 기본값을 **빈 값**으로(옛 버전용 안전장치로만 유지), 설치 안내를 **git main(수정본)** 으로 변경(README/SKILL/run_via_cli.sh). 무료 표준 idle timeout 은 ~90분.
+- **클린 재현(2026-06-16)**: 전 챕터 드라이버를 레포 파일로 정리(하드코드 제거·`REPO` env·챕터 폴더 스캔·`OVER_CAP` env·**일시 드롭 1회 자동 재시도**)하고 **초기화 후 단일 패스** 실행 → **30/32 전부 status=ok, 실패 0건**(retry-once 로 이전의 17·20·26·29 수동 재시도 불필요해짐), 25·27 만 캡 스킵→master 충당. 소요 **1시간 8분**(per-chapter 새 VM).
+- **도구 통합(2026-06-16)**: `run_all_via_cli.sh` 와 `run_via_cli.sh` 를 **`run_via_cli.sh` 하나로 병합** — 인자 없으면 전 챕터, `7 24` 처럼 주면 그 챕터만(per-chapter 새 VM·재시도·resume·OVER_CAP 전체모드 한정). `executed/` colab-cli 도구 **2종 확정**: `run_via_cli.sh`(오케스트레이터)·`colab_cli_exec.py`(VM 실행기).
+
 ## 9. 진행 로그
 
+- 2026-06-16 ★정정★ "11분 캡"=colab-cli keep-alive 버그(issue #14) 규명(§8-8) — v0.5.11 옛 RPC가 일반계정 403→VM ~11분 prune. main(v0.5.12.dev2, TFE 핑)으로 교체 후 ch25 24분 완주·ch27도 완주 → **전 32챕터 CLI 가능**. OVER_CAP 기본 빈 값, 설치 안내 git main 으로.
+- 2026-06-16 전 챕터 드라이버 일반화 + 초기화 후 **단일 패스 30/32 ok·0실패**로 검증(§8-7, retry-once 로 일시 드롭 자동 복구). 이후 `run_all_via_cli.sh`+`run_via_cli.sh` 를 **`run_via_cli.sh` 하나로 병합**(인자 없으면 전체, `7 24` 면 해당 챕터) → 도구 2종(`run_via_cli.sh`·`colab_cli_exec.py`). README/SKILL 갱신.
+- 2026-06-16 upstream 이슈 #17(colab-cli 로 executed 자동화) 검토 — 작업이 이미 충족. 이슈의 가정 `exec -f → *_output.ipynb` 는 성립 안 함(exec 은 출력 노트북 미생성)을 README/§8-7 에 명시. 그래서 nbclient+download 방식이 필연.
+- 2026-06-16 전 챕터 CLI 실행 실측(§8-7) — **30/32 CLI 성공**(GPU 학습 SFT·DPO·GRPO·diffusion 포함), 캡 초과 25·27만 master 실행본으로 충당 → **executed/ 32개 전수 유효(status=ok·err0)**. 버그 3건 수정: `colab download` 의 `.ipynb`→repr 깨짐(base64 사본 회피), 무료 세션 ~11분 캡(챕터별 새 VM 전환), 죽은 VM 10h hang(하트비트+`--timeout 120`). 일시 드롭(17·20·26·29)은 재시도 1회로 해결.
+- 2026-06-15 CLI 러너 `executed/run_via_cli.sh` + VM 실행기 `executed/colab_cli_exec.py` 추가(§8-6) — upstream 의 `google-colab-cli` 제안 반영. 무료 계정 T4 실측 확인 후 채택, 브라우저 러너는 폴백 유지. README/SKILL ① 에 CLI 경로(A/C) 병기.
 - 2026-06-14 executed 16~32 실행·push 완료(사용자, Colab 러너) → **01~32 전 챕터 실행본 확보**(§8-5 후속).
 - 2026-06-14 executed 01~32 전수 변환·린트로 잡은 보강을 변환기/린터에 반영: **헤딩 위아래 빈 줄 자동 삽입**(E2, ch29 8건 해소) + **트렁케이트 opt-out 에 22 추가**(한국어 토큰화 보존) + 노이즈 필터에 `generation_config` 보일러플레이트 추가 + **윈도우 경로 방어**(변환기는 진짜 `C:\` 경로만 인라인코드, 린터 W1은 LaTeX 수식 제외해 `i:\,` 오탐 제거). 재검 전 32챕터 **위반 0·경고 0**.
 - 2026-06-14 upstream(yoon-gu) PR 준비 — upstream/master 기준 깨끗한 브랜치 `feat/notebook-to-wikidocs` 에 항목별 커밋(러너 / 변환기·린터 / 보강 / 스킬). 러너 **repo-agnostic 화**(`REPO`=본인 fork)·챕터별 소요시간·Colab 배지 추가. `198723` 언급을 [wikidocs 전자책 작성시 주의할 점](https://wikidocs.net/198723) 링크로 통일.

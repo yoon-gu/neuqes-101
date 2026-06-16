@@ -29,16 +29,21 @@ disable-model-invocation: true
 
 ### ① 실행 결과 확보 — `executed/<폴더>.ipynb`
 
-챕터의 진짜 출력은 **Colab에서 실행해야** 나온다. 러너 **`executed/run_on_colab.ipynb` 를 Colab T4에서 열어**
-대상 챕터를 끝까지 실행 → 출력 포함 `executed/<폴더>.ipynb` 를 **본인 fork**로 커밋·푸시한다.
-**이 러너 실행은 사람이 한다 — Claude(스킬)가 대신 돌리지 않는다.**
+챕터의 진짜 출력은 **Colab에서 실행해야** 나온다. **colab-cli 를 먼저 쓴다(권장).** 두 경로 모두 출력 포함
+`executed/<폴더>.ipynb` 를 만들고, 같은 실행 로직(해시 멱등·`executed_from` 도장)을 공유한다.
+
+- **C. colab-cli (1순위·권장)** — [`google-colab-cli`](https://github.com/googlecolab/google-colab-cli)로 **터미널에서** VM 할당→실행→`colab download` 회수. 결과를 로컬로 받아 **PAT 불필요**, 브라우저를 안 열어도 되고 **인증만 1회 해두면 스킬/에이전트가 직접 실행**할 수 있다.
+  - `./executed/run_via_cli.sh` — **인자 없으면 전 챕터**, **`7 24` 처럼 주면 그 챕터만**(REPO 는 git origin 에서 자동 인식). 챕터별 새 VM·일시드롭 1회 재시도·resume(이미 ok 면 skip, `FORCE=1` 로 무시).
+  - **사전 1회**: `uv tool install "git+https://github.com/googlecolab/google-colab-cli"`(issue #14 keep-alive 수정본 — PyPI v0.5.11 이하는 VM 이 ~11분에 idle-prune 돼 무거운 챕터 실패) + `colab --auth=oauth2 whoami`(동의화면 "모두 선택"). **과금 방지로 결제수단 없는 무료 계정** 권장. 자세한 건 `executed/README.md`.
+  - 수정본 기준 **전 32챕터 완주**(25·24분, 27·19분 포함, 실측). 무료 T4 표준 idle timeout 은 ~90분.
+- **A. 브라우저 러너 `executed/run_on_colab.ipynb` (폴백)** — **다음 경우에만**: ⓐ Windows(colab-cli 미지원), ⓑ CLI 인증을 못 쓰는 상황, ⓒ (구버전 colab-cli 사용 등으로) 무거운 챕터가 11분 캡에 막힐 때. Colab T4에서 열어 실행 → **본인 fork**로 커밋·푸시(PAT은 `getpass`, 미저장). 이 경로는 **사람이 직접** 한다.
 
 - **멱등·재개**: clean 노트북 해시를 실행본에 도장 → 안 바뀐 챕터는 skip, 세션이 끊겨도 이어 채운다. 챕터별·총 소요시간 출력.
-- **repo-agnostic**: 설정 셀 `REPO`에 본인 fork만 지정(원본 push 권한 불필요). PAT은 `getpass`(미저장).
+- **repo-agnostic**: VM 에서 clone 만 하므로 REPO 는 git origin 에서 자동 인식(원본 push 권한 불필요).
 
 **변환 전 반드시 확인**: 변환할 챕터의 `executed/<폴더>.ipynb` 가 있는지 먼저 본다.
-**없으면 합성으로 조용히 넘어가지 말고, 사용자에게 알리고 멈춘다** — `executed/README.md` 를 참고해
-**먼저 Colab에서 러너로 실행해 `executed/<폴더>.ipynb` 를 `executed/` 아래에 만들어 두라**고 안내한다.
+**없으면 합성으로 조용히 넘어가지 말고**, 먼저 **C(colab-cli)** 로 실행해 `executed/<폴더>.ipynb` 를 만든다
+(macOS/Linux·인증돼 있으면 스킬이 직접 실행 가능). CLI 를 못 쓰면 **A(브라우저 러너)** 로 사람이 실행하도록 안내하고 멈춘다.
 
 ### ② 변환 — `scripts/build_wikidocs.py`
 
