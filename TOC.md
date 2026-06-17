@@ -76,3 +76,7 @@
   * [19-2. 해부 — 같은 문장을 4 토크나이저로 비교](pages/19-tokenizer_training-anatomy.md)
   * [19-3. 변형 — vocab 크기 sweep](pages/19-tokenizer_training-variation.md)
   * [19-4. 정리와 FAQ](pages/19-tokenizer_training-wrapup.md)
+* [20. 작은 BERT 사전학습 (English MLM Pretraining)](pages/20-en_bert_pretrain.md)
+  * [20-1. 실습](pages/20-en_bert_pretrain-practice.md)
+  * [20-2. 변형 — 학습 step 더 늘리거나 block_size 변경](pages/20-en_bert_pretrain-variation.md)
+  * [20-3. 정리와 FAQ](pages/20-en_bert_pretrain-wrapup.md)
