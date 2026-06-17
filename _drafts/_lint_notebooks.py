@@ -38,11 +38,13 @@ SKIP_DIRS = {"_drafts", "book", ".git", "__pycache__"}
 
 def neutralize_magics(src: str) -> str:
     """Replace lines starting with `!` or `%` with `pass`-comments so AST/pyflakes
-    don't choke on Jupyter magics."""
+    don't choke on Jupyter magics. Also neutralizes the de-sugared form
+    `get_ipython().system(...)` / `.run_line_magic(...)` that executed notebooks
+    save, which would otherwise read as an undefined name."""
     out = []
     for line in src.split("\n"):
         stripped = line.lstrip()
-        if stripped.startswith("!") or stripped.startswith("%"):
+        if stripped.startswith("!") or stripped.startswith("%") or "get_ipython(" in stripped:
             indent = line[: len(line) - len(stripped)]
             out.append(f"{indent}pass  # {stripped}")
         else:
