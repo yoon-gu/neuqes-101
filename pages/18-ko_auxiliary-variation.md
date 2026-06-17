@@ -1,0 +1,67 @@
+§8 은 λ=0 vs λ=0.1 두 점만 비교했습니다. λ 를 *그리드* 로 돌리면 *어떤 λ 가 메인 task 에 가장 도움이 되는지* 알 수 있습니다 — 운영 시 실제 grid search 패턴.
+
+이 셀은 학습 시간이 약 10분씩 늘어 *선택 사항* — 시간 여유 있을 때만 실행. (또는 λ 한두 점만 추가해서 빠르게.)
+
+```python
+# 시간 여유 있을 때만 실행 — 각 lambda 마다 처음부터 다시 학습
+LAMBDA_GRID = [0.0, 0.1, 1.0]   # 빠르게 보고 싶으면 [0.0, 0.1] 만
+RUN_LAMBDA_SWEEP = False        # ← True 로 바꿔 실행
+
+sweep_results = []
+
+if RUN_LAMBDA_SWEEP:
+    for lam in LAMBDA_GRID:
+        print(f"\n{'='*60}")
+        print(f"Training with lambda_aux = {lam}")
+        print(f"{'='*60}")
+        m = make_model()
+        args = TrainingArguments(
+            output_dir=f"./ch18_sweep_lam{lam}",
+            num_train_epochs=2,
+            per_device_train_batch_size=16,
+            per_device_eval_batch_size=32,
+            learning_rate=2e-5,
+            fp16=True,
+            eval_strategy="no",
+            logging_steps=200,
+            save_strategy="no",
+            report_to="none",
+            seed=SEED,
+            remove_unused_columns=False,
+        )
+        tr = AuxTrainer(
+            model=m, args=args,
+            train_dataset=train_tok, eval_dataset=eval_tok,
+            data_collator=collator, processing_class=tokenizer,
+            compute_metrics=compute_metrics_main, lambda_aux=lam,
+        )
+        tr.train()
+        ev = tr.evaluate()
+        sweep_results.append({
+            "lambda": lam,
+            "macro_f1": float(ev.get("eval_macro_f1", float("nan"))),
+            "micro_f1": float(ev.get("eval_micro_f1", float("nan"))),
+            "macro_auc": float(ev.get("eval_macro_auc", float("nan"))),
+        })
+        del m, tr
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+    sweep_df = pd.DataFrame(sweep_results)
+    print("\nLambda sweep result:")
+    print(sweep_df.round(4).to_string(index=False))
+else:
+    print("Lambda sweep skipped. Set RUN_LAMBDA_SWEEP=True to run (~30 min extra on T4).")
+```
+
+**▶ 실행 결과**
+
+```text
+Lambda sweep skipped. Set RUN_LAMBDA_SWEEP=True to run (~30 min extra on T4).
+```
+
+**해석 가이드 — 결과를 직접 보면**
+
+- macro_f1 이 λ=0.1 에서 최대 → 가벼운 보조 가중치가 정규화 효과로 메인 도움.
+- macro_f1 이 λ=1.0 에서 최대 → 보조 신호가 충분히 강해 둘 다 학습.
+- macro_f1 이 λ=0 에서 최대 (baseline 이 가장 좋음) → 보조 task 가 이 셋업에선 도움 안 됨. quick 모드 노이즈일 수 있어 시드 바꿔 재실행 권장.
