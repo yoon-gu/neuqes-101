@@ -10,3 +10,8 @@
   * [02-2. 해부: "출력은 그냥 숫자다"](pages/02-sklearn_regression-anatomy.md)
   * [02-3. 변형: 별점을 [0, 1]로 정규화](pages/02-sklearn_regression-variation.md)
   * [02-4. 정리와 FAQ](pages/02-sklearn_regression-wrapup.md)
+* [03. 이진 분류 (Binary Classification & BCE)](pages/03-sklearn_binary.md)
+  * [03-1. 실습: `LogisticRegression`으로 이진 분류](pages/03-sklearn_binary-practice.md)
+  * [03-2. 해부: sigmoid는 logit을 어떻게 확률로 바꾸나](pages/03-sklearn_binary-anatomy.md)
+  * [03-3. 변형: 임계값(threshold)을 옮기면](pages/03-sklearn_binary-variation.md)
+  * [03-4. 정리와 FAQ](pages/03-sklearn_binary-wrapup.md)
