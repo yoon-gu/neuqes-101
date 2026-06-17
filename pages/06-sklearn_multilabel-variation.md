@@ -1,0 +1,35 @@
+multi-label에서는 K개 sigmoid 출력에 대해 임계값 0.5로 자르는 게 기본입니다. 이 임계값을 옮기면 모든 라벨이 함께 반응합니다 — 임계값을 낮추면 더 많은 라벨이 활성되어 recall은 오르고 precision은 내려갑니다.
+
+(고급 트릭: 라벨마다 *별도* 임계값을 정해 검증 F1을 최대화할 수도 있음. 여기서는 하나로 통일.)
+
+```python
+thresholds = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7]
+rows = []
+for t in thresholds:
+    Y_pred_t = (proba_ml >= t).astype(int)
+    rows.append({
+        "threshold": t,
+        "subset_acc": accuracy_score(Y_test, Y_pred_t),
+        "hamming": hamming_loss(Y_test, Y_pred_t),
+        "micro_F1": f1_score(Y_test, Y_pred_t, average="micro", zero_division=0),
+        "macro_F1": f1_score(Y_test, Y_pred_t, average="macro", zero_division=0),
+    })
+df_t = pd.DataFrame(rows).round(4)
+print(df_t.to_string(index=False))
+```
+
+**▶ 실행 결과**
+
+```text
+ threshold  subset_acc  hamming  micro_F1  macro_F1
+       0.2       0.233   0.2696    0.7178    0.6984
+       0.3       0.472   0.1468    0.8135    0.7877
+       0.4       0.563   0.1136    0.8335    0.7697
+       0.5       0.493   0.1382    0.7737    0.6470
+       0.6       0.416   0.1658    0.6984    0.5129
+       0.7       0.344   0.2028    0.5947    0.3919
+```
+
+**결과 해석**
+
+임계값을 0.4로 낮추면 subset accuracy·hamming·micro F1이 모두 기본값 0.5보다 좋아집니다. recall이 낮던 드문 라벨(price·ambiance·location)을 더 적극적으로 켜주기 때문이며, multi-label에서는 0.5가 늘 최선은 아니라는 걸 보여줍니다.
