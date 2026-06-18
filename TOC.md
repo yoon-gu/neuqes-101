@@ -94,3 +94,7 @@
   * [24-1. 실습](pages/24-gpt_tinystories-practice.md)
   * [24-2. 변형 - sampling hyperparam 비교](pages/24-gpt_tinystories-variation.md)
   * [24-3. 정리와 FAQ](pages/24-gpt_tinystories-wrapup.md)
+* [25. GPT-2 계속 사전학습 (Continual Pretraining)](pages/25-gpt2_continual_pretrain.md)
+  * [25-1. 실습](pages/25-gpt2_continual_pretrain-practice.md)
+  * [25-2. 변형 — 더 많은 epoch / 다른 도메인 / catastrophic forgetting 시연](pages/25-gpt2_continual_pretrain-variation.md)
+  * [25-3. 정리와 FAQ](pages/25-gpt2_continual_pretrain-wrapup.md)
