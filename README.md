@@ -16,11 +16,24 @@ scikit-learn 한 줄로 텍스트를 숫자로 바꾸는 일에서 출발해, �
 
 텍스트 분석을 네 축으로 나눠, 한 번에 한 축씩만 움직입니다.
 
-```
-모델:       sklearn ─→ DistilBERT(영어) ─→ KLUE-BERT(한국어) ─→ 작은 BERT(워드레벨)
-태스크:     Regression ─→ Binary ─→ Multi-class ─→ Multi-label
-손실 함수:  MSELoss ─→ BCEWithLogitsLoss ─→ CrossEntropyLoss ─→ BCEWithLogitsLoss(per-label) ─→ +Auxiliary (Combined)
-토크나이저: TF-IDF ─→ WordPiece(영어) ─→ WordPiece(한국어) ─→ 워드레벨(직접) ─→ 형태소기반(직접)
+```mermaid
+flowchart TB
+    subgraph model["모델"]
+        direction LR
+        m1["sklearn"] --> m2["DistilBERT (영어)"] --> m3["KLUE-BERT (한국어)"] --> m4["작은 BERT (워드레벨)"]
+    end
+    subgraph task["태스크"]
+        direction LR
+        t1["Regression"] --> t2["Binary"] --> t3["Multi-class"] --> t4["Multi-label"]
+    end
+    subgraph loss["손실 함수"]
+        direction LR
+        l1["MSELoss"] --> l2["BCEWithLogitsLoss"] --> l3["CrossEntropyLoss"] --> l4["BCEWithLogitsLoss (per-label)"] --> l5["+Auxiliary (Combined)"]
+    end
+    subgraph tok["토크나이저"]
+        direction LR
+        k1["TF-IDF"] --> k2["WordPiece (영어)"] --> k3["WordPiece (한국어)"] --> k4["워드레벨 (직접)"] --> k5["형태소기반 (직접)"]
+    end
 ```
 
 > Auxiliary는 새 task가 아니라 기존 loss에 보조 항(예: `λ·MSE`)을 더하는 변화이므로 **손실 함수 축** 끝에 둡니다. Ch 14·18의 메인 task는 직전 장(Multi-label)과 동일합니다.
