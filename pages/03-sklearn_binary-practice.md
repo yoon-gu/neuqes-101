@@ -6,6 +6,8 @@
 !pip install -q datasets scikit-learn pandas matplotlib
 ```
 
+Yelp 리뷰 데이터셋에서 5,000건을 뽑아 데이터프레임으로 만듭니다. 원본 라벨은 0-4이므로 1을 더해 1-5점 별점으로 바꾸고, 별점별 분포를 확인합니다. 뒤에서 이 별점을 이진 라벨로 변환할 것이라 분포가 고른지 미리 살펴봅니다.
+
 ```python
 import numpy as np
 import pandas as pd
@@ -43,6 +45,8 @@ star
 Name: count, dtype: int64
 ```
 
+별점을 이진 라벨로 바꿉니다. 긍정도 부정도 아닌 3점은 빼고, 4-5점은 positive(1), 1-2점은 negative(0)로 묶습니다. 두 클래스가 얼마나 균형 잡혔는지 분포와 positive 비율을 함께 출력합니다.
+
 ```python
 # 별점 3은 애매하므로 제외, 4-5 → 1 (positive), 1-2 → 0 (negative)
 df_bin = df[df["star"] != 3].copy()
@@ -68,6 +72,8 @@ Positive rate: 49.4%
 **결과 해석**
 
 3점을 빼고 4-5점을 positive, 1-2점을 negative로 묶으니 양쪽이 49.4% 대 50.6%로 거의 반반입니다. 균형 잡힌 데이터라 뒤에서 정확도(accuracy)를 성능 지표로 그대로 신뢰할 수 있습니다.
+
+데이터를 8 대 2로 train/test로 나눕니다. `stratify`로 두 클래스 비율을 양쪽에 똑같이 유지하고, 그다음 TF-IDF로 텍스트를 숫자 벡터로 바꿉니다. 벡터화는 train에 `fit_transform`, test에는 `transform`만 써서 test 정보가 학습에 새지 않게 합니다.
 
 ```python
 X_text_train, X_text_test, y_train, y_test = train_test_split(
@@ -114,6 +120,8 @@ Test accuracy: 0.8639
 **결과 해석**
 
 같은 TF-IDF·5,000건인데 정확도가 86.4%까지 오릅니다 — Ch 2의 5단계 회귀(R² 0.22)보다 쉬운 건 문제를 "몇 점"에서 "좋다/나쁘다" 둘로 줄였기 때문입니다. 모델과 특징을 그대로 둔 채 태스크만 단순화해도 성능이 크게 달라진다는 점을 보여줍니다.
+
+0/1 예측 대신 `predict_proba`로 각 샘플의 확률을 꺼내 봅니다. 출력은 `[P(neg), P(pos)]` 두 열로 나오며, 두 확률을 더하면 항상 1이 되는지 확인합니다. 임계값을 옮겨 가며 예측을 바꿀 수 있도록 이 확률을 손에 쥐는 단계입니다.
 
 ```python
 # predict_proba는 [P(y=0), P(y=1)] 형태로 두 확률을 모두 줌

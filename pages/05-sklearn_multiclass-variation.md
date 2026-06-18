@@ -27,6 +27,8 @@
 
 핵심 차이는 **클래스가 서로 경쟁하느냐** 입니다. multinomial은 한 logit이 커지면 다른 logit의 softmax 확률이 자동으로 줄어듭니다 (분모 공유). OvR의 각 sigmoid는 다른 클래스 학습과 독립적이라 P_k 가 모두 동시에 0.8이 될 수도, 모두 0.1이 될 수도 있습니다.
 
+이제 같은 데이터에 OvR을 직접 학습시켜 두 방식의 출력을 한 샘플에서 나란히 비교합니다. 5개 binary 모델의 계수를 쌓아 raw sigmoid 확률을 손으로 계산하고, multinomial 분포·OvR raw·OvR 정규화 세 열의 합이 각각 어떻게 되는지(특히 OvR raw의 합이 1이 아닌 점)를 눈여겨보세요.
+
 ```python
 # OvR은 sklearn.multiclass.OneVsRestClassifier로 만듭니다.
 # 내부적으로 K개 binary LogisticRegression이 따로 학습되어 model_ovr.estimators_ 에 들어갑니다.
@@ -99,6 +101,8 @@ True star:    2★
 - 그러나 한 문서가 여러 라벨을 가질 수 있는 *multi-label* 문제에서는 이 가정이 깨집니다 — 영화는 "로맨스 + 코미디"일 수 있고, 식당 리뷰는 "음식 + 서비스 + 가격"을 동시에 다룰 수 있습니다.
 - multi-label은 **OvR의 사고방식을 그대로** 가져갑니다: K개 독립 sigmoid를 별도로 학습하고, **정규화하지 않습니다**. 각 라벨이 독립적으로 0/1을 결정하는 것이 그 모델의 본래 모습.
 - 그래서 OvR을 multi-class에서 미리 만나두는 게 다음 챕터의 다리가 됩니다.
+
+한 샘플을 넘어 전체 테스트 셋에서 두 방식의 정확도를 비교하고, OvR raw 확률의 행 합이 실제로 얼마나 1에서 벗어나는지 분포로 확인합니다. 정확도 차이가 0.003 수준으로 거의 같다는 점, 그리고 raw 행 합의 min/max가 1을 크게 벗어난다는 점을 함께 보세요.
 
 ```python
 # 전체 test set 정확도 비교

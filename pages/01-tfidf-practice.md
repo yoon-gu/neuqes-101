@@ -38,6 +38,8 @@ DatasetDict({
 })
 ```
 
+65만 건 전체를 그대로 쓰면 무거우니, `shuffle`로 섞은 뒤 앞에서 5,000건만 잘라 표본을 만듭니다. `seed=42`를 고정해 누가 실행해도 같은 표본이 뽑히게 합니다. 이어서 pandas `DataFrame`으로 옮겨 앞 3건을 살펴봅니다.
+
 ```python
 SAMPLE_SIZE = 5000
 ds = dataset["train"].shuffle(seed=42).select(range(SAMPLE_SIZE))
@@ -56,6 +58,8 @@ Sample count: 5000
 1      2  who really knows if this is good pho or not, i...
 2      4  I LOVE Bloom Salon... all of their stylist are...
 ```
+
+별점 분포가 한쪽으로 치우치진 않았는지 막대그래프로 확인합니다. 라벨이 0-4로 저장돼 있으니 보기 좋게 `1 star`-`5 star` 표기로 바꿔 그립니다. 표본이 원본의 균형을 잘 물려받았는지 눈여겨봅니다.
 
 ```python
 counts = df["label"].value_counts().sort_index()
@@ -84,6 +88,8 @@ Name: count, dtype: int64
 **결과 해석**
 
 5개 별점이 약 960-1027건씩 고르게 섞였습니다. `shuffle(seed=42)`로 뽑은 무작위 표본이 원본의 균형을 거의 그대로 물려받아, 뒤 챕터에서 특정 별점에 치우치지 않은 채 회귀·분류를 실험할 수 있습니다.
+
+리뷰가 보통 몇 단어 길이인지 분포를 봅니다. 공백 기준으로 단어 수를 센 뒤 `describe()`로 요약 통계를 뽑습니다. 평균과 중앙값, 최댓값의 차이를 눈여겨보면 길이가 한쪽으로 긴 분포인지 가늠할 수 있습니다.
 
 ```python
 df["len_words"] = df["text"].str.split().str.len()

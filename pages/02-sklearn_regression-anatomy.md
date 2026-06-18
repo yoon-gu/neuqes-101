@@ -4,6 +4,8 @@
 
 이게 **회귀의 본질** 입니다. 출력 범위 제약은 모델이 아니라 사람이 따로 입혀야 합니다 — clipping 같은 후처리, 혹은 sigmoid 같은 활성화 함수로요.
 
+`mean_squared_error`가 내부에서 무엇을 계산하는지 직접 손으로 재현해, 오차를 제곱해 평균 낸 값과 일치하는지 확인합니다. MSE가 마법이 아니라 "오차 제곱의 평균"일 뿐임을 두 값이 같다는 걸로 못 박으려는 것입니다.
+
 ```python
 # sklearn의 mean_squared_error가 내부에서 뭘 계산하는지 직접 재현
 manual_mse = ((y_test - y_pred_test) ** 2).mean()

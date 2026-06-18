@@ -6,6 +6,8 @@
 !pip install -q datasets scikit-learn pandas matplotlib
 ```
 
+필요한 라이브러리를 불러온 뒤 Yelp 리뷰 데이터를 5,000개만 추려 5클래스 분류용으로 준비합니다. 라벨이 0-4(별점 1-5)로 이미 5개라는 점, 그리고 각 별점이 대략 1,000개씩 고르게 분포한다는 점을 출력으로 확인하세요.
+
 ```python
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -45,6 +47,8 @@ label
 4     975
 Name: count, dtype: int64
 ```
+
+데이터를 8:2로 나눈 뒤 학습 텍스트에만 TF-IDF를 학습시켜 두 분할을 같은 어휘 공간으로 변환합니다. `stratify`로 별점 비율을 그대로 유지하고, `fit_transform`은 학습 셋에만 적용하고 테스트 셋은 `transform`만 해 정보 누수를 막는 점을 눈여겨보세요.
 
 ```python
 # 5-class 데이터 (라벨이 이미 0-4 — 별점 1-5)
@@ -94,6 +98,8 @@ Improvement over baseline: +0.3080
 **결과 해석**
 
 5클래스 정확도가 50.8%로 랜덤 추측(20%)의 2.5배입니다. Ch 3의 binary 86%보다 낮은 건 틀릴 수 있는 경우의 수가 2개에서 5개로 늘었기 때문이며, 같은 TF-IDF·모델에서 태스크 난이도만으로 점수가 갈린다는 걸 보여줍니다.
+
+정확도 한 숫자 뒤에 가려진 확률 분포를 직접 들여다봅니다. `predict_proba`로 각 샘플의 5개 별점 확률을 뽑아 `(N, 5)` 형태인지, 행마다 합이 정확히 1인지 확인하고, 처음 세 샘플의 분포를 표로 살펴보세요.
 
 ```python
 proba_5 = model_5.predict_proba(X_test)

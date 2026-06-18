@@ -6,6 +6,8 @@
 !pip install -q datasets scikit-learn pandas matplotlib
 ```
 
+필요한 라이브러리를 불러온 뒤 Yelp 리뷰 데이터를 내려받습니다. 전체를 다 쓰면 학습이 길어지므로 seed를 고정해 무작위로 5,000건만 추려 이후 실습 내내 같은 표본을 씁니다.
+
 ```python
 import warnings
 warnings.filterwarnings("ignore", category=FutureWarning)
@@ -38,6 +40,8 @@ print(f"Total samples: {len(df)}")
 ```text
 Total samples: 5000
 ```
+
+multi-label의 BCE가 라벨마다 어떻게 매겨지는지 한 샘플로 직접 분해해 봅니다. 라벨이 3개 이상 켜진 test 샘플을 골라, 5개 항목별로 정답(0/1)·예측 확률·각각의 BCE 항을 한 줄씩 출력하고 그 평균을 손실로 냅니다. 활성 라벨은 확률이 높을수록, 비활성 라벨은 낮을수록 loss가 작아지는 흐름을 눈으로 확인하세요.
 
 ```python
 # 여러 라벨이 활성된 test 샘플 하나 고르기 (분해가 잘 보이도록)
@@ -145,6 +149,8 @@ First 3 multi-hot labels:
  [0 0 0 1 0]]
 ```
 
+합성한 multi-hot 라벨이 데이터에 어떻게 분포하는지 살펴봅니다. 항목별로 켜진 비율을 구하고, 샘플당 활성 라벨 개수의 평균과 분포를 함께 출력합니다. 라벨마다 빈도가 얼마나 다른지, 한 리뷰가 여러 항목을 동시에 말하는 경우가 실제로 흔한지를 확인하세요.
+
 ```python
 print("Per-aspect activation rate (over all 5,000 samples):")
 for k, aspect in enumerate(ASPECTS):
@@ -181,6 +187,8 @@ Active label distribution:
 **결과 해석**
 
 food·service가 절반 안팎으로 흔하고 ambiance는 18%로 드물어 라벨 빈도가 크게 다릅니다. 샘플당 평균 1.75개 라벨이 켜지고 2개 이상인 경우가 절반을 넘으니, 한 리뷰가 여러 항목을 동시에 말한다는 multi-label 가정이 데이터에 실제로 나타납니다.
+
+데이터를 train/test로 8:2로 나눈 뒤, 텍스트를 TF-IDF 벡터로 바꿔 모델 입력을 준비합니다. 벡터화 기준은 train에서만 학습(`fit_transform`)하고 test에는 그대로 적용(`transform`)해 정보 누출을 막습니다. 출력되는 shape에서 Y가 `(N, 5)` 형태의 multi-hot임을 확인하세요.
 
 ```python
 X_text_train, X_text_test, Y_train, Y_test = train_test_split(

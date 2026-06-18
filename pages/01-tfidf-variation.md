@@ -21,6 +21,8 @@ print(f"shape: {X_tfidf.shape}")
 shape: (5000, 10000)
 ```
 
+첫 번째 리뷰 한 건을 골라 단순 횟수와 TF-IDF 점수를 나란히 비교합니다. 같은 문서의 `CountVectorizer` 행과 `TfidfVectorizer` 행을 꺼내 TF-IDF 점수가 높은 순으로 상위 10개 단어를 출력합니다. 횟수는 똑같이 1인 단어들이 TF-IDF에서는 점수가 갈린다는 점을 눈여겨봅니다.
+
 ```python
 doc_id = 0
 review = df["text"].iloc[doc_id]

@@ -29,6 +29,8 @@ Manual first 5:  [0.4485 0.0999 0.1638 0.6661 0.7578]
 sklearn first 5: [0.4485 0.0999 0.1638 0.6661 0.7578]
 ```
 
+이번엔 BCE(log loss)를 공식대로 직접 계산해 sklearn의 `log_loss`와 비교합니다. 정답이 1이면 $-\log(p)$, 0이면 $-\log(1-p)$를 더해 평균 내는 게 전부입니다. 둘이 정확히 일치하면 BCE가 별도의 마법이 아니라 확률에 로그를 씌운 단순한 식임이 드러납니다.
+
 ```python
 # BCE(log loss)도 직접 계산 가능
 # 정답이 1이면 -log(p), 0이면 -log(1-p)
@@ -49,6 +51,8 @@ Manual BCE:  0.383475
 sklearn BCE: 0.383475
 Diff:        0.00e+00
 ```
+
+정확도 하나로는 가려지는 클래스별 성능을 들여다봅니다. `classification_report`로 negative·positive 각각의 precision·recall·f1을 뽑고, confusion matrix로 어떤 방향으로 틀리는지(TN/FP/FN/TP)를 확인합니다. 오분류가 한쪽으로 쏠리는지를 눈여겨봅니다.
 
 ```python
 print(classification_report(y_test, y_pred, target_names=["negative", "positive"]))
