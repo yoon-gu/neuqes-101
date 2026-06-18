@@ -117,3 +117,7 @@
   * [30-1. 실습](pages/30-dpo-practice.md)
   * [30-2. 변형 — β 조정 / 더 많은 preference / DPO 변종](pages/30-dpo-variation.md)
   * [30-3. 정리와 FAQ](pages/30-dpo-wrapup.md)
+* [31. GRPO: 검증 가능한 보상으로 정렬 (Verifiable Reward)](pages/31-grpo.md)
+  * [31-1. 실습](pages/31-grpo-practice.md)
+  * [31-2. 변형 — group size / format reward / 코드 verifier / 다른 task](pages/31-grpo-variation.md)
+  * [31-3. 정리와 FAQ](pages/31-grpo-wrapup.md)
