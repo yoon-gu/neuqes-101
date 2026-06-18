@@ -1,4 +1,4 @@
-# neuqes-101
+# Hugging Face로 시작하는 텍스트 분석
 
 Hugging Face 입문 커리큘럼 (34챕터 + 부록). 모든 실습자료는 **Google Colab 노트북** 으로 제공되며, T4 GPU(16GB) 환경에서 챕터당 30분 이내에 끝까지 돌도록 설계되어 있습니다.
 
