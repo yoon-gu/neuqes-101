@@ -102,3 +102,7 @@
   * [26-1. 실습](pages/26-ko_tiny_gpt-practice.md)
   * [26-2. 변형 - sampling hyperparam / 더 큰 모델 / 더 많은 stories](pages/26-ko_tiny_gpt-variation.md)
   * [26-3. 정리와 FAQ](pages/26-ko_tiny_gpt-wrapup.md)
+* [27. KoGPT2 계속 사전학습 (Korean Continual Pretraining)](pages/27-ko_gpt2_continual_pretrain.md)
+  * [27-1. 실습](pages/27-ko_gpt2_continual_pretrain-practice.md)
+  * [27-2. 변형 — 더 많은 epoch / 다른 도메인 / catastrophic forgetting 시연](pages/27-ko_gpt2_continual_pretrain-variation.md)
+  * [27-3. 정리와 FAQ](pages/27-ko_gpt2_continual_pretrain-wrapup.md)
