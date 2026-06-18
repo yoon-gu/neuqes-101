@@ -113,3 +113,7 @@
 * [29. 분야별 벤치마크 평가 (Benchmark Evaluation)](pages/29-benchmark_eval.md)
   * [29-1. 실습](pages/29-benchmark_eval-practice.md)
   * [29-2. 정리와 FAQ](pages/29-benchmark_eval-wrapup.md)
+* [30. DPO: 사람 선호로 정렬 (Preference Alignment)](pages/30-dpo.md)
+  * [30-1. 실습](pages/30-dpo-practice.md)
+  * [30-2. 변형 — β 조정 / 더 많은 preference / DPO 변종](pages/30-dpo-variation.md)
+  * [30-3. 정리와 FAQ](pages/30-dpo-wrapup.md)
