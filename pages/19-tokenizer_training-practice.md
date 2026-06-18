@@ -61,6 +61,8 @@ CUDA available: True
 GPU:             Tesla T4
 ```
 
+영어 토크나이저를 학습할 코퍼스로 Yelp 리뷰 5,000문장을 불러옵니다. 토큰화 비교에 앞서 문장당 글자 수의 평균·중앙값·최댓값을 미리 재두어, 뒤에서 나올 영어-한국어 토큰 수 차이의 출발점을 확인합니다.
+
 ```python
 SEED = 42
 N_EN = 5000
@@ -123,6 +125,8 @@ char length stats:
 
 한국어 NSMC 리뷰는 평균 34자로 영어의 1/20 수준이라, 같은 vocab 크기로 학습해도 문장당 토큰 수가 훨씬 적게 나오는 출발점이 됩니다.
 
+토크나이저를 반복해서 학습할 수 있도록 두 개의 빌더 함수를 정의합니다. `build_wordpiece`는 정규화·pre-tokenizer·`##` subword 규칙을 갖춘 WordPiece 토크나이저를, `build_wordlevel`은 공백으로 끊은 어절을 통째로 다루는 WordLevel 토크나이저를 같은 코퍼스로 학습해 돌려줍니다. 두 알고리즘에 같은 특수 토큰과 vocab 크기(8000)를 쓰는 점을 눈여겨보세요.
+
 ```python
 SPECIAL_TOKENS = ["[PAD]", "[UNK]", "[CLS]", "[SEP]", "[MASK]"]
 VOCAB_SIZE = 8000
@@ -179,6 +183,8 @@ print("helper builders ready: build_wordpiece(), build_wordlevel()")
 helper builders ready: build_wordpiece(), build_wordlevel()
 ```
 
+앞서 만든 빌더로 영어·한국어 × WordPiece·WordLevel 조합의 토크나이저 4개를 실제로 학습합니다. 각 학습에 걸린 시간을 함께 재서, 토크나이저 학습이 모델 학습과 달리 얼마나 가벼운 작업인지 확인합니다.
+
 ```python
 # 4개 토크나이저 학습 (vocab_size=8000)
 t0 = time.time()
@@ -218,6 +224,8 @@ total time: 3.64s
 **결과 해석**
 
 5,000문장으로 4개 토크나이저를 모두 합쳐 3.64초 만에 학습했는데, 토크나이저 학습은 모델 학습과 달리 GPU 없이도 순식간에 끝나는 가벼운 통계 작업임을 보여줍니다.
+
+학습된 vocab 안에 실제로 어떤 토큰이 담겼는지 들여다봅니다. 특수 토큰이 맨 앞 id에 자리 잡았는지, 그리고 `##`로 시작하는 subword 토큰이 vocab에서 차지하는 비율을 토크나이저별로 출력해 알고리즘·언어 차이를 비교합니다.
 
 ```python
 def vocab_peek(tok, name, n=15):
@@ -265,6 +273,8 @@ vocab_peek(tok_ko_wl, "ko WordLevel")
 
 vocab 맨 앞 5개는 항상 우리가 지정한 특수 토큰이고, 한국어 WordPiece의 `##` subword 비율(41.9%)이 영어(21.7%)의 두 배에 가까운 점은 교착어인 한국어가 조사·어미를 더 잘게 쪼개 표현하기 때문입니다. WordLevel은 단어를 통째로 다루므로 `##` 토큰이 0개이고, vocab에 `영화`, `정말` 같은 NSMC 코퍼스 특유의 빈출 어절이 그대로 올라옵니다.
 
+학습에 쓰지 않은 평가용 문장 1,000건을 따로 떼어, 토크나이저가 문장을 몇 개 토큰으로 쪼개는지 측정합니다. 토크나이저별 평균·중앙값·95퍼센타일 토큰 수를 표로 정리해 알고리즘과 언어가 시퀀스 길이에 미치는 영향을 비교합니다.
+
 ```python
 N_EVAL = 1000
 eval_en = list(load_dataset("fancyzhx/yelp_polarity", split=f"train[{N_EN}:{N_EN + N_EVAL}]")["text"])
@@ -306,6 +316,8 @@ ko WordLevel        9.106            7.0       27.00
 
 WordLevel은 단어 하나를 1토큰으로 묶어 WordPiece보다 문장당 토큰 수가 항상 적지만, 이 짧은 길이는 다음에 볼 UNK 비율을 희생한 결과입니다. 한국어 토큰 수가 영어의 1/10 수준인 것은 앞서 본 문장 길이 차이가 그대로 반영된 모습입니다.
 
+방금 잰 문장당 토큰 수를 분포 곡선(KDE)으로 그립니다. 영어와 한국어를 좌우 패널로 나누고 각 패널에 WordPiece·WordLevel을 겹쳐, 표의 평균값만으로는 보이지 않던 분포 전체의 치우침을 한눈에 비교합니다.
+
 ```python
 sns.set_theme(style="whitegrid", context="talk")
 fig, axes = plt.subplots(1, 2, figsize=(14, 5), sharey=True)
@@ -338,6 +350,8 @@ plt.show()
 **결과 해석**
 
 분포 곡선으로 보면 두 언어 모두 WordPiece가 WordLevel보다 오른쪽으로 치우쳐 토큰을 더 잘게 쪼개고, 한국어는 영어보다 분포 전체가 훨씬 왼쪽(짧은 길이)에 몰려 있습니다.
+
+토큰 길이 다음으로 살펴볼 지표는 UNK 비율입니다. 평가 문장을 토큰화했을 때 전체 토큰 중 `[UNK]`가 차지하는 비율을 토크나이저별로 계산해, 단어를 통째로 다루는 WordLevel이 처음 보는 어절을 얼마나 놓치는지 수치로 드러냅니다.
 
 ```python
 def unk_rate(tok, texts):
@@ -377,6 +391,8 @@ ko WordLevel  43.74%
 
 subword로 쪼개는 WordPiece는 모르는 단어도 글자 단위로 내려가 `[UNK]`를 거의 만들지 않지만, 단어를 통째로만 다루는 WordLevel은 처음 보는 어절을 곧장 `[UNK]`로 떨어뜨립니다. 교착어인 한국어 WordLevel의 UNK가 43.74%까지 치솟는 것은 같은 어근에 조사·어미가 바뀐 어절이 모두 별개 단어로 취급되어 vocab으로 감당하기 어렵기 때문입니다.
 
+방금 계산한 UNK 비율을 막대그래프로 그려 토크나이저 4개를 나란히 비교합니다. 각 막대 위에 정확한 퍼센트 값을 적어, 한국어 WordLevel만 유독 높이 솟는 모습을 시각적으로 강조합니다.
+
 ```python
 sns.set_theme(style="whitegrid", context="talk")
 fig, ax = plt.subplots(figsize=(9, 5))
@@ -395,6 +411,8 @@ plt.show()
 **▶ 실행 결과**
 
 ![output](../assets/19-tokenizer_training-out2.png)
+
+지금까지 따로따로 본 vocab 크기·토큰 길이·UNK 비율을 언어 × 알고리즘 2×2 표 하나로 모읍니다. 네 토크나이저의 핵심 지표를 한 화면에서 비교해, 알고리즘과 언어가 각 지표에 어떻게 작용했는지 정리합니다.
 
 ```python
 summary_2x2 = pd.DataFrame({
@@ -428,6 +446,8 @@ language algorithm  vocab_size  mean_tokens_per_sent  p95_tokens_per_sent  unk_r
   Korean WordPiece        8000                 19.80                57.05          0.08
   Korean WordLevel        8000                  9.11                27.00         43.74
 ```
+
+토크나이저를 학습한 언어와 입력 문장의 언어가 어긋날 때 어떤 일이 벌어지는지 교차 실험을 합니다. 영어·한국어 예시 문장을 4개 토크나이저에 모두 통과시켜 토큰 수와 UNK 비율을 표로 모으고, 같은 언어(`same`)와 다른 언어(`cross`) 조합을 구분해 둡니다.
 
 ```python
 # 4 토크나이저를 dict 로 묶어 cross-language 분석에 사용
@@ -482,6 +502,8 @@ input_lang    tokenizer tokenizer_train_lang  n_tokens  n_unk  unk_pct   match
 
 토크나이저는 학습한 언어의 코퍼스에만 최적화되어, 영어 문장을 한국어 토크나이저에 넣거나 그 반대로 넣으면 UNK가 급증하거나 글자 단위로 산산조각 납니다. 다만 한국어 ko_WordLevel은 자기 언어 입력에도 UNK 66.7%가 나오는데, 이는 cross-language 문제가 아니라 WordLevel 알고리즘 자체가 처음 보는 어절에 취약한 한계를 드러냅니다.
 
+숫자만으로는 와닿지 않는 교차 적용 결과를 실제 토큰 시퀀스로 확인합니다. 같은 입력을 토크나이저별로 어떻게 쪼개는지 앞 12개 토큰을 출력해, 한글이 통째로 `[UNK]`가 되거나 영어가 글자 단위로 산산조각 나는 모습을 눈으로 봅니다.
+
 ```python
 # 같은 입력을 토크나이저 별로 실제로 어떻게 쪼개는지 (첫 12 토큰)
 print("=" * 78)
@@ -516,6 +538,8 @@ for lang, text in cross_examples:
 
 같은 문장이 토크나이저마다 전혀 다르게 쪼개지는 모습이 한눈에 보입니다. 한국어를 영어 WordPiece에 넣으면 vocab에 한글 글자가 없어 통째로 `[UNK]`가 되고, 한국어 WordPiece는 `음 / ##식이`, `맛 / ##있어` 처럼 어근과 조사·어미를 `##` 경계로 갈라 의미 단위를 살려냅니다.
 
+교차 적용의 UNK 비율을 히트맵으로 한 장에 모읍니다. 가로축은 토크나이저(알고리즘 × 학습 언어), 세로축은 입력 언어로 두어, 학습 언어와 입력 언어가 일치할 때만 UNK가 낮아지는 대각선 패턴을 색으로 드러냅니다.
+
 ```python
 # 시각화: UNK 비율 4×2 매트릭스 (가로 토크나이저, 세로 입력 언어)
 fig, ax = plt.subplots(figsize=(8.5, 3.6))
@@ -532,6 +556,8 @@ plt.tight_layout(); plt.show()
 **▶ 실행 결과**
 
 ![output](../assets/19-tokenizer_training-out3.png)
+
+학습한 토크나이저는 한 번 만들고 끝이 아니라 파일로 저장해 재사용합니다. 4개 토크나이저를 각각 json 파일로 직렬화하고, 저장된 파일 목록과 크기를 출력해 vocab과 규칙이 어떤 규모로 담기는지 확인합니다.
 
 ```python
 import os
@@ -559,6 +585,8 @@ saved 4 tokenizer files:
   ./tokenizers_ch19/ko_wordpiece.json  (251.5 KB)
 ```
 
+저장한 json이 토크나이저를 온전히 담았는지 검증합니다. `Tokenizer.from_file()`로 다시 불러온 뒤 같은 문장을 토큰화해, 원본과 로드본의 토큰 시퀀스가 정확히 일치하는지 비교합니다.
+
 ```python
 # 2) Tokenizer.from_file() 로 다시 로드
 tok_en_wp_loaded = Tokenizer.from_file("./tokenizers_ch19/en_wordpiece.json")
@@ -580,6 +608,8 @@ match           : True
 **결과 해석**
 
 `match: True`는 json 한 파일에 vocab과 merge 규칙, 특수 토큰까지 모두 직렬화되어, 다시 로드해도 토큰화 결과가 완벽히 재현됨을 확인해 줍니다.
+
+마지막으로 직접 학습한 토크나이저를 `PreTrainedTokenizerFast`로 감싸 Hugging Face 표준 인터페이스로 바꿉니다. 이렇게 하면 Ch 7 이후 써온 `padding`·`truncation`·`return_tensors` 옵션과 `decode`를 그대로 쓸 수 있어, 사전학습 토크나이저와 동일하게 동작하는지 확인합니다.
 
 ```python
 # 3) PreTrainedTokenizerFast 로 wrap — HF 표준 인터페이스로 변환

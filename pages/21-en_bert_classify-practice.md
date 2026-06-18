@@ -103,6 +103,8 @@ Wed Jun 17 21:58:55 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+분류 데이터셋인 Yelp polarity 를 불러와 Ch 10 과 같은 seed·크기로 학습 5,000개·검증 1,000개를 추립니다. 두 split 의 양성 비율과 첫 샘플을 출력해 데이터가 한쪽으로 치우치지 않았는지, 텍스트가 어떻게 생겼는지 미리 확인합니다.
+
 ```python
 SEED = 42
 N_TRAIN = 5000
@@ -148,6 +150,8 @@ first train sample:
   text:  Decent size, decent selection, decent staff.\n\nI guess that can wholly sum this place up, it's decent.  As with many other stores …(뒤 72자 생략)
 ```
 
+기성 `bert-base-uncased` 토크나이저를 불러와 vocab 크기와 최대 길이를 확인합니다. 예시 문장 하나를 토큰화해 어떤 subword 로 쪼개지는지 보여주는데, `unforgettable` 이 `un / ##for / ##get / ##table` 처럼 조각으로 나뉘는 WordPiece 동작을 눈여겨보면 됩니다.
+
 ```python
 TOKENIZER_NAME = "bert-base-uncased"
 tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_NAME)
@@ -174,6 +178,8 @@ model_max_length: 512
 sample: 'The food was unforgettable and the service was excellent.'
 tokens (15): ['[CLS]', 'the', 'food', 'was', 'un', '##for', '##get', '##table', 'and', 'the', 'service', 'was', 'excellent', '.', '[SEP]']
 ```
+
+Ch 20 과 같은 작은 BERT 구조(hidden 256, layer 4, head 4)를 `BertConfig` 로 정의하고, 이를 무작위 초기화된 `BertForMaskedLM` 으로 만듭니다. 사전학습된 가중치를 쓰지 않고 밑바닥에서 시작하는 것이 이 장의 핵심이라, 총 파라미터 수를 출력해 약 11M 규모임을 확인합니다.
 
 ```python
 # Ch 20 과 같은 작은 BERT 설정
@@ -206,6 +212,8 @@ print(f"Total parameters:  {total:,}  ({total/1e6:.2f} M)")
 Small BERT config: hidden=256, layer=4, head=4
 Total parameters:  11,103,290  (11.10 M)
 ```
+
+MLM 사전학습용 코퍼스로 분류 데이터와는 별개인 일반 도메인 Wikitext-103 을 불러와, 너무 짧거나 긴 줄을 걸러 단락을 추립니다. 이어 토큰화한 뒤 `group_texts` 로 여러 단락을 이어 붙여 128 토큰 블록으로 잘라내는데, 이렇게 고정 길이 블록을 만들어야 MLM 학습에서 패딩 낭비 없이 토큰을 채워 쓸 수 있습니다.
 
 ```python
 # MLM 사전학습용 일반 도메인 코퍼스: Wikitext-103 (분류용 Yelp 와 별도)
@@ -270,6 +278,8 @@ MLM train blocks: 2,100  (block_size=128)
 MLM eval blocks:  428
 ```
 
+MLM 학습 시 배치마다 토큰의 15% 를 골라 가리는 일을 자동으로 해 주는 `DataCollatorForLanguageModeling` 을 만듭니다. `mlm_probability=0.15` 가 BERT 원논문이 쓴 마스킹 비율로, 이 collator 가 정답 라벨도 함께 생성해 줍니다.
+
 ```python
 mlm_collator = DataCollatorForLanguageModeling(
     tokenizer=tokenizer,
@@ -277,6 +287,8 @@ mlm_collator = DataCollatorForLanguageModeling(
     mlm_probability=0.15,
 )
 ```
+
+collator 가 실제로 무슨 일을 하는지 짧은 문장 하나에 한 번 돌려 토큰별 결과를 표로 펼쳐 봅니다. 어떤 자리가 `[MASK]` 로 바뀌고, 어떤 자리는 선택되고도 원본이 유지되거나 다른 토큰으로 바뀌는지, 그리고 라벨이 `-100`(loss 무시)인지 원본 id 인지를 한눈에 대조할 수 있습니다.
 
 ```python
 # 짧은 예시 문장 하나에 collator 한 번 돌려서 어떤 자리가 어떻게 바뀌는지 직접 봅니다.
@@ -345,6 +357,8 @@ print(demo_df.to_string(index=False))
   17    [SEP]          [SEP]      -100             —
 ```
 
+이번에는 64개 블록(약 8천 토큰) 규모의 큰 배치에 collator 를 돌려, 선택 15% 와 그 안의 80-10-10 분배가 통계적으로 맞는지 직접 세어 봅니다. 표본이 작아 약간 흔들리겠지만, 출력된 비율이 이론치 근처로 모이는지 확인하는 것이 목적입니다.
+
 ```python
 # 큰 batch (block 64개 = 약 8000 토큰) 에서 80/10/10 비율이 실제로 맞는지 통계로 확인.
 torch.manual_seed(0)
@@ -385,6 +399,8 @@ Selected for loss (target 15%):      1,217  (14.86%)
 
 이론치: 선택 15% / 그 중 80-10-10 으로 [MASK]-random-kept. 표본이 작아 약간 흔들리지만 비율 일치.
 ```
+
+MLM 사전학습용 `TrainingArguments` 와 `Trainer` 를 구성합니다. T4 에서 fp16 을 켜고 배치 32·3 epoch 로 맞추며, 마지막에 총 학습 step 수를 미리 출력해 한 epoch 당 몇 step 이 도는지 가늠합니다.
 
 ```python
 USE_FP16 = (DEVICE == "cuda")
@@ -433,6 +449,8 @@ MLM fp16:       True
 MLM steps:      195
 ```
 
+이제 MLM 사전학습을 실제로 돌리고 걸린 시간과 평균 train loss 를 출력합니다. 같이 찍는 무작위 기준선(`ln vocab`)과 비교하면, 짧은 학습으로 모델이 언어 패턴을 얼마나 익혔는지 가늠할 수 있습니다.
+
 ```python
 t0 = time.time()
 mlm_result = mlm_trainer.train()
@@ -455,6 +473,8 @@ random baseline (ln vocab): 10.3262
 
 train loss 7.60 은 무작위 추측 기준선 10.33 보다 분명히 낮아, 단 0.3 분의 짧은 사전학습으로도 모델이 언어 패턴을 일부 익혔음을 보여줍니다. 다만 기준선과의 격차가 크지 않아 학습 강도가 약했음도 함께 드러납니다.
 
+검증 셋으로 MLM 성능을 재서 eval loss 와 이를 지수화한 perplexity 를 출력합니다. perplexity 는 다음 토큰 후보를 평균 몇 개 규모로 좁혔는지를 뜻하므로, 무작위 기준선(vocab 크기)과 비교해 사전학습 효과를 직관적으로 읽을 수 있습니다.
+
 ```python
 mlm_eval_metrics = mlm_trainer.evaluate()
 mlm_eval_loss = mlm_eval_metrics["eval_loss"]
@@ -476,6 +496,8 @@ MLM eval perplexity:  1339.60
 **결과 해석**
 
 검증 perplexity 1339.60 은 무작위 기준선 30,522 의 약 1/23 수준으로, 다음 토큰 후보를 3 만 개에서 천여 개 규모로 좁힌 셈입니다. 그래도 절대값이 여전히 높아, 짧은 사전학습으로 얻은 표현이 제한적임을 보여줍니다.
+
+MLM 으로 학습한 본체를 분류 모델로 옮겨 심는 핵심 단계입니다. 같은 구조에 `num_labels=2` 와 `problem_type` 만 더한 분류용 모델을 만든 뒤, MLM 모델의 embeddings·encoder 가중치를 `load_state_dict` 로 복사합니다. 분류용 pooler 만 missing key 로 남는 것을 출력으로 확인하고, 본체와 분류 헤드의 파라미터 비중도 함께 비교합니다.
 
 ```python
 # 분류용 config: 같은 본체 구조 + num_labels=2 + problem_type
@@ -524,6 +546,8 @@ Classification model parameters:
   total:                                 11,072,770  (11.07 M)
 ```
 
+Yelp 텍스트를 분류용으로 토큰화합니다. MLM 때의 블록 묶기와 달리 문장 단위로 `[CLS]`/`[SEP]` 를 붙이고 `max_length=128` 로 자르며, 정수 라벨을 `labels` 컬럼으로 함께 넣어 `Trainer` 가 바로 학습할 수 있는 형태로 정리합니다.
+
 ```python
 # 분류용 토큰화 — 문장 단위, [CLS]/[SEP] 부착, max_length=128
 def cls_tokenize(batch):
@@ -553,6 +577,8 @@ Dataset({
 First sample label: 1  (int 0 or 1)
 ```
 
+검증 단계에서 쓸 평가 함수를 정의합니다. logits 에 안정 softmax 를 적용해 클래스 확률을 구한 뒤 accuracy·precision·recall·f1 과, 클래스 1 확률을 입력으로 한 AUC 까지 한 번에 계산해 돌려줍니다.
+
 ```python
 def compute_metrics(eval_pred):
     logits, labels = eval_pred
@@ -571,6 +597,8 @@ def compute_metrics(eval_pred):
         "auc":       float(roc_auc_score(labels, probs_pos)),
     }
 ```
+
+Ch 10 과 똑같은 하이퍼파라미터로 분류 fine-tune 을 돌립니다. 변수는 오직 본체 출발점(기성 DistilBERT 가 아니라 직접 사전학습한 작은 BERT)뿐이라, 학습 시간과 평균 train loss 를 무작위 기준선(`ln 2`)과 비교해 출발점 차이가 어떻게 드러나는지 살핍니다.
 
 ```python
 # Ch 10 과 같은 hyperparams — 변하는 건 *본체 출발점* 뿐
@@ -647,6 +675,8 @@ Wed Jun 17 22:00:17 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+검증 셋으로 분류 성능을 측정해 accuracy·f1·auc 등 지표를 출력합니다. 앞서 정의한 `compute_metrics` 가 호출되며, 이 값들이 직접 사전학습한 작은 BERT 의 실제 분류 실력을 보여줍니다.
+
 ```python
 cls_eval_metrics = cls_trainer.evaluate()
 print("Ch 21 small BERT (scratch MLM 3 epoch + classification fine-tune) — eval:")
@@ -672,6 +702,8 @@ Ch 21 small BERT (scratch MLM 3 epoch + classification fine-tune) — eval:
 **결과 해석**
 
 정확도 0.649, F1 0.642, AUC 0.708 로 50% 무작위 추측보다는 확실히 낫지만, 본격적인 분류기로 보기엔 부족합니다. 짧게 사전학습한 작은 BERT 의 표현력 한계가 그대로 성능 천장으로 나타난 결과입니다.
+
+검증 셋 전체에 대한 예측을 받아 더 자세히 들여다봅니다. 예측 양성 비율로 모델이 한쪽으로 쏠리는지 보고, 맞힌 예측과 틀린 예측의 평균 확신도를 비교해 분류 경계가 얼마나 또렷한지 가늠하며, 클래스별 `classification_report` 까지 출력합니다.
 
 ```python
 preds_output = cls_trainer.predict(cls_eval)
@@ -717,6 +749,8 @@ weighted avg     0.6494    0.6490    0.6491      1000
 
 예측 양성 비율 49.7% 와 두 클래스가 거의 대칭인 precision/recall 은 모델이 한쪽으로 쏠리지 않고 고르게 틀리고 있음을 보여줍니다. 맞힌 예측의 평균 확신도(0.553)와 틀린 예측의 확신도(0.539)가 거의 같다는 점은 분류 경계가 아직 흐릿함을 뜻합니다.
 
+학습 로그에서 step 별 train loss 를 뽑아 곡선으로 그립니다. 무작위 기준선(`ln 2`)을 점선으로 함께 표시해, 손실이 기준선 아래로 얼마나 가파르게 내려가는지를 눈으로 확인하기 위함입니다.
+
 ```python
 log_history = cls_trainer.state.log_history
 train_logs = [(e["step"], e["loss"]) for e in log_history if "loss" in e and "eval_loss" not in e]
@@ -748,6 +782,8 @@ else:
 
 train CE loss 곡선이 ln 2 기준선 바로 아래에서 천천히 내려가, 학습이 진행되긴 하지만 폭이 매우 좁습니다. 사전학습이 충분했다면 이 곡선이 훨씬 가파르게 떨어졌을 자리입니다.
 
+검증 예측으로 혼동 행렬을 만들어 히트맵으로 그립니다. 행 기준으로 정규화해 클래스별 recall 을 색으로 보여주므로, 어느 클래스를 더 잘 맞히는지 또는 오분류가 양쪽에 고르게 퍼지는지를 한눈에 읽을 수 있습니다.
+
 ```python
 sns.set_theme(style="white", context="talk")
 cm = confusion_matrix(cls_labels, cls_preds, labels=[0, 1])
@@ -775,6 +811,8 @@ plt.show()
 **결과 해석**
 
 대각선(정답)이 두 클래스 모두 0.65 안팎이고 오분류도 양쪽에 고르게 퍼져, 특정 클래스만 못 맞히는 편향 없이 전반적으로 절반 가까이 틀리는 모습입니다.
+
+기성 사전학습 DistilBERT 로 같은 데이터를 분류한 Ch 10 의 전형적 수치를 기준으로 두고, 이번 장 작은 BERT 의 지표와 나란히 비교합니다. metric 별 차이(delta)를 표로 출력해, 사전학습의 양과 질이 분류 성능 격차로 얼마나 환산되는지 수치로 확인합니다.
 
 ```python
 # Ch 10 reference 수치 — yelp_polarity 5K/1K + DistilBERT fine-tune 2 epoch 의 *전형적* 결과
@@ -816,6 +854,8 @@ precision                   0.93           0.6338              -0.2962
 **결과 해석**
 
 모든 지표에서 Ch 10 의 기성 사전학습 DistilBERT 가 0.28 - 0.30 포인트 앞섭니다. 대규모 코퍼스로 오래 사전학습한 본체와, 위키 2 천 단락으로 잠깐 사전학습한 작은 본체의 차이가 분류 성능 격차로 그대로 환산된 결과입니다.
+
+같은 비교를 막대그래프로 그려 두 모델의 지표 차이를 한눈에 보여 줍니다. metric 마다 두 막대의 높이 차가 일정한지 살피면, 사전학습 출발점이 모든 지표에 고르게 영향을 준다는 점을 시각적으로 확인할 수 있습니다.
 
 ```python
 # bar chart 로 한눈에 보기

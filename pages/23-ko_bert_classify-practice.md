@@ -103,6 +103,8 @@ Wed Jun 17 22:03:53 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+분류용 데이터인 NSMC(네이버 영화 리뷰) 학습/테스트 셋을 GitHub에서 내려받습니다. 전체에서 Ch 15와 같은 seed로 5,000개 학습/1,000개 평가만 뽑아 T4에서 빠르게 돌도록 줄이고, 양성 비율과 첫 샘플 몇 개를 출력해 라벨 분포가 균형 잡혔는지 확인합니다. 마지막에는 `datasets.Dataset` 형태로 바꿔 이후 토큰화에 쓰기 좋게 만듭니다.
+
 ```python
 SEED = 42
 N_TRAIN = 5000
@@ -163,6 +165,8 @@ Dataset({
 })
 ```
 
+본체는 직접 사전학습하지만 토크나이저는 `klue/bert-base`의 것을 그대로 빌려 씁니다. 한국어 어휘를 새로 학습하는 부담을 덜고 분류 본질에 집중하기 위해서입니다. NSMC 도메인 문장 하나를 토큰화해 한국어가 어절과 `##` 서브워드로 어떻게 쪼개지는지, `[CLS]`/`[SEP]`가 어디 붙는지 확인합니다.
+
 ```python
 TOKENIZER_NAME = "klue/bert-base"
 tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_NAME)
@@ -189,6 +193,8 @@ model_max_length: 512
 NSMC-domain sample: '이 영화 정말 재미있었고 배우들 연기도 훌륭했어요.'
 tokens (16): ['[CLS]', '이', '영화', '정말', '재미있', '##었', '##고', '배우', '##들', '연기', '##도', '훌륭', '##했', '##어요', '.', '[SEP]']
 ```
+
+사전학습할 작은 BERT의 구조를 `BertConfig`로 직접 정의합니다. hidden 256, layer 4, head 4로 기성 BERT보다 훨씬 작게 잡아 T4에서 빠르게 학습되도록 했고, 가중치 초기화 없이 무작위로 시작하는 `BertForMaskedLM`을 만든 뒤 전체 파라미터 수를 출력해 모델 규모를 확인합니다.
 
 ```python
 # Ch 22 와 같은 작은 BERT 설정
@@ -221,6 +227,8 @@ print(f"Total parameters:  {total:,}  ({total/1e6:.2f} M)")
 Small BERT config: hidden=256, layer=4, head=4
 Total parameters:  11,483,136  (11.48 M)
 ```
+
+사전학습에 쓸 일반 도메인 코퍼스로 한국어 Wikipedia를 내려받습니다. 분류용 NSMC와는 일부러 분리해 본체가 특정 태스크에 치우치지 않게 하려는 것입니다. 문단 단위로 잘라 정해진 개수만큼 모으고, 토큰화한 뒤 `group_texts`로 `block_size=128` 고정 길이 덩어리로 이어 붙여 MLM 학습에 알맞은 형태로 만듭니다.
 
 ```python
 # MLM 사전학습용 일반 도메인 코퍼스: 한국어 Wikipedia (분류용 NSMC 와 별도)
@@ -291,6 +299,8 @@ MLM train blocks: 1,562  (block_size=128)
 MLM eval blocks:  293
 ```
 
+MLM 학습에 필요한 데이터 콜레이터를 준비합니다. `DataCollatorForLanguageModeling`은 매 배치마다 토큰의 15%를 즉석에서 `[MASK]` 등으로 가리고, 가린 자리만 정답으로 남긴 라벨을 자동으로 만들어 줍니다. 덕분에 데이터셋에 미리 마스킹을 박아 둘 필요 없이 에폭마다 다른 위치가 가려집니다.
+
 ```python
 mlm_collator = DataCollatorForLanguageModeling(
     tokenizer=tokenizer,
@@ -298,6 +308,8 @@ mlm_collator = DataCollatorForLanguageModeling(
     mlm_probability=0.15,
 )
 ```
+
+사전학습 단계의 하이퍼파라미터를 `TrainingArguments`로 잡고 `Trainer`에 모델·데이터·콜레이터를 연결합니다. T4에서만 `fp16`을 켜고, MLM은 분류 파인튜닝보다 높은 학습률(5e-4)과 3 에폭을 써서 짧은 시간 안에 본체가 어느 정도 정렬되도록 합니다. 설정한 에폭·배치·학습률과 예상 스텝 수를 출력해 학습 규모를 미리 확인합니다.
 
 ```python
 USE_FP16 = (DEVICE == "cuda")
@@ -346,6 +358,8 @@ MLM fp16:          True
 MLM steps:         144
 ```
 
+실제로 MLM 사전학습을 돌리고 걸린 시간과 평균 학습 손실을 출력합니다. 함께 찍는 무작위 기준선 `ln(vocab_size)`은 아무것도 학습하지 않았을 때의 이론적 손실 상한이라, train loss가 이 값보다 얼마나 내려갔는지로 학습이 시작됐는지 가늠할 수 있습니다.
+
 ```python
 t0 = time.time()
 mlm_result = mlm_trainer.train()
@@ -368,6 +382,8 @@ random baseline (ln vocab): 10.3735
 
 train loss 7.92 는 무작위 추측의 이론 상한 10.37 보다 아래로 내려왔으니 모델이 한국어 패턴을 어느 정도 익히기 시작했지만, 0.2 분이라는 극히 짧은 학습이라 본격적인 언어 표현을 잡기엔 한참 부족한 수준입니다.
 
+평가 셋에서 MLM 손실을 측정하고 이를 perplexity로 바꿔 출력합니다. perplexity는 손실의 지수값으로, 모델이 다음 토큰을 고를 때 평균 몇 개 후보 사이에서 헤매는지를 뜻합니다. 무작위 기준선인 vocab_size(32,000)와 비교하면 학습 신호가 얼마나 잡혔는지 한눈에 보입니다.
+
 ```python
 mlm_eval_metrics = mlm_trainer.evaluate()
 mlm_eval_loss = mlm_eval_metrics["eval_loss"]
@@ -389,6 +405,8 @@ MLM eval perplexity:  2480.14
 **결과 해석**
 
 perplexity 2480 은 무작위 추측의 32,000 대비 13 배가량 낮아 학습 신호가 분명히 잡혔음을 보여주지만, 잘 학습된 BERT 가 보통 한 자릿수에서 수십 수준의 perplexity 를 내는 것과 비교하면 여전히 매우 높아 사전학습이 초기 단계에 머물러 있음을 알 수 있습니다.
+
+사전학습한 본체를 분류 모델로 옮깁니다. 같은 구조에 `num_labels=2`와 분류 헤드를 얹은 새 모델을 만든 뒤, MLM 모델의 embeddings·encoder 가중치를 `load_state_dict(strict=False)`로 복사해 학습한 언어 표현을 그대로 가져옵니다. 분류 헤드는 새로 초기화되므로 출력되는 missing/unexpected 키와 본체 대비 헤드의 파라미터 비중을 보며 무엇이 복사되고 무엇이 새로 학습될지 확인합니다.
 
 ```python
 # 분류용 config: 같은 본체 구조 + num_labels=2 + problem_type
@@ -437,6 +455,8 @@ Classification model parameters:
   total:                                 11,451,138  (11.45 M)
 ```
 
+분류용 NSMC 데이터를 토큰화합니다. MLM처럼 긴 덩어리로 이어 붙이지 않고 리뷰 한 줄을 문장 단위로 토큰화하면서 `[CLS]`/`[SEP]`를 붙이고, 라벨을 정수로 정리해 모델 입력에 필요한 컬럼만 남깁니다. 끝에 토큰 길이 통계를 찍어 NSMC 리뷰가 얼마나 짧은지(대부분 max_length=128 안에 들어오는지) 확인합니다.
+
 ```python
 # 분류용 토큰화 — 문장 단위, [CLS]/[SEP] 부착, max_length=128
 def cls_tokenize(batch):
@@ -470,6 +490,8 @@ First sample label: 1  (int 0 or 1)
 Token length stats — mean: 21.9, median: 17, max: 117
 ```
 
+평가 때 `Trainer`가 호출할 지표 계산 함수를 정의합니다. 모델이 내놓은 logits에 안정적인 softmax를 적용해 확률로 바꾸고, argmax로 예측 라벨을, 클래스 1의 확률을 AUC 입력으로 씁니다. 정확도·정밀도·재현율·F1에 더해 AUC까지 한 번에 돌려줘 분류 성능을 여러 각도로 보게 합니다.
+
 ```python
 def compute_metrics(eval_pred):
     logits, labels = eval_pred
@@ -488,6 +510,8 @@ def compute_metrics(eval_pred):
         "auc":       float(roc_auc_score(labels, probs_pos)),
     }
 ```
+
+이제 복사한 본체 위에서 NSMC 분류를 파인튜닝합니다. 하이퍼파라미터는 Ch 15와 똑같이 맞춰 오직 본체의 출발점만 다르게 했으므로, 결과 차이는 사전학습 차이에서 온다고 볼 수 있습니다. 학습을 돌린 뒤 평균 손실을 무작위 기준선 `ln 2`와 비교해 분류가 학습을 시작했는지 가늠합니다.
 
 ```python
 # Ch 15 와 같은 hyperparams — 변하는 건 *본체 출발점* 뿐
@@ -564,6 +588,8 @@ Wed Jun 17 22:05:02 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+파인튜닝한 분류 모델을 평가 셋으로 돌려 앞서 정의한 지표들을 한꺼번에 출력합니다. accuracy·precision·recall·f1·auc를 모아 보며, 직접 만든 작은 BERT가 한국어 감성 분류에서 무작위 추측(0.5)을 의미 있게 넘어서는지 확인합니다.
+
 ```python
 cls_eval_metrics = cls_trainer.evaluate()
 print("Ch 23 small BERT (scratch MLM 3 epoch on Korean Wikipedia + NSMC fine-tune) — eval:")
@@ -589,6 +615,8 @@ Ch 23 small BERT (scratch MLM 3 epoch on Korean Wikipedia + NSMC fine-tune) — 
 **결과 해석**
 
 정확도 0.542, AUC 0.559 로 무작위 추측(0.5)은 가까스로 넘었지만 거의 동전 던지기 수준이며, 짧은 사전학습으로는 한국어 감성 분류에 필요한 표현력을 확보하지 못했음을 수치가 그대로 보여줍니다.
+
+평가 셋 전체에 대해 예측을 다시 받아 더 자세히 들여다봅니다. softmax 확률에서 예측 라벨과 양성 확률을 뽑은 뒤, 예측한 양성 비율과 맞힌/틀린 예측의 평균 확신도를 비교하고 클래스별 `classification_report`까지 출력합니다. 맞을 때와 틀릴 때의 확신도가 비슷한지 살펴보면 모델이 근거 있게 분류하는지 드러납니다.
 
 ```python
 preds_output = cls_trainer.predict(cls_eval)
@@ -634,6 +662,8 @@ weighted avg     0.5450    0.5420    0.5335      1000
 
 예측 양성 비율이 36.5% 로 한쪽(negative)에 치우쳐 있고 positive recall 이 0.41 에 그쳐, 모델이 긍정 리뷰의 절반 이상을 놓치고 있습니다. 게다가 맞힌 예측의 확신도(0.531)와 틀린 예측의 확신도(0.527)가 거의 같아, 사실상 신뢰할 만한 결정 근거 없이 분류하고 있음을 알 수 있습니다.
 
+학습 로그에서 스텝별 train 손실을 꺼내 곡선으로 그립니다. 무작위 기준선 `ln 2`를 점선으로 함께 그어, 분류 손실이 그 선 아래로 의미 있게 내려가는지 아니면 거의 평평하게 머무는지를 한눈에 보게 합니다.
+
 ```python
 log_history = cls_trainer.state.log_history
 train_logs = [(e["step"], e["loss"]) for e in log_history if "loss" in e and "eval_loss" not in e]
@@ -665,6 +695,8 @@ else:
 
 학습 곡선이 ln 2 기준선 근처에서 거의 평평하게 머물러, 분류 손실이 의미 있게 떨어지지 않았음을 한눈에 확인할 수 있습니다.
 
+예측을 혼동행렬로 정리해 히트맵으로 그립니다. 행 단위로 정규화해 각 실제 클래스에서 모델이 어디로 예측을 보냈는지(=클래스별 recall)를 보여주므로, 모델이 한쪽 라벨로 치우쳐 예측하는 비대칭이 있는지 시각적으로 확인할 수 있습니다.
+
 ```python
 sns.set_theme(style="white", context="talk")
 cm = confusion_matrix(cls_labels, cls_preds, labels=[0, 1])
@@ -692,6 +724,8 @@ plt.show()
 **결과 해석**
 
 negative 는 0.68 의 recall 로 비교적 잘 잡지만 positive 는 0.41 에 그쳐, 모델이 부정 쪽으로 예측을 몰아주는 비대칭이 혼동행렬에 그대로 드러납니다.
+
+직접 만든 작은 모델의 결과를 기성 `klue/bert-base`의 Ch 15 전형적 수치와 나란히 표로 정리합니다. 같은 데이터·같은 분류 설정에서 본체의 사전학습 규모만 다르므로, 이 표의 격차가 곧 대규모 사전학습이 가져다주는 차이를 뜻합니다.
 
 ```python
 # Ch 15 reference 수치 — klue/bert-base + NSMC 5K/1K + 2 epoch 의 *전형적* 결과
@@ -732,6 +766,8 @@ precision                       0.86                   0.5562
 **결과 해석**
 
 기성 klue/bert-base 의 정확도 0.86, AUC 0.93 에 비해 직접 만든 작은 모델은 0.54, 0.56 에 머물러, 대규모 코퍼스로 충분히 사전학습한 모델과 0.2 분짜리 사전학습 사이의 격차가 얼마나 큰지를 한 표로 보여줍니다.
+
+앞의 비교 표를 막대그래프로 옮겨 지표별로 두 모델을 나란히 세웁니다. 지표마다 파란 막대(기성 모델)와 주황 막대(우리 모델)의 높이 차이를 보면, 어느 지표에서 격차가 가장 크게 벌어지는지 한눈에 읽힙니다.
 
 ```python
 # 2-way bar chart 로 한눈에 보기

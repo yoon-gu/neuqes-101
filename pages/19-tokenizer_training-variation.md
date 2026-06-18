@@ -32,6 +32,8 @@ print(df_sweep.to_string(index=False))
 
 vocab을 1K에서 16K로 16배 키우는 동안 문장당 평균 토큰 수는 209.8에서 148.1로 줄지만, 1K에서 4K로 갈 때 가장 크게 떨어지고 8K 이후로는 거의 평평해져 수확 체감이 뚜렷합니다. UNK는 영어 WordPiece 특성상 어느 vocab에서도 0%를 유지합니다.
 
+sweep 결과를 그래프로 그려 추세를 한눈에 봅니다. 왼쪽 축에 평균 토큰 수, 오른쪽 축에 UNK 비율을 함께 그리고 가로축은 로그 스케일로 두어, vocab을 키울수록 토큰 수가 줄다가 평평해지는 수확 체감 곡선을 드러냅니다.
+
 ```python
 sns.set_theme(style="whitegrid", context="talk")
 fig, ax1 = plt.subplots(figsize=(9, 5))
