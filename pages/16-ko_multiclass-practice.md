@@ -72,6 +72,8 @@ Wed Jun 17 21:47:31 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+KLUE 벤치마크의 YNAT(뉴스 제목 주제 분류) 데이터를 내려받아 split 구성과 라벨 이름을 확인합니다. 7개 카테고리가 한국어로 정의돼 있어 출력·플롯용 영문 라벨로 매핑해 두고, train의 클래스 분포와 첫 3개 샘플을 함께 살펴 데이터의 균형과 형태를 가늠합니다.
+
 ```python
 ds = load_dataset("klue/klue", "ynat")
 print(f"splits: {list(ds.keys())}")
@@ -122,6 +124,8 @@ first 3 samples:
 
 KLUE-YNAT 뉴스 제목을 7개 카테고리로 나누는 multi-class 과제이며, World(18.2%)와 IT/Science(11.5%) 사이의 분포 차이가 크지 않아 클래스 불균형은 완만한 편입니다. 영어 multi-class(Ch 12)와 같은 구조를 한국어 데이터로 다시 푸는 자리입니다.
 
+T4에서 30분 안에 끝내기 위해 train 5,000개, eval 1,000개로 줄여 샘플링하고, `title` 컬럼을 `transformers` 표준 이름 `text`로 바꿉니다. 이어 klue/bert-base 토크나이저로 제목 200개의 토큰 길이를 미리 재 보아 `max_length` 설정의 근거를 마련합니다.
+
 ```python
 # T4 30분 룰: 5K train / 1K eval (KLUE 의 validation split 에서 sample)
 SEED = 42
@@ -153,6 +157,8 @@ Token length (sample 200): mean=15.8, median=16, max=27
 
 뉴스 제목이 짧아 토큰 길이 중앙값이 16, 최대 27에 그치므로 `max_length=128`은 사실상 모든 문장을 자르지 않고 담아냅니다. klue/bert-base의 한국어 WordPiece가 짧은 제목도 효율적으로 쪼개고 있습니다.
 
+train과 eval 데이터를 한꺼번에 토큰화하고, 정수 라벨을 `labels` 컬럼으로 옮깁니다. 모델이 입력으로 받는 `input_ids`, `attention_mask`, `token_type_ids`, `labels`만 남기고 나머지 원본 컬럼을 제거해 `Trainer`에 바로 넣을 수 있는 형태로 정리합니다.
+
 ```python
 def tokenize_fn(batch):
     out = tokenizer(batch["text"], truncation=True, max_length=128)
@@ -180,6 +186,8 @@ Dataset({
 
 First sample label: 3  (int 0-6)
 ```
+
+klue/bert-base에 7개 클래스 분류 헤드를 얹어 모델을 불러옵니다. `problem_type="single_label_classification"`로 지정해 multi-class 표준인 `CrossEntropyLoss`가 쓰이게 하고, `id2label`/`label2id`로 라벨 이름을 붙여 둡니다. 출력의 파라미터 수와 새로 초기화된 `classifier` 헤드(768→7)를 눈여겨봐 주세요.
 
 ```python
 model = AutoModelForSequenceClassification.from_pretrained(
@@ -256,6 +264,8 @@ Wed Jun 17 21:47:56 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+평가 때 호출할 지표 함수를 정의합니다. 7개 클래스 로짓에 안정 softmax를 적용해 확률을 얻고 argmax로 예측을 뽑은 뒤, accuracy와 macro 평균 precision/recall/F1을 계산합니다. multi-class에서는 AUC를 One-vs-Rest 방식으로 구해 클래스별 확률 순위까지 함께 봅니다.
+
 ```python
 def compute_metrics(eval_pred):
     logits, labels = eval_pred
@@ -278,6 +288,8 @@ def compute_metrics(eval_pred):
         out["auc_ovr"] = float("nan")
     return out
 ```
+
+학습 설정을 모아 `Trainer`를 구성하고 실제 파인튜닝을 돌립니다. T4 제약에 맞춰 2 에폭, batch 16, `fp16=True`를 쓰고 매 에폭마다 검증하도록 했습니다. 학습이 끝나면 평균 train loss를 무작위 기준선 loss($\ln 7$)와 나란히 출력해 학습 효과를 가늠합니다.
 
 ```python
 training_args = TrainingArguments(
@@ -349,6 +361,8 @@ Wed Jun 17 21:48:38 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+검증 세트에서 모델을 평가해 앞서 정의한 지표들을 한꺼번에 출력합니다. accuracy와 macro F1로 전체 성능을, AUC로 클래스별 확률 분리 정도를 확인합니다.
+
 ```python
 eval_metrics = trainer.evaluate()
 print("klue/bert-base KLUE-YNAT — evaluation:")
@@ -374,6 +388,8 @@ klue/bert-base KLUE-YNAT — evaluation:
 **결과 해석**
 
 검증 정확도 85.5%, macro F1 0.8584로 7개 클래스 전반에 고르게 잘 맞히며, One-vs-Rest AUC 0.9821은 클래스별 확률 순위까지 거의 완벽하게 분리해냄을 뜻합니다.
+
+검증 세트에 대한 로짓을 직접 받아 softmax 확률과 예측 클래스를 구합니다. 각 예측의 top-1 확률(모델이 고른 클래스의 확신도)을 뽑고, 맞힌 예측과 틀린 예측의 평균 확신도를 나눠 비교합니다. 확신도가 정답 여부와 어떻게 연결되는지 보려는 준비 단계입니다.
 
 ```python
 preds_output = trainer.predict(eval_tok)
@@ -404,6 +420,8 @@ top-1 prob mean: correct=0.9051, wrong=0.7234
 **결과 해석**
 
 맞힌 예측의 평균 top-1 확률(0.9051)이 틀린 예측(0.7234)보다 뚜렷이 높아, 모델의 확신도가 정답 여부를 어느 정도 가늠하는 신호가 됩니다. 다만 틀린 경우의 평균이 0.72에 이르는 것으로 보아 자신 있게 틀리는 사례도 섞여 있습니다.
+
+7개 카테고리별로 precision, recall, F1을 따로 출력합니다. 전체 평균 한 숫자로는 가려지는, 어떤 카테고리가 잘 맞고 어떤 카테고리가 약한지를 클래스 단위로 확인합니다.
 
 ```python
 # 클래스별 분류 리포트
@@ -436,6 +454,8 @@ weighted avg     0.8578    0.8550    0.8553      1000
 
 Sports(F1 0.9315)와 World(0.9016)처럼 어휘가 뚜렷한 카테고리는 점수가 가장 높고, Politics(0.8000)와 Economy(0.8221)가 상대적으로 약한데 이는 정치·경제·사회 뉴스가 표현을 공유해 서로 헷갈리기 때문입니다.
 
+혼동 행렬을 행 기준으로 정규화해 히트맵으로 그립니다. 셀 안에는 실제 건수를, 색 진하기로는 recall을 나타내 어떤 카테고리가 어떤 카테고리로 잘못 흘러가는지 한눈에 봅니다. 대각선이 진할수록 잘 맞힌 것이고, 대각선 밖의 진한 칸이 주요 오분류 방향입니다.
+
 ```python
 sns.set_theme(style="white", context="talk")
 cm = confusion_matrix(labels, preds, labels=list(range(len(LABEL_NAMES))))
@@ -463,6 +483,8 @@ plt.show()
 **결과 해석**
 
 대각선이 진하게 채워져 대부분의 예측이 정답 카테고리에 모였고, 가장 큰 오분류는 Society로 새어 나가는 흐름입니다. Economy(31건), Politics(11건), Life&Culture(17건)가 모두 Society로 흡수되는데, 사회 뉴스가 다른 주제의 어휘를 폭넓게 포함하는 한국어 뉴스 특성을 보여줍니다.
+
+top-1 확률 분포를 맞힘/틀림으로 나눠 밀도 곡선으로 겹쳐 그립니다. 두 분포가 얼마나 분리되는지 보면 확신도가 정답 여부를 가르는 신호로 쓸 만한지 판단할 수 있습니다. 균등 분포 기준선($1/K$)도 함께 표시해 확신이 약한 구간이 어디인지 가늠합니다.
 
 ```python
 sns.set_theme(style="whitegrid", context="talk")
@@ -494,6 +516,8 @@ plt.show()
 **결과 해석**
 
 맞힌 예측(초록)은 top-1 확률이 1.0 근처에 뾰족하게 몰린 반면, 틀린 예측(빨강)은 0.4-0.9에 넓게 퍼져 확신이 약한 구간에 오답이 집중됩니다. 두 분포가 0.85 이상에서 겹치는 부분이 자신 있게 틀린 사례에 해당합니다.
+
+세 가지 대표 사례를 직접 골라 들여다봅니다. 가장 확신한 예측, 거의 모르는(확률이 $2/K$ 근처) 예측, 그리고 가장 확신했는데 틀린 예측입니다. 각각의 제목과 정답·예측 라벨, top-3 확률 분포를 함께 출력해 모델이 어디서 헷갈리는지 구체적으로 살펴봅니다.
 
 ```python
 texts = list(eval_full["text"])

@@ -82,6 +82,8 @@ Wed Jun 17 21:49:36 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+KLUE-YNAT 뉴스 헤드라인 분류 데이터를 내려받아 split 크기와 라벨 종류를 확인합니다. 원본은 헤드라인 하나에 카테고리 하나가 붙은 single-label 데이터이므로, 7개 한국어 카테고리 이름을 영문으로 매핑해 두고 출력·플롯에서는 영문을 씁니다. `title` 컬럼은 `transformers` 표준에 맞춰 `text` 로 이름을 바꿉니다.
+
 ```python
 ds = load_dataset("klue/klue", "ynat")
 print(f"splits: {list(ds.keys())}")
@@ -112,6 +114,8 @@ first 2 raw samples:
   label=3 (Life&Culture)  text='유튜브 내달 2일까지 크리에이터 지원 공간 운영'
   label=3 (Life&Culture)  text='어버이날 맑다가 흐려져…남부지방 옅은 황사'
 ```
+
+single-label 데이터로 multi-label 문제를 만들기 위해 두 헤드라인을 ` [SEP] ` 로 이어 붙여 합성 샘플을 생성합니다. 결합한 두 헤드라인의 카테고리를 모두 1로 켜서 multi-hot 라벨을 만들고, 두 카테고리가 같으면 활성 라벨이 1개가 됩니다. 학습 5,000개·평가 1,000개를 만들고 첫 샘플의 결합 텍스트와 multi-hot 라벨을 살펴봅니다.
 
 ```python
 SEED = 42
@@ -178,6 +182,8 @@ First synthetic sample:
   active categories: ['Economy', 'Life&Culture']
 ```
 
+합성 데이터가 어떤 분포인지 확인하기 위해 카테고리별 활성률과 샘플당 활성 라벨 개수를 집계합니다. 두 헤드라인을 무작위로 짝지으므로 대부분 샘플은 라벨 2개가 켜지고, 같은 카테고리끼리 뽑힌 경우에만 1개가 됩니다. 라벨 간 빈도 차이가 이후 카테고리별 성능 차이로 이어지므로 미리 눈여겨봅니다.
+
 ```python
 # 카테고리별 활성률 + 활성 라벨 개수 분포
 Y_train = np.array(train_full["multi_hot"])
@@ -218,6 +224,8 @@ Active label distribution (train):
 
 카테고리별 활성률이 21.8%-32.8% 로 어느 한쪽으로 크게 치우치진 않지만 World/Sports 가 IT과학/사회보다 약 1.5배 자주 등장해, 빈도가 낮은 라벨일수록 학습 신호가 적어 recall 이 흔들리기 쉽습니다. 샘플당 평균 1.85개 라벨이 켜지고 85.4% 가 두 라벨을 함께 갖는 multi-label 구조라, 라벨마다 독립 sigmoid 로 푸는 이번 설정이 적절합니다.
 
+`klue/bert-base` 토크나이저를 불러와 결합 헤드라인의 토큰 길이를 먼저 확인하고, `max_length=128` 로 잘라 토큰화합니다. multi-hot 라벨은 `BCEWithLogitsLoss` 가 요구하는 7차원 float 벡터로 `labels` 컬럼에 넣습니다. 모델 입력에 필요 없는 원본 컬럼은 제거합니다.
+
 ```python
 tokenizer = AutoTokenizer.from_pretrained("klue/bert-base")
 
@@ -256,6 +264,8 @@ Dataset({
 
 First sample label: [0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0]  (length-7 multi-hot float vector)
 ```
+
+`klue/bert-base` 위에 7개 출력을 가진 분류 헤드를 얹어 모델을 만듭니다. `problem_type="multi_label_classification"` 을 지정하면 `Trainer` 가 라벨마다 독립적인 `BCEWithLogitsLoss` 를 자동으로 적용합니다. 새로 초기화된 분류 헤드와 사전학습 가중치가 어떻게 로드되는지 리포트를 함께 확인합니다.
 
 ```python
 model = AutoModelForSequenceClassification.from_pretrained(
@@ -334,6 +344,8 @@ Wed Jun 17 21:49:57 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+multi-label 평가에 쓸 지표 함수를 정의합니다. logits 에 라벨별 sigmoid 를 적용하고 0.5 임계값으로 multi-hot 예측을 만든 뒤, hamming loss·micro/macro F1·macro AUC 를 계산합니다. micro 는 전체 라벨을 합산해, macro 는 라벨마다 동일 가중치로 평균해 빈도 불균형의 영향을 다르게 비춥니다.
+
 ```python
 def compute_metrics(eval_pred):
     logits, labels = eval_pred                      # logits: (N, K), labels: (N, K) float
@@ -367,6 +379,8 @@ def compute_metrics(eval_pred):
         out["macro_auc"] = float("nan")
     return out
 ```
+
+학습 설정을 정하고 `Trainer` 로 2 에폭 파인튜닝을 돌립니다. T4 16GB 안에서 끝나도록 batch_size 16·`max_length=128`·`fp16=True` 를 쓰고, 매 에폭마다 평가하도록 `eval_strategy="epoch"` 를 지정합니다. 학습이 끝나면 평균 train loss 를 확인합니다.
 
 ```python
 training_args = TrainingArguments(
@@ -432,6 +446,8 @@ Wed Jun 17 21:50:40 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+학습이 끝난 모델을 평가 셋에서 돌려 앞서 정의한 지표들을 한 번에 확인합니다. eval loss 와 함께 hamming loss·micro/macro F1·macro AUC 가 출력되며, micro 와 macro 값을 비교해 라벨 빈도 불균형의 영향을 가늠합니다.
+
 ```python
 eval_metrics = trainer.evaluate()
 print("klue/bert-base KLUE-YNAT multi-label — evaluation:")
@@ -463,6 +479,8 @@ klue/bert-base KLUE-YNAT multi-label — evaluation:
 **결과 해석**
 
 micro F1 0.8538 과 macro F1 0.8520 이 거의 같아, 라벨 빈도가 비교적 고른 이번 데이터에서는 두 평균이 비슷하게 나옵니다. macro AUC 0.9633 은 threshold 와 무관하게 모델의 순위 매김 자체가 우수함을 뜻하고, hamming loss 0.0724 는 전체 라벨 위치 중 7% 정도만 틀렸다는 의미입니다.
+
+평가 셋 전체에 대한 logits 를 뽑아 sigmoid 확률과 0.5 임계값 예측을 구합니다. 카테고리별로 확률이 어디서부터 어디까지 분포하는지, 그리고 실제 활성률과 예측 활성률이 얼마나 일치하는지 비교합니다. 활성률 차이가 큰 카테고리는 recall 이 흔들리는 지점을 알려줍니다.
 
 ```python
 # logits → per-label sigmoid → multi-hot 예측
@@ -498,6 +516,8 @@ prob ranges per category:
 
 확률 범위가 모든 카테고리에서 0.01 부근부터 0.98 부근까지 양극단으로 벌어져, 모델이 확신을 갖고 예측하고 있음을 보여줍니다. 예측 활성률이 실제 활성률과 대체로 맞아떨어지지만 Society 만 실제 68.4% 대비 예측 60.1% 로 낮아, 가장 빈번한 카테고리에서 일부를 놓치고 있어 recall 저하로 이어집니다.
 
+카테고리별 precision·recall·F1 을 표로 출력해 어느 라벨이 약한지 자세히 봅니다. support(실제 양성 개수)가 적은 라벨일수록 학습 신호가 부족해 F1 이 떨어지는 경향을 함께 확인합니다.
+
 ```python
 # Per-category classification report
 print(classification_report(
@@ -529,6 +549,8 @@ weighted avg     0.8687    0.8419    0.8536      1758
 **결과 해석**
 
 가장 빈번한 Society(support 684)는 precision 0.9151 은 높지만 recall 0.8041 로 낮아, 확신이 설 때만 켜는 보수적 태도가 일부 정답을 놓치고 있습니다. 반대로 support 가 가장 적은 IT/Science(126)는 F1 0.7656 으로 최저인데, 학습 샘플이 적은 라벨일수록 성능이 떨어지는 빈도 불균형 효과가 드러납니다.
+
+카테고리마다 정답(label=1)과 비정답(label=0)의 sigmoid 확률 분포를 KDE 곡선으로 그립니다. 0.5 점선을 기준으로 두 분포가 얼마나 잘 갈라지는지 보면 라벨별 독립 sigmoid 가 분리를 잘 학습했는지 한눈에 들어옵니다. 두 봉우리가 겹치는 카테고리일수록 임계값 선택에 민감합니다.
 
 ```python
 sns.set_theme(style="whitegrid", context="talk")
@@ -566,6 +588,8 @@ plt.show()
 **결과 해석**
 
 각 카테고리에서 정답(label=1)과 비정답(label=0)의 확률 분포가 0.5 점선을 사이에 두고 양쪽으로 잘 갈라져, 라벨마다 독립 sigmoid 가 분리를 잘 학습했음을 보여줍니다. 두 봉우리가 겹치는 카테고리일수록 threshold 선택에 따라 precision-recall 트레이드오프가 민감하게 바뀝니다.
+
+라벨 간 동시출현 패턴을 조건부 확률 P(j|i) 행렬로 만들어 실제와 예측을 나란히 히트맵으로 비교합니다. 두 무늬가 비슷할수록 모델이 결합 입력 안의 카테고리 공동 등장 구조까지 재현했다는 뜻입니다. 합성 데이터는 무작위로 짝지었으므로 특정 쌍에 쏠리지 않는지도 확인합니다.
 
 ```python
 def cooccurrence_matrix(Y):

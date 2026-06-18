@@ -76,6 +76,8 @@ Wed Jun 17 21:41:56 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+메인 multi-label 태스크의 정답을 만들기 위해, 리뷰 텍스트를 다섯 가지 측면(food, service, price, ambiance, location)으로 라벨링하는 규칙을 정의합니다. 각 측면마다 키워드 목록을 두고, `extract_aspects`가 문장에 해당 키워드가 하나라도 등장하면 1, 아니면 0을 매겨 5차원 multi-hot 벡터를 만듭니다. 단어 경계(`\b`)로 매칭해 부분 문자열 오탐을 막는 점을 눈여겨보세요.
+
 ```python
 ASPECT_KEYWORDS = {
     "food": ["food", "meal", "dish", "taste", "delicious", "flavor", "menu",
@@ -109,6 +111,8 @@ print(f"K (aspects): {K}, aspects: {ASPECTS}")
 ```text
 K (aspects): 5, aspects: ['food', 'service', 'price', 'ambiance', 'location']
 ```
+
+토크나이저를 불러오고 Yelp 리뷰에서 학습 5,000개, 평가 1,000개를 샘플링합니다. `attach_aspects_and_aux`로 두 종류의 라벨을 한꺼번에 붙이는데, 메인 태스크용 5차원 측면 multi-hot과 보조 태스크용 별점 회귀값(0-4 별점을 4로 나눠 0-1 스케일로)을 함께 만듭니다. 하나의 입력에서 두 라벨이 동시에 나오는 구조가 이 장 보조 손실의 출발점입니다.
 
 ```python
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
@@ -146,6 +150,8 @@ First sample:
   aux_score (star/4): 1.00  (star = 5)
 ```
 
+보조 회귀 라벨인 별점 점수가 어떻게 분포하는지 확인합니다. 범위와 평균, 표준편차를 출력하고 다섯 별점 구간별로 샘플 수와 비율을 세어, 특정 별점에 쏠리지 않고 고르게 퍼져 있는지 점검합니다.
+
 ```python
 # 보조 라벨 분포 (별점 0-1 스케일)
 import numpy as np
@@ -176,6 +182,8 @@ Aux score distribution (train):
 **결과 해석**
 
 별점 5개 구간이 모두 19-20% 대로 고르게 분포해 있어, 보조 회귀 태스크가 특정 별점에 치우치지 않고 균형 잡힌 신호를 제공합니다.
+
+텍스트를 토큰화하면서 두 라벨을 모델이 받을 형태로 정리합니다. 메인 multi-label 정답은 `labels` 키에 5차원 float multi-hot으로, 보조 별점은 `aux_labels` 키에 float 스칼라로 담습니다. 토큰화 후에는 원본 텍스트와 중간 컬럼을 제거해 데이터셋을 가볍게 유지합니다.
 
 ```python
 def tokenize_fn(batch):
@@ -208,6 +216,8 @@ Dataset({
 First sample labels: [0.0, 1.0, 0.0, 0.0, 1.0]
 First sample aux_labels: 1.00
 ```
+
+표준 `DataCollatorWithPadding`은 `aux_labels` 같은 비표준 키를 어떻게 다룰지 모르므로, 이를 감싸는 collator를 직접 만듭니다. 먼저 `aux_labels`를 텐서로 빼낸 뒤 나머지를 표준 패딩에 넘기고, multi-hot `labels`를 float으로 보정한 다음 보조 라벨을 다시 붙여 배치를 완성합니다. 마지막에 네 개 샘플로 배치를 만들어 각 키의 shape과 dtype을 찍어 봅니다.
 
 ```python
 class AuxCollator:
@@ -245,6 +255,8 @@ Batch keys: ['input_ids', 'token_type_ids', 'attention_mask', 'labels', 'aux_lab
   labels: shape=(4, 5), dtype=torch.float32
   aux_labels: shape=(4,), dtype=torch.float32
 ```
+
+메인 분류 모델을 만들면서 보조 회귀용 헤드를 직접 덧붙입니다. `AutoModelForSequenceClassification`을 multi-label로 불러오면 5차원 메인 분류 헤드는 자동으로 붙고, 여기에 CLS hidden(768차원)을 스칼라로 내보내는 `aux_head` Linear를 수동으로 추가합니다. 출력의 파라미터 요약에서 보조 헤드가 전체의 0.001% 남짓에 불과한 가벼운 추가임을 눈여겨보세요.
 
 ```python
 def make_model():
@@ -305,6 +317,8 @@ Main classifier:      Linear(in_features=768, out_features=5, bias=True)
 Aux head:             Linear(in_features=768, out_features=1, bias=True)
 ```
 
+이 장의 핵심으로, `Trainer`의 `compute_loss`만 오버라이드해 결합 손실을 구현합니다. 메인 BCE 손실은 자동 매핑으로 그대로 받고, `output_hidden_states=True`로 받은 마지막 layer의 CLS hidden을 `aux_head`에 통과시켜 보조 MSE 손실을 따로 계산합니다. 최종 손실은 `main_loss + λ * aux_loss`로 두 손실을 λ로 가중 합산하며, λ가 보조 태스크의 영향력을 조절하는 손잡이가 됩니다.
+
 ```python
 from transformers.modeling_outputs import SequenceClassifierOutput
 
@@ -345,6 +359,8 @@ print("AuxTrainer 정의 완료 — Trainer 의 compute_loss 만 교체.")
 AuxTrainer 정의 완료 — Trainer 의 compute_loss 만 교체.
 ```
 
+평가 단계에서 메인 multi-label 성능을 재는 함수를 정의합니다. 로짓에 sigmoid를 적용해 확률로 바꾼 뒤 0.5 임계값으로 예측을 정하고, hamming loss와 micro/macro 평균의 F1, precision, recall, 그리고 macro AUC를 한꺼번에 계산합니다. 보조 헤드는 여기서 평가하지 않고 메인 태스크에만 집중하는 점을 눈여겨보세요.
+
 ```python
 def compute_metrics_main(eval_pred):
     # 메인 task 평가 — Ch 13과 동일
@@ -375,6 +391,8 @@ def compute_metrics_main(eval_pred):
         out["macro_auc"] = float("nan")
     return out
 ```
+
+이제 λ=1로 결합 손실을 적용해 실제로 학습을 돌립니다. T4 제약에 맞춰 2 에폭, batch size 16, `fp16=True`로 설정하고, `aux_labels`가 `model.forward` 시그니처에 없어 자동 제거되지 않도록 `remove_unused_columns=False`를 켭니다. 앞서 정의한 `AuxTrainer`에 λ를 넘겨 보조 손실을 메인과 동등한 비중으로 섞은 결과를 확인합니다.
 
 ```python
 LAMBDA_AUX = 1.0
@@ -449,6 +467,8 @@ Wed Jun 17 21:43:06 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+학습이 끝난 λ=1 모델로 평가 셋에서 메인 multi-label 성능을 측정합니다. `evaluate`가 돌려준 지표 중 `eval_`로 시작하는 float 값만 추려 보기 좋게 출력합니다.
+
 ```python
 # 메인 metric
 eval_metrics_aux = trainer_aux.evaluate()
@@ -481,6 +501,8 @@ With-aux (λ=1) — main task metrics:
 **결과 해석**
 
 λ=1로 보조 손실을 강하게 섞은 결과 메인 multi-label 성능이 micro F1 0.6559, macro F1 0.4004 수준에 그쳐, 보조 태스크가 메인 학습을 상당히 잠식했음을 보여줍니다. 곧 학습할 λ=0 베이스라인과 비교하면 그 차이가 분명해집니다.
+
+이번에는 보조 회귀 헤드가 별점을 얼마나 잘 맞히는지 직접 측정합니다. `Trainer`의 자동 평가는 메인 헤드만 보므로, 평가 셋을 배치 단위로 수동 forward해 CLS hidden에서 `aux_head` 예측을 모은 뒤 RMSE, R^2, Pearson 상관을 계산합니다.
 
 ```python
 # 보조 metric — eval 전체에 대해 수동 forward (작아서 빠름)
@@ -527,6 +549,8 @@ With-aux (λ=1) — aux task metrics (star regression, 0-1 scale):
 
 보조 헤드는 별점을 R^2 0.64, Pearson 0.80으로 꽤 잘 회귀해, 0-1 스케일 RMSE가 0.21에 그칩니다. 메인 성능을 희생한 대가로 보조 태스크 자체는 신뢰할 만한 수준으로 학습됐습니다.
 
+뒤에서 라벨별로 베이스라인과 비교하기 위해, λ=1 모델의 샘플별 메인 예측을 미리 뽑아 둡니다. `predict`로 받은 로짓에 sigmoid와 0.5 임계값을 적용해 multi-hot 예측을 만들고, 정답도 함께 정수형으로 보관합니다.
+
 ```python
 # 메인 task per-sample 예측 (다음 비교 단계에서 사용)
 preds_output_aux = trainer_aux.predict(eval_tok)
@@ -548,6 +572,8 @@ print(f"Eval samples:      {len(labels_eval)}")
 Main logits shape: (1000, 5)
 Eval samples:      1000
 ```
+
+보조 손실의 효과를 분리해 보기 위해 λ=0 베이스라인을 학습합니다. 같은 데이터와 하이퍼파라미터, 같은 `AuxTrainer`를 쓰되 λ만 0으로 두어 보조 MSE 항을 완전히 끄므로, 메인 BCE 손실만으로 학습한 순수 비교군이 됩니다. 동등한 비교를 위해 모델도 새 인스턴스로 새로 초기화하는 점을 눈여겨보세요.
 
 ```python
 # 새 모델 인스턴스 — λ=0 학습용
@@ -610,6 +636,8 @@ No-aux (λ=0) baseline training done — mean train loss: 0.4075
 
 λ=0 베이스라인의 train loss 0.4075는 보조 항이 빠진 순수 메인 BCE 손실이라, 결합 손실 0.5672보다 작은 것이 당연합니다. 둘은 손실 구성이 다르므로 절댓값이 아니라 메인 metric으로 비교해야 합니다.
 
+베이스라인 모델로 메인 metric을 평가하고, 라벨별 비교에 쓸 샘플별 예측도 함께 뽑아 둡니다. 앞서 λ=1 모델에 적용한 것과 똑같이 sigmoid와 0.5 임계값을 거쳐 multi-hot 예측을 만들어, 두 모델을 같은 기준에서 비교할 수 있게 합니다.
+
 ```python
 # baseline 메인 metric
 eval_metrics_no_aux = trainer_no_aux.evaluate()
@@ -652,6 +680,8 @@ No-aux (λ=0) baseline — main task metrics:
 
 보조 손실 없이 학습한 베이스라인은 micro F1 0.8163, macro F1 0.7577로 λ=1 모델을 크게 앞섭니다. 여기서는 λ=1이 너무 커 보조 태스크가 메인을 짓눌렀고, 균형점을 찾으려면 λ를 더 작게 두어야 한다는 신호입니다.
 
+두 모델의 메인 metric을 한 표로 모아 직접 비교합니다. 공통 지표마다 λ=0 베이스라인과 λ=1 값을 나란히 놓고 차이(`delta`)까지 계산해, 보조 손실이 각 지표를 얼마나 올리거나 내렸는지 한눈에 읽을 수 있게 합니다.
+
 ```python
 m_aux    = {k.replace("eval_", ""): v for k, v in eval_metrics_aux.items()
             if k.startswith("eval_") and isinstance(v, float)}
@@ -689,6 +719,8 @@ samples_per_second           884.1300            1024.5580              140.4280
 **결과 해석**
 
 모든 메인 metric에서 delta가 음수라, λ=1 보조 손실이 메인 성능을 일관되게 끌어내렸습니다. 특히 macro F1이 -0.3573으로 가장 크게 떨어져, 데이터가 적은 희소 라벨일수록 보조 항의 간섭에 취약함을 시사합니다.
+
+평균 지표만으로는 가려진, 보조 손실의 영향이 라벨마다 어떻게 다른지 들여다봅니다. 다섯 측면 각각에 대해 베이스라인과 λ=1 모델의 F1을 따로 구해 표로 비교하고, 막대그래프로 나란히 그려 어느 라벨이 가장 크게 무너지는지 시각적으로 드러냅니다.
 
 ```python
 def per_label_f1(Y_true, Y_pred):
@@ -745,6 +777,8 @@ location     0.8202       0.0000               -0.8202
 **결과 해석**
 
 food, service처럼 풍부한 라벨은 보조 손실에도 F1이 거의 유지되지만, price, ambiance, location 같은 희소 라벨은 크게 무너지고 특히 location은 F1이 0.8202에서 0으로 완전히 붕괴합니다. 보조 태스크의 간섭이 약한 라벨에 집중된다는 점이 막대 그래프에서 한눈에 드러납니다.
+
+마지막으로 보조 회귀 헤드의 예측을 실제 별점별로 violin 그래프로 그려, 회귀가 별점 순서를 제대로 잡았는지 확인합니다. 정답이 다섯 개 정수 별점에서만 나오므로 별점마다 예측 분포를 묶고, 각 별점의 목표값(0.0-1.0)을 점선 가이드로 함께 표시해 분포 중심이 가이드를 따라 오르는지 비교합니다.
 
 ```python
 # True star 별로 예측값 분포를 violin 으로 — 정답이 5개 정수 라벨에서만 나오므로

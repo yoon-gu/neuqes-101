@@ -77,6 +77,8 @@ Wed Jun 17 21:39:27 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+Yelp 리뷰에는 항목 라벨이 없으므로, 항목별 키워드 사전을 정의해 라벨을 합성합니다. `extract_aspects`는 한 리뷰에서 각 항목의 키워드가 단어 경계로 등장하는지 검사해 5차원 multi-hot 벡터를 만듭니다. 라벨이 서로 배타적이지 않아 여러 항목이 동시에 켜질 수 있다는 점이 multi-label의 핵심입니다.
+
 ```python
 ASPECT_KEYWORDS = {
     "food": ["food", "meal", "dish", "taste", "delicious", "flavor", "menu",
@@ -112,6 +114,8 @@ K (number of aspects): 5
 aspects: ['food', 'service', 'price', 'ambiance', 'location']
 ```
 
+DistilBERT 토크나이저를 불러오고 Yelp 데이터에서 학습 5,000개·평가 1,000개를 추출합니다. 이어 `attach_aspects`로 모든 텍스트에 앞서 정의한 5차원 multi-hot 항목 벡터를 부착합니다. 첫 샘플의 활성 항목까지 출력해 합성 라벨이 의도대로 붙는지 눈으로 확인합니다.
+
 ```python
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
 
@@ -144,6 +148,8 @@ First sample:
   aspects (multi-hot): [0.0, 1.0, 0.0, 0.0, 1.0]
   active aspects: ['service', 'location']
 ```
+
+합성한 라벨의 분포를 점검합니다. 항목별 활성률과 함께, 한 샘플에 평균 몇 개의 항목이 켜지는지·0개부터 5개까지 어떻게 퍼져 있는지를 집계합니다. 라벨별 빈도 차와 다중 활성 정도를 미리 보면 뒤의 평가 지표 해석이 쉬워집니다.
 
 ```python
 # 항목별 활성률
@@ -187,6 +193,8 @@ Active label distribution (train):
 
 food/service는 절반 가까이 활성이지만 ambiance/location은 20% 안팎으로 라벨별 빈도 차가 큽니다. 한 샘플에 평균 1.75개 항목이 켜지고 0개부터 5개까지 분포가 퍼져 있어, 라벨마다 독립 sigmoid로 다루는 multi-label 설정이 자연스럽습니다.
 
+텍스트를 토큰화하면서 multi-hot 항목 벡터를 `labels` 컬럼에 넣습니다. `BCEWithLogitsLoss`는 라벨을 float 텐서로 받으므로 정수 0/1이 아니라 실수로 변환합니다. 학습에 불필요한 원본 컬럼은 제거해 `input_ids`·`labels`만 남깁니다.
+
 ```python
 def tokenize_fn(batch):
     out = tokenizer(batch["text"], truncation=True, max_length=128)
@@ -211,6 +219,8 @@ Dataset({
 
 First sample label: [0.0, 1.0, 0.0, 0.0, 1.0]  (length-5 multi-hot float vector)
 ```
+
+DistilBERT에 5차원 분류 헤드를 얹어 모델을 만듭니다. `problem_type="multi_label_classification"`을 지정하면 `Trainer`가 라벨별 독립 sigmoid + `BCEWithLogitsLoss`를 자동으로 적용합니다. 헤드가 새로 초기화되며(분류기 5출력) 파라미터 수와 설정이 의도대로 잡혔는지 출력으로 확인합니다.
 
 ```python
 model = AutoModelForSequenceClassification.from_pretrained(
@@ -289,6 +299,8 @@ Wed Jun 17 21:40:03 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+평가용 지표 함수를 정의합니다. 라벨별 logit에 sigmoid를 씌워 확률로 바꾸고 0.5 임계값으로 multi-hot 예측을 만든 뒤, Hamming loss와 micro·macro F1을 계산합니다. micro는 전체 라벨을 합산하고 macro는 라벨별 F1을 동일 가중으로 평균하므로, 빈도가 다른 라벨에서 두 값이 갈리는 점을 눈여겨봅니다.
+
 ```python
 def compute_metrics(eval_pred):
     logits, labels = eval_pred                      # logits: (N, K), labels: (N, K) float
@@ -322,6 +334,8 @@ def compute_metrics(eval_pred):
         out["macro_auc"] = float("nan")
     return out
 ```
+
+학습 설정을 구성하고 `Trainer`로 파인튜닝을 실행합니다. T4 제약에 맞춰 배치 16·2에폭·`fp16=True`로 두고, 앞서 만든 `compute_metrics`를 연결해 에폭마다 평가가 돌게 합니다. 끝나면 평균 학습 손실을 출력합니다.
 
 ```python
 training_args = TrainingArguments(
@@ -391,6 +405,8 @@ Wed Jun 17 21:40:42 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+학습된 모델을 평가 셋에 돌려 앞서 정의한 모든 지표를 한 번에 계산합니다. 손실뿐 아니라 Hamming loss·micro/macro F1·AUC가 함께 출력되어 multi-label 성능을 여러 각도로 읽을 수 있습니다.
+
 ```python
 # 평가 metric
 eval_metrics = trainer.evaluate()
@@ -424,6 +440,8 @@ BERT multi-label evaluation:
 
 micro F1 0.8398에 비해 macro F1 0.8019이 낮은데, 빈도 낮은 라벨까지 동일 가중치로 평균하는 macro 쪽이 손해를 보기 때문입니다. precision(0.92)이 recall(0.78)보다 높아 0.5 임계값에서 모델이 보수적으로 라벨을 켜고 있으며, macro AUC 0.9155는 임계값과 무관하게 라벨별 순위 분리력 자체는 우수함을 보여줍니다.
 
+평가 셋 전체의 logit을 뽑아 sigmoid 확률과 0.5 임계값 예측을 직접 만듭니다. 라벨별로 확률 범위와 실제 활성률·예측 활성률을 나란히 출력해, 어떤 항목에서 모델이 양성을 충분히 켜지 못하는지 확인합니다.
+
 ```python
 # logits → per-label sigmoid → multi-hot 예측
 preds_output = trainer.predict(eval_tok)
@@ -456,6 +474,8 @@ prob ranges per label:
 
 food/service는 예측률이 실제율에 거의 맞지만, price(30.4%→17.4%)나 ambiance(16.8%→10.2%)처럼 빈도 낮은 라벨은 0.5 임계값에서 모델이 절반 가까이를 켜지 못합니다. 양성이 드문 라벨일수록 sigmoid 확률이 0.5를 넘기 어려워 recall이 떨어지는 multi-label의 전형적 패턴입니다.
 
+라벨별 precision·recall·F1을 한 표로 정리합니다. 항목마다 성능을 따로 보면, 빈도 낮은 라벨에서 precision은 높은데 recall이 주저앉는 불균형이 드러납니다.
+
 ```python
 # Per-label classification report
 print(classification_report(
@@ -485,6 +505,8 @@ weighted avg     0.9170    0.7760    0.8310      1723
 **결과 해석**
 
 빈도 낮은 라벨은 precision은 높지만(price 0.91, ambiance 0.98) recall이 0.52-0.60으로 주저앉아 F1을 깎아먹습니다. 즉 모델은 켠 라벨은 거의 맞히지만 켜야 할 것을 놓치는 쪽으로 치우쳐 있고, 이 라벨들의 임계값을 0.5보다 낮추면 recall과 F1을 끌어올릴 여지가 있습니다.
+
+지표 대신 개별 사례를 직접 읽어 봅니다. 정답 항목이 가장 많은 샘플과 가장 적은 샘플을 골라, 원문과 함께 라벨별 정답·확률·예측을 한 줄씩 비교합니다. 어떤 항목에서 확률이 임계값 근처를 맴도는지 손으로 짚어 보는 단계입니다.
 
 ```python
 # 평가 셋에서 항목 활성이 가장 *많은* 샘플 1개 + 가장 *적은* 샘플 1개 골라 읽어보기
@@ -556,6 +578,8 @@ text (truncated): I don't quite get this place or why Asians love it, but it is 
 
 5개 라벨이 모두 켜진 어려운 샘플에서는 food/ambiance를 놓쳐 3개만 맞혔는데, 두 라벨의 확률이 0.26-0.27로 0.5에 못 미친 경계 사례입니다. 반대로 라벨이 하나도 없는 샘플은 모든 확률이 0.1 아래로 깔끔히 떨어져, 라벨별 독립 sigmoid가 각 항목을 따로 끄고 켜는 구조가 잘 드러납니다.
 
+라벨별 sigmoid 확률 분포를 양성·음성으로 나눠 그립니다. 항목마다 작은 패널을 만들고 0.5 점선을 함께 표시해, 양성과 음성 봉우리가 임계값을 기준으로 얼마나 잘 갈라지는지 시각적으로 확인합니다.
+
 ```python
 sns.set_theme(style="whitegrid", context="talk")
 
@@ -591,6 +615,8 @@ plt.show()
 **결과 해석**
 
 라벨마다 양성(빨강)과 음성(파랑) 확률 분포가 0.5 점선을 기준으로 잘 갈라집니다. 다만 ambiance/location처럼 양성이 드문 라벨은 양성 봉우리가 점선 왼쪽까지 끌려와 있어, 0.5 임계값이 이들에게는 다소 높게 작동하며 recall 손실로 이어집니다.
+
+라벨 간 동시발생 구조를 들여다봅니다. 한 항목이 켜졌을 때 다른 항목이 함께 켜질 조건부 확률 행렬을 실제 라벨과 예측 라벨 각각에 대해 계산해 히트맵으로 나란히 그립니다. 라벨별 독립 sigmoid가 상관을 직접 모델링하지 않는데도 예측이 실제 동시발생 패턴을 따라가는지 비교하는 것이 핵심입니다.
 
 ```python
 def cooccurrence_matrix(Y):
@@ -634,6 +660,8 @@ plt.show()
 **결과 해석**
 
 실제 라벨 간 동시발생 패턴을 예측 행렬이 대체로 따라가지만, 빈도 낮은 라벨은 적게 켜진 만큼 예측 쪽 조건부 확률이 옅게 나옵니다. 라벨별 독립 sigmoid는 항목 간 상관을 직접 모델링하지 않는데도 본문 표현이 공통 신호를 담아 동시발생 구조가 어느 정도 재현되는 점이 흥미롭습니다.
+
+BERT와 견줄 베이스라인으로 Ch 6의 TF-IDF + OvR 로지스틱 회귀를 같은 데이터에 재현합니다. 라벨마다 독립 이진 분류기를 학습해(OneVsRest) multi-label을 처리하고, 동일한 0.5 임계값과 지표로 micro/macro F1·AUC·Hamming loss를 계산합니다. 같은 조건에서 BERT와 직접 비교하기 위한 기준선입니다.
 
 ```python
 # Ch 6 셋업 재현 — TF-IDF + OneVsRestClassifier(LogisticRegression)
@@ -683,6 +711,8 @@ sklearn TF-IDF + OvR LogReg:
 
 Ch 6를 재현한 TF-IDF + OvR LogReg 베이스라인은 micro F1 0.7634, macro F1 0.6141로, BERT보다 특히 macro 쪽이 크게 뒤집니다. 흥미롭게도 macro AUC는 0.9387로 BERT(0.9155)보다 살짝 높아, 순위 분리력 자체는 비슷해도 0.5 임계값에서 양성을 켜는 능력에서 격차가 벌어집니다.
 
+두 모델의 지표를 같은 표로 모아 차이를 한눈에 봅니다. 공통 지표마다 sklearn·BERT 값과 그 차이(BERT − sklearn)를 나란히 출력해, 격차가 precision에서 나는지 recall에서 나는지 가립니다.
+
 ```python
 metrics_bert = {
     k.replace("eval_", ""): v for k, v in eval_metrics.items()
@@ -726,6 +756,8 @@ macro_precision         0.9036               0.9259          0.0223
 **결과 해석**
 
 BERT의 이득은 거의 전부 recall에서 나옵니다. micro recall +0.11, macro recall +0.19로 크게 앞서는 반면 precision 차이는 미미하고 AUC는 오히려 sklearn이 약간 높습니다. 문맥을 읽는 BERT가 베이스라인이 놓치던 양성 라벨을 더 많이 건져 올려 F1 격차를 만든다는 뜻입니다.
+
+전체 평균이 아닌 라벨별 F1로 쪼개 두 모델을 비교합니다. 항목마다 sklearn과 BERT의 F1과 그 차이를 표로 내고 막대그래프로도 그려, 어느 항목에서 BERT의 이득이 집중되는지 또렷하게 드러냅니다.
 
 ```python
 def per_label_f1(Y_true, Y_pred):

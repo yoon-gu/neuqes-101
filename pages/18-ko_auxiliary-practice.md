@@ -86,6 +86,8 @@ Wed Jun 17 21:51:43 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+KLUE-YNAT(연합뉴스 토픽 분류) 데이터를 내려받아 split과 크기, 7개 카테고리 라벨 이름을 확인합니다. 출력·플롯은 한글 폰트 깨짐을 피하려고 영문 라벨로 매핑해 두고, `title` 컬럼은 이후 코드와 맞추기 위해 `text`로 이름을 바꿉니다.
+
 ```python
 ds = load_dataset("klue/klue", "ynat")
 print(f"splits: {list(ds.keys())}")
@@ -116,6 +118,8 @@ first 2 raw samples:
   label=3 (Life&Culture)  text='유튜브 내달 2일까지 크리에이터 지원 공간 운영'
   label=3 (Life&Culture)  text='어버이날 맑다가 흐려져…남부지방 옅은 황사'
 ```
+
+single-label 데이터를 두 헤드라인씩 짝지어 multi-label로 합성하는 함수입니다. 텍스트는 ` [SEP] ` 로 이어 붙이고 라벨은 두 카테고리를 1로 켠 multi-hot으로 만드는데, 여기서 활성 카테고리 개수 `n_active`(1 또는 2)가 이 장의 보조 task 정답이 됩니다. 같은 카테고리끼리 짝지어지면 활성이 1개뿐이라는 점을 눈여겨봐 주세요.
 
 ```python
 SEED = 42
@@ -182,6 +186,8 @@ First synthetic sample:
   n_active:  2  ← Ch 18 aux label
 ```
 
+합성된 보조 라벨 `n_active`가 train/eval에서 어떻게 분포하는지 1·2 두 값의 비율과 평균을 출력합니다. 무작위 짝짓기라면 평균이 이론값 1.857에 가까워야 하므로, 데이터가 의도대로 만들어졌는지 가늠하는 점검입니다.
+
 ```python
 # 보조 라벨 (n_active) 분포 — train/eval
 n_active_train = np.array(train_full["n_active"])
@@ -212,6 +218,8 @@ Aux label (n_active) distribution:
 **결과 해석**
 
 두 헤드라인을 무작위로 짝지으므로 보조 라벨 `n_active`는 대부분 2(train 85.4%)이고 1은 소수입니다. 평균 1.854가 이론값 1.857과 거의 일치해 합성 데이터가 의도대로 만들어졌음을 확인할 수 있습니다.
+
+`klue/bert-base` 토크나이저를 불러와 결합 헤드라인의 토큰 길이를 먼저 살펴본 뒤 `tokenize_fn`으로 데이터를 인코딩합니다. 메인 라벨은 7차원 multi-hot float, 보조 라벨은 활성 개수를 담은 float 스칼라로 따로 만들어 두 헤드가 같은 배치에서 학습되도록 준비합니다.
 
 ```python
 tokenizer = AutoTokenizer.from_pretrained("klue/bert-base")
@@ -257,6 +265,8 @@ First sample labels:    [0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0]  (length-7 multi-hot
 First sample n_active:  2  (aux scalar)
 ```
 
+배치를 만들 때 스칼라 보조 라벨 `n_active`는 표준 패딩과 섞이지 않으므로, 이를 먼저 떼어 낸 뒤 나머지를 `DataCollatorWithPadding`으로 패딩하고 마지막에 다시 붙이는 커스텀 collator입니다. 첫 4개 샘플로 배치를 만들어 각 키의 shape와 dtype이 의도대로 나오는지 확인합니다.
+
 ```python
 class AuxCollator:
     def __init__(self, tokenizer):
@@ -293,6 +303,8 @@ Batch keys: ['input_ids', 'token_type_ids', 'attention_mask', 'labels', 'n_activ
   labels: shape=(4, 7), dtype=torch.float32
   n_active: shape=(4,), dtype=torch.float32
 ```
+
+KLUE-BERT 본체를 공유하면서 메인 헤드(multi-label 7차원)와 보조 헤드(활성 개수 회귀 1차원)를 함께 얹은 멀티태스크 모델입니다. forward 안에서 메인 BCE 손실과 보조 MSE 손실을 `l_main + lambda_aux * l_aux`로 결합하는 부분이 이 장의 핵심이니 눈여겨봐 주세요. 두 헤드가 본체에 비해 파라미터를 거의 더하지 않는다는 점도 함께 확인합니다.
 
 ```python
 class KoBertMultiTask(nn.Module):
@@ -413,6 +425,8 @@ Wed Jun 17 21:52:05 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+기본 `Trainer`의 `compute_loss`만 교체해 forward에 `lambda_aux`를 넘기는 커스텀 Trainer입니다. 손실 결합은 모델이 직접 하므로 여기서는 λ 값을 전달하기만 하면 되고, λ를 0으로 주면 보조 항을 끈 baseline으로도 그대로 재사용할 수 있습니다.
+
 ```python
 class AuxTrainer(Trainer):
     def __init__(self, *args, lambda_aux: float = 0.1, **kwargs):
@@ -435,6 +449,8 @@ print("AuxTrainer 정의 완료 — Trainer 의 compute_loss 만 교체.")
 ```text
 AuxTrainer 정의 완료 — Trainer 의 compute_loss 만 교체.
 ```
+
+메인 multi-label task를 평가하는 지표 함수로, logits에 sigmoid를 씌워 0.5 임계값으로 예측을 만든 뒤 hamming loss와 micro/macro F1·precision·recall, macro-AUC를 계산합니다. 보조 task는 여기서 다루지 않고 뒤에서 따로 평가합니다.
 
 ```python
 def compute_metrics_main(eval_pred):
@@ -464,6 +480,8 @@ def compute_metrics_main(eval_pred):
         out["macro_auc"] = float("nan")
     return out
 ```
+
+λ=0.1로 보조 항을 켠 멀티태스크 모델을 실제로 학습합니다. T4 제약에 맞춰 2 에폭·batch 16·fp16으로 돌리고, `n_active` 컬럼이 자동 제거되지 않도록 `remove_unused_columns=False`를 둔 점을 눈여겨봐 주세요.
 
 ```python
 LAMBDA_AUX = 0.1
@@ -539,6 +557,8 @@ Wed Jun 17 21:52:48 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+학습된 멀티태스크 모델로 eval 셋의 메인 task 지표를 뽑아 봅니다. 여기서 나오는 micro-F1·macro-AUC 등이 뒤에서 보조 항 없는 baseline과 비교할 기준점이 됩니다.
+
 ```python
 # 메인 metric
 eval_metrics_aux = trainer_aux.evaluate()
@@ -571,6 +591,8 @@ With-aux (lambda=0.1) — main task metrics:
 **결과 해석**
 
 보조 헤드를 더한 메인 태스크는 micro-F1 0.8521, macro-AUC 0.9628로 한국어 multi-label을 안정적으로 풀어냅니다. 이 값들은 뒤에서 보조 항 없는 baseline과 비교할 기준점이 됩니다.
+
+보조 헤드의 예측은 `Trainer.evaluate`가 자동으로 모아 주지 않으므로, eval 셋 전체를 직접 forward해 `last_count_pred`에 보관된 활성 개수 예측을 수집합니다. 이렇게 모은 예측으로 RMSE·R^2·Pearson을 계산해 보조 회귀가 얼마나 잘 맞는지 확인합니다.
 
 ```python
 # 보조 metric — eval 전체에 대해 수동 forward
@@ -622,6 +644,8 @@ With-aux (lambda=0.1) — aux task metrics (n_active regression):
 
 보조 회귀는 Pearson 0.485, R^2 0.137로 활성 개수의 방향성은 어느 정도 잡지만 정확히 맞히지는 못합니다. 라벨이 1·2 두 값뿐이고 분포가 2로 크게 치우쳐 있어 학습 신호가 약한 점이 한계로 작용합니다.
 
+뒤의 카테고리별 비교를 위해 메인 task의 per-sample 예측을 미리 만들어 둡니다. logits에 sigmoid를 씌워 확률로 바꾸고 0.5 임계값으로 multi-hot 예측을 만든 결과를 보관합니다.
+
 ```python
 # 메인 task per-sample 예측 (다음 비교 단계에서 사용)
 preds_output_aux = trainer_aux.predict(eval_tok)
@@ -643,6 +667,8 @@ print(f"Eval samples:      {len(labels_eval)}")
 Main logits shape: (1000, 7)
 Eval samples:      1000
 ```
+
+보조 항을 켠 모델의 카테고리별 precision·recall·F1을 `classification_report`로 한눈에 봅니다. 7개 토픽 각각에서 성능이 어떻게 갈리는지 확인하는 단계입니다.
 
 ```python
 # Per-category classification report (with-aux)
@@ -673,6 +699,8 @@ Life&Culture     0.8378    0.8921    0.8641       278
 weighted avg     0.8625    0.8453    0.8522      1758
  samples avg     0.8823    0.8625    0.8530      1758
 ```
+
+같은 데이터·설정으로 λ=0 baseline을 새 모델 인스턴스에 학습합니다. 보조 항만 끄고 나머지를 그대로 두어, 뒤에서 보조 항의 효과를 공정하게 분리해 비교하기 위한 대조군입니다.
 
 ```python
 # 새 모델 인스턴스 — λ=0 학습용
@@ -728,6 +756,8 @@ Notes:
 No-aux (lambda=0) baseline training done — mean train loss: 0.2213
 ```
 
+baseline 모델의 메인 task 지표와 per-sample 예측을 뽑습니다. 보조를 켠 모델과 같은 방식으로 평가해 두 결과를 곧바로 나란히 놓고 비교할 수 있게 합니다.
+
 ```python
 # baseline 메인 metric
 eval_metrics_no_aux = trainer_no_aux.evaluate()
@@ -770,6 +800,8 @@ No-aux (lambda=0) baseline — main task metrics:
 
 보조 항을 끈 baseline은 micro-F1 0.8600, macro-F1 0.8561로 보조를 더한 쪽(0.8521, 0.8470)보다 오히려 높습니다. 이 셋업에서는 보조 태스크가 메인 성능을 끌어올리지 못한다는 신호입니다.
 
+두 모델의 공통 지표를 한 표로 모아 `delta (aux - no_aux)` 열로 보조 항이 각 지표를 얼마나 올리거나 내렸는지 한눈에 봅니다. delta의 부호와 크기가 이 비교의 핵심 결론입니다.
+
 ```python
 m_aux    = {k.replace("eval_", ""): v for k, v in eval_metrics_aux.items()
             if k.startswith("eval_") and isinstance(v, float)}
@@ -807,6 +839,8 @@ samples_per_second          1423.4440              1132.6520             -290.79
 **결과 해석**
 
 micro-F1 -0.0079, macro-F1 -0.0091, macro-AUC -0.0025로 모든 메인 지표의 delta가 음수입니다. 영어 Ch 14와 마찬가지로 이 데이터에서는 λ=0.1의 보조 항이 도움이 되기보다 메인 성능을 소폭 깎습니다.
+
+이번에는 전체 평균이 아니라 카테고리별 F1을 두 모델에 대해 따로 계산해 표와 막대그래프로 비교합니다. 보조 항의 영향이 특정 토픽에 몰리는지, 아니면 전반에 고르게 퍼지는지를 살펴보는 단계입니다.
 
 ```python
 def per_label_f1(Y_true, Y_pred):
@@ -865,6 +899,8 @@ Life&Culture     0.8646       0.8641               -0.0005
 **결과 해석**
 
 카테고리별로 보면 IT/Science만 +0.0043으로 미세하게 오르고 Economy(-0.0247), Politics(-0.0133) 등 나머지는 모두 떨어집니다. 보조 항의 영향이 특정 카테고리에 집중되기보다 전반적으로 약간의 손해로 나타납니다.
+
+보조 회귀의 예측을 정답 `n_active`(1·2) 그룹별로 나눠 violin plot으로 그립니다. 점선은 정답 위치이므로, 예측 분포가 그 선 근처에 모이는지 또는 다수값 쪽으로 쏠리는지를 시각적으로 확인할 수 있습니다.
 
 ```python
 # True n_active 별 예측 분포 — violin
