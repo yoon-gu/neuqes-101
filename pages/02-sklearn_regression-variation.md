@@ -25,14 +25,14 @@ print(f"Test MSE (no normalization):    {mean_squared_error(y_test, y_pred_test)
 **▶ 실행 결과**
 
 ```text
-Test MSE (normalized space): 0.0970
-Test MSE (back to star space): 1.5522
-Test MSE (no normalization):    1.5522
+Test MSE (normalized space): 0.0973
+Test MSE (back to star space): 1.5565
+Test MSE (no normalization):    1.5565
 ```
 
 **결과 해석**
 
-라벨을 [0, 1]로 압축한 모델도 별점 공간으로 되돌리면 MSE가 1.5522로, 정규화하지 않은 모델과 정확히 같습니다. 라벨 스케일을 바꾸는 건 단위 환산일 뿐이라 예측 품질 자체는 그대로라는 뜻이고, 출력을 범위 안에 가두려면 라벨이 아니라 모델 쪽(활성화 함수)을 손봐야 함을 확인시켜 줍니다.
+라벨을 [0, 1]로 압축한 모델도 별점 공간으로 되돌리면 MSE가 1.5565로, 정규화하지 않은 모델과 정확히 같습니다. 라벨 스케일을 바꾸는 건 단위 환산일 뿐이라 예측 품질 자체는 그대로라는 뜻이고, 출력을 범위 안에 가두려면 라벨이 아니라 모델 쪽(활성화 함수)을 손봐야 함을 확인시켜 줍니다.
 
 정규화한 모델의 예측 범위를 출력하고, [0, 1]을 벗어난 예측이 몇 개나 되는지 아래위로 세어 봅니다. 정답 라벨을 [0, 1]로 눌렀는데도 출력은 여전히 그 밖으로 새는지 수치로 확인하려는 것입니다. 8% 안팎이 경계를 벗어난다는 점에 주목하세요.
 
@@ -50,11 +50,11 @@ print(f"Predictions > 1: {n_above} ({n_above / len(y_pred_norm):.1%})")
 **▶ 실행 결과**
 
 ```text
-Normalized model pred range: [-0.568, 1.612]
+Normalized model pred range: [-0.638, 1.538]
 Ideal range: [0, 1]
 
-Predictions < 0: 84 (8.4%)
-Predictions > 1: 88 (8.8%)
+Predictions < 0: 85 (8.5%)
+Predictions > 1: 92 (9.2%)
 ```
 
 **관찰**: 정답 라벨을 [0, 1]로 압축해도 모델 출력은 여전히 그 범위를 벗어납니다. 가중합을 그대로 뱉는 한 어떤 라벨 스케일링으로도 [0, 1] 안에 가둘 수 없습니다.

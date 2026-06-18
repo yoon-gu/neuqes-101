@@ -9,8 +9,8 @@ print(classification_report(y_test, y_pred, target_names=[f"{i+1}★" for i in r
 ```text
               precision    recall  f1-score   support
 
-          1★       0.62      0.76      0.68       204
-          2★       0.39      0.35      0.37       205
+          1★       0.62      0.77      0.69       204
+          2★       0.40      0.35      0.37       205
           3★       0.41      0.35      0.38       192
           4★       0.45      0.43      0.44       204
           5★       0.62      0.64      0.63       195
@@ -40,11 +40,11 @@ print(cm_df)
 
 ```text
          pred 1★  pred 2★  pred 3★  pred 4★  pred 5★
-true 1★      156       38        2        4        4
+true 1★      158       36        2        4        4
 true 2★       54       72       52       16       11
 true 3★       23       50       68       37       14
-true 4★       10       20       38       88       48
-true 5★       10        3        7       51      124
+true 4★       11       20       37       88       48
+true 5★       10        3        6       51      125
 ```
 
 **관찰**: confusion matrix의 오답이 **대각선 근처에 몰립니다**.

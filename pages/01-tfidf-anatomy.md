@@ -19,7 +19,7 @@ print(f"sparsity: {sparsity:.2%}  (fraction of empty cells)")
 
 ```text
 shape: (5000, 10000)  (n_docs, vocab_size)
-non-zero entries: 405,789
+non-zero entries: 405,803
 total cells: 50,000,000
 sparsity: 99.19%  (fraction of empty cells)
 ```
@@ -69,7 +69,7 @@ for i in top:
 
 ```text
 Vocab size: 10,000
-First 20: ['00', '000', '00am', '00pm', '05', '08', '09', '10', '100', '1000', '100th', '101', '10am', '10min', '10pm', '11', '110', '112', '11am', '11pm']
+First 20: ['00', '000', '00am', '00pm', '05', '05nparfrm9annokwdi3bbq', '08', '09', '10', '100', '1000', '100th', '101', '10am', '10min', '1 …(뒤 33자 생략)
 
 Top 10 most frequent words
               the  33,748

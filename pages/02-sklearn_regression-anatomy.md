@@ -19,7 +19,7 @@ print(f"Diff:        {abs(manual_mse - sklearn_mse):.2e}")
 **▶ 실행 결과**
 
 ```text
-Manual MSE: 1.552180
-sklearn MSE: 1.552180
+Manual MSE: 1.556471
+sklearn MSE: 1.556471
 Diff:        0.00e+00
 ```

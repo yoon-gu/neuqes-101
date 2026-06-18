@@ -16,9 +16,9 @@ print(f"macro F1: {f1_score(Y_test, Y_pred, average='macro', zero_division=0):.4
 
 ```text
 Subset accuracy (all match): 0.4930
-Hamming loss (mean per-label error): 0.1382
-micro F1: 0.7737
-macro F1: 0.6470
+Hamming loss (mean per-label error): 0.1372
+micro F1: 0.7749
+macro F1: 0.6467
 ```
 
 **결과 해석**
@@ -42,15 +42,15 @@ print(classification_report(
               precision    recall  f1-score   support
 
         food       0.90      0.90      0.90       564
-     service       0.89      0.86      0.88       519
+     service       0.90      0.86      0.88       519
        price       0.93      0.43      0.59       276
-    ambiance       1.00      0.28      0.43       185
+    ambiance       1.00      0.27      0.43       185
     location       0.94      0.29      0.44       203
 
-   micro avg       0.90      0.68      0.77      1747
+   micro avg       0.91      0.68      0.77      1747
    macro avg       0.93      0.55      0.65      1747
 weighted avg       0.92      0.68      0.74      1747
- samples avg       0.68      0.58      0.61      1747
+ samples avg       0.69      0.58      0.61      1747
 ```
 
 **결과 해석**

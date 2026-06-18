@@ -23,10 +23,10 @@ print(f"sklearn first 5: {proba_sklearn[:5].round(4)}")
 **▶ 실행 결과**
 
 ```text
-Max diff (manual vs sklearn): 0.00e+00
+Max diff (manual vs sklearn): 1.11e-16
 
-Manual first 5:  [0.4485 0.0999 0.1638 0.6661 0.7578]
-sklearn first 5: [0.4485 0.0999 0.1638 0.6661 0.7578]
+Manual first 5:  [0.4477 0.1001 0.1591 0.6653 0.758 ]
+sklearn first 5: [0.4477 0.1001 0.1591 0.6653 0.758 ]
 ```
 
 이번엔 BCE(log loss)를 공식대로 직접 계산해 sklearn의 `log_loss`와 비교합니다. 정답이 1이면 $-\log(p)$, 0이면 $-\log(1-p)$를 더해 평균 내는 게 전부입니다. 둘이 정확히 일치하면 BCE가 별도의 마법이 아니라 확률에 로그를 씌운 단순한 식임이 드러납니다.
@@ -47,8 +47,8 @@ print(f"Diff:        {abs(manual_bce - sklearn_bce):.2e}")
 **▶ 실행 결과**
 
 ```text
-Manual BCE:  0.383475
-sklearn BCE: 0.383475
+Manual BCE:  0.383569
+sklearn BCE: 0.383569
 Diff:        0.00e+00
 ```
 

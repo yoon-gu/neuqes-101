@@ -119,8 +119,8 @@ Method B predict_proba shape: (808, 2)
   (sklearn returns [P(0), P(1)] for both — sigmoid output expanded to two columns)
 
 First 5 P(y=1):
-Method A: [0.4485 0.0999 0.1638 0.6661 0.7578]
-Method B: [0.4485 0.0999 0.1638 0.6661 0.7578]
+Method A: [0.4477 0.1001 0.1591 0.6653 0.758 ]
+Method B: [0.4477 0.1001 0.1591 0.6653 0.758 ]
 
 Max diff:  0.0000
 Mean diff: 0.0000

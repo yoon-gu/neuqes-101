@@ -84,9 +84,9 @@ print(f"Test  R²:  {r2_score(y_test, y_pred_test):.4f}")
 
 ```text
 Train MSE: 0.0000
-Test  MSE: 1.5522
-Test  MAE: 0.9929
-Test  R²:  0.2161
+Test  MSE: 1.5565
+Test  MAE: 0.9952
+Test  R²:  0.2139
 ```
 
 **결과 해석**
@@ -114,7 +114,7 @@ plt.show()
 **▶ 실행 결과**
 
 ```text
-Pred range: [-1.27, 7.45]
+Pred range: [-1.55, 7.15]
 True range: [1, 5]
 ```
 

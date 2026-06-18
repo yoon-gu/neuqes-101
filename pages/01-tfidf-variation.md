@@ -51,9 +51,9 @@ I stalk this truck.  I've been to industrial parks where I pretend to be a tech 
 -----------------------------------
           stalk       1    0.2418
         pretend       1    0.2252
+          parks       1    0.2212
      industrial       1    0.2212
          farmer       1    0.2212
-          parks       1    0.2212
          divine       1    0.2092
            tech       1    0.2068
           pride       1    0.2046

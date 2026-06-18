@@ -80,13 +80,13 @@ True star:    2★
 
    class     multinomial     OvR raw    OvR normalized
 --------------------------------------------------------
-  1★            0.3479      0.3272            0.3540
-  2★            0.3014      0.2617            0.2832
-  3★            0.1708      0.1581            0.1711
-  4★            0.0842      0.0846            0.0916
-  5★            0.0957      0.0925            0.1001
+  1★            0.3570      0.3374            0.3625
+  2★            0.3071      0.2680            0.2880
+  3★            0.1634      0.1543            0.1658
+  4★            0.0806      0.0827            0.0889
+  5★            0.0919      0.0882            0.0948
 --------------------------------------------------------
-  sum            1.0000      0.9241            1.0000
+  sum            1.0000      0.9307            1.0000
 ```
 
 **관찰**
@@ -123,13 +123,13 @@ print(f"  → 5 independent sigmoids; rows do not sum to exactly 1")
 **▶ 실행 결과**
 
 ```text
-multinomial accuracy: 0.5080
-OvR accuracy:         0.5050
-Diff: 0.0030
+multinomial accuracy: 0.5110
+OvR accuracy:         0.5070
+Diff: 0.0040
 
 OvR raw row sum distribution (pre-normalization):
-  min:  0.779
-  max:  1.394
+  min:  0.778
+  max:  1.387
   mean: 0.982
   → 5 independent sigmoids; rows do not sum to exactly 1
 ```
