@@ -79,14 +79,33 @@ scikit-learn 한 줄로 텍스트를 숫자로 바꾸는 일에서 출발해, �
 
 > Ch 4는 Ch 3 이진 분류 데이터를 그대로 가져와 **softmax+CE(2차원)** 로 풀어 sigmoid+BCE와의 동등성을 시연합니다. **Ch 10·11도 BERT에서 같은 두 방식을 따로 학습** 해 비교합니다 — Ch 10이 sigmoid+BCE 방식, Ch 11이 softmax+CE 방식.
 
-## Phase 구분
+## 학습 여정 (Phase 0-5)
 
-- **Phase 0 (Ch 1-6)** — sklearn으로 태스크/loss의 본질 학습. BERT 등장하지 않음.
-- **Phase 1 (Ch 7-14)** — DistilBERT와 Trainer로 Loss/Head 구조를 재정식화합니다. Ch 10·11이 binary 두 방식을 별도 학습으로 비교, Auxiliary loss(Ch 14)로 마무리.
-- **Phase 2 (Ch 15-18)** — 한국어로 압축 재방문 (klue/bert-base). Binary부터 시작 (회귀는 영어에서 다뤘으므로 생략).
-- **Phase 3 (Ch 19-23) — 토크나이저 학습 + BERT scratch (일반 도메인 사전학습 → 다른 도메인 fine-tune)**: Ch 19 에서 WordPiece + WordLevel 을 직접 학습해 비교 → 영어 작은 BERT scratch (**Wikitext-103 MLM 사전학습 Ch 20** → Yelp 이진 분류 Ch 21, Ch 10 과 비교) → 한국어 작은 BERT scratch (**한국어 Wikipedia MLM Ch 22** → NSMC 이진 Ch 23, Ch 15 와 비교). **원본 BERT (Wikipedia + BookCorpus 일반 도메인) 정신 그대로** — 사전학습은 *일반 도메인 위키*, fine-tune 은 *다른 도메인 task* 라서 *진정한 transfer* 가 측정됩니다 (DAPT 아닌 정직한 사전학습-fine-tune 패러다임). Ch 20 부터는 토크나이저를 학습하지 않고 표준 모델의 토크나이저(`bert-base-uncased`, `klue/bert-base`)를 그대로 가져와 사용.
-- **Phase 4 (Ch 24-31) — GPT/LLM (autoregressive)**: encoder(BERT)에서 decoder(GPT)로. *GPT 시대의 학습 4단계* — **사전학습 (Ch 24 영어 scratch, Ch 26 한국어 scratch) → continual pretraining (Ch 25 gpt2 + TinyStories, Ch 27 KoGPT2 + 한국어 TinyStories — 영어·한국어 대칭) → SFT (Ch 28 KoGPT2 + KoAlpaca, instruction tuning) → alignment (Ch 30 DPO → Ch 31 GRPO)**. 사이에 **분야별 벤치마크 평가 (Ch 29: MMLU/HellaSwag/GSM8K/HumanEval + KMMLU/HAERAE/LogicKor, `lm-evaluation-harness`)**. 부록 A1 (`28_sft/appendix_agentic.ipynb`) — agentic / function-calling SFT. *PPO 는 T4 메모리 한계(actor+critic+RM+ref 4 모델 동시 로드)로 제외 — DPO 가 그 부담 없는 대체.* 영어 (Ch 24·25) 와 한국어 (Ch 26·27) 가 *scratch + continual pretraining* 으로 완전 대칭.
-- **Phase 5 (Ch 32-34) — Diffusion LM**: autoregressive 가 아니라 *문장 전체를 병렬 denoise* 하는 새 패러다임. 32 개념·작은 mask-diffusion 직접 구현 → 33 LLaDA-8B 글로벌 모델 사용 → 34 Trida-7B 한국 산 모델 (AR vs Diffusion 비교).
+큰 흐름은 **sklearn으로 본질 잡기 → DistilBERT로 다시 → 한국어로 재방문 → 바닥부터 직접 → GPT와 정렬 → Diffusion** 입니다. 한 단계가 끝나면 같은 골격을 다음 단계가 한 겹씩 더 깊게 되짚습니다.
+
+### Phase 0 · sklearn으로 태스크와 손실의 본질 (Ch 1-6)
+
+BERT는 아직 등장하지 않습니다. 텍스트를 TF-IDF로 숫자화한 뒤 회귀 → 이진 → 다중 클래스 → 다중 라벨로 태스크를 넓히며, MSE·BCE·CrossEntropy가 각각 무엇을 재는지 sklearn으로 또렷하게 익힙니다. Ch 4에서는 같은 이진 데이터를 sigmoid+BCE와 softmax+CE 두 방식으로 풀어, 둘이 사실은 같은 모델임을 보입니다.
+
+### Phase 1 · DistilBERT로 같은 태스크를 다시 (Ch 7-14)
+
+Phase 0에서 익힌 태스크들을 이번엔 DistilBERT와 `Trainer`로 재정식화합니다. 출력 헤드와 손실 함수만 갈아끼우며 회귀·이진·다중 클래스·다중 라벨을 훑고, Ch 10·11에서 이진 분류의 두 방식(sigmoid / softmax)을 따로 학습해 BERT에서도 같은 결과가 나옴을 확인합니다. 보조 손실(Ch 14)로 손실 축을 마무리합니다.
+
+### Phase 2 · 한국어로 압축 재방문 (Ch 15-18)
+
+`klue/bert-base`로 같은 흐름을 한국어에서 빠르게 되짚습니다. 회귀는 영어에서 이미 다뤘으므로 건너뛰고 이진 분류부터 시작합니다.
+
+### Phase 3 · 토크나이저와 사전학습을 바닥부터 (Ch 19-23)
+
+사전학습된 모델에 기대지 않고 직접 만듭니다. 먼저 토크나이저를 손수 학습해 비교하고(Ch 19), 작은 BERT를 일반 도메인 위키로 MLM 사전학습한 뒤(영어 Ch 20·한국어 Ch 22) 다른 도메인 분류로 파인튜닝합니다(Ch 21·23). 사전학습은 일반 도메인, 파인튜닝은 다른 도메인이라 진짜 transfer가 측정됩니다 — 원본 BERT가 위키·책으로 사전학습하던 정신 그대로입니다. 결과는 기성 모델(영어 Ch 10·한국어 Ch 15)과 직접 견줍니다.
+
+### Phase 4 · GPT로 넘어가 정렬까지 (Ch 24-31)
+
+인코더(BERT)에서 디코더(GPT)로 무대를 옮깁니다. GPT 시대의 학습 네 단계 — **사전학습**(Ch 24·26) → **계속 사전학습**(Ch 25·27) → **SFT 지시학습**(Ch 28) → **정렬**(Ch 30 DPO, Ch 31 GRPO) — 을 영어·한국어 대칭으로 밟고, 그 사이에 분야별 벤치마크 평가(Ch 29)를 끼웁니다. PPO는 T4 한 대에 네 모델을 동시에 올릴 수 없어 제외하고, 그 부담이 없는 DPO로 대신합니다.
+
+### Phase 5 · Diffusion LM (Ch 32-34)
+
+다음 토큰을 하나씩 잇는 autoregressive와 달리, 문장 전체를 한꺼번에 denoise하는 새 패러다임을 봅니다. 작은 mask-diffusion을 직접 구현해 개념을 잡고(Ch 32), 글로벌 모델 LLaDA-8B(Ch 33)와 국산 Trida-7B(Ch 34)로 autoregressive와 Diffusion을 나란히 비교합니다.
 
 ## 학습 환경
 
