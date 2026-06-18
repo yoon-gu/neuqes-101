@@ -69,6 +69,8 @@ Wed Jun 17 21:30:31 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+DistilBERT 토크나이저를 불러오고 Yelp 리뷰에서 train 4,000건·eval 1,000건만 뽑아, 별점(0-4)을 1-5 float 라벨로 바꿔 토큰화합니다.
+
 ```python
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
 
@@ -101,6 +103,8 @@ Dataset({
 
 First sample label: 5.0  (float)
 ```
+
+출력 차원 1짜리 회귀 헤드를 단 DistilBERT 분류 모델을 만들고 파라미터 수와 헤드 구조, problem_type을 확인합니다.
 
 ```python
 model = AutoModelForSequenceClassification.from_pretrained(
@@ -141,6 +145,8 @@ problem_type:  regression
 
 num_labels=1 + problem_type="regression"을 주니 분류 헤드가 768→1 Linear 한 줄이 되고 Trainer가 자동으로 MSELoss를 씁니다. Ch 2의 선형 회귀 위에 DistilBERT 본체가 특징 추출기로 얹힌 구조입니다.
 
+전체·학습 가능·동결 파라미터 수를 세는 헬퍼를 정의하고 현재 모델은 모든 층이 학습 대상임을 확인합니다.
+
 ```python
 def param_summary(m):
     total     = sum(p.numel() for p in m.parameters())
@@ -164,6 +170,8 @@ Frozen parameters:                0  (0.0 M, 0.0%)
 
 Default — all layers are trainable
 ```
+
+시연용으로 모델을 하나 더 만들어 BERT 본체를 동결했을 때 학습 대상이 분류 헤드만 남는 것을 보여주고, 다 쓴 모델은 메모리에서 비웁니다.
 
 ```python
 # 시연용 — 같은 모델을 한 번 더 만들고 BERT 본체를 동결
@@ -252,6 +260,8 @@ Wed Jun 17 21:31:10 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+T4에서 30분 안에 끝나도록 에폭·배치 크기·learning rate·fp16 등 학습 인자를 정합니다.
+
 ```python
 training_args = TrainingArguments(
     output_dir="./ch09_output",
@@ -276,6 +286,8 @@ print(f"Total training steps: {len(train_tok) // training_args.per_device_train_
 Total training steps: 500
 ```
 
+평가 때 MSE·MAE·R²를 계산하도록 compute_metrics 함수를 정의합니다.
+
 ```python
 # 평가 지표를 직접 정의 — sklearn 헬퍼 그대로 활용
 def compute_metrics(eval_pred):
@@ -287,6 +299,8 @@ def compute_metrics(eval_pred):
         "r2":  float(r2_score(labels, preds)),
     }
 ```
+
+모델·인자·데이터셋·지표를 묶어 Trainer를 만들고 실제 파인튜닝을 실행합니다.
 
 ```python
 trainer = Trainer(
@@ -339,6 +353,8 @@ Wed Jun 17 21:31:42 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+학습된 모델을 eval 셋으로 평가해 MSE·MAE·R² 최종 지표를 출력합니다.
+
 ```python
 # BERT 최종 평가 (eval_dataset 기준)
 bert_metrics = trainer.evaluate()
@@ -363,6 +379,8 @@ BERT evaluation:
 **결과 해석**
 
 2 에폭 파인튜닝 뒤 eval MSE 0.65, R² 0.67입니다. 별점을 평균 ±0.61(MAE) 안에서 맞힌다는 뜻이고, eval_loss와 eval_mse가 같은 값인 데서 회귀 손실이 곧 MSE임을 확인할 수 있습니다.
+
+비교 기준으로 같은 4,000건에 TF-IDF + sklearn LinearRegression을 학습해 같은 지표로 평가합니다.
 
 ```python
 # 같은 4,000건으로 sklearn LinearRegression 학습 (Ch 2 방식)
@@ -397,6 +415,8 @@ sklearn LinearRegression evaluation:
   r2:  0.1996
 ```
 
+sklearn과 DistilBERT의 MSE·MAE·R²를 한 DataFrame으로 나란히 비교합니다.
+
 ```python
 # 한 표로 비교
 rows = [
@@ -424,6 +444,8 @@ pd.DataFrame(rows).round(4)
 
 같은 4,000건·같은 별점 회귀인데 DistilBERT의 R²(0.67)가 sklearn TF-IDF(0.20)의 세 배가 넘고 MSE는 절반 이하입니다. 단어 빈도만 세는 선형 모델과 달리 문맥을 읽는 사전학습 표현이 회귀에서도 큰 차이를 만든다는 걸 보여줍니다.
 
+BERT 예측값을 받아 sklearn 예측과 함께 실제 별점·예측·잔차를 담은 long-form DataFrame으로 정리합니다.
+
 ```python
 # BERT 예측값 직접 받기 (별도 evaluate 호출이지만 빠름)
 preds_output = trainer.predict(eval_tok)
@@ -443,6 +465,8 @@ df_compare["Residual"] = df_compare["Predicted"] - df_compare["Actual star"]
 ```text
 <IPython.core.display.HTML object>
 ```
+
+실제 별점별 예측 분포를 두 모델로 나눠 split 바이올린 플롯으로 그리고 기준선을 함께 표시합니다.
 
 ```python
 fig, ax = plt.subplots(figsize=(11, 5))
@@ -465,6 +489,8 @@ plt.show()
 **결과 해석**
 
 BERT(왼쪽 반)는 실제 별점이 오를수록 예측 분포도 따라 올라가 빨간 기준선에 가깝게 붙지만, sklearn(오른쪽 반)은 가운데로 뭉쳐 1점·5점 극단을 잘 못 맞힙니다.
+
+이번에는 잔차(예측 − 실제)의 분포를 실제 별점별로 바이올린 플롯으로 그려 두 모델의 편향을 비교합니다.
 
 ```python
 fig, ax = plt.subplots(figsize=(11, 5))
