@@ -225,14 +225,6 @@ else:
     )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-PyTorch:        2.x.x
-CUDA available: True
-GPU:            Tesla T4
-\end{lstlisting}
-\par\vspace{0.9em}
-
 \begin{codeRead}
 \inlinecode{numpy, pandas, matplotlib, PyTorch, datasets} 같은 주요 패키지를 불러옵니다.
 \end{codeRead}
@@ -252,7 +244,14 @@ GPU:            Tesla T4
 \textbf{1행}의 \inlinecode{!nvidia-smi}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Wed Jun 17 21:30:31 2026
+NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
+0 Tesla T4 Off | 00000000:00:04.0 Off | 0
+N/A 39C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \section{데이터 준비}
 
@@ -302,17 +301,6 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Dataset({
-  features: [...],
-  num_rows: ...
-})
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \section{\texorpdfstring{모델 로드}{모델 로드}}
 
 \ref{ch:07}장에서는 사전학습된 분류 헤드(\inlinecode{distilbert-base-uncased-finetuned-sst-2-english}, num\_labels=2)를 그대로 썼습니다. 이번엔 본체 모델만 받고 \textbf{분류 헤드를 새로} 만듭니다 --- \inlinecode{num\_labels=1} 이라 출력 차원이 1, \inlinecode{problem\_type="regression"} 이라 \inlinecode{Trainer} 가 자동으로 MSELoss 사용.
@@ -334,16 +322,21 @@ print(f"Classifier:    {model.classifier}")
 print(f"problem_type:  {model.config.problem_type}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Total parameters:     ...
-Trainable parameters: ...
-Classifier:           ...
+Key                     | Status     | 
+------------------------+------------+-
+classifier.weight       | MISSING    | 
+pre_classifier.weight   | MISSING    | 
+pre_classifier.bias     | MISSING    | 
+classifier.bias         | MISSING    | 
+
+- MISSING: those params were newly initialized because missing from the che...
+Parameters:    66,954,241
+Classifier:    Linear(in_features=768, out_features=1, bias=True)
+problem_type:  regression
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{경고 메시지를 보셨을 겁니다} --- \inlinecode{Some\ weights\ of\ DistilBertForSequenceClassification\ were\ not\ initialized\ ...}. 분류 헤드(\inlinecode{Linear(768,\ 1)})가 새로 만들어지면서 \emph{랜덤 초기화} 됐다는 알림입니다. 이 부분이 학습으로 채워지고, BERT 본체는 사전학습 가중치를 미세 조정합니다 (transfer learning의 본 모습).
 
 \subsection{학습 파라미터}
@@ -372,14 +365,6 @@ print(
 print(
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Total parameters:     ...
-Trainable parameters: ...
-Classifier:           ...
-\end{lstlisting}
-\par\vspace{0.9em}
-
 \noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
 \Needspace{6\baselineskip}
@@ -390,15 +375,15 @@ Classifier:           ...
 print(f"\nDefault — all layers are trainable")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Total parameters:     ...
-Trainable parameters: ...
-Classifier:           ...
+Total parameters:        66,954,241  (67.0 M)
+Trainable parameters:    66,954,241  (67.0 M, 100.0%)
+Frozen parameters:                0  (0.0 M, 0.0%)
+
+Default — all layers are trainable
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \subsection{BERT 본체 동결}
 
@@ -426,14 +411,6 @@ print(
     f"  Frozen:      {fr:>13,}  ("
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Total parameters:     ...
-Trainable parameters: ...
-Classifier:           ...
-\end{lstlisting}
-\par\vspace{0.9em}
-
 \noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
 \Needspace{10\baselineskip}
@@ -447,14 +424,6 @@ print(
 print(
     f"Tradeoff: BERT body cannot adapt to the task — "
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Total parameters:     ...
-Trainable parameters: ...
-Classifier:           ...
-\end{lstlisting}
-\par\vspace{0.9em}
 
 \noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 필요한 라이브러리와 기본 설정을 준비하는 단계로 넘어갑니다.}
 
@@ -473,16 +442,6 @@ gc.collect()
 if torch.cuda.is_available():
     torch.cuda.empty_cache()
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-PyTorch:        2.x.x
-CUDA available: True
-GPU:            Tesla T4
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \textbf{언제 동결을 쓰나}
 
@@ -505,8 +464,14 @@ GPU:            Tesla T4
 !nvidia-smi
 \end{lstlisting}
 
-
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Wed Jun 17 21:31:10 2026
+NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
+0 Tesla T4 Off | 00000000:00:04.0 Off | 0
+N/A 41C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
+\end{lstlisting}
+\par\vspace{0.9em}
 모델 가중치(\textasciitilde67M 파라미터, fp32 \textasciitilde255 MB)가 GPU에 올라간 상태입니다. 학습이 시작되면 \emph{옵티마이저 모멘텀(2배) + gradient(1배)} 가 추가되어 VRAM이 더 늘어납니다.
 
 
@@ -545,15 +510,11 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
+Total training steps: 500
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{10\baselineskip}
 \begin{lstlisting}
 def compute_metrics(eval_pred):
@@ -587,14 +548,16 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-TrainOutput(global_step=..., training_loss=..., metrics={...})
+Epoch  Training...  Validati...  Mse       Mae       R2
+-----  -----------  -----------  --------  --------  --------
+1      0.768790     0.703477     0.703477  0.668927  0.638973
+2      0.553886     0.646681     0.646681  0.611532  0.668121
+
+Training done — mean train loss: 1.0480
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 학습이 진행되는 동안 step별 loss와 에폭별 평가 metric이 출력됩니다. \textbf{핵심 관찰}:
 
 \begin{itemize}
@@ -626,8 +589,14 @@ TrainOutput(global_step=..., training_loss=..., metrics={...})
 !nvidia-smi
 \end{lstlisting}
 
-
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Wed Jun 17 21:31:42 2026
+NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
+0 Tesla T4 Off | 00000000:00:04.0 Off | 0
+N/A 62C P0 72W / 70W | 1573MiB / 15360MiB | 71% Default
+\end{lstlisting}
+\par\vspace{0.9em}
 학습 후 VRAM 상태입니다. 학습 \emph{중} 에는 옵티마이저 모멘텀과 gradient가 추가되어 더 큰 VRAM을 잠시 쓰지만, 학습이 끝나면 일부가 해제됩니다 (단, PyTorch 캐시 할당자가 다음 사용을 위해 일부 메모리를 보유).
 
 \textbf{학습 시 VRAM 구성 (fp16 기준)}:
@@ -669,16 +638,18 @@ for k, v in bert_metrics.items():
         print(f"  {k:>20}: {v:.4f}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-eval_loss:      ...
-eval_accuracy:  ...
-eval_f1:        ...
+Training...  Validati...  Epoch  Mse       Mae       R2
+-----------  -----------  -----  --------  --------  --------
+0.553886     0.646681     2      0.646681  0.611532  0.668121
+BERT evaluation:
+             eval_loss: 0.6467
+              eval_mse: 0.6467
+              eval_mae: 0.6115
+               eval_r2: 0.6681
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -713,15 +684,6 @@ print(
 print(f"  r2:  {r2_score(eval_labels, sk_pred):.4f}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 rows = [
@@ -737,8 +699,14 @@ rows = [
 pd.DataFrame(rows).round(4)
 \end{lstlisting}
 
-
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+model           mse     mae     r2
+-  --------------  ------  ------  ------
+0  sklearn Lin...  1.5597  1.0086  0.1996
+1  DistilBERT...   0.6467  0.6115  0.6681
+\end{lstlisting}
+\par\vspace{0.9em}
 \textbf{해석 가이드} (실제 숫자는 random seed에 따라 조금씩 다릅니다):
 
 \begin{itemize}
@@ -766,7 +734,10 @@ df_compare = pd.DataFrame({
 df_compare["Residual"] = df_compare["Predicted"] - df_compare["Actual star"]
 \end{lstlisting}
 
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \subsection{예측 분포}
 
@@ -801,6 +772,11 @@ plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+<Figure size 1100x500 with 1 Axes>
+\end{lstlisting}
+\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{정답 별점별 BERT와 sklearn 회귀 예측 분포}{fig:ch09-predicted-violin}
 \includegraphics[width=0.92\linewidth]{assets/figures/ch09_predicted_violin.png}
 \end{bookfigurelabel}
@@ -859,6 +835,11 @@ plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+<Figure size 1100x500 with 1 Axes>
+\end{lstlisting}
+\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{정답 별점별 잔차 분포 비교}{fig:ch09-residual-violin}
 \includegraphics[width=0.92\linewidth]{assets/figures/ch09_residual_violin.png}
 \end{bookfigurelabel}

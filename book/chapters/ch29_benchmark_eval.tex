@@ -377,25 +377,6 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-question        : 6 곱하기 4는?
-gold answer     : '24'
-
-answer_a = '정답은 24입니다.'
-   exact match        : False
-   extract-int match  : True
-
-answer_b = '이십사'
-   exact match        : False
-   extract-int match  : False
-
-=> exact match is brittle when the output format changes.
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \begin{quote}
 위에서 \inlinecode{answer\_a} 는 \emph{숫자 추출} 로는 맞다고 잡히지만, \inlinecode{answer\_b} (\inlinecode{"이십사"}) 는 \emph{숫자 추출조차} 실패합니다 --- 내용은 정답인데도요. \textbf{이것이 생성형 정량 평가의 본질적 어려움} 입니다. 정답을 \emph{인식하는 것 자체} 가 task 마다 다른 규칙을 요구합니다. §2 의 MC 평가가 \emph{생성을 피해} log-likelihood 만 보는 것도, 이 형식 변동 문제를 우회하려는 설계입니다.
 \end{quote}
@@ -505,16 +486,6 @@ print(f"torch  : {torch.__version__}")
 print(f"fp16   : {USE_FP16}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-device : cuda  (Tesla T4)  # or mps/cpu depending on runtime
-torch  : ...
-fp16   : True
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \section{평가 대상 모델 로드}
 
 \textbf{\inlinecode{Qwen/Qwen2.5-0.5B-Instruct}} --- 약 0.5B (494M) 파라미터의 \emph{작은 instruct 모델} 입니다. T4 에서 가볍게 돌고, 한국어·영어를 모두 지원해 한국어 벤치마크에서도 \emph{random 보다 나은} 점수를 냅니다. 작은 모델이라 점수 자체는 낮지만, \emph{평가 파이프라인을 끝까지 돌려보기} 에 적합합니다.
@@ -543,17 +514,6 @@ print(f"eos token : {tokenizer.eos_token!r}")
 \begin{codeRead}
 \textbf{1행}의 \inlinecode{MODEL\_NAME = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{tokenizer = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{4행}의 \inlinecode{model = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{model.eval(...)}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{7행}의 \inlinecode{n\_params = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-model     : Qwen/Qwen2.5-0.5B-Instruct
-params    : about 500M
-vocab     : ...
-eos token : '<|im_end|>'
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \section{Multiple-choice 평가 직접 구현 (핵심)}
 
@@ -685,21 +645,6 @@ print(f"\npredicted (sum)  : {demo_choices[pred_sum]}")
 print(f"predicted (mean) : {demo_choices[pred_mean]}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-    choice  logprob_sum  logprob_mean
- 2입니다.       ...          ...
- 3입니다.       ...          ...
- 5입니다.       ...          ...
-10입니다.       ...          ...
-
-predicted (sum)  : 2입니다.
-predicted (mean) : 2입니다.
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \subsection{KoBEST HellaSwag --- 4지선다 상식추론}
 
 \textbf{\inlinecode{skt/kobest\_v1}} 의 \inlinecode{hellaswag} task 는 \emph{문맥 (context)} 뒤에 가장 자연스러운 \emph{다음 문장} 을 4개 후보 (\inlinecode{ending\_1..4}) 중에서 고르는 한국어 상식추론 벤치마크입니다. 선택지 길이가 제각각이라 \emph{길이 정규화 (mean)} 효과가 잘 드러납니다. T4 + 시간 제약상 \textbf{test split 의 앞 50문항} 만 평가합니다.
@@ -725,23 +670,6 @@ for i in range(1, 5):
     print(f"ending_{i} :", ex[f'ending_{i}'][:40])
 print("label   :", ex["label"])
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-HellaSwag subset : 50 문항 (4지선다)
-columns          : ['context', 'ending_1', 'ending_2', 'ending_3', 'ending_4', 'label']
-
---- example ---
-context : ...
-ending_1 : ...
-ending_2 : ...
-ending_3 : ...
-ending_4 : ...
-label   : ...
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -777,17 +705,6 @@ print(
 print(f"  random baseline (1/4)          : 0.250")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-KoBEST HellaSwag  (n=50)
-  acc      (sum  / log-prob)     : ...
-  acc_norm (mean / length-norm)  : ...
-  random baseline (1/4)          : 0.250
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \subsection{KoBEST BoolQ --- 2지선다 (예 / 아니오)}
 
 \inlinecode{boolq} task 는 \emph{본문 (paragraph)} 과 \emph{질문 (question)} 을 주고 \textbf{예 / 아니오} 를 묻습니다. 선택지가 2개라 \emph{random baseline 은 0.5} --- MC 평가를 \emph{가장 단순한 형태} 로 보여줍니다. 여기서는 질문 뒤에 “예” / “아니오” 를 이어붙여 log-prob 를 비교합니다 (label 0 = 아니오, 1 = 예).
@@ -822,16 +739,6 @@ print(f"KoBEST BoolQ  (n={len(boolq)})")
 print(f"  acc             : {acc_boolq:.3f}")
 print(f"  random baseline : 0.500  (2지선다)")
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-KoBEST BoolQ  (n=50)
-  acc             : ...
-  random baseline : 0.500  (2지선다)
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \begin{quote}
 \textbf{여기까지가 MC 평가의 전부입니다.} 생성은 한 번도 하지 않았습니다 --- 오직 \emph{각 선택지의 log-likelihood} 를 forward 한 번씩으로 계산해 argmax 했을 뿐입니다. 점수가 random 근처라면, 그건 \emph{0.5B 라는 작은 모델의 한계} 입니다 (§7). 같은 코드를 더 큰 모델에 그대로 적용하면 점수가 오릅니다.
@@ -924,20 +831,6 @@ print(
 \textbf{1--8행}의 \inlinecode{ARITHMETIC = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{10--13행}의 \inlinecode{FEWSHOT = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{15행}의 \inlinecode{def extract\_first\_int(tex...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{16행}의 \inlinecode{'''생성 텍스트에서 첫 정수를 추출 (정답...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{17행}의 \inlinecode{m = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{18행}의 \inlinecode{return int(m[0]) if m els...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-               question                 generated  pred  answer    ok
-       6 곱하기 4는 얼마인가요?       정답은 24입니다    24      24  True
-      15 더하기 9는 얼마인가요?       정답은 24입니다    24      24  True
-       20 빼기 8은 얼마인가요?        정답은 12입니다    12      12  True
-       7 곱하기 7은 얼마인가요?       정답은 49입니다    49      49  True
-
-few-shot 산술 정확도 : 1.000  (n=6)
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \begin{quote}
 \textbf{생성 평가의 어려움}: 모델이 정답 숫자를 \emph{맞게 말해도} 형식이 다르면 (\inlinecode{24} vs \inlinecode{이십사} vs 본문에 다른 숫자가 먼저 등장) 정규식 추출이 어긋날 수 있습니다. GSM8K·HumanEval 의 공식 평가가 \emph{정교한 파싱 / 코드 실행} 을 쓰는 이유입니다. MC (§2) 가 \emph{형식에 안 흔들리는} 것과 대조됩니다.
 \end{quote}
@@ -988,18 +881,6 @@ print(
 \begin{codeRead}
 \textbf{1행}의 \inlinecode{acc\_zero, zero\_df = eval\_...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{acc\_few = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5--8행}의 \inlinecode{compare = ...}에서는 결과를 표로 보기 좋게 정리합니다.
 \end{codeRead}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-              setting  accuracy
- zero-shot (0 examples)     0.333
- few-shot (2 examples)      1.000
-
-in-context learning effect : +0.667  (few - zero)
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \begin{quote}
 few-shot 이 점수를 올리는 핵심은 \emph{지식을 새로 가르치는 게 아니라} \textbf{답변 형식을 정렬} 시키는 데 있습니다. MMLU 같은 벤치마크가 보통 \emph{5-shot} 으로 보고되는 이유 --- 모델이 \emph{객관식 답 형식} 에 적응하도록.
@@ -1059,16 +940,6 @@ except ImportError:
     HAS_LM_EVAL = False
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-lm-eval version : ...
-# if missing:
-lm-eval 미설치 - 이 셀은 건너뜁니다.
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 if HAS_LM_EVAL:
@@ -1104,19 +975,6 @@ else:
         "점수로 참고하세요."
     )
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-[kobest_boolq]
-  acc           : ...
-  acc_stderr    : ...
-  acc_norm      : ...
-
-# if lm-eval is unavailable, use the direct implementation above.
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \begin{quote}
 위 셀이 버전 문제로 실패하면 (\texttt{task\ \textquotesingle{}kobest\_boolq\textquotesingle{}\ not\ found} 등), \inlinecode{lm\_eval.tasks.TaskManager().all\_tasks} 로 \emph{설치된 버전의 task 이름} 을 확인해 바꾸면 됩니다. \textbf{핵심은 점수 자체가 아니라, §2 의 직접 구현과 \inlinecode{lm-eval} 이 \emph{같은 log-likelihood 원리} 위에 있다는 것} 입니다.
@@ -1494,18 +1352,6 @@ except Exception as e:
     )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-lm-eval available tasks : ...
-  [mmlu      ] ['mmlu', 'mmlu_continuation', ...]
-  [hellaswag ] ['hellaswag', ...]
-  [gsm8k     ] ['gsm8k', ...]
-  [kobest    ] ['kobest_boolq', 'kobest_hellaswag', ...]
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \subsection{§5 LLM-as-judge 와 human evaluation --- 열린 질문은 누가 채점하나}
 
 객관식(MC)·정규식으로는 \emph{열린 질문} (에세이, 조언, 대화) 을 채점할 수 없습니다 --- 정답이 하나가 아니니까요 (메인 장 §1 의 어려움). 그래서 \emph{주관적 품질} 을 채점하는 두 방식이 있습니다: \textbf{LLM-as-judge} (강한 LLM 이 채점) 와 \textbf{human evaluation} (사람이 직접 채점). 둘은 \emph{경쟁이자 보완} 관계입니다.
@@ -1618,22 +1464,6 @@ print(
     "#     model='gpt-4o', messages=[{'role':'user','content': example}])"
 )
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-You are an impartial judge. Compare two AI answers to the same question.
-Judge by: helpfulness, correctness, and clarity.
-
-[Question]
-건강한 식습관 3가지를 알려줘.
-
-Output ONLY one of: "A", "B", or "tie". Then a one-line reason.
-============================================================
-position bias 줄이기: A/B 순서를 바꿔 한 번 더 채점하고 결과를 평균합니다.
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \subsubsection{\texorpdfstring{사람이 직접 평가 (human evaluation) --- \emph{진짜 gold standard 인가?}}{사람이 직접 평가 (human evaluation) --- 진짜 gold standard 인가?}}
 
@@ -1944,22 +1774,6 @@ except Exception as e:
         "to READ reports, not the numbers."
     )
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-model                                      downloads    likes
-----------------------------------------------------------------
-LGAI-EXAONE/EXAONE-4.0-32B                         ...      ...
-google/gemma-3-27b-it                              ...      ...
-Qwen/Qwen3-32B                                     ...      ...
-zai-org/GLM-4.5                                    ...      ...
-deepseek-ai/DeepSeek-R1                            ...      ...
-
-note: download count is a usage signal, NOT a quality score.
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \subsection{체크포인트 질문}
 

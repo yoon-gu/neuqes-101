@@ -502,18 +502,6 @@ USE_FP16 = (device.type == "cuda")
 print(f"use fp16     : {USE_FP16}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-trl          : 1.5.1
-device       : cuda  (Tesla T4)
-VRAM total   : 15.00 GiB
-torch        : ...
-use fp16     : True
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \section{\texorpdfstring{verifiable 데이터 --- \inlinecode{prompt} + 정답 (산술)}{verifiable 데이터 --- prompt + 정답 (산술)}}
 
 GRPO 데이터의 핵심은 \textbf{정답을 자동 검증할 수 있어야} 한다는 것입니다. 코드(테스트 실행) 는 무겁고 환경 의존이 크니, 본 장은 \emph{가장 깨끗한 verifiable task} 인 \textbf{산술(arithmetic)} 로 시작합니다 --- 정답이 \emph{정수 하나} 라 \emph{문자열 매칭만으로 채점} 됩니다.
@@ -603,23 +591,6 @@ print(
 print(grpo_ds[0]["answer"])
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-train: 256 samples,  eval: 64 samples
-
-=== sample 0 ===
---- prompt (model input) ---
-### 명령어:
-7 - 1 = ?
-
-### 응답:
---- answer (for verifier) ---
-6
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \section{SFT 모델 (policy) 로드}
 
 GRPO 는 \emph{SFT 모델에서 출발} 합니다 (\ref{ch:28}장의 SFT 체크포인트가 정석). 노트북 단독 실행을 위해 \textbf{base KoGPT2 로 시작} 합니다 --- 보통은 \emph{이미 지시를 따르는 SFT 모델} 에서 GRPO 를 시작해야 \emph{rollout 이 의미 있는 답} 을 내고 verifier 가 \emph{섞인 reward} (잘한 답 + 못한 답) 를 줄 수 있습니다.
@@ -665,21 +636,6 @@ print(
     f"{tokenizer.pad_token_id}"
 )
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-load done: ...s
-
-=== policy model ===
-#params      : 125.16 M
-vocab_size   : 51,200
-tokenizer    : PreTrainedTokenizerFast
-  eos_token  : </s>  id=1
-  pad_token  : <pad>  id=3
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \section{verifier (reward function) 정의 + group advantage 손계산}
 
@@ -755,20 +711,6 @@ for c, r in zip(demo_completions, demo_rewards):
 print(f"\nrewards (group): {demo_rewards}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-========================================================
-verifier demo - prompt: '3 + 5 = ?', gold answer: 8
-========================================================
-  reward=1.0  completion='The answer is 8.'
-  reward=0.0  completion='answer: 7'
-  reward=1.0  completion='8'
-  reward=0.0  completion='I don't know'
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \subsection{\texorpdfstring{group relative advantage 손계산 --- reward \(\to\) advantage}{group relative advantage 손계산 --- reward \textbackslash to advantage}}
 
 verifier 가 매긴 reward \([1, 0, 1, 0]\) 를 \emph{group 평균 대비 상대값} 으로 바꿉니다 (§의 수식):
@@ -836,30 +778,6 @@ for rw in [[1, 0, 1, 0], [1, 1, 1, 0], [1, 0, 0, 0], [1, 1, 1, 1], [0, 0, 0, 0]]
         f"{note}"
     )
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-============================================================
-group relative advantage - by hand (group mean as baseline, no critic)
-============================================================
-rewards          : [1. 0. 1. 0.]
-group mean       : 0.500   <- baseline (replaces critic)
-group std        : 0.500
-advantage        : [ 1. -1.  1. -1.]
-------------------------------------------------------------
-  y1: reward=1  advantage=+1.00  -> prob UP (above avg)
-  y2: reward=0  advantage=-1.00  -> prob DOWN (below avg)
-  y3: reward=1  advantage=+1.00  -> prob UP (above avg)
-  y4: reward=0  advantage=-1.00  -> prob DOWN (below avg)
-
-advantage for various group compositions:
-  rewards=[1, 0, 1, 0] -> advantage=[ 1. -1.  1. -1.]
-  rewards=[1, 1, 1, 1] -> advantage=[0. 0. 0. 0.]  (all same -> no learning signal)
-  rewards=[0, 0, 0, 0] -> advantage=[0. 0. 0. 0.]  (all same -> no learning signal)
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \textbf{무엇을 보고 있나} --- 위 두 출력은 \inlinecode{GRPOTrainer} 가 \emph{매 step, 매 prompt} 내부에서 하는 계산입니다:
 
@@ -942,14 +860,6 @@ print(
     f"{acc_before:.3f}"
 )
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-BEFORE GRPO - arithmetic accuracy (verifier pass rate): 0.000
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -1043,16 +953,6 @@ if torch.cuda.is_available():
     )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-device : cuda  (Tesla T4)  # or mps/cpu depending on runtime
-torch  : ...
-fp16   : True
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \section{\texorpdfstring{GRPO 전·후 정확도 비교 --- \emph{verifier pass rate 가 올랐는가}}{GRPO 전·후 정확도 비교 --- verifier pass rate 가 올랐는가}}
 
 본 장의 핵심 데모. \emph{같은 eval 셋} (학습에 안 쓴 산술 문제) 에 대해 \emph{GRPO 전} 과 \emph{후} 의 \textbf{정확도 (verifier pass rate)} 를 비교합니다.
@@ -1109,14 +1009,6 @@ ax.set_title("GRPO before vs after - arithmetic accuracy")
 ax.grid(True, axis="y", alpha=0.3)
 plt.tight_layout(); plt.show()
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-AFTER  GRPO - arithmetic accuracy (verifier pass rate): 0.000
-BEFORE GRPO - arithmetic accuracy                     : 0.000
-delta                                                 : +0.000
-\end{lstlisting}
-\par\vspace{0.9em}
 
 \begin{bookfigurelabel}[H]{KoGPT2 GRPO 전후 산술 verifier 통과율}{fig:ch31-grpo-kogpt2-accuracy}
 \includegraphics[width=0.72\linewidth]{assets/figures/ch31_grpo_kogpt2_accuracy.png}
@@ -1217,12 +1109,6 @@ if torch.cuda.is_available() and vram_cb.steps:
               fp16)",
           )
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-peak VRAM (max over training): ... MiB  (policy only, ref-free, num_generations=4, fp16)
-\end{lstlisting}
-\par\vspace{0.9em}
 
 \begin{bookfigurelabel}[H]{KoGPT2 GRPO 학습 중 reward와 loss 흐름}{fig:ch31-grpo-kogpt2-curves}
 \includegraphics[width=0.88\linewidth]{assets/figures/ch31_grpo_training_curves.png}
@@ -1762,18 +1648,6 @@ USE_FP16 = (device.type == "cuda")
 print(f"use fp16     : {USE_FP16}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-trl          : 1.5.1
-device       : cuda  (Tesla T4)
-VRAM total   : 15.00 GiB
-torch        : ...
-use fp16     : True
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \subsection{\texorpdfstring{모델 --- \inlinecode{Qwen/Qwen2.5-0.5B-Instruct} (산술 일부 가능)}{모델 --- Qwen/Qwen2.5-0.5B-Instruct (산술 일부 가능)}}
 
 본문의 KoGPT2 (125M) 대신 \textbf{\inlinecode{Qwen/Qwen2.5-0.5B-Instruct}} (약 494M, \ref{ch:29}장에서 평가에 쓴 작은 instruct 모델) 를 policy 로 씁니다. 핵심은 이 모델이 \emph{산술을 가끔이라도 맞힌다} 는 것 --- 그래야 group 에 \emph{정답·오답이 섞여} GRPO 의 출발 조건 (std\textgreater0) 을 충족합니다.
@@ -1819,17 +1693,6 @@ print(
     f"{tokenizer.pad_token_id}"
 )
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-model     : Qwen/Qwen2.5-0.5B-Instruct
-params    : about 500M
-vocab     : ...
-eos token : '<|im_end|>'
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \subsection{verifiable 데이터 + 두 개의 reward 함수 (correctness + format)}
 
@@ -1927,23 +1790,6 @@ print("--- answer (for verifier scoring) ---")
 print(grpo_ds[0]["answer"])
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-train: 128 samples,  eval: 64 samples
-
-=== sample 0 ===
---- prompt (model input) ---
-<|im_start|>user
-7 - 1 = ? Solve it. Write only the final answer in the format: 정답: N
-<|im_end|>
-<|im_start|>assistant
---- answer (for verifier) ---
-6
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 def extract_last_int(text: str):
@@ -2007,21 +1853,6 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-============================================================
-two verifier rewards - correctness + format
-============================================================
-completion       correct  format  total
-정답: 8             1.0     0.2    1.2
-answer is 8         1.0     0.0    1.0
-정답: 7             0.0     0.2    0.2
-no idea             0.0     0.0    0.0
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \subsubsection{format reward 가 학습 신호를 살리는 순간 --- advantage 비교}
 
 correctness reward 만 있을 때와, format reward 를 더했을 때 \emph{advantage} 가 어떻게 달라지는지 손계산으로 봅니다. \emph{correctness 가 전부 0} 인 (모델이 한 문제도 못 맞힌) group 을 가정합니다.
@@ -2066,22 +1897,6 @@ print(
     "(to follow format first)"
 )
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-============================================================
-when the model gets NOTHING right (correctness all zero):
-============================================================
-correctness only : rewards=[0.0, 0.0, 0.0, 0.0]
-  -> advantage   : [0. 0. 0. 0.]   (all 0 = NO signal)
-+ format reward  : rewards=[0.2, 0.0, 0.2, 0.0]
-  -> advantage   : [ 1. -1.  1. -1.]   (signal restored!)
-------------------------------------------------------------
-format reward keeps std>0 so GRPO can still learn (to follow format first)
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \subsection{\texorpdfstring{baseline 측정 --- GRPO \emph{전} 정확도 (base reward \textgreater{} 0 인가)}{baseline 측정 --- GRPO 전 정확도 (base reward \textgreater{} 0 인가)}}
 
@@ -2152,15 +1967,6 @@ else:
         "or format reward"
     )
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-BEFORE GRPO - Qwen arithmetic accuracy (verifier pass rate): 0.188
-  -> base reward > 0  ==> group has diversity (std>0)  ==> GRPO can start
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \subsection{GRPO 학습 --- 튜닝된 hyperparameter + 두 reward}
 
@@ -2253,16 +2059,6 @@ if torch.cuda.is_available():
         f"{torch.cuda.max_memory_allocated()/1024**2:.0f} MiB"
     )
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-device : cuda  (Tesla T4)  # or mps/cpu depending on runtime
-torch  : ...
-fp16   : True
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \subsection{\texorpdfstring{reward 전·후 비교 --- \emph{본문 KoGPT2 와의 대비}}{reward 전·후 비교 --- 본문 KoGPT2 와의 대비}}
 
@@ -2359,14 +2155,6 @@ ax2.grid(True, alpha=0.3); ax2.legend(fontsize=8)
 
 plt.tight_layout(); plt.show()
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-AFTER  GRPO - Qwen arithmetic accuracy (verifier pass rate): 0.281
-BEFORE GRPO - Qwen arithmetic accuracy                     : 0.188
-delta                                                      : +0.094
-\end{lstlisting}
-\par\vspace{0.9em}
 
 \begin{bookfigurelabel}[H]{Qwen GRPO 부록: 정확도와 reward 곡선}{fig:ch31-qwen-grpo-reward-curves}
 \includegraphics[width=0.9\linewidth]{assets/figures/ch31_qwen_grpo_reward_curves.png}

@@ -190,15 +190,13 @@ else:
     )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-PyTorch:        2.x.x
+PyTorch:        2.11.0+cu128
 CUDA available: True
 GPU:            Tesla T4
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \subsection{\texorpdfstring{GPU 메모리 확인}{GPU 메모리 확인}}
 
@@ -215,8 +213,14 @@ T4의 총 VRAM은 \textbf{약 15.36 GB} (= 15,360 MiB). 모델·옵티마이저�
 !nvidia-smi
 \end{lstlisting}
 
-
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Wed Jun 17 21:13:25 2026
+NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
+0 Tesla T4 Off | 00000000:00:04.0 Off | 0
+N/A 43C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
+\end{lstlisting}
+\par\vspace{0.9em}
 \textbf{무엇을 봐야 하나} --- 출력 가운데 줄 \inlinecode{Memory-Usage} 칸:
 
 \Needspace{5\baselineskip}
@@ -244,14 +248,6 @@ if torch.cuda.is_available():
     total = torch.cuda.get_device_properties(0).total_memory / 1024**2
     print(f"GPU memory: {used:.0f} / {total:.0f} MiB")
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-PyTorch:        2.x.x
-CUDA available: True
-GPU:            Tesla T4
-\end{lstlisting}
-\par\vspace{0.9em}
 
 \begin{quote}
 Tip: \inlinecode{!nvidia-smi} 는 \emph{시스템 전체} VRAM을 보여주고, \inlinecode{torch.cuda.memory\_allocated()} 는 \emph{현재 PyTorch 프로세스} 의 할당량만 보여줍니다 --- 후자는 캐시·예약 메모리는 빼고 실제 텐서가 점유한 양에 가깝습니다.
@@ -281,8 +277,12 @@ classifier("I love using Hugging Face! It's so simple.")
 \inlinecode{transformers} 같은 주요 패키지를 불러옵니다. \textbf{3행}의 \inlinecode{DEVICE = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{classifier = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{classifier(...)}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
-
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+If the error persists, please let us know by opening an issue on GitHub (ht...
+[{'label': 'POSITIVE', 'score': 0.9998088479042053}]
+\end{lstlisting}
+\par\vspace{0.9em}
 \textbf{DistilBERT(SST-2)가 VRAM에 올라간 직후의 nvidia-smi:}
 
 
@@ -296,8 +296,14 @@ classifier("I love using Hugging Face! It's so simple.")
 \textbf{1행}의 \inlinecode{!nvidia-smi}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
-
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Wed Jun 17 21:13:54 2026
+NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
+0 Tesla T4 Off | 00000000:00:04.0 Off | 0
+N/A 45C P0 26W / 70W | 423MiB / 15360MiB | 2% Default
+\end{lstlisting}
+\par\vspace{0.9em}
 baseline과 비교하면 \inlinecode{Memory-Usage} 가 늘어났을 겁니다. \textbf{얼마나 늘어났을까?} --- 모델 파라미터 수에서 거꾸로 추정해봅니다.
 
 
@@ -384,14 +390,13 @@ for r in results:
     print(r)
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Total parameters:     ...
-Trainable parameters: ...
-Classifier:           ...
+{'label': 'POSITIVE', 'score': 0.9998798370361328}
+{'label': 'NEGATIVE', 'score': 0.9997876286506653}
+{'label': 'NEGATIVE', 'score': 0.9820851683616638}
 \end{lstlisting}
 \par\vspace{0.9em}
-
 \begin{codeRead}
 \textbf{1--5행}의 \inlinecode{results = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{for r in results:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
@@ -418,8 +423,11 @@ generator(
 )
 \end{lstlisting}
 
-
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+[{'generated_text': "Hugging Face is the only new movie ever made about the...
+\end{lstlisting}
+\par\vspace{0.9em}
 \Needspace{8\baselineskip}
 \begin{lstlisting}
 unmasker = pipeline(
@@ -430,8 +438,27 @@ unmasker = pipeline(
 unmasker("Hugging Face is a [MASK] for NLP.")
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+----------------------------+------------+--+-
 
-
+[{'score': 0.04617200419306755,
+  'token': 10675,
+  'token_str': 'synonym',
+  'sequence': 'hugging face is a synonym for nlp.'},
+ {'score': 0.03509846702218056,
+  'token': 4431,
+  'token_str': 'reference',
+  'sequence': 'hugging face is a reference for nlp.'},
+ {'score': 0.02785254456102848,
+  'token': 2944,
+  'token_str': 'model',
+  'sequence': 'hugging face is a model for nlp.'},
+ {'score': 0.025830449536442757,
+  'token': 19240,
+...
+\end{lstlisting}
+\par\vspace{0.9em}
 \textbf{3개 pipeline(DistilBERT + GPT-2 + BERT-base)이 모두 VRAM에 쌓인 상태:}
 
 
@@ -441,8 +468,14 @@ unmasker("Hugging Face is a [MASK] for NLP.")
 !nvidia-smi
 \end{lstlisting}
 
-
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Wed Jun 17 21:14:16 2026
+NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
+0 Tesla T4 Off | 00000000:00:04.0 Off | 0
+N/A 48C P0 35W / 70W | 1401MiB / 15360MiB | 9% Default
+\end{lstlisting}
+\par\vspace{0.9em}
 \textbf{파라미터 수 합계로 예측한 모델 가중치 vs 실제 VRAM 증가} --- 차이가 PyTorch 오버헤드입니다.
 
 
@@ -459,14 +492,6 @@ print(f"{'model':>30}  {'params':>12}  {'fp32 size':>14}")
 print("-" * 65)
 total_params, total_size = 0, 0.0
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Total parameters:     ...
-Trainable parameters: ...
-Classifier:           ...
-\end{lstlisting}
-\par\vspace{0.9em}
 
 \noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
@@ -488,16 +513,18 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Total parameters:     ...
-Trainable parameters: ...
-Classifier:           ...
+model        params       fp32 size
+-----------------------------------------------------------------
+            DistilBERT (SST-2)       67.0 M        255.4 MB
+                         GPT-2      124.4 M        474.7 MB
+             BERT-base-uncased      109.5 M        417.8 MB
+-----------------------------------------------------------------
+                         total      300.9 M       1147.9 MB
+                         in GB                       1.12 GB
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{실제 nvidia-smi VRAM 사용량과 비교} --- 위 합계(\textasciitilde 수백 MB)에 \textbf{PyTorch CUDA 컨텍스트 + 캐시 할당자 \textasciitilde{} 200-400 MB} 를 더한 값이 nvidia-smi 의 \inlinecode{Memory-Usage} 와 비슷할 겁니다.
 
 \begin{quote}
@@ -585,16 +612,14 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
+Model: distilbert/distilbert-base-uncased-finetuned-sst-2-english
+Model class:         DistilBertForSequenceClassification
+Tokenizer class:     BertTokenizer
+Label mapping:       {0: 'NEGATIVE', 1: 'POSITIVE'}
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 기본 모델은 \textbf{\inlinecode{distilbert-base-uncased-finetuned-sst-2-english}} 입니다.
 
 \begin{itemize}
@@ -644,16 +669,14 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
+Loaded
+  tokenizer class: BertTokenizer
+  model class:     DistilBertForSequenceClassification
+  model device:    cuda:0
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{\inlinecode{pipeline} 위에 추가로 \emph{같은 DistilBERT} 가 올라간 상태} --- VRAM이 또 한 번 늘어났습니다. 같은 가중치라도 별도 객체이면 별도 메모리.
 
 
@@ -663,8 +686,14 @@ tokens / input_ids: [...]
 !nvidia-smi
 \end{lstlisting}
 
-
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Wed Jun 17 21:14:22 2026
+NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
+0 Tesla T4 Off | 00000000:00:04.0 Off | 0
+N/A 49C P0 26W / 70W | 1671MiB / 15360MiB | 0% Default
+\end{lstlisting}
+\par\vspace{0.9em}
 \begin{quote}
 \textbf{잠깐, \inlinecode{Auto}가 뭔가요?}
 
@@ -702,16 +731,16 @@ for key, value in inputs.items():
     print(f"  {key}: {value}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
+Tokens: ['i', 'love', 'using', 'hugging', 'face', '!']
+
+Model inputs:
+input_ids: tensor([[ 101, 1045, 2293, 2478, 17662, 2227, 999, 102]])
+  token_type_ids: tensor([[0, 0, 0, 0, 0, 0, 0, 0]])
+  attention_mask: tensor([[1, 1, 1, 1, 1, 1, 1, 1]])
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{관찰 포인트}
 
 \begin{itemize}
@@ -735,15 +764,20 @@ for token_id in inputs["input_ids"][0]:
     print(f"{token_id.item():>5}    {token!r}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
+ID    token
+------------------------------
+  101    '[CLS]'
+ 1045    'i'
+ 2293    'love'
+ 2478    'using'
+17662    'hugging'
+ 2227    'face'
+  999    '!'
+  102    '[SEP]'
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \subsection{모델 추론}
 
@@ -765,17 +799,14 @@ print(f"Logits:        {outputs.logits}")
 print(f"Logits device: {outputs.logits.device}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-logits shape: (..., ...)
-probability range: [..., ...]
-first samples:
-  ...
+Output object: SequenceClassifierOutput
+Logits shape:  torch.Size([1, 2])  (batch=1, classes=2: NEGATIVE, POSITIVE)
+Logits:        tensor([[-3.9266,  4.2142]], device='cuda:0')
+Logits device: cuda:0
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 로짓(logits)은 모델이 출력한 \textbf{정규화되지 않은 점수}. shape \texttt{{[}1,\ 2{]}}는 “배치 1개, 클래스 2개”를 의미합니다.
 
 여기서 잠깐 --- 익숙하지 않나요? \ref{ch:04}장의 \emph{softmax + 2차원 head} 구조와 정확히 같습니다. BERT는 사전학습된 \emph{심층} 모델일 뿐, 마지막 분류 헤드는 sklearn에서 본 것과 본질이 같습니다.
@@ -801,17 +832,13 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-logits shape: (..., ...)
-probability range: [..., ...]
-first samples:
-  ...
+Probabilities: tensor([[2.9132e-04, 9.9971e-01]], device='cuda:0')
+
+Final result: {'label': 'POSITIVE', 'score': 0.9997}
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{잠깐 --- \inlinecode{transformers} 안에는 softmax 함수가 없나요?}
 
 없습니다. Hugging Face는 \emph{모델·토크나이저·학습 루프} 를 제공하고, \textbf{수치 연산은 PyTorch에 위임}합니다 (혹은 TensorFlow / JAX). 그래서 후처리(softmax, argmax, log 등)는 \inlinecode{torch.*} 를 직접 부릅니다.
@@ -849,15 +876,15 @@ print(
 print(f"\n  values: {p1}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
+Do all three forms agree?
+  torch.softmax vs F.softmax:    True
+  torch.softmax vs nn.Softmax:   True
+
+  values: tensor([[2.9132e-04, 9.9971e-01]], device='cuda:0')
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{보너스 --- 학습 코드에서 자주 보이는 \inlinecode{log\_softmax}}
 
 수치적 안정성 때문에 학습 시에는 \inlinecode{softmax\ →\ log} 두 단계 대신 \textbf{\inlinecode{log\_softmax} 한 번} 으로 묶는 게 표준입니다 (\inlinecode{CrossEntropyLoss} 가 내부에서 이렇게 함).
@@ -882,7 +909,12 @@ print(
 )
 \end{lstlisting}
 
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+pipeline result:    [{'label': 'POSITIVE', 'score': 0.9997085928916931}]
+manual 4-step:      [{'label': 'POSITIVE', 'score': 0.9997}]
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \section{토크나이저 어휘 비교}
 
@@ -926,14 +958,15 @@ for name, tok in tokenizer_specs.items():
     )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
+model  vocab_size                             class
+----------------------------------------------------------------------------
+     distilbert-base-uncased      30,522                     BertTokenizer
+             bert-base-cased      28,996                     BertTokenizer
+                        gpt2      50,257                     GPT2Tokenizer
 \end{lstlisting}
 \par\vspace{0.9em}
-
 \begin{codeRead}
 \textbf{1--5행}의 \inlinecode{tokenizer\_specs = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{9행}의 \inlinecode{for name, tok in tokenize...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
@@ -962,7 +995,19 @@ for sent in sample_sentences:
 \textbf{1--4행}의 \inlinecode{sample\_sentences = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{for sent in sample\_senten...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{8행}의 \inlinecode{for name, tok in tokenize...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{9행}의 \inlinecode{tokens = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Input: 'I love using Hugging Face!'
+distilbert-base-uncased (6 tokens) ['i', 'love', 'using', 'hugging', 'face'...
+bert-base-cased (7 tokens) ['I', 'love', 'using', 'Hu', '##gging', 'Face',...
+gpt2 (7 tokens) ['I', '<sp>love', '<sp>using', '<sp>Hug', 'ging', '<sp>Face...
 
+Input: 'Tokenization is fascinating.'
+distilbert-base-uncased (5 tokens) ['token', '##ization', 'is', 'fascinatin...
+bert-base-cased (6 tokens) ['To', '##ken', '##ization', 'is', 'fascinating'...
+gpt2 (5 tokens) ['Token', 'ization', '<sp>is', '<sp>fascinating', '.']
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \subsection{특수 토큰}
 
@@ -1010,14 +1055,6 @@ for name, tok in tokenizer_specs.items():
 
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
-\end{lstlisting}
-\par\vspace{0.9em}
-
 \noindent\emph{앞뒤 블록은 모두 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
 \Needspace{8\baselineskip}
@@ -1030,16 +1067,19 @@ for name, tok in tokenizer_specs.items():
     )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
+model           BOS/CLS           EOS/SEP         PAD         UNK
+---------------------------------------------------------------------------...
+distilbert-base-uncased [CLS] [SEP] [PAD] [UNK]
+bert-base-cased [CLS] [SEP] [PAD] [UNK]
+gpt2 <|endoftext|> <|endoftext|> — <|endoftext|>
+
+distilbert-base-uncased.special_tokens_map = {'unk_token': '[UNK]', 'sep_to...
+bert-base-cased.special_tokens_map = {'unk_token': '[UNK]', 'sep_token': '[...
+gpt2.special_tokens_map = {'bos_token': '<|endoftext|>', 'eos_token': '<|en...
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{관찰 포인트}
 
 \begin{itemize}
@@ -1100,14 +1140,6 @@ print(
     f"{cfg.hidden_size}        (BERT-base/DistilBERT: 768)"
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Total parameters:     ...
-Trainable parameters: ...
-Classifier:           ...
-\end{lstlisting}
-\par\vspace{0.9em}
-
 \noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
 
 \Needspace{10\baselineskip}
@@ -1121,14 +1153,6 @@ print(
     f"max_position_embeddings: "
     f"{cfg.max_position_embeddings}  (input length cap)"
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
-\end{lstlisting}
-\par\vspace{0.9em}
 
 \noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 

@@ -526,18 +526,6 @@ USE_FP16 = (device.type == "cuda")
 print(f"use fp16     : {USE_FP16}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-trl          : 1.5.1
-device       : cuda  (Tesla T4)
-VRAM total   : 15.00 GiB
-torch        : ...
-use fp16     : True
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \section{\texorpdfstring{preference 데이터 로드 --- \inlinecode{prompt} / \inlinecode{chosen} / \inlinecode{rejected}}{preference 데이터 로드 --- prompt / chosen / rejected}}
 
 \textbf{\inlinecode{maywell/ko\_Ultrafeedback\_binarized}} --- 한국어 preference 데이터셋. 각 샘플은 \emph{같은 \inlinecode{prompt} 에 대한 \inlinecode{chosen} (선호되는 답) 과 \inlinecode{rejected} (덜 선호되는 답)} 을 가집니다. 이게 DPO 의 표준 데이터 형식 (\inlinecode{prompt} / \inlinecode{chosen} / \inlinecode{rejected} 세 컬럼).
@@ -623,20 +611,6 @@ raw = raw.shuffle(seed=SEED).select(range(min(N_DPO, len(raw))))
 print(f"\nafter filter + subset: {len(raw):,} samples")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-raw dataset: Dataset({
-    features: ['prompt', 'chosen', 'rejected', ...],
-    num_rows: ...
-})
-
-fields: ['prompt', 'chosen', 'rejected', ...]
-after filter + subset: 1,500 samples
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \subsection{prompt 포맷 + 답변 길이 통제}
 
 \ref{ch:28}장 SFT 와 \emph{같은 instruction 포맷} (\texttt{\#\#\#\ 명령어:\textbackslash{}n...\textbackslash{}n\textbackslash{}n\#\#\#\ 응답:\textbackslash{}n}) 으로 prompt 를 감쌉니다 --- SFT 와 추론·학습 포맷을 일치시켜야 정렬이 제대로 됩니다. chosen / rejected 답변은 너무 길면 잘라 시퀀스 길이를 통제합니다.
@@ -681,27 +655,6 @@ print(ex0["chosen"][:200])
 print("\n--- rejected (덜 선호) ---")
 print(ex0["rejected"][:200])
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-formatted dataset: Dataset({
-    features: ['prompt', 'chosen', 'rejected'],
-    num_rows: 1500
-})
-
-=== preference sample 0 ===
---- prompt ---
-### 명령어:
-...
-### 응답:
---- chosen (선호) ---
-...
---- rejected (덜 선호) ---
-...
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \section{SFT 모델 (policy) 로드 + reference 준비}
 
@@ -749,21 +702,6 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-load done: ...s
-
-=== policy model ===
-#params      : 125.16 M
-vocab_size   : 51,200
-tokenizer    : PreTrainedTokenizerFast
-  eos_token  : </s>  id=1
-  pad_token  : <pad>  id=3
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \subsection{reference 모델 --- SFT 모델 복사 + freeze}
 
 DPO 는 \emph{policy + frozen reference 두 모델} 을 씁니다. reference 는 \emph{학습 시작 시점의 SFT 모델을 복사해 freeze} 한 것 --- policy 가 \emph{원본에서 얼마나 멀어졌나} 의 기준 (§4 의 KL 제약 닻).
@@ -789,16 +727,6 @@ print(
 print("policy   : 학습 대상 (gradient 흐름)")
 print("reference: 고정 (gradient 안 흐름) - KL 제약의 닻")
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-reference model: frozen  (trainable params = 0)
-policy   : 학습 대상 (gradient 흐름)
-reference: 고정 (gradient 안 흐름) - KL 제약의 닻
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \section{DPO loss 직관 시각화 --- margin 을 손으로 계산}
 
@@ -914,25 +842,6 @@ print(
     f"{BETA})"
 )
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-============================================================
-DPO loss - 한 샘플로 손계산 (response-only log-prob)
-============================================================
-log pi_theta(chosen)    :   ...
-log pi_ref  (chosen)    :   ...
-log pi_theta(rejected)  :   ...
-log pi_ref  (rejected)  :   ...
-------------------------------------------------------------
-implicit reward (chosen)   r_w =    0.000
-implicit reward (rejected) r_l =    0.000
-margin = r_w - r_l             =    0.000
-DPO loss = -log sigmoid(beta*margin) =   0.6931   (beta=0.1)
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \textbf{무엇을 보고 있나} --- 위 출력은 \inlinecode{DPOTrainer} 가 \emph{매 step, 매 샘플} 내부에서 하는 계산입니다:
 
@@ -1063,16 +972,6 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-BEFORE DPO - reward margin (n=64)
-  mean margin     : 0.000
-  reward accuracy : 0.500  (ratio of margin>0; approx. 0.5 before training)
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 dpo_config = DPOConfig(
@@ -1163,18 +1062,6 @@ if torch.cuda.is_available():
     )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-=== DPO summary ===
-elapsed     : ... min
-global_step : ...
-train_loss  : ...
-final peak  : ... MiB
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \section{\texorpdfstring{DPO 전·후 reward margin 비교 --- \emph{선호가 정렬됐는가}}{DPO 전·후 reward margin 비교 --- 선호가 정렬됐는가}}
 
 본 장의 핵심 데모. \emph{같은 preference 샘플들} 에 대해 \emph{DPO 전} 과 \emph{DPO 후} 의 \textbf{reward margin (chosen - rejected 의 implicit reward)} 분포를 비교합니다.
@@ -1256,16 +1143,6 @@ plt.tight_layout(); plt.show()
 \end{bookfigurelabel}
 
 \textbf{그림 읽기} --- 그림~\ref{fig:ch30-dpo-margin-shift}는 DPO 전후에 chosen과 rejected의 reward margin 분포가 어떻게 이동하는지 보여줍니다. 0보다 오른쪽에 있는 샘플은 policy가 chosen 응답을 rejected 응답보다 더 선호한다는 뜻입니다. DPO의 목표는 이 분포를 오른쪽으로 밀어, 사람이 선호한 응답의 log-likelihood advantage를 키우는 것입니다.
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-AFTER DPO - reward margin (n=64)
-  mean margin     : positive shift  (before: near 0)
-  reward accuracy : improved        (before: near 0.5)
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \textbf{해석 가이드 --- preference alignment 의 증거}
 
@@ -1361,14 +1238,6 @@ if torch.cuda.is_available() and vram_cb.steps:
     print(f"peak VRAM (max over training): {max(vram_cb.peak_MiB):.0f} MiB"
           f"  (policy + reference, bs=2, grad_accum=8, fp16)")
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-peak VRAM (max over training): ... MiB  (policy + reference, bs=2, grad_accum=8, fp16)
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \section{변형: \(\beta\) 조정 / 더 많은 preference / DPO 변종}
 

@@ -371,14 +371,6 @@ else:
     )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-PyTorch:        2.x.x
-CUDA available: True
-GPU:            Tesla T4
-\end{lstlisting}
-\par\vspace{0.9em}
-
 \begin{codeRead}
 \inlinecode{numpy, pandas, matplotlib, PyTorch, datasets} 같은 주요 패키지를 불러옵니다.
 \end{codeRead}
@@ -398,7 +390,14 @@ GPU:            Tesla T4
 \textbf{1행}의 \inlinecode{!nvidia-smi}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Wed Jun 17 21:41:56 2026
+NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
+0 Tesla T4 Off | 00000000:00:04.0 Off | 0
+N/A 39C P8 12W / 70W | 3MiB / 15360MiB | 0% Default
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \section{데이터 준비}
 
@@ -447,15 +446,11 @@ def extract_aspects(text: str) -> list[float]:
 print(f"K (aspects): {K}, aspects: {ASPECTS}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
+K (aspects): 5, aspects: ['food', 'service', 'price', 'ambiance', 'location']
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
@@ -503,15 +498,6 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 import numpy as np
@@ -527,13 +513,6 @@ print(
 print(f"\nAux score distribution (train):")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
-\end{lstlisting}
-\par\vspace{0.9em}
-
 \noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
 \Needspace{9\baselineskip}
@@ -547,14 +526,19 @@ for v in [0.0, 0.25, 0.5, 0.75, 1.0]:
     )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
+aux score range: [0.00, 1.00]
+aux score mean: 0.495, std: 0.354
+
+Aux score distribution (train):
+  0.00  (star 1): 1017 samples (20.3%)
+  0.25  (star 2): 1027 samples (20.5%)
+  0.50  (star 3): 960 samples (19.2%)
+  0.75  (star 4): 1021 samples (20.4%)
+  1.00  (star 5): 975 samples (19.5%)
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \section{토큰화}
 
@@ -596,16 +580,17 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
 Dataset({
-  features: [...],
-  num_rows: ...
+features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels', 'aux_...
+    num_rows: 5000
 })
+
+First sample labels: [0.0, 1.0, 0.0, 0.0, 1.0]
+First sample aux_labels: 1.00
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \section{\texorpdfstring{커스텀 Data Collator}{커스텀 Data Collator}}
 
@@ -655,15 +640,6 @@ for k, v in batch.items():
         f"{v.dtype}"
     )
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \section{모델 셋업}
 
@@ -725,16 +701,6 @@ print(
 print(f"Main classifier:      {model.classifier}")
 print(f"Aux head:             {model.aux_head}")
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Total parameters:     ...
-Trainable parameters: ...
-Classifier:           ...
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \textbf{보조 헤드는 \textasciitilde770개 파라미터} --- 768→1 Linear의 weight + bias. 전체 67M 의 \emph{0.001\%}. 이 \emph{미세한 추가 자유도} 만으로 멀티태스크 학습이 동작합니다.
 
@@ -820,15 +786,6 @@ print(
     "교체."
 )
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \textbf{평가용 metric 함수} --- 메인 (\ref{ch:13}장과 동일) + 보조 (RMSE, R², Pearson r). 보조 logit 추출은 \inlinecode{Trainer.predict()} 가 메인 logits 만 반환하기 때문에 별도 단계로 빼서 처리.
 
@@ -926,14 +883,6 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-TrainOutput(global_step=..., training_loss=..., metrics={...})
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \textbf{중요: \inlinecode{remove\_unused\_columns=False}} --- Trainer는 기본으로 \emph{model.forward 시그니처에 없는 컬럼} 을 제거합니다. \inlinecode{aux\_labels} 는 모델 시그니처에 없어 자동 제거되면 우리 \inlinecode{compute\_loss} 가 받을 수 없습니다. 이 옵션을 꺼야 함.
 
 
@@ -943,7 +892,14 @@ TrainOutput(global_step=..., training_loss=..., metrics={...})
 !nvidia-smi
 \end{lstlisting}
 
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Wed Jun 17 21:43:06 2026
+NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
+0 Tesla T4 Off | 00000000:00:04.0 Off | 0
+N/A 60C P0 67W / 70W | 1619MiB / 15360MiB | 69% Default
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \section{평가}
 
@@ -959,16 +915,6 @@ for k, v in eval_metrics_aux.items():
     if k.startswith("eval_") and isinstance(v, float):
         print(f"  {k:>22}: {v:.4f}")
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-eval_loss:      ...
-eval_accuracy:  ...
-eval_f1:        ...
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -1018,15 +964,6 @@ print(f"  R^2:     {r2_aux:.4f}")
 print(f"  Pearson: {pear_aux:.4f}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 preds_output_aux = trainer_aux.predict(eval_tok)
@@ -1041,16 +978,12 @@ print(f"Main logits shape: {logits_aux.shape}")
 print(f"Eval samples:      {len(labels_eval)}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-logits shape: (..., ...)
-probability range: [..., ...]
-first samples:
-  ...
+Main logits shape: (1000, 5)
+Eval samples:      1000
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \section{lambda=0 기준선 비교}
 
@@ -1104,14 +1037,6 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-TrainOutput(global_step=..., training_loss=..., metrics={...})
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 eval_metrics_no_aux = trainer_no_aux.evaluate()
@@ -1127,16 +1052,6 @@ if isinstance(logits_no_aux, tuple):
 probs_no_aux = 1.0 / (1.0 + np.exp(-logits_no_aux))
 preds_main_no_aux = (probs_no_aux >= 0.5).astype(int)
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-eval_loss:      ...
-eval_accuracy:  ...
-eval_f1:        ...
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \subsection{메인 지표 비교}
 
@@ -1173,16 +1088,23 @@ cmp["delta (aux - no_aux)"] = cmp["with aux (lambda=1)"] - cmp["no aux (lambda=0
 print(cmp.round(4).to_string(index=False))
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-column_a    column_b    column_c
-...         ...         ...
-...         ...         ...
+metric  no aux (lambda=0)  with aux (lambda=1)  delta (aux - no_aux)
+loss 0.3091 0.4758 0.1667
+hamming_loss 0.1138 0.1958 0.0820
+micro_f1 0.8163 0.6559 -0.1604
+micro_precision 0.9199 0.8316 -0.0884
+micro_recall 0.7336 0.5415 -0.1921
+macro_f1 0.7577 0.4004 -0.3573
+macro_precision 0.9205 0.7101 -0.2104
+macro_recall 0.6737 0.3760 -0.2977
+macro_auc 0.9081 0.8293 -0.0788
+runtime 1.1311 0.9760 -0.1551
+samples_per_second 884.1300 1024.5580 140.4280
+steps_per_second 28.2920 32.7860 4.4940
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{해석 가이드}
 
 \begin{itemize}
@@ -1231,14 +1153,6 @@ label_cmp = pd.DataFrame({
 })
 print(label_cmp.round(4).to_string(index=False))
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-column_a    column_b    column_c
-...         ...         ...
-...         ...         ...
-\end{lstlisting}
-\par\vspace{0.9em}
 
 \noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
 
@@ -1429,14 +1343,6 @@ for lam in [0.1, 0.3, 1.0, 3.0, 10.0]:
         f"{metrics['eval_macro_f1']:.4f}"
     )
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-eval_loss:      ...
-eval_accuracy:  ...
-eval_f1:        ...
-\end{lstlisting}
-\par\vspace{0.9em}
 
 흔한 패턴:
 

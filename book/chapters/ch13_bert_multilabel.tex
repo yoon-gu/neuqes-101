@@ -250,14 +250,6 @@ else:
     )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-PyTorch:        2.x.x
-CUDA available: True
-GPU:            Tesla T4
-\end{lstlisting}
-\par\vspace{0.9em}
-
 \begin{codeRead}
 \inlinecode{numpy, pandas, matplotlib, PyTorch, datasets} 같은 주요 패키지를 불러옵니다.
 \end{codeRead}
@@ -277,7 +269,14 @@ GPU:            Tesla T4
 \textbf{1행}의 \inlinecode{!nvidia-smi}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Wed Jun 17 21:39:27 2026
+NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
+0 Tesla T4 Off | 00000000:00:04.0 Off | 0
+N/A 40C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \section{데이터 준비}
 
@@ -340,15 +339,12 @@ print(f"K (number of aspects): {K}")
 print(f"aspects: {ASPECTS}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
+K (number of aspects): 5
+aspects: ['food', 'service', 'price', 'ambiance', 'location']
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
@@ -383,15 +379,6 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 Y_train = np.array(train_full["aspects"])
@@ -406,13 +393,6 @@ for k, aspect in enumerate(ASPECTS):
     )
 
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
-\end{lstlisting}
-\par\vspace{0.9em}
 
 \noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
@@ -432,15 +412,25 @@ for n in range(K + 1):
     )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
+Per-aspect activation rate (train):
+       food: 55.6%  (2778 / 5000)
+    service: 49.6%  (2480 / 5000)
+      price: 29.4%  (1472 / 5000)
+   ambiance: 18.1%  (905 / 5000)
+   location: 21.9%  (1095 / 5000)
+
+Mean active labels per sample: 1.75
+Active label distribution (train):
+  0 labels active: 741 samples (14.8%)
+  1 labels active: 1464 samples (29.3%)
+  2 labels active: 1506 samples (30.1%)
+  3 labels active: 957 samples (19.1%)
+  4 labels active: 277 samples (5.5%)
+  5 labels active: 55 samples (1.1%)
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{\ref{ch:12}장과의 한 줄 차이}: \texttt{out{[}“labels”{]}\ =\ {[}int(l)\ for\ l\ in\ batch{[}“label”{]}{]}} → \texttt{out{[}“labels”{]}\ =\ {[}list(map(float,\ a))\ for\ a\ in\ batch{[}“aspects”{]}{]}}. 라벨이 \emph{int 스칼라} 가 아니라 \emph{길이 5 multi-hot float 벡터}. 이 형식 + \inlinecode{problem\_type="multi\_label\_classification"} 두 가지가 BCE per-label 자동 매핑의 트리거.
 
 
@@ -478,17 +468,6 @@ print(
     f"{train_tok[0]['labels']}  (length-5 multi-hot float vector)"
 )
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Dataset({
-  features: [...],
-  num_rows: ...
-})
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \section{\texorpdfstring{모델 로드}{모델 로드}}
 
@@ -533,16 +512,6 @@ print(
 print(f"id2label:             {model.config.id2label}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Total parameters:     ...
-Trainable parameters: ...
-Classifier:           ...
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \textbf{\ref{ch:12}장과 파라미터 수가 \emph{완전히 동일}} --- 차이는 \inlinecode{problem\_type} 한 줄뿐. 같은 모델이 \emph{어떻게 해석되고 어떤 loss로 학습되는가} 만 바뀝니다.
 
 
@@ -552,7 +521,14 @@ Classifier:           ...
 !nvidia-smi
 \end{lstlisting}
 
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Wed Jun 17 21:40:03 2026
+NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
+0 Tesla T4 Off | 00000000:00:04.0 Off | 0
+N/A 42C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \section{학습}
 
@@ -651,20 +627,19 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-TrainOutput(global_step=..., training_loss=..., metrics={...})
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \Needspace{5\baselineskip}
 \begin{lstlisting}
 !nvidia-smi
 \end{lstlisting}
 
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Wed Jun 17 21:40:42 2026
+NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
+0 Tesla T4 Off | 00000000:00:04.0 Off | 0
+N/A 62C P0 70W / 70W | 1577MiB / 15360MiB | 73% Default
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \section{평가}
 
@@ -681,16 +656,26 @@ for k, v in eval_metrics.items():
         print(f"  {k:>22}: {v:.4f}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-eval_loss:      ...
-eval_accuracy:  ...
-eval_f1:        ...
+Train... Valid... Epoch Hammi... Micro F1 Micro... Micro... Macro F1 Macro....
+-------- -------- ----- -------- -------- -------- -------- -------- ------...
+0.285646 0.293182 2 0.102000 0.839824 0.915127 0.775972 0.801891 0.925907 0...
+BERT multi-label evaluation:
+               eval_loss: 0.2932
+       eval_hamming_loss: 0.1020
+           eval_micro_f1: 0.8398
+    eval_micro_precision: 0.9151
+       eval_micro_recall: 0.7760
+           eval_macro_f1: 0.8019
+    eval_macro_precision: 0.9259
+       eval_macro_recall: 0.7229
+          eval_macro_auc: 0.9155
+            eval_runtime: 0.9146
+  eval_samples_per_second: 1093.3460
+   eval_steps_per_second: 34.9870
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 preds_output = trainer.predict(eval_tok)
@@ -724,17 +709,6 @@ for k, a in enumerate(ASPECTS):
     )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-logits shape: (..., ...)
-probability range: [..., ...]
-first samples:
-  ...
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \Needspace{8\baselineskip}
 \begin{lstlisting}
 # Per-label classification report
@@ -745,18 +719,22 @@ print(classification_report(
 ))
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-              precision    recall  f1-score   support
-label_0          ...       ...       ...        ...
-label_1          ...       ...       ...        ...
+precision    recall  f1-score   support
 
-micro avg        ...       ...       ...        ...
-macro avg        ...       ...       ...        ...
+        food     0.9347    0.9330    0.9338       552
+     service     0.8761    0.8390    0.8571       497
+       price     0.9080    0.5197    0.6611       304
+    ambiance     0.9804    0.5952    0.7407       168
+    location     0.9304    0.7277    0.8167       202
+
+   micro avg     0.9151    0.7760    0.8398      1723
+   macro avg     0.9259    0.7229    0.8019      1723
+weighted avg     0.9170    0.7760    0.8310      1723
+ samples avg     0.7733    0.6906    0.7114      1723
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \subsection{샘플 단위 해석}
 
@@ -815,18 +793,6 @@ for label_kind, idx in sample_ids:
     print(f"  true:      {true_active}")
     print()
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-sample #...  (many active labels)
-text: ...
-     label    true      prob    pred  match
-       food       1    0.9123       1  yes
-    service       0    0.2441       0  yes
-  predicted: [...]
-  true:      [...]
-\end{lstlisting}
-\par\vspace{0.9em}
 
 \textbf{읽는 법} --- \inlinecode{true} 컬럼은 키워드 합성으로 만든 정답 multi-hot입니다. \inlinecode{prob}는 모델이 각 항목에 대해 독립적으로 낸 sigmoid 확률이고, 합이 1일 필요가 없습니다. \inlinecode{pred}는 지금 기준으로 \inlinecode{prob >= 0.5} 를 적용한 결과입니다. 마지막의 \inlinecode{predicted: [...]} 와 \inlinecode{true: [...]} 를 비교하면 모델이 한 리뷰에서 어떤 항목을 맞혔고 무엇을 놓쳤는지 한눈에 볼 수 있습니다.
 
@@ -1048,15 +1014,6 @@ print(
     f"{hamming_loss(Y_eval_bin, preds_sk):.4f}"
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-logits shape: (..., ...)
-probability range: [..., ...]
-first samples:
-  ...
-\end{lstlisting}
-\par\vspace{0.9em}
-
 \noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
 \Needspace{5\baselineskip}
@@ -1112,16 +1069,6 @@ cmp["BERT - sklearn"] = cmp["BERT (this chapter)"] - cmp["sklearn (OvR)"]
 print(cmp.round(4).to_string(index=False))
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-column_a    column_b    column_c
-...         ...         ...
-...         ...         ...
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \subsection{라벨별 F1 비교}
 
 
@@ -1154,14 +1101,6 @@ label_cmp = pd.DataFrame({
 label_cmp["BERT - sklearn"] = label_cmp["BERT F1"] - label_cmp["sklearn F1"]
 print(label_cmp.round(4).to_string(index=False))
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-column_a    column_b    column_c
-...         ...         ...
-...         ...         ...
-\end{lstlisting}
-\par\vspace{0.9em}
 
 \noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
 

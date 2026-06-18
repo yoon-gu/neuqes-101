@@ -473,16 +473,6 @@ USE_FP16 = (device.type == "cuda")
 print(f"use fp16   : {USE_FP16}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-PyTorch:        2.x.x
-CUDA available: True
-GPU:            Tesla T4
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \section{\texorpdfstring{한국어 TinyStories 데이터 로드 + story 복원 --- \emph{\ref{ch:26}장과 완전히 동일}}{한국어 TinyStories 데이터 로드 + story 복원 --- \ref{ch:26}장과 완전히 동일}}
 
 본 장의 데이터는 \emph{통제 변수}. \ref{ch:26}장과 정확히 같은 방식으로 \inlinecode{g0ster/TinyStories-Korean} 을 로드합니다. 이 데이터셋은 \emph{story 단위가 아니라 줄(line) 단위} 로 저장되어 있어, \emph{\texttt{\textless{}\textbar{}endoftext\textbar{}\textgreater{}} 를 만날 때까지 줄을 이어 붙여} 한 story 로 복원합니다. 그렇게 복원한 처음 \textbf{30,000 stories} 만 사용 (\ref{ch:26}장과 같은 규모, T4 30분 룰 안). \emph{데이터를 고정하고 본체·토크나이저·lr 만 바꿔 격차를 본다} 가 본 장의 격리 실험 설계.
@@ -564,17 +554,6 @@ print("val  :", raw_val)
 print("\n=== sample story (same as 26장) ===")
 print(raw_train[0]["text"][:400])
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-dataset:           g0ster/TinyStories-Korean
-restored stories:  30,000 train / 500 eval
-boundary:          <|endoftext|>
-format:            line stream -> story list
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \section{\texorpdfstring{KoGPT2 토크나이저·모델 로드 --- \emph{모델 로드 한 줄로 학습 단계 2 진입}}{KoGPT2 토크나이저·모델 로드 --- 모델 로드 한 줄로 학습 단계 2 진입}}
 
@@ -658,19 +637,6 @@ print(
 \begin{codeRead}
 \inlinecode{transformers} 같은 주요 패키지를 불러옵니다. \textbf{3행}의 \inlinecode{t0 = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5--9행}의 \inlinecode{tokenizer = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{11행}의 \inlinecode{model = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{13행}의 \inlinecode{model.config.pad\_token\_id...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-vocab_size      : 8000
-pad_token_id    : 0
-cls_token_id    : 2
-input_ids shape : torch.Size([1, 32])
-input_ids       : [2, ..., 3, 0, 0, ...]
-decoded         : [CLS] the food was unforgettable ... [SEP] [PAD] ...
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \subsection{\texorpdfstring{\ref{ch:26}장 \(\leftrightarrow\) \ref{ch:27}장 코드 diff --- \emph{모델·토크나이저 로드 두 줄 차이}}{\ref{ch:26}장 \textbackslash leftrightarrow \ref{ch:27}장 코드 diff --- 모델·토크나이저 로드 두 줄 차이}}
 
@@ -810,19 +776,6 @@ print("\nfirst chunk decode (first 200 chars):")
 print(tokenizer.decode(lm_train[0]["input_ids"])[:200])
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-lm_train: Dataset({features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'], num_rows: ...})
-lm_eval:  Dataset({features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'], num_rows: ...})
-block_size:           128
-train blocks: ...  (approx. ... tokens)
-eval blocks:  ...   (approx. ... tokens)
-sample block 0 first 20 tok: ['the', '...', '...']
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \textbf{비교 관전 포인트} --- 같은 30K stories 가 \emph{KoGPT2 BBPE (vocab 51,200)} 로 토큰화되면 \ref{ch:26}장의 \emph{직접 학습 BBPE (vocab 약 4,000)} 보다 \emph{토큰 수가 적습니다} --- vocab 이 클수록 한 토큰이 더 긴 byte 시퀀스를 표현하므로. 같은 데이터의 토큰 수 차이가 \emph{토크나이저 vocab 크기의 직접적 효과} (영어 \ref{ch:24}장\(\to\)25 에서 본 결의 한국어 재확인).
 
 
@@ -888,16 +841,6 @@ for p in PROMPTS:
     print(f"\n[prompt] {p}")
     print(text)
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-tokenizer:        ...
-vocab_size:       ...
-tokens / input_ids: [...]
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \textbf{해석 가이드 --- \emph{\ref{ch:26}장 random init} vs \emph{\ref{ch:27}장 KoGPT2 사전학습} 의 직전 비교}
 
@@ -1040,16 +983,6 @@ if torch.cuda.is_available():
     )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-PyTorch:        2.x.x
-CUDA available: True
-GPU:            Tesla T4
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 # loss curve + VRAM trace
@@ -1130,15 +1063,6 @@ for p in PROMPTS:
     print(text)
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 print("=" * 78)
@@ -1153,15 +1077,6 @@ for p, before, after in zip(PROMPTS, before_outputs, after_outputs):
     print(f"BEFORE  : {before[len(p):].strip()[:280]}")
     print(f"AFTER   : {after[len(p):].strip()[:280]}")
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \textbf{해석 가이드 --- continual pretraining 의 도메인 적응 효과}
 
@@ -1254,15 +1169,6 @@ for p, before, after in zip(PROMPTS, before_outputs, after_outputs):
         f"{after[len(p):].strip()[:240]}"
     )
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \textbf{해석 가이드 --- 세 셋업의 격차}
 

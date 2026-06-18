@@ -450,16 +450,6 @@ USE_FP16 = (device.type == "cuda")
 print(f"use fp16     : {USE_FP16}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-PyTorch:        2.x.x
-CUDA available: True
-GPU:            Tesla T4
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \section{KoAlpaca instruction 데이터 로드 + 포맷}
 
 \textbf{\inlinecode{beomi/KoAlpaca-v1.1a}} --- 한국어 instruction tuning 데이터셋. 각 샘플은 \inlinecode{instruction} (지시) 과 \inlinecode{output} (응답) 필드를 가집니다 (\inlinecode{url} 필드는 출처 --- 학습에 사용 안 함). T4 + 30분 룰 안에서 \textbf{약 3,000 샘플} 만 subset 으로 사용합니다.
@@ -496,17 +486,6 @@ raw = raw.filter(keep)
 raw = raw.shuffle(seed=SEED).select(range(min(N_SFT, len(raw))))
 print(f"\nafter filter + subset: {len(raw):,} samples")
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-dataset:           beomi/KoAlpaca-v1.1a
-sampled train:     3,000 instruction-response pairs
-columns:           prompt, completion
-format:            ### 명령어: ...  ### 응답: ...
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \subsection{\texorpdfstring{포맷 함수 --- \inlinecode{prompt} / \inlinecode{completion} 두 컬럼으로}{포맷 함수 --- prompt / completion 두 컬럼으로}}
 
@@ -549,15 +528,6 @@ print(sft_ds[0]["prompt"])
 print("--- completion ---")
 print(sft_ds[0]["completion"][:200])
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \section{\texorpdfstring{KoGPT2 토크나이저·모델 로드 --- \emph{\ref{ch:27}장과 동일한 본체}}{KoGPT2 토크나이저·모델 로드 --- \ref{ch:27}장과 동일한 본체}}
 
@@ -621,18 +591,6 @@ print(
 \begin{codeRead}
 \inlinecode{transformers} 같은 주요 패키지를 불러옵니다. \textbf{3행}의 \inlinecode{t0 = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5--9행}의 \inlinecode{tokenizer = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{11행}의 \inlinecode{model = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{12행}의 \inlinecode{model.config.pad\_token\_id...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-tokenizer:        skt/kogpt2-base-v2
-class:            PreTrainedTokenizerFast
-vocab_size:       51,200
-special tokens:   bos/eos='</s>', unk='<unk>', pad='<pad>', mask='<mask>'
-round trip:       encode -> decode check passed
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \section{\texorpdfstring{collator 의 \inlinecode{labels} 마스킹 직접 시각화 --- \textbf{이 장의 클라이맥스}}{collator 의 labels 마스킹 직접 시각화 --- 이 장의 클라이맥스}}
 
@@ -702,18 +660,6 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-prompt tokens     : 38
-completion tokens : 142  (incl. EOS)
-total tokens      : 180
-
-labels learned    : 142 / 180  (prompt masked = 38)
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 rows = []
@@ -743,24 +689,6 @@ print(
 print("=" * 78)
 print(label_table.to_string(index=False))
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-==============================================================================
-Per-token labels - prompt is masked (-100), only response is learned
-==============================================================================
- pos  token          input_id  label   learn?
-   0  '###'             ...    -100   - (prompt, -100)
-   1  ' 명령어'         ...    -100   - (prompt, -100)
- ...  ...               ...    -100   - (prompt, -100)
-  38  ' 답변'           ...     ...   Y (response)
-  39  '은'              ...     ...   Y (response)
- ...  ...               ...     ...   Y (response)
- 179  '</s>'            ...     ...   Y (response)
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \textbf{무엇을 보고 있나} --- 위 표의 \inlinecode{learn?} 열을 보면:
 
@@ -885,16 +813,6 @@ for p in PROMPTS:
     print(f"[answer] {ans[:240]}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-tokenizer:        ...
-vocab_size:       ...
-tokens / input_ids: [...]
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 sft_config = SFTConfig(
@@ -985,19 +903,6 @@ if torch.cuda.is_available():
     )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-SFTConfig:
-  completion_only_loss: True
-  max_length:           512
-  per_device_train_batch_size: 2
-  gradient_accumulation_steps: 8
-  fp16:                 True
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \section{\texorpdfstring{학습 곡선 --- \emph{답변 부분에서만 계산된} loss}{학습 곡선 --- 답변 부분에서만 계산된 loss}}
 
 아래 loss 는 \emph{답변 토큰에서만} 계산된 값입니다 (prompt 는 \inlinecode{-100} 으로 제외). \ref{ch:27}장의 loss (거의 모든 자리) 와는 \emph{합산 대상} 이 다르므로 절대값을 직접 비교하지는 않습니다.
@@ -1077,22 +982,6 @@ for p in PROMPTS:
     print(f"[answer] {ans[:240]}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-======================================================================
-AFTER SFT - KoGPT2 + KoAlpaca instruction tuning
-======================================================================
-
-[instruction] 피보나치 수열을 초등학생에게 설명해줘.
-[answer] 피보나치 수열은 앞의 두 수를 더해서 다음 수를 만드는 규칙입니다...
-
-[instruction] 아래 문장을 긍정/부정으로 분류하고 이유를 한 문장으로 써줘: ...
-[answer] 긍정입니다. 문장에 만족과 추천 의도가 드러나기 때문입니다...
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 print("=" * 80)
@@ -1122,25 +1011,6 @@ for p, before, after in zip(PROMPTS, before_outputs, after_outputs):
 print("\n\n=== compact table ===")
 print(pd.DataFrame(comparison).to_string(index=False))
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-================================================================================
-BEFORE SFT (raw KoGPT2) vs AFTER SFT (KoGPT2 + KoAlpaca) - instruction following
-================================================================================
-
-INSTRUCTION : 피보나치 수열을 초등학생에게 설명해줘.
-BEFORE      : 피보나치 수열을 초등학생에게 설명해줘. 어느 날...
-AFTER       : 피보나치 수열은 앞의 두 수를 더해서 다음 수를 만드는 규칙입니다...
-
-=== compact table ===
-instruction                              before (raw)        after (sft)
-피보나치 수열을 초등학생에게 설명해줘.     이어쓰기 경향        지시에 대한 설명
-감성 분류와 이유를 써줘.                  지시 무시/산문       분류 + 이유
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \textbf{해석 가이드 --- behavior alignment 의 증거}
 

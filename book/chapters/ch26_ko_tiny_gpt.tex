@@ -446,16 +446,6 @@ USE_FP16 = (device.type == "cuda")
 print(f"use fp16   : {USE_FP16}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-PyTorch:        2.x.x
-CUDA available: True
-GPU:            Tesla T4
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \section{한국어 TinyStories 데이터 로드 + story 복원}
 
 \inlinecode{g0ster/TinyStories-Korean} 은 영어 \inlinecode{roneneldan/TinyStories} 를 한국어로 번역한 동화 데이터셋 (Dohoon Kim, 2024, MIT 라이선스). 어휘·문법이 단순해 \textbf{3-5M 파라미터} 짜리 작은 모델로도 한국어 문장 생성을 시연할 수 있습니다.
@@ -555,17 +545,6 @@ print("\n=== sample story ===")
 print(raw_train[0]["text"][:400])
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-DatasetDict({
-  train: Dataset({features: ['label', 'text'], num_rows: ...})
-  test:  Dataset({features: ['label', 'text'], num_rows: ...})
-})
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \section{BBPE 토크나이저 직접 학습 (한국어)}
 
 \inlinecode{tokenizers.BPE} + ByteLevel pre-tokenizer 로 vocab 약 4,000 의 byte-level BPE 를 \emph{한국어 코퍼스에서 직접} 학습합니다. \ref{ch:24}장의 영어 BPE 와 \emph{같은 절차} --- 다른 점은 \emph{학습 코퍼스} (영어 \(\to\) 한국어) 와 \emph{vocab 크기} (2,048 \(\to\) 약 4,000, 한글 byte 표현을 위해 약간 키움) 뿐.
@@ -657,19 +636,6 @@ print(
 \inlinecode{tokenizers, transformers} 같은 주요 패키지를 불러옵니다.
 \end{codeRead}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-vocab_size      : 8000
-pad_token_id    : 0
-cls_token_id    : 2
-input_ids shape : torch.Size([1, 32])
-input_ids       : [2, ..., 3, 0, 0, ...]
-decoded         : [CLS] the food was unforgettable ... [SEP] [PAD] ...
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \subsection{같은 한국어 문장: 영어 BPE (gpt2) vs 한국어 BBPE (본 장)}
 
 \inlinecode{gpt2} 의 영어 BPE 로 한국어를 토큰화하면 한글이 \emph{byte 단위로 잘게 쪼개져} 토큰 수가 폭증합니다. 우리가 한국어 코퍼스 위에 직접 학습한 BBPE 와 \emph{같은 문장} 을 비교해 봅니다. \ref{ch:19}장과 \ref{ch:25}장에서 다룬 cross-language 결론을 한국어 generation 장에서 실측하는 절입니다.
@@ -727,16 +693,6 @@ print(
     "tokens)."
 )
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-column_a    column_b    column_c
-...         ...         ...
-...         ...         ...
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \textbf{관전 포인트} --- \inlinecode{옛날\ 옛날에} 처럼 한국어 코퍼스에 \emph{자주 등장} 하는 표현은 우리 BBPE 가 \emph{적은 토큰} 으로 압축합니다. 영어 gpt2 BPE 는 같은 문장을 \emph{2-4배 많은 byte 조각} 으로 쪼갭니다 --- UNK 는 없지만 \emph{의미 단위} 가 사라져, 그 위에서 학습하면 한국어 정보를 압축할 자리가 부족합니다. \emph{왜 한국어는 토크나이저를 직접 학습하는가} 의 실측 답.
 
@@ -863,19 +819,6 @@ print("\nfirst chunk decode (first 200 chars):")
 print(tokenizer.decode(lm_train[0]["input_ids"])[:200])
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-lm_train: Dataset({features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'], num_rows: ...})
-lm_eval:  Dataset({features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'], num_rows: ...})
-block_size:           128
-train blocks: ...  (approx. ... tokens)
-eval blocks:  ...   (approx. ... tokens)
-sample block 0 first 20 tok: ['the', '...', '...']
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \subsection{\texorpdfstring{Collator 가 만드는 \inlinecode{labels} 확인 (한국어) - \emph{거의 모든 자리} 가 학습 신호}{Collator 가 만드는 labels 확인 (한국어) - 거의 모든 자리 가 학습 신호}}
 
 \inlinecode{DataCollatorForLanguageModeling(mlm=False)} 가 \emph{내부적으로} \inlinecode{labels\ =\ input\_ids.clone()} 을 만들어 \inlinecode{-100} 자리는 \emph{없거나 pad 토큰 자리만} 임을 한국어 데이터로 직접 확인합니다. \ref{ch:20}·\ref{ch:22}장의 MLM collator 가 약 85\% 를 \inlinecode{-100} 으로 채웠던 것과 \emph{정확히 반대} --- \ref{ch:24}장 (영어) 에서 본 결과의 한국어 재확인.
@@ -952,18 +895,6 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-batch input_ids shape : (2, 128)
-batch labels shape    : (2, 128)
-ignored (-100)        : pad positions only
-train signal          : almost every token
-(input_ids == labels) : non-pad positions are cloned
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \begin{quote}
 \textbf{\inlinecode{-100} thread 환기 (한국어)} - 언어가 한국어로 바뀌어도 collator 동작은 동일. CausalLM 은 \emph{거의 모든 자리} 학습. 28장 (한국어 SFT) 에서는 \emph{prompt 자리만 -100} - 같은 트릭의 정반대 자리. 그 한 줄 코드가 \emph{모델이 한국어 instruction 을 따라가게 만드는 핵심} 이고, 본 장의 collator 셋업이 그 토대입니다.
 \end{quote}
@@ -1039,18 +970,6 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-#params           : about 3M
-weight tying      : True  (lm_head <-> token embedding)
-fp32 weight size  : about 12 MiB
-model             : GPT2LMHeadModel
-head              : Linear(256, about 4000)
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \section{\texorpdfstring{학습 \emph{전} generation - 비교 기준선 (random init baseline)}{학습 전 generation - 비교 기준선 (random init baseline)}}
 
 \ref{ch:24}장의 \emph{사전학습 전 generation} 과 같은 역할. random init 모델은 \emph{어느 토큰이든 거의 균등한 확률} 로 뽑으니, 생성 텍스트가 \emph{한국어와 거리가 먼 byte 조각 / 의미 없는 음절 나열} 이 나옵니다.
@@ -1113,19 +1032,6 @@ for p in PROMPTS:
     print(f"\nprompt: {p}")
     print(text)
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-UNTRAINED model - generation from random initial weights
-prompt: 옛날 옛날에 작은 토끼가
-옛날 옛날에 작은 토끼가 ... [meaningless byte/syllable fragments]
-
-prompt: 작은 소녀는 숲에서
-작은 소녀는 숲에서 ... [repeated fragments, no story structure]
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \textbf{관전 포인트} - 학습 전 출력은 \emph{무작위 음절·byte 조각 나열} (의미 없는 한국어 토큰들). 학습 후 출력과 \emph{나란히 비교} 하면 사전학습이 본체에 \emph{next-token 분포} 를 새긴 증거를 직접 보게 됩니다. \ref{ch:24}장 (영어) 에서 random init 출력이 영어와 거리 멀었던 것과 같은 현상의 한국어판.
 
@@ -1256,16 +1162,6 @@ if torch.cuda.is_available():
     )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-PyTorch:        2.x.x
-CUDA available: True
-GPU:            Tesla T4
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 # loss curve + VRAM trace
@@ -1352,14 +1248,6 @@ for p in PROMPTS:
     print(text)
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-TrainOutput(global_step=..., training_loss=..., metrics={...})
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 print("=" * 78)
@@ -1374,20 +1262,6 @@ for p, before, after in zip(PROMPTS, before_outputs, after_outputs):
     print(f"BEFORE  : {before[len(p):].strip()[:280]}")
     print(f"AFTER   : {after[len(p):].strip()[:280]}")
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-PROMPT  : 옛날 옛날에 작은 토끼가
-BEFORE  : ... [meaningless fragments]
-AFTER   : 숲에서 친구를 만나 함께 집으로 돌아왔습니다 ...
-
-PROMPT  : 작은 소녀는 숲에서
-BEFORE  : ... [random syllables]
-AFTER   : 길을 잃었지만 작은 새의 도움을 받았습니다 ...
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \textbf{해석 가이드 - 사전학습이 만든 차이}
 
@@ -1428,21 +1302,6 @@ for c in configs:
                         temperature=c["temperature"], top_k=c["top_k"], top_p=c["top_p"]))
     print()
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-[T=0.3, top_k=20]
-옛날 옛날에 작은 토끼가 집으로 돌아갔습니다 ...
-
-[T=0.8, top_k=50]
-옛날 옛날에 작은 토끼가 숲에서 친구를 만났습니다 ...
-
-[T=1.2, top_k=100]
-옛날 옛날에 작은 토끼가 이상한 길을 따라갔습니다 ...
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \textbf{관전 포인트}
 
@@ -1548,16 +1407,6 @@ else:
         "Covered in depth in 27장."
     )
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-PyTorch:        2.x.x
-CUDA available: True
-GPU:            Tesla T4
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \textbf{해석 가이드 - 규모가 만든 격차}
 

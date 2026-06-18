@@ -301,16 +301,14 @@ elif DEVICE == "cpu":
 \inlinecode{numpy, pandas, matplotlib, PyTorch, datasets} 같은 주요 패키지를 불러옵니다.
 \end{codeRead}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-PyTorch:        2.x.x
+PyTorch:        2.11.0+cu128
 CUDA available: True
-GPU:            Tesla T4
+Device:         cuda
+GPU:             Tesla T4
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{baseline VRAM} (CUDA 환경에서만 의미 있는 출력 --- Colab T4 기준):
 
 
@@ -324,7 +322,14 @@ GPU:            Tesla T4
 \textbf{1행}의 \inlinecode{!nvidia-smi}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Wed Jun 17 21:51:43 2026
+NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
+0 Tesla T4 Off | 00000000:00:04.0 Off | 0
+N/A 40C P8 11W / 70W | 3MiB / 15360MiB | 0% Default
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \section{데이터 준비}
 
@@ -383,16 +388,17 @@ for ex in ds["train"].select(range(2)):
     )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-DatasetDict({
-  train: Dataset({features: ['label', 'text'], num_rows: ...})
-  test:  Dataset({features: ['label', 'text'], num_rows: ...})
-})
+splits: ['train', 'validation']
+sizes: [('train', 45678), ('validation', 9107)]
+label names (7): ['IT과학', '경제', '사회', '생활문화', '세계', '스포츠', '...
+
+first 2 raw samples:
+  label=3 (Life&Culture)  text='유튜브 내달 2일까지 크리에이터 지원 공간 운영'
+  label=3 (Life&Culture)  text='어버이날 맑다가 흐려져…남부지방 옅은 황사'
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \subsection{\texorpdfstring{합성 함수 --- \ref{ch:17}장의 \inlinecode{make\_multilabel} 재사용}{합성 함수 --- \ref{ch:17}장의 make\_multilabel 재사용}}
 
@@ -489,15 +495,6 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 n_active_train = np.array(train_full["n_active"])
@@ -525,14 +522,17 @@ print(
 print(f"  eval  mean: {n_active_eval.mean():.3f}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
+Aux label (n_active) distribution:
+  value     train      eval
+      1    732 (14.6%)    242 (24.2%)
+      2   4268 (85.4%)    758 (75.8%)
+
+  train mean: 1.854  (expected ~1.857 = 2*6/7 + 1*1/7)
+  eval  mean: 1.758
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \section{\texorpdfstring{토큰화}{토큰화}}
 
@@ -607,16 +607,18 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
+Token length (combined, sample 200): mean=30.0, median=30, max=41
 Dataset({
-  features: [...],
-  num_rows: ...
+features: ['n_active', 'input_ids', 'token_type_ids', 'attention_mask', 'la...
+    num_rows: 5000
 })
+
+First sample labels: [0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0] (length-7 multi-ho...
+First sample n_active:  2  (aux scalar)
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \section{\texorpdfstring{커스텀 Data Collator}{커스텀 Data Collator}}
 
@@ -662,15 +664,16 @@ for k, v in batch.items():
     )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
+Batch keys: ['input_ids', 'token_type_ids', 'attention_mask', 'labels', 'n_...
+  input_ids: shape=(4, 32), dtype=torch.int64
+  token_type_ids: shape=(4, 32), dtype=torch.int64
+  attention_mask: shape=(4, 32), dtype=torch.int64
+  labels: shape=(4, 7), dtype=torch.float32
+  n_active: shape=(4,), dtype=torch.float32
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \section{\texorpdfstring{모델 정의}{모델 정의}}
 
@@ -806,17 +809,6 @@ print(f"Main head: {model.cls_head}")
 print(f"Aux  head: {model.count_head}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-logits shape: (..., ...)
-probability range: [..., ...]
-first samples:
-  ...
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \textbf{보조 헤드는 약 769개 파라미터} --- 768에서 1로 가는 Linear 의 weight + bias입니다. 전체 약 110M 의 \emph{0.0007\%}. 이 미세한 추가 자유도만으로 multi-task 학습이 동작합니다 (\ref{ch:14}장과 동일한 직관).
 
 
@@ -826,7 +818,14 @@ first samples:
 !nvidia-smi
 \end{lstlisting}
 
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Wed Jun 17 21:52:05 2026
+NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
+0 Tesla T4 Off | 00000000:00:04.0 Off | 0
+N/A 41C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \section{\texorpdfstring{커스텀 Trainer}{커스텀 Trainer}}
 
@@ -862,15 +861,11 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
+AuxTrainer 정의 완료 — Trainer 의 compute_loss 만 교체.
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{평가용 metric 함수} --- 메인 (\ref{ch:17}장과 동일) 만 자동 계산. 보조 metric (RMSE, R², Pearson r) 은 별도 forward 로 \inlinecode{count\_pred} 를 추출해 측정 (eval 후 별도 단계).
 
 
@@ -969,14 +964,16 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-TrainOutput(global_step=..., training_loss=..., metrics={...})
+Epoch Train... Valid... Hammi... Micro F1 Micro... Micro... Macro F1 Macro....
+----- -------- -------- -------- -------- -------- -------- -------- ------...
+1 0.218334 0.239012 0.087714 0.823258 0.833333 0.813424 0.823409 0.823344 0...
+2 0.156921 0.211451 0.073714 0.852064 0.858960 0.845279 0.847002 0.839162 0...
+
+With-aux training done — mean train loss: 0.2477
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{중요: \inlinecode{remove\_unused\_columns=False}} --- Trainer 는 기본으로 \emph{model.forward 시그니처에 없는 컬럼} 을 제거합니다. \inlinecode{n\_active} 는 KoBertMultiTask.forward 에 있어 자동 인식되지만, 모델 클래스를 바꿔 끼울 때 위험할 수 있어 명시적으로 끕니다 (\ref{ch:14}장과 같은 보호 패턴).
 
 
@@ -986,7 +983,14 @@ TrainOutput(global_step=..., training_loss=..., metrics={...})
 !nvidia-smi
 \end{lstlisting}
 
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Wed Jun 17 21:52:48 2026
+NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
+0 Tesla T4 Off | 00000000:00:04.0 Off | 0
+N/A 62C P0 35W / 70W | 2189MiB / 15360MiB | 39% Default
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \section{평가}
 
@@ -1003,16 +1007,26 @@ for k, v in eval_metrics_aux.items():
         print(f"  {k:>22}: {v:.4f}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-eval_loss:      ...
-eval_accuracy:  ...
-eval_f1:        ...
+Train... Valid... Epoch Hammi... Micro F1 Micro... Micro... Macro F1 Macro....
+-------- -------- ----- -------- -------- -------- -------- -------- ------...
+0.156921 0.211451 2 0.073714 0.852064 0.858960 0.845279 0.847002 0.839162 0...
+With-aux (lambda=0.1) — main task metrics:
+               eval_loss: 0.2115
+       eval_hamming_loss: 0.0737
+           eval_micro_f1: 0.8521
+    eval_micro_precision: 0.8590
+       eval_micro_recall: 0.8453
+           eval_macro_f1: 0.8470
+    eval_macro_precision: 0.8392
+       eval_macro_recall: 0.8577
+          eval_macro_auc: 0.9628
+            eval_runtime: 0.8829
+  eval_samples_per_second: 1132.6520
+   eval_steps_per_second: 36.2450
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 @torch.no_grad()
@@ -1080,15 +1094,17 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
+With-aux (lambda=0.1) — aux task metrics (n_active regression):
+  RMSE:    0.3980
+  R^2:     0.1366
+  Pearson: 0.4851
+
+  Aux pred range: [1.002, 2.514]
+  Aux true range: [1.0, 2.0]
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 preds_output_aux = trainer_aux.predict(eval_tok)
@@ -1103,17 +1119,12 @@ print(f"Main logits shape: {logits_aux.shape}")
 print(f"Eval samples:      {len(labels_eval)}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-logits shape: (..., ...)
-probability range: [..., ...]
-first samples:
-  ...
+Main logits shape: (1000, 7)
+Eval samples:      1000
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{9\baselineskip}
 \begin{lstlisting}
 # Per-category classification report (with-aux)
@@ -1125,18 +1136,25 @@ print(classification_report(
 ))
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
+Per-category report — with aux (lambda=0.1):
               precision    recall  f1-score   support
-label_0          ...       ...       ...        ...
-label_1          ...       ...       ...        ...
 
-micro avg        ...       ...       ...        ...
-macro avg        ...       ...       ...        ...
+  IT/Science     0.7634    0.7937    0.7782       126
+     Economy     0.8214    0.7731    0.7965       238
+     Society     0.9186    0.8246    0.8690       684
+Life&Culture     0.8378    0.8921    0.8641       278
+       World     0.8742    0.8742    0.8742       159
+      Sports     0.8810    0.9487    0.9136       117
+    Politics     0.7778    0.8974    0.8333       156
+
+   micro avg     0.8590    0.8453    0.8521      1758
+   macro avg     0.8392    0.8577    0.8470      1758
+weighted avg     0.8625    0.8453    0.8522      1758
+ samples avg     0.8823    0.8625    0.8530      1758
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \section{비교 실험: \(\lambda=0\) 기준선 학습}
 
@@ -1190,14 +1208,19 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-TrainOutput(global_step=..., training_loss=..., metrics={...})
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+
+Epoch Train... Valid... Hammi... Micro F1 Micro... Micro... Macro F1 Macro....
+----- -------- -------- -------- -------- -------- -------- -------- ------...
+1 0.199678 0.214148 0.082571 0.833908 0.842625 0.825370 0.831334 0.823086 0...
+2 0.142944 0.186676 0.070143 0.859994 0.862207 0.857793 0.856066 0.843479 0...
+
+No-aux (lambda=0) baseline training done — mean train loss: 0.2213
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 eval_metrics_no_aux = trainer_no_aux.evaluate()
@@ -1214,15 +1237,26 @@ probs_no_aux = 1.0 / (1.0 + np.exp(-logits_no_aux))
 preds_main_no_aux = (probs_no_aux >= 0.5).astype(int)
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-eval_loss:      ...
-eval_accuracy:  ...
-eval_f1:        ...
+Train... Valid... Epoch Hammi... Micro F1 Micro... Micro... Macro F1 Macro....
+-------- -------- ----- -------- -------- -------- -------- -------- ------...
+0.142944 0.186676 2 0.070143 0.859994 0.862207 0.857793 0.856066 0.843479 0...
+No-aux (lambda=0) baseline — main task metrics:
+               eval_loss: 0.1867
+       eval_hamming_loss: 0.0701
+           eval_micro_f1: 0.8600
+    eval_micro_precision: 0.8622
+       eval_micro_recall: 0.8578
+           eval_macro_f1: 0.8561
+    eval_macro_precision: 0.8435
+       eval_macro_recall: 0.8708
+          eval_macro_auc: 0.9653
+            eval_runtime: 0.7025
+  eval_samples_per_second: 1423.4440
+   eval_steps_per_second: 45.5500
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \subsection{메인 지표 비교}
 
@@ -1259,16 +1293,23 @@ cmp["delta (aux - no_aux)"] = cmp["with aux (lambda=0.1)"] - cmp["no aux (lambda
 print(cmp.round(4).to_string(index=False))
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-column_a    column_b    column_c
-...         ...         ...
-...         ...         ...
+metric  no aux (lambda=0)  with aux (lambda=0.1)  delta (aux - no_aux)
+loss 0.1867 0.2115 0.0248
+hamming_loss 0.0701 0.0737 0.0036
+micro_f1 0.8600 0.8521 -0.0079
+micro_precision 0.8622 0.8590 -0.0032
+micro_recall 0.8578 0.8453 -0.0125
+macro_f1 0.8561 0.8470 -0.0091
+macro_precision 0.8435 0.8392 -0.0043
+macro_recall 0.8708 0.8577 -0.0131
+macro_auc 0.9653 0.9628 -0.0025
+runtime 0.7025 0.8829 0.1804
+samples_per_second 1423.4440 1132.6520 -290.7920
+steps_per_second 45.5500 36.2450 -9.3050
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{해석 가이드}
 
 \begin{itemize}
@@ -1367,16 +1408,19 @@ plt.show()
 
 \textbf{그림 읽기} --- 그림~\ref{fig:ch18-per-label-f1-compare}는 \(\lambda=0\) 기준선과 \(\lambda=0.1\) 보조 손실 설정의 카테고리별 F1을 비교합니다. 모든 라벨에서 동시에 오르지 않을 수 있으므로, 평균 지표뿐 아니라 어느 카테고리가 도움을 받고 어느 카테고리가 흔들리는지 함께 확인해야 합니다.
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-column_a    column_b    column_c
-...         ...         ...
-...         ...         ...
+category  no aux F1  with aux F1  delta (aux - no_aux)
+  IT/Science     0.7739       0.7782                0.0043
+     Economy     0.8213       0.7965               -0.0247
+     Society     0.8736       0.8690               -0.0045
+Life&Culture     0.8646       0.8641               -0.0005
+       World     0.8869       0.8742               -0.0126
+      Sports     0.9256       0.9136               -0.0120
+    Politics     0.8466       0.8333               -0.0133
+<Figure size 1100x500 with 1 Axes>
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{해석}
 
 \begin{itemize}
@@ -1434,6 +1478,11 @@ plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+<Figure size 750x550 with 1 Axes>
+\end{lstlisting}
+\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{활성 라벨 개수 보조 회귀의 예측 분포}{fig:ch18-aux-count-violin}
 \includegraphics[width=0.76\linewidth]{assets/figures/ch18_aux_count_violin.png}
 \end{bookfigurelabel}
@@ -1537,16 +1586,11 @@ else:
     )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-PyTorch:        2.x.x
-CUDA available: True
-GPU:            Tesla T4
+Lambda sweep skipped. Set RUN_LAMBDA_SWEEP=True to run (~30 min extra on T4).
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{해석 가이드 --- 결과를 직접 보면}
 
 \begin{itemize}

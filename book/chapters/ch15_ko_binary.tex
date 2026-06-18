@@ -243,16 +243,13 @@ else:
 \inlinecode{numpy, pandas, matplotlib, PyTorch, datasets} 같은 주요 패키지를 불러옵니다.
 \end{codeRead}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-PyTorch:        2.x.x
+PyTorch:        2.11.0+cu128
 CUDA available: True
-GPU:            Tesla T4
+GPU:             Tesla T4
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{baseline VRAM}:
 
 
@@ -266,7 +263,14 @@ GPU:            Tesla T4
 \textbf{1행}의 \inlinecode{!nvidia-smi}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Wed Jun 17 21:44:50 2026
+NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
+0 Tesla T4 Off | 00000000:00:04.0 Off | 0
+N/A 32C P8 11W / 70W | 3MiB / 15360MiB | 0% Default
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \section{토크나이저 비교}
 
@@ -325,16 +329,24 @@ print(
 \textbf{1행}의 \inlinecode{tokenizer\_ko = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{2행}의 \inlinecode{tokenizer\_en = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{4--8행}의 \inlinecode{samples = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{10행}의 \inlinecode{for sent in samples:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{12행}의 \inlinecode{tok\_ko = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
+text: 이 영화 정말 재미있었어요
+klue/bert-base ( 6 tokens): ['이', '영화', '정말', '재미있', '##었', '##어요']
+distilbert-en (14 tokens): ['U+110B', '##U+1175', 'U+110B', '##U+1167', '##...
+
+text: 별로였어요. 시간 낭비
+  klue/bert-base ( 6 tokens): ['별로', '##였', '##어요', '.', '시간', '낭비']
+distilbert-en (12 tokens): ['[UNK]', '.', 'U+1109', '##U+1175', '##U+1100',...
+
+text: 오랜만에 본 명작이네요!
+klue/bert-base ( 8 tokens): ['오랜만', '##에', '본', '명작', '##이', '##네'...
+distilbert-en (26 tokens): ['U+110B', '##U+1169', '##U+1105', '##U+1162', '...
+
+klue/bert-base vocab size:        32,000
+distilbert-base-uncased vocab:    30,522
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{관찰}
 
 \begin{itemize}
@@ -393,15 +405,6 @@ for _, row in df_train_full.head(3).iterrows():
     )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 SEED = 42
@@ -445,15 +448,6 @@ eval_ds  = eval_ds.rename_column("document", "text")
 print()
 print(train_ds)
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \section{토큰화 --- \ref{ch:11}장 패턴 그대로, 토크나이저만 한국어로}
 
@@ -512,17 +506,6 @@ print(
 \textbf{1행}의 \inlinecode{tokenizer = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{def tokenize\_fn(batch):}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{4--8행}의 \inlinecode{out = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{9행}의 \inlinecode{out["labels"] = [int(l) f...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{10행}의 \inlinecode{return out}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{12--15행}의 \inlinecode{train\_tok = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Dataset({
-  features: [...],
-  num_rows: ...
-})
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \section{\texorpdfstring{모델 로드}{모델 로드}}
 
 \ref{ch:11}장 에서 \inlinecode{distilbert-base-uncased} 였던 자리만 \inlinecode{klue/bert-base} 로 교체. 분류 헤드 \inlinecode{Linear(H,\ 2)} + \inlinecode{single\_label\_classification} 셋업은 동일.
@@ -577,16 +560,22 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
+Key                                        | Status     | 
+-------------------------------------------+------------+-
+classifier.weight                          | MISSING    | 
+classifier.bias                            | MISSING    | 
+
+- MISSING: those params were newly initialized because missing from the che...
+Parameters:             110,618,882  (110.6 M)
+Trainable parameters:   110,618,882  (100.0%)
+Classifier:           Linear(in_features=768, out_features=2, bias=True)
+problem_type:         single_label_classification
+hidden size H:        768
+vocab size V:         32,000
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{파라미터 수 비교 --- \ref{ch:11}장 vs \ref{ch:15}장}
 
 \begin{booktable}{15장 모델 로드 표}{tab:ch15-04}
@@ -613,7 +602,14 @@ Hidden size H & 768 & 768 \\
 !nvidia-smi
 \end{lstlisting}
 
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Wed Jun 17 21:45:11 2026
+NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
+0 Tesla T4 Off | 00000000:00:04.0 Off | 0
+N/A 33C P8 12W / 70W | 3MiB / 15360MiB | 0% Default
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \section{학습}
 
@@ -692,20 +688,29 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-TrainOutput(global_step=..., training_loss=..., metrics={...})
+Epoch  Train...  Valid...  Accuracy  Preci...  Recall    F1        Auc
+-----  --------  --------  --------  --------  --------  --------  --------
+1      0.373789  0.344967  0.860000  0.859719  0.859719  0.859719  0.924856
+2      0.213966  0.399458  0.864000  0.877339  0.845691  0.861224  0.924764
+
+Training done — mean train loss: 0.3008
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{5\baselineskip}
 \begin{lstlisting}
 !nvidia-smi
 \end{lstlisting}
 
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Wed Jun 17 21:46:00 2026
+NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
+0 Tesla T4 Off | 00000000:00:04.0 Off | 0
+N/A 54C P0 32W / 70W | 2627MiB / 15360MiB | 79% Default
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \section{평가}
 
@@ -722,16 +727,20 @@ for k, v in eval_metrics.items():
         print(f"  {k:>20}: {v:.4f}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-eval_loss:      ...
-eval_accuracy:  ...
-eval_f1:        ...
+Train...  Valid...  Epoch  Accuracy  Preci...  Recall    F1        Auc
+--------  --------  -----  --------  --------  --------  --------  --------
+0.213966  0.399458  2      0.864000  0.877339  0.845691  0.861224  0.924764
+klue/bert-base NSMC binary — evaluation:
+             eval_loss: 0.3995
+         eval_accuracy: 0.8640
+        eval_precision: 0.8773
+           eval_recall: 0.8457
+               eval_f1: 0.8612
+              eval_auc: 0.9248
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{10\baselineskip}
 \begin{lstlisting}
 preds_output = trainer.predict(eval_tok)
@@ -764,17 +773,14 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-logits shape: (..., ...)
-probability range: [..., ...]
-first samples:
-  ...
+logits2 (raw)  shape: (1000, 2)
+logit z = z1-z0 range: [-5.83, 5.09]
+prob range:           [0.0029, 0.9939]
+positive prediction rate (prob >= 0.5): 48.1%
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{7\baselineskip}
 \begin{lstlisting}
 print(classification_report(
@@ -784,18 +790,18 @@ print(classification_report(
 ))
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-              precision    recall  f1-score   support
-label_0          ...       ...       ...        ...
-label_1          ...       ...       ...        ...
+precision    recall  f1-score   support
 
-micro avg        ...       ...       ...        ...
-macro avg        ...       ...       ...        ...
+    negative     0.8516    0.8822    0.8667       501
+    positive     0.8773    0.8457    0.8612       499
+
+    accuracy                         0.8640      1000
+   macro avg     0.8645    0.8640    0.8639      1000
+weighted avg     0.8645    0.8640    0.8640      1000
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \subsection{확률 공간 KDE (\ref{ch:11}장과 동일 패턴)}
 
@@ -821,6 +827,11 @@ plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+<Figure size 900x500 with 1 Axes>
+\end{lstlisting}
+\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{NSMC 이진 분류의 positive 확률 분포}{fig:ch15-probability-kde}
 \includegraphics[width=0.88\linewidth]{assets/figures/ch15_probability_kde.png}
 \end{bookfigurelabel}
@@ -849,6 +860,11 @@ plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+<Figure size 900x500 with 1 Axes>
+\end{lstlisting}
+\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{NSMC 이진 분류의 logit 차이 분포}{fig:ch15-logit-kde}
 \includegraphics[width=0.88\linewidth]{assets/figures/ch15_logit_kde.png}
 \end{bookfigurelabel}
@@ -921,17 +937,6 @@ for label_str, idx in samples:
     )
     print()
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-logits shape: (..., ...)
-probability range: [..., ...]
-first samples:
-  ...
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \textbf{관찰 포인트}
 

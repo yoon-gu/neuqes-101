@@ -220,14 +220,6 @@ else:
     )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-PyTorch:        2.x.x
-CUDA available: True
-GPU:            Tesla T4
-\end{lstlisting}
-\par\vspace{0.9em}
-
 \begin{codeRead}
 \inlinecode{numpy, pandas, matplotlib, PyTorch, datasets} 같은 주요 패키지를 불러옵니다.
 \end{codeRead}
@@ -247,7 +239,14 @@ GPU:            Tesla T4
 \textbf{1행}의 \inlinecode{!nvidia-smi}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Wed Jun 17 21:34:39 2026
+NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
+0 Tesla T4 Off | 00000000:00:04.0 Off | 0
+N/A 41C P8 11W / 70W | 3MiB / 15360MiB | 0% Default
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \section{데이터 준비}
 
@@ -288,15 +287,6 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \textbf{\ref{ch:10}장과의 한 줄 차이}: \texttt{out{[}“labels”{]}\ =\ {[}{[}float(b){]}\ for\ b\ in\ batch{[}“binary”{]}{]}} → \texttt{out{[}“labels”{]}\ =\ {[}int(b)\ for\ b\ in\ batch{[}“binary”{]}{]}}. 라벨이 \emph{길이 1짜리 float 리스트} 가 아니라 \emph{int 스칼라} 입니다.
 
 
@@ -333,17 +323,6 @@ print(
     f"{train_tok[0]['labels']}  (int scalar)"
 )
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Dataset({
-  features: [...],
-  num_rows: ...
-})
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \section{모델 로드}
 
@@ -417,7 +396,14 @@ classifier (\inlinecode{Linear(768→K)}) & \textbf{769} (=768+1) & \textbf{1,53
 !nvidia-smi
 \end{lstlisting}
 
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Wed Jun 17 21:35:05 2026
+NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
+0 Tesla T4 Off | 00000000:00:04.0 Off | 0
+N/A 42C P8 14W / 70W | 3MiB / 15360MiB | 0% Default
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \section{학습}
 
@@ -504,20 +490,19 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-TrainOutput(global_step=..., training_loss=..., metrics={...})
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \Needspace{5\baselineskip}
 \begin{lstlisting}
 !nvidia-smi
 \end{lstlisting}
 
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Wed Jun 17 21:35:37 2026
+NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
+0 Tesla T4 Off | 00000000:00:04.0 Off | 0
+N/A 59C P0 58W / 70W | 1579MiB / 15360MiB | 78% Default
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \section{평가}
 
@@ -534,16 +519,20 @@ for k, v in eval_metrics.items():
         print(f"  {k:>20}: {v:.4f}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-eval_loss:      ...
-eval_accuracy:  ...
-eval_f1:        ...
+Train...  Valid...  Epoch  Accuracy  Preci...  Recall    F1        Auc
+--------  --------  -----  --------  --------  --------  --------  --------
+0.161377  0.271645  2      0.910448  0.900804  0.905660  0.903226  0.967126
+BERT method B evaluation:
+             eval_loss: 0.2716
+         eval_accuracy: 0.9104
+        eval_precision: 0.9008
+           eval_recall: 0.9057
+               eval_f1: 0.9032
+              eval_auc: 0.9671
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 preds_output = trainer.predict(eval_tok)
@@ -578,14 +567,6 @@ print(f"\nFirst 5 samples:")
 print(pd.DataFrame({
     "label":   labels[:5],
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-column_a    column_b    column_c
-...         ...         ...
-...         ...         ...
-\end{lstlisting}
-\par\vspace{0.9em}
 
 \noindent\emph{앞뒤 블록은 모두 모델 출력을 확률이나 예측값으로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
@@ -634,6 +615,11 @@ plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+<Figure size 900x500 with 1 Axes>
+\end{lstlisting}
+\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{방식 B의 softmax 확률 분포}{fig:ch11-probability-kde}
 \includegraphics[width=0.88\linewidth]{assets/figures/ch11_probability_kde.png}
 \end{bookfigurelabel}
@@ -664,6 +650,11 @@ plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+<Figure size 900x500 with 1 Axes>
+\end{lstlisting}
+\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{방식 B를 1차원 logit 차이로 환산한 분포}{fig:ch11-logit-kde}
 \includegraphics[width=0.88\linewidth]{assets/figures/ch11_logit_kde.png}
 \end{bookfigurelabel}
@@ -686,7 +677,18 @@ print(classification_report(
 ))
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+precision    recall  f1-score   support
 
+    negative     0.9188    0.9145    0.9167       433
+    positive     0.9008    0.9057    0.9032       371
+
+    accuracy                         0.9104       804
+   macro avg     0.9098    0.9101    0.9099       804
+weighted avg     0.9105    0.9104    0.9105       804
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \section{\texorpdfstring{방식 A/B 비교}{방식 A/B 비교}}
 
@@ -743,15 +745,12 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
+Method A first sample label: [1.0]  (length-1 float vector)
+Method B first sample label: 1    (int scalar)
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 model_A = AutoModelForSequenceClassification.from_pretrained(
@@ -799,16 +798,6 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Total parameters:     ...
-Trainable parameters: ...
-Classifier:           ...
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 training_args_A = TrainingArguments(
@@ -852,14 +841,6 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-TrainOutput(global_step=..., training_loss=..., metrics={...})
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 preds_A_out = trainer_A.predict(eval_tok_A)
@@ -876,15 +857,20 @@ for k, v in eval_metrics_A.items():
         print(f"  {k:>20}: {v:.4f}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-eval_loss:      ...
-eval_accuracy:  ...
-eval_f1:        ...
+Train...  Valid...  Epoch  Accuracy  Preci...  Recall    F1        Auc
+--------  --------  -----  --------  --------  --------  --------  --------
+0.162265  0.281090  2      0.905473  0.904110  0.889488  0.896739  0.966261
+Method A evaluation:
+             eval_loss: 0.2811
+         eval_accuracy: 0.9055
+        eval_precision: 0.9041
+           eval_recall: 0.8895
+               eval_f1: 0.8967
+              eval_auc: 0.9663
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \subsection{평가지표 비교}
 
@@ -923,15 +909,17 @@ cmp["|A-B|"] = (cmp["method A (sigmoid+BCE)"] - cmp["method B (softmax+CE)"]).ab
 print(cmp.round(4).to_string(index=False))
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-column_a    column_b    column_c
-...         ...         ...
-...         ...         ...
+metric  method A (sigmoid+BCE)  method B (softmax+CE)  |A-B|
+     loss                  0.2811                 0.2716 0.0094
+ accuracy                  0.9055                 0.9104 0.0050
+precision                  0.9041                 0.9008 0.0033
+   recall                  0.8895                 0.9057 0.0162
+       f1                  0.8967                 0.9032 0.0065
+      auc                  0.9663                 0.9671 0.0009
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \subsection{확률 산점도}
 
@@ -1033,8 +1021,17 @@ print(f"  only B correct (A wrong): {only_B_right:.1%}")
 print(f"  both wrong:             {both_wrong:.1%}")
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Agreement rate (A vs B predictions): 98.3%
 
-
+Prediction quadrants:
+  both correct:           89.9%
+  only A correct (B wrong): 0.6%
+  only B correct (A wrong): 1.1%
+  both wrong:             8.3%
+\end{lstlisting}
+\par\vspace{0.9em}
 \textbf{여기까지 보고 결론} --- 식으로 본 동등성 (\(\sigma(z) = \mathrm{softmax}(z_0, z_1)[1]\) when \(z = z_1 - z_0\))이 BERT에서도 그대로 성립합니다. 차이가 있어 봐야 random init / dropout 같은 \emph{학습 경로 차이} 정도. 두 방식은 \textbf{수식이 다른 같은 모델}, 라이브러리·코드 컨벤션이 강요하는 표현 차이일 뿐입니다.
 
 \begin{quote}

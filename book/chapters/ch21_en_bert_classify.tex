@@ -322,8 +322,6 @@ MLM head (\inlinecode{cls.predictions}) & vocab 위 분류 헤드 & \textbf{버�
 %pip install -q -U transformers datasets accelerate
 \end{lstlisting}
 
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 import warnings
@@ -396,16 +394,14 @@ elif DEVICE == "cpu":
     )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-PyTorch:        2.x.x
+PyTorch:        2.11.0+cu128
 CUDA available: True
-GPU:            Tesla T4
+Device:         cuda
+GPU:             Tesla T4
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{baseline VRAM} (CUDA 환경에서만 의미 있는 출력 --- Colab T4 기준):
 
 
@@ -415,7 +411,14 @@ GPU:            Tesla T4
 !nvidia-smi
 \end{lstlisting}
 
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Wed Jun 17 21:58:55 2026
+NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
+0 Tesla T4 Off | 00000000:00:04.0 Off | 0
+N/A 36C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \section{Yelp 이진 분류 데이터 로드 --- \ref{ch:10}장과 같은 split}
 
@@ -474,20 +477,23 @@ print(
 print(f"  text:  {ds_train_full[0]['text'][:200]}...")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
 splits: ['train', 'test']
 train size: 560,000
 test size:  38,000
-label names: ['negative', 'positive']
+label names: ['1', '2']
+
 sampled train: 5,000
-  positive rate: ...%  (label 1)
+  positive rate: 50.7%  (label 1)
 sampled eval:  1,000
-  positive rate: ...%  (label 1)
+  positive rate: 48.4%  (label 1)
+
+first train sample:
+  label: 1 (2)
+text: Decent size, decent selection, decent staff.\n\nI guess that can whol...
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \section{\texorpdfstring{토크나이저 --- \inlinecode{bert-base-uncased} (\ref{ch:20}장과 동일)}{토크나이저 --- bert-base-uncased (\ref{ch:20}장과 동일)}}
 
@@ -526,15 +532,16 @@ print(f"tokens ({len(tokens)}): {tokens}")
 \textbf{1행}의 \inlinecode{TOKENIZER\_NAME = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{2행}의 \inlinecode{tokenizer = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{8행}의 \inlinecode{SAMPLE = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
+tokenizer:        bert-base-uncased
+vocab_size:       30,522
+model_max_length: 512
+
+sample: 'The food was unforgettable and the service was excellent.'
+tokens (15): ['[CLS]', 'the', 'food', 'was', 'un', '##for', '##get', '##tab...
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \section{MLM 사전학습}
 
@@ -582,16 +589,12 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
+Small BERT config: hidden=256, layer=4, head=4
+Total parameters:  11,103,290  (11.10 M)
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 N_MLM_TRAIN = 2000
@@ -712,19 +715,6 @@ print(
 print(f"MLM eval blocks:  {len(lm_eval):,}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-lm_train: Dataset({features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'], num_rows: ...})
-lm_eval:  Dataset({features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'], num_rows: ...})
-block_size:           128
-train blocks: ...  (approx. ... tokens)
-eval blocks:  ...   (approx. ... tokens)
-sample block 0 first 20 tok: ['the', '...', '...']
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \Needspace{7\baselineskip}
 \begin{lstlisting}
 mlm_collator = DataCollatorForLanguageModeling(
@@ -817,18 +807,27 @@ demo_df = pd.DataFrame(rows)
 print(demo_df.to_string(index=False))
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
- pos original after_collator label_id what_happened
-   0    [CLS]          [CLS]     -100             -
-   1      the           the      -100             -
-   2  capital        [MASK]     3007   [MASK] (80%)
- ...      ...           ...       ...           ...
+pos original after_collator  label_id what_happened
+   0    [CLS]          [CLS]      -100             —
+   1      the            the      -100             —
+   2  capital         [MASK]      3007  [MASK] (80%)
+   3       of             of      1997    kept (10%)
+   4   france         france      -100             —
+   5       is             is      -100             —
+   6    paris          paris      -100             —
+   7        ,              ,      -100             —
+   8  located        located      -100             —
+   9       on             on      -100             —
+  10      the            the      -100             —
+  11    banks          banks      -100             —
+  12       of         [MASK]      1997  [MASK] (80%)
+  13      the            the      -100             —
+  14    seine          seine      -100             —
+...
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 torch.manual_seed(0)
@@ -886,19 +885,17 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-lm_train: Dataset({features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'], num_rows: ...})
-lm_eval:  Dataset({features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'], num_rows: ...})
-block_size:           128
-train blocks: ...  (approx. ... tokens)
-eval blocks:  ...   (approx. ... tokens)
-sample block 0 first 20 tok: ['the', '...', '...']
+Total tokens:                  8,192
+Selected for loss (target 15%):      1,217  (14.86%)
+  └─ replaced with [MASK]:       961  (78.96% of selected)
+  └─ replaced with random:       121  ( 9.94% of selected)
+  └─ kept as original:           135  (11.09% of selected)
+
+이론치: 선택 15% / 그 중 80-10-10 으로 [MASK]-random-kept. 표본이 작아 약간...
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{관전 포인트}
 
 \begin{itemize}
@@ -1026,16 +1023,16 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
+[transformers] warmup_ratio is deprecated and will be removed in v5.2. Use...
+MLM epochs:     3
+MLM batch size: 32
+MLM learning rate: 0.0005
+MLM fp16:       True
+MLM steps:      195
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 t0 = time.time()
@@ -1052,16 +1049,19 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-MLM pretraining done in ... min
-mean train loss: ...
-random baseline loss (uniform over vocab): 10.3262
+Epoch  Training Loss  Validation Loss
+-----  -------------  ---------------
+1      7.428842       7.485041
+2      7.314868       7.214524
+3      7.152557       7.258091
+
+MLM pretraining done in 0.3 min
+mean train loss: 7.5983
+random baseline (ln vocab): 10.3262
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{10\baselineskip}
 \begin{lstlisting}
 mlm_eval_metrics = mlm_trainer.evaluate()
@@ -1074,16 +1074,16 @@ print(
 print(f"(random baseline PPL: {tokenizer.vocab_size:,})")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-MLM eval loss:        ...
-MLM eval perplexity:  ...
-random baseline PPL:  30,522
+Training Loss  Validation Loss  Epoch
+-------------  ---------------  -----
+7.152557       7.200129         3
+MLM eval loss:        7.2001
+MLM eval perplexity:  1339.60
+(random baseline PPL: 30,522)
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{관전 포인트} --- Wikitext-103 paragraphs 에서 MLM loss 가 \emph{random baseline 10.33} 에서 시작해 4-6 부근까지 떨어졌다면 본체가 \emph{일반 위키 어휘·문맥 구조의 일부} 를 학습한 상태. perplexity 로 환산하면 vocab 30,522 중 \emph{수백 개 후보} 로 좁혀진 정도. \ref{ch:20}장의 2 epoch 보다는 약간 얕지만, \emph{Yelp 분류 fine-tune 출발점} 으로는 충분합니다 --- 본체가 \emph{일반 영어 구조} 를 가지면 \emph{영화 리뷰 도메인} 도 fine-tune 으로 빠르게 적응.
 
 \begin{quote}
@@ -1183,20 +1183,18 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
 본체 가중치 복사 완료
-  missing keys (분류 측에만 있는 부분): 0  e.g. []
+missing keys (분류 측에만 있는 부분): 2 e.g. ['pooler.dense.weight', 'poole...
   unexpected keys (MLM 측 잉여):       0  e.g. []
+
 Classification model parameters:
-  body (embeddings + encoder + pooler):        ...
-  classifier head Linear(256, 2):              ...
-  total:                                      ...
+  body (embeddings + encoder + pooler): 11,072,256  (100.0%)
+  classifier head Linear(256, 2):              514  (0.0%)
+  total:                                 11,072,770  (11.07 M)
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{\inlinecode{bert.load\_state\_dict} 가 한 일} --- \inlinecode{BertForMaskedLM} 과 \inlinecode{BertForSequenceClassification} 둘 다 \emph{내부에 같은 \inlinecode{BertModel}} (이름 \inlinecode{self.bert}) 을 갖습니다. 그 본체만 통째로 옮긴 셈. MLM head (\inlinecode{cls.predictions}) 와 분류 head (\inlinecode{classifier}) 는 \emph{모델 객체의 다른 자리} 라 자동으로 분리됩니다.
 
 \begin{quote}
@@ -1236,16 +1234,16 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
+Dataset({
+    features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'],
+    num_rows: 5000
+})
+
+First sample label: 1  (int 0 or 1)
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 def compute_metrics(eval_pred):
@@ -1327,22 +1325,31 @@ print(f"mean train loss: {cls_result.training_loss:.4f}")
 print(f"random baseline (ln 2): {math.log(2):.4f}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Classification fine-tune done in ... min
-mean train loss: ...
+Epoch  Train...  Valid...  Accuracy  Preci...  Recall    F1        Auc
+-----  --------  --------  --------  --------  --------  --------  --------
+1      0.688515  0.686191  0.489000  0.486322  0.991736  0.652617  0.686673
+2      0.665370  0.659038  0.649000  0.633803  0.650826  0.642202  0.707897
+
+Classification fine-tune done in 0.3 min
+mean train loss: 0.6829
 random baseline (ln 2): 0.6931
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{5\baselineskip}
 \begin{lstlisting}
 !nvidia-smi
 \end{lstlisting}
 
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Wed Jun 17 22:00:17 2026
+NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
+0 Tesla T4 Off | 00000000:00:04.0 Off | 0
+N/A 53C P0 42W / 70W | 797MiB / 15360MiB | 29% Default
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \section{평가}
 
@@ -1362,16 +1369,20 @@ for k, v in cls_eval_metrics.items():
         print(f"  {k:>20}: {v:.4f}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-eval_loss:      ...
-eval_accuracy:  ...
-eval_f1:        ...
+Train...  Valid...  Epoch  Accuracy  Preci...  Recall    F1        Auc
+--------  --------  -----  --------  --------  --------  --------  --------
+0.665370  0.659038  2      0.649000  0.633803  0.650826  0.642202  0.707897
+Ch 21 small BERT (scratch MLM 3 epoch + classification fine-tune) — eval:
+             eval_loss: 0.6590
+         eval_accuracy: 0.6490
+        eval_precision: 0.6338
+           eval_recall: 0.6508
+               eval_f1: 0.6422
+              eval_auc: 0.7079
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{10\baselineskip}
 \begin{lstlisting}
 preds_output = cls_trainer.predict(cls_eval)
@@ -1404,19 +1415,22 @@ print(classification_report(
 ))
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
 Logits shape: (1000, 2)
-Predicted positive rate: ...%
-Top-1 prob mean: correct=..., wrong=...
+Predicted positive rate: 49.7%
+Top-1 prob mean: correct=0.5529, wrong=0.5385
 
               precision    recall  f1-score   support
-negative          ...       ...       ...        ...
-positive          ...       ...       ...        ...
+
+    negative     0.6640    0.6473    0.6555       516
+    positive     0.6338    0.6508    0.6422       484
+
+    accuracy                         0.6490      1000
+   macro avg     0.6489    0.6491    0.6489      1000
+weighted avg     0.6494    0.6490    0.6491      1000
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \subsection{학습 곡선}
 
@@ -1460,6 +1474,11 @@ else:
     print("No train loss logs found.")
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+<Figure size 900x500 with 1 Axes>
+\end{lstlisting}
+\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{작은 BERT의 Yelp 이진 분류 fine-tune loss 곡선}{fig:ch21-finetune-loss}
 \includegraphics[width=0.82\linewidth]{assets/figures/ch21_finetune_loss.png}
 \end{bookfigurelabel}
@@ -1503,6 +1522,11 @@ plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+<Figure size 600x500 with 2 Axes>
+\end{lstlisting}
+\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{작은 BERT의 Yelp 이진 분류 혼동 행렬}{fig:ch21-confusion-matrix}
 \includegraphics[width=0.68\linewidth]{assets/figures/ch21_confusion_matrix.png}
 \end{bookfigurelabel}
@@ -1568,16 +1592,17 @@ print("10장 vs 21장 — classification metrics")
 print(comparison.round(4).to_string(index=False))
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-column_a    column_b    column_c
-...         ...         ...
-...         ...         ...
+Ch10 vs Ch21 — classification metrics
+   metric  Ch10 DistilBERT (ref)  Ch21 small BERT  delta (Ch21 - Ch10)
+ accuracy                   0.93           0.6490              -0.2810
+precision                   0.93           0.6338              -0.2962
+   recall                   0.93           0.6508              -0.2792
+       f1                   0.93           0.6422              -0.2878
+      auc                   0.98           0.7079              -0.2721
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 sns.set_theme(style="whitegrid", context="talk")
@@ -1608,6 +1633,11 @@ plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+<Figure size 900x500 with 1 Axes>
+\end{lstlisting}
+\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{Yelp 이진 분류에서 DistilBERT와 작은 BERT 비교}{fig:ch21-ch10-compare}
 \includegraphics[width=0.82\linewidth]{assets/figures/ch21_ch10_compare.png}
 \end{bookfigurelabel}

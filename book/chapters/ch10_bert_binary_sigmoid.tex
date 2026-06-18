@@ -246,14 +246,6 @@ else:
     )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-PyTorch:        2.x.x
-CUDA available: True
-GPU:            Tesla T4
-\end{lstlisting}
-\par\vspace{0.9em}
-
 \begin{codeRead}
 \inlinecode{numpy, pandas, matplotlib, PyTorch, datasets} 같은 주요 패키지를 불러옵니다.
 \end{codeRead}
@@ -273,7 +265,14 @@ GPU:            Tesla T4
 \textbf{1행}의 \inlinecode{!nvidia-smi}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Wed Jun 17 21:32:42 2026
+NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
+0 Tesla T4 Off | 00000000:00:04.0 Off | 0
+N/A 43C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \section{데이터 준비}
 
@@ -325,15 +324,6 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 def tokenize_fn(batch):
@@ -367,17 +357,6 @@ print(
     f"{train_tok[0]['labels']}  (length-1 float vector)"
 )
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Dataset({
-  features: [...],
-  num_rows: ...
-})
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \section{모델 로드}
 
@@ -419,22 +398,19 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Total parameters:     ...
-Trainable parameters: ...
-Classifier:           ...
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \Needspace{5\baselineskip}
 \begin{lstlisting}
 !nvidia-smi
 \end{lstlisting}
 
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Wed Jun 17 21:33:06 2026
+NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
+0 Tesla T4 Off | 00000000:00:04.0 Off | 0
+N/A 44C P8 14W / 70W | 3MiB / 15360MiB | 0% Default
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \section{학습}
 
@@ -518,20 +494,19 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-TrainOutput(global_step=..., training_loss=..., metrics={...})
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \Needspace{5\baselineskip}
 \begin{lstlisting}
 !nvidia-smi
 \end{lstlisting}
 
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Wed Jun 17 21:33:38 2026
+NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
+0 Tesla T4 Off | 00000000:00:04.0 Off | 0
+N/A 61C P0 68W / 70W | 1579MiB / 15360MiB | 69% Default
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \section{평가}
 
@@ -548,16 +523,20 @@ for k, v in eval_metrics.items():
         print(f"  {k:>20}: {v:.4f}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-eval_loss:      ...
-eval_accuracy:  ...
-eval_f1:        ...
+Train...  Valid...  Epoch  Accuracy  Preci...  Recall    F1        Auc
+--------  --------  -----  --------  --------  --------  --------  --------
+0.159778  0.281910  2      0.902985  0.897019  0.892183  0.894595  0.968480
+BERT method A evaluation:
+             eval_loss: 0.2819
+         eval_accuracy: 0.9030
+        eval_precision: 0.8970
+           eval_recall: 0.8922
+               eval_f1: 0.8946
+              eval_auc: 0.9685
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 preds_output = trainer.predict(eval_tok)
@@ -578,15 +557,6 @@ print(
     f"{(probs >= 0.5).mean():.1%}"
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-logits shape: (..., ...)
-probability range: [..., ...]
-first samples:
-  ...
-\end{lstlisting}
-\par\vspace{0.9em}
-
 \noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 모델 출력을 확률이나 예측값으로 바꾸는 단계로 넘어갑니다.}
 
 \Needspace{10\baselineskip}
@@ -601,15 +571,21 @@ print(pd.DataFrame({
 }).to_string(index=False))
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-column_a    column_b    column_c
-...         ...         ...
-...         ...         ...
+Logit range: [-4.57, 4.11]
+Prob range:  [0.0102, 0.9838]
+Positive prediction rate (prob >= 0.5): 45.9%
+
+First 5 samples:
+ label  logit   prob  pred
+     1   3.77 0.9775     1
+     0  -3.29 0.0360     0
+     1   4.04 0.9827     1
+     1   3.71 0.9761     1
+     1   4.06 0.9830     1
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \subsection{\texorpdfstring{확률 분포}{확률 분포}}
 
@@ -656,6 +632,11 @@ plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+<Figure size 900x500 with 1 Axes>
+\end{lstlisting}
+\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{방식 A의 sigmoid 확률 분포}{fig:ch10-probability-kde}
 \includegraphics[width=0.88\linewidth]{assets/figures/ch10_probability_kde.png}
 \end{bookfigurelabel}
@@ -696,6 +677,11 @@ plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+<Figure size 900x500 with 1 Axes>
+\end{lstlisting}
+\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{방식 A의 sigmoid 이전 logit 분포}{fig:ch10-logit-kde}
 \includegraphics[width=0.88\linewidth]{assets/figures/ch10_logit_kde.png}
 \end{bookfigurelabel}
@@ -730,18 +716,18 @@ print(classification_report(
 ))
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-              precision    recall  f1-score   support
-label_0          ...       ...       ...        ...
-label_1          ...       ...       ...        ...
+precision    recall  f1-score   support
 
-micro avg        ...       ...       ...        ...
-macro avg        ...       ...       ...        ...
+    negative     0.9080    0.9122    0.9101       433
+    positive     0.8970    0.8922    0.8946       371
+
+    accuracy                         0.9030       804
+   macro avg     0.9025    0.9022    0.9024       804
+weighted avg     0.9030    0.9030    0.9030       804
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \section{결과 저장}
 
@@ -791,16 +777,6 @@ for f in sorted(os.listdir("./shared_binary_results")):
     size_kb = os.path.getsize(f"./shared_binary_results/{f}") / 1024
     print(f"  {f}  ({size_kb:.1f} KB)")
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Saved: ./shared_binary_results/
-  metrics.json
-  probabilities.npy
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \textbf{참고}: Colab은 세션이 끝나면 \inlinecode{./shared\_binary\_results/} 가 사라집니다. \emph{Drive에 보존} 하려면 다음과 같이 마운트.
 

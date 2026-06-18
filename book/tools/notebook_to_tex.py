@@ -15,6 +15,7 @@ import argparse
 import io
 import textwrap
 import tokenize
+import unicodedata
 from dataclasses import dataclass
 from html import unescape
 from html.parser import HTMLParser
@@ -3086,14 +3087,36 @@ def output_text(outputs: list[dict]) -> str:
         "[notice] A new release of pip",
         "notice] A new release of pip",
         "To update, run:",
+        "[transformers] No model was supplied",
+        "[transformers] Passing `generation_config`",
+        "[transformers] Setting `pad_token_id`",
+        "[transformers] Both `max_new_tokens`",
+        "[transformers] Ignoring clean_up_tokenization_spaces",
+        "Using a pipeline without specifying a model name",
+        "You are not authenticated with the Hugging Face Hub",
+        "Error while fetching `HF_TOKEN`",
+        "Warning: You are sending unauthenticated requests",
+        "WARNING:huggingface_hub",
+        "huggingface_hub/utils/_auth.py",
+        "warnings.warn(",
+        "LOAD REPORT from:",
+        "Key                         | Status",
+        "UNEXPECTED",
+        "Notes:",
+        "- UNEXPECTED:",
+        "<IPython.core.display.HTML object>",
     )
     lines = [
         line
         for line in text.splitlines()
         if not any(pattern in line for pattern in skip_patterns)
         and not line.strip().startswith("from .autonotebook import tqdm")
+        and not re.search(r":\s+\d+%\|", line)
+        and "[00:00<" not in line
+        and "[00:00?" not in line
+        and not any(char in line for char in "━╺╸")
     ]
-    text = sanitize_symbols("\n".join(lines).strip())
+    text = sanitize_listing_unicode(sanitize_symbols("\n".join(lines).strip()))
     if not text:
         return ""
     lines = text.splitlines()
@@ -3103,6 +3126,23 @@ def output_text(outputs: list[dict]) -> str:
     if len(compact) > 1600:
         compact = compact[:1550].rstrip() + "\n..."
     return fit_listing_text(compact, width=78)
+
+
+def compact_nvidia_smi_output(text: str) -> str:
+    """Keep the factual VRAM line without filling the page with the full table."""
+    lines = [line.rstrip() for line in text.splitlines() if line.strip()]
+    if not lines:
+        return text
+    selected: list[str] = []
+    for line in lines:
+        stripped = line.strip()
+        if re.match(r"^[A-Z][a-z]{2}\s+[A-Z][a-z]{2}\s+\d{1,2}", stripped):
+            selected.append(stripped)
+        elif "NVIDIA-SMI" in stripped and "Driver Version" in stripped:
+            selected.append(re.sub(r"\s+", " ", stripped).strip("| "))
+        elif "Tesla T4" in stripped or "MiB /" in stripped:
+            selected.append(re.sub(r"\s+", " ", stripped).strip("| "))
+    return "\n".join(dict.fromkeys(selected)) or text
 
 
 class PandasTableParser(HTMLParser):
@@ -3268,6 +3308,36 @@ def html_tables_to_plain_text(html: str, width: int = 78) -> list[str]:
 
 def display_width(text: str) -> int:
     return sum(1 if ord(char) < 128 else 2 for char in text)
+
+
+def sanitize_listing_unicode(text: str) -> str:
+    """Convert output-only glyphs that Nanum fonts often cannot render."""
+    text = unicodedata.normalize("NFC", text)
+    replacements = {
+        "Ġ": "<sp>",
+        "▁": "_",
+        "—": "--",
+        "–": "-",
+        "“": '"',
+        "”": '"',
+        "‘": "'",
+        "’": "'",
+    }
+    text = "".join(replacements.get(char, char) for char in text)
+    cleaned: list[str] = []
+    for char in text:
+        code = ord(char)
+        if 0x1100 <= code <= 0x11FF:
+            cleaned.append(f"U+{code:04X}")
+        elif (
+            0x2E80 <= code <= 0x2FDF
+            or 0x3400 <= code <= 0x4DBF
+            or 0x4E00 <= code <= 0x9FFF
+        ):
+            cleaned.append(f"U+{code:04X}")
+        else:
+            cleaned.append(char)
+    return "".join(cleaned)
 
 
 def fit_listing_text(text: str, width: int = 78) -> str:
@@ -3529,6 +3599,8 @@ def output_to_latex(source: str, outputs: list[dict]) -> str:
     text = output_text(outputs)
     if not text:
         return ""
+    if re.search(r"(?m)^\s*!nvidia-smi\s*$", source):
+        text = compact_nvidia_smi_output(text)
     return (
         "\\noindent\\textbf{출력.}\n"
         "\\begin{lstlisting}[style=bookoutput]\n"
@@ -4421,15 +4493,7 @@ def synthetic_output_text(source: str) -> str:
 
 
 def synthetic_output_to_latex(source: str) -> str:
-    if "print(" not in source:
-        return ""
-    return (
-        "\\noindent\\textbf{출력 형태.}\n"
-        "\\begin{lstlisting}[style=bookoutput]\n"
-        + synthetic_output_text(source)
-        + "\n\\end{lstlisting}\n"
-        "\\par\\vspace{0.9em}"
-    )
+    return ""
 
 
 def code_to_latex(source: str, include_notes: bool = False, outputs: list[dict] | None = None) -> str:

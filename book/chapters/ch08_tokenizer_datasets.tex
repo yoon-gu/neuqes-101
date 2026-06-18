@@ -197,14 +197,15 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-PyTorch:        2.x.x
+PyTorch:        2.11.0+cu128
 CUDA available: True
 GPU:            Tesla T4
+
+No model weights loaded in this chapter; VRAM stays roughly flat.
 \end{lstlisting}
 \par\vspace{0.9em}
-
 \begin{codeRead}
 \inlinecode{numpy, pandas, PyTorch, datasets, transformers} 같은 주요 패키지를 불러옵니다.
 \end{codeRead}
@@ -225,17 +226,6 @@ ds = load_dataset("yelp_review_full")
 print(ds)
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-DatasetDict({
-  train: Dataset({features: ['label', 'text'], num_rows: ...})
-  test:  Dataset({features: ['label', 'text'], num_rows: ...})
-})
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 print(f"train samples: {len(ds['train']):,}")
@@ -249,15 +239,18 @@ print(
 print(f"  text:  {ds['train'][0]['text'][:200]}...")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
+train samples: 650,000
+test samples:  50,000
+
+features: {'label': ClassLabel(names=['1 star', '2 star', '3 stars', '4 sta...
+
+First sample:
+  label: 4  (0-4 = stars 1-5)
+text: dr. goldberg offers everything i look for in a general practitioner....
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{5\baselineskip}
 \begin{lstlisting}
 small = ds["train"].shuffle(seed=42).select(range(5000))
@@ -265,16 +258,16 @@ print(small)
 print(f"\nfirst sample text: {small[0]['text'][:150]}...")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
 Dataset({
-  features: [...],
-  num_rows: ...
+    features: ['label', 'text'],
+    num_rows: 5000
 })
+
+first sample text: I stalk this truck. I've been to industrial parks where...
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \section{토크나이저 옵션}
 
@@ -293,14 +286,13 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
+Class:     BertTokenizer
+vocab:     30,522
+pad_token: [PAD]  (id=0)
 \end{lstlisting}
 \par\vspace{0.9em}
-
 \begin{codeRead}
 \textbf{1행}의 \inlinecode{tokenizer = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
@@ -330,15 +322,15 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
+Input (first 150 chars): I stalk this truck. I've been to industrial parks...
+
+input_ids length: 75
+First 30 IDs: [101, 1045, 23899, 2023, 4744, 1012, 1045, 1005, 2310, 2042,...
+Decoded first 30: [CLS] i stalk this truck. i ' ve been to industrial parks...
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \subsection{\texorpdfstring{동적 패딩}{동적 패딩}}
 
@@ -358,14 +350,6 @@ for i, ids in enumerate(out_no_pad["input_ids"]):
     print(f"  sentence {i}: {len(ids)} tokens")
 
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
-\end{lstlisting}
-\par\vspace{0.9em}
 
 \noindent\emph{앞뒤 블록은 모두 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
@@ -388,15 +372,18 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
+padding=False:
+  sentence 0: 5 tokens
+  sentence 1: 75 tokens
+
+padding=True (return_tensors='pt'):
+  input_ids shape: torch.Size([2, 75])
+attention_mask sentence 0: tensor([1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0...
+attention_mask sentence 1: tensor([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1...
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \subsection{\texorpdfstring{고정 길이 패딩}{padding=“max\_length”, max\_length=128 --- 고정 길이}}
 
@@ -419,14 +406,6 @@ print(
 
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
-\end{lstlisting}
-\par\vspace{0.9em}
-
 \noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
 \Needspace{8\baselineskip}
@@ -438,15 +417,6 @@ print(
     f"wasted)"
 )
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \subsection{\texorpdfstring{긴 입력 자르기}{긴 입력 자르기}}
 
@@ -474,14 +444,6 @@ print(
     f"truncation=True, max_length=128: "
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
-\end{lstlisting}
-\par\vspace{0.9em}
-
 \noindent\emph{앞뒤 블록은 모두 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
 \Needspace{8\baselineskip}
@@ -494,15 +456,14 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
+[transformers] Token indices sequence length is longer than the specified m...
+truncation=False: 1602 tokens  (may exceed BERT limit 512)
+truncation=True, max_length=128: 128 tokens
+  Last token: [SEP] (= [SEP], always appended)
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \subsection{attention mask}
 
@@ -547,14 +508,6 @@ print(f"  max:    {lengths.max()}")
 
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
-\end{lstlisting}
-\par\vspace{0.9em}
-
 \noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
 \Needspace{9\baselineskip}
@@ -568,15 +521,24 @@ for max_len in [64, 128, 256, 512]:
     )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
+Token length distribution over 1,000 samples:
+  min:    2
+  mean:   177
+  median: 131
+  p90:    366
+  p95:    470
+  p99:    770
+  max:    1263
+
+Fraction truncated at various max_length:
+  max_length=64:  77.1% truncated
+  max_length=128:  50.9% truncated
+  max_length=256:  21.6% truncated
+  max_length=512:   3.9% truncated
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{해석}: 학습 시 \inlinecode{max\_length=128} 로 두면 95\% 이상 정상, 5\% 정도만 잘립니다 (Yelp 리뷰가 대부분 짧음). \inlinecode{max\_length=512} 면 거의 모든 리뷰를 보존하지만 평균 패딩 비율이 60-70\%라 메모리·시간 낭비.
 
 이 커리큘럼은 \textbf{\inlinecode{max\_length=128}} 을 표준으로 씁니다 (T4 30분 제약 + 무난한 정보 보존 균형).
@@ -623,16 +585,17 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
 Dataset({
-  features: [...],
-  num_rows: ...
+features: ['label', 'text', 'input_ids', 'token_type_ids', 'attention_mask'],
+    num_rows: 5000
 })
+
+First sample input_ids length: 128  (= 128, fixed)
+First sample attention_mask sum: 75  (real tokens)
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \subsection{\texorpdfstring{샘플 필터링}{샘플 필터링}}
 
@@ -653,14 +616,12 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
+Positive samples: 1,996 / 5,000 = 39.9%
+Short samples:    2,520 / 5,000 = 50.4%
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \subsection{\texorpdfstring{텐서 형식 변환}{with\_format(“torch”) --- 텐서 형식으로}}
 
@@ -686,14 +647,6 @@ print(
     f"label:          "
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
-\end{lstlisting}
-\par\vspace{0.9em}
-
 \noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
 \Needspace{5\baselineskip}
@@ -702,7 +655,13 @@ tokens / input_ids: [...]
 )
 \end{lstlisting}
 
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+input_ids:      Tensor, dtype=torch.int64, shape=torch.Size([128])
+attention_mask: Tensor, shape=torch.Size([128])
+label:          4  (0-4 = stars 1-5)
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \section{\texorpdfstring{DataLoader 변환}{DataLoader 변환}}
 
@@ -730,14 +689,6 @@ print(
     f"attention_mask shape: "
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
-\end{lstlisting}
-\par\vspace{0.9em}
-
 \noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
 \Needspace{6\baselineskip}
@@ -748,14 +699,15 @@ print(f"label shape:          {batch['label'].shape}")
 print(f"label values:         {batch['label'].tolist()}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
+batch keys:           ['label', 'input_ids', 'attention_mask']
+input_ids shape:      torch.Size([8, 128])      (= [batch_size, max_length])
+attention_mask shape: torch.Size([8, 128])
+label shape:          torch.Size([8])
+label values:         [1, 3, 3, 3, 1, 1, 3, 3]
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \section{\texorpdfstring{DataCollator}{DataCollator}}
 
@@ -795,16 +747,6 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
 \Needspace{10\baselineskip}
 \begin{lstlisting}
 collator = DataCollatorWithPadding(
@@ -837,8 +779,17 @@ for i, batch in enumerate(dyn_loader):
     if i >= 4: break
 \end{lstlisting}
 
-
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Per-batch shape (batch_size=8, varies):
+ batch             shape    real_tok   total    fill
+     0          (8, 128)         832    1024     81%
+     1          (8, 128)         782    1024     76%
+     2          (8, 128)         761    1024     74%
+     3          (8, 128)         770    1024     75%
+     4          (8, 128)         762    1024     74%
+\end{lstlisting}
+\par\vspace{0.9em}
 \textbf{정적 vs 동적 padding 비교}
 
 \begin{booktable}{DataCollator}{tab:ch08-04}
@@ -1043,14 +994,6 @@ df_stats["fill_rate"] = df_stats["fill_rate"].apply(lambda r: f"{r:.1%}")
 print(df_stats.to_string(index=False))
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-column_a    column_b    column_c
-...         ...         ...
-...         ...         ...
-\end{lstlisting}
-\par\vspace{0.9em}
-
 \noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
 \Needspace{11\baselineskip}
@@ -1065,16 +1008,6 @@ print(
     "training, less memory)"
 )
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \subsection{\texorpdfstring{MLM 마스킹}{MLM 마스킹}}
 
@@ -1102,14 +1035,6 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
-\end{lstlisting}
-\par\vspace{0.9em}
-
 \noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
@@ -1126,16 +1051,6 @@ print(
     "10% kept — so [MASK] rate ~12%)"
 )
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -1169,7 +1084,27 @@ print(
 )
 \end{lstlisting}
 
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+original     masked     label changed
+     [CLS]      [CLS] (ignored)        
+         i          i (ignored)        
+     stalk      stalk (ignored)        
+      this       this (ignored)        
+     truck barrington     truck       *
+         .     [MASK]         .       *
+         i     [MASK]         i       *
+         '          ' (ignored)        
+        ve         ve (ignored)        
+      been       been (ignored)        
+        to         to (ignored)        
+industrial industrial (ignored)        
+     parks      parks (ignored)        
+     where      where (ignored)        
+         i          i (ignored)        
+...
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \subsection{CLM 입력 구성}
 
@@ -1237,14 +1172,6 @@ print(f"input_ids shape:  {clm_batch['input_ids'].shape}")
 print(f"labels shape:     {clm_batch['labels'].shape}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
-\end{lstlisting}
-\par\vspace{0.9em}
-
 \noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
@@ -1262,15 +1189,6 @@ print(
     f"{real_len}"
 )
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -1304,16 +1222,6 @@ print(
     "to predict 'world'."
 )
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-column_a    column_b    column_c
-...         ...         ...
-...         ...         ...
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \subsection{\texorpdfstring{커스텀 collate\_fn}{커스텀 collate\_fn}}
 
@@ -1376,13 +1284,6 @@ print(
     f"aux_score (float):      "
     f"{[round(x, 3) for x in batch['aux_score'].tolist()]}"
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
-\end{lstlisting}
-\par\vspace{0.9em}
 
 \noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
@@ -1579,15 +1480,6 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-DatasetDict({
-  train: Dataset({features: ['label', 'text'], num_rows: ...})
-  test:  Dataset({features: ['label', 'text'], num_rows: ...})
-})
-\end{lstlisting}
-\par\vspace{0.9em}
-
 대조적으로 pandas로 같은 데이터를 읽으면 GB 단위 메모리가 필요합니다.
 
 \end{faqBox}
@@ -1640,14 +1532,6 @@ print(
     f"{tokenizer.decode(out2['input_ids'])}"
 )
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
-\end{lstlisting}
-\par\vspace{0.9em}
 
 힌트: 기본값에선 \texttt{{[}CLS{]}} 와 \texttt{{[}SEP{]}} 가 자동으로 \emph{2개} 추가됩니다 --- \inlinecode{add\_special\_tokens=False} 로 끄면 빠집니다. 분류 작업에선 거의 항상 켜둬야 하지만(BERT 사전학습 시 {[}CLS{]} 자리에 분류 신호가 모이도록 학습됐으므로), 디버깅·연구용으로 끄는 경우가 있습니다.
 

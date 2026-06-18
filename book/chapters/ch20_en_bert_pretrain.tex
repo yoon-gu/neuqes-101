@@ -278,8 +278,6 @@ MLM loss & PPL & 해석 \\
 %pip install -q -U transformers datasets accelerate
 \end{lstlisting}
 
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 import warnings
@@ -346,16 +344,14 @@ elif DEVICE == "cpu":
     )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-PyTorch:        2.x.x
+PyTorch:        2.11.0+cu128
 CUDA available: True
-GPU:            Tesla T4
+Device:         cuda
+GPU:             Tesla T4
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{baseline VRAM} (CUDA 환경에서만 의미 있는 출력 --- Colab T4 기준):
 
 
@@ -365,7 +361,14 @@ GPU:            Tesla T4
 !nvidia-smi
 \end{lstlisting}
 
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Wed Jun 17 21:56:36 2026
+NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
+0 Tesla T4 Off | 00000000:00:04.0 Off | 0
+N/A 38C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \section{\texorpdfstring{토크나이저 로드}{토크나이저 로드}}
 
@@ -405,7 +408,7 @@ print(f"ids:    {enc['input_ids'][0].tolist()}")
 \textbf{1행}의 \inlinecode{TOKENIZER\_NAME = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{2행}의 \inlinecode{tokenizer = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
 tokenizer:        bert-base-uncased
 vocab_size:       30,522
@@ -415,12 +418,13 @@ special tokens:
     unk_token:    '[UNK]'  (id=100)
     cls_token:    '[CLS]'  (id=101)
     sep_token:    '[SEP]'  (id=102)
-    mask_token:   '[MASK]' (id=103)
-tokens (...): ['[CLS]', 'the', 'capital', 'of', 'france', 'is', 'paris', ...]
+   mask_token:   '[MASK]'  (id=103)
+
+sample: 'The capital of France is Paris, located on the Seine river.'
+tokens (15): ['[CLS]', 'the', 'capital', 'of', 'france', 'is', 'paris', ','...
+ids: [101, 1996, 3007, 1997, 2605, 2003, 3000, 1010, 2284, 2006, 1996, 1647...
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \section{데이터 준비}
 
@@ -500,21 +504,24 @@ for i in range(3):
     print(f"  Sample {i}: {t[:120]}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
 downloading Wikitext-103 (Salesforce/wikitext, wikitext-103-raw-v1)...
-  raw train lines: ...
-  raw eval  lines: ...
+  raw train lines: 1,801,350
+  raw eval  lines: 3,760
+
 sampled train: 5,000 paragraphs
 sampled eval:  500 paragraphs
+
 sample text length stats (chars):
-  mean: ..., median: ..., max: ...
+  mean: 650.0, median: 614, max: 2002
+
 first sample previews:
-  Sample 0: ...
+Sample 0: Balinor Buckhannah , the Crown Prince of the country of Callahorn...
+Sample 1: Bellomont was Member of Parliament for Droitwich from 1688 to 169...
+Sample 2: Paulet was promoted to full lieutenant in 1791 and appointed to H...
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \section{토큰화와 토큰 그룹화}
 
@@ -556,15 +563,6 @@ print(
     f"{tokenized_train[0]['input_ids'][:30]}"
 )
 \end{lstlisting}
-
-\noindent\textbf{출력 형태.}
-\begin{lstlisting}[style=bookoutput]
-tokenized_train: Dataset({features: ['input_ids', 'token_type_ids', 'attention_mask'], num_rows: ...})
-first 30 input_ids of sample 0: [1996, 3007, 1997, ...]
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -632,18 +630,25 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-lm_train: Dataset({features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'], num_rows: ...})
-lm_eval:  Dataset({features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'], num_rows: ...})
+lm_train: Dataset({
+    features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'],
+    num_rows: 5352
+})
+lm_eval:  Dataset({
+    features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'],
+    num_rows: 535
+})
+
 block_size:           128
-train blocks: ...  (approx. ... tokens)
-eval blocks:  ...   (approx. ... tokens)
-sample block 0 first 20 tok: ['the', '...', '...']
+train blocks: 5,352  (approx. 685,056 tokens)
+eval blocks:  535   (approx. 68,480 tokens)
+
+sample block 0 first 20 ids: [20222, 12131, 10131, 4819, 15272, 1010, 1996,...
+sample block 0 first 20 tok: ['bali', '##nor', 'buck', '##han', '##nah', ',...
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \section{\texorpdfstring{작은 BERT 모델 정의}{작은 BERT 모델 정의}}
 
@@ -748,20 +753,18 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
 Config: hidden=256, layer=4, head=4, intermediate=1024
 max_position_embeddings: 128
-Total parameters:      ...  (... M)
-Trainable:             ...
-  embeddings:          ...
-  encoder (4 layer):   ...
-  MLM head:            ...
+
+Total parameters:       11,103,290  (11.10 M)
+Trainable:              11,103,290
+  embeddings:            7,847,424  (70.7%)  ← vocab 30522 x hidden 256
+  encoder (4 layer):     3,159,040  (28.5%)
+  MLM head:                 96,826  (0.9%)  ← tied with embeddings
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{관찰} --- 작은 BERT 의 파라미터는 \emph{임베딩 테이블이 절반 이상} 차지합니다 (vocab 30522 \(\times\) hidden 256 \(\approx\) 7.8M). encoder body 자체는 약 2M. 이게 \emph{vocab 큰데 모델이 작은} 셋업의 특징 --- 표준 BERT (vocab 30K \(\times\) hidden 768 \(\approx\) 23M / 110M = 21\%) 와 비율이 매우 다릅니다.
 
 \begin{quote}
@@ -881,18 +884,27 @@ demo_df = pd.DataFrame(rows)
 print(demo_df.to_string(index=False))
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
- pos original after_collator label_id what_happened
-   0    [CLS]          [CLS]     -100             -
-   1      the           the      -100             -
-   2  capital        [MASK]     3007   [MASK] (80%)
- ...      ...           ...       ...           ...
+pos  original after_collator  label_id what_happened
+   0     [CLS]          [CLS]      -100             —
+   1       pre            pre      -100             —
+   2   ##train         [MASK]     23654  [MASK] (80%)
+   3     ##ing         [MASK]      2075  [MASK] (80%)
+   4         a              a      -100             —
+   5  language       language      -100             —
+   6     model          model      -100             —
+   7        on             on      -100             —
+   8 wikipedia      wikipedia      -100             —
+   9   teaches        teaches      -100             —
+  10        it             it      -100             —
+  11   general        general      -100             —
+  12   english         [MASK]      2394  [MASK] (80%)
+  13 structure      structure      -100             —
+  14         .              .      -100             —
+  15     [SEP]          [SEP]      -100             —
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 torch.manual_seed(0)
@@ -949,19 +961,17 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-lm_train: Dataset({features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'], num_rows: ...})
-lm_eval:  Dataset({features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'], num_rows: ...})
-block_size:           128
-train blocks: ...  (approx. ... tokens)
-eval blocks:  ...   (approx. ... tokens)
-sample block 0 first 20 tok: ['the', '...', '...']
+Total tokens:                        8,192
+Selected for loss (target 15%):      1,217  (14.86%)
+  └─ replaced with [MASK]:             961  (78.96% of selected)
+  └─ replaced with random:             121  ( 9.94% of selected)
+  └─ kept as original:                 135  (11.09% of selected)
+
+Target: 선택 15% / 그 중 80-10-10 으로 [MASK]-random-kept. 표본 크면 비율...
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{관전 포인트}
 
 \begin{itemize}
@@ -1034,15 +1044,17 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Class: DistilBertTokenizerFast
-vocab: 30,522
-tokens / input_ids: [...]
+[transformers] warmup_ratio is deprecated and will be removed in v5.2. Use...
+epochs:        2
+batch size:    32
+learning rate: 0.0005
+fp16:          True
+train blocks:  5,352
+steps / epoch: 167
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \subsection{사전학습 전 기준선}
 
@@ -1146,16 +1158,26 @@ for sent in test_sentences:
     print()
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-MLM eval loss:        ...
-MLM eval perplexity:  ...
-random baseline PPL:  30,522
+Training Loss  Validation Loss  Epoch
+-------------  ---------------  -----
+No log         10.380036        0
+==============================================================================
+BEFORE pretraining  (random init body)
+==============================================================================
+  eval_loss       : 10.3800   (random baseline ln V = 10.3262)
+  eval_perplexity : 32,210     (random baseline V    = 30,522)
+input: The capital of France is [MASK].
+top-5 before pretraining: ['gretchen', 'skeletal', '[unused976]', 'partitio...
+
+input: Water freezes at [MASK] degrees Celsius.
+top-5 before pretraining: ['cargo', 'hussein', 'disciplined', 'U+2F65', 'go...
+
+input: The food at this restaurant was absolutely [MASK].
+...
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 t0 = time.time()
@@ -1172,22 +1194,31 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-MLM pretraining done in ... min
-mean train loss: ...
+Epoch  Training Loss  Validation Loss
+-----  -------------  ---------------
+1      7.228502       7.216739
+2      7.064244       7.062058
+
+MLM pretraining done in 0.4 min
+mean train loss: 7.4301
 random baseline loss (uniform over vocab): 10.3262
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{5\baselineskip}
 \begin{lstlisting}
 !nvidia-smi
 \end{lstlisting}
 
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Wed Jun 17 21:57:40 2026
+NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
+0 Tesla T4 Off | 00000000:00:04.0 Off | 0
+N/A 55C P0 76W / 70W | 3335MiB / 15360MiB | 53% Default
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \section{평가}
 
@@ -1247,6 +1278,11 @@ else:
     print("No train loss logs found.")
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+<Figure size 900x500 with 1 Axes>
+\end{lstlisting}
+\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{작은 BERT의 MLM 사전학습 loss 곡선}{fig:ch20-mlm-training-loss}
 \includegraphics[width=0.82\linewidth]{assets/figures/ch20_mlm_training_loss.png}
 \end{bookfigurelabel}
@@ -1283,15 +1319,20 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-eval_loss:      ...
-eval_accuracy:  ...
-eval_f1:        ...
+Training Loss  Validation Loss  Epoch
+-------------  ---------------  -----
+7.064244       7.126870         2
+=== eval (held-out Wikitext-103 paragraphs) ===
+               eval_loss: 7.1269
+
+  MLM loss:               7.1269
+  perplexity (exp loss):  1244.97
+  random baseline PPL:    30,522  (uniform over vocab)
+  -> model narrowed vocab to approx. 1245 candidates per masked position
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \subsection{사전학습 전후 비교}
 
@@ -1338,15 +1379,26 @@ for sent in test_sentences:
     print()
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-MLM eval loss:        ...
-MLM eval perplexity:  ...
-random baseline PPL:  30,522
+Training Loss  Validation Loss  Epoch
+-------------  ---------------  -----
+7.064244       7.128796         2
+==============================================================================
+AFTER pretraining  (2 epoch MLM on Wikitext-103)
+==============================================================================
+  eval_loss       : 7.1288   (before: 10.3800)
+  eval_perplexity : 1,247.37        (before: 32,210)
+  -> narrowed vocab to approx. 1247 candidates per masked position
+
+input: The capital of France is [MASK].
+  top-5 after pretraining: ['the', ',', '.', 'and', 'in']
+
+input: Water freezes at [MASK] degrees Celsius.
+  top-5 after pretraining: ['the', ',', '.', 'and', 'of']
+...
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \subsection{평가 손실과 perplexity}
 
@@ -1366,16 +1418,14 @@ print("Before vs After — eval metrics")
 print(metric_compare.round(4).to_string(index=False))
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-MLM eval loss:        ...
-MLM eval perplexity:  ...
-random baseline PPL:  30,522
+Before vs After — eval metrics
+         metric  before (random)  after (2 epoch)  random baseline
+      eval_loss          10.3800           7.1288          10.3262
+eval_perplexity       32210.1324        1247.3738       30522.0000
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 sns.set_theme(style="whitegrid", context="talk")
@@ -1417,6 +1467,11 @@ plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+<Figure size 1200x500 with 2 Axes>
+\end{lstlisting}
+\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{사전학습 전후 MLM eval loss와 perplexity 비교}{fig:ch20-eval-loss-ppl}
 \includegraphics[width=0.88\linewidth]{assets/figures/ch20_eval_loss_ppl.png}
 \end{bookfigurelabel}
@@ -1453,16 +1508,14 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Total parameters:     ...
-Trainable parameters: ...
-Classifier:           ...
+----------------------------+------------+--+-
+
+Our small BERT params: 11.1M
+Reference BERT params: 109.5M  (10x larger)
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 def predict_mask_with(text, ref, top_k=5):
@@ -1565,17 +1618,27 @@ for _, row in top5_compare.iterrows():
     print()
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
+Before (random) vs Ours (small BERT, 5K paragraphs) vs Reference (bert-base...
+===========================================================================...
 input: The capital of France is [MASK].
-  before (random)        : ..., ..., ...
-  ours  (small, 5K para) : the, france, paris, ...
-  ref   (bert-base)      : paris, france, lyon, ...
+  before (random)        : gretchen, skeletal, [unused976], partition, ##ια
+  ours  (small, 5K para) : the, ,, ., and, in
+  ref   (bert-base)      : paris, lille, lyon, marseille, tours
+
+input: Water freezes at [MASK] degrees Celsius.
+  before (random)        : cargo, hussein, disciplined, U+2F65, gore
+  ours  (small, 5K para) : the, ,, ., and, of
+  ref   (bert-base)      : 100, 60, 50, 30, 90
+
+input: The food at this restaurant was absolutely [MASK].
+  before (random)        : guided, socially, ##nine, resignation, invalid
+  ours  (small, 5K para) : the, ,, ., and, of
+  ref   (bert-base)      : delicious, amazing, fabulous, fantastic, incredible
+...
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{해석 가이드 --- 사전학습이 만든 차이}
 
 \begin{itemize}
@@ -1630,18 +1693,16 @@ for f in sorted(os.listdir(SAVE_DIR)):
     print(f"  {f:>30s}  {size_str}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
 Saved to: ./ch20_small_bert_mlm
 Files:
-                  config.json  ... KB
-                  model.safetensors  ... MB
-                  tokenizer.json  ... KB
+                     config.json  0.7 KB
+               model.safetensors  42.4 MB
+                  tokenizer.json  694.7 KB
+           tokenizer_config.json  0.3 KB
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{저장된 파일 구조} --- \inlinecode{from\_pretrained} 가 인식하는 HF 표준 레이아웃:
 
 \begin{booktable}{20장 모델 저장과 다음 장 재사용}{tab:ch20-07}

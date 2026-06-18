@@ -504,8 +504,6 @@ GPT-2 는 특수 토큰을 \emph{최소화} 합니다 - \texttt{\textless{}\text
 %pip install -q -U transformers tokenizers datasets accelerate
 \end{lstlisting}
 
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 import warnings
@@ -560,15 +558,14 @@ USE_FP16 = (device.type == "cuda")
 print(f"use fp16   : {USE_FP16}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-PyTorch:        2.x.x
-CUDA available: True
-GPU:            Tesla T4
+device     : cuda  (Tesla T4)
+VRAM total : 14.56 GiB
+torch      : 2.11.0+cu128
+use fp16   : True
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \section{TinyStories 데이터 로드}
 
@@ -605,16 +602,25 @@ print("\n=== sample story ===")
 print(raw_train[0]["text"][:400])
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-DatasetDict({
-  train: Dataset({features: ['label', 'text'], num_rows: ...})
-  test:  Dataset({features: ['label', 'text'], num_rows: ...})
+train: Dataset({
+    features: ['text'],
+    num_rows: 30000
 })
+val  : Dataset({
+    features: ['text'],
+    num_rows: 500
+})
+
+=== sample story ===
+One day, a little girl named Lily found a needle in her room. She knew it w...
+
+Lily went to her mom and said, "Mom, I found this needle. Can you share it...
+
+To
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \section{BPE 토크나이저 직접 학습}
 
@@ -710,19 +716,19 @@ print(
 \inlinecode{tokenizers, transformers} 같은 주요 패키지를 불러옵니다.
 \end{codeRead}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-vocab_size      : 8000
-pad_token_id    : 0
-cls_token_id    : 2
-input_ids shape : torch.Size([1, 32])
-input_ids       : [2, ..., 3, 0, 0, ...]
-decoded         : [CLS] the food was unforgettable ... [SEP] [PAD] ...
+BPE training done: 10.6s, vocab=2048
+
+=== encode/decode demo ===
+input      : Once upon a time, a little rabbit went to the forest.
+ids        : [428, 440, 259, 394, 12, 259, 395, 1114, 464, 266, 263, 1081, 14]
+tokens : ['Once', '<sp>upon', '<sp>a', '<sp>time', ',', '<sp>a', '<sp>littl...
+decode     : Once upon a time, a little rabbit went to the forest.
+vocab_size : 2048
+eos_token  : <|endoftext|>  id=0
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{관전 포인트} --- \inlinecode{Once\ upon\ a\ time} 같이 TinyStories 에 \emph{자주 등장} 하는 표현은 \emph{적은 수의 토큰} 으로 압축, \inlinecode{rabbit} 처럼 덜 등장한 단어는 \emph{여러 byte 조각} 으로 분할되는 경향. vocab 2,048 은 작은 모델에 맞춘 \emph{최소한의 크기} 입니다.
 
 
@@ -850,18 +856,16 @@ print("\nfirst chunk decode (first 200 chars):")
 print(tokenizer.decode(lm_train[0]["input_ids"])[:200])
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-lm_train: Dataset({features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'], num_rows: ...})
-lm_eval:  Dataset({features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'], num_rows: ...})
-block_size:           128
-train blocks: ...  (approx. ... tokens)
-eval blocks:  ...   (approx. ... tokens)
-sample block 0 first 20 tok: ['the', '...', '...']
+train chunks: 57,973  (block_size=128)
+val   chunks: 867
+approx. train tokens: 7.42 M
+
+first chunk decode (first 200 chars):
+One day, a little girl named Lily found a needle in her room. She knew it w...
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \subsection{\texorpdfstring{Collator 가 만드는 \inlinecode{labels} 확인 - \emph{거의 모든 자리} 가 학습 신호}{Collator 가 만드는 labels 확인 - 거의 모든 자리 가 학습 신호}}
 
@@ -939,16 +943,24 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-total positions:   ...
-ignored (-100):    pad positions only
-train signal:      almost every token
+input_ids shape: (2, 128)
+labels shape   : (2, 128)
+
+=== 'labels = -100' thread - CausalLM vs MLM comparison ===
+total positions      : 256
+  ignored (-100)     :     1  ( 0.39%)
+  train signal       :   255  (99.61%)
+
+[MLM (Ch 20/22)]     approx. 85% = -100, 15% = train signal
+[CausalLM (this ch)] 0.39% = -100, 99.61% = train signal <- almost every po...
+
+=> a single step's token-learning efficiency: GPT pretrain is approx. 5-6x...
+
+(input_ids == labels) positions: 255/256  - clone as-is
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \begin{quote}
 \textbf{\inlinecode{-100} thread 환기} - MLM 은 \emph{마스킹된 자리만} 학습, CausalLM 은 \emph{거의 모든 자리} 학습. 같은 PyTorch \inlinecode{CrossEntropyLoss(ignore\_index=-100)} 트릭이 \emph{적용 자리만 정반대}. \ref{ch:28}장 (SFT) 에서는 \emph{prompt 자리만 -100} - 같은 트릭의 세 번째 적용. 그 한 줄 코드가 \emph{모델이 instruction 을 따라가게 만드는 핵심} 입니다.
 \end{quote}
@@ -1036,15 +1048,17 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-model:             GPT2LMHeadModel / AutoModelForCausalLM
-parameters:        ...
-lm_head:           Linear(H, vocab_size)
+#params           : 3.72 M
+weight tying      : True  (lm_head <-> wte shared)
+fp32 weight size  : 14.18 MiB
+
+model: GPT2LMHeadModel
+  - body : GPT2Model  (Decoder, causal attention)
+  - head : Linear(in=256, out=2048)
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \section{\texorpdfstring{학습 \emph{전} generation - 비교 기준선 (random init baseline)}{학습 전 generation - 비교 기준선 (random init baseline)}}
 
@@ -1108,16 +1122,22 @@ for p in PROMPTS:
     print(text)
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-tokenizer:        ...
-vocab_size:       ...
-tokens / input_ids: [...]
+======================================================================
+UNTRAINED model - generation from random initial weights
+======================================================================
+
+[prompt] Once upon a time,
+Once upon a time,ushinkush min is wondered5 cruallyked bed farmer smo wonde...
+
+[prompt] The little girl
+The little girlakak everyush Sarahgged:un't different different# gl keepner...
+
+[prompt] A big dog
+A big dog cle music hisftere learnedpe fam pullve bat batinin paper paper t...
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{관전 포인트} - 학습 전 출력은 \emph{무작위 토큰 나열} (반복되는 짧은 byte 조각, 의미 없는 단어들). \ref{ch:20}·\ref{ch:22}장의 \emph{학습 전 {[}MASK{]} top-5} 가 \emph{the / a / of / , / .} 같은 통계적 빈도 토큰이었던 것과 같은 현상의 \emph{generation 판} 입니다. 학습 후 출력과 \emph{나란히 비교} 하면 사전학습이 본체에 \emph{next-token 분포} 를 새긴 증거를 직접 보게 됩니다.
 
 
@@ -1247,16 +1267,27 @@ if torch.cuda.is_available():
     )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-device : cuda  (Tesla T4)  # or mps/cpu depending on runtime
-torch  : ...
-fp16   : True
+[transformers] `loss_type=None` was set in the config but it is unrecognize...
+Step  Training Loss  Validation Loss
+----  -------------  ---------------
+150   4.943553       4.512319
+300   4.164156       3.928088
+450   3.859346       3.635721
+600   3.661513       3.438943
+750   3.525258       3.297616
+900   3.410508       3.207347
+1050  3.381458       3.144733
+1200  3.332278       3.108168
+1350  3.313862       3.091538
+1500  3.305599       3.088617
+
+=== training summary ===
+elapsed       : 0.87 min
+...
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 # loss curve + VRAM trace
@@ -1304,8 +1335,11 @@ ax2.grid(True, alpha=0.3); ax2.legend()
 plt.tight_layout(); plt.show()
 \end{lstlisting}
 
-
-
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+<Figure size 1300x400 with 2 Axes>
+\end{lstlisting}
+\par\vspace{0.9em}
 \textbf{관전 포인트} - 학습 첫 step loss 가 약 7.6 (random baseline \inlinecode{ln(2048)}) 부근에서 시작해 \emph{수백 step 안에 약 4-5} 로 빠르게 떨어지고, 1500 step 끝에 \emph{약 2.5-3.0} 부근에서 안정화되면 정상. perplexity 로 환산하면 vocab 2,048 중 \emph{약 12-20 개 후보} 로 좁힌 상태 - 다음 토큰을 \emph{어느 정도 결정적} 으로 뽑는 수준.
 
 
@@ -1331,14 +1365,28 @@ for p in PROMPTS:
     print(text)
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-TrainOutput(global_step=..., training_loss=..., metrics={...})
+======================================================================
+TRAINED model - generation after Trainer.train()
+======================================================================
+
+[prompt] Once upon a time,
+Once upon a time, there was a girl named Lily. She loved to play with her f...
+
+One day, Lily saw a small house, a boy named Timmy. He was so happy because...
+
+[prompt] The little girl
+The little girl had been a wonderful time. It was so happy to see the park....
+
+[prompt] A big dog
+A big dog, but they could go in the park. They ran away and the truck. The...
+
+"But we can't get my mouth. I can play with you."
+
+"It's okay, it is not very curious. He is not
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 print("=" * 78)
@@ -1354,16 +1402,27 @@ for p, before, after in zip(PROMPTS, before_outputs, after_outputs):
     print(f"AFTER   : {after[len(p):].strip()[:280]}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-tokenizer:        ...
-vocab_size:       ...
-tokens / input_ids: [...]
+==============================================================================
+BEFORE (random init) vs AFTER (trained on TinyStories 30K)
+==============================================================================
+
+PROMPT  : Once upon a time,
+------------------------------------------------------------------------------
+BEFORE : ushinkush min is wondered5 cruallyked bed farmer smo wonder smo dr...
+AFTER : there was a girl named Lily. She loved to play with her friends. Sh...
+
+One day, Lily saw a small house, a boy named Timmy. He was so happy because...
+
+PROMPT  : The little girl
+------------------------------------------------------------------------------
+BEFORE : akak everyush Sarahgged:un't different different# gl keepner Graie...
+AFTER : had been a wonderful time. It was so happy to see the park. She tha...
+
+...
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{해석 가이드 - 사전학습이 만든 차이}
 
 \begin{itemize}
@@ -1441,16 +1500,27 @@ if torch.cuda.is_available():
     torch.cuda.empty_cache()
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-PyTorch:        2.x.x
-CUDA available: True
-GPU:            Tesla T4
+loading reference gpt2 (124M, OpenAI WebText pretraining)...
+  vocab_size : 50,257
+  #params    : 124.4 M
+
+======================================================================
+REFERENCE gpt2 (124M, WebText) - generation on same prompts
+======================================================================
+
+[prompt] Once upon a time,
+Once upon a time, if you don't know what your country's government is doing...
+
+In the last few months, I've traveled to dozens of countries around the wor...
+
+My new book — the Making of a Better World Order:
+
+[prompt] The little girl
+...
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 print("=" * 78)
@@ -1467,15 +1537,27 @@ for p, before, after, ref in zip(PROMPTS, before_outputs, after_outputs, ref_out
     print(f"REF    : {ref[len(p):].strip()[:240]}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
+==============================================================================
+3-way comparison: BEFORE (random) / OURS (3M, TinyStories 30K) / REF (gpt2...
+==============================================================================
+
+PROMPT : Once upon a time,
+------------------------------------------------------------------------------
+BEFORE : ushinkush min is wondered5 cruallyked bed farmer smo wonder smo dr...
+OURS : there was a girl named Lily. She loved to play with her friends. She...
+
+One day, Lily saw a small house, a boy named Timmy. He was so happy because...
+REF : if you don't know what your country's government is doing, you can fi...
+
+In the last few months, I've traveled to dozens of countries around the wor...
+
+My new book — the Making of a Better World Orde
+
+...
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{해석 가이드 - 데이터·파라미터 규모가 만든 격차}
 
 \begin{itemize}
@@ -1522,16 +1604,27 @@ for c in configs:
     print()
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-tokenizer:        ...
-vocab_size:       ...
-tokens / input_ids: [...]
+======================================================================
+[T=0.3, top_k=20  (conservative)]
+Once upon a time, a little rabbit named Lily. She loved to play with her to...
+
+Lily was sad
+
+======================================================================
+[T=0.8, top_k=50  (balanced)]
+Once upon a time, a little rabbit who liked to play in the park. One day, h...
+
+One day, Timmy saw a small house, Timmy's mom a shiny tree in a big tree. T...
+
+======================================================================
+[T=1.0, top_p=0.9 (nucleus)]
+Once upon a time, a little rabbit who liked to read water to play the squir...
+
+...
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
 \textbf{관전 포인트}
 
 \begin{itemize}

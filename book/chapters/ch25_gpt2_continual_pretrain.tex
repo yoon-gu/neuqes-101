@@ -413,15 +413,14 @@ USE_FP16 = (device.type == "cuda")
 print(f"use fp16   : {USE_FP16}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-PyTorch:        2.x.x
-CUDA available: True
-GPU:            Tesla T4
+device     : cuda  (Tesla T4)
+VRAM total : 14.56 GiB
+torch      : 2.11.0+cu128
+use fp16   : True
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \section{\texorpdfstring{TinyStories 데이터 로드 --- \emph{\ref{ch:24}장과 완전히 동일}}{TinyStories 데이터 로드 --- \ref{ch:24}장과 완전히 동일}}
 
@@ -456,16 +455,25 @@ print("\n=== sample story (same as 24장) ===")
 print(raw_train[0]["text"][:400])
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-DatasetDict({
-  train: Dataset({features: ['label', 'text'], num_rows: ...})
-  test:  Dataset({features: ['label', 'text'], num_rows: ...})
+train: Dataset({
+    features: ['text'],
+    num_rows: 30000
 })
+val  : Dataset({
+    features: ['text'],
+    num_rows: 500
+})
+
+=== sample story (same as Ch 24) ===
+One day, a little girl named Lily found a needle in her room. She knew it w...
+
+Lily went to her mom and said, "Mom, I found this needle. Can you share it...
+
+To
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \section{\texorpdfstring{\inlinecode{gpt2} 토크나이저·모델 로드 --- \emph{모델 로드 한 줄로 학습 단계 2 진입}}{gpt2 토크나이저·모델 로드 --- 모델 로드 한 줄로 학습 단계 2 진입}}
 
@@ -540,20 +548,29 @@ print(
 )
 \end{lstlisting}
 
-\begin{codeRead}
-\inlinecode{transformers} 같은 주요 패키지를 불러옵니다. \textbf{3행}의 \inlinecode{t0 = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{4행}의 \inlinecode{tokenizer = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{tokenizer.pad\_token = tok...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{7행}의 \inlinecode{model = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
-\end{codeRead}
-
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-tokenizer:        GPT-2 byte-level BPE
-vocab_size:       50,257
-pad token:        <|endoftext|>
-tokens / input_ids: [...]
+load done: 9.4s
+
+=== model ===
+#params : 124.44 M (Ch 24 was approx. 3M; Ch 25 is approx. 41x larger)
+vocab_size        : 50,257  (Ch 24 was 2,048; Ch 25 is approx. 25x larger)
+weight tying      : True  (lm_head <-> wte shared)
+fp32 weight size  : 474.7 MiB
+
+tokenizer    : GPT2Tokenizer
+  eos_token  : <|endoftext|>  id=50256
+  pad_token  : <|endoftext|>  id=50256  (= eos_token)
+
+model: GPT2LMHeadModel
+  - body : GPT2Model  (Decoder, causal attention)
+  - head : Linear(in=768, out=50257)
 \end{lstlisting}
 \par\vspace{0.9em}
 
-
+\begin{codeRead}
+\inlinecode{transformers} 같은 주요 패키지를 불러옵니다. \textbf{3행}의 \inlinecode{t0 = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{4행}의 \inlinecode{tokenizer = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{tokenizer.pad\_token = tok...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{7행}의 \inlinecode{model = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\end{codeRead}
 
 \subsection{\texorpdfstring{\ref{ch:24}장 \(\leftrightarrow\) \ref{ch:25}장 코드 diff --- \emph{모델·토크나이저 로드 두 줄 차이}}{\ref{ch:24}장 \textbackslash leftrightarrow \ref{ch:25}장 코드 diff --- 모델·토크나이저 로드 두 줄 차이}}
 
@@ -690,18 +707,18 @@ print("\nfirst chunk decode (first 200 chars):")
 print(tokenizer.decode(lm_train[0]["input_ids"])[:200])
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-lm_train: Dataset({features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'], num_rows: ...})
-lm_eval:  Dataset({features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'], num_rows: ...})
-block_size:           128
-train blocks: ...  (approx. ... tokens)
-eval blocks:  ...   (approx. ... tokens)
-sample block 0 first 20 tok: ['the', '...', '...']
+[transformers] Token indices sequence length is longer than the specified m...
+
+train chunks: 51,863  (block_size=128)
+val   chunks: 788
+approx. train tokens: 6.64 M
+
+first chunk decode (first 200 chars):
+One day, a little girl named Lily found a needle in her room. She knew it w...
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \textbf{비교 관전 포인트} --- 같은 30K stories 가 \emph{gpt2 BPE (vocab 50,257)} 로 토큰화되면 \ref{ch:24}장의 \emph{직접 학습 BPE (vocab 2,048)} 보다 \emph{토큰 수가 적습니다} --- vocab 이 클수록 한 토큰이 더 긴 byte 시퀀스를 표현하므로. 같은 데이터의 토큰 수 차이가 \emph{토크나이저 vocab 크기의 직접적 효과}.
 
@@ -769,18 +786,29 @@ for p in PROMPTS:
     print(text)
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\textbf{해석 가이드 --- \emph{\ref{ch:24}장 random init} vs \emph{\ref{ch:25}장 gpt2 사전학습} 의 직전 비교}
+
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-tokenizer:        GPT-2 byte-level BPE
-vocab_size:       50,257
-pad token:        <|endoftext|>
-tokens / input_ids: [...]
+======================================================================
+BEFORE continual pretraining - gpt2 pretrained on WebText, as-is
+======================================================================
+
+[prompt] Once upon a time,
+Once upon a time, if you don't know what your country's government is doing...
+
+In the last few months, I've traveled to dozens of countries around the wor...
+
+My new book -- the Making of a Better World Order:
+
+[prompt] The little girl
+The little girl has been at her desk all day...for two hours. She's got a p...
+
+[prompt] A big dog
+A big dog is a dog that loves to eat, but is also a dog that's afraid to do...
+...
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
-\textbf{해석 가이드 --- \emph{\ref{ch:24}장 random init} vs \emph{\ref{ch:25}장 gpt2 사전학습} 의 직전 비교}
 
 \begin{itemize}
 \tightlist
@@ -921,15 +949,16 @@ if torch.cuda.is_available():
     )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-PyTorch:        2.x.x
-CUDA available: True
-GPU:            Tesla T4
+=== continual pretraining summary ===
+elapsed       : 19.22 min
+global_step   : 3242
+train_loss    : 2.0699
+vocab ln (random baseline): 10.8249  (we start MUCH lower than this)
+final peak    : 1450 MiB
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -1013,14 +1042,28 @@ for p in PROMPTS:
     print(text)
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
+======================================================================
+AFTER continual pretraining - gpt2 + TinyStories 30K
+======================================================================
+
+[prompt] Once upon a time,
+Once upon a time, there was a little girl named Sally who wanted to play wi...
+
+[prompt] The little girl
+The little girl was so happy and hugged her mom. She said, "Mommy, I'm so g...
+
+Her mom hugged her and said, "It's so much fun to ride a bike in the park....
+
+[prompt] A big dog
+A big dog was wandering around and he noticed some old people lying on the...
+
+The old people smiled and said, "I'm glad you are so kind. I'm sorry you ca...
+
+The big dog felt
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -1037,16 +1080,34 @@ for p, before, after in zip(PROMPTS, before_outputs, after_outputs):
     print(f"AFTER   : {after[len(p):].strip()[:280]}")
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\textbf{해석 가이드 --- continual pretraining 의 도메인 적응 효과}
+
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
+==============================================================================
+Ch 25 BEFORE (gpt2 as-is) vs AFTER (gpt2 + TinyStories continual pretrain)
+==============================================================================
+
+PROMPT  : Once upon a time,
+------------------------------------------------------------------------------
+BEFORE : if you don't know what your country's government is doing, you can...
+
+In the last few months, I've traveled to dozens of countries around the wor...
+
+My new book -- the Making of a Better World Order:
+AFTER : there was a little girl named Sally who wanted to play with her toy...
+
+PROMPT  : The little girl
+------------------------------------------------------------------------------
+BEFORE : has been at her desk all day...for two hours. She's got a pen and...
+AFTER : was so happy and hugged her mom. She said, "Mommy, I'm so glad you...
+
+Her mom hugged her and said, "It's so much fun to ride a bike in the park....
+
+PROMPT  : A big dog
+...
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
-\textbf{해석 가이드 --- continual pretraining 의 도메인 적응 효과}
 
 \begin{itemize}
 \tightlist
@@ -1139,16 +1200,32 @@ for p, before, after in zip(PROMPTS, before_outputs, after_outputs):
     )
 \end{lstlisting}
 
-\noindent\textbf{출력 형태.}
+\textbf{해석 가이드 --- 세 셋업의 격차}
+
+\noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-Output varies by runtime, seed, and sampled data.
-Running the cell in Colab prints the corresponding string or table.
+===========================================================================...
+3-way comparison: Ch 24 (3M scratch) vs Ch 25 BEFORE vs Ch 25 AFTER
+===========================================================================...
+
+PROMPT          : Once upon a time,
+---------------------------------------------------------------------------...
+Ch 24 (scratch) : Once upon a time, there was a little girl named Lily. She...
+Ch 25 BEFORE : if you don't know what your country's government is doing, y...
+
+In the last few months, I've traveled to dozens of countries around the wor...
+
+My new book -- the Making of a Better World Orde
+Ch 25 AFTER : there was a little girl named Sally who wanted to play with h...
+
+PROMPT          : The little girl
+---------------------------------------------------------------------------...
+Ch 24 (scratch) : The little girl was very happy. She wanted to play with h...
+Ch 25 BEFORE : has been at her desk all day...for two hours. She's got a pe...
+Ch 2
+...
 \end{lstlisting}
 \par\vspace{0.9em}
-
-
-
-\textbf{해석 가이드 --- 세 셋업의 격차}
 
 \begin{itemize}
 \tightlist
