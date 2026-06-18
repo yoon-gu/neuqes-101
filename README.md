@@ -1,23 +1,35 @@
 # Hugging Face로 시작하는 텍스트 분석
 
-Hugging Face 입문 커리큘럼 (34챕터 + 부록). 모든 실습자료는 **Google Colab 노트북** 으로 제공되며, T4 GPU(16GB) 환경에서 챕터당 30분 이내에 끝까지 돌도록 설계되어 있습니다.
+scikit-learn 한 줄로 텍스트를 숫자로 바꾸는 일에서 출발해, 직접 만든 GPT가 짧은 이야기를 써내려가는 순간까지 한 걸음씩 따라가는 책입니다. 모든 장이 **Google Colab 노트북** 한 개로 되어 있어, 아무것도 설치하지 않고 브라우저에서 열어 무료 T4 GPU로 30분 안에 끝까지 실행해 볼 수 있습니다.
 
-학습 흐름의 두 축:
+이 책의 약속은 단순합니다. **한 장에서 바뀌는 것은 딱 한 가지뿐입니다.** 모델을 바꾸는 장에서는 데이터와 손실 함수를 그대로 두고, 손실 함수를 바꾸는 장에서는 모델을 건드리지 않습니다. 그래서 결과가 달라질 때마다 무엇이 그 차이를 만들었는지 헷갈리지 않고 짚어낼 수 있습니다.
+
+라이브러리를 호출하는 데서 멈추지 않습니다. sigmoid와 softmax가 같은 분류를 어떻게 다른 방식으로 푸는지, CrossEntropy가 안에서 무슨 계산을 하는지, 토크나이저가 문장을 어떻게 조각내는지를 매 장마다 직접 열어 확인합니다.
+
+## 누구에게 맞는 책인가요
+
+- 파이썬은 써봤지만 BERT나 GPT를 코드로 다뤄 본 적은 없는 분
+- 모델이 왜 그렇게 동작하는지 설명이 아니라 실행 결과로 납득하고 싶은 분
+- 값비싼 장비 없이 무료 Colab 한 대로 사전학습부터 정렬(alignment)까지 경험하고 싶은 분
+
+## 이렇게 배웁니다
+
+텍스트 분석을 네 축으로 나눠, 한 번에 한 축씩만 움직입니다.
 
 ```
-모델 축:    sklearn ─→ DistilBERT(영어) ─→ KLUE-BERT(한국어) ─→ 작은 BERT(워드레벨)
-태스크 축:  Regression ─→ Binary ─→ Multi-class ─→ Multi-label
-Loss 축:    MSELoss ─→ BCEWithLogitsLoss ─→ CrossEntropyLoss ─→ BCEWithLogitsLoss(per-label) ─→ +Auxiliary (Combined)
+모델:       sklearn ─→ DistilBERT(영어) ─→ KLUE-BERT(한국어) ─→ 작은 BERT(워드레벨)
+태스크:     Regression ─→ Binary ─→ Multi-class ─→ Multi-label
+손실 함수:  MSELoss ─→ BCEWithLogitsLoss ─→ CrossEntropyLoss ─→ BCEWithLogitsLoss(per-label) ─→ +Auxiliary (Combined)
 토크나이저: TF-IDF ─→ WordPiece(영어) ─→ WordPiece(한국어) ─→ 워드레벨(직접) ─→ 형태소기반(직접)
 ```
 
-> Auxiliary는 새 task가 아니라 기존 loss에 보조 항(예: `λ·MSE`)을 더하는 변화이므로 **Loss 축** 끝에 둡니다. Ch 14·18의 메인 task는 직전 챕터(Multi-label)와 동일합니다.
+> Auxiliary는 새 task가 아니라 기존 loss에 보조 항(예: `λ·MSE`)을 더하는 변화이므로 **손실 함수 축** 끝에 둡니다. Ch 14·18의 메인 task는 직전 장(Multi-label)과 동일합니다.
 
-각 챕터는 레포 루트의 자체 폴더(예: `01_tfidf/`)에 노트북과 요약 `README.md`가 함께 들어 있습니다.
+각 장은 **먼저 돌려보기 → 안에서 무슨 일이 일어나는지 해부하기 → 직접 바꿔보기**의 세 단계로 흐릅니다.
 
 ## 챕터별 변화추적표
 
-각 행의 Colab 버튼을 누르면 해당 챕터 노트북이 Colab에서 바로 열립니다. **진행** 열은 사용자가 Colab에서 직접 실행해 끝까지 정상 동작함을 확인하면 `✅`으로 갱신합니다(미검증: `—`).
+표의 Colab 버튼을 누르면 그 장의 노트북이 곧바로 열립니다. **진행** 열의 `✅`은 Colab T4에서 끝까지 정상 실행됨을 확인한 장이고, `—`는 아직 검증 전입니다. 한 장에서 어떤 축이 움직이는지(모델·토크나이저·데이터·Output Head·Loss)를 한눈에 비교하도록 정리했습니다.
 
 | Ch | 진행 | Colab | 모델 | 토크나이저 | 데이터 | Output Head | Activation | Loss | 라벨 형식 |
 |---|---|---|---|---|---|---|---|---|---|
@@ -74,7 +86,9 @@ Loss 축:    MSELoss ─→ BCEWithLogitsLoss ─→ CrossEntropyLoss ─→ BCE
 - bf16 미지원(T4 Compute Capability 7.5) → `fp16=True` 만 사용
 - Flash Attention 2 미지원
 
-## 개발 (저자용)
+## 기여자·저자용 (개발 환경)
+
+> 아래는 책을 함께 만드는 분들을 위한 안내입니다. 학습만 하실 분은 여기까지 보지 않으셔도 됩니다.
 
 새로 clone한 직후 한 번만 실행:
 
