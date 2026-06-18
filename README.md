@@ -6,6 +6,15 @@ scikit-learn 한 줄로 텍스트를 숫자로 바꾸는 일에서 출발해, �
 
 라이브러리를 호출하는 데서 멈추지 않습니다. sigmoid와 softmax가 같은 분류를 어떻게 다른 방식으로 푸는지, CrossEntropy가 안에서 무슨 계산을 하는지, 토크나이저가 문장을 어떻게 조각내는지를 매 장마다 직접 열어 확인합니다.
 
+## 📘 책 PDF로 받기
+
+웹에서 장별로 읽는 것과 같은 내용을, 인쇄·오프라인용으로 한 권에 묶은 PDF 원고입니다. 표지·목차·각주까지 조판해 그대로 출력하거나 태블릿에서 읽기 좋습니다.
+
+- **최신 PDF 내려받기 (Ch 1-31)** — [neuqes-101-ch01-31-manuscript.pdf](https://github.com/yoon-gu/neuqes-101/releases/latest)
+- 버전별 원고는 [Releases](https://github.com/yoon-gu/neuqes-101/releases)에서 받을 수 있습니다.
+
+> 집필이 진행되며 장이 더해질 때마다 새 버전을 올립니다. 최신 PDF는 항상 위 **Releases** 최신 항목에서 확인하실 수 있습니다.
+
 ## 누구에게 맞는 책인가요
 
 - 파이썬은 써봤지만 BERT나 GPT를 코드로 다뤄 본 적은 없는 분
