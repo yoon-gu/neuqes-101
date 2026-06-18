@@ -106,3 +106,7 @@
   * [27-1. 실습](pages/27-ko_gpt2_continual_pretrain-practice.md)
   * [27-2. 변형 — 더 많은 epoch / 다른 도메인 / catastrophic forgetting 시연](pages/27-ko_gpt2_continual_pretrain-variation.md)
   * [27-3. 정리와 FAQ](pages/27-ko_gpt2_continual_pretrain-wrapup.md)
+* [28. KoGPT2 SFT (Instruction Tuning)](pages/28-sft.md)
+  * [28-1. 실습](pages/28-sft-practice.md)
+  * [28-2. 변형 — 더 많은 데이터 / 다른 response_template / LoRA](pages/28-sft-variation.md)
+  * [28-3. 정리와 FAQ](pages/28-sft-wrapup.md)
