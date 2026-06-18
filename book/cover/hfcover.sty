@@ -82,26 +82,26 @@
 %%-- Customisation hooks (override before \drawcover) ----------
 \newcommand{\hfTitleLineOne}{텍스트 분석을 위한}
 \newcommand{\hfTitleLineTwo}{Hugging Face 입문}
-\newcommand{\hfSubtitle}{손으로 따라가며 익히는 텍스트 분류 · 26장 원고}
+\newcommand{\hfSubtitle}{손으로 따라가며 익히는 텍스트 분석 · GPT/LLM까지 · 31장 원고}
 \newcommand{\hfRunMark}{HF · 101}
 \newcommand{\hfVersionMark}{v1.0 · 2026}
-\newcommand{\hfBandKicker}{Hugging Face 입문 커리큘럼 · 26장 원고}
-\newcommand{\hfAuthor}{황윤구}
+\newcommand{\hfBandKicker}{Hugging Face 입문 커리큘럼 · 31장 원고}
+\newcommand{\hfAuthor}{황윤구, 유창민}
 \newcommand{\hfBlurb}{%
-  sklearn에서 시작해 DistilBERT, KLUE-BERT,\\
-  그리고 직접 학습한 토크나이저까지.\\
-  {\color{hfInkThree}모델·태스크·Loss·토크나이저 — 네 축으로 추적한다.}%
+  sklearn에서 시작해 BERT, 직접 학습한 토크나이저,\\
+  GPT/LLM 사전학습과 SFT, 선호 정렬까지.\\
+  {\color{hfInkThree}모델·태스크·Loss·토크나이저·정렬 — 다섯 축으로 추적한다.}%
 }
 
 %%-- Axis chips (key/value pairs rendered in 2×2 grid) ---------
 \newcommand{\hfAxisOneK}{MODEL}
-\newcommand{\hfAxisOneV}{sklearn $\to$ DistilBERT $\to$ KLUE $\to$ small BERT}
+\newcommand{\hfAxisOneV}{sklearn $\to$ BERT $\to$ small BERT $\to$ GPT/LLM}
 \newcommand{\hfAxisTwoK}{TASK}
-\newcommand{\hfAxisTwoV}{Reg $\to$ Binary $\to$ Multi-class $\to$ Multi-label}
+\newcommand{\hfAxisTwoV}{Reg $\to$ Classification $\to$ Generation $\to$ Alignment}
 \newcommand{\hfAxisThreeK}{LOSS}
-\newcommand{\hfAxisThreeV}{MSE $\to$ BCE $\to$ CE $\to$ +Aux}
+\newcommand{\hfAxisThreeV}{MSE $\to$ BCE/CE $\to$ CLM $\to$ DPO/GRPO}
 \newcommand{\hfAxisFourK}{TOKEN}
-\newcommand{\hfAxisFourV}{TF-IDF $\to$ WordPiece $\to$ 워드 $\to$ 형태소}
+\newcommand{\hfAxisFourV}{TF-IDF $\to$ WordPiece $\to$ BPE/BBPE}
 
 %%-- The cover --------------------------------------------------
 %% Coordinates use the page in mm. B5 page = 176 × 250 mm.
