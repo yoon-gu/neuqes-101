@@ -33,6 +33,8 @@ GPU:            Tesla T4
 No model weights loaded in this chapter; VRAM stays roughly flat.
 ```
 
+Phase 0에서 쓰던 Yelp 리뷰 데이터를 `datasets` 허브에서 그대로 내려받습니다. 반환되는 `DatasetDict` 의 train/test split 구성과 각 split의 행 수를 출력해 데이터 규모를 먼저 확인합니다.
+
 ```python
 ds = load_dataset("Yelp/yelp_review_full")
 print(ds)
@@ -52,6 +54,8 @@ DatasetDict({
     })
 })
 ```
+
+데이터의 실제 모양을 들여다봅니다. `features` 로 라벨이 5단계 별점(`ClassLabel`)이고 텍스트가 문자열임을 확인하고, 첫 샘플의 label과 text 앞부분을 찍어 어떤 리뷰인지 감을 잡습니다.
 
 ```python
 # train split의 첫 샘플 + features 확인
@@ -76,6 +80,8 @@ First sample:
   text:  dr. goldberg offers everything i look for in a general practitioner.  he's nice and easy to talk to without being patronizing; he's always on time in seeing his patients; he's affiliated with a top-no...
 ```
 
+65만 건 전체는 T4 30분 제약에 너무 큽니다. `shuffle` 로 섞은 뒤 `select` 로 5,000건만 떼어내 Phase 0과 같은 작업 분량으로 맞춥니다. `seed=42` 를 고정해 매번 같은 subsample을 얻도록 합니다.
+
 ```python
 # 5,000건만 subsample (Phase 0와 동일한 처리)
 small = ds["train"].shuffle(seed=42).select(range(5000))
@@ -94,6 +100,8 @@ Dataset({
 first sample text: I stalk this truck.  I've been to industrial parks where I pretend to be a tech worker standing in line, strip mall parking lots, and of course the fa...
 ```
 
+DistilBERT의 토크나이저를 불러옵니다. 실제 클래스 이름과 vocab 크기, 그리고 빈자리를 채우는 데 쓰는 `pad_token` 과 그 id를 확인합니다. pad 토큰은 뒤에서 padding을 다룰 때 핵심이 됩니다.
+
 ```python
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
 print(f"Class:     {type(tokenizer).__name__}")
@@ -108,6 +116,8 @@ Class:     BertTokenizer
 vocab:     30,522
 pad_token: [PAD]  (id=0)
 ```
+
+리뷰 한 건을 토크나이저에 통과시켜 텍스트가 정수 id 시퀀스로 바뀌는 과정을 봅니다. 맨 앞 id가 `[CLS]`(101)로 시작하는 점, 그리고 `decode` 로 id를 다시 토큰 문자열로 되돌려 어떤 단위로 쪼개졌는지 확인합니다.
 
 ```python
 sample = small[0]["text"]
@@ -128,6 +138,8 @@ input_ids length: 75
 First 30 IDs:      [101, 1045, 23899, 2023, 4744, 1012, 1045, 1005, 2310, 2042, 2000, 3919, 6328, 2073, 1045, 9811, 2000, 2022, 1037, 6627, 7309, 3061, 1999, 2240, 1010, 6167, 6670, 5581, 7167, 1010]
 Decoded first 30:  [CLS] i stalk this truck. i ' ve been to industrial parks where i pretend to be a tech worker standing in line, strip mall parking lots,
 ```
+
+길이가 크게 다른 두 문장을 한 번에 토큰화하며 padding의 효과를 봅니다. `padding=False` 면 문장마다 길이가 제각각이지만, `padding=True` 면 배치 안 가장 긴 길이에 맞춰 짧은 쪽을 채웁니다. 채운 자리는 `attention_mask` 에서 0으로 표시돼 모델이 무시할 부분을 알려줍니다.
 
 ```python
 # 길이가 다른 두 문장을 묶기
@@ -162,6 +174,8 @@ padding=True (return_tensors='pt'):
   attention_mask sentence 1: tensor([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
 ```
 
+이번엔 `padding="max_length"` 로 배치 길이가 아니라 고정 길이 128에 무조건 맞춥니다. `attention_mask` 에서 1의 비율을 계산해, 짧은 문장이 섞이면 상당 부분이 padding으로 채워져 연산이 낭비됨을 숫자로 확인합니다.
+
 ```python
 out_fixed = tokenizer(texts, padding="max_length", max_length=128, return_tensors="pt")
 print(f"shape: {out_fixed['input_ids'].shape}  (batch 2, max_length=128)")
@@ -180,6 +194,8 @@ shape: torch.Size([2, 128])  (batch 2, max_length=128)
 attention_mask=1 ratio: 31.2%
   → short sentence is mostly padding (compute wasted)
 ```
+
+반대로 너무 긴 입력은 잘라내야 합니다. BERT 계열은 512 토큰이 한계라, truncation 없이 넣으면 길이 초과 경고가 뜹니다. `truncation=True` 와 `max_length=128` 을 주면 앞에서부터 잘라 길이를 맞추고, 마지막 자리에는 항상 `[SEP]` 가 붙는 점을 확인합니다.
 
 ```python
 # 매우 긴 텍스트 (512 토큰 초과)
@@ -203,6 +219,8 @@ truncation=False: 1602 tokens  (may exceed BERT limit 512)
 truncation=True, max_length=128: 128 tokens
   Last token: [SEP] (= [SEP], always appended)
 ```
+
+`max_length` 를 얼마로 둘지 정하려면 실제 데이터의 길이 분포를 알아야 합니다. 1,000건의 토큰 길이를 모아 min/mean/median/분위수를 보고, max_length를 64-512로 바꿀 때 각각 몇 %가 잘리는지 계산해 길이 선택의 trade-off를 눈으로 봅니다.
 
 ```python
 # 5,000건의 토큰 길이 분포
@@ -250,6 +268,8 @@ Fraction truncated at various max_length:
 
 리뷰 토큰 길이가 median 131, p99 770으로 꼬리가 깁니다. max_length=128로 자르면 절반(50.9%)이 잘리지만 512로 늘리면 4%만 잘립니다. 길이를 키울수록 정보 손실은 줄지만 self-attention 연산이 제곱으로 늘어, T4 30분 제약과 맞바꿔야 하는 선택입니다.
 
+이제 한 건씩이 아니라 5,000건 전체를 한 번에 토큰화합니다. `map(batched=True)` 는 `tokenize_fn` 에 샘플을 묶음으로 넘겨 빠르게 처리하고, 결과로 `input_ids`·`attention_mask` 컬럼이 데이터셋에 추가됩니다. 모든 샘플이 128 길이로 고정됐는지 확인합니다.
+
 ```python
 def tokenize_fn(batch):
     # batch는 dict of lists: {"text": [..., ...], "label": [..., ...]}
@@ -280,6 +300,8 @@ First sample input_ids length: 128  (= 128, fixed)
 First sample attention_mask sum: 75  (real tokens)
 ```
 
+`filter` 로 조건에 맞는 샘플만 골라내는 방법도 같이 봅니다. 별점 4-5(label 3 이상)인 긍정 리뷰와, 단어 100개 이하의 짧은 텍스트를 각각 추려 전체 대비 비율을 출력합니다. 데이터 부분집합을 만드는 표준 도구입니다.
+
 ```python
 # 별점 4-5 (label 3-4) 만
 positive = small.filter(lambda x: x["label"] >= 3)
@@ -296,6 +318,8 @@ print(f"Short samples:    {len(short):,} / {len(small):,} = {len(short)/len(smal
 Positive samples: 1,996 / 5,000 = 39.9%
 Short samples:    2,520 / 5,000 = 50.4%
 ```
+
+토큰화한 데이터셋은 아직 파이썬 리스트라 모델에 바로 못 넣습니다. `with_format("torch")` 로 지정한 컬럼만 PyTorch 텐서로 바꿉니다. `input_ids` 의 dtype이 `int64`, shape이 128로 잡히는지 확인해 모델 입력 형식을 맞춥니다.
 
 ```python
 # 모델에 바로 먹일 수 있도록 PyTorch tensor로 변환
@@ -317,6 +341,8 @@ input_ids:      Tensor, dtype=torch.int64, shape=torch.Size([128])
 attention_mask: Tensor, shape=torch.Size([128])
 label:          4  (0-4 = stars 1-5)
 ```
+
+텐서로 바꾼 데이터셋을 `DataLoader` 로 감싸 배치 단위로 꺼내봅니다. 첫 배치를 뽑아 `input_ids` shape이 `[batch_size, max_length]` 인 8x128로 묶이는지, label이 배치 크기만큼 함께 따라오는지 확인합니다.
 
 ```python
 from torch.utils.data import DataLoader
@@ -342,6 +368,8 @@ label shape:          torch.Size([8])
 label values:         [1, 3, 3, 3, 1, 1, 3, 3]
 ```
 
+고정 길이 padding의 낭비를 줄이는 방법이 동적 padding입니다. 토큰화 단계에서는 padding을 빼고 truncation만 적용해 샘플마다 길이가 제각각인 상태로 둡니다. 앞 10개 길이를 찍어, 이대로는 하나의 텐서로 묶을 수 없음을 확인합니다.
+
 ```python
 from transformers import DataCollatorWithPadding
 
@@ -364,6 +392,8 @@ print(f"  → all different — cannot batch as-is into a tensor")
 First 10 sample token lengths: [75, 128, 89, 28, 128, 128, 128, 128, 64, 128]
   → all different — cannot batch as-is into a tensor
 ```
+
+길이가 제각각인 샘플은 `DataCollatorWithPadding` 을 `collate_fn` 자리에 끼워 해결합니다. 이 collator는 배치를 만들 때마다 그 배치 안 가장 긴 길이에 맞춰 동적으로 padding합니다. 배치별 shape과 채움 비율(fill)을 찍어 매 배치 길이가 달라질 수 있음을 봅니다.
 
 ```python
 # DataCollatorWithPadding이 collate_fn 자리에서 매 배치 동적 padding
@@ -483,6 +513,8 @@ labels shape:    torch.Size([3, 128])  (-100 positions ignored by loss)
   (of the 15% masked: 80% [MASK], 10% random token, 10% kept — so [MASK] rate ~12%)
 ```
 
+masking이 실제로 토큰을 어떻게 바꾸는지 첫 샘플 앞부분을 표로 펼쳐 봅니다. 원래 토큰, collator가 가린 토큰, 그리고 모델이 맞춰야 할 label을 나란히 두면 가려진 자리(`*`)만 label에 원래 토큰이 남고 나머지는 `-100`(ignored)으로 빠지는 게 보입니다.
+
 ```python
 # 첫 샘플 — 원래 vs masked vs label 비교
 i = 0
@@ -596,6 +628,8 @@ labels shape:     torch.Size([3, 48])
 First sample: input_ids == labels?  (excluding padding, all should match)
   Matching positions: 48 / 48
 ```
+
+CLM에서는 토큰을 가리지 않으므로 input과 label이 같은 위치에서 일치합니다. 첫 샘플 앞 20자리를 표로 펼쳐 토큰과 label이 그대로 겹치는지 확인합니다. 다음 토큰 예측을 위한 shift-by-one은 collator가 아니라 모델 forward 안에서 처리됩니다.
 
 ```python
 # 첫 샘플 — input vs label (패딩 자리 -100 확인)

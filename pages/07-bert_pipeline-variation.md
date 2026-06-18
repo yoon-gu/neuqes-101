@@ -2,6 +2,8 @@
 
 ### Step 1: Tokenizer와 Model 직접 로드
 
+`pipeline` 이 알아서 받아오던 토크나이저와 모델을 이번엔 직접 손에 쥡니다. `AutoTokenizer` 와 `AutoModelForSequenceClassification` 으로 같은 SST-2 DistilBERT를 불러오고, GPU가 있으면 모델을 직접 `cuda` 로 옮깁니다. 직접 로드는 기본이 CPU라 이 이동을 명시해야 한다는 점을 눈여겨보세요.
+
 ```python
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
@@ -72,6 +74,8 @@ Wed Jun 17 21:14:22 2026
 
 ### Step 2: 텍스트 → 숫자 (Tokenization)
 
+문장을 토큰 문자열로 쪼개본 뒤, 모델이 바로 먹을 수 있는 텐서로 변환합니다. `tokenize()` 는 토큰 목록만 돌려주고, `tokenizer(text, return_tensors="pt")` 는 `input_ids`·`attention_mask` 같은 입력 텐서까지 만들어줍니다. 두 호출이 무엇을 다르게 돌려주는지 비교해보세요.
+
 ```python
 text = "I love using Hugging Face!"
 
@@ -102,6 +106,8 @@ Model inputs:
 - `attention_mask`: `1`이면 "이 위치는 진짜 토큰", `0`이면 "패딩이니 무시하라"는 신호 (이번엔 패딩 없음 → 모두 1).
 - `tokenize()` 와 `tokenizer()` 의 차이 — 전자는 토큰 문자열만 반환, 후자는 모델 입력용 텐서까지 다 만들어줌.
 
+방금 얻은 `input_ids` 의 정수들이 실제로 어떤 토큰인지 거꾸로 확인합니다. 각 ID를 `tokenizer.decode()` 로 풀어 ID와 토큰 문자열을 나란히 출력합니다. 맨 앞 `101`·맨 뒤 `102` 가 `[CLS]`·`[SEP]` 특수 토큰으로 되살아나는지 눈여겨보세요.
+
 ```python
 # input_ids를 다시 토큰으로 디코딩해서 확인
 print(f"{'ID':>5}    token")
@@ -127,6 +133,8 @@ for token_id in inputs["input_ids"][0]:
 ```
 
 ### Step 3: 숫자 → 로짓 (Model forward)
+
+이제 입력 텐서를 모델에 통과시켜 로짓을 얻습니다. 입력을 모델과 같은 device로 옮긴 뒤 `torch.no_grad()` 안에서 forward를 돌려, 추론에 불필요한 gradient 계산을 끕니다. 출력 객체의 타입과 로짓의 shape `[1, 2]` 가 "배치 1개, 클래스 2개"를 뜻한다는 점을 확인하세요.
 
 ```python
 # 입력 텐서도 모델과 같은 device로 이동시켜야 함 (CPU↔GPU 혼합 forward는 에러)
@@ -156,6 +164,8 @@ Logits device: cuda:0
 여기서 잠깐 — 익숙하지 않나요? Ch 4의 *softmax + 2차원 head* 구조와 정확히 같습니다. BERT는 사전학습된 *심층* 모델일 뿐, 마지막 분류 헤드는 sklearn에서 본 것과 본질이 같습니다.
 
 ### Step 4: 로짓 → 확률/라벨 (Post-processing)
+
+마지막으로 로짓을 사람이 읽을 수 있는 라벨과 확률로 바꿉니다. `softmax` 로 로짓을 확률 분포로 만든 뒤, `argmax` 로 가장 높은 클래스를 고르고 `id2label` 로 이름을 붙입니다. 이렇게 직접 푼 결과가 `pipeline` 한 줄과 같은 라벨·점수로 떨어지는지 확인해보세요.
 
 ```python
 # softmax로 확률 변환
@@ -226,6 +236,8 @@ log_probs_stable = F.log_softmax(logits, dim=-1)
 ```
 
 추론 시에는 그냥 `softmax` 가 깔끔합니다 — 확률이 직접 필요하니까요. **학습 시** `CrossEntropyLoss(logits, target)` 는 내부적으로 logit에 `log_softmax` 를 적용하고 NLL을 더하므로, *softmax를 직접 부를 일이 없습니다* (Ch 9 이후 자주 등장).
+
+지금까지 손으로 푼 4단계 결과를 `pipeline` 한 줄의 출력과 직접 나란히 찍어 비교합니다. 라벨과 점수가 같게 나오면, `pipeline` 이 내부에서 우리가 한 토큰화→forward→softmax→argmax를 그대로 감싸고 있었다는 뜻입니다.
 
 ```python
 # pipeline이 한 줄로 해주던 일을 4단계로 직접 재현했습니다. 결과를 비교해봅시다.
