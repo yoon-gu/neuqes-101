@@ -40,6 +40,7 @@ import argparse
 import base64
 import json
 import re
+import subprocess
 import sys
 import traceback
 from html import unescape
@@ -48,6 +49,32 @@ from pathlib import Path
 
 # 레포 루트: 이 스크립트는 .claude/skills/notebook-to-wikidocs/scripts/ 아래 있음 → parents[4]
 ROOT = Path(__file__).resolve().parents[4]
+
+
+def _github_repo() -> str:
+    """git origin 에서 owner/repo 를 자동 인식(실패 시 빈 문자열). Colab 버튼 URL 용."""
+    try:
+        url = subprocess.check_output(
+            ["git", "-C", str(ROOT), "remote", "get-url", "origin"],
+            text=True, stderr=subprocess.DEVNULL).strip()
+    except Exception:
+        return ""
+    m = re.search(r"github\.com[:/]+([^/]+/[^/]+?)(?:\.git)?/?$", url)
+    return m.group(1) if m else ""
+
+
+GITHUB_REPO = _github_repo()
+
+
+def _colab_button(folder: str) -> str:
+    """실습 페이지 맨 위에 넣을 Colab '바로 열기' 링크.
+    배지 이미지(외부 SVG)는 EPUB/PDF에서 깨지므로 전자책 안전한 텍스트 링크로 둔다(린터 E4 회피).
+    repo 를 못 찾으면 빈 문자열 → 링크 생략."""
+    if not GITHUB_REPO:
+        return ""
+    url = f"https://colab.research.google.com/github/{GITHUB_REPO}/blob/master/{folder}/{folder}.ipynb"
+    return f"> ▶ **[Google Colab에서 이 장 실습 열기]({url})** — 브라우저에서 바로 실행해 볼 수 있습니다."
+
 
 COLAB_BADGE_RE = re.compile(r"^\s*\[!\[.*?Colab.*?\]\(.*?\)\]\(.*?\)\s*$", re.IGNORECASE)
 HEADER_RE = re.compile(r"^(#{1,6})\s+(.*)$")
@@ -647,6 +674,10 @@ def convert(nb: dict, num: int, slug: str, title: str,
     for idx, (g, sl, dt) in enumerate(present_subs, 1):
         parts: list[str] = []
         body_blocks = list(groups[g])
+        if g == "practice":
+            btn = _colab_button(f"{num:02d}_{slug}")
+            if btn:
+                parts.append(btn)
         if g == "practice" and setup_code:
             parts.append("## 환경 준비\n\n" + "\n\n".join(setup_code))
         if g in ("practice", "anatomy", "variation") and body_blocks:
