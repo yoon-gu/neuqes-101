@@ -418,6 +418,15 @@ print(
 )
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+shape: torch.Size([2, 128])  (batch 2, max_length=128)
+
+attention_mask=1 ratio: 31.2%
+  -> short sentence is mostly padding (compute wasted)
+\end{lstlisting}
+\par\vspace{0.9em}
+
 \subsection{\texorpdfstring{긴 입력 자르기}{긴 입력 자르기}}
 
 BERT 계열은 사전학습 시 \inlinecode{max\_length=512} 로 학습돼서 그보다 긴 입력은 처리할 수 없습니다. \inlinecode{truncation=True} 로 자동 절단.
@@ -792,21 +801,21 @@ Per-batch shape (batch_size=8, varies):
 \par\vspace{0.9em}
 \textbf{정적 vs 동적 padding 비교}
 
-\begin{booktable}{DataCollator}{tab:ch08-04}
+\begin{booktable}{정적 padding과 동적 padding의 조건부 효율 비교}{tab:ch08-04}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lllll@{}}
 \toprule
-방식 & 토큰화 시점 & 배치 shape & 실제 토큰 비율 & 메모리/속도 \\
+방식 & 토큰화 시점 & 배치 shape & 이 실험의 채움률 & 해석 \\
 \midrule
 
-\textbf{정적} (\inlinecode{padding="max\_length"=128}) & 모든 샘플을 128로 미리 padding & 항상 (B, 128) & 보통 30-50\% & 일정, 낭비 큼 \\
-\textbf{동적} (\inlinecode{DataCollatorWithPadding}) & padding 없이 truncation만 & (B, longest in batch) --- 매번 다름 & 보통 70-95\% & 변동, 효율 \\
+\textbf{정적} (\inlinecode{padding="max\_length"=128}) & 모든 샘플을 128로 미리 padding & 항상 (B, 128) & 76.1\% & 기준선 \\
+\textbf{동적} (\inlinecode{DataCollatorWithPadding}) & padding 없이 truncation만 & 이 표본에서는 대부분 (B, 128) & 76.1\% & 절감 0\% \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
-위 출력에서 채움률(실제 토큰/전체)이 정적 방식보다 훨씬 높을 겁니다. 같은 학습이라도 동적 padding이 \emph{2배 가까이 빠른 경우} 도 흔합니다.
+이 Yelp 표본에서는 정적 padding과 동적 padding의 채움률이 모두 76.1\%로 같고, 총 토큰 수 절감도 0\%였습니다. 리뷰 절반 이상이 \inlinecode{max\_length=128}까지 잘려 배치마다 가장 긴 샘플이 거의 항상 128에 도달하기 때문입니다. 동적 padding의 이득은 짧은 문장과 긴 문장이 섞여 배치별 최장 길이가 크게 흔들리는 데이터에서 커집니다.
 
 \subsection{\texorpdfstring{다양한 \inlinecode{DataCollator} 종류}{다양한 DataCollator 종류}}
 
@@ -1009,6 +1018,17 @@ print(
 )
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+                method  real_tokens  total_tokens fill_rate
+static (max_length=128)         4873          6400     76.1%
+ dynamic (DataCollator)         4873          6400     76.1%
+
+Dynamic vs static total tokens: 100.0% -> ~0% reduction
+(this much self-attention compute saved -> faster training, less memory)
+\end{lstlisting}
+\par\vspace{0.9em}
+
 \subsection{\texorpdfstring{MLM 마스킹}{MLM 마스킹}}
 
 BERT 사전학습은 입력 토큰의 15\%를 \texttt{{[}MASK{]}} 로 가리고 모델이 맞추도록 학습됩니다 (Masked Language Modeling). 그 masking 자체를 담당하는 게 \inlinecode{DataCollatorForLanguageModeling} --- 이 장의 학습엔 안 쓰지만, BERT의 기원을 이해하는 데 직접 보는 게 빠릅니다.
@@ -1051,6 +1071,16 @@ print(
     "10% kept — so [MASK] rate ~12%)"
 )
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+input_ids shape: torch.Size([3, 128])
+labels shape:    torch.Size([3, 128])  (-100 positions ignored by loss)
+
+[MASK] tokens: 44 / 384 (11.5%)
+  (of the 15% masked: 80% [MASK], 10% random token, 10% kept -- so [MASK] rate ~12%)
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -1381,12 +1411,12 @@ print(
 
 \begin{faqBox}{Q1. (실무) \inlinecode{padding=True} 와 \inlinecode{padding="max\_length"} 중 뭘 써야 하나요?}
 
-대부분 \textbf{\inlinecode{padding=True} (동적)} 이 효율적입니다.
+대부분은 \textbf{\inlinecode{padding=True} (동적)} 이 효율적이지만, 본 장의 Yelp 표본처럼 배치마다 최장 샘플이 거의 \inlinecode{max\_length}에 닿는 경우에는 절감이 없을 수 있습니다.
 
 \begin{itemize}
 \tightlist
 \item
-  \textbf{\inlinecode{padding=True}}: 배치 안 가장 긴 시퀀스 길이까지만 padding. 짧은 배치는 적은 토큰만 처리해 속도·메모리 절약. 일반 학습/추론에서 표준.
+  \textbf{\inlinecode{padding=True}}: 배치 안 가장 긴 시퀀스 길이까지만 padding. 짧은 배치가 실제로 존재하면 적은 토큰만 처리해 속도·메모리를 절약합니다. 일반 학습/추론에서 표준.
 \item
   \textbf{\inlinecode{padding="max\_length"}}: 항상 같은 길이. TPU나 정적 graph(예: TorchScript)처럼 \emph{shape이 매 배치 동일해야 하는} 환경에서. CPU/GPU 학습엔 보통 불필요.
 \end{itemize}

@@ -10,13 +10,13 @@
 
 
 
-\index{1Multi-class classification@Multi-class classification}
+\index{1Multi class classification@Multi-class classification}
 
 \index{1CrossEntropyLoss@CrossEntropyLoss}
 
-\index{1confusion\_matrix@confusion\_matrix}
+\index{1confusion matrix@confusion\_matrix}
 
-\index{1classification\_report@classification\_report}
+\index{1classification report@classification\_report}
 
 \index{0다중 클래스 분류@다중 클래스 분류}
 
@@ -28,12 +28,11 @@
 
 \index{0매크로 F1@매크로 F1}
 
-
 \index{1multinomial logistic regression@multinomial logistic regression}
 
 \index{1OvR@OvR}
 
-\index{1One-vs-Rest@One-vs-Rest}
+\index{1One vs Rest@One-vs-Rest}
 
 \index{1argmax@argmax}
 
@@ -53,7 +52,9 @@
 
 \index{1F1@F1}
 
-\index{1class\_weight@class\_weight}
+\index{1class weight@class\_weight}
+
+\index{1multi class@multi\_class}
 
 \index{0다항 로지스틱 회귀@다항 로지스틱 회귀}
 
@@ -74,9 +75,10 @@
 \index{0분류 리포트@분류 리포트}
 
 
+
 \section{변화추적표}
 
-\begin{booktable}{변화추적표}{tab:ch05-tracking}
+\begin{booktable}{5장 변화추적표}{tab:ch05-01}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lllllll@{}}
 \toprule
@@ -87,19 +89,19 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 2 & \inlinecode{LinearRegression()} & \inlinecode{TfidfVectorizer()} & Yelp (별점 1-5) & (1차원) & 없음 & \inlinecode{MSELoss} \\
 3 & \inlinecode{LogisticRegression()} & \inlinecode{TfidfVectorizer()} & Yelp 이진화 & (1차원) & sigmoid & \inlinecode{BCEWithLogitsLoss} \\
 4 & \inlinecode{LogisticRegression()} (multinomial 자동) & \inlinecode{TfidfVectorizer()} & Yelp 이진화 (\ref{ch:03}장과 동일) & (2차원) & softmax & \inlinecode{CrossEntropyLoss} \\
-\textbf{5 ← 여기} & \inlinecode{LogisticRegression()} (multinomial 자동) & \inlinecode{TfidfVectorizer()} & Yelp 5클래스 (별점 0-4) & \textbf{(5차원)} & softmax & \inlinecode{CrossEntropyLoss} \\
+\textbf{5 \(\leftarrow\) 여기} & \inlinecode{LogisticRegression()} (multinomial 자동) & \inlinecode{TfidfVectorizer()} & Yelp 5클래스 (별점 0-4) & \textbf{(5차원)} & softmax & \inlinecode{CrossEntropyLoss} \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
-전체 19개 장의 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
+전체 \ref{ch:20}장 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
 
 
 
 \section{변경점: \ref{ch:04}장 대비}
 
-\begin{booktable}{변경점 요약}{tab:ch05-diff}
+\begin{booktable}{5장 변경점 요약}{tab:ch05-02}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -109,7 +111,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 데이터 & Yelp 이진화 (K=2) & \textbf{Yelp 5클래스 (K=5)} \\
 Output Head & (2차원) & \textbf{(5차원)} \\
 활성화·Loss & softmax + CE & softmax + CE (그대로) \\
-모델·토크나이저 & LogReg (multinomial 자동) + TF-IDF & 그대로 \\
+모델·토크나이저 & LogReg(multinomial) + TF-IDF & 그대로 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -132,7 +134,7 @@ L = -\frac{1}{N}\sum_{i=1}^{N} \log \hat p_{i,\, y_i}
 
 \textbf{숫자로 감 잡기} (K=5, 정답 클래스 = 2 인 한 샘플):
 
-\begin{booktable}{CrossEntropyLoss 다중 클래스 수치 예시}{tab:ch05-ce-multiclass-examples}
+\begin{booktable}{5장 손실 수치 예시}{tab:ch05-03}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -194,25 +196,17 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 
 \noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 데이터를 불러오고 학습에 맞는 형태로 정리하는 단계로 넘어갑니다.}
 
-\Needspace{8\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=17]
 plt.rcParams["axes.unicode_minus"] = False
 
-dataset = load_dataset("yelp_review_full")
+dataset = load_dataset("Yelp/yelp_review_full")
 SAMPLE_SIZE = 5000
 ds = dataset["train"].shuffle(seed=42).select(range(SAMPLE_SIZE))
 df = ds.to_pandas()
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 예측 결과를 지표와 표로 요약하는 단계로 넘어갑니다.}
-
-\Needspace{7\baselineskip}
-\begin{lstlisting}[firstnumber=25]
-sample_summary = pd.DataFrame([{"metric": "sample_count", "value": len(df)}])
-class_distribution = df["label"].value_counts().sort_index().rename_axis("label_0_to_4").reset_index(name="count")
-
-display(sample_summary)
-display(class_distribution)
+print(f"Total samples: {len(df)}")
+print("Class distribution (label 0-4 = star 1-5):")
+print(df["label"].value_counts().sort_index())
 \end{lstlisting}
 
 \begin{codeRead}
@@ -221,16 +215,16 @@ display(class_distribution)
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-metric        value
--  ------------  -----
-0  sample_count  5000
-   label_0_to_4  count
--  ------------  -----
-0  0             1017
-1  1             1027
-2  2             960
-3  3             1021
-4  4             975
+If the error persists, please let us know by opening an issue on GitHub (ht...
+Total samples: 5000
+Class distribution (label 0-4 = star 1-5):
+label
+0    1017
+1    1027
+2     960
+3    1021
+4     975
+Name: count, dtype: int64
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -248,39 +242,19 @@ tfidf = TfidfVectorizer(max_features=10000)
 X_train = tfidf.fit_transform(X_text_train)
 X_test = tfidf.transform(X_text_test)
 
-split_summary = pd.DataFrame([
-    {"split": "train", "X_shape": X_train.shape, "y_shape": y_train.shape},
-    {"split": "test", "X_shape": X_test.shape, "y_shape": y_test.shape},
-])
-train_label_distribution = pd.Series(y_train).value_counts().sort_index().rename_axis("label_0_to_4").reset_index(name="count")
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 데이터를 불러오고 학습에 맞는 형태로 정리하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-display(split_summary)
-display(train_label_distribution)
+print(
+    f"X_train: {X_train.shape}, y_train distribution: "
+    f"{pd.Series(y_train).value_counts().sort_index().tolist()}"
+)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{y\_5class = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3--5행}의 \inlinecode{X\_text\_train, X\_text\_test...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{7행}의 \inlinecode{tfidf = ...}에서는 TF-IDF 기반 벡터라이저를 만듭니다. \textbf{8행}의 \inlinecode{X\_train = ...}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{9행}의 \inlinecode{X\_test = ...}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{11--14행}의 \inlinecode{split\_summary = ...}에서는 결과를 표로 보기 좋게 정리합니다.
+\textbf{1행}의 \inlinecode{y\_5class = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3--5행}의 \inlinecode{X\_text\_train, X\_text\_test...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{7행}의 \inlinecode{tfidf = ...}에서는 TF-IDF 기반 벡터라이저를 만듭니다. \textbf{8행}의 \inlinecode{X\_train = ...}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{9행}의 \inlinecode{X\_test = ...}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-split  X_shape        y_shape
--  -----  -------------  -------
-0  train  (4000, 10000)  (4000,)
-1  test   (1000, 10000)  (1000,)
-   label_0_to_4  count
--  ------------  -----
-0  0             813
-1  1             822
-2  2             768
-3  3             817
-4  4             780
+X_train: (4000, 10000), y_train distribution: [813, 822, 768, 817, 780]
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -288,7 +262,7 @@ split  X_shape        y_shape
 
 \section{실습: 5클래스 분류}
 
-코드는 \ref{ch:04}장과 같은 \inlinecode{LogisticRegression()} 한 줄입니다. 최신 sklearn은 학습 데이터의 클래스 개수를 보고 K=5 multi-class 문제에서는 multinomial softmax 방식으로 자동 학습합니다.
+코드는 \ref{ch:04}장과 동일한 \inlinecode{LogisticRegression()} 한 줄. sklearn 은 \emph{학습 데이터의 클래스 개수} 를 보고, K=5 multi-class 라 자동으로 multinomial(softmax+CE)을 적용합니다.
 
 
 
@@ -301,25 +275,20 @@ y_pred = model_5.predict(X_test)
 acc = accuracy_score(y_test, y_pred)
 baseline = 1 / 5
 
-accuracy_summary = pd.DataFrame([
-    {"metric": "test_accuracy", "value": acc},
-    {"metric": "uniform_baseline", "value": baseline},
-    {"metric": "accuracy_lift", "value": acc - baseline},
-])
-display(accuracy_summary)
+print(f"Test accuracy: {acc:.4f}")
+print(f"baseline (uniform guess): {baseline:.4f}")
+print(f"Improvement over baseline: {acc - baseline:+.4f}")
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{model\_5 = ...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model\_5.fit(...)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{y\_pred = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{5행}의 \inlinecode{acc = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{baseline = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{8--12행}의 \inlinecode{accuracy\_summary = ...}에서는 결과를 표로 보기 좋게 정리합니다.
+\textbf{1행}의 \inlinecode{model\_5 = ...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model\_5.fit(...)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{y\_pred = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{5행}의 \inlinecode{acc = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{baseline = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-metric            value
--  ----------------  -----
-0  test_accuracy     0.508
-1  uniform_baseline  0.200
-2  accuracy_lift     0.308
+Test accuracy: 0.5110
+baseline (uniform guess): 0.2000
+Improvement over baseline: +0.3110
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -328,39 +297,31 @@ metric            value
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 proba_5 = model_5.predict_proba(X_test)
-
-proba_shape = pd.DataFrame([{"object": "proba_5", "shape": proba_5.shape}])
-row_sum_check = pd.DataFrame({"row_sum": proba_5.sum(axis=1)[:5].round(6)})
-proba_preview = pd.DataFrame(
-    proba_5[:3],
-    columns=[f"P({i+1}★)" for i in range(5)]).round(3,
+print(f"predict_proba shape: {proba_5.shape}  (N, K=5)")
+print(
+    f"Row sums (should be 1): "
+    f"{proba_5.sum(axis=1)[:5].round(4)}"
 )
-
-display(proba_shape)
-display(row_sum_check)
-display(proba_preview)
+print(f"\nFirst 3 sample probability distributions:")
+print(
+    pd.DataFrame(proba_5[:3], columns=[f"P({i+1}★)" for i in range(5)]).round(3)
+)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{proba\_5 = ...}에서는 클래스별 예측 확률을 계산합니다. \textbf{3행}의 \inlinecode{proba\_shape = ...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{4행}의 \inlinecode{row\_sum\_check = ...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{5--8행}의 \inlinecode{proba\_preview = ...}에서는 결과를 표로 보기 좋게 정리합니다.
+\textbf{1행}의 \inlinecode{proba\_5 = ...}에서는 클래스별 예측 확률을 계산합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-object   shape
--  -------  ---------
-0  proba_5  (1000, 5)
-   row_sum
-0      1.0
-1      1.0
-2      1.0
-3      1.0
-4      1.0
+predict_proba shape: (1000, 5)  (N, K=5)
+Row sums (should be 1): [1. 1. 1. 1. 1.]
+
+First 3 sample probability distributions:
    P(1★)  P(2★)  P(3★)  P(4★)  P(5★)
--  ------  ------  ------  ------  ------
-0  0.348   0.301   0.171   0.084   0.096
-1  0.137   0.333   0.352   0.139   0.040
-2  0.615   0.230   0.052   0.042   0.060
+0  0.357  0.307  0.163  0.081  0.092
+1  0.136  0.339  0.348  0.138  0.040
+2  0.614  0.233  0.052  0.042  0.059
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -372,34 +333,26 @@ object   shape
 
 
 
-\Needspace{10\baselineskip}
+\Needspace{5\baselineskip}
 \begin{lstlisting}
-report = classification_report(
-    y_test,
-    y_pred,
-    target_names=[f"{i+1}★" for i in range(5)],
-    output_dict=True,
+print(
+    classification_report(y_test, y_pred, target_names=[f"{i+1}★" for i in range(5)])
 )
-report_df = pd.DataFrame(report).T
-display(report_df.round(4))
 \end{lstlisting}
-
-\begin{codeRead}
-\textbf{1--6행}의 \inlinecode{report = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{7행}의 \inlinecode{report\_df = ...}에서는 결과를 표로 보기 좋게 정리합니다.
-\end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-precision  recall  f1-score  support
-------------  ---------  ------  --------  --------
-1★           0.6166     0.7647  0.6827    204.000
-2★           0.3934     0.3512  0.3711    205.000
-3★           0.4072     0.3542  0.3788    192.000
-4★           0.4490     0.4314  0.4400    204.000
-5★           0.6169     0.6359  0.6263    195.000
-accuracy      0.5080     0.5080  0.5080    0.508
-macro avg     0.4966     0.5075  0.4998    1000.000
-weighted avg  0.4965     0.5080  0.5000    1000.000
+precision    recall  f1-score   support
+
+          1★       0.62      0.77      0.69       204
+          2★       0.40      0.35      0.37       205
+          3★       0.41      0.35      0.38       192
+          4★       0.45      0.43      0.44       204
+          5★       0.62      0.64      0.63       195
+
+    accuracy                           0.51      1000
+   macro avg       0.50      0.51      0.50      1000
+weighted avg       0.50      0.51      0.50      1000
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -413,7 +366,7 @@ cm_df = pd.DataFrame(
     index=[f"true {i+1}★" for i in range(5)],
     columns=[f"pred {i+1}★" for i in range(5)],
 )
-display(cm_df)
+print(cm_df)
 \end{lstlisting}
 
 \begin{codeRead}
@@ -423,12 +376,11 @@ display(cm_df)
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
 pred 1★  pred 2★  pred 3★  pred 4★  pred 5★
---------  --------  --------  --------  --------  --------
-true 1★  156       38        2         4         4
-true 2★  54        72        52        16        11
-true 3★  23        50        68        37        14
-true 4★  10        20        38        88        48
-true 5★  10        3         7         51        124
+true 1★      158       36        2        4        4
+true 2★       54       72       52       16       11
+true 3★       23       50       68       37       14
+true 4★       11       20       37       88       48
+true 5★       10        3        6       51      125
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -439,7 +391,7 @@ true 5★  10        3         7         51        124
 \begin{itemize}
 \tightlist
 \item
-  4점을 5점으로 혼동하기 쉬운 경우는 많아도 4점을 1점으로 혼동하기 쉬운 경우는 거의 없습니다.
+  4점을 5점으로 혼동하는 경우는 많아도 4점을 1점으로 혼동하는 경우는 거의 없습니다.
 \item
   분류 모델은 클래스 간 거리(별점 1과 별점 2가 가깝다는 정보)를 \emph{명시적으로} 모릅니다 --- 5개 독립 클래스로 처리할 뿐입니다.
 \item
@@ -448,7 +400,7 @@ true 5★  10        3         7         51        124
 
 \textbf{회귀(\ref{ch:02}장)와 비교} --- 같은 데이터, 다른 관점:
 
-\begin{booktable}{다중 클래스 평가 지표 요약}{tab:ch05-metric-summary}
+\begin{booktable}{5장 해부: 평가 지표 한꺼번에 보기 표}{tab:ch05-04}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}llll@{}}
 \toprule
@@ -456,7 +408,7 @@ true 5★  10        3         7         51        124
 \midrule
 
 회귀 (\ref{ch:02}장) & 별점 사이 \textbf{거리} 가 의미 있음 & MSE & 1 vs 16 (다른 페널티) \\
-분류 (\ref{ch:05}장) & 5개 \textbf{독립 클래스} & CE & 둘 다 단순히 “틀림” (같은 페널티) \\
+분류 (\ref{ch:05}장) & 5개 \textbf{독립 클래스} & CE & 둘 다 동일한 오분류 (같은 페널티) \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -468,76 +420,39 @@ true 5★  10        3         7         51        124
 
 \section{변형: multinomial vs OvR}
 
-\inlinecode{LogisticRegression()} 의 multinomial 동작은 한 모델이 K개 logit을 \textbf{동시에} 학습합니다. softmax 한 번이라 합 = 1이 강제 --- “K개 클래스 중 정확히 하나”라는 \emph{상호배타} 가정.
+\textbf{multinomial} (\inlinecode{LogisticRegression()} 의 모던 sklearn 기본 동작) 은 한 모델이 K개 logit을 \textbf{동시에} 학습합니다. softmax 한 번이라 합 = 1이 강제 --- “K개 클래스 중 정확히 하나”라는 \emph{상호배타} 가정.
 
 또 다른 방식 \textbf{OvR (One-vs-Rest)} 은 K개의 \emph{독립} binary 분류기. 각 분류기는 “이 클래스 vs 나머지 모든 클래스”만 학습합니다.
 
 \subsection{두 방식의 구조 비교}
 
-\begin{bookfigurelabel}[H]{Multinomial softmax의 출력 구조}{fig:ch05-multinomial-softmax}
-\begin{adjustbox}{width=.78\linewidth}
-\begin{tikzpicture}[
-  font=\sffamily\scriptsize,
-  box/.style={draw=CodeRule, fill=CodeBg, rounded corners=1.2mm, minimum width=15mm, minimum height=5.0mm, align=center, inner xsep=3pt, inner ysep=1.8pt},
-  cell/.style={draw=CodeRule, fill=CodeBg, rounded corners=1.0mm, minimum width=19mm, minimum height=4.1mm, align=center, inner xsep=2pt, inner ysep=1.1pt},
-  soft/.style={draw=BookBlue, fill=BookPaper, rounded corners=1.0mm, minimum width=20mm, minimum height=4.4mm, align=center, inner xsep=2pt, inner ysep=1.3pt},
-  note/.style={align=center, text=BookMuted, font=\sffamily\tiny},
-  arrow/.style={->, line width=0.45pt, draw=BookMuted, shorten >=1.2pt, shorten <=1.2pt}
-]
-\node[font=\sffamily\bfseries\small] at (4.75,0.58) {multinomial: one softmax over 5 logits};
-\node[box] (mx) at (-0.35,-1.20) {입력\\$x$};
-\node[box, minimum width=12mm, inner xsep=2pt] (mlin) at (1.45,-1.20) {분류기\\$V\to 5$};
-\node[soft] (msoft) at (5.50,-1.20) {softmax};
-\foreach \i/\y in {1/-0.05,2/-0.625,3/-1.20,4/-1.775,5/-2.35}{
-  \node[cell] (z\i) at (3.25,\y) {$z_\i$};
-  \node[cell] (mp\i) at (7.75,\y) {$p_\i$};
-  \draw[arrow] (z\i.east) -- (msoft.west);
-  \draw[arrow] (msoft.east) -- (mp\i.west);
-}
-\draw[arrow] (mx) -- (mlin);
-\foreach \i in {1,2,3,4,5}{\draw[arrow] (mlin.east) -- (z\i.west);}
-\node[note] at (5.50,-2.88) {one normalization: $\sum_{k=1}^{5}p_k=1$};
-\end{tikzpicture}
-\end{adjustbox}
-\end{bookfigurelabel}
+\textbf{multinomial (softmax)}:
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch05-multinomial-softmax}에서는 분류기 하나가 다섯 개의 logit \(z_1,\ldots,z_5\)를 한꺼번에 만들고, softmax 한 번이 이를 \(p_1,\ldots,p_5\)로 바꿉니다. 핵심은 \textbf{한 번의 정규화}입니다. 다섯 확률이 같은 분모를 공유하므로 \(\sum_k p_k=1\)이 되고, 한 클래스의 확률이 커지면 나머지 클래스 확률은 함께 줄어듭니다.
+\Needspace{8\baselineskip}
+\begin{lstlisting}
+[입력 x] ──$\to$ Linear(V $\to$ K) ──$\to$ logits [z_1, ..., z_K]
+                            ──$\to$ softmax 한 번
+                            ──$\to$ [p_1, ..., p_K]   (
+                                합 = 1,
+                                클래스끼리 경쟁,
+                            )
+\end{lstlisting}
 
-\begin{bookfigurelabel}[H]{OvR의 독립 sigmoid 출력 구조}{fig:ch05-ovr-sigmoid}
-\begin{adjustbox}{width=.78\linewidth}
-\begin{tikzpicture}[
-  font=\sffamily\scriptsize,
-  box/.style={draw=CodeRule, fill=CodeBg, rounded corners=1.2mm, minimum width=15mm, minimum height=5.0mm, align=center, inner xsep=3pt, inner ysep=1.8pt},
-  cell/.style={draw=CodeRule, fill=CodeBg, rounded corners=1.0mm, minimum width=19mm, minimum height=4.1mm, align=center, inner xsep=2pt, inner ysep=1.1pt},
-  soft/.style={draw=BookBlue, fill=BookPaper, rounded corners=1.0mm, minimum width=20mm, minimum height=4.4mm, align=center, inner xsep=2pt, inner ysep=1.3pt},
-  ovr/.style={draw=BookGreen, fill=BookPaper, rounded corners=1.0mm, minimum width=31mm, minimum height=4.1mm, align=center, inner xsep=2pt, inner ysep=1.1pt},
-  note/.style={align=center, text=BookMuted, font=\sffamily\tiny},
-  arrow/.style={->, line width=0.45pt, draw=BookMuted, shorten >=1.2pt, shorten <=1.2pt}
-]
-\node[font=\sffamily\bfseries\small] at (4.75,0.50) {OvR: 5 independent sigmoid outputs};
-\node[box] (ox) at (0,-1.45) {입력\\$x$};
-\foreach \i/\y in {1/-0.55,2/-1.00,3/-1.45,4/-1.90,5/-2.35}{
-  \node[ovr] (c\i) at (2.75,\y) {분류기 \i: $\i\star$ vs rest};
-  \node[soft] (s\i) at (5.45,\y) {sigmoid};
-  \node[cell] (p\i) at (7.65,\y) {$P_\i$};
-  \draw[arrow] (ox.east) -- (c\i.west);
-  \draw[arrow] (c\i.east) -- (s\i.west);
-  \draw[arrow] (s\i.east) -- (p\i.west);
-}
-\node[note] at (4.75,-2.82) {independent $P_k$; choose $\arg\max_k P_k$};
-\end{tikzpicture}
-\end{adjustbox}
-\end{bookfigurelabel}
+\textbf{OvR} (이 장의 K=5 예시):
 
-그림~\ref{fig:ch05-multinomial-softmax}은 하나의 분류기가 다섯 logit을 한꺼번에 만들고, softmax 한 번으로 다섯 확률을 \textbf{하나의 분포}로 정규화하는 흐름입니다. 그래서 확률의 합은 항상 1이고, 한 클래스 확률이 커지면 다른 클래스 확률은 함께 줄어듭니다.
+\Needspace{10\baselineskip}
+\begin{lstlisting}
+             ┌──$\to$ 분류기 1:  "1★ vs 나머지"  ──$\to$ sigmoid ──$\to$ P_1
+             ├──$\to$ 분류기 2:  "2★ vs 나머지"  ──$\to$ sigmoid ──$\to$ P_2
+[입력 x] ──$\to$ ├──$\to$ 분류기 3:  "3★ vs 나머지"  ──$\to$ sigmoid ──$\to$ P_3
+             ├──$\to$ 분류기 4:  "4★ vs 나머지"  ──$\to$ sigmoid ──$\to$ P_4
+             └──$\to$ 분류기 5:  "5★ vs 나머지"  ──$\to$ sigmoid ──$\to$ P_5
 
-반면 그림~\ref{fig:ch05-ovr-sigmoid}는 다섯 개의 binary 분류기가 각각 “해당 클래스 vs 나머지”를 따로 판단합니다. 각 sigmoid 출력은 독립적인 점수라서 \(P_k\)가 모두 동시에 0.8이 될 수도, 모두 0.1이 될 수도 있습니다.
+   각 P_k 는 다른 P_j 와 무관한 독립 sigmoid 출력 (raw 합 $\ne$ 1)
+   예측: argmax(P_k) — sklearn이 표시할 땐 행을 정규화해 합 1로 보여줌
+\end{lstlisting}
 
-핵심 차이는 \textbf{클래스가 서로 경쟁하느냐} 입니다. multinomial은 같은 분모를 공유하는 하나의 확률분포를 만들고, OvR은 클래스별 독립 판단을 만든다고 이해하면 됩니다.
-
-
-
-이제 그림~\ref{fig:ch05-ovr-sigmoid}의 구조를 실제 \inlinecode{sklearn} 객체로 확인해보겠습니다. \inlinecode{OneVsRestClassifier}는 겉으로는 하나의 모델처럼 보이지만, 내부에는 클래스 수만큼의 binary 분류기를 따로 보관합니다. 별점이 5개이므로 여기서는 다섯 개의 \inlinecode{LogisticRegression}이 만들어지는지 먼저 확인합니다.
+핵심 차이는 \textbf{클래스가 서로 경쟁하느냐} 입니다. multinomial은 한 logit이 커지면 다른 logit의 softmax 확률이 자동으로 줄어듭니다 (분모 공유). OvR의 각 sigmoid는 다른 클래스 학습과 독립적이라 P\_k 가 모두 동시에 0.8이 될 수도, 모두 0.1이 될 수도 있습니다.
 
 
 
@@ -546,45 +461,28 @@ true 5★  10        3         7         51        124
 model_ovr = OneVsRestClassifier(LogisticRegression(max_iter=1000))
 model_ovr.fit(X_train, y_train)
 
-ovr_model_summary = pd.DataFrame([
-    {"metric": "n_estimators", "value": len(model_ovr.estimators_)},
-    {
-        "metric": "estimator_type",
-        "value": type(model_ovr.estimators_[0]).__name__,
-    },
-    {
-        "metric": "estimator_0_coef_shape",
-        "value": model_ovr.estimators_[0].coef_.shape,
-    },
-])
+print(
+    f"OvR estimators count: "
+    f"{len(model_ovr.estimators_)}"
+)
+print(
+    f"Each estimator is a separate LogisticRegression for"
+    f"'class k vs rest'"
+)
+print(
+    f"  estimator 0 coef_ shape: "
+    f"{model_ovr.estimators_[0].coef_.shape}  (1, V)"
+)
 
-display(ovr_model_summary)
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
-metric                  value
--  ----------------------  ------------------
-0  n_estimators            5
-1  estimator_type          LogisticRegression
-2  estimator_0_coef_shape  (1, 10000)
-\end{lstlisting}
-\par\vspace{0.9em}
-
-
-
-위 출력에서 \inlinecode{n\_estimators}가 5라면 OvR이 정말로 다섯 개의 binary 분류기를 만들었다는 뜻입니다. \inlinecode{estimator\_0\_coef\_shape}는 첫 번째 binary 분류기가 하나의 weight 벡터를 가진다는 점을 보여줍니다. 즉 multinomial처럼 한 모델 안에서 5개 클래스를 동시에 경쟁시키는 구조가 아니라, 클래스별 판단기를 병렬로 세운 구조입니다.
-
-
+\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 모델 출력을 확률이나 예측값으로 바꾸는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}
-ovr_coef = np.vstack([
-    est.coef_[0] for est in model_ovr.estimators_
-])
-ovr_intercept = np.array([
-    est.intercept_[0] for est in model_ovr.estimators_
-])
+\begin{lstlisting}[firstnumber=17]
+ovr_coef = np.vstack([est.coef_[0] for est in model_ovr.estimators_])
+# (5, V)
+ovr_intercept = np.array([est.intercept_[0] for est in model_ovr.estimators_]) # (5,)
 
 ovr_logits_all = np.asarray(X_test @ ovr_coef.T) + ovr_intercept
 ovr_sigmoid_all = 1.0 / (1.0 + np.exp(-ovr_logits_all))
@@ -593,66 +491,62 @@ sample_idx = 0
 sample_text = X_text_test.iloc[sample_idx]
 true_label = y_test.iloc[sample_idx]
 
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 모델 출력을 확률이나 예측값으로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}[firstnumber=15]
 p_multi = proba_5[sample_idx]
 p_ovr_raw = ovr_sigmoid_all[sample_idx]
 p_ovr_norm = model_ovr.predict_proba(X_test)[sample_idx]
+
 \end{lstlisting}
 
-\noindent\emph{앞뒤 블록은 모두 모델 출력을 확률이나 예측값으로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+\noindent\emph{앞 블록은 모델 출력을 확률이나 예측값으로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=19]
-review_preview = pd.DataFrame([
-    {"review_preview_200_chars": sample_text[:200] + "..."}
-])
-probability_comparison = pd.DataFrame({
-    "class": [f"{k+1}★" for k in range(5)],
-    "multinomial": p_multi.round(4),
-    "ovr_raw": p_ovr_raw.round(4),
-    "ovr_normalized": p_ovr_norm.round(4),
-})
-probability_sums = pd.DataFrame([
-    {"method": "multinomial", "sum": p_multi.sum()},
-    {"method": "ovr_raw", "sum": p_ovr_raw.sum()},
-    {"method": "ovr_normalized", "sum": p_ovr_norm.sum()},
-])
+\begin{lstlisting}[firstnumber=32]
+print("\nReview preview (200 chars):")
+print(f"{sample_text[:200]}...")
+print(f"True star:    {true_label + 1}★\n")
 
+print(
+    f"{'class':>8}  {'multinomial':>14}  {'OvR raw':>10}  "
+    f"{'OvR normalized':>16}"
+)
+print("-" * 56)
 \end{lstlisting}
 
-\noindent\emph{앞뒤 블록은 모두 모델 출력을 확률이나 예측값으로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
-\Needspace{6\baselineskip}
-\begin{lstlisting}[firstnumber=34]
-display(review_preview)
-display(pd.DataFrame([{"target_star": true_label + 1}]))
-display(probability_comparison)
-display(probability_sums)
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=41]
+for k in range(5):
+    print(
+        f"  {k+1}★    {p_multi[k]:>14.4f}  {p_ovr_raw[k]:>10.4f}  "
+        f"{p_ovr_norm[k]:>16.4f}"
+    )
+print("-" * 56)
+print(
+    f"  sum    {p_multi.sum():>14.4f}  {p_ovr_raw.sum():>10.4f}  "
+    f"{p_ovr_norm.sum():>16.4f}"
+)
 \end{lstlisting}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-review_preview_200_chars
-0  A friend suggested this.. and we met up here w...
-   target_star
-0            2
-   class  multinomial  ovr_raw  ovr_normalized
--  -----  -----------  -------  --------------
-0  1★    0.3479       0.3272   0.3540
-1  2★    0.3014       0.2617   0.2832
-2  3★    0.1708       0.1581   0.1711
-3  4★    0.0842       0.0846   0.0916
-4  5★    0.0957       0.0925   0.1001
-   method          sum
--  --------------  --------
-0  multinomial     1.000000
-1  ovr_raw         0.924129
-2  ovr_normalized  1.000000
+OvR estimators count: 5
+Each estimator is a separate LogisticRegression for 'class k vs rest'
+  estimator 0 coef_ shape: (1, 10000)  (1, V)
+
+Review preview (200 chars):
+A friend suggested this.. and we met up here with 2 other friends on Christ...
+True star:    2★
+
+   class     multinomial     OvR raw    OvR normalized
+--------------------------------------------------------
+  1★            0.3570      0.3374            0.3625
+  2★            0.3071      0.2680            0.2880
+  3★            0.1634      0.1543            0.1658
+  4★            0.0806      0.0827            0.0889
+  5★            0.0919      0.0882            0.0948
+--------------------------------------------------------
+  sum            1.0000      0.9307            1.0000
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -686,62 +580,54 @@ review_preview_200_chars
 
 
 
-한 샘플의 확률 모양을 확인했으니, 마지막으로 전체 테스트셋에서 두 방식의 예측 성능과 OvR raw 출력의 합을 함께 봅니다. 정확도는 비슷할 수 있지만, \inlinecode{ovr\_raw}의 합은 확률분포처럼 1에 고정되지 않습니다. 이 차이가 다음 장의 multi-label 분류로 넘어가는 중요한 연결고리입니다.
-
-
-
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 acc_ovr = accuracy_score(
     y_test,
     model_ovr.predict(X_test),
 )
-raw_sums = ovr_sigmoid_all.sum(axis=1)
+print(f"multinomial accuracy: {acc:.4f}")
+print(f"OvR accuracy:         {acc_ovr:.4f}")
+print(f"Diff: {abs(acc - acc_ovr):.4f}")
 
-model_accuracy_comparison = pd.DataFrame([
-    {"method": "multinomial", "accuracy": acc},
-    {"method": "ovr", "accuracy": acc_ovr},
-    {"method": "absolute_difference", "accuracy": abs(acc - acc_ovr)},
-])
-raw_sum_summary = pd.DataFrame([
-    {"metric": "min_raw_probability_sum", "value": raw_sums.min()},
-    {"metric": "max_raw_probability_sum", "value": raw_sums.max()},
-    {"metric": "mean_raw_probability_sum", "value": raw_sums.mean()},
-])
+raw_sums = ovr_sigmoid_all.sum(axis=1)
+print(
+    f"\nOvR raw row sum distribution (pre-normalization):"
+)
+print(f"  min:  {raw_sums.min():.3f}")
+print(f"  max:  {raw_sums.max():.3f}")
+print(f"  mean: {raw_sums.mean():.3f}")
+print(
 \end{lstlisting}
 
-\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+\noindent\emph{앞 블록은 모델 출력을 확률이나 예측값으로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
 \Needspace{5\baselineskip}
 \begin{lstlisting}[firstnumber=17]
-display(model_accuracy_comparison)
-display(raw_sum_summary)
+    f"  -> 5 independent sigmoids; rows do not sum to "
+    f"exactly 1"
+)
 \end{lstlisting}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-method               accuracy
--  -------------------  --------
-0  multinomial          0.508
-1  ovr                  0.505
-2  absolute_difference  0.003
-   metric                    value
--  ------------------------  --------
-0  min_raw_probability_sum   0.779181
-1  max_raw_probability_sum   1.393514
-2  mean_raw_probability_sum  0.981771
+multinomial accuracy: 0.5110
+OvR accuracy:         0.5070
+Diff: 0.0040
+
+OvR raw row sum distribution (pre-normalization):
+  min:  0.778
+  max:  1.387
+  mean: 0.982
+  → 5 independent sigmoids; rows do not sum to exactly 1
 \end{lstlisting}
 \par\vspace{0.9em}
 
 
 
-정확도만 보면 두 방식은 거의 비슷하게 보일 수 있습니다. 하지만 \inlinecode{raw\_sum\_summary}를 보면 OvR raw 출력의 합은 샘플마다 달라집니다. 이 값이 1보다 작거나 클 수 있다는 사실이 핵심입니다. OvR은 확률분포를 만드는 모델이 아니라, 클래스별로 독립적인 “해당 여부” 점수를 만드는 모델입니다. 그래서 multi-class 문제에서는 보통 multinomial softmax가 더 자연스럽고, 다음 장의 multi-label 문제에서는 OvR식 독립 sigmoid가 더 자연스럽습니다.
-
-
-
 \section{이 장에 등장한 라이브러리}
 
-\begin{booktable}{새로 등장한 라이브러리}{tab:ch05-libraries}
+\begin{booktable}{5장 새로 등장한 라이브러리}{tab:ch05-05}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -749,7 +635,7 @@ method               accuracy
 \midrule
 
 \inlinecode{sklearn.multiclass.OneVsRestClassifier} & K개 독립 binary 분류기를 묶어 estimators\_ 로 노출 & \ref{ch:06}장 multi-label의 핵심 도구로 그대로 재등장 \\
-\inlinecode{sklearn.metrics.confusion\_matrix} & 다중 클래스도 K×K로 일반화 & 분류 장마다 사용 \\
+\inlinecode{sklearn.metrics.confusion\_matrix} & 다중 클래스도 K\(\times\)K로 일반화 & 분류 장마다 사용 \\
 \inlinecode{sklearn.metrics.classification\_report} & per-class precision/recall/F1 한 번에 & --- \\
 \bottomrule
 \end{tabular}
@@ -766,7 +652,7 @@ method               accuracy
 \item
   K=5 균등 분포일 때 CE 손실값은 얼마인가요? 학습된 모델은 이보다 작아야 하는 이유는?
 \item
-  5×5 confusion matrix에서 오답이 대각선 근처에 몰리는 현상은 모델의 어떤 가정과 데이터의 어떤 성질 사이에서 나오나요?
+  5\(\times\)5 confusion matrix에서 오답이 대각선 근처에 몰리는 현상은 모델의 어떤 가정과 데이터의 어떤 성질 사이에서 나오나요?
 \item
   multinomial과 OvR의 핵심 차이를 한 문장으로 요약해보세요.
 \item
@@ -784,12 +670,12 @@ method               accuracy
 \begin{itemize}
 \tightlist
 \item
-  \textbf{multinomial (softmax)}: 한 모델이 K개 logit을 동시에 학습. softmax → 확률 합 = 1, 클래스 \emph{상호배타}.
+  \textbf{multinomial (softmax)}: 한 모델이 K개 logit을 동시에 학습. softmax \(\to\) 확률 합 = 1, 클래스 \emph{상호배타}.
 \item
   \textbf{OvR (One-vs-Rest)}: K개 \emph{독립} binary 분류기 (\inlinecode{OneVsRestClassifier}로 명시적으로 구성). 클래스 0의 logit은 다른 클래스 학습에 영향 없음. 정규화 전 확률 합이 1이 아닐 수 있음.
 \end{itemize}
 
-\begin{booktable}{multinomial과 OvR 비교}{tab:ch05-multinomial-ovr-comparison}
+\begin{booktable}{5장 FAQ 표}{tab:ch05-06}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}ll@{}}
 \toprule
@@ -814,7 +700,7 @@ method               accuracy
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
 \item
-  \textbf{Hierarchical classification}: 큰 그룹 → 세부 분류. 예: 의류 → 상의/하의 → 셔츠/티셔츠.
+  \textbf{Hierarchical classification}: 큰 그룹 \(\to\) 세부 분류. 예: 의류 \(\to\) 상의/하의 \(\to\) 셔츠/티셔츠.
 \item
   \textbf{희귀 클래스 묶기}: 빈도 1-2회짜리는 “기타”로. long tail 80\%는 어차피 못 배움.
 \item
@@ -827,7 +713,7 @@ K=5 정도는 위 트릭이 필요 없는 작은 규모.
 
 \begin{faqBox}{Q3. (실무) 클래스 불균형이 심한데 \inlinecode{class\_weight}를 어떻게 적용하나요?}
 
-\Needspace{7\baselineskip}
+\Needspace{6\baselineskip}
 \begin{lstlisting}
 model = LogisticRegression(
     class_weight="balanced",
@@ -877,9 +763,9 @@ sns.heatmap(cm_norm, annot=True, fmt=".2f", cmap="Blues")
 \begin{itemize}
 \tightlist
 \item
-  모든 클래스가 똑같이 중요 → macro F1.
+  모든 클래스가 똑같이 중요 \(\to\) macro F1.
 \item
-  다수 클래스 위주로 평가하고 싶음 → weighted F1.
+  다수 클래스 위주로 평가하고 싶음 \(\to\) weighted F1.
 \item
   보고에는 보통 둘 다 함께 적습니다.
 \end{itemize}
@@ -899,7 +785,7 @@ L = -\log(1/K) = \log K
 
 \textbf{의미}: 모델이 \emph{아무것도 안 학습한 상태} 의 손실. 학습 손실이 baseline보다 크면 “정답이 \emph{아닌} 곳에 자신 있다”는 뜻 --- 모델이 잘못된 방향으로 가고 있습니다.
 
-K=5에서 baseline ≈ 1.609. 학습 도중 loss가 이 값 근처에서 정체되면 “모델이 데이터에서 신호를 못 잡고 있다”는 진단.
+K=5에서 baseline \(\approx\) 1.609. 학습 도중 loss가 이 값 근처에서 정체되면 “모델이 데이터에서 신호를 못 잡고 있다”는 진단.
 \end{faqBox}
 
 
@@ -914,25 +800,18 @@ from sklearn.linear_model import LinearRegression
 
 model_reg = LinearRegression()
 model_reg.fit(X_train, y_train.astype(float))
-pred_reg = np.clip(
-    np.round(model_reg.predict(X_test)),
-    0,
-    4).astype(int,
-)
+pred_reg = np.clip(np.round(model_reg.predict(X_test)), 0, 4).astype(int)
 
 pred_clf = y_pred
 
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{7\baselineskip}
-\begin{lstlisting}[firstnumber=13]
 for name, pred in [("회귀 후 round/clip", pred_reg), ("분류", pred_clf)]:
     mask4 = (y_test == 3)
     n_4to3 = ((pred == 2) & mask4).sum()
     n_4to1 = ((pred == 0) & mask4).sum()
-    rows.append({"model": name, "n_4_to_3": n_4to3, "n_4_to_1": n_4to1})
+    print(
+        f"{name}: 4★$\to$3★ {n_4to3}건, 4★$\to$1★ "
+        f"{n_4to1}건"
+    )
 \end{lstlisting}
 
 힌트: 회귀는 큰 실수일수록 손실이 제곱으로 커지므로 4★을 1★로 예측하는 큰 실수가 더 드물어야 합니다. 분류는 둘을 동등하게 처벌하므로 그런 경향이 약할 수 있습니다.

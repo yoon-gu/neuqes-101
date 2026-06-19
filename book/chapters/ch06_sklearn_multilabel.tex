@@ -10,13 +10,13 @@
 
 
 
-\index{1Multi-label classification@Multi-label classification}
+\index{1Multi label classification@Multi-label classification}
 
 \index{1OneVsRestClassifier@OneVsRestClassifier}
 
 \index{1BCEWithLogitsLoss@BCEWithLogitsLoss}
 
-\index{1hamming\_loss@hamming\_loss}
+\index{1hamming loss@hamming\_loss}
 
 \index{1micro F1@micro F1}
 
@@ -38,8 +38,7 @@
 
 \index{0항목 라벨@항목 라벨}
 
-
-\index{1per-label sigmoid@per-label sigmoid}
+\index{1per label sigmoid@per-label sigmoid}
 
 \index{1subset accuracy@subset accuracy}
 
@@ -47,15 +46,15 @@
 
 \index{1label density@label density}
 
-\index{1average=“micro”@average=“micro”}
+\index{1average micro@average="micro"}
 
-\index{1average=“macro”@average=“macro”}
+\index{1average macro@average="macro"}
 
-\index{1multi-hot vector@multi-hot vector}
+\index{1multi hot vector@multi-hot vector}
 
 \index{1aspect label@aspect label}
 
-\index{1label-wise threshold@label-wise threshold}
+\index{1label wise threshold@label-wise threshold}
 
 \index{1independent labels@independent labels}
 
@@ -82,9 +81,10 @@
 \index{0이진 관련성@이진 관련성}
 
 
+
 \section{변화추적표}
 
-\begin{booktable}{변화추적표}{tab:ch06-tracking}
+\begin{booktable}{6장 변화추적표}{tab:ch06-01}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lllllll@{}}
 \toprule
@@ -96,13 +96,13 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 3 & \inlinecode{LogisticRegression()} & \inlinecode{TfidfVectorizer()} & Yelp 이진화 & (1차원) & sigmoid & \inlinecode{BCEWithLogitsLoss} \\
 4 & \inlinecode{LogisticRegression()} (multinomial 자동) & \inlinecode{TfidfVectorizer()} & Yelp 이진화 (\ref{ch:03}장과 동일) & (2차원) & softmax & \inlinecode{CrossEntropyLoss} \\
 5 & \inlinecode{LogisticRegression()} (multinomial 자동) & \inlinecode{TfidfVectorizer()} & Yelp 5클래스 & (5차원) & softmax & \inlinecode{CrossEntropyLoss} \\
-\textbf{6 ← 여기} & \inlinecode{OneVsRestClassifier(LogisticRegression())} & \inlinecode{TfidfVectorizer()} & Yelp + 항목 키워드 합성 & (5차원) & \textbf{sigmoid (각각 독립)} & \textbf{\inlinecode{BCEWithLogitsLoss} per-label} \\
+\textbf{6 \(\leftarrow\) 여기} & \inlinecode{OneVsRestClassifier(LogisticRegression())} & \inlinecode{TfidfVectorizer()} & Yelp + 항목 키워드 합성 & (5차원) & \textbf{sigmoid (각각 독립)} & \textbf{\inlinecode{BCEWithLogitsLoss} per-label} \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
-전체 19개 장의 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
+전체 \ref{ch:20}장 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
 
 
 
@@ -110,7 +110,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 
 가장 큰 변화는 \textbf{데이터 가정} 이고, 그게 모델 선택을 강제합니다.
 
-\begin{booktable}{변경점 요약}{tab:ch06-diff}
+\begin{booktable}{6장 변경점 요약}{tab:ch06-02}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -122,7 +122,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 모델 패러다임 & \textbf{multinomial 기본} + OvR 대안 (\ref{ch:05}장 후반에서 두 방식 비교) & \textbf{OvR 만} (multinomial은 데이터 가정과 충돌) \\
 Activation & softmax 한 번 (합 = 1 강제) & \textbf{per-label sigmoid} (라벨끼리 독립) \\
 Loss & \inlinecode{CrossEntropyLoss} & \textbf{per-label \inlinecode{BCEWithLogitsLoss} 평균} \\
-OvR 사용 방식 & K개 sigmoid → \textbf{argmax로 한 라벨 선택} & K개 sigmoid \textbf{그대로} (argmax 없음, 각자 임계값 0.5와 비교) \\
+OvR 사용 방식 & K개 sigmoid \(\to\) \textbf{argmax로 한 라벨 선택} & K개 sigmoid \textbf{그대로} (argmax 없음, 각자 임계값 0.5와 비교) \\
 데이터 & 별점 5클래스 & \textbf{Yelp + 항목 키워드 합성} (5개 항목) \\
 토크나이저 & TF-IDF & TF-IDF (그대로) \\
 \bottomrule
@@ -149,10 +149,10 @@ OvR 사용 방식 & K개 sigmoid → \textbf{argmax로 한 라벨 선택} & K개
 \item
   \textbf{multinomial은 부적합}: softmax가 합=1을 강제하므로 \textquotesingle food=0.9, service=0.85 동시 활성\textquotesingle{} 같은 분포를 \emph{표현할 수가 없습니다}. P(food)=0.9면 나머지 합이 0.1로 강제돼 동시 활성이 수학적으로 불가능.
 \item
-  \textbf{OvR은 자연스럽게 들어맞음}: K개 sigmoid가 \emph{각자} 0/1을 결정 → 어떤 조합이든 표현 가능. argmax 후처리 단계만 빼면 그대로 multi-label.
+  \textbf{OvR은 자연스럽게 들어맞음}: K개 sigmoid가 \emph{각자} 0/1을 결정 \(\to\) 어떤 조합이든 표현 가능. argmax 후처리 단계만 빼면 그대로 multi-label.
 \end{itemize}
 
-요약: \ref{ch:05}장에서 \emph{대안} 이었던 OvR이 \ref{ch:06}장에서는 \emph{유일한 자연스러운 선택} 이 됩니다. 알고리즘(\inlinecode{OneVsRestClassifier})은 그대로, 사용 방식만 “argmax로 한 라벨 선택” → “K개 출력 그대로” 로 바뀝니다.
+요약: \ref{ch:05}장에서 \emph{대안} 이었던 OvR이 \ref{ch:06}장에서는 \emph{유일한 자연스러운 선택} 이 됩니다. 알고리즘(\inlinecode{OneVsRestClassifier})은 그대로, 사용 방식만 “argmax로 한 라벨 선택” \(\to\) “K개 출력 그대로” 로 바뀝니다.
 
 
 
@@ -171,7 +171,7 @@ L = \frac{1}{N \cdot K}\sum_{i=1}^{N}\sum_{k=1}^{K}\bigl[-y_{ik}\log \hat p_{ik}
 
 \textbf{숫자로 감 잡기} (K=5, 정답 multi-hot \(\mathbf{y} = [1, 0, 1, 0, 1]\)):
 
-\begin{booktable}{라벨별 BCE 수치 예시}{tab:ch06-per-label-bce-examples}
+\begin{booktable}{6장 손실 함수의 변화 - 라벨별 이진 교차 엔트로피 표}{tab:ch06-03}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}llll@{}}
 \toprule
@@ -179,8 +179,8 @@ L = \frac{1}{N \cdot K}\sum_{i=1}^{N}\sum_{k=1}^{K}\bigl[-y_{ik}\log \hat p_{ik}
 \midrule
 
 잘 맞춤 & \texttt{{[}0.9,\ 0.1,\ 0.8,\ 0.2,\ 0.6{]}} & 0.105 / 0.105 / 0.223 / 0.223 / 0.511 & \textbf{0.233} \\
-균등 (baseline) & \texttt{{[}0.5,\ 0.5,\ 0.5,\ 0.5,\ 0.5{]}} & 0.693 × 5 & \textbf{0.693} \\
-정반대로 자신감 & \texttt{{[}0.1,\ 0.9,\ 0.1,\ 0.9,\ 0.1{]}} & 2.303 × 5 & \textbf{2.303} \\
+균등 (baseline) & \texttt{{[}0.5,\ 0.5,\ 0.5,\ 0.5,\ 0.5{]}} & 0.693 \(\times\) 5 & \textbf{0.693} \\
+정반대로 자신감 & \texttt{{[}0.1,\ 0.9,\ 0.1,\ 0.9,\ 0.1{]}} & 2.303 \(\times\) 5 & \textbf{2.303} \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -245,24 +245,19 @@ from sklearn.model_selection import train_test_split
 
 \noindent\emph{앞뒤 블록은 모두 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
-\Needspace{7\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=17]
 from sklearn.metrics import (
     accuracy_score, hamming_loss, f1_score, classification_report,
 )
 
 plt.rcParams["axes.unicode_minus"] = False
-\end{lstlisting}
 
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 데이터를 불러오고 학습에 맞는 형태로 정리하는 단계로 넘어갑니다.}
-
-\Needspace{7\baselineskip}
-\begin{lstlisting}[firstnumber=23]
-dataset = load_dataset("yelp_review_full")
+dataset = load_dataset("Yelp/yelp_review_full")
 SAMPLE_SIZE = 5000
 ds = dataset["train"].shuffle(seed=42).select(range(SAMPLE_SIZE))
 df = ds.to_pandas()
-display(pd.DataFrame([{"metric": "sample_count", "value": len(df)}]))
+print(f"Total samples: {len(df)}")
 \end{lstlisting}
 
 \begin{codeRead}
@@ -271,9 +266,8 @@ display(pd.DataFrame([{"metric": "sample_count", "value": len(df)}]))
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-metric        value
--  ------------  -----
-0  sample_count  5000
+If the error persists, please let us know by opening an issue on GitHub (ht...
+Total samples: 5000
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -283,7 +277,7 @@ metric        value
 
 Yelp 데이터에는 multi-label 정답이 없으므로 \textbf{5개 항목(aspect)} 별 키워드 사전을 만들어 매칭합니다.
 
-\begin{booktable}{항목 라벨 합성 예시}{tab:ch06-label-examples}
+\begin{booktable}{6장 실습 1: 항목 라벨 합성 표}{tab:ch06-04}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -325,100 +319,89 @@ K = len(ASPECTS)
 
 \noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
-\Needspace{8\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=16]
 def extract_aspects(text: str) -> list[int]:
-    tokens = set(re.findall(r"[a-z]+", text.lower()))
+    text_lower = text.lower()
     return [
-        int(any(kw in tokens for kw in keywords))
+        int(any(re.search(rf"\b{re.escape(kw)}\b", text_lower) for kw in keywords))
         for keywords in ASPECT_KEYWORDS.values()
     ]
-\end{lstlisting}
 
-\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{10\baselineskip}
-\begin{lstlisting}[firstnumber=23]
 df["aspects"] = df["text"].apply(extract_aspects)
 Y = np.array(df["aspects"].tolist())   # (N, 5) multi-hot
-
-label_shape = pd.DataFrame([{"object": "Y", "shape": Y.shape}])
-label_preview = pd.DataFrame(Y[:3], columns=ASPECTS)
-
-display(label_shape)
-display(label_preview)
+print(f"Y shape: {Y.shape}  (n_samples, n_aspects)")
+print(f"First 3 multi-hot labels:\n{Y[:3]}")
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1--12행}의 \inlinecode{ASPECT\_KEYWORDS = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{13행}의 \inlinecode{ASPECTS = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{14행}의 \inlinecode{K = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{16행}의 \inlinecode{def extract\_aspects(text:...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{17행}의 \inlinecode{tokens = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{18--21행}의 \inlinecode{return [ int(any(kw in to...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\textbf{1--12행}의 \inlinecode{ASPECT\_KEYWORDS = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{13행}의 \inlinecode{ASPECTS = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{14행}의 \inlinecode{K = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{16행}의 \inlinecode{def extract\_aspects(text:...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{17행}의 \inlinecode{text\_lower = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{18--21행}의 \inlinecode{return [ int(any(re.searc...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-object  shape
--  ------  ---------
-0  Y       (5000, 5)
-   food  service  price  ambiance  location
--  ----  -------  -----  --------  --------
-0  0     1        0      0         1
-1  0     0        0      0         1
-2  0     0        0      1         0
+Y shape: (5000, 5)  (n_samples, n_aspects)
+First 3 multi-hot labels:
+[[0 1 0 0 1]
+ [0 0 0 0 1]
+ [0 0 0 1 0]]
 \end{lstlisting}
 \par\vspace{0.9em}
 
 
 
-\Needspace{11\baselineskip}
+\Needspace{10\baselineskip}
 \begin{lstlisting}
-aspect_activation = pd.DataFrame({
-    "aspect": ASPECTS,
-    "activation_rate": [Y[:, k].mean() for k in range(K)],
-    "active_count": [int(Y[:, k].sum()) for k in range(K)],
-})
-
-n_labels_per_sample = Y.sum(axis=1)
-label_count_distribution = pd.DataFrame({
-    "n_active_labels": range(K + 1),
-    "sample_count": [(n_labels_per_sample == n).sum() for n in range(K + 1)],
-})
-label_count_distribution["sample_rate"] = label_count_distribution["sample_count"] / len(Y)
-summary = pd.DataFrame([{"metric": "mean_active_labels_per_sample", "value": n_labels_per_sample.mean()}])
+print(
+    "Per-aspect activation rate (over all 5,000 samples):"
+)
+for k, aspect in enumerate(ASPECTS):
+    print(
+        f"  {aspect:>9}: {Y[:, k].mean():.1%}  ("
+        f"{Y[:, k].sum()} samples)"
+    )
 
 \end{lstlisting}
 
-\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
-\Needspace{5\baselineskip}
-\begin{lstlisting}[firstnumber=15]
-display(aspect_activation)
-display(summary)
-display(label_count_distribution)
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=10]
+n_labels_per_sample = Y.sum(axis=1)
+print(
+    f"\nMean active labels per sample: "
+    f"{n_labels_per_sample.mean():.2f}"
+)
+print(f"Active label distribution:")
+for n in range(K + 1):
+    count = (n_labels_per_sample == n).sum()
+    print(
+        f"  {n} labels: {count} samples  ("
+        f"{count/len(Y):.1%})"
+    )
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1--5행}의 \inlinecode{aspect\_activation = ...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{7행}의 \inlinecode{n\_labels\_per\_sample = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{8--11행}의 \inlinecode{label\_count\_distribution...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{12행}의 \inlinecode{label\_count\_distribution[...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{13행}의 \inlinecode{summary = ...}에서는 결과를 표로 보기 좋게 정리합니다.
+\textbf{4행}의 \inlinecode{for k, aspect in enumerat...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{10행}의 \inlinecode{n\_labels\_per\_sample = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-aspect    activation_rate  active_count
--  --------  ---------------  ------------
-0  food      0.5556           2778
-1  service   0.4960           2480
-2  price     0.2944           1472
-3  ambiance  0.1810           905
-4  location  0.2190           1095
-   metric                    value
--  ------------------------  -----
-0  mean_active_labels_pe...  1.746
-   n_active_labels  sample_count  sample_rate
--  ---------------  ------------  -----------
-0  0                741           0.1482
-1  1                1464          0.2928
-2  2                1506          0.3012
-3  3                957           0.1914
-4  4                277           0.0554
-5  5                55            0.0110
+Per-aspect activation rate (over all 5,000 samples):
+       food: 55.6%  (2778 samples)
+    service: 49.6%  (2480 samples)
+      price: 29.4%  (1472 samples)
+   ambiance: 18.1%  (905 samples)
+   location: 21.9%  (1095 samples)
+
+Mean active labels per sample: 1.75
+Active label distribution:
+  0 labels: 741 samples  (14.8%)
+  1 labels: 1464 samples  (29.3%)
+  2 labels: 1506 samples  (30.1%)
+  3 labels: 957 samples  (19.1%)
+  4 labels: 277 samples  (5.5%)
+  5 labels: 55 samples  (1.1%)
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -427,31 +410,28 @@ aspect    activation_rate  active_count
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 X_text_train, X_text_test, Y_train, Y_test = train_test_split(
-    df["text"], Y,
-    test_size=0.2, random_state=42,
+    df["text"], Y, test_size=0.2, random_state=42,
 )
 
 tfidf = TfidfVectorizer(max_features=10000)
 X_train = tfidf.fit_transform(X_text_train)
 X_test = tfidf.transform(X_text_test)
 
-split_summary = pd.DataFrame([
-    {"split": "train", "X_shape": X_train.shape, "Y_shape": Y_train.shape},
-    {"split": "test", "X_shape": X_test.shape, "Y_shape": Y_test.shape},
-])
-display(split_summary)
+print(
+    f"X_train: {X_train.shape}, Y_train: "
+    f"{Y_train.shape}"
+)
+print(f"X_test:  {X_test.shape}, Y_test:  {Y_test.shape}")
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1--4행}의 \inlinecode{X\_text\_train, X\_text\_test...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{6행}의 \inlinecode{tfidf = ...}에서는 TF-IDF 기반 벡터라이저를 만듭니다. \textbf{7행}의 \inlinecode{X\_train = ...}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{8행}의 \inlinecode{X\_test = ...}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{10--13행}의 \inlinecode{split\_summary = ...}에서는 결과를 표로 보기 좋게 정리합니다.
+\textbf{1--3행}의 \inlinecode{X\_text\_train, X\_text\_test...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{5행}의 \inlinecode{tfidf = ...}에서는 TF-IDF 기반 벡터라이저를 만듭니다. \textbf{6행}의 \inlinecode{X\_train = ...}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{7행}의 \inlinecode{X\_test = ...}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-split  X_shape        Y_shape
--  -----  -------------  ---------
-0  train  (4000, 10000)  (4000, 5)
-1  test   (1000, 10000)  (1000, 5)
+X_train: (4000, 10000), Y_train: (4000, 5)
+X_test:  (1000, 10000), Y_test:  (1000, 5)
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -459,7 +439,7 @@ split  X_shape        Y_shape
 
 \section{\texorpdfstring{실습 2: \inlinecode{OneVsRestClassifier} (이번엔 argmax 없이)}{실습 2: OneVsRestClassifier (이번엔 argmax 없이)}}
 
-\ref{ch:05}장에서 multi-class의 \emph{대안} 으로 본 \inlinecode{OneVsRestClassifier}가 이번엔 \emph{기본 도구} 입니다. 코드 차이는 단 하나 --- \textbf{\inlinecode{Y\_train} shape이 \inlinecode{(N,)} → \inlinecode{(N,\ K)}} 로 바뀌는 것. sklearn이 multi-hot Y를 보고 multi-label 모드로 자동 전환해 K개 binary 분류기가 독립적으로 학습됩니다.
+\ref{ch:05}장에서 multi-class의 \emph{대안} 으로 본 \inlinecode{OneVsRestClassifier}가 이번엔 \emph{기본 도구} 입니다. 코드 차이는 단 하나 --- \textbf{\inlinecode{Y\_train} shape이 \inlinecode{(N,)} \(\to\) \inlinecode{(N,\ K)}} 로 바뀌는 것. sklearn이 multi-hot Y를 보고 multi-label 모드로 자동 전환해 K개 binary 분류기가 독립적으로 학습됩니다.
 
 가장 중요한 사용 방식 변화는 \textbf{argmax가 사라진다는 것}.
 
@@ -475,27 +455,28 @@ split  X_shape        Y_shape
 
 
 
-\Needspace{10\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 bare_model = LogisticRegression(max_iter=1000)
 try:
     bare_model.fit(X_train, Y_train)
-    bare_result = {"status": "success", "detail": str(bare_model.coef_.shape)}
+    print(
+        f"Succeeded? coef_ shape: "
+        f"{bare_model.coef_.shape}"
+    )
 except ValueError as e:
-    bare_result = {"status": "ValueError", "detail": str(e)}
-
-display(pd.DataFrame([bare_result]))
+    print(f"Failed: {type(e).__name__}")
+    print(f"   Message: {e}")
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{bare\_model = ...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{try:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{3행}의 \inlinecode{bare\_model.fit(...)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{bare\_result = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{except ValueError as e:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{6행}의 \inlinecode{bare\_result = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\textbf{1행}의 \inlinecode{bare\_model = ...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{try:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{3행}의 \inlinecode{bare\_model.fit(...)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{8행}의 \inlinecode{except ValueError as e:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-status      detail
--  ----------  ------------------------
-0  ValueError  y should be a 1d arra...
+Failed: ValueError
+   Message: y should be a 1d array, got an array of shape (4000, 5) instead.
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -525,78 +506,75 @@ status      detail
 model_ml = OneVsRestClassifier(LogisticRegression(max_iter=1000))
 model_ml.fit(X_train, Y_train)
 
-first_estimator = model_ml.estimators_[0]
-first_coef_shape = getattr(
-    getattr(first_estimator, "coef_", None),
-    "shape",
-    None,
+print(f"OvR fit succeeded!")
+print(
+    f"  Number of binary classifiers: "
+    f"{len(model_ml.estimators_)}"
 )
-estimator_summary = pd.DataFrame([
-    {"metric": "n_binary_estimators", "value": len(model_ml.estimators_)},
-    {"metric": "estimator_0_type", "value": type(first_estimator).__name__},
-    {"metric": "estimator_0_coef_shape", "value": first_coef_shape},
-])
-label_estimator_summary = pd.DataFrame([
-    {
+print(
+    f"  Each estimator type:          "
+    f"{type(model_ml.estimators_[0]).__name__}"
+)
+print(
+    f"  Each estimator coef shape:    "
+    f"{model_ml.estimators_[0].coef_.shape}  (1, V — one binary per label)"
+)
 \end{lstlisting}
 
-\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{9\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-        "estimator": k,
-        "aspect": aspect,
-        "positive_count": int(Y_train[:, k].sum()),
-        "positive_rate": Y_train[:, k].mean(),
-    }
-    for k, aspect in enumerate(ASPECTS)
-])
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 모델 출력을 확률이나 예측값으로 바꾸는 단계로 넘어갑니다.}
+\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 모델 출력을 확률이나 예측값으로 바꾸는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=25]
+\begin{lstlisting}[firstnumber=17]
+print(f"\nLabel for each classifier:")
+for k, aspect in enumerate(ASPECTS):
+    n_pos = Y_train[:, k].sum()
+    print(
+        f"  estimator[{k}] = '{aspect}': {n_pos} positives ("
+        f"{n_pos/len(Y_train):.1%})"
+    )
+
 Y_pred = model_ml.predict(X_test)
 proba_ml = model_ml.predict_proba(X_test)
 
-prediction_shape = pd.DataFrame([
-    {"object": "Y_pred", "shape": Y_pred.shape},
-    {"object": "proba_ml", "shape": proba_ml.shape},
-])
-proba_preview = pd.DataFrame(
-    proba_ml[:3],
-    columns=ASPECTS).round(4,
-)
+\end{lstlisting}
 
-display(estimator_summary)
-display(label_estimator_summary)
-display(prediction_shape)
-display(proba_preview)
+\noindent\emph{앞뒤 블록은 모두 모델 출력을 확률이나 예측값으로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=28]
+print(f"\nY_pred shape: {Y_pred.shape}")
+print(f"proba shape:  {proba_ml.shape}")
+print(
+    f"\nFirst 3 sample predicted probabilities "
+    f"(per-label):"
+)
+print(
+    pd.DataFrame(proba_ml[:3], columns=ASPECTS).round(4)
+)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{model\_ml = ...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model\_ml.fit(...)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{first\_estimator = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5--9행}의 \inlinecode{first\_coef\_shape = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{10--14행}의 \inlinecode{estimator\_summary = ...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{15--23행}의 \inlinecode{label\_estimator\_summary =...}에서는 결과를 표로 보기 좋게 정리합니다.
+\textbf{1행}의 \inlinecode{model\_ml = ...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model\_ml.fit(...)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-metric                  value
--  ----------------------  ------------------
-0  n_binary_estimators     5
-1  estimator_0_type        LogisticRegression
-2  estimator_0_coef_shape  (1, 10000)
-   estimator  aspect    positive_count  positive_rate
--  ---------  --------  --------------  -------------
-0  0          food      2214            0.55350
-1  1          service   1961            0.49025
-2  2          price     1196            0.29900
-3  3          ambiance  720             0.18000
-4  4          location  892             0.22300
-   object    shape
--  --------  ---------
-0  Y_pred    (1000, 5)
-1  proba_ml  (1000, 5)
+OvR fit succeeded!
+  Number of binary classifiers: 5
+  Each estimator type:          LogisticRegression
+  Each estimator coef shape:    (1, 10000)  (1, V -- one binary per label)
+
+Label for each classifier:
+  estimator[0] = 'food': 2214 positives (55.4%)
+  estimator[1] = 'service': 1961 positives (49.0%)
+  estimator[2] = 'price': 1196 positives (29.9%)
+  estimator[3] = 'ambiance': 720 positives (18.0%)
+  estimator[4] = 'location': 892 positives (22.3%)
+
+Y_pred shape: (1000, 5)
+proba shape:  (1000, 5)
+
+First 3 sample predicted probabilities (per-label):
 ...
 \end{lstlisting}
 \par\vspace{0.9em}
@@ -618,16 +596,24 @@ y_true = Y_test[sample_idx]
 p_pred = proba_ml[sample_idx]
 text = X_text_test.iloc[sample_idx]
 
-rows = []
-total_loss = 0.0
-for k, aspect in enumerate(ASPECTS):
-    y_k, p_k = int(y_true[k]), float(p_pred[k])
+print("Review preview (200 chars):")
+print(f"{text[:200]}...")
+print(f"Active labels: {y_true.sum()}\n")
+
 \end{lstlisting}
 
-\noindent\emph{앞 블록은 모델 출력을 확률이나 예측값으로 바꾸는 단계입니다. 이어지는 블록에서는 예측 결과를 지표와 표로 요약하는 단계로 넘어갑니다.}
+\noindent\emph{앞 블록은 모델 출력을 확률이나 예측값으로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=12]
+print(
+    f"{'aspect':>10}  {'y_true':>6}  {'pred p':>10}  {'term':>20}  "
+    f"{'loss':>10}"
+)
+print("-" * 64)
+total_loss = 0.0
+for k, aspect in enumerate(ASPECTS):
+    y_k, p_k = int(y_true[k]), float(p_pred[k])
     if y_k == 1:
         loss_k = -np.log(max(p_k, 1e-12))
         formula = f"-log({p_k:.4f})"
@@ -635,56 +621,43 @@ for k, aspect in enumerate(ASPECTS):
         loss_k = -np.log(max(1 - p_k, 1e-12))
         formula = f"-log(1-{p_k:.4f})"
     total_loss += loss_k
-    rows.append({
-        "aspect": aspect,
-        "target": y_k,
-        "predicted_probability": p_k,
-        "loss_term": formula,
-        "bce": loss_k,
-    })
-
+    print(
 \end{lstlisting}
 
-\noindent\emph{앞 블록은 모델 출력을 확률이나 예측값으로 바꾸는 단계입니다. 이어지는 블록에서는 예측 결과를 지표와 표로 요약하는 단계로 넘어갑니다.}
+\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
-\Needspace{9\baselineskip}
-\begin{lstlisting}[firstnumber=27]
-review_preview = pd.DataFrame([{"review_preview_200_chars": text[:200] + "..."}])
-sample_summary = pd.DataFrame([{"active_label_count": int(y_true.sum())}])
-bce_breakdown = pd.DataFrame(rows)
-bce_summary = pd.DataFrame([
-    {"metric": "sum_bce", "value": total_loss},
-    {"metric": "mean_bce", "value": total_loss / K},
-])
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{6\baselineskip}
-\begin{lstlisting}[firstnumber=35]
-display(review_preview)
-display(sample_summary)
-display(bce_breakdown.round(4))
-display(bce_summary.round(4))
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=28]
+        f"{aspect:>10}  {y_k:>6d}  {p_k:>10.4f}  {formula:>20}  "
+        f"{loss_k:>10.4f}"
+    )
+print("-" * 64)
+print(
+    f"{'sum':>10}  {'':>6}  {'':>10}  {'':>20}  "
+    f"{total_loss:>10.4f}"
+)
+print(
+    f"{'mean BCE':>10}  {'':>6}  {'':>10}  {'/ 5':>20}  "
+    f"{total_loss/5:>10.4f}"
+)
 \end{lstlisting}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-review_preview_200_chars
-0  Okay, so I just went to Vegas for the first ti...
-   active_label_count
-0                   3
-   aspect    target  predicte...  loss_term    bce
--  --------  ------  -----------  -----------  ------
-0  food      0       0.4466       -log(1-0...  0.5917
-1  service   1       0.9027       -log(0.9...  0.1024
-2  price     1       0.7366       -log(0.7...  0.3057
-3  ambiance  1       0.5771       -log(0.5...  0.5497
-4  location  0       0.2620       -log(1-0...  0.3038
-   metric    value
--  --------  ------
-0  sum_bce   1.8533
-1  mean_bce  0.3707
+Review preview (200 chars):
+Okay, so I just went to Vegas for the first time for my 21st birthday. Basi...
+Active labels: 3
+
+    aspect  y_true      pred p                  term        loss
+----------------------------------------------------------------
+      food       0      0.4514        -log(1-0.4514)      0.6003
+   service       1      0.9069          -log(0.9069)      0.0977
+     price       1      0.7343          -log(0.7343)      0.3089
+  ambiance       1      0.5806          -log(0.5806)      0.5437
+  location       0      0.2636        -log(1-0.2636)      0.3060
+----------------------------------------------------------------
+       sum                                                1.8566
+  mean BCE                                       / 5      0.3713
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -741,64 +714,60 @@ multi-class에서 자주 쓰던 accuracy는 multi-label에서 의미가 미묘�
 
 
 
-\Needspace{9\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
-multi_label_metrics = pd.DataFrame([
-    {"metric": "subset_accuracy", "value": accuracy_score(Y_test, Y_pred)},
-    {"metric": "hamming_loss", "value": hamming_loss(Y_test, Y_pred)},
-    {"metric": "micro_f1", "value": f1_score(Y_test, Y_pred, average="micro", zero_division=0)},
-    {"metric": "macro_f1", "value": f1_score(Y_test, Y_pred, average="macro", zero_division=0)},
-])
-display(multi_label_metrics)
+print(
+    f"Subset accuracy (all match): "
+    f"{accuracy_score(Y_test, Y_pred):.4f}"
+)
+print(
+    f"Hamming loss (mean per-label error): "
+    f"{hamming_loss(Y_test, Y_pred):.4f}"
+)
+print(
+    f"micro F1: "
+    f"{f1_score(Y_test, Y_pred, average='micro', zero_division=0):.4f}"
+)
+print(
+    f"macro F1: "
+    f"{f1_score(Y_test, Y_pred, average='macro', zero_division=0):.4f}"
+)
 \end{lstlisting}
-
-\begin{codeRead}
-\textbf{1--6행}의 \inlinecode{multi\_label\_metrics = ...}에서는 결과를 표로 보기 좋게 정리합니다.
-\end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-metric           value
--  ---------------  --------
-0  subset_accuracy  0.493000
-1  hamming_loss     0.138200
-2  micro_f1         0.773665
-3  macro_f1         0.646973
+Subset accuracy (all match): 0.4930
+Hamming loss (mean per-label error): 0.1372
+micro F1: 0.7749
+macro F1: 0.6467
 \end{lstlisting}
 \par\vspace{0.9em}
 
 
 
-\Needspace{11\baselineskip}
+\Needspace{7\baselineskip}
 \begin{lstlisting}
-report = classification_report(
-    Y_test,
-    Y_pred,
+print(classification_report(
+    Y_test, Y_pred,
     target_names=ASPECTS,
     zero_division=0,
-    output_dict=True,
-)
-report_df = pd.DataFrame(report).T
-display(report_df.round(4))
+))
 \end{lstlisting}
-
-\begin{codeRead}
-\textbf{1--7행}의 \inlinecode{report = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{8행}의 \inlinecode{report\_df = ...}에서는 결과를 표로 보기 좋게 정리합니다.
-\end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-precision  recall  f1-score  support
-------------  ---------  ------  --------  -------
-food          0.8959     0.9007  0.8983    564.0
-service       0.8936     0.8574  0.8751    519.0
-price         0.9291     0.4275  0.5856    276.0
-ambiance      1.0000     0.2757  0.4322    185.0
-location      0.9365     0.2906  0.4436    203.0
-micro avg     0.9043     0.6760  0.7737    1747.0
-macro avg     0.9310     0.5504  0.6470    1747.0
-weighted avg  0.9162     0.6760  0.7398    1747.0
-samples avg   0.6832     0.5788  0.6082    1747.0
+precision    recall  f1-score   support
+
+        food       0.90      0.90      0.90       564
+     service       0.90      0.86      0.88       519
+       price       0.93      0.43      0.59       276
+    ambiance       1.00      0.27      0.43       185
+    location       0.94      0.29      0.44       203
+
+   micro avg       0.91      0.68      0.77      1747
+   macro avg       0.93      0.55      0.65      1747
+weighted avg       0.92      0.68      0.74      1747
+ samples avg       0.69      0.58      0.61      1747
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -826,19 +795,18 @@ for t in thresholds:
         "macro_F1": f1_score(Y_test, Y_pred_t, average="macro", zero_division=0),
     })
 df_t = pd.DataFrame(rows).round(4)
-display(df_t)
+print(df_t.to_string(index=False))
 \end{lstlisting}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
 threshold  subset_acc  hamming  micro_F1  macro_F1
--  ---------  ----------  -------  --------  --------
-0  0.2        0.233       0.2696   0.7178    0.6984
-1  0.3        0.472       0.1468   0.8135    0.7877
-2  0.4        0.563       0.1136   0.8335    0.7697
-3  0.5        0.493       0.1382   0.7737    0.6470
-4  0.6        0.416       0.1658   0.6984    0.5129
-5  0.7        0.344       0.2028   0.5947    0.3919
+       0.2       0.230   0.2706    0.7170    0.6978
+       0.3       0.468   0.1478    0.8127    0.7889
+       0.4       0.561   0.1146    0.8320    0.7657
+       0.5       0.493   0.1372    0.7749    0.6467
+       0.6       0.415   0.1658    0.6989    0.5172
+       0.7       0.342   0.2036    0.5928    0.3877
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -858,7 +826,7 @@ threshold  subset_acc  hamming  micro_F1  macro_F1
 \item
   \textbf{사전 협소} --- \textquotesingle food\textquotesingle 에 \textquotesingle sushi\textquotesingle, \textquotesingle ramen\textquotesingle, \textquotesingle pasta\textquotesingle{} 같은 구체 음식명이 빠져 있으면 그 리뷰는 food=0이 되어 버림.
 \item
-  \textbf{정답에 노이즈가 있음} --- 우리 라벨 자체가 진짜 정답이 아닌 휴리스틱이라, 모델 성능을 이 정답에 비교하는 건 결국 “모델이 휴리스틱을 얼마나 따라 했나”를 잴 뿐.
+  \textbf{정답이 노이지} --- 우리 라벨 자체가 진짜 정답이 아닌 휴리스틱이라, 모델 성능을 이 정답에 비교하는 건 결국 “모델이 휴리스틱을 얼마나 따라 했나”를 잴 뿐.
 \item
   \textbf{빈 라벨}: 모든 항목이 0인 샘플도 있음 (\texttt{\{n\_labels\_per\_sample\ ==\ 0).sum()} 건). 실제 multi-label 데이터에선 보통 최소 한 라벨은 보장.
 \end{enumerate}
@@ -869,7 +837,7 @@ threshold  subset_acc  hamming  micro_F1  macro_F1
 
 \section{이 장에 등장한 라이브러리}
 
-\begin{booktable}{새로 등장한 라이브러리}{tab:ch06-libraries}
+\begin{booktable}{6장 새로 등장한 라이브러리}{tab:ch06-05}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -908,7 +876,7 @@ threshold  subset_acc  hamming  micro_F1  macro_F1
 
 \begin{faqBox}{Q1. (이론) Multi-class와 Multi-label은 정확히 어떻게 다른가요?}
 
-\begin{booktable}{Multi-class와 Multi-label 비교}{tab:ch06-multiclass-multilabel-comparison}
+\begin{booktable}{6장 FAQ 표}{tab:ch06-06}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -945,11 +913,11 @@ Loss & CrossEntropy & per-label BCE 평균 \\
 \begin{itemize}
 \tightlist
 \item
-  라벨 빈도가 비슷 + 모든 라벨 동등 중요 → 둘이 비슷, 단순히 macro 보면 됨.
+  라벨 빈도가 비슷 + 모든 라벨 동등 중요 \(\to\) 둘이 비슷, 단순히 macro 보면 됨.
 \item
-  빈도 차이가 크고 \emph{드문 라벨도 잘 잡고 싶다} → macro F1 (소수 클래스 보호).
+  빈도 차이가 크고 \emph{드문 라벨도 잘 잡고 싶다} \(\to\) macro F1 (소수 클래스 보호).
 \item
-  전체 시스템의 평균적 정확도가 핵심 → micro F1.
+  전체 시스템의 평균적 정확도가 핵심 \(\to\) micro F1.
 \end{itemize}
 
 실무에선 둘 다 보고 차이를 해석하는 게 표준입니다.
@@ -978,7 +946,7 @@ Y_clean = Y[mask_nonempty]
 df_clean = df[mask_nonempty]
 \end{lstlisting}
 
-이 장은 (a) 그대로 두기 --- 합성 데이터에서 “어느 키워드도 없는 짧은 리뷰”는 자연스러운 부분이라.
+이 장는 (a) 그대로 두기 --- 합성 데이터에서 “어느 키워드도 없는 짧은 리뷰”는 자연스러운 부분이라.
 
 \end{faqBox}
 
@@ -992,7 +960,7 @@ df_clean = df[mask_nonempty]
 \item
   \textbf{사람 라벨링}: 가장 정확하지만 비용 큼. crowdsourcing, 도메인 전문가, 사내 라벨러.
 \item
-  \textbf{약지도 학습 (weak supervision)}: 우리 장처럼 휴리스틱 라벨로 \emph{부트스트랩} → 학습된 모델로 \emph{재라벨링} → 사람이 검수. Snorkel 같은 프레임워크.
+  \textbf{약지도 학습 (weak supervision)}: 우리 장처럼 휴리스틱 라벨로 \emph{부트스트랩} \(\to\) 학습된 모델로 \emph{재라벨링} \(\to\) 사람이 검수. Snorkel 같은 프레임워크.
 \item
   \textbf{거대 모델 보조}: GPT-4/Claude 같은 LLM에게 라벨 지시문을 줘서 자동 태깅. 비용은 사람 라벨링보다 훨씬 저렴, 정확도는 도메인에 따라 다름.
 \end{enumerate}
@@ -1030,83 +998,63 @@ best_thresholds = []
 for k in range(K):
     best_t, best_f1 = 0.5, 0.0
     for t in np.linspace(0.1, 0.9, 17):
-        f1 = f1_score(
-            Y_test[:, k],
-            (proba_ml[:, k] >= t).astype(int),
-            zero_division=0,
-        )
+        f1 = f1_score(Y_test[:, k], (proba_ml[:, k] >= t).astype(int), zero_division=0)
         if f1 > best_f1:
             best_t, best_f1 = t, f1
     best_thresholds.append(best_t)
 
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}[firstnumber=16]
-threshold_table = pd.DataFrame({"aspect": ASPECTS, "best_threshold": best_thresholds})
-display(threshold_table)
+print(
+    f"라벨별 최적 임계값: "
+    f"{dict(zip(ASPECTS, best_thresholds))}"
+)
 \end{lstlisting}
 
 주의 주의: 위 코드는 \emph{test set} 으로 임계값을 정해 보여준 것 --- 실무에선 \emph{별도 검증 데이터셋} 으로 임계값을 정하고 test에는 적용만 해야 합니다 (안 그러면 test에 누설).
 
 \end{faqBox}
 
-\begin{faqBox}{Q7. (실무) \ref{ch:05}장의 OvR 비교와 이 장의 \inlinecode{OneVsRestClassifier(LogisticRegression())}는 어떻게 다른가요?}
+\begin{faqBox}{Q7. (실무) sklearn 에서 OvR 을 어떻게 구현하나요?}
 
-겉보기엔 같은 OvR 알고리즘처럼 보이지만, \ref{ch:05}장과 이 장에서의 역할은 다릅니다. \ref{ch:05}장의 OvR은 multi-class softmax와 구조를 비교하기 위한 \emph{진단용 대안} 이고, 이 장의 OvR은 multi-label 문제를 실제로 푸는 \emph{주 모델} 입니다.
+\textbf{한 줄 답}: \inlinecode{OneVsRestClassifier(LogisticRegression())} 로 wrap. multi-class·multi-label 양쪽에 통하는 \emph{표준 패턴} 입니다.
 
-\begin{booktable}{LogisticRegression OvR와 OneVsRestClassifier 비교}{tab:ch06-ovr-wrapper-comparison}
+\inlinecode{OneVsRestClassifier} wrapper 의 특징:
+
+\begin{booktable}{6장 FAQ 표}{tab:ch06-07}
 \begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}lll@{}}
+\begin{tabular}{@{}ll@{}}
 \toprule
-비교 항목 & \ref{ch:05}장 OvR 비교 & \ref{ch:06}장 multi-label OvR \\
+비교 항목 & \inlinecode{OneVsRestClassifier(LogisticRegression())} \\
 \midrule
 
-목적 & softmax multinomial과 비교 & multi-label을 직접 학습 \\
-받는 Y 형식 & 1D class index & 2D multi-hot label matrix \\
-예측 규칙 & K개 점수 중 하나를 선택 & label마다 독립 threshold 적용 \\
-확률 해석 & 한 샘플의 최종 예측은 한 클래스 & 여러 label이 동시에 1 가능 \\
-본문 역할 & 개념 비교용 보조 실험 & 이 장의 표준 모델 \\
+받는 Y 형식 & \textbf{1D + 2D 둘 다} (multi-class 또는 multi-label) \\
+내부 저장 & K개 \emph{별도} estimator 를 \inlinecode{.estimators\_} 리스트로, 각자 \inlinecode{coef\_} shape \inlinecode{(1,\ V)} \\
+base classifier & \textbf{임의 binary 분류기} 가능 (\inlinecode{SVC}, \inlinecode{RandomForestClassifier}, ...) \\
+multi-label 지원 & OK \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
-\textbf{핵심 차이}: multi-class에서는 최종적으로 \emph{하나의 클래스} 를 고르는 반면, multi-label에서는 각 label을 독립적으로 켜거나 끕니다. 최신 sklearn 코드에서는 구식 \inlinecode{multi\_class} 인자를 쓰지 않고, OvR 구조가 필요할 때 \inlinecode{OneVsRestClassifier(LogisticRegression())} 를 명시합니다.
-
-\Needspace{9\baselineskip}
+\Needspace{10\baselineskip}
 \begin{lstlisting}
 OneVsRestClassifier(LogisticRegression()).fit(X, y_1d)
-# OK: multi-class comparison, choose one class
-
+# OK multi-class
 OneVsRestClassifier(LogisticRegression()).fit(X, y_multihot)
-# OK: multi-label, threshold each label
+# OK multi-label
 
 from sklearn.svm import SVC
 OneVsRestClassifier(SVC(probability=True)).fit(X, y_multihot)
 # OK
 \end{lstlisting}
 
-\textbf{언제 무엇을 쓰나}:
-
-\begin{itemize}
-\tightlist
-\item
-  보통의 multi-class 문제라면 \inlinecode{LogisticRegression()} 으로 충분합니다. 최신 sklearn은 K가 3 이상일 때 multinomial softmax 동작을 자동으로 선택합니다.
-\item
-  multi-label이거나, K개 binary 모델을 \emph{명시적으로} 다루고 싶다면 \inlinecode{OneVsRestClassifier} 를 씁니다.
-\end{itemize}
-
-이 커리큘럼은 \ref{ch:05}장에서 \textbf{개념 비교용으로} OvR wrapper를 잠깐 보여주고, \ref{ch:06}장의 multi-label에서는 \textbf{표준 도구인} \inlinecode{OneVsRestClassifier} 로 정착합니다.
+이 커리큘럼은 \ref{ch:05}장 에선 \emph{모던 \inlinecode{LogisticRegression()} (multinomial 자동)} 으로 multi-class softmax 를 하고, \ref{ch:06}장의 multi-label 에서는 \inlinecode{OneVsRestClassifier} 로 \emph{명시적} 으로 K개 binary 학습을 표현합니다.
 \end{faqBox}
 
 
 
 \section{오류 실험 (선택)}
 
-같은 데이터를 multi-class로 잘못 풀면 어떻게 될까요? \emph{가장 강하게 활성된 항목 하나} 만 정답으로 골라보고 (argmax) multinomial LogReg를 학습합니다.
+같은 데이터를 multi-class로 잘못 풀면 어떻게 될까요? \emph{가장 강하게 활성된 항목 하나} 만 정답으로 골라 (argmax) multinomial LogReg를 학습합니다.
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -1115,10 +1063,14 @@ y_pseudo_class = Y[mask_nonempty].argmax(axis=1)
 texts = df["text"][mask_nonempty]
 
 X_pseudo = tfidf.transform(texts)
+
 model_pseudo = LogisticRegression(max_iter=1000)
 model_pseudo.fit(X_pseudo[:4000], y_pseudo_class[:4000])
 acc_pseudo = (model_pseudo.predict(X_pseudo[4000:]) == y_pseudo_class[4000:]).mean()
-display(pd.DataFrame([{"metric": "pseudo_multiclass_accuracy", "value": acc_pseudo}]))
+print(
+    f"강제로 multi-class화 한 경우 accuracy: "
+    f"{acc_pseudo:.4f}"
+)
 \end{lstlisting}
 
 힌트: 한 리뷰에 여러 항목이 동시에 있을 때 \emph{하나만} 정답으로 골라 학습하면 정보가 사라집니다. 정답이 임의 선택이라 모델이 어느 라벨을 골라야 할지 모호해지고, multi-label 결과보다 정보가 적은 모델이 됩니다.
@@ -1127,7 +1079,7 @@ display(pd.DataFrame([{"metric": "pseudo_multiclass_accuracy", "value": acc_pseu
 
 \section{Phase 0 마무리 --- sklearn vs HuggingFace 미리보기}
 
-이 장으로 scikit-learn 단계가 끝납니다. 다음 장(\ref{ch:07}장)부터 등장하는 \inlinecode{transformers} (Hugging Face)는 \emph{loss를 최소화한다} 는 목적은 같지만 \textbf{그 방식과 철학} 이 다릅니다. 큰 그림을 미리 잡아두면 Phase 1의 학습 코드가 익숙하게 이해할 수 있습니다.
+이 장로 scikit-learn 단계가 끝납니다. 다음 장(\ref{ch:07}장)부터 등장하는 \inlinecode{transformers} (Hugging Face)는 \emph{loss를 최소화한다} 는 목적은 같지만 \textbf{그 방식과 철학} 이 다릅니다. 큰 그림을 미리 잡아두면 Phase 1의 학습 코드가 익숙하게 이해할 수 있습니다.
 
 \subsection{핵심 차이 한 문장}
 
@@ -1142,14 +1094,14 @@ HF의 \inlinecode{Trainer}는 학습 \emph{과정} 을 명시합니다 --- 학�
 
 \subsection{한 표로 정리}
 
-\begin{booktable}{Phase 0와 Hugging Face 흐름 비교}{tab:ch06-phase0-hf-preview}
+\begin{booktable}{6장 한 표로 정리 표}{tab:ch06-08}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
 축 & sklearn (Phase 0) & HuggingFace / PyTorch (Phase 1+) \\
 \midrule
 
-\textbf{최적화 방식} & 수렴 보장 solver (lbfgs 등) 한 번 호출 → 전역 최적해 & 미니배치 SGD/Adam --- 학습자가 epoch·step 통제 \\
+\textbf{최적화 방식} & 수렴 보장 solver (lbfgs 등) 한 번 호출 \(\to\) 전역 최적해 & 미니배치 SGD/Adam --- 학습자가 epoch·step 통제 \\
 \textbf{언제 끝나나} & 수렴 기준(\inlinecode{tol}) 도달 시 자동 & 사용자 지정 epoch 수 (멈출 시점 직접 결정) \\
 \textbf{결정성} & convex 문제라 같은 입력엔 같은 출력 & non-convex --- random seed·batch 순서에 따라 매번 미세 차이 \\
 \textbf{에폭/배치 개념} & 보통 없음 --- 전체 데이터 한 번에 & \textbf{핵심} --- \inlinecode{num\_train\_epochs}, \inlinecode{batch\_size} 명시 필수 \\

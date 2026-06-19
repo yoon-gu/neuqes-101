@@ -24,49 +24,51 @@
 
 \index{0교차 엔트로피@교차 엔트로피}
 
-\index{0원-핫@원-핫}
+\index{0원 핫@원-핫}
 
 \index{0리파라미터화@리파라미터화}
 
 \index{0이진 분류 동등성@이진 분류 동등성}
 
-
 \index{1logit difference@logit difference}
 
-\index{12-logit softmax@2-logit softmax}
+\index{12 logit softmax@2-logit softmax}
 
-\index{1-logit sigmoid}
+\index{11 logit sigmoid@1-logit sigmoid}
 
 \index{1softmax CE@softmax CE}
 
-\index{1log-sum-exp@log-sum-exp}
+\index{1log sum exp@log-sum-exp}
 
-\index{1coef\_@coef\_}
+\index{1coef@coef\_}
 
-\index{1intercept\_@intercept\_}
+\index{1intercept@intercept\_}
 
-\index{1predict\_proba@predict\_proba}
+\index{1multi class@multi\_class}
+
+\index{1predict proba@predict\_proba}
 
 \index{1binary equivalence@binary equivalence}
 
-\index{1one-hot label@one-hot label}
+\index{1one hot label@one-hot label}
 
 \index{0두 로짓 차이@두 로짓 차이}
 
 \index{02차원 출력@2차원 출력}
 
-\index{1차원 출력}
+\index{01차원 출력@1차원 출력}
 
 \index{0소프트맥스 CE@소프트맥스 CE}
 
-\index{0원-핫 라벨@원-핫 라벨}
+\index{0원 핫 라벨@원-핫 라벨}
 
 \index{0동등성 증명@동등성 증명}
 
 
+
 \section{변화추적표}
 
-\begin{booktable}{변화추적표}{tab:ch04-tracking}
+\begin{booktable}{4장 변화추적표}{tab:ch04-01}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lllllll@{}}
 \toprule
@@ -76,19 +78,19 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 1 & (TF-IDF) & \inlinecode{TfidfVectorizer()} & Yelp 5,000 & --- & --- & --- \\
 2 & \inlinecode{LinearRegression()} & \inlinecode{TfidfVectorizer()} & Yelp (별점 1-5) & (1차원) & 없음 & \inlinecode{MSELoss} \\
 3 & \inlinecode{LogisticRegression()} & \inlinecode{TfidfVectorizer()} & Yelp 이진화 & (1차원) & sigmoid & \inlinecode{BCEWithLogitsLoss} \\
-\textbf{4 ← 여기} & \inlinecode{LogisticRegression()} (multinomial 자동) & \inlinecode{TfidfVectorizer()} & Yelp 이진화 (\ref{ch:03}장과 동일) & \textbf{(2차원)} & \textbf{softmax} & \textbf{\inlinecode{CrossEntropyLoss}} \\
+\textbf{4 \(\leftarrow\) 여기} & \inlinecode{LogisticRegression()} (multinomial 자동) & \inlinecode{TfidfVectorizer()} & Yelp 이진화 (\ref{ch:03}장과 동일) & \textbf{(2차원)} & \textbf{softmax} & \textbf{\inlinecode{CrossEntropyLoss}} \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
-전체 19개 장의 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
+전체 \ref{ch:20}장 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
 
 
 
 \section{변경점: \ref{ch:03}장 대비}
 
-\begin{booktable}{변경점 요약}{tab:ch04-diff}
+\begin{booktable}{4장 변경점 요약}{tab:ch04-02}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -106,7 +108,7 @@ Loss & \inlinecode{BCEWithLogitsLoss} & \textbf{\inlinecode{CrossEntropyLoss}} \
 \end{adjustbox}
 \end{booktable}
 
-\textbf{왜 같은 데이터에 같은 task인데 따로 장으로 다루나?} 두 방식은 출력 차원·activation·loss가 모두 바뀌어 보이지만 \emph{수학적으로 동등} 합니다. 이 동등성을 가장 단순한 sklearn 환경에서 미리 체험해두면, \ref{ch:10}장에서 BERT binary가 두 방식 중 어느 쪽을 골라도 같다는 사실을 자연스럽게 받아들일 수 있습니다.
+\textbf{왜 같은 데이터에 같은 task인데 따로 장로 다루나?} 두 방식은 출력 차원·activation·loss가 모두 바뀌어 보이지만 \emph{수학적으로 동등} 합니다. 이 동등성을 가장 단순한 sklearn 환경에서 미리 체험해두면, \ref{ch:10}·\ref{ch:11}장에서 BERT binary가 두 방식 중 어느 쪽을 골라도 같다는 사실을 자연스럽게 받아들일 수 있습니다.
 
 또 K=2를 통과하면 같은 식이 K=5(다음 장)로 자연스럽게 일반화됩니다 --- softmax/CE는 K가 무엇이든 작동합니다.
 
@@ -134,7 +136,7 @@ L = -\frac{1}{N}\sum_{i=1}^{N} \log \hat p_{i,\, y_i}
 
 \textbf{숫자로 감 잡기} (K=2, 정답 \(y = 1\)인 한 샘플):
 
-\begin{booktable}{CrossEntropyLoss 이진 분류 수치 예시}{tab:ch04-ce-binary-examples}
+\begin{booktable}{4장 손실 함수의 변화 - 교차 엔트로피 등장 표}{tab:ch04-03}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}llll@{}}
 \toprule
@@ -151,14 +153,12 @@ L = -\frac{1}{N}\sum_{i=1}^{N} \log \hat p_{i,\, y_i}
 
 \textbf{\ref{ch:03}장 BCE 표와 비교해보면} 손실값이 \emph{완전히 같습니다} (0.105 / 0.693 / 2.303). K=2에서 BCE와 CE가 동등하다는 첫 단서.
 
-\Needspace{9\baselineskip}
+\Needspace{6\baselineskip}
 \begin{lstlisting}
 criterion = nn.CrossEntropyLoss()
 loss = criterion(logits, targets)
 
-LogisticRegression(
-    max_iter=1000,
-)
+LogisticRegression(max_iter=1000)
 \end{lstlisting}
 
 
@@ -210,16 +210,22 @@ from sklearn.metrics import accuracy_score, log_loss
 \begin{lstlisting}[firstnumber=17]
 plt.rcParams["axes.unicode_minus"] = False
 
-dataset = load_dataset("yelp_review_full")
+dataset = load_dataset("Yelp/yelp_review_full")
 SAMPLE_SIZE = 5000
 ds = dataset["train"].shuffle(seed=42).select(range(SAMPLE_SIZE))
 df = ds.to_pandas()
-df["star"] = df["label"] + 1   # 0-4 → 1-5
+df["star"] = df["label"] + 1   # 0-4 -> 1-5
 \end{lstlisting}
 
 \begin{codeRead}
 \inlinecode{numpy, pandas, matplotlib, datasets, scikit-learn} 같은 주요 패키지를 불러옵니다.
 \end{codeRead}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+If the error persists, please let us know by opening an issue on GitHub (ht...
+\end{lstlisting}
+\par\vspace{0.9em}
 
 
 
@@ -236,22 +242,10 @@ tfidf = TfidfVectorizer(max_features=10000)
 X_train = tfidf.fit_transform(X_text_train)
 X_test = tfidf.transform(X_text_test)
 
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 데이터를 불러오고 학습에 맞는 형태로 정리하는 단계입니다. 이어지는 블록에서는 예측 결과를 지표와 표로 요약하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=12]
-setup_summary = pd.DataFrame([
-    {"object": "X_train", "shape": X_train.shape},
-    {"object": "X_test", "shape": X_test.shape},
-    {"object": "y_train", "shape": y_train.shape},
-    {"object": "y_test", "shape": y_test.shape},
-])
-label_summary = pd.DataFrame([{"metric": "positive_rate_train", "value": y_train.mean()}])
-
-display(setup_summary)
-display(label_summary)
+print(
+    f"X_train: {X_train.shape}, positive rate: "
+    f"{y_train.mean():.1%}"
+)
 \end{lstlisting}
 
 \begin{codeRead}
@@ -260,15 +254,7 @@ display(label_summary)
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-object   shape
--  -------  -------------
-0  X_train  (3232, 10000)
-1  X_test   (808, 10000)
-2  y_train  (3232,)
-3  y_test   (808,)
-   metric               value
--  -------------------  --------
-0  positive_rate_train  0.494121
+X_train: (3232, 10000), positive rate: 49.4%
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -276,7 +262,7 @@ object   shape
 
 \section{실습: 두 방식을 나란히 학습}
 
-\begin{booktable}{sigmoid 방식과 softmax 방식 비교}{tab:ch04-probability-comparison}
+\begin{booktable}{4장 실습: 두 방식을 나란히 학습 표}{tab:ch04-04}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lllll@{}}
 \toprule
@@ -303,12 +289,9 @@ model_b.fit(X_train, y_train)
 acc_a = accuracy_score(y_test, model_a.predict(X_test))
 acc_b = accuracy_score(y_test, model_b.predict(X_test))
 
-accuracy_comparison = pd.DataFrame([
-    {"method": "A_sigmoid_bce", "accuracy": acc_a},
-    {"method": "B_softmax_ce", "accuracy": acc_b},
-    {"method": "absolute_difference", "accuracy": abs(acc_a - acc_b)},
-])
-display(accuracy_comparison)
+print(f"Method A (sigmoid + BCE) accuracy: {acc_a:.4f}")
+print(f"Method B (softmax + CE)  accuracy: {acc_b:.4f}")
+print(f"Diff: {abs(acc_a - acc_b):.4f}")
 \end{lstlisting}
 
 \begin{codeRead}
@@ -317,11 +300,9 @@ display(accuracy_comparison)
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-method               accuracy
--  -------------------  --------
-0  A_sigmoid_bce        0.863861
-1  B_softmax_ce         0.863861
-2  absolute_difference  0.000000
+Method A (sigmoid + BCE) accuracy: 0.8639
+Method B (softmax + CE)  accuracy: 0.8639
+Diff: 0.0000
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -332,53 +313,37 @@ method               accuracy
 proba_a = model_a.predict_proba(X_test)   # (N, 2)
 proba_b = model_b.predict_proba(X_test)   # (N, 2)
 
+print(f"Method A predict_proba shape: {proba_a.shape}")
+print(f"Method B predict_proba shape: {proba_b.shape}")
+print(
+    f"  (sklearn returns [P(0), P(1)] for both — sigmoid"
+    f"output expanded to two columns)"
+)
+
 p_a, p_b = proba_a[:, 1], proba_b[:, 1]
-
-shape_comparison = pd.DataFrame([
-    {"method": "A_sigmoid_bce", "predict_proba_shape": proba_a.shape},
-    {"method": "B_softmax_ce", "predict_proba_shape": proba_b.shape},
-])
-probability_preview = pd.DataFrame({
-    "P_y1_A": p_a[:5].round(4),
-    "P_y1_B": p_b[:5].round(4),
-})
-difference_summary = pd.DataFrame([
-    {"metric": "max_absolute_difference", "value": np.abs(p_a - p_b).max()},
-    {"metric": "mean_absolute_difference", "value": np.abs(p_a - p_b).mean()},
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 모델 출력을 확률이나 예측값으로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{7\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-])
-
-display(shape_comparison)
-display(probability_preview)
-display(difference_summary)
+print(f"\nFirst 5 P(y=1):")
+print(f"Method A: {p_a[:5].round(4)}")
+print(f"Method B: {p_b[:5].round(4)}")
+print(f"\nMax diff:  {np.abs(p_a - p_b).max():.4f}")
+print(f"Mean diff: {np.abs(p_a - p_b).mean():.4f}")
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{proba\_a = ...}에서는 클래스별 예측 확률을 계산합니다. \textbf{2행}의 \inlinecode{proba\_b = ...}에서는 클래스별 예측 확률을 계산합니다. \textbf{4행}의 \inlinecode{p\_a, p\_b = proba\_a[:, 1],...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6--9행}의 \inlinecode{shape\_comparison = ...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{10--13행}의 \inlinecode{probability\_preview = ...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{14--17행}의 \inlinecode{difference\_summary = ...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다.
+\textbf{1행}의 \inlinecode{proba\_a = ...}에서는 클래스별 예측 확률을 계산합니다. \textbf{2행}의 \inlinecode{proba\_b = ...}에서는 클래스별 예측 확률을 계산합니다. \textbf{11행}의 \inlinecode{p\_a, p\_b = proba\_a[:, 1],...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-method         predict_proba_shape
--  -------------  -------------------
-0  A_sigmoid_bce  (808, 2)
-1  B_softmax_ce   (808, 2)
-   P_y1_A  P_y1_B
--  ------  ------
-0  0.4485  0.4485
-1  0.0999  0.0999
-2  0.1638  0.1638
-3  0.6661  0.6661
-4  0.7578  0.7578
-   metric                    value
--  ------------------------  -----
-0  max_absolute_difference   0.0
-1  mean_absolute_difference  0.0
+Method A predict_proba shape: (808, 2)
+Method B predict_proba shape: (808, 2)
+(sklearn returns [P(0), P(1)] for both -- sigmoid output expanded to two co...
+
+First 5 P(y=1):
+Method A: [0.4477 0.1001 0.1591 0.6653 0.758 ]
+Method B: [0.4477 0.1001 0.1591 0.6653 0.758 ]
+
+Max diff:  0.0000
+Mean diff: 0.0000
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -420,28 +385,44 @@ z1_arr = np.array([ 1.0, 0.5, -0.5, 2.0])
 softmax_p1  = np.exp(z1_arr) / (np.exp(z0_arr) + np.exp(z1_arr))
 sigmoid_diff = 1.0 / (1.0 + np.exp(-(z1_arr - z0_arr)))
 
-softmax_sigmoid_check = pd.DataFrame({
-    "z0": z0_arr,
-    "z1": z1_arr,
-    "softmax_p1": softmax_p1,
-    "sigmoid_z1_minus_z0": sigmoid_diff,
-    "absolute_difference": np.abs(softmax_p1 - sigmoid_diff),
-})
-display(softmax_sigmoid_check)
+print(
+    f"{'z_0':>6} {'z_1':>6}    {'softmax([z0,z1])_1':>22}    "
+    f"{'sigmoid(z1-z0)':>16}"
+)
+print("-" * 60)
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=12]
+for i in range(len(z0_arr)):
+    print(
+        f"{z0_arr[i]:>6.1f} {z1_arr[i]:>6.1f}    {softmax_p1[i]:>22.8f}    "
+        f"{sigmoid_diff[i]:>16.8f}"
+    )
+
+print(
+    f"\nMax diff: "
+    f"{np.abs(softmax_p1 - sigmoid_diff).max():.2e}  (numerical noise)"
+)
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{z0\_arr = ...}에서는 비교 실험에 사용할 작은 배열을 만듭니다. \textbf{2행}의 \inlinecode{z1\_arr = ...}에서는 비교 실험에 사용할 작은 배열을 만듭니다. \textbf{4행}의 \inlinecode{softmax\_p1 = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{sigmoid\_diff = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{7--13행}의 \inlinecode{softmax\_sigmoid\_check = ...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다.
+\textbf{1행}의 \inlinecode{z0\_arr = ...}에서는 비교 실험에 사용할 작은 배열을 만듭니다. \textbf{2행}의 \inlinecode{z1\_arr = ...}에서는 비교 실험에 사용할 작은 배열을 만듭니다. \textbf{4행}의 \inlinecode{softmax\_p1 = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{sigmoid\_diff = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-z0    z1    softmax_p1  sigmoid_...  absolute...
--  ----  ----  ----------  -----------  -----------
-0  -2.0  1.0   0.952574    0.952574     2.220446...
-1  0.0   0.5   0.622459    0.622459     0.000000...
-2  1.5   -0.5  0.119203    0.119203     2.775558...
-3  3.0   2.0   0.268941    0.268941     0.000000...
+z_0    z_1        softmax([z0,z1])_1      sigmoid(z1-z0)
+
+------------------------------------------------------------
+  -2.0    1.0                0.95257413          0.95257413
+   0.0    0.5                0.62245933          0.62245933
+   1.5   -0.5                0.11920292          0.11920292
+   3.0    2.0                0.26894142          0.26894142
+
+Max diff: 2.22e-16  (numerical noise)
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -457,29 +438,69 @@ z0    z1    softmax_p1  sigmoid_...  absolute...
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
-coef_shape_check = pd.DataFrame([
-    {"method": "A_sigmoid_bce", "coef_shape": model_a.coef_.shape, "intercept_shape": model_a.intercept_.shape},
-    {"method": "B_softmax_ce", "coef_shape": model_b.coef_.shape, "intercept_shape": model_b.intercept_.shape},
-])
-parameter_difference = pd.DataFrame([
-    {"metric": "coef_max_absolute_difference", "value": np.abs(model_a.coef_ - model_b.coef_).max()},
-    {"metric": "intercept_max_absolute_difference", "value": np.abs(model_a.intercept_ - model_b.intercept_).max()},
-])
+print(f"Method A coef_ shape:      {model_a.coef_.shape}")
+print(f"Method B coef_ shape:      {model_b.coef_.shape}")
+print(
+    f"Method A intercept_ shape: "
+    f"{model_a.intercept_.shape}"
+)
+print(
+    f"Method B intercept_ shape: "
+    f"{model_b.intercept_.shape}"
+)
+print()
+print(
+    "-> both (1, V) — sklearn collapses K=2 multinomial "
+    "to binary form"
+)
+print()
+\end{lstlisting}
 
-display(coef_shape_check)
-display(parameter_difference)
+\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=17]
+print(
+    f"coef_ max diff:      "
+    f"{np.abs(model_a.coef_ - model_b.coef_).max():.2e}"
+)
+print(
+    f"intercept_ max diff: "
+    f"{np.abs(model_a.intercept_ - model_b.intercept_).max():.2e}"
+)
+print()
+print(
+    "(small difference is only solver convergence noise; "
+    "same model essentially)"
+)
+print()
+print(
+    "True (2, V) two-logit head appears in PyTorch "
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{5\baselineskip}
+\begin{lstlisting}[firstnumber=33]
+    "(10장/11 BERT binary)."
+)
 \end{lstlisting}
 
 \noindent\textbf{출력.}
 \begin{lstlisting}[style=bookoutput]
-method         coef_shape  intercept_shape
--  -------------  ----------  ---------------
-0  A_sigmoid_bce  (1, 10000)  (1,)
-1  B_softmax_ce   (1, 10000)  (1,)
-   metric                    value
--  ------------------------  -----
-0  coef_max_absolute_dif...  0.0
-1  intercept_max_absolut...  0.0
+Method A coef_ shape:      (1, 10000)
+Method B coef_ shape:      (1, 10000)
+Method A intercept_ shape: (1,)
+Method B intercept_ shape: (1,)
+
+→ both (1, V) -- sklearn collapses K=2 multinomial to binary form
+
+coef_ max diff:      0.00e+00
+intercept_ max diff: 0.00e+00
+
+(small difference is only solver convergence noise; same model essentially)
+
+True (2, V) two-logit head appears in PyTorch (Ch 10/11 BERT binary).
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -487,14 +508,14 @@ method         coef_shape  intercept_shape
 
 \section{이 장에 등장한 라이브러리}
 
-\begin{booktable}{새로 등장한 라이브러리}{tab:ch04-libraries}
+\begin{booktable}{4장 새로 등장한 라이브러리}{tab:ch04-05}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
 이름 & 한 줄 설명 & 다음 장에서 \\
 \midrule
 
-\inlinecode{LogisticRegression()} (multinomial 자동) & softmax + CE 다중 분류 (이 장엔 K=2) & \ref{ch:05}장에서 K=5로 확장, \ref{ch:11}장 BERT multi-class에서 같은 패러다임 \\
+\inlinecode{LogisticRegression()} & 데이터가 multi-class 면 multinomial(softmax+CE) 자동, binary 면 sigmoid+BCE (이 장엔 K=2) & \ref{ch:05}장에서 K=5 로 확장, \ref{ch:11}장 BERT multi-class 에서 같은 패러다임 \\
 \inlinecode{sklearn.metrics.log\_loss} & CE/BCE 평가 함수 (multi-class 호환) & --- \\
 \bottomrule
 \end{tabular}
@@ -562,7 +583,7 @@ method         coef_shape  intercept_shape
   \textbf{softmax+CE (방식 B, num\_labels=2)}: BERT/PyTorch 기본, 딥러닝 표준. 다중 클래스로 일반화하기 자연스럽고 라이브러리 코드가 단순(같은 헤드/같은 loss로 K가 2이든 N이든 호환).
 \end{itemize}
 
-이 커리큘럼의 BERT 장(\ref{ch:09}--\ref{ch:13}장)는 방식 B가 기본이라 이 장에서 미리 익숙해지는 게 의미 있습니다. \ref{ch:10}장에서 두 방식을 BERT로 다시 비교합니다.
+이 커리큘럼의 BERT 장(\ref{ch:09}--\ref{ch:14}장)는 방식 B가 기본이라 이 장에서 미리 익숙해지는 게 의미 있습니다. \ref{ch:10}·\ref{ch:11}장에서 두 방식을 BERT로 별도 학습해 비교합니다.
 
 \end{faqBox}
 
@@ -579,13 +600,13 @@ method         coef_shape  intercept_shape
 
 분모가 모든 클래스 \(e^{z_j}\)의 합이라 분자들이 그 합을 정확히 분할 --- 합이 1.
 
-\textbf{왜 이런 구조?} 모델 출력을 “확률 분포”로 해석하고 싶어서입니다. 확률 분포는 정의상 \(\sum_k p_k = 1\) 이고 각 항이 {[}0, 1{]}. softmax는 임의 실수 logit 벡터를 그런 분포로 보내는 가장 자연스러운 변환 중 하나(지수 함수 = 단조증가 + 양수 보장 → 정규화).
+\textbf{왜 이런 구조?} 모델 출력을 “확률 분포”로 해석하고 싶어서입니다. 확률 분포는 정의상 \(\sum_k p_k = 1\) 이고 각 항이 {[}0, 1{]}. softmax는 임의 실수 logit 벡터를 그런 분포로 보내는 가장 자연스러운 변환 중 하나(지수 함수 = 단조증가 + 양수 보장 \(\to\) 정규화).
 
 \end{faqBox}
 
-\begin{faqBox}{Q4. (실무) sklearn binary에서 \inlinecode{coef\_.shape}가 왜 \inlinecode{(1,\ V)} 인가요?}
+\begin{faqBox}{Q4. (실무) sklearn binary 에서 \inlinecode{coef\_.shape} 가 왜 \inlinecode{(1,\ V)} 인가요? --- 방식 A·B 가 왜 같은 결과로 수렴하는가}
 
-위 본문에서 확인했듯 K=2 softmax는 두 logit 중 하나가 잉여(redundant)입니다 --- \(z_1 - z_0\) 만 의미가 있어요. sklearn은 이걸 알고 \textbf{K=2 multinomial을 자동으로 binary form으로 collapse} 시킵니다. 그래서 \inlinecode{coef\_} 가 \inlinecode{(2,\ V)} 가 아니라 \inlinecode{(1,\ V)}, \inlinecode{intercept\_} 도 \inlinecode{(1,)} 로 저장됩니다.
+위 본문에서 확인했듯 K=2 softmax 는 두 logit 중 하나가 잉여(redundant)입니다 --- \(z_1 - z_0\) 만 의미가 있어요. sklearn 은 이걸 알고 \textbf{K=2 multinomial 을 자동으로 binary form 으로 collapse} 시킵니다. 그래서 \inlinecode{coef\_} 가 \inlinecode{(2,\ V)} 가 아니라 \inlinecode{(1,\ V)}, \inlinecode{intercept\_} 도 \inlinecode{(1,)} 로 저장됩니다.
 
 \Needspace{5\baselineskip}
 \begin{lstlisting}
@@ -594,15 +615,37 @@ LogisticRegression().fit(X, y_binary).coef_.shape
 LogisticRegression().fit(X, y_3class).coef_.shape
 \end{lstlisting}
 
-그래서 방식 A와 방식 B가 sklearn 안에서는 사실상 같은 모델이고, predict\_proba도 미세한 수치 오차 빼고 일치합니다. 진짜 \emph{두 별개의 logit head} 가 살아 있는 형태는 프레임워크가 collapse하지 않는 환경 --- PyTorch에서 \inlinecode{nn.Linear(H,\ 2)} 를 직접 만들 때 --- 비로소 등장합니다 (\ref{ch:10}장).
+그래서 방식 A와 방식 B가 sklearn 안에서는 사실상 같은 모델이고, predict\_proba 도 미세한 수치 오차 빼고 일치합니다. 진짜 \emph{두 별개의 logit head} 가 살아 있는 형태는 프레임워크가 collapse 하지 않는 환경 --- PyTorch 에서 \inlinecode{nn.Linear(H,\ 2)} 를 직접 만들 때 --- 비로소 등장합니다 (\ref{ch:10}·\ref{ch:11}장).
 
 \end{faqBox}
 
-\begin{faqBox}{Q5. (이론) 최신 sklearn에서는 왜 \inlinecode{multi\_class} 인자를 쓰지 않나요?}
+\begin{faqBox}{Q5. (이론) sklearn 에서 softmax 와 OvR 을 어떻게 구분하나요?}
 
-최신 sklearn에서는 \inlinecode{LogisticRegression()} 이 데이터의 클래스 개수를 보고 적절한 multi-class 동작을 선택합니다. \inlinecode{lbfgs} 같은 기본 solver에서는 K가 3 이상이면 multinomial softmax 방식으로 학습하고, K=2 binary에서는 수학적으로 동등한 1차원 binary form으로 collapse합니다.
+\inlinecode{LogisticRegression()} 의 동작은 \textbf{학습 데이터의 클래스 개수} 가 결정합니다.
 
-따라서 이 원고의 실행 코드는 더 이상 \inlinecode{multi\_class="multinomial"} 을 명시하지 않습니다. 해당 인자는 sklearn 1.5부터 deprecated되었고, 이후 버전에서는 제거될 수 있습니다. 개념 설명에서는 \emph{multinomial/softmax}라는 말을 유지하되, API 호출은 \inlinecode{LogisticRegression(max\_iter=1000)} 처럼 씁니다.
+\begin{booktable}{4장 FAQ 표}{tab:ch04-06}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{@{}lll@{}}
+\toprule
+데이터 & 자동 학습 형태 & logit head \\
+\midrule
+
+binary (K=2) & sigmoid + BCE & \inlinecode{coef\_} shape \inlinecode{(1,\ V)} \\
+multi-class (K\(\ge\)3) & softmax + CE (multinomial) & \inlinecode{coef\_} shape \inlinecode{(K,\ V)} \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{booktable}
+
+\textbf{K개 독립 binary} (multi-label 또는 명시적 OvR) 가 필요하면 별도 wrapper:
+
+\Needspace{5\baselineskip}
+\begin{lstlisting}
+from sklearn.multiclass import OneVsRestClassifier
+OneVsRestClassifier(LogisticRegression()).fit(X, Y)
+\end{lstlisting}
+
+이 장의 방식 A·B 둘 다 \inlinecode{LogisticRegression()} 한 줄로 학습합니다 --- binary 데이터라 sklearn 이 같은 collapse 형태로 만들어 둘이 \emph{수치적으로 동일} (FAQ Q4). 두 방식이 \emph{진짜로 분리된} 학습이 되려면 PyTorch nn.Linear 를 직접 짜야 합니다 (\ref{ch:10}·\ref{ch:11}장).
 
 \end{faqBox}
 
@@ -624,7 +667,7 @@ AutoModelForSequenceClassification.from_pretrained(
 )
 \end{lstlisting}
 
-이 커리큘럼의 \ref{ch:10}장이 두 방식을 BERT로 다시 비교하는 장입니다. 이 장에서 익힌 동등성이 그 비교의 출발점이 됩니다.
+이 커리큘럼의 \ref{ch:10}·\ref{ch:11}장이 두 방식을 BERT로 \emph{별도 학습} 해 비교하는 장입니다. 이 장에서 익힌 동등성이 그 비교의 출발점이 됩니다.
 \end{faqBox}
 
 
@@ -641,12 +684,9 @@ p_original  = np.exp(z)         / np.sum(np.exp(z))
 p_shift5    = np.exp(z + 5)     / np.sum(np.exp(z + 5))
 p_zero_z0   = np.exp(z - z[0])  / np.sum(np.exp(z - z[0]))
 
-shift_check = pd.DataFrame([
-    {"case": "original", "probability": p_original.round(6)},
-    {"case": "shift_plus_5", "probability": p_shift5.round(6)},
-    {"case": "zero_z0", "probability": p_zero_z0.round(6)},
-])
-display(shift_check)
+print(f"softmax([1, 2]):    {p_original.round(6)}")
+print(f"softmax([6, 7]):    {p_shift5.round(6)}")
+print(f"softmax([0, 1]):    {p_zero_z0.round(6)}")
 \end{lstlisting}
 
 힌트: 세 결과가 모두 같습니다. 두 logit 중 \emph{하나는 자유롭게 정할 수 있고} 의미 있는 정보는 차이 \(z_1 - z_0\) 뿐 --- 만약 \(z_0 = 0\) 으로 고정하면 \(z_1\) 만 학습하면 됩니다. 이게 sklearn이 K=2 multinomial을 binary form으로 collapse하는 형식적 근거이고, K=2 softmax가 sigmoid의 리파라미터화에 불과한 이유입니다.
@@ -664,7 +704,7 @@ display(shift_check)
 \item
   수식·코드 변화 거의 없음 --- softmax/CE는 K가 무엇이든 같은 형태
 \item
-  5×5 confusion matrix가 대각선 근처에 몰리는 ordinal 흔적 관찰
+  5\(\times\)5 confusion matrix가 대각선 근처에 몰리는 ordinal 흔적 관찰
 \item
   multinomial vs OvR 비교 (\ref{ch:06}장 multi-label로 가는 다리)
 \end{itemize}

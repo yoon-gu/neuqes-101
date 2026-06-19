@@ -122,9 +122,9 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Loss \\
 \midrule
 
 23 & 작은 BERT (한국어, scratch) + 분류 head & \inlinecode{klue/bert-base} (가져옴) & NSMC 이진 & \inlinecode{Linear(H,\ 2)} & \inlinecode{CrossEntropyLoss} \\
-24 & 작은 GPT2 (약 3M, scratch) & BPE (직접 학습, 영어, vocab 2,048) & 영어 TinyStories 30K stories & \inlinecode{Linear(H,\ V)} (LM head, weight tied) & \inlinecode{CrossEntropyLoss} (next-token) \\
+24 & 작은 GPT2 (약 3.72M, scratch) & BPE (직접 학습, 영어, vocab 2,048) & 영어 TinyStories 30K stories & \inlinecode{Linear(H,\ V)} (LM head, weight tied) & \inlinecode{CrossEntropyLoss} (next-token) \\
 25 & \inlinecode{gpt2} (124M, OpenAI WebText 사전학습) & BPE (gpt2 그대로, vocab 50,257) & 영어 TinyStories (\ref{ch:24}장과 동일) & \inlinecode{Linear(H,\ V)} (LM head 그대로) & \inlinecode{CrossEntropyLoss} (next-token) - continual pretraining \\
-\textbf{26 (현재)} & \textbf{작은 GPT2 (약 3M, scratch)} & \textbf{BBPE (직접 학습, 한국어, vocab 약 4,000)} & \textbf{한국어 TinyStories 30K stories} & \textbf{\inlinecode{Linear(H,\ V)} (LM head, weight tied)} & \textbf{\inlinecode{CrossEntropyLoss} (next-token)} \\
+\textbf{26 (현재)} & \textbf{작은 GPT2 (4.22M, scratch)} & \textbf{BBPE (직접 학습, 한국어, vocab 약 4,000)} & \textbf{한국어 TinyStories 30K stories} & \textbf{\inlinecode{Linear(H,\ V)} (LM head, weight tied)} & \textbf{\inlinecode{CrossEntropyLoss} (next-token)} \\
 27 (다음) & KoGPT2 (\inlinecode{skt/kogpt2-base-v2}, 125M, 대규모 한국어 사전학습) & KoGPT2 BBPE (그대로) & 한국어 TinyStories (\ref{ch:26}장과 동일) & \inlinecode{Linear(H,\ V)} (LM head 그대로) & \inlinecode{CrossEntropyLoss} (next-token) - continual pretraining \\
 \bottomrule
 \end{tabular}
@@ -172,7 +172,7 @@ Phase 4 는 영어 (\ref{ch:24}--\ref{ch:25}장) 와 한국어 (26-27장) 가 \e
 토크나이저 학습 코퍼스 & 영어 TinyStories & \textbf{한국어 TinyStories} \\
 토크나이저 알고리즘 & byte-level BPE (vocab 2,048) & \textbf{byte-level BPE (BBPE, vocab 약 4,000)} - 한글은 byte 단위라 어휘를 약간 키움 \\
 데이터 & \inlinecode{roneneldan/TinyStories} (영어 동화) & \textbf{\inlinecode{g0ster/TinyStories-Korean}} (한국어 번역 동화) \\
-본체 구조 & \inlinecode{GPT2Config(n\_layer=4,\ n\_head=4,\ n\_embd=256)} 약 3M & (그대로) \\
+본체 구조 & \inlinecode{GPT2Config(n\_layer=4,\ n\_head=4,\ n\_embd=256)} 약 3.72M & 같은 구조, vocab 4,000으로 \textbf{4.22M} \\
 모델 클래스 & \inlinecode{GPT2LMHeadModel(config)} random init & (그대로) \\
 Collator & \inlinecode{DataCollatorForLanguageModeling(mlm=False)} & (그대로) \\
 Loss & \inlinecode{CrossEntropyLoss} (next-token, vocab 2,048 logits) & \textbf{\inlinecode{CrossEntropyLoss}} (next-token, vocab 약 4,000 logits) \\
@@ -263,7 +263,7 @@ SFT / Instruction Tuning & 28장 (한국어 SFT) & \textbf{prompt 부분 \inline
 
 \section{\texorpdfstring{Loss --- \inlinecode{CrossEntropyLoss} (next-token), \ref{ch:24}장과 동일}{Loss --- CrossEntropyLoss (next-token), \ref{ch:24}장과 동일}}
 
-이 장는 \emph{언어만 바뀌고} loss 함수는 \ref{ch:24}장과 동일한 next-token CrossEntropyLoss. 다만 vocab 크기가 달라 random baseline \inlinecode{ln\ V} 가 미세하게 이동합니다.
+이 장은 \emph{언어만 바뀌고} loss 함수는 \ref{ch:24}장과 동일한 next-token CrossEntropyLoss. 다만 vocab 크기가 달라 random baseline \inlinecode{ln\ V} 가 미세하게 이동합니다.
 
 \subsection{수식 (\ref{ch:24}장과 동일)}
 
@@ -313,7 +313,8 @@ BBPE (\ref{ch:26}장, 한국어) & 약 4,000 & \textbf{약 8.29} & 약 4,000 \\
 
 균등 추측 (random init 직후) & \(1/4000 = 2.5 \times 10^{-4}\) & \textbf{약 8.29} --- random baseline \\
 약하게 학습 (정답 확률 0.02) & \(0.02\) & 3.91 \\
-잘 학습된 작은 GPT (정답 확률 0.05-0.15) & \(0.05\) - \(0.15\) & \textbf{1.9 - 3.0} --- 이 장 목표 영역 \\
+본 장 실측 (1500 step) & 약 \(0.011\) - \(0.020\) & \textbf{train\_loss 4.55 / logged loss 3.89} \\
+더 학습된 작은 GPT (참고 목표) & \(0.05\) - \(0.15\) & 1.9 - 3.0 \\
 큰 사전학습 GPT (정답 확률 0.3+) & \(0.3\) & 1.20 \\
 \bottomrule
 \end{tabular}
@@ -327,11 +328,11 @@ BBPE (\ref{ch:26}장, 한국어) & 약 4,000 & \textbf{약 8.29} & 약 4,000 \\
 \item
   학습 첫 step loss 가 약 8.3 부근이면 random init 직후 \emph{균등 추측} 상태. 첫 100 step 안에 빠르게 떨어지면 vocab + 모델 정상.
 \item
-  목표는 \emph{vocab 후보를 좁히는} 단계 (약 2.5-3.0). 한국어 TinyStories 의 단순한 어휘·문법 덕분에 3M 짜리 작은 모델로도 도달 가능 --- \ref{ch:24}장 (영어) 와 같은 결.
+  본 장의 1500 step 실측은 요약 \inlinecode{train\_loss=4.5487}, 마지막 logged loss 약 3.89입니다. 한국어 번역 데이터와 더 큰 vocab 때문에 \ref{ch:24}장보다 높게 머무는 것이 정상입니다.
 \end{itemize}
 
 \begin{quote}
-\ref{ch:24}장의 \(\ln(2048) \approx 7.62\) 와 같은 직관입니다. \emph{vocab 차원} 만 약간 커진 것 (약 4,000) --- 학습 동역학에는 영향 없고, \emph{학습 종료 loss 의 절대값} 을 영어 장와 비교할 때만 미세 보정합니다.
+\ref{ch:24}장의 \(\ln(2048) \approx 7.62\) 와 같은 직관입니다. \emph{vocab 차원} 만 약간 커진 것 (약 4,000) --- random baseline과 학습 종료 loss의 절대값을 해석할 때 반드시 함께 봐야 합니다.
 \end{quote}
 
 
@@ -908,7 +909,7 @@ print(
 \begin{itemize}
 \tightlist
 \item
-  \inlinecode{n\_layer=4,\ n\_head=4,\ n\_embd=256} \(\to\) 약 3M params (\ref{ch:24}장과 동일)
+  \inlinecode{n\_layer=4,\ n\_head=4,\ n\_embd=256} \(\to\) 실측 4.22M params (vocab 4,000 영향)
 \item
   \inlinecode{n\_positions\ =\ BLOCK\_SIZE\ =\ 128}
 \item
@@ -969,6 +970,18 @@ print(
     f"{model.lm_head.out_features})"
 )
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+#params           : 4.22 M
+weight tying      : True  (lm_head <-> wte shared)
+fp32 weight size  : 16.08 MiB
+
+model: GPT2LMHeadModel
+  - body : GPT2Model  (Decoder, causal attention)
+  - head : Linear(in=256, out=4000)
+\end{lstlisting}
+\par\vspace{0.9em}
 
 \section{\texorpdfstring{학습 \emph{전} generation - 비교 기준선 (random init baseline)}{학습 전 generation - 비교 기준선 (random init baseline)}}
 
@@ -1162,6 +1175,17 @@ if torch.cuda.is_available():
     )
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+=== training summary ===
+elapsed       : 0.90 min
+global_step   : 1500
+train_loss    : 4.5487
+random baseline (ln vocab): 8.2940
+final peak    : 66 MiB
+\end{lstlisting}
+\par\vspace{0.9em}
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 # loss curve + VRAM trace
@@ -1213,17 +1237,17 @@ plt.tight_layout(); plt.show()
 \includegraphics[width=0.88\linewidth]{assets/figures/ch26_loss_vram_trace.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch26-loss-vram-trace}의 왼쪽 패널은 한국어 BBPE vocab 기준의 random baseline \inlinecode{ln(4000)} 근처에서 시작해 next-token loss가 빠르게 낮아지는 흐름을 보여줍니다. 오른쪽 패널은 \ref{ch:24}장과 같은 약 3M 모델 구조가 T4 VRAM 범위 안에서 안정적으로 학습되는지 확인하는 지표입니다.
+\textbf{그림 읽기} --- 그림~\ref{fig:ch26-loss-vram-trace}의 왼쪽 패널은 한국어 BBPE vocab 기준의 random baseline \inlinecode{ln(4000)} 근처에서 시작해 next-token loss가 빠르게 낮아지는 흐름을 보여줍니다. 오른쪽 패널은 \ref{ch:24}장과 같은 4-layer 구조가 vocab 4,000 설정에서 실측 4.22M params로 커져도 T4 VRAM 범위 안에서 안정적으로 학습되는지 확인하는 지표입니다.
 
 \begin{bookfigurelabel}[H]{Scratch Causal LM의 영어/한국어 학습 손실 비교}{fig:ch26-ch24-loss-compare}
 \includegraphics[width=0.72\linewidth]{assets/figures/ch26_ch24_loss_compare.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch26-ch24-loss-compare}는 \ref{ch:24}장과 \ref{ch:26}장의 대칭 관계를 loss 관점에서 압축합니다. 한국어는 vocab 크기가 약 4,000으로 커져 random baseline이 조금 높지만, 학습 후 손실 영역은 영어 scratch 장과 비슷한 범위로 내려옵니다. 이 비교는 언어가 바뀌어도 작은 GPT + 30K stories from-scratch 학습 동역학이 유사하다는 본 장의 검증 가설을 뒷받침합니다.
+\textbf{그림 읽기} --- 그림~\ref{fig:ch26-ch24-loss-compare}는 \ref{ch:24}장과 \ref{ch:26}장의 대칭 관계를 loss 관점에서 압축합니다. 한국어는 vocab 크기가 약 4,000으로 커져 random baseline이 조금 높지만, 학습 후 손실은 요약 \inlinecode{train\_loss=4.5487}, 마지막 logged loss 약 3.89 수준에 머뭅니다. 이 비교는 한국어 scratch 학습도 random baseline에서 빠르게 내려오지만, 영어 \ref{ch:24}장과 같은 2점대 수렴을 기대하면 안 된다는 점을 보여줍니다.
 
 
 
-\textbf{관전 포인트} - 학습 첫 step loss 가 약 8.3 (random baseline \inlinecode{ln(4000)}) 부근에서 시작해 \emph{수백 step 안에 약 4-5} 로 빠르게 떨어지고, 1500 step 끝에 \emph{약 2.5-3.0} 부근에서 안정화되면 정상. \ref{ch:24}장 (영어) 와 같은 수렴 곡선이 한국어에서도 나오는지가 본 장의 핵심 관찰 --- \emph{언어가 달라도 작은 GPT + 30K stories 의 학습 동역학은 비슷하다}.
+\textbf{관전 포인트} - 학습 첫 step loss 는 약 8.3 (random baseline \inlinecode{ln(4000)}) 부근에서 시작해 \emph{수백 step 안에 약 4-5} 로 빠르게 떨어집니다. 이번 실행본에서는 1500 step 요약 \inlinecode{train\_loss=4.5487}, 마지막 logged loss 약 3.89로 마무리됐습니다. 따라서 한국어 scratch 장의 정상 기준은 2점대가 아니라 \emph{4점대 초중반에서 계속 낮아지는 흐름} 입니다.
 
 
 
@@ -1339,7 +1363,7 @@ for c in configs:
 
 \section{(선택) Reference 비교 - KoGPT2 의 같은 prompt generation}
 
-\emph{학습이 충분히 잘 된} 기준점으로 \inlinecode{skt/kogpt2-base-v2} (125M, 대규모 한국어 사전학습) 에 같은 한국어 prompt 를 넣어 \emph{우리 작은 GPT (약 3M, 한국어 TinyStories 30K)} 와 격차를 봅니다. \textbf{27장 이 KoGPT2 본격 장} 이므로 여기서는 \emph{간단히 한 번만} --- T4 시간을 아끼려면 이 셀은 건너뛰어도 됩니다.
+\emph{학습이 충분히 잘 된} 기준점으로 \inlinecode{skt/kogpt2-base-v2} (125M, 대규모 한국어 사전학습) 에 같은 한국어 prompt 를 넣어 \emph{우리 작은 GPT (4.22M, 한국어 TinyStories 30K)} 와 격차를 봅니다. \textbf{27장 이 KoGPT2 본격 장} 이므로 여기서는 \emph{간단히 한 번만} --- T4 시간을 아끼려면 이 셀은 건너뛰어도 됩니다.
 
 
 
@@ -1413,7 +1437,7 @@ else:
 \begin{itemize}
 \tightlist
 \item
-  \textbf{OURS (약 3M, 한국어 TinyStories 30K)}: \emph{동화 풍 단순 한국어} - 어휘는 동화 도메인에 강하지만 \emph{복잡한 문장 구조 / 추상적 어휘} 는 약함.
+  \textbf{OURS (4.22M, 한국어 TinyStories 30K)}: \emph{동화 풍 단순 한국어} - 어휘는 동화 도메인에 강하지만 \emph{복잡한 문장 구조 / 추상적 어휘} 는 약함.
 \item
   \textbf{REF (KoGPT2 125M, 대규모 한국어 코퍼스)}: \emph{다양한 도메인 어휘 + 자연스러운 문장 흐름}. 학습 데이터의 규모·다양성이 generation 다양성으로 직결.
 \end{itemize}
@@ -1456,7 +1480,7 @@ else:
 \item
   영어 gpt2 BPE 로 한국어를 토큰화하면 토큰 수가 폭증합니다 (셀 비교 표). \emph{byte-level} 이라 UNK 는 없는데, 왜 그래도 \emph{직접 학습한 BBPE} 가 한국어 학습에 유리할까요? (의미 단위 보존 vs byte 조각 분해 관점)
 \item
-  random baseline 이 \ref{ch:24}장 (vocab 2,048) 의 \(\ln(2048) \approx 7.62\) 에서 \ref{ch:26}장 (vocab 약 4,000) 의 \(\ln(4000) \approx 8.29\) 로 바뀝니다. 이 차이가 \emph{학습 동역학} 에 의미 있는 영향을 주나요? \emph{학습 종료 loss 의 절대값} 을 영어 장와 비교할 때는요?
+  random baseline 이 \ref{ch:24}장 (vocab 2,048) 의 \(\ln(2048) \approx 7.62\) 에서 \ref{ch:26}장 (vocab 약 4,000) 의 \(\ln(4000) \approx 8.29\) 로 바뀝니다. 이 차이가 \emph{학습 동역학} 에 의미 있는 영향을 주나요? \emph{학습 종료 loss 의 절대값} 을 영어 장과 비교할 때는요?
 \item
   본 장의 collator 가 만드는 \inlinecode{labels} 는 \emph{거의 모든 자리} 가 학습 신호입니다. 28장 (한국어 SFT) 에서는 \texttt{labels{[}:prompt\_len{]}\ =\ -100} 한 줄로 \emph{prompt 부분만 제외} 합니다. \emph{왜 이 한 줄이 모델이 한국어 instruction 을 따라가게 만드는지} 설명해 보세요.
 \item
@@ -1526,7 +1550,7 @@ model = GPT2LMHeadModel(config)
 축 & \ref{ch:26}장 (본 장) & 27장 (다음) \\
 \midrule
 
-모델 크기 & 약 3M params & \textbf{약 125M (40배)} \\
+모델 크기 & 4.22M params & \textbf{약 125M (약 30배)} \\
 사전학습 & from scratch (random init) & \textbf{대규모 한국어 코퍼스 사전학습} \\
 토크나이저 & 직접 학습 BBPE vocab 약 4,000 & \textbf{KoGPT2 BBPE (그대로)} \\
 한국어 TinyStories 학습 & 사전학습 그 자체 (1500 steps) & \textbf{continual pretraining} (수백 steps) \\
@@ -1647,7 +1671,7 @@ print(
 \item
   \textbf{같은 한국어 TinyStories} 데이터 (본 장와 동일) 로 \textbf{continual pretraining} (계속 사전학습 --- \emph{같은 CausalLM task, 새 데이터, head 그대로}. \emph{task adaptation 의미의 fine-tune 이 아니라 단계 2})
 \item
-  \textbf{핵심 비교}: 본 장 (약 3M, from scratch) vs 27장 (125M, continual pretraining) 의 한국어 generation 품질·학습 곡선 격차
+  \textbf{핵심 비교}: 본 장 (4.22M, from scratch) vs 27장 (125M, continual pretraining) 의 한국어 generation 품질·학습 곡선 격차
 \item
   \emph{trainer 자체는 \ref{ch:26}장과 동일} (\inlinecode{transformers.Trainer} + \inlinecode{DataCollatorForLanguageModeling(mlm=False)}) - \emph{변하는 건 모델 로드 한 줄 + lr (scratch 5e-4 \(\to\) continual pretraining 2e-5)}
 \item
@@ -1655,6 +1679,6 @@ print(
 \end{itemize}
 
 \begin{quote}
-\textbf{변하는 축}: \emph{모델 크기 + 사전학습 여부} (3M / scratch \(\to\) 125M / pretrained). 데이터·토크나이저 규약·loss·trainer 는 같음. Phase 4 의 \emph{학습 단계 2 (continual pretraining)} 가 한국어에서 자리 잡는 장. \emph{진짜 행동 정렬 (SFT)} 은 28장에서 본격 등장합니다.
+\textbf{변하는 축}: \emph{모델 크기 + 사전학습 여부} (4.22M / scratch \(\to\) 125M / pretrained). 데이터·토크나이저 규약·loss·trainer 는 같음. Phase 4 의 \emph{학습 단계 2 (continual pretraining)} 가 한국어에서 자리 잡는 장. \emph{진짜 행동 정렬 (SFT)} 은 28장에서 본격 등장합니다.
 \end{quote}
 \end{previewBox}

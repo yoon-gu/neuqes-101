@@ -1059,18 +1059,16 @@ preds_main_no_aux = (probs_no_aux >= 0.5).astype(int)
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
-m_aux    = {k.replace(
-    "eval_",
-    ""): v for k,
-    v in eval_metrics_aux.items(,
-)
-            if k.startswith("eval_") and isinstance(v, float)}
-m_no_aux = {k.replace(
-    "eval_",
-    ""): v for k,
-    v in eval_metrics_no_aux.items(,
-)
-            if k.startswith("eval_") and isinstance(v, float)}
+m_aux = {
+    k.replace("eval_", ""): v
+    for k, v in eval_metrics_aux.items()
+    if k.startswith("eval_") and isinstance(v, float)
+}
+m_no_aux = {
+    k.replace("eval_", ""): v
+    for k, v in eval_metrics_no_aux.items()
+    if k.startswith("eval_") and isinstance(v, float)
+}
 
 \end{lstlisting}
 
