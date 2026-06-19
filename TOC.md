@@ -121,3 +121,8 @@
   * [31-1. 실습: GRPO로 보상 기반 정렬](pages/31-grpo-practice.md)
   * [31-2. 변형 — group size / format reward / 코드 verifier / 다른 task](pages/31-grpo-variation.md)
   * [31-3. 정리와 FAQ](pages/31-grpo-wrapup.md)
+* [33. 작은 diffusion LM 제대로 학습하기 (Ch 32 붕괴 고치기)](pages/33-diffusion_train.md)
+  * [33-1. 실습: 작은 diffusion LM 학습·생성](pages/33-diffusion_train-practice.md)
+  * [33-2. 해부 — 모델이 정말 조건부를 배웠나 (눈대중 말고 숫자로)](pages/33-diffusion_train-anatomy.md)
+  * [33-3. 변형 — 샘플러만 바꿔보기](pages/33-diffusion_train-variation.md)
+  * [33-4. 정리와 FAQ](pages/33-diffusion_train-wrapup.md)

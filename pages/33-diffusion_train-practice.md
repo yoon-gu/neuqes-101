@@ -1,0 +1,326 @@
+> ▶ **[Google Colab에서 이 장 실습 열기](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/33_diffusion_train/33_diffusion_train.ipynb)** — 브라우저에서 바로 실행해 볼 수 있습니다.
+
+## 환경 준비
+
+```python
+%pip install -q -U transformers tokenizers datasets accelerate
+```
+
+**▶ 실행 결과**
+
+```text
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 108.5 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 0.0/555.1 kB ? eta -:--:--
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 49.1 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.2/389.2 kB 39.3 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸━━━━━ 42.7/48.9 MB 261.2 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 285.0 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 285.0 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 19.2 MB/s eta 0:00:00
+```
+
+```python
+import math, time, torch
+import torch.nn.functional as F
+from datasets import load_dataset
+
+SEED = 42
+torch.manual_seed(SEED)
+device = "cuda" if torch.cuda.is_available() else "cpu"
+USE_FP16 = torch.cuda.is_available()
+print("torch", torch.__version__, "| device", device, "| fp16", USE_FP16)
+if torch.cuda.is_available():
+    print("GPU:", torch.cuda.get_device_name(0))
+```
+
+**▶ 실행 결과**
+
+```text
+torch 2.11.0+cu128 | device cuda | fp16 True
+GPU: Tesla T4
+```
+
+### TinyStories 로드 (Ch 24/26과 같은 데이터)
+
+```python
+raw_train = load_dataset("roneneldan/TinyStories", split="train[:100000]")
+raw_val   = load_dataset("roneneldan/TinyStories", split="validation[:500]")
+print(raw_train)
+print(raw_val[0]["text"][:160])
+```
+
+**▶ 실행 결과**
+
+```text
+Dataset({
+    features: ['text'],
+    num_rows: 100000
+})
+Spot. Spot saw the shiny car and said, "Wow, Kitty, your car is so bright and clean!" Kitty smiled and replied, "Thank you, Spot. I polish it every day."
+
+After
+```
+
+### TinyStories에 BPE 2048 직접 학습 + `[MASK]`
+
+작은 모델에 맞춰 vocab을 직접 학습합니다. `[MASK]`를 special token으로 더해 흡수형 마스킹에 씁니다.
+
+```python
+from tokenizers import Tokenizer, models, trainers, pre_tokenizers, decoders
+from transformers import PreTrainedTokenizerFast
+
+VOCAB = 2048
+def corpus_iter(bs=1000):
+    for i in range(0, len(raw_train), bs):
+        yield raw_train[i:i+bs]["text"]
+
+_tk = Tokenizer(models.BPE(unk_token="[UNK]"))
+_tk.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=True)
+_tk.decoder = decoders.ByteLevel()
+_trainer = trainers.BpeTrainer(vocab_size=VOCAB, special_tokens=["[PAD]", "[UNK]", "[MASK]"])
+_tk.train_from_iterator(corpus_iter(), trainer=_trainer)
+
+tokenizer = PreTrainedTokenizerFast(
+    tokenizer_object=_tk, pad_token="[PAD]", unk_token="[UNK]", mask_token="[MASK]")
+print("vocab_size :", tokenizer.vocab_size)
+print("mask_id    :", tokenizer.mask_token_id, "| pad_id:", tokenizer.pad_token_id)
+print("sample tok :", tokenizer.tokenize("Once upon a time there was a little cat.")[:14])
+```
+
+**▶ 실행 결과**
+
+```text
+vocab_size : 2048
+mask_id    : 2 | pad_id: 0
+sample tok : ['ĠOnce', 'Ġupon', 'Ġa', 'Ġtime', 'Ġthere', 'Ġwas', 'Ġa', 'Ġlittle', 'Ġcat', '.']
+```
+
+### 토큰화 + `group_texts` (BLOCK_SIZE=128)
+
+```python
+BLOCK_SIZE = 128
+def tok_fn(b):
+    return tokenizer(b["text"], add_special_tokens=False)
+tt = raw_train.map(tok_fn, batched=True, remove_columns=raw_train.column_names, desc="tok train")
+tv = raw_val.map(tok_fn, batched=True, remove_columns=raw_val.column_names, desc="tok val")
+
+def group_texts(b):
+    cat = sum(b["input_ids"], [])
+    n = (len(cat) // BLOCK_SIZE) * BLOCK_SIZE
+    return {"input_ids": [cat[i:i+BLOCK_SIZE] for i in range(0, n, BLOCK_SIZE)]}
+lm_train = tt.map(group_texts, batched=True, remove_columns=tt.column_names, desc="group train")
+lm_val   = tv.map(group_texts, batched=True, remove_columns=tv.column_names, desc="group val")
+print(f"train chunks {len(lm_train):,} | val {len(lm_val):,} | approx {len(lm_train)*BLOCK_SIZE/1e6:.2f}M tokens")
+```
+
+**▶ 실행 결과**
+
+```text
+train chunks 189,030 | val 853 | approx 24.20M tokens
+```
+
+### Diffusion collator — 매 배치 가변 비율 마스킹
+
+`t ~ U(0.02, 1)`로 마스킹 비율을 뽑고(하한 절단), 가린 자리만 학습 신호로 둡니다.
+
+```python
+class DiffusionCollator:
+    def __init__(self, tok, eps=0.02, seed=SEED):
+        self.mask_id = tok.mask_token_id
+        self.eps = eps
+        self.gen = torch.Generator().manual_seed(seed)   # Trainer seed 와 분리
+    def __call__(self, examples):
+        ids = torch.tensor([e["input_ids"] for e in examples], dtype=torch.long)
+        B, L = ids.shape
+        t = torch.rand(B, generator=self.gen) * (1.0 - self.eps) + self.eps
+        mask = torch.rand(B, L, generator=self.gen) < t.unsqueeze(1)
+        no = ~mask.any(dim=1)
+        if no.any():
+            j = torch.randint(0, L, (int(no.sum()),), generator=self.gen)
+            mask[no, j] = True
+        inp = ids.clone(); inp[mask] = self.mask_id
+        lab = ids.clone(); lab[~mask] = -100
+        return {"input_ids": inp, "attention_mask": torch.ones(B, L, dtype=torch.long),
+                "labels": lab, "t": t}
+coll = DiffusionCollator(tokenizer)
+print("collator ready, mask_id =", coll.mask_id)
+```
+
+**▶ 실행 결과**
+
+```text
+collator ready, mask_id = 2
+```
+
+### 작은 BERT-MLM 모델 (Ch 24와 동급, 본체는 그대로)
+
+```python
+from transformers import BertConfig, BertForMaskedLM
+cfg = BertConfig(vocab_size=tokenizer.vocab_size, hidden_size=256, num_hidden_layers=4,
+                 num_attention_heads=4, intermediate_size=1024,
+                 max_position_embeddings=BLOCK_SIZE, pad_token_id=tokenizer.pad_token_id)
+model = BertForMaskedLM(cfg).to(device)
+np_ = model.num_parameters()
+emb = tokenizer.vocab_size * cfg.hidden_size
+print(f"#params {np_/1e6:.2f}M | embedding share {emb/np_:.1%}  (Ch32: ~70%)")
+```
+
+**▶ 실행 결과**
+
+```text
+#params 3.79M | embedding share 13.9%  (Ch32: ~70%)
+```
+
+**결과 해석**
+
+vocab을 2048로 줄이자 임베딩이 차지하던 비중이 Ch 32의 약 70%에서 13.9%로 떨어지고, 모델 전체가 Ch 24와 같은 3.79M으로 슬림해졌습니다. 임베딩에서 아낀 용량이 본체로 돌아가 조건부 구조를 학습할 여력이 생깁니다.
+
+### 시간가중 `1/t` 손실로 30000 step 학습
+
+```python
+from transformers import Trainer, TrainingArguments
+
+class DiffusionTrainer(Trainer):
+    def compute_loss(self, model, inputs, return_outputs=False, **kw):
+        t = inputs["t"]; labels = inputs["labels"]
+        out = model(input_ids=inputs["input_ids"], attention_mask=inputs["attention_mask"])
+        B, L, V = out.logits.shape
+        per = F.cross_entropy(out.logits.view(-1, V), labels.view(-1),
+                              ignore_index=-100, reduction="none").view(B, L)
+        loss = ((per.sum(dim=1) / L) / t.to(per.dtype)).mean()
+        return (loss, out) if return_outputs else loss
+
+args = TrainingArguments(
+    output_dir="./out33", max_steps=30000,
+    per_device_train_batch_size=64, per_device_eval_batch_size=64,
+    learning_rate=3e-4, weight_decay=0.01, warmup_steps=500,
+    lr_scheduler_type="cosine", max_grad_norm=1.0, fp16=USE_FP16,
+    logging_steps=250, eval_strategy="steps", eval_steps=2000, save_strategy="no",
+    report_to="none", label_names=["labels"], remove_unused_columns=False, seed=SEED)
+
+trainer = DiffusionTrainer(model=model, args=args, train_dataset=lm_train,
+                           eval_dataset=lm_val, data_collator=coll)
+t0 = time.time(); r = trainer.train(); el = (time.time()-t0)/60
+print(f"\n=== summary ===\nelapsed {el:.2f} min | step {r.global_step} | train_loss {r.training_loss:.4f}")
+print(f"random baseline ln(V) = {math.log(tokenizer.vocab_size):.4f}")
+if torch.cuda.is_available():
+    print(f"peak VRAM {torch.cuda.max_memory_allocated()/1024**2:.0f} MiB")
+```
+
+**▶ 실행 결과**
+
+```text
+<IPython.core.display.HTML object>
+=== summary ===
+elapsed 18.50 min | step 30000 | train_loss 3.5916
+random baseline ln(V) = 7.6246
+peak VRAM 627 MiB
+```
+
+**결과 해석**
+
+유니그램 정체값(Ch 32의 약 6.0)보다 한참 아래인 3.59까지 내려갔습니다. 모델이 단순 빈도가 아니라 문맥 의존 구조를 학습하고 있다는 신호이고, 30000 step이 18.5분으로 T4 30분 예산 안에 무난히 들어왔습니다.
+
+### carry-over 샘플러로 생성
+
+전부 `[MASK]`에서 시작해 블록 단위로 채웁니다. 기본값은 반복억제 설정(temperature 0.8 · top_p 0.92 · rep penalty 1.3 · 인접중복 금지)입니다.
+
+```python
+@torch.no_grad()
+def generate(model, length=128, block=32, temperature=0.8, top_p=0.92, top_k=0,
+             rep_penalty=1.3, no_immediate_repeat=True, prompt_ids=None):
+    """carry-over semi-AR + 반복 억제(rep penalty / 인접중복 금지 / top-p)."""
+    model.eval()
+    mask_id = tokenizer.mask_token_id
+    x = torch.full((1, length), mask_id, dtype=torch.long, device=device)
+    fixed = torch.zeros(length, dtype=torch.bool, device=device)
+    if prompt_ids is not None:
+        p = torch.tensor(prompt_ids[:length], device=device)
+        x[0, :len(p)] = p; fixed[:len(p)] = True
+    nblocks = (length + block - 1) // block
+    for b in range(nblocks):
+        lo, hi = b * block, min((b + 1) * block, length)
+        steps = hi - lo
+        for s in range(steps):
+            logits = model(input_ids=x).logits[0].float()        # (L, V)
+            logits[:, mask_id] = -1e9
+            # 반복 패널티: 이미 확정된 토큰들의 로짓을 깎음
+            if rep_penalty and rep_penalty != 1.0:
+                comm = x[0][x[0] != mask_id]
+                if comm.numel() > 0:
+                    u = torch.unique(comm)
+                    col = logits[:, u]
+                    logits[:, u] = torch.where(col > 0, col / rep_penalty, col * rep_penalty)
+            # 인접중복 금지: 각 자리에서 '왼쪽 토큰과 같은 토큰' 예측 차단
+            if no_immediate_repeat:
+                left = torch.roll(x[0], 1); left[0] = mask_id
+                valid = left != mask_id
+                logits[valid, left[valid]] = -1e9
+            probs = (logits / max(temperature, 1e-6)).softmax(-1)
+            if top_k and top_k > 0:
+                kth = probs.topk(top_k, dim=-1).values[:, -1, None]
+                probs = probs.masked_fill(probs < kth, 0.0)
+            if top_p and top_p < 1.0:
+                sp, si = probs.sort(dim=-1, descending=True)
+                rm = (sp.cumsum(-1) - sp) > top_p
+                sp = sp.masked_fill(rm, 0.0)
+                probs = torch.zeros_like(probs).scatter(-1, si, sp)
+            probs = probs / probs.sum(-1, keepdim=True).clamp_min(1e-9)
+            pred = torch.multinomial(probs, 1).squeeze(-1)
+            conf = probs.gather(-1, pred.unsqueeze(-1)).squeeze(-1)
+            cur = (x[0] == mask_id) & (~fixed)
+            cur[:lo] = False; cur[hi:] = False
+            nleft = int(cur.sum())
+            if nleft == 0: break
+            nreveal = nleft if s == steps - 1 else max(1, nleft // (steps - s))
+            cc = conf.clone(); cc[~cur] = -1e9
+            idx = cc.topk(nreveal).indices
+            x[0, idx] = pred[idx]
+    return tokenizer.decode(x[0], skip_special_tokens=True)
+
+pid = tokenizer("Once upon a time", add_special_tokens=False)["input_ids"]
+torch.manual_seed(SEED)
+print("=== unconditional (all-[MASK] -> generate, default sampler) ===")
+for i in range(3):
+    print(f"[{i}] {generate(model)[:340]}")
+print("\n=== conditional (prompt 'Once upon a time' fixed) ===")
+for i in range(3):
+    print(f"[{i}] {generate(model, prompt_ids=pid)[:340]}")
+```
+
+**▶ 실행 결과**
+
+```text
+=== unconditional (all-[MASK] -> generate, default sampler) ===
+[0]  say, "Yes, Ben. We have a ball. They are very good friends."
+
+"They go to the park and play," Lily says.
+Ben follows his mom's house. He hopes to play with their toys again. She is happy and happy.
+Lily smiles at her. She shows him back to Tom and kiss. She gives Anna to his dad. She hugs her. She says, "Thank you, I love me. You're welc
+[1]  you want to play with me." She looked at Tom and put her toys in the room. 
+
+"It's okay, Lily! I'm sorry for you. But you don't know that we should have a good friend. You are not nice. And they can share your dolls o …(뒤 122자 생략)
+[2] , so it zoomed in the air! He got very scared, but it started to run away. 
+
+The boy was sad and wished he had never been here for being playing with his friends. They knew that they would play together again. Once up …(뒤 123자 생략)
+
+=== conditional (prompt 'Once upon a time' fixed) ===
+[0]  Once upon a time, there was a little girl named Lily. She loved to play with her toys and play with her mommy and her friends. One day, …(뒤 83자 생략)
+
+Lily's mom said, "Let's go inside!" Her mommy replied, "Yes, we can slide together and have fun after you." 
+As they we
+[1]  Once upon a time, there was a little girl named Lily. She loved to play outside and watch her friends. One day, she went for bed with her mom.
+ 
+Lily's mommy said, "I want to go inside the park!" Her mom replied, "Yes, I can do it." So, they walked home with their toys. They were so h …(뒤 45자 생략)
+
+After a
+[2]  Once upon a time, there was a little girl named Lily. She loved to play with her toys and run in the park together. One day, she saw a …(뒤 106자 생략)
+
+Lily's mom replied, "I'm sorry! I didn't know what to do." 
+
+Her mom explained, "Why don't have 
+```
+
+**결과 해석**
+
+전부 `[MASK]`에서 시작했는데도 인물(Lily, Ben, Tom)과 대화, 배경이 있는 이야기가 나옵니다. Ch 32의 `". the the.. was"` 붕괴를 확실히 벗어났습니다. `"I love me"`, `"go inside the park"`처럼 자잘한 흠은 3.79M 작은 모델의 한계이지만, 조건부 구조를 학습했다는 건 분명합니다.
