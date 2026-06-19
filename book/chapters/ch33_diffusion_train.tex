@@ -1,0 +1,595 @@
+% Drafted from pages/33-diffusion_train*.md and executed/33_diffusion_train.ipynb.
+
+\chapter[작은 diffusion LM 학습 (Ch 32 붕괴 교정)]{작은 diffusion LM 제대로 학습하기 (Ch 32 붕괴 고치기)}
+
+\label{ch:33}
+
+\markboth{작은 diffusion LM 학습}{작은 diffusion LM 학습}
+
+\chaptermeta{33_diffusion_train/33_diffusion_train.ipynb}{https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/33_diffusion_train/33_diffusion_train.ipynb}{Ch 32의 mask diffusion 붕괴 원인을 진단하고, 작은 diffusion LM이 실제로 읽을 만한 TinyStories 문장을 생성하도록 교정}
+
+\index{0diffusion 언어모델@diffusion 언어모델}
+\index{0흡수형 diffusion@흡수형 diffusion}
+\index{0마스크 diffusion@마스크 diffusion}
+\index{0시간가중 손실@시간가중 손실}
+\index{0반복 억제 샘플러@반복 억제 샘플러}
+\index{0고정 t 정확도@고정-\(t\) 정확도}
+\index{0유니그램 KL@유니그램 KL}
+\index{04 gram 반복률@4-gram 반복률}
+\index{1BertForMaskedLM@BertForMaskedLM}
+\index{1ByteLevelBPETokenizer@ByteLevelBPETokenizer}
+\index{1TinyStories@TinyStories}
+\index{1BPE@BPE}
+\index{1MASK token@[MASK] token}
+\index{1carry over sampler@carry-over sampler}
+\index{1top p@top-p}
+\index{1repetition penalty@repetition penalty}
+\index{1fixed t accuracy@fixed-\(t\) accuracy}
+\index{1KL divergence@KL divergence}
+
+\section{누적 추적표}
+
+\begin{booktable}{33장 누적 추적표}{tab:ch33-tracking}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{@{}lllll@{}}
+\toprule
+장 & 모델 & 토크나이저 & 학습 신호 & 핵심 결과 \\
+\midrule
+\ref{ch:24}장 & 작은 GPT2 from scratch & BPE 2048 & next-token CE & AR 기준선 \\
+Ch 32 & 작은 mask diffusion & WordPiece 30522 & mask CE mean & 고빈도 토큰 반복 붕괴 \\
+\textbf{33장} & \textbf{\inlinecode{BertForMaskedLM} 3.79M} & \textbf{ByteLevel BPE 2048 + \inlinecode{[MASK]}} & \textbf{흡수형 NELBO surrogate + \(1/t\)} & \textbf{top-1 acc 0.717, 4-gram 0.000} \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{booktable}
+
+이 장은 diffusion 언어모델을 처음부터 새로 키우는 장입니다. 직전 diffusion 실험인 Ch 32는 코드가 실행되었지만, 생성 결과는 마침표와 \inlinecode{the}, \inlinecode{and}, \inlinecode{was} 같은 고빈도 토큰으로 무너졌습니다. 이번 장에서는 그 붕괴를 감으로 판단하지 않고 세 가지 원인으로 나누어 진단한 뒤, 작은 모델이 실제로 TinyStories 문장을 생성하도록 교정합니다.
+
+\section{변경점: Ch 32 붕괴의 세 원인과 교정}
+
+\begin{booktable}{Ch 32 붕괴 원인과 33장 교정 요약}{tab:ch33-collapse-fix}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{@{}llll@{}}
+\toprule
+축 & Ch 32 문제 & 33장 교정 & 실측 결과 \\
+\midrule
+어휘/용량 & WordPiece 30522개가 임베딩을 과점 & TinyStories BPE 2048 + \inlinecode{[MASK]} & 임베딩 share 70\% \(\to\) 13.9\% \\
+학습량 & 조건부 구조를 배우기 전에 종료 & \inlinecode{max\_steps=30000} & 18.50분, train\_loss 3.5916 \\
+샘플러 & 저신뢰 재마스킹으로 문맥이 흔들림 & carry-over semi-AR + 반복 억제 & 4-gram 반복률 0.177 \(\to\) 0.000 \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{booktable}
+
+첫 번째 원인은 파라미터 배분입니다. Ch 32의 WordPiece vocab 30522개는 hidden 256 모델에서 임베딩 테이블만 약 7.8M 파라미터를 차지합니다. 작은 모델 전체에서 임베딩 share가 약 70\%에 이르면, 정작 문맥을 읽고 조건부 분포를 배우는 트랜스포머 본체에 남는 용량이 부족합니다. 33장은 TinyStories에 맞춘 ByteLevel BPE vocab 2048개를 직접 학습해 모델을 3.79M으로 줄이고, 임베딩 share를 13.9\%까지 낮춥니다.
+
+두 번째 원인은 학습량입니다. diffusion LM은 AR 언어모델과 달리 모든 위치가 매 step 감독되는 구조가 아닙니다. 매 배치에서 마스크된 자리만 손실을 받으므로, 같은 수준의 조건부 구조를 배우려면 더 많은 step이 필요합니다. 이번 실행본은 T4에서 \inlinecode{max\_steps=30000}까지 학습했고, 총 18.50분이 걸렸으며 최종 \inlinecode{train\_loss}는 3.5916입니다.
+
+세 번째 원인은 디코딩 절차입니다. Ch 32의 저신뢰 재마스킹은 방금 채운 토큰도 다시 \inlinecode{[MASK]}로 지울 수 있었습니다. 작은 모델에서는 이렇게 비단조적으로 채우고 지우는 절차가 안정적인 문맥을 만들기 어렵습니다. 33장은 block 단위로 왼쪽에서 오른쪽으로 진행하면서 한 번 확정한 토큰을 다음 step으로 그대로 넘기는 carry-over 샘플러를 사용합니다.
+
+\section{Loss 노트: 흡수형 NELBO surrogate}
+
+흡수형 mask diffusion에서는 시간 \(t\)에 따라 토큰 일부를 \inlinecode{[MASK]}로 흡수시킵니다. 이 장의 스케줄은 식~\eqref{eq:ch33-alpha}처럼 선형입니다.
+
+\begin{equation}
+\label{eq:ch33-alpha}
+\alpha_t = 1 - t
+\end{equation}
+
+선형 스케줄에서는 시간가중이 식~\eqref{eq:ch33-time-weight}처럼 단순해집니다.
+
+\begin{equation}
+\label{eq:ch33-time-weight}
+\left|\frac{\alpha'_t}{1-\alpha_t}\right| = \frac{1}{t}
+\end{equation}
+
+따라서 구현 손실은 마스크된 자리의 CE 합을 문장 길이 \(L\)로 나눈 뒤 \(1/t\)를 곱합니다. 이를 식~\eqref{eq:ch33-loss}처럼 적을 수 있습니다.
+
+\begin{equation}
+\label{eq:ch33-loss}
+\mathcal{L}_{\text{surrogate}}
+= \frac{1}{B}\sum_{b=1}^{B}
+\frac{1}{t_b}
+\frac{1}{L}
+\sum_{i \in M_b}
+\mathrm{CE}\!\left(p_\theta(x_i \mid x_{\setminus M_b}, t_b), x_i\right)
+\end{equation}
+
+식~\eqref{eq:ch33-loss}에서 중요한 점은 `/L`의 의미입니다. 이 항은 ELBO 자체를 그대로 출력하는 것이 아니라, ELBO와 상수배 관계에 있는 surrogate입니다. 즉 절대값을 논문식 ELBO 값처럼 해석하면 안 됩니다. 다만 같은 실험 안에서 학습 방향을 만들고 loss 추이를 비교하기에는 충분합니다. 반면 \(1/t\)는 단순 상수배가 아니라 시간별 가중 자체를 바꾸므로, 흡수형 diffusion의 학습 성질을 보존하려면 빼면 안 됩니다.
+
+\section{실습: 환경과 데이터 준비}
+
+\Needspace{9\baselineskip}
+\begin{lstlisting}
+import math, time, torch
+import torch.nn.functional as F
+from datasets import load_dataset
+
+SEED = 42
+torch.manual_seed(SEED)
+device = "cuda" if torch.cuda.is_available() else "cpu"
+USE_FP16 = torch.cuda.is_available()
+print("torch", torch.__version__, "| device", device, "| fp16", USE_FP16)
+if torch.cuda.is_available():
+    print("GPU:", torch.cuda.get_device_name(0))
+\end{lstlisting}
+
+\begin{codeRead}
+이 블록은 실행 환경을 고정합니다. \inlinecode{device}는 CUDA가 있으면 GPU를 선택하고, T4에서는 \inlinecode{USE\_FP16=True}로 둡니다. 이후 학습 시간과 VRAM 사용량은 이 환경을 기준으로 읽어야 합니다.
+\end{codeRead}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+torch 2.11.0+cu128 | device cuda | fp16 True
+GPU: Tesla T4
+\end{lstlisting}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}
+ds = load_dataset(
+    "roneneldan/TinyStories",
+    split="train[:100000]",
+)
+print(ds)
+print(ds[0]["text"][:180])
+\end{lstlisting}
+
+\begin{codeRead}
+TinyStories에서 학습용 100000개 예시만 사용합니다. 이번 장의 목표는 대규모 성능 경쟁이 아니라 Ch 32 붕괴를 같은 T4 예산 안에서 교정하는 것이므로, 데이터 크기를 고정해 비교 가능성을 확보합니다.
+\end{codeRead}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+Dataset({
+    features: ['text'],
+    num_rows: 100000
+})
+Spot. Spot saw the shiny car and said, "Wow, Kitty, your car is so bright and clean!" Kitty smiled and replied, "Thank you, Spot. I polish it every day."
+
+After
+\end{lstlisting}
+
+\section{실습: BPE 2048과 \inlinecode{[MASK]} 토큰}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}
+from tokenizers import ByteLevelBPETokenizer
+from transformers import PreTrainedTokenizerFast
+
+tok = ByteLevelBPETokenizer()
+tok.train_from_iterator(
+    (x["text"] for x in ds),
+    vocab_size=2048,
+    min_frequency=2,
+    special_tokens=["[PAD]", "[UNK]", "[MASK]"],
+)
+tokenizer = PreTrainedTokenizerFast(
+    tokenizer_object=tok._tokenizer,
+    pad_token="[PAD]",
+    unk_token="[UNK]",
+    mask_token="[MASK]",
+)
+print("vocab_size :", tokenizer.vocab_size)
+print("mask_id    :", tokenizer.mask_token_id, "| pad_id:", tokenizer.pad_token_id)
+print("sample tok :", tokenizer.tokenize("Once upon a time there was a little cat."))
+\end{lstlisting}
+
+\begin{codeRead}
+\inlinecode{ByteLevelBPETokenizer}는 TinyStories 말뭉치에 맞춘 2048개 어휘를 학습합니다. \inlinecode{[MASK]}는 diffusion의 흡수 상태를 표현하는 핵심 토큰이므로, BPE 학습 시점부터 special token으로 넣어야 합니다. Ch 32의 30522개 vocab과 비교하면 어휘는 작지만, 작은 모델에서는 이 절약분이 본체 용량으로 돌아갑니다.
+\end{codeRead}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+vocab_size : 2048
+mask_id    : 2 | pad_id: 0
+sample tok : ['<sp>Once', '<sp>upon', '<sp>a', '<sp>time', '<sp>there', '<sp>was', '<sp>a', '<sp>little', '<sp>cat', '.']
+\end{lstlisting}
+
+ByteLevel BPE의 원 출력은 공백 앞 토큰을 U+0120 표식으로 표시합니다. PDF 코드 폰트에서 해당 글리프가 빠지는 것을 피하기 위해, 책 원고에서는 같은 의미를 ASCII 표기인 \inlinecode{<sp>}로 바꾸어 보입니다.
+
+\Needspace{8\baselineskip}
+\begin{lstlisting}
+train_ids = tokenize_and_group(ds, seq_len=128)
+val_ids = tokenize_and_group(val_ds, seq_len=128)
+print(
+    f"train chunks {len(train_ids):,} | val {len(val_ids):,} | "
+    f"approx {len(train_ids) * 128 / 1e6:.2f}M tokens"
+)
+\end{lstlisting}
+
+\begin{codeRead}
+텍스트를 128 토큰 단위의 고정 길이 chunk로 묶습니다. diffusion 학습은 각 chunk 안에서 임의의 위치를 마스크하므로, 이후 collator가 토큰 단위 노이징을 담당합니다.
+\end{codeRead}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+train chunks 189,030 | val 853 | approx 24.20M tokens
+\end{lstlisting}
+
+\section{실습: 모델과 시간가중 손실}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}
+from transformers import BertConfig, BertForMaskedLM
+
+config = BertConfig(
+    vocab_size=tokenizer.vocab_size,
+    hidden_size=256,
+    num_hidden_layers=4,
+    num_attention_heads=4,
+    intermediate_size=1024,
+    max_position_embeddings=128,
+    pad_token_id=tokenizer.pad_token_id,
+)
+model = BertForMaskedLM(config).to(device)
+
+n_params = sum(p.numel() for p in model.parameters())
+emb_params = model.bert.embeddings.word_embeddings.weight.numel()
+print(f"#params {n_params/1e6:.2f}M | embedding share {emb_params/n_params:.1%}  (Ch32: ~70%)")
+\end{lstlisting}
+
+\begin{codeRead}
+모델 본체는 hidden 256, 4 layer, 4 head로 작게 유지합니다. 바뀐 부분은 주로 vocab입니다. \inlinecode{emb\_params/n\_params}가 13.9\%로 내려가면서, 작은 예산 안에서도 본체가 문맥 구조를 학습할 여지가 생깁니다.
+\end{codeRead}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+#params 3.79M | embedding share 13.9%  (Ch32: ~70%)
+\end{lstlisting}
+
+\Needspace{13\baselineskip}
+\begin{lstlisting}
+def diffusion_loss(model, input_ids, attention_mask):
+    batch, seq_len = input_ids.shape
+    t = torch.rand(batch, device=input_ids.device).clamp_min(0.02)
+    mask_prob = t[:, None].expand_as(input_ids)
+    can_mask = attention_mask.bool()
+    mask = (torch.rand_like(mask_prob) < mask_prob) & can_mask
+
+    noisy = input_ids.clone()
+    noisy[mask] = tokenizer.mask_token_id
+    logits = model(noisy, attention_mask=attention_mask).logits
+
+    ce = F.cross_entropy(
+        logits[mask],
+        input_ids[mask],
+        reduction="none",
+    )
+    weight = (1.0 / t).repeat_interleave(mask.sum(dim=1))
+    return (ce * weight).sum() / (batch * seq_len)
+\end{lstlisting}
+
+\begin{codeRead}
+핵심은 \inlinecode{t}와 \inlinecode{weight = 1.0 / t}입니다. 각 샘플마다 마스킹 비율을 뽑고, 마스크된 자리에서만 CE를 계산한 뒤 식~\eqref{eq:ch33-time-weight}의 시간가중을 곱합니다. 나머지 토큰은 손실을 받지 않으므로, 이 학습은 CausalLM처럼 모든 위치를 매번 감독하지 않습니다.
+\end{codeRead}
+
+\Needspace{9\baselineskip}
+\begin{lstlisting}
+training_args = TrainingArguments(
+    output_dir="out_ch33_diffusion_train",
+    per_device_train_batch_size=64,
+    max_steps=30000,
+    learning_rate=3e-4,
+    lr_scheduler_type="cosine",
+    fp16=USE_FP16,
+)
+\end{lstlisting}
+
+\begin{codeRead}
+\inlinecode{max\_steps=30000}이 이번 장의 중요한 교정입니다. Ch 32의 짧은 학습으로는 조건부 구조를 충분히 배우지 못했기 때문에, T4 30분 예산 안에서 학습량을 크게 늘립니다.
+\end{codeRead}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+=== summary ===
+elapsed 18.50 min | step 30000 | train_loss 3.5916
+random baseline ln(V) = 7.6246
+peak VRAM 627 MiB
+\end{lstlisting}
+
+이 출력은 학습이 T4 예산 안에 들어왔다는 점을 먼저 확인시켜 줍니다. 30000 step을 18.50분에 마쳤고, peak VRAM은 627 MiB입니다. \(\ln(V)\) 기준선 7.6246보다 train\_loss 3.5916이 충분히 낮으므로, 모델이 단순 무작위 예측보다 훨씬 많은 구조를 배웠다고 볼 수 있습니다.
+
+\section{생성: all-\inlinecode{[MASK]}에서 이야기 만들기}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}
+torch.manual_seed(SEED)
+print("=== unconditional (all-[MASK] -> generate, default sampler) ===")
+for i in range(3):
+    print(f"[{i}] {generate(model)}")
+
+print("\n=== conditional (prompt 'Once upon a time' fixed) ===")
+pid = tokenizer("Once upon a time", add_special_tokens=False)["input_ids"]
+for i in range(3):
+    print(f"[{i}] {generate(model, prompt_ids=pid)}")
+\end{lstlisting}
+
+\begin{codeRead}
+무조건 생성은 전체를 \inlinecode{[MASK]}로 시작하고, 조건부 생성은 \inlinecode{"Once upon a time"} prompt를 고정한 뒤 나머지를 채웁니다. diffusion LM은 왼쪽에서 오른쪽으로 다음 토큰 하나만 예측하는 AR 모델이 아니라, 여러 빈칸을 반복적으로 채우는 방식으로 문장을 만듭니다.
+\end{codeRead}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+=== unconditional (all-[MASK] -> generate, default sampler) ===
+[0]  say, "Yes, Ben. We have a ball. They are very good friends."
+
+"They go to the park and play," Lily says.
+Ben follows his mom's house. He hopes to play with their toys again. She is happy and happy.
+Lily smiles at her. She shows him back to Tom and kiss. She gives Anna to his dad. She hugs her. She says, "Thank you, I love me. You're welc
+[1]  you want to play with me." She looked at Tom and put her toys in the room. 
+
+"It's okay, Lily! I'm sorry for you. But you don't know that we should have a good friend. You are not nice. And they can share your dolls or be brave. Let's take care of us when we will fix it. We're very kind. They can still make some cookies and get snacks," 
+[2] , so it zoomed in the air! He got very scared, but it started to run away. 
+
+The boy was sad and wished he had never been here for being playing with his friends. They knew that they would play together again. Once upon a time, there was a little girl named Lily. She loved to play with her toys. One day, she went to the park with her mom.
+
+=== conditional (prompt 'Once upon a time' fixed) ===
+[0]  Once upon a time, there was a little girl named Lily. She loved to play with her toys and play with her mommy and her friends. One day, she went for a while playing in the park when she saw that it had been very fast. 
+
+Lily's mom said, "Let's go inside!" Her mommy replied, "Yes, we can slide together and have fun after you." 
+As they we
+[1]  Once upon a time, there was a little girl named Lily. She loved to play outside and watch her friends. One day, she went for bed with her mom.
+ 
+Lily's mommy said, "I want to go inside the park!" Her mom replied, "Yes, I can do it." So, they walked home with their toys. They were so happy when they had many fun playing together.
+
+After a
+[2]  Once upon a time, there was a little girl named Lily. She loved to play with her toys and run in the park together. One day, she saw a big slide on the floor. It looked so pretty that it flew down. Her mom said, "What are you doing for me?" 
+
+Lily's mom replied, "I'm sorry! I didn't know what to do." 
+
+Her mom explained, "Why don't have 
+\end{lstlisting}
+
+출력은 완벽하지 않습니다. 문법이 깨지는 지점도 있고, 일부 문장은 중간에서 끊깁니다. 그러나 Ch 32의 고빈도 토큰 반복과는 다릅니다. 인물, 대화, 사건이 있는 TinyStories 형식으로 이동했고, 조건부 생성에서는 prompt 뒤에 동화식 도입부가 안정적으로 이어집니다.
+
+\section{정량 진단: 모델과 샘플러를 분리해 보기}
+
+생성 예시만 보면 모델이 좋아진 것인지, 샘플러가 우연히 덜 망친 것인지 분리하기 어렵습니다. 이 장은 세 숫자로 확인합니다. 고정-\(t\) top-1 accuracy는 모델 자체의 조건부 복원 능력을 보고, KL은 생성 분포가 유니그램 빈도표를 넘어섰는지 보며, 4-gram 반복률은 샘플러가 같은 조각을 맴도는지 봅니다.
+
+\begin{booktable}{33장 정량 진단 요약}{tab:ch33-diagnostics}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{@{}llll@{}}
+\toprule
+지표 & 붕괴 상태의 기대값 & 33장 실측 & 해석 \\
+\midrule
+고정-\(t=0.15\) top-1 accuracy & 낮음 & \textbf{0.717} & 모델이 문맥 기반 복원을 학습 \\
+KL(\(P_{\text{gen}}\|P_{\text{unigram}}\)) & 0 근처 & \textbf{0.78} & 유니그램 빈도표를 넘어선 생성 분포 \\
+4-gram 반복률 & 높음 & \textbf{0.177 \(\to\) 0.000} & 반복 억제 샘플러가 루프를 제거 \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{booktable}
+
+\Needspace{13\baselineskip}
+\begin{lstlisting}
+def fixed_t_acc(t_val=0.15, n=128):
+    cor = tot = 0
+    for ex in lm_val.select(range(min(n, len(lm_val)))):
+        ids = torch.tensor(ex["input_ids"])
+        m = torch.rand(len(ids), generator=g) < t_val
+        if not m.any():
+            m[0] = True
+        inp = ids.clone()
+        inp[m] = tokenizer.mask_token_id
+        with torch.no_grad():
+            pr = model(inp.unsqueeze(0).to(device)).logits[0].argmax(-1).cpu()
+        cor += (pr[m] == ids[m]).sum().item()
+        tot += int(m.sum())
+    return cor / tot
+
+print(f"[진단] 고정-t(0.15) top-1 accuracy = {fixed_t_acc():.3f}")
+\end{lstlisting}
+
+\begin{codeRead}
+이 평가는 샘플러를 배제합니다. 검증 문장의 15\%만 \inlinecode{[MASK]}로 가린 뒤, 한 번의 forward에서 마스크 자리를 맞혔는지 셉니다. 0.717은 가려진 자리 10개 중 약 7개를 양방향 문맥만 보고 복원했다는 뜻입니다.
+\end{codeRead}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}
+def rep4(text):
+    toks = text.split()
+    if len(toks) < 5:
+        return 0.0
+    grams = [tuple(toks[i:i+4]) for i in range(len(toks)-3)]
+    return 1.0 - len(set(grams)) / len(grams)
+
+bestB = [
+    generate(model, prompt_ids=pid, temperature=0.8, top_p=0.92,
+             rep_penalty=1.3, no_immediate_repeat=True)
+    for _ in range(5)
+]
+baseA = [
+    generate(model, prompt_ids=pid, temperature=0.7, top_k=40,
+             top_p=1.0, rep_penalty=1.0, no_immediate_repeat=False)
+    for _ in range(5)
+]
+print(f"[진단] 4-gram 반복률  A(기존)={statistics.mean(map(rep4,baseA)):.3f}  B(반복억제)={statistics.mean(map(rep4,bestB)):.3f}  (낮을수록 좋음)")
+\end{lstlisting}
+
+\begin{codeRead}
+\inlinecode{rep4}는 생성문 안의 4-gram 중복 비율을 계산합니다. 반복 억제가 없으면 같은 짧은 조각이 다시 등장하고, 반복 억제를 켜면 그 루프가 사라집니다.
+\end{codeRead}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+[진단] 고정-t(0.15) top-1 accuracy = 0.717
+[진단] 4-gram 반복률  A(기존)=0.177  B(반복억제)=0.000  (낮을수록 좋음)
+\end{lstlisting}
+
+KL 진단은 생성 토큰 분포 \(P_{\text{gen}}\)과 학습 말뭉치의 유니그램 분포 \(P_{\text{unigram}}\)을 비교합니다. 붕괴 모델이 단어 빈도만 흉내 내면 KL은 0에 가까워집니다. 이번 실행의 KL은 0.78로, 생성이 단순 유니그램 빈도표를 그대로 반복하는 상태가 아님을 보여줍니다.
+
+\section{샘플러 변형: 같은 모델, 다른 디코딩}
+
+여기서는 모델을 다시 학습하지 않습니다. 같은 30000 step 모델을 두고 샘플러만 바꿉니다. 샘플러는 학습된 확률 분포에서 실제 문장을 뽑는 절차이므로, 작은 모델에서는 반복 억제와 block 크기가 결과에 크게 영향을 줍니다.
+
+\begin{booktable}{샘플러 변형 비교}{tab:ch33-sampler-sweep}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{@{}llll@{}}
+\toprule
+설정 & temperature & 반복 억제 & 의도 \\
+\midrule
+A & 0.7 + top-k 40 & 없음 & 기존 단순 샘플러 확인 \\
+B & 0.8 + top-p 0.92 & rep 1.3 + 인접 중복 금지 & 기본 교정안 \\
+C & 0.9 + top-p 0.95 & rep 1.2 + 인접 중복 금지 & 다양성 증가 \\
+D & B와 동일, block 16 & rep 1.3 + 인접 중복 금지 & 더 촘촘한 carry-over \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{booktable}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}
+print("=== sampler sweep (same model, prompt: Once upon a time) ===")
+pid = tokenizer("Once upon a time", add_special_tokens=False)["input_ids"]
+configs = [
+    ("A) base temp0.7/topk40", dict(temperature=0.7, top_k=40)),
+    ("B) rep1.3 + no immediate repeat + topp0.92",
+     dict(temperature=0.8, top_p=0.92, rep_penalty=1.3,
+          no_immediate_repeat=True)),
+    ("C) rep1.2 + temp0.9 + topp0.95",
+     dict(temperature=0.9, top_p=0.95, rep_penalty=1.2,
+          no_immediate_repeat=True)),
+    ("D) B + block16",
+     dict(temperature=0.8, top_p=0.92, rep_penalty=1.3,
+          no_immediate_repeat=True, block=16)),
+]
+\end{lstlisting}
+
+\begin{codeRead}
+A는 반복 억제를 넣지 않은 비교군입니다. B-D는 같은 모델 위에서 반복 억제와 block 크기만 조정합니다. 특히 D는 block을 16으로 줄여 더 autoregressive에 가까운 흐름을 만듭니다.
+\end{codeRead}
+
+\noindent\textbf{출력.}
+\begin{lstlisting}[style=bookoutput]
+=== 샘플러 sweep (같은 학습 모델, 조건부 'Once upon a time') ===
+
+----- A) 기존 temp0.7/topk40 (반복억제 없음) -----
+[0]  Once upon a time, there was a little girl named Lily. She loved to play with her toy friends. One day, Lily's mom came to play with her toys. She saw a big ball and wanted to play with it.
+
+Lily's mom asked her to help her mom. She asked her mom if she could play with her toy ball. Lily said, "Yes, you can play with my ball with it."
+
+Lily and her mom said,
+[1]  Once upon a time, there was a little girl named Lily. She loved to play with her toys and her friends. One day, she went to the park with her friends. She wanted to play with her and toys because she wanted to play with it.
+
+Suddenly, Lily's friend came outside and saw a big dog playing in the park. It was a big, red red ball, and they were playing in the p
+
+----- B) rep1.3 + 인접금지 + topp0.92 -----
+[0]  Once upon a time, there was a little girl named Lily. She loved to play with her friends and explore in her backyard. One day, she went outside to the park when she saw a big ball! It looked so pretty that it wanted to catch it. 
+
+Lily picked up and tried to grab it inside. But then, she found a rock on the ground and started to run away. 
+
+The boy said, "I
+[1]  Once upon a time, there was a little girl named Lily. She loved to play outside and play with her toys. One day, she went to the park and saw a big slide. It looked so pretty fun. Lily laughed and said, "Look at my car! 
+
+"Lily's go home me!"
+Her mom replied, "I'm sorry, sweet mommy. I don't want it again soon." 
+
+The man smiled and said, "Yes, I love you. 
+
+----- C) rep1.2 + temp0.9 + topp0.95 -----
+[0]  Once upon a time, there was a little girl named Lily. She loved to play with her toys and leaves together. One day, she decided to go outside and play outside. 
+
+Suddenly, she saw a big red rock on the ground. She picked it up and held it tightly. Lily was sad and cried and said, "It's so cool! I won't hurt you!" Her mom replied, "Yes, let's go or explore."
+[1]  Once upon a time, there was a little girl named Lily. She loved to play with her toys and make pretty blankets. One day, she went to the park and saw a big dog who was playing in the grass. 
+
+Later that day, Lily's mom heard her said, "I'm sorry, but you can't have some food." Her mom replied, "Don't worry, but I'll touch it." 
+
+Lily felt sad too, but then,
+
+----- D) B + block16 (더 촘촘) -----
+[0]  Once upon a time, there was a little girl named Lily. She loved to play with her toys. One day, she was playing in the park and said that it would be a lot of fun things! 
+
+Lily's mom came and replied, "Don't worry, Lily. I'm sorry, but you can change your clothes." Her mom replied, "I don't want to do it again!" But then, they saw a big red ball. It had an
+[1]  Once upon a time, there was a little girl Lily. She loved to play with her toys and pretty blankets on her shoes. One day, she went to the park when she saw a big box! It looked so beautiful that it had ever seen before. 
+
+Lily's mom said, "I don't know what to do it!" Her mom replied, "Of course if I have some new things for you." 
+
+Her mom explained, "You
+\end{lstlisting}
+
+A는 같은 표현이 되돌아오는 경향이 남아 있습니다. B-D는 반복 억제를 통해 루프가 줄고, D는 block을 더 잘게 쪼개 국소 흐름을 조금 더 안정시킵니다. 다만 샘플러는 없는 능력을 만들지 못합니다. 이번 개선은 먼저 모델이 조건부 구조를 배웠기 때문에 의미가 있습니다.
+
+\section{AR(\ref{ch:24}장)과 diffusion의 비교}
+
+\begin{booktable}{AR 언어모델과 diffusion LM 비교}{tab:ch33-ar-diffusion}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{@{}lll@{}}
+\toprule
+항목 & \ref{ch:24}장 AR GPT & 33장 diffusion LM \\
+\midrule
+생성 방향 & 왼쪽에서 오른쪽으로 next-token & all-\inlinecode{[MASK]}에서 반복 채우기 \\
+학습 감독 & 거의 모든 위치 & 마스크된 위치만 \\
+문맥 & 과거 토큰만 & 양방향 문맥 \\
+학습 step & 1500 step & 30000 step \\
+모델 규모 & 약 3.72M & 3.79M \\
+디코딩 비용 & KV-cache로 순차 생성 & 여러 forward 반복, NFE 부담 \\
+결과 성격 & 더 자연스러운 기준선 & 작은 모델에서도 교정 후 coherent 생성 가능 \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{booktable}
+
+\ref{ch:24}장의 AR 모델은 같은 TinyStories 계열에서 훨씬 적은 step으로 읽기 쉬운 문장을 만들었습니다. next-token 학습은 모든 위치가 매번 감독되므로 학습 신호가 조밀합니다. 반면 diffusion LM은 일부 마스크 위치만 손실을 받기 때문에 신호가 희박하고, 생성할 때도 여러 번 forward를 반복해야 합니다. 대신 양방향 문맥을 사용하고, 길이 내부의 여러 위치를 동시에 다룰 수 있다는 다른 구조적 장점이 있습니다.
+
+따라서 이 장의 결론은 diffusion이 AR보다 항상 낫다는 것이 아닙니다. 작은 모델, 작은 데이터, T4 30분 예산에서는 AR이 훨씬 실용적인 기준선입니다. 33장의 의의는 Ch 32처럼 무너진 diffusion LM도 원인을 분해하면 학습 가능한 형태로 살릴 수 있고, 그 개선을 top-1 accuracy, KL, 4-gram 반복률로 검증할 수 있다는 데 있습니다.
+
+\section{이 장에 등장한 라이브러리와 함수}
+
+\begin{booktable}{33장 새로 등장한 도구}{tab:ch33-libraries}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{@{}lll@{}}
+\toprule
+이름 & 역할 & 다음 장에서의 의미 \\
+\midrule
+\api{ByteLevelBPETokenizer} & TinyStories용 BPE 2048 직접 학습 & 작은 diffusion LM의 용량 배분 교정 \\
+\api{BertForMaskedLM} & mask diffusion 백본으로 재사용 & MLM 모델을 diffusion 학습기로 전환 \\
+\inlinecode{diffusion\_loss} & 마스크 자리 CE + \(1/t\) 시간가중 & 흡수형 NELBO surrogate 구현 \\
+\inlinecode{fixed\_t\_acc} & 샘플러 없이 모델 복원 능력 측정 & 생성 실패 원인 분리 \\
+\inlinecode{rep4} & 4-gram 반복률 측정 & 샘플러 반복 루프 진단 \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{booktable}
+
+\section{체크포인트 질문}
+
+\begin{enumerate}
+\item Ch 32에서 vocab 30522개가 작은 모델의 임베딩 share를 약 70\%까지 키웠습니다. 이 구조가 왜 문맥 학습을 방해하는지 설명해 보세요.
+\item 식~\eqref{eq:ch33-time-weight}의 \(1/t\) 시간가중이 없다면 어떤 \(t\) 구간의 학습 신호가 상대적으로 약해질까요?
+\item 고정-\(t=0.15\) top-1 accuracy는 왜 샘플러가 아니라 모델 자체를 평가한다고 볼 수 있을까요?
+\item 4-gram 반복률이 0이라고 해서 문장이 반드시 좋다고 말할 수 없는 이유는 무엇인가요?
+\end{enumerate}
+
+\section{FAQ}
+
+\begin{faqBox}{Q1. vocab을 2048로 줄이면 표현력이 부족하지 않나요?}
+일반적인 대규모 웹 말뭉치라면 부족할 수 있습니다. 하지만 이번 데이터는 TinyStories이고, 목표는 작은 diffusion LM이 조건부 구조를 배울 수 있는지 확인하는 것입니다. Ch 32에서는 vocab이 너무 커서 임베딩이 모델 대부분을 차지했습니다. 2048 BPE는 어휘 표현력을 조금 줄이는 대신 본체가 문맥을 학습할 용량을 확보합니다.
+\end{faqBox}
+
+\begin{faqBox}{Q2. \inlinecode{train\_loss} 3.59만 보면 충분히 좋은 모델이라고 말할 수 있나요?}
+아닙니다. loss만으로는 생성 품질을 판단하기 어렵습니다. 그래서 이 장은 고정-\(t\) top-1 accuracy 0.717, KL 0.78, 4-gram 반복률 0.177 \(\to\) 0.000을 함께 봅니다. loss는 학습이 진행됐다는 신호이고, 세 진단값은 모델과 샘플러가 실제로 개선됐는지 확인하는 별도의 증거입니다.
+\end{faqBox}
+
+\begin{faqBox}{Q3. KL 0.78은 왜 좋은 신호인가요? KL은 작을수록 좋은 것 아닌가요?}
+여기서 비교 대상은 정답 분포가 아니라 코퍼스 유니그램 분포입니다. 생성 분포가 유니그램과 거의 같다면 모델이 문맥을 보지 않고 단어 빈도만 흉내 내는 상태일 수 있습니다. 따라서 이 진단에서는 KL이 0 근처로 붙는 것이 오히려 붕괴 신호입니다. 0.78은 생성이 단순 빈도표와 다르게 움직인다는 뜻입니다.
+\end{faqBox}
+
+\begin{faqBox}{Q4. carry-over 샘플러는 AR 생성과 같은 것인가요?}
+완전히 같지는 않습니다. AR은 매 step 다음 한 토큰만 예측하고 KV-cache로 이어 갑니다. carry-over 샘플러는 diffusion 모델의 전체 로짓을 반복해서 보되, block 안에서 이미 확정한 토큰을 다시 지우지 않는 방식입니다. 왼쪽에서 오른쪽으로 확정된 문맥이 쌓인다는 점에서는 AR에 가까운 안정성을 일부 빌려옵니다.
+\end{faqBox}
+
+\begin{faqBox}{Q5. 왜 \inlinecode{[MASK]} 토큰을 생성 결과에서 막아야 하나요?}
+\inlinecode{[MASK]}는 학습 중 노이징 상태를 나타내는 토큰이지 최종 텍스트에 남아야 할 단어가 아닙니다. 디코딩 중 \inlinecode{mask\_id} 로짓을 \(-\infty\)로 막지 않으면 모델이 빈칸 자체를 답으로 내놓을 수 있습니다. 샘플러는 모든 자리가 실제 토큰으로 확정되도록 \inlinecode{[MASK]} 생성을 차단해야 합니다.
+\end{faqBox}
+
+\begin{faqBox}{Q6. Ch 24 AR 모델과 Ch 33 diffusion 모델 중 어떤 쪽을 실무 기준선으로 삼아야 하나요?}
+작은 모델과 제한된 GPU 예산에서는 AR을 기준선으로 삼는 편이 현실적입니다. \ref{ch:24}장은 1500 step으로 매끄러운 결과를 얻지만, 33장은 30000 step을 써야 Ch 32 붕괴를 벗어납니다. diffusion은 구조적으로 흥미롭지만, 학습 신호와 디코딩 비용을 함께 고려해야 합니다.
+\end{faqBox}
+
+\begin{faqBox}{Q7. 이 장의 결과를 더 개선하려면 무엇을 먼저 바꿔야 하나요?}
+가장 먼저 볼 것은 데이터와 step 수입니다. 이미 vocab과 샘플러는 붕괴를 피하는 방향으로 교정했습니다. 다음 개선은 더 긴 학습, 더 큰 본체, 더 정교한 noise schedule, 그리고 샘플러의 NFE와 block 크기 탐색입니다. 다만 이 장의 T4 30분 제약 안에서는 30000 step, 3.79M 모델, peak 627 MiB 구성이 실용적인 균형점입니다.
+\end{faqBox}
+
+\begin{previewBox}{미리보기}
+다음 diffusion 계열 실험에서는 작은 모델을 살리는 수준을 넘어, AR 계열과 diffusion 계열을 더 공정한 비용 축에서 비교해야 합니다. 특히 학습 step, NFE, KV-cache 유무, 반복 억제 샘플러가 품질과 속도에 어떤 영향을 주는지가 핵심 비교 지점입니다.
+\end{previewBox}
