@@ -103,7 +103,9 @@ Phase 0에서 익힌 태스크들을 이번엔 DistilBERT와 `Trainer`로 재정
 
 인코더(BERT)에서 디코더(GPT)로 무대를 옮깁니다. GPT 시대의 학습 네 단계 — **사전학습**(Ch 24·26) → **계속 사전학습**(Ch 25·27) → **SFT 지시학습**(Ch 28) → **정렬**(Ch 30 DPO, Ch 31 GRPO) — 을 영어·한국어 대칭으로 밟고, 그 사이에 분야별 벤치마크 평가(Ch 29)를 끼웁니다. PPO는 T4 한 대에 네 모델을 동시에 올릴 수 없어 제외하고, 그 부담이 없는 DPO로 대신합니다.
 
-### Phase 5 · Diffusion LM (Ch 32-34)
+### Phase 5 · Diffusion LM (Ch 32-34) — 🚧 진행 중
+
+> 이 단계는 아직 집필·검증 중입니다.
 
 다음 토큰을 하나씩 잇는 autoregressive와 달리, 문장 전체를 한꺼번에 denoise하는 새 패러다임을 봅니다. 작은 mask-diffusion을 직접 구현해 개념을 잡고(Ch 32), 글로벌 모델 LLaDA-8B(Ch 33)와 국산 Trida-7B(Ch 34)로 autoregressive와 Diffusion을 나란히 비교합니다.
 
