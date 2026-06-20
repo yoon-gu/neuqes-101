@@ -1,39 +1,39 @@
-이 장에서는 임베딩까지 합쳐 **3.79M 파라미터**짜리 작은 mask-diffusion 언어 모델(`BertForMaskedLM`, hidden 256 / 4 layer)이 `Once upon a time…`으로 시작하는 영어 동화를 **끝까지 완결된 문장으로** 생성하게 만듭니다. 실제로 학습이 끝난 모델은 이런 문장을 만들어냅니다.
+이 장에서 바뀌는 단 한 가지는 **생성 샘플러**입니다. Ch 32에서 같은 작은 diffusion LM(vocab 2048, 30000 step)이 이미 영어 동화를 생성했지만, 기본 샘플러(confidence remasking)는 한번 높은 확신을 받은 흔한 토큰을 거듭 뽑아 *반복*이 보였습니다 — `named named`, `play and play`처럼요. 이 장은 **모델도 학습도 그대로 두고**, 디코딩 방식만 **carry-over semi-AR + 반복 억제**로 바꿔 그 반복을 없앱니다.
+
+학습이 끝난 모델에 새 샘플러를 적용하면 이런 문장이 나옵니다.
 
 > *"Once upon a time, there was a little girl named Lily. She loved to play outside with her friends. One day, she went to the park and saw a big tree in the sky…"*
 
-인물(Lily)·대화·배경이 모두 갖춰진, 동화다운 흐름입니다. 작은 모델에서 이만큼 나오게 한 핵심 레시피는 세 가지입니다.
+반복 없이 인물(Lily)·대화·배경이 이어지는 흐름입니다. 이 장의 한 가지 변화인 샘플러는 두 부분으로 이뤄집니다.
 
-- **작은 vocab (2048)** — ByteLevel BPE로 어휘를 2048개 + `[MASK]`로 압축합니다. 이러면 임베딩이 전체 파라미터의 13.9%만 차지해, 3.79M의 대부분이 실제 Transformer 본체로 갑니다.
-- **충분한 학습 (30000 step)** — diffusion 계열은 한 step마다 일부 위치만 복원하므로, 같은 품질을 내려면 자기회귀(AR) 모델보다 대략 20배 더 오래 학습해야 합니다. `max_steps=30000`이 그 하한선입니다.
-- **carry-over 샘플러** — semi-AR 방식으로 이전 step에서 확정한 토큰을 이어받고, 반복 억제(temperature 0.8 / top-p 0.92 / repetition penalty 1.3 / 인접 동일 토큰 금지)를 더해 생성이 한 단어에 갇히지 않게 합니다.
+- **carry-over semi-AR** — 이전 step에서 확정한 토큰을 다음 step으로 이어받아, 매 step 전체를 다시 흔들지 않고 점진적으로 문장을 굳혀갑니다.
+- **반복 억제** — temperature 0.8 / top-p 0.92 / repetition penalty 1.3 / 인접 동일 토큰 금지를 더해, 생성이 한 단어에 갇히지 않게 합니다.
 
-데이터는 `TinyStories` 10만 편을 사용합니다. 흡수형(absorbing) diffusion에 1/t 시간가중 loss를 얹어, 학습이 끝난 모델의 train loss는 **3.59**까지 내려갑니다(균등 vocab 2048의 baseline은 ln 2048 = 7.62). 고정 시점(t=0.15)에서 측정한 top-1 복원 정확도는 **0.717**, 4-gram 반복률은 **0.177에서 0.000**으로 떨어집니다. 직전 장에서 만든 작은 diffusion 모델을, 바로 위 세 가지 선택으로 "실제로 동화를 쓰는" 모델까지 키워 보겠습니다.
+모델 본체·vocab 2048·30000 step·1/t 시간가중 loss는 Ch 32에서 세운 그대로입니다. 이 장은 오직 *어떻게 뽑아내는가*만 바꿉니다.
 
 ## 추적표 (Phase 5 — diffusion 라인)
 
-| 챕터 | 모델 | 토크나이저 | 데이터 | Loss | 생성 결과 |
-|---|---|---|---|---|---|
-| Ch 32 (붕괴) | BertForMaskedLM, hidden 256/4L (~11M) | bert-base-uncased WordPiece, vocab 30522 | TinyStories | 마스크 자리 CE 평균 (시간가중 없음) | ". the the.. was" — 유니그램 붕괴 |
-| **Ch 33 (교정)** | **BertForMaskedLM, hidden 256/4L (3.79M)** | **TinyStories ByteLevel BPE, vocab 2048** | **TinyStories train[:100000]** | **흡수형 NELBO + 시간가중 1/t** | **"Once upon a time, there was a little girl named Lily..." — 인물·대화·배경 있음** |
+| 챕터 | 모델·학습 (공통) | 샘플러 | 생성 결과 |
+|---|---|---|---|
+| Ch 32 (패러다임) | BertForMaskedLM hidden 256/4L (3.79M), ByteLevel BPE 2048, 30000 step, 1/t 시간가중 loss | 기본 confidence remasking | coherent하나 반복 ("They run… They run", "happy. happy") |
+| **Ch 33 (샘플러)** | **(Ch 32와 동일)** | **carry-over semi-AR + 반복 억제** | **"…named Lily. She loved to play…" — 반복 없음 (4-gram 0.177 → 0.000)** |
 
-Ch 32와 Ch 33의 본체(hidden 256/4L)는 같습니다. 달라진 것은 임베딩 테이블의 크기(vocab), 학습량, 그리고 디코딩 방식입니다. vocab을 30522에서 2048로 줄이자 임베딩이 차지하던 파라미터 비중이 약 70%에서 13.9%로 떨어지고, 전체 모델은 3.79M으로 가벼워져 Ch 24와 같은 급이 됩니다.
+모델·토크나이저·학습량·loss는 Ch 32와 **완전히 같습니다**. 이 장이 바꾸는 것은 오직 **생성 샘플러** 하나입니다.
 
 ## 변경점 (Diff from Ch 32)
 
-Ch 32에서 이미 흡수형 mask-diffusion의 골격은 세웠습니다. 이번 장은 같은 골격을 **실제로 학습이 되는 모델**로 끌어올리는 세 가지 선택을 더합니다. 셋 다 "더 작게, 더 오래, 더 신중하게"라는 한 방향을 가리킵니다.
+Ch 32에서 작은 diffusion LM이 이미 영어 동화를 생성했습니다(vocab 2048, 30000 step, 1/t loss). 다만 기본 샘플러라 반복이 남았습니다. 이 장의 변화는 **딱 하나, 샘플러**입니다.
 
 | 항목 | Ch 32 | Ch 33 (이번) | 왜 이렇게 바꾸나 |
 |---|---|---|---|
-| **vocab 크기** | 30522 | **2048** (ByteLevel BPE + `[MASK]`) | 작은 모델일수록 임베딩이 파라미터를 잠식합니다. 2048로 줄이면 임베딩 비중이 약 70%에서 13.9%로 내려가, 3.79M의 대부분이 Transformer 본체로 돌아갑니다. |
-| **학습 step** | 1500 | **30000** | diffusion은 step마다 일부 위치만 복원하므로 AR 대비 대략 20배의 학습량이 필요합니다. 30000 step이 동화가 문장으로 이어지기 시작하는 하한선입니다. |
-| **샘플러** | 비단조 일괄 복원 | **carry-over semi-AR + 반복 억제** | 확정된 토큰을 다음 step으로 이어받고(carry-over), temperature 0.8 / top-p 0.92 / repetition penalty 1.3 / 인접 동일 토큰 금지를 더해 생성이 한 단어에 갇히지 않게 합니다. |
+| 모델·vocab·학습·loss | hidden 256/4L, BPE 2048, 30000 step, 1/t | **동일 (그대로 상속)** | 모델 품질은 Ch 32에서 이미 확보(고정-t top-1 acc 0.717) |
+| **샘플러** | 기본 confidence remasking (일괄 복원) | **carry-over semi-AR + 반복 억제** | 확정 토큰을 다음 step으로 이어받고(carry-over), temperature 0.8 / top-p 0.92 / repetition penalty 1.3 / 인접 동일 토큰 금지로 반복을 제거합니다. |
 
-세 선택의 효과는 숫자로 분명합니다. train loss는 균등분포 baseline 7.62 대비 **3.59**, 고정 시점(t=0.15) top-1 복원 정확도 **0.717**, 4-gram 반복률 **0.177 → 0.000**. 이 변화들이 왜 *결정적인지* — 그리고 이 중 하나라도 빠지면 생성이 어떻게 무너지는지 — 는 뒤의 🔬 해부와 🚀 삽질 코너에서 대조로 보겠습니다.
+효과는 숫자로 분명합니다. **같은 모델인데 4-gram 반복률이 0.177 → 0.000**으로 떨어집니다. train loss(3.59)·고정-t acc(0.717)는 모델이 같으니 그대로입니다. *생성 품질은 모델만이 아니라 샘플러가 좌우한다* — 이 장의 한 줄 메시지입니다.
 
 ## Loss 노트 — 흡수형 mask diffusion의 시간가중
 
-Ch 32에서는 마스크 자리의 cross-entropy를 그냥 평균만 냈습니다. 그런데 흡수형(absorbing) mask diffusion의 변분 하한(NELBO)을 제대로 풀면, 각 시점 $t$의 손실에 **시간에 따라 달라지는 가중치**가 붙습니다. 이 가중치가 학습이 제대로 굴러가게 만드는 핵심이라, 이번 장에서는 이 항을 명시적으로 넣습니다.
+이 장의 loss는 Ch 32와 **같습니다** — 흡수형(absorbing) mask diffusion의 $1/t$ 시간가중. 이 장은 모델을 새로 학습하니, 복습 차원에서 *왜 $1/t$인지* 다시 짚습니다. 흡수형 mask diffusion의 변분 하한(NELBO)을 제대로 풀면, 각 시점 $t$의 손실에 **시간에 따라 달라지는 가중치**가 붙습니다.
 
 선형 schedule $\alpha_t = 1 - t$를 쓰면 시각 $t$에서 토큰이 아직 마스크되지 않고 살아 있을 확률이 $\alpha_t$입니다. 연속시간 흡수형 확산의 NELBO를 정리하면 시간가중이
 
@@ -61,7 +61,7 @@ $$ \frac{1}{t}\cdot\frac{\sum_{\text{mask 자리}} (-\log p)}{L} $$
 
 ## 토크나이저 노트 — 왜 작은 모델엔 작은 vocab인가
 
-Ch 32 붕괴의 첫 번째 원인이 바로 토크나이저였습니다. `bert-base-uncased`의 WordPiece vocab은 30522개입니다. 이걸 hidden 256짜리 작은 모델에 그대로 붙이면 임베딩 테이블만
+이 장도 Ch 32와 **같은 BPE 2048**을 씁니다. 작은 모델에 작은 vocab이 왜 중요한지 복습합니다. 만약 `bert-base-uncased`의 WordPiece vocab 30522개를 hidden 256짜리 작은 모델에 그대로 붙이면 임베딩 테이블만
 
 $$ 30522 \times 256 \approx 7.8\text{M} $$
 
@@ -110,7 +110,7 @@ Diffusion 모델은 한 배치에서 확률 $t$로 일부 자리만 가립니다
 
 결과물의 결을 보면, 같은 약 3.7M 규모에서 Ch 24의 GPT는 1500 step만으로도 "there was a girl named Lily" 같은 매끄러운 문장을 냈습니다. 이 장의 diffusion은 30000 step을 들여 인물(Lily, Timmy)·대화·배경이 있는 이야기까지 도달했지만, "big collar tree", "an noise" 같은 자잘한 흠이 남습니다.
 
-이 거칠기는 모델이 잘못 학습됐다는 신호가 아닙니다. **같은 규모에서 diffusion이 autoregressive보다 거친 건 정상** 입니다. 양방향 병렬 채움이라는 더 어려운 과제를, 더 희박한 감독으로, 작은 본체로 풀고 있기 때문입니다. 중요한 건 Ch 32의 붕괴(". the the.. was")를 벗어나 조건부 구조를 실제로 학습했다는 점입니다. 고정-t(0.15) top-1 accuracy가 0.717까지 오르고, 생성 토큰 분포가 코퍼스 유니그램과 뚜렷이 다른(KL 0.78) 상태가 그 증거입니다.
+이 거칠기는 모델이 잘못 학습됐다는 신호가 아닙니다. **같은 규모에서 diffusion이 autoregressive보다 거친 건 정상** 입니다. 양방향 병렬 채움이라는 더 어려운 과제를, 더 희박한 감독으로, 작은 본체로 풀고 있기 때문입니다. 중요한 건 이 모델이 유니그램 붕괴(". the the.. was" 같은 고빈도 토큰 반복)에 빠지지 않고 조건부 구조를 실제로 학습했다는 점입니다. 고정-t(0.15) top-1 accuracy가 0.717까지 오르고, 생성 토큰 분포가 코퍼스 유니그램과 뚜렷이 다른(KL 0.78) 상태가 그 증거입니다.
 
 ### 정리
 
@@ -119,6 +119,6 @@ Autoregressive와 diffusion 중 하나가 일방적으로 우월한 게 아닙�
 ## 이 장의 구성
 
 - [33-1. 실습](33-diffusion_train-practice.md)
-- [33-2. 해부 — 모델이 정말 조건부를 배웠나 (눈대중 말고 숫자로)](33-diffusion_train-anatomy.md)
-- [33-3. 변형 — 샘플러만 바꿔보기](33-diffusion_train-variation.md)
+- [33-2. 해부: 모델이 정말 조건부를 배웠나 (눈대중 말고 숫자로)](33-diffusion_train-anatomy.md)
+- [33-3. 변형: 샘플러만 바꿔보기](33-diffusion_train-variation.md)
 - [33-4. 정리와 FAQ](33-diffusion_train-wrapup.md)

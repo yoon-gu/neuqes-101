@@ -9,14 +9,14 @@
 **▶ 실행 결과**
 
 ```text
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 825.1/825.1 kB 49.8 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 119.9 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 45.0 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.2/389.2 kB 35.6 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━╺━━━━━━━━━━━━━━━━━━━━━ 22.4/48.9 MB 221.2 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 146.3 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 146.3 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 16.9 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 825.1/825.1 kB 25.9 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 97.3 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 28.7 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.2/389.2 kB 24.4 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸━━━━━━━━━━━ 34.9/48.9 MB 192.2 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 156.2 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 156.2 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 15.0 MB/s eta 0:00:00
 ```
 
 ```python
@@ -74,8 +74,6 @@ torch        : 2.11.0+cu128
 use fp16     : True
 ```
 
-GRPO 학습용 데이터를 만듭니다. 산술 문제를 prompt로 만들고 정답을 따로 보관하는데, 이 정답은 모델 입력이 아니라 verifier가 생성 답을 자동 채점할 때만 씁니다. 보상 모델 없이 규칙으로 채점할 수 있는 task라는 점을 눈여겨보세요.
-
 ```python
 from datasets import Dataset
 
@@ -132,8 +130,6 @@ train: 256 samples,  eval: 64 samples
 14
 ```
 
-정렬할 policy 모델과 토크나이저를 로드합니다. 보통은 Ch 28 SFT 체크포인트를 출발점으로 삼지만 여기서는 단독 실행을 위해 base 모델로 시작합니다. KoGPT2는 `AutoTokenizer`가 영어 토크나이저로 잘못 fallback되므로 `PreTrainedTokenizerFast`로 special token을 직접 지정해 로드하는 점을 봐 두세요.
-
 ```python
 from transformers import PreTrainedTokenizerFast, AutoModelForCausalLM
 
@@ -171,7 +167,7 @@ transformer.h.{0...11}.attn.masked_bias | UNEXPECTED |  |
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
-load done: 22.2s
+load done: 17.0s
 
 === policy model ===
 #params      : 125.16 M
@@ -181,40 +177,57 @@ tokenizer    : TokenizersBackend
   pad_token  : <pad>  id=3
 ```
 
-GRPO의 핵심인 verifier(보상 함수)를 정의합니다. DPO처럼 별도 보상 모델을 학습하는 대신, 생성 답에서 마지막 정수를 뽑아 정답과 일치하면 1.0, 아니면 0.0을 주는 규칙 기반 채점입니다. 아래 데모에서 같은 prompt에 대한 여러 답이 어떻게 0/1로 갈리는지 확인하세요.
+```python
+# === SFT 워밍스타트 === GRPO 전에 산술 포맷+정답을 지도학습 (비제로 시작점)
+from transformers import Trainer, TrainingArguments, DataCollatorForLanguageModeling
+
+sft_ds = make_arithmetic(3000, max_operand=9, seed=SEED + 7)   # SFT 용 (정답 포함 학습)
+def _to_sft(ex):
+    # prompt + 정답 + EOS 를 통째로 언어모델링 (정답 생성을 학습)
+    return tokenizer(ex["prompt"] + ex["answer"] + tokenizer.eos_token,
+                     truncation=True, max_length=48, padding="max_length")
+sft_tok = sft_ds.map(_to_sft, remove_columns=sft_ds.column_names)
+
+sft_args = TrainingArguments(
+    output_dir="./out_grpo_sft", num_train_epochs=5,
+    per_device_train_batch_size=32, learning_rate=5e-4,
+    warmup_ratio=0.1, lr_scheduler_type="cosine", max_grad_norm=1.0,
+    fp16=torch.cuda.is_available(), logging_steps=50, save_strategy="no", report_to="none")
+sft_trainer = Trainer(model=policy, args=sft_args, train_dataset=sft_tok,
+                      data_collator=DataCollatorForLanguageModeling(tokenizer, mlm=False))
+t0 = time.time(); sft_trainer.train()
+print(f"SFT 워밍스타트 완료 ({(time.time()-t0)/60:.1f}min) - policy 가 이제 산술 포맷을 안다")
+```
+
+**▶ 실행 결과**
+
+```text
+[transformers] warmup_ratio is deprecated and will be removed in v5.2. Use `warmup_steps` instead.
+[transformers] `loss_type=None` was set in the config but it is unrecognized. Using the default loss: `ForCausalLMLoss`.
+<IPython.core.display.HTML object>
+SFT 워밍스타트 완료 (1.2min) - policy 가 이제 산술 포맷을 안다
+```
 
 ```python
-def extract_last_int(text: str):
-    '''생성 답에서 마지막 정수를 추출 (없으면 None). 산술 task 의 정답 후보.'''
-    matches = re.findall(r"-?\d+", text)
-    return matches[-1] if matches else None
+def extract_answer(text: str):
+    '''생성 답에서 정답 정수를 추출. 응답 블록만 보고(모델이 다음 문제를 이어 생성해도
+    그 숫자를 집지 않도록 "###" 앞까지만) 첫 정수를 집는다.'''
+    seg = text.split("###")[0]
+    m = re.search(r"-?\d+", seg)
+    return m.group(0) if m else None
 
 
 def reward_correct(completions, answer, **kwargs):
-    '''verifier: 생성 답의 마지막 정수가 정답과 일치하면 1.0, 아니면 0.0.
-
-    trl reward_func 시그니처:
-      - completions: 생성된 답 리스트 (group)
-      - answer     : 데이터셋의 'answer' 컬럼이 리스트로 전달 (정답)
-      - 반환       : 각 completion 의 reward 리스트
-    '''
-    rewards = []
-    for comp, gold in zip(completions, answer):
-        pred = extract_last_int(comp)
-        rewards.append(1.0 if (pred is not None and pred == str(gold)) else 0.0)
-    return rewards
+    '''verifier: 생성 답의 정수가 정답과 일치하면 1.0, 아니면 0.0 (이진 검증가능 보상).
+    trl reward_func 시그니처: completions(생성 답 리스트) + answer(정답 리스트) -> reward 리스트.'''
+    return [1.0 if (extract_answer(c) == str(g)) else 0.0
+            for c, g in zip(completions, answer)]
 
 
 # verifier 시연 - 한 prompt("3 + 5 = ?", 정답 8) 에 4개 답 (일부 맞음/틀림)
-demo_completions = [
-    "The answer is 8.",         # 맞음 -> 1.0
-    "answer: 7",                # 틀림 -> 0.0
-    "8",                        # 맞음 -> 1.0
-    "I don't know",             # 숫자 없음 -> 0.0
-]
+demo_completions = ["The answer is 8.", "answer: 7", "8", "I don't know"]
 demo_answers = ["8", "8", "8", "8"]
 demo_rewards = reward_correct(demo_completions, answer=demo_answers)
-
 print("=" * 56)
 print("verifier demo - prompt: '3 + 5 = ?', gold answer: 8")
 print("=" * 56)
@@ -236,8 +249,6 @@ verifier demo - prompt: '3 + 5 = ?', gold answer: 8
 
 rewards (group): [1.0, 0.0, 1.0, 0.0]
 ```
-
-GRPO의 group relative advantage를 손으로 계산해 봅니다. 한 prompt에서 만든 여러 rollout의 reward를 그룹 평균으로 빼고 표준편차로 나누어, critic(가치망) 없이 그룹 평균을 baseline으로 삼는 방식입니다. 그룹 구성이 전부 같으면 advantage가 0이 되어 학습 신호가 사라진다는 점을 마지막 출력에서 확인하세요.
 
 ```python
 def group_advantage(rewards, eps=1e-4):
@@ -293,70 +304,88 @@ advantage for various group compositions:
   rewards=[0, 0, 0, 0] -> advantage=[0. 0. 0. 0.]  (all same -> no learning signal)
 ```
 
-GRPO 전후를 비교하기 위해 학습 전 정확도를 먼저 측정합니다. eval 셋의 각 prompt에 답을 여러 개 생성하고 verifier로 채점해 pass rate(정확도)를 구합니다. base 모델이라 산술을 거의 못 맞히는 출발점을 확인해 두세요.
-
 ```python
 from trl import GRPOTrainer, GRPOConfig
 
 
-# GRPO 전·후 비교용 - eval 셋에서 정확도(verifier pass rate) 측정
+# GRPO 전·후 비교용 - greedy(do_sample=False) 로 결정화 측정.
+# sampling 측정은 실행마다 베이스라인이 흔들려 delta 를 못 읽는다 -> greedy 로 고정.
 @torch.no_grad()
-def eval_accuracy(model, dataset, n=64, n_sample=2, max_new=24):
-    '''각 prompt 에 n_sample 개 답을 생성해 verifier pass rate (정확도) 계산.'''
+def eval_accuracy(model, dataset, n=64, max_new=24):
     model.eval()
-    correct, total = 0, 0
+    correct = 0
     for ex in dataset.select(range(min(n, len(dataset)))):
         enc = tokenizer(ex["prompt"], return_tensors="pt").to(model.device)
-        gen = model.generate(
-            **enc, max_new_tokens=max_new, do_sample=True, temperature=1.0,
-            top_p=0.95, num_return_sequences=n_sample,
-            pad_token_id=tokenizer.pad_token_id,
-        )
-        for g in gen:
-            text = tokenizer.decode(g[enc["input_ids"].shape[1]:], skip_special_tokens=True)
-            pred = extract_last_int(text)
-            correct += int(pred is not None and pred == str(ex["answer"]))
-            total += 1
-    return correct / max(total, 1)
+        gen = model.generate(**enc, max_new_tokens=max_new, do_sample=False, num_beams=1,
+                             pad_token_id=tokenizer.pad_token_id)
+        text = tokenizer.decode(gen[0][enc["input_ids"].shape[1]:], skip_special_tokens=True)
+        correct += int(extract_answer(text) == str(ex["answer"]))
+    return correct / min(n, len(dataset))
 
 
-acc_before = eval_accuracy(policy, eval_ds, n=64, n_sample=2)
-print(f"BEFORE GRPO - arithmetic accuracy (verifier pass rate): {acc_before:.3f}")
+acc_before = eval_accuracy(policy, eval_ds, n=64)
+print(f"BEFORE GRPO - arithmetic accuracy (greedy verifier pass rate): {acc_before:.3f}")
 ```
 
 **▶ 실행 결과**
 
 ```text
-BEFORE GRPO - arithmetic accuracy (verifier pass rate): 0.000
+BEFORE GRPO - arithmetic accuracy (greedy verifier pass rate): 0.875
 ```
 
-**결과 해석**
+```python
+# 각 prompt 에 k 개 답을 생성해 정답률(pass rate)을 측정
+@torch.no_grad()
+def pass_rate(model, prompt, gold, k=8):
+    enc = tokenizer(prompt, return_tensors="pt").to(model.device)
+    gen = model.generate(**enc, max_new_tokens=24, do_sample=True, temperature=0.7, top_p=0.95,
+                         num_return_sequences=k, pad_token_id=tokenizer.pad_token_id)
+    c = sum(extract_answer(tokenizer.decode(g[enc["input_ids"].shape[1]:], skip_special_tokens=True)) == str(gold)
+            for g in gen)
+    return c / k
 
-base KoGPT2는 산술을 한 번도 맞히지 못해 정확도가 0.000입니다. GRPO가 끌어올려야 할 기준선입니다.
+# 중간 난이도(2-7/8 정답)인 prompt 만 남겨 그룹 std>0 보장
+pool = make_arithmetic(500, max_operand=9, seed=SEED + 3)
+keep = [ex for ex in pool if 0.25 <= pass_rate(policy, ex["prompt"], ex["answer"]) <= 0.875]
+grpo_ds = Dataset.from_list(keep[:256]) if len(keep) >= 16 else grpo_ds  # 너무 적으면 원본 유지
+print(f"난이도 필터: pool {len(pool)} -> 중간난이도 {len(grpo_ds)}개 (그룹에 정답·오답 섞임 → advantage std>0)")
+```
 
-`GRPOConfig`와 `GRPOTrainer`로 실제 정렬을 수행합니다. `num_generations=4`로 한 prompt당 4개의 rollout을 생성해 그룹 내 상대 비교로 정책을 갱신하고, `beta=0.0`으로 reference 모델 없이(ref-free) 메모리를 아낍니다. `reward_funcs`에 verifier를 넘기면 rollout → 채점 → group advantage → 정책 갱신이 자동으로 돌아갑니다.
+**▶ 실행 결과**
+
+```text
+난이도 필터: pool 500 -> 중간난이도 256개 (그룹에 정답·오답 섞임 → advantage std>0)
+```
 
 ```python
-GROUP_SIZE = 4   # num_generations - rollout group size (T4 룰: 작게)
+GROUP_SIZE = 8   # num_generations - rollout group size (T4 룰: 작게)
 
 grpo_config = GRPOConfig(
     output_dir="./out_kogpt2_grpo",
-    num_train_epochs=1,
-    per_device_train_batch_size=GROUP_SIZE,   # group rollout 이 한 batch 에 들어가도록
-    gradient_accumulation_steps=4,
-    num_generations=GROUP_SIZE,               # <- 한 prompt 당 생성 답 개수 (group size)
-    max_completion_length=24,                 # 짧은 산술 답 - generation 비용 통제
-    temperature=1.0,                          # rollout 다양성 (group 안에 정답·오답 섞이게)
-    learning_rate=1e-5,
-    beta=0.0,                                 # 0 = ref-free (reference 없이, 메모리 절약)
+    num_train_epochs=2,
+    # 배치·그룹: micro-batch 당 prompt 2개(16/8) × grad_accum 8 = step 당 unique prompt 16
+    per_device_train_batch_size=16,
+    gradient_accumulation_steps=8,
+    num_generations=GROUP_SIZE,               # 한 prompt 당 생성 답 개수(그룹 크기)
+    max_completion_length=24,
+    mask_truncated_completions=True,          # 잘린 생성은 loss 에서 제외
+    # 탐색: eval(greedy)·rollout 정합, 산술은 저엔트로피라 0.7 로 낮춤
+    temperature=0.7,
+    top_p=0.95,
+    # 신호 정규화: std 나눗셈 제거(난이도 bias·과증폭 차단)
+    scale_rewards=False,
+    loss_type="dr_grpo",
+    # 붕괴 방지: lr 낮추고(정석 ~1e-6 근처) clip 강화, 짧은 RL 에 cosine 금지
+    learning_rate=5e-6,
+    lr_scheduler_type="constant_with_warmup",
     warmup_ratio=0.1,
-    lr_scheduler_type="cosine",
-    max_grad_norm=1.0,
-    fp16=USE_FP16,                            # T4 는 bf16 불가
+    max_grad_norm=0.2,
+    beta=0.04,                                # KL 앵커(참조=SFT 모델), ref-free(0) 금지
+    fp16=USE_FP16,
     logging_steps=5,
     save_strategy="no",
     report_to="none",
-    use_vllm=False,                           # vLLM 없이 HF generate 로 rollout (Colab 호환)
+    use_vllm=False,
     seed=SEED,
 )
 
@@ -407,22 +436,23 @@ if torch.cuda.is_available():
 
 ```text
 [transformers] warmup_ratio is deprecated and will be removed in v5.2. Use `warmup_steps` instead.
+[transformers] GPT2LMHeadModel LOAD REPORT from: skt/kogpt2-base-v2
+Key                                     | Status     |  | 
+----------------------------------------+------------+--+-
+transformer.h.{0...11}.attn.masked_bias | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
 <IPython.core.display.HTML object>
 === GRPO summary ===
-elapsed     : 0.77 min
-global_step : 64
-train_loss  : -0.0000
-final peak  : 1451 MiB
+elapsed     : 0.49 min
+global_step : 32
+train_loss  : 5171634.2480
+final peak  : 2886 MiB
 ```
 
-**결과 해석**
-
-ref-free에 num_generations=4로 64 step 학습이 0.77분, peak VRAM 1451 MiB에 끝나 T4 30분 룰 안에 충분히 들어옵니다. train_loss가 0 근처인 것은 advantage 가중 정책 손실의 특성으로, 정렬 효과는 loss 값이 아니라 정확도 변화로 봐야 합니다.
-
-GRPO 후 정확도를 다시 측정해 학습 전과 막대그래프로 비교합니다. 같은 eval 셋·같은 verifier로 채점하므로 두 값의 차이가 곧 GRPO의 정렬 효과입니다.
-
 ```python
-acc_after = eval_accuracy(policy, eval_ds, n=64, n_sample=2)
+acc_after = eval_accuracy(policy, eval_ds, n=64)
 
 print(f"AFTER  GRPO - arithmetic accuracy (verifier pass rate): {acc_after:.3f}")
 print(f"BEFORE GRPO - arithmetic accuracy                     : {acc_before:.3f}")
@@ -444,18 +474,12 @@ plt.tight_layout(); plt.show()
 **▶ 실행 결과**
 
 ```text
-AFTER  GRPO - arithmetic accuracy (verifier pass rate): 0.047
-BEFORE GRPO - arithmetic accuracy                     : 0.000
-delta                                                 : +0.047
+AFTER  GRPO - arithmetic accuracy (verifier pass rate): 0.891
+BEFORE GRPO - arithmetic accuracy                     : 0.875
+delta                                                 : +0.016
 ```
 
 ![output](../assets/31-grpo-out1.png)
-
-**결과 해석**
-
-정확도가 0.000에서 0.047로 올라(delta +0.047) GRPO가 짧은 학습만으로도 정렬 방향이 옳음을 보여줍니다. 절대값이 낮은 것은 작은 base 모델·256 샘플·1 에폭이라는 T4 제약 때문이며, 변형 코너의 group size 확대나 더 큰 데이터로 끌어올릴 수 있습니다.
-
-학습 로그에서 group 평균 reward와 reward 표준편차, GRPO loss의 추이를 그립니다. reward가 오르는지, 그리고 그룹 안에 정답·오답이 섞여 학습 신호를 만드는 reward std가 유지되는지를 함께 확인하는 그림입니다.
 
 ```python
 log = trainer.state.log_history
@@ -500,9 +524,5 @@ if torch.cuda.is_available() and vram_cb.steps:
 ![output](../assets/31-grpo-out2.png)
 
 ```text
-peak VRAM (max over training): 2230 MiB  (policy only, ref-free, num_generations=4, fp16)
+peak VRAM (max over training): 3670 MiB  (policy only, ref-free, num_generations=8, fp16)
 ```
-
-**결과 해석**
-
-학습 전 구간 peak VRAM이 2230 MiB로 T4의 16GB에 여유 있게 들어옵니다. ref-free(`beta=0.0`)라 reference 모델을 띄우지 않고 policy만 메모리에 올린 덕분이며, num_generations를 키우면 rollout 비용과 함께 이 값도 늘어납니다.

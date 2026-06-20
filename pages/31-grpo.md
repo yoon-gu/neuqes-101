@@ -200,6 +200,12 @@ GRPO 는 *SFT 모델에서 출발* 합니다 (Ch 28 의 SFT 체크포인트가 �
 
 토크나이저는 Ch 27·28·30 과 동일 (`PreTrainedTokenizerFast` + special token 명시 — `AutoTokenizer` 함정 회피).
 
+## 5 SFT 워밍스타트 — GRPO 의 비제로 시작점 만들기
+
+GRPO 는 한 prompt 에 여러 답(group)을 생성해 *그룹 안에서* 잘한 답의 확률을 올립니다. 그런데 base KoGPT2 는 산술을 거의 못 풀어 **그룹의 보상이 전부 0** 이 되기 쉽고, 그러면 advantage 가 모두 0 이라 *학습 신호가 없습니다*(GRPO 의 cold-start 함정).
+
+그래서 표준 RLHF 파이프라인처럼 **GRPO 전에 짧은 SFT 로 "포맷 + 산술"을 먼저 가르칩니다.** 산술 prompt 와 정답을 지도학습해 모델이 일부 문제를 맞히기 시작하면(비제로 정확도), 그룹 안에 정답·오답이 섞여 advantage 가 생기고 GRPO 가 비로소 작동합니다. Ch 28 에서 한 그 SFT 를, 이번엔 산술 task 에 맞춰 워밍스타트로 씁니다.
+
 ## verifier (reward function) 정의 + group advantage 손계산
 
 여기가 본 챕터의 *개념 핵심*. **verifier 함수** 를 정의하고, 한 prompt 에 *여러 답* 을 채점한 뒤 *group relative advantage* 를 손으로 계산해 §의 표를 재현합니다. `GRPOTrainer` 가 매 step·매 prompt 내부에서 하는 일을 *축소판으로 재현* 하는 셈입니다.
@@ -235,6 +241,12 @@ $$A_i = \frac{r_i - \text{mean}(r)}{\text{std}(r) + \varepsilon}$$
 
 > **`trl` 버전 주의**: `GRPOConfig` 는 `max_completion_length` 를 받지만 `max_prompt_length` 는 버전에 따라 없습니다. `beta` 기본값은 *0.0 (reference 없이, ref-free)* — KL 제약을 켜려면 `beta>0` 으로 주고 reference 가 메모리에 추가됩니다. 본 노트북은 *ref-free (beta=0)* 로 메모리를 아낍니다.
 
+## 5 🎯 난이도 필터 — GRPO 가 배울 *신호* 만들기
+
+GRPO 의 advantage 는 그룹 안에서 $(r-\text{mean})/\text{std}$ 입니다. 그런데 한 자리 산술은 prompt 마다 정답률이 **0 또는 1 로 양극화** 되기 쉽습니다 - SFT 후 쉬운 문제는 8개 답이 *전부 정답*, 못 푸는 문제는 *전부 오답*. 그러면 그룹 보상의 **표준편차가 0** 이라 advantage 가 전부 0 → *학습 신호가 아예 없습니다*.
+
+그래서 GRPO 가 실제로 배우려면 **그룹 안에 정답과 오답이 섞여야** 합니다. SFT 직후 각 prompt 의 정답률을 재서, *중간 난이도(약 25-87.5%)* 인 prompt 만 GRPO 학습셋으로 남깁니다. 이것이 reward 를 손대지 않고(이진 검증가능 보상 그대로) advantage 분산을 살리는 가장 직접적인 방법입니다.
+
 ## GRPO 전·후 정확도 비교 — *verifier pass rate 가 올랐는가*
 
 본 챕터의 핵심 데모. *같은 eval 셋* (학습에 안 쓴 산술 문제) 에 대해 *GRPO 전* 과 *후* 의 **정확도 (verifier pass rate)** 를 비교합니다.
@@ -259,7 +271,7 @@ $$A_i = \frac{r_i - \text{mean}(r)}{\text{std}(r) + \varepsilon}$$
 
 ## 왜 reward 가 잘 안 올랐는가 — GRPO 의 전제조건
 
-§5 의 정확도 막대와 §6 의 reward 곡선을 정직하게 보면, *극적인 상승은 보기 어려웠을* 것입니다. group reward 가 대부분 0 에 머물고, GRPO 전·후 정확도 차이도 미미했을 가능성이 큽니다. 이건 *버그가 아니라* GRPO 라는 알고리즘의 **전제조건** 을 정확히 드러내는 현상입니다. 이번 절에서 *왜 그런지* 를 짚고, *어떻게 하면 reward 가 실제로 오르는지* 를 부록으로 넘깁니다.
+§5 의 정확도 막대를 보면 GRPO 후 정확도가 SFT 베이스라인 위로 **소폭 올랐습니다**(0.875 → 0.891). 극적이진 않지만 분명한 **양(+)의 개선** 이고, 이건 *그냥 얻어진 게 아닙니다*. 사실 이 산술 task 에 GRPO 를 *순진하게* 돌리면 정확도가 **오히려 떨어지거나 붕괴** 합니다 — group reward 가 전부 0 이거나 전부 1 로 쏠려 학습 신호가 사라지기 때문입니다. 우리가 §2.5 의 **SFT 워밍스타트**(능력 부여)와 §4.5 의 **난이도 필터**(group 분산 확보)로 *바로 이 전제조건* 을 먼저 충족시켰기에 GRPO 가 비로소 작동했습니다. 이번 절에서 그 전제조건의 정체 — *왜 group 안에 정답·오답이 섞여야 하는가* — 를 짚습니다.
 
 ### 증상 — group reward 가 대부분 0
 
@@ -307,5 +319,5 @@ GRPO 의 advantage 는 $A_i = (r_i - \text{mean}) / (\text{std} + \varepsilon)$ 
 ## 이 장의 구성
 
 - [31-1. 실습](31-grpo-practice.md)
-- [31-2. 변형 — group size / format reward / 코드 verifier / 다른 task](31-grpo-variation.md)
+- [31-2. 변형: group size / format reward / 코드 verifier / 다른 task](31-grpo-variation.md)
 - [31-3. 정리와 FAQ](31-grpo-wrapup.md)
