@@ -126,3 +126,7 @@
   * [33-2. 해부 — 모델이 정말 조건부를 배웠나 (눈대중 말고 숫자로)](pages/33-diffusion_train-anatomy.md)
   * [33-3. 변형 — 샘플러만 바꿔보기](pages/33-diffusion_train-variation.md)
   * [33-4. 정리와 FAQ](pages/33-diffusion_train-wrapup.md)
+* [34. 한국어로 가면 무너진다 — 80/10/10으로 살리는 diffusion](pages/34-ko_diffusion.md)
+  * [34-1. 실습 — 80/10/10 수정판 직접 학습하기](pages/34-ko_diffusion-practice.md)
+  * [34-2. 해부 — 붕괴를 진단하고, 범인을 좁혀가기](pages/34-ko_diffusion-anatomy.md)
+  * [34-3. 정리와 FAQ](pages/34-ko_diffusion-wrapup.md)
