@@ -1,4 +1,4 @@
-"""Ch 35 저-마스킹 실험 — 로컬 Mac MPS 실행. t<=0.30 컷이 한국어 조건부 학습을 살리는지.
+"""Ch 34 부록 — 저-마스킹 실험 — 로컬 Mac MPS 실행. t<=0.30 컷이 한국어 조건부 학습을 살리는지.
 사용: python run_local_mps.py [max_steps]"""
 import math, time, sys, torch
 import torch.nn.functional as F
@@ -96,7 +96,7 @@ class DiffTrainer(Trainer):
         return (loss, out) if return_outputs else loss
 
 MAX_STEPS = int(sys.argv[1]) if len(sys.argv) > 1 else 12000
-args = TrainingArguments(output_dir="./35_ko_lowmask/out_local", max_steps=MAX_STEPS,
+args = TrainingArguments(output_dir="./out_local", max_steps=MAX_STEPS,
     per_device_train_batch_size=64, learning_rate=4e-4, weight_decay=0.01,
     warmup_steps=1000, lr_scheduler_type="cosine", max_grad_norm=1.0, fp16=False,
     logging_steps=250, save_strategy="no", report_to="none", label_names=["labels"],

@@ -91,8 +91,8 @@ step·용량이 다 무력하고 loss가 평탄하다는 사실은 "느린 수�
 
 ## 8. 재현 정보
 
-- 실패/진단 스크립트: `35_ko_lowmask/run_local_mps.py`(저마스킹), `35_ko_lowmask/control_std_mlm.py`(표준 MLM 대조)
-- 해결 스크립트: `35_ko_lowmask/run_local_fix.py`(80/10/10 이식)
+- 실패/진단 스크립트: `34_ko_diffusion/appendix_run_local_mps.py`(저마스킹), `34_ko_diffusion/appendix_control_std_mlm.py`(표준 MLM 대조)
+- 해결 스크립트: `34_ko_diffusion/appendix_run_local_fix.py`(80/10/10 이식)
 - 정식 노트북: `34_ko_diffusion/34_ko_diffusion.ipynb`(80/10/10 + plain CE + 생성·진단)
 - 로컬 환경: `.venv` Python 3.12 + torch 2.11 MPS, fp16 비활성
 

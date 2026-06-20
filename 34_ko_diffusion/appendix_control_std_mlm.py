@@ -63,7 +63,7 @@ print("params(M)", round(model.num_parameters()/1e6, 2), flush=True)
 collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=True, mlm_probability=0.15)
 
 MAX_STEPS = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
-args = TrainingArguments(output_dir="./35_ko_lowmask/out_ctrl", max_steps=MAX_STEPS,
+args = TrainingArguments(output_dir="./out_ctrl", max_steps=MAX_STEPS,
     per_device_train_batch_size=64, learning_rate=5e-4, weight_decay=0.01,
     warmup_steps=500, lr_scheduler_type="cosine", max_grad_norm=1.0, fp16=False,
     logging_steps=250, save_strategy="no", report_to="none", remove_unused_columns=False, seed=SEED)
