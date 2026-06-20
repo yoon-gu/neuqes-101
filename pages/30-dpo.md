@@ -296,5 +296,5 @@ margin 분포가 *오른쪽 (양수) 으로 밀려났다면* 정렬이 일어난
 ## 이 장의 구성
 
 - [30-1. 실습](30-dpo-practice.md)
-- [30-2. 변형 — β 조정 / 더 많은 preference / DPO 변종](30-dpo-variation.md)
+- [30-2. 변형: β 조정 / 더 많은 preference / DPO 변종](30-dpo-variation.md)
 - [30-3. 정리와 FAQ](30-dpo-wrapup.md)
