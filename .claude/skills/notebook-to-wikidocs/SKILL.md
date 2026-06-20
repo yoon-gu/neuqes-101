@@ -67,6 +67,12 @@ python3 .claude/skills/notebook-to-wikidocs/scripts/build_wikidocs.py --all   # 
 산출물: `pages/NN-slug.md`(개요) + `-{practice,anatomy,variation,wrapup}.md`(절), 그림 `assets/NN-slug-outK.png`,
 `TOC.md`(해당 장 블록만 교체, 나머지 번호 순서 보존). 챕터별 실패는 격리되어 배치를 멈추지 않는다.
 
+**절 제목 형식**(자동 통일) — 절 제목은 항상 `키워드: 소개` 한 형식으로 맞춘다(`_normalize_subtitle`):
+- 실습 → `실습: <간단한 소개>`, 변형 → `변형: <간단한 안내>`, 해부 → `해부: <간단한 소개>`.
+- 정리와 FAQ(wrapup)는 소개 없이 항상 `정리와 FAQ` 그대로(노트북 헤더로 덮어쓰지 않음).
+- 노트북 헤더가 `실습 2:`·`변형 —`·`… 실습`(키워드 말미)처럼 제각각이어도 키워드+순번+구분자를 떼어 `키워드: 나머지`로 통일한다(구분자는 `:` 고정, `—` 금지). 키워드만 있고 소개가 없으면 키워드만 남는다.
+- 노트북 작성 시에도 이 형식(`실습: 소개` / `변형: 안내`)으로 헤더를 쓰면 변환이 그대로 보존한다.
+
 **실습 Colab 링크**(자동) — 각 장 `*-practice.md` 맨 위에 그 장 노트북(`NN_slug/NN_slug.ipynb`)을 여는 **Colab 바로 열기 링크**를 단다. repo 는 git origin 에서 자동 인식. 배지 이미지(외부 SVG)는 EPUB/PDF에서 깨지므로 **전자책 안전한 텍스트 링크**로 넣는다(린터 E4 회피). 개요·해부 등 다른 절에는 달지 않는다.
 
 ### ③ 검증 — `scripts/check_wikidocs_md.py`

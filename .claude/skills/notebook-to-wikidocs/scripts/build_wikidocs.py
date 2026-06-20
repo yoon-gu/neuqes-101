@@ -180,6 +180,24 @@ def _clean_heading_text(text: str) -> str:
     return EMOJI_RE.sub("", text).strip()
 
 
+SUBTITLE_LABELS = {"practice": "실습", "anatomy": "해부", "variation": "변형"}
+
+
+def _normalize_subtitle(group: str, text: str) -> str:
+    """절 제목을 'label: 소개' 형식으로 통일한다.
+    노트북 헤더가 '실습 2:', '변형 —', '… 실습'(말미)처럼 제각각이어도
+    키워드+순번+구분자를 떼어내 'label: 나머지'로 맞춘다. 나머지가 없으면 label만.
+    예: '변형 — λ 스윕' → '변형: λ 스윕', 'Collator 추가 실습' → '실습: Collator 추가'.
+    """
+    label = SUBTITLE_LABELS.get(group)
+    if not label:
+        return text
+    rest = re.sub(rf"^{label}\s*\d*\s*[:\-–—]?\s*", "", text)  # 선두 '실습 2:' 류 제거
+    rest = re.sub(rf"\s*{label}\s*$", "", rest)                # 말미 '… 실습' 제거
+    rest = rest.strip(" :-–—")
+    return f"{label}: {rest}" if rest else label
+
+
 def _first_header(md: str) -> tuple[int, str] | None:
     for line in md.splitlines():
         m = HEADER_RE.match(line)
@@ -631,7 +649,8 @@ def convert(nb: dict, num: int, slug: str, title: str,
             if hdr and hdr[0] == 2:
                 current = _classify(hdr[1])
                 if current in ("practice", "anatomy", "variation"):
-                    sub_titles[current] = _clean_heading_text(hdr[1])
+                    sub_titles[current] = _normalize_subtitle(
+                        current, _clean_heading_text(hdr[1]))
             groups[current].append(_strip_header_emoji(_sanitize_md_cell(md, stem, stats)))
         elif ctype == "code":
             code = _cell_text(cell).rstrip("\n")
