@@ -1,4 +1,6 @@
-# Hugging Face로 시작하는 텍스트 분석
+# Colab 무료버전으로 BERT·GPT·Diffusion LM from scratch
+
+> 영어도 한국어도 — 비싼 GPU도 결제도 없이 세 언어모델을 직접
 
 scikit-learn 한 줄로 텍스트를 숫자로 바꾸는 일에서 출발해, 직접 만든 GPT가 짧은 이야기를 써내려가는 순간까지 한 걸음씩 따라가는 책입니다. 모든 장이 **Google Colab 노트북** 한 개로 되어 있어, 아무것도 설치하지 않고 브라우저에서 열어 무료 T4 GPU로 30분 안에 끝까지 실행해 볼 수 있습니다.
 
