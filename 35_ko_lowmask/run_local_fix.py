@@ -1,0 +1,122 @@
+"""iter5 — 작동하는 표준 MLM 재료(80/10/10 + plain CE + lr 5e-4)를 diffusion(가변 마스킹)에 이식.
+표준 MLM은 같은 한국어 데이터로 acc 0.469. diffusion이 빠뜨린 80/10/10이 범인인지 검증."""
+import math, time, sys, torch
+from datasets import load_dataset, Dataset
+from tokenizers import Tokenizer, models, trainers, pre_tokenizers, decoders
+from transformers import (PreTrainedTokenizerFast, BertConfig, BertForMaskedLM,
+                          Trainer, TrainingArguments)
+
+SEED = 42; torch.manual_seed(SEED)
+device = "mps" if torch.backends.mps.is_available() else "cpu"
+print("device:", device, flush=True)
+
+EOT = "<|endoftext|>"; N_TRAIN, N_VAL, MAXL = 50_000, 500, 1_500_000
+def rebuild(split, n, maxl):
+    stories, buf = [], []
+    for i, ex in enumerate(load_dataset("g0ster/TinyStories-Korean", split=split, streaming=True)):
+        if i >= maxl or len(stories) >= n: break
+        line = (ex["text"] or "").strip()
+        if line == EOT:
+            s = " ".join(buf).strip()
+            if s: stories.append(s)
+            buf = []
+        elif line: buf.append(line)
+    if buf and len(stories) < n:
+        s = " ".join(buf).strip()
+        if s: stories.append(s)
+    return stories[:n]
+raw_train = Dataset.from_dict({"text": rebuild("train", N_TRAIN, MAXL)})
+raw_val   = Dataset.from_dict({"text": rebuild("validation", N_VAL, 50_000)})
+print("stories", len(raw_train), len(raw_val), flush=True)
+
+VOCAB = 4000
+def corpus_iter(bs=1000):
+    for i in range(0, len(raw_train), bs): yield raw_train[i:i+bs]["text"]
+_tk = Tokenizer(models.BPE(unk_token="[UNK]"))
+_tk.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=False)
+_tk.decoder = decoders.ByteLevel()
+_tk.train_from_iterator(corpus_iter(), trainer=trainers.BpeTrainer(
+    vocab_size=VOCAB, special_tokens=["[PAD]", "[UNK]", "[MASK]"],
+    initial_alphabet=pre_tokenizers.ByteLevel.alphabet()))
+tokenizer = PreTrainedTokenizerFast(tokenizer_object=_tk, pad_token="[PAD]",
+                                    unk_token="[UNK]", mask_token="[MASK]")
+print("vocab", tokenizer.vocab_size, flush=True)
+
+BLOCK = 128
+tt = raw_train.map(lambda b: tokenizer(b["text"], add_special_tokens=False), batched=True, remove_columns=raw_train.column_names)
+tv = raw_val.map(lambda b: tokenizer(b["text"], add_special_tokens=False), batched=True, remove_columns=raw_val.column_names)
+def group(b):
+    cat = sum(b["input_ids"], []); n = (len(cat)//BLOCK)*BLOCK
+    return {"input_ids": [cat[i:i+BLOCK] for i in range(0, n, BLOCK)]}
+lm_train = tt.map(group, batched=True, remove_columns=tt.column_names)
+lm_val   = tv.map(group, batched=True, remove_columns=tv.column_names)
+print("chunks", len(lm_train), len(lm_val), flush=True)
+
+# ★ diffusion 가변 마스킹 + BERT 80/10/10 + (1/t 없이 BertForMaskedLM 기본 CE)
+N_SPECIAL = 3  # [PAD],[UNK],[MASK]
+class DiffMLMCollator:
+    def __init__(self, tok, eps=0.05, tmax=1.0, seed=SEED):
+        self.mask_id = tok.mask_token_id; self.vocab = tok.vocab_size
+        self.eps = eps; self.tmax = tmax
+        self.gen = torch.Generator().manual_seed(seed)
+    def __call__(self, ex):
+        ids = torch.tensor([e["input_ids"] for e in ex], dtype=torch.long)
+        B, L = ids.shape
+        t = torch.rand(B, generator=self.gen) * (self.tmax - self.eps) + self.eps  # 가변 마스킹률
+        sel = torch.rand(B, L, generator=self.gen) < t.unsqueeze(1)
+        no = ~sel.any(1)
+        if no.any():
+            j = torch.randint(0, L, (int(no.sum()),), generator=self.gen); sel[no, j] = True
+        labels = ids.clone(); labels[~sel] = -100
+        inp = ids.clone()
+        r = torch.rand(B, L, generator=self.gen)
+        mask_pos = sel & (r < 0.8)                       # 80% -> [MASK]
+        rand_pos = sel & (r >= 0.8) & (r < 0.9)          # 10% -> 랜덤 토큰
+        # 나머지 10% -> 원본 유지
+        inp[mask_pos] = self.mask_id
+        n_rand = int(rand_pos.sum())
+        if n_rand:
+            inp[rand_pos] = torch.randint(N_SPECIAL, self.vocab, (n_rand,), generator=self.gen)
+        return {"input_ids": inp, "attention_mask": torch.ones(B, L, dtype=torch.long), "labels": labels}
+
+cfg = BertConfig(vocab_size=tokenizer.vocab_size, hidden_size=256, num_hidden_layers=4,
+                 num_attention_heads=4, intermediate_size=1024,
+                 max_position_embeddings=BLOCK, pad_token_id=tokenizer.pad_token_id)
+model = BertForMaskedLM(cfg).to(device)
+print("params(M)", round(model.num_parameters()/1e6, 2), flush=True)
+
+MAX_STEPS = int(sys.argv[1]) if len(sys.argv) > 1 else 10000
+# BertForMaskedLM 기본 loss(plain CE) 사용 -> 커스텀 Trainer 불필요
+args = TrainingArguments(output_dir="./35_ko_lowmask/out_fix", max_steps=MAX_STEPS,
+    per_device_train_batch_size=64, learning_rate=5e-4, weight_decay=0.01,
+    warmup_steps=1000, lr_scheduler_type="cosine", max_grad_norm=1.0, fp16=False,
+    logging_steps=250, save_strategy="no", report_to="none", remove_unused_columns=False, seed=SEED)
+trainer = Trainer(model=model, args=args, train_dataset=lm_train,
+                  data_collator=DiffMLMCollator(tokenizer))
+t0 = time.time(); r = trainer.train()
+print(f"\n=== FIX(80/10/10) elapsed {(time.time()-t0)/60:.2f}min | step {r.global_step} | "
+      f"train_loss {r.training_loss:.4f} | baseline ln(V) {math.log(tokenizer.vocab_size):.4f} ===", flush=True)
+
+g = torch.Generator().manual_seed(0)
+def fixed_t_acc(tv_=0.15, n=128):
+    cor = tot = 0
+    for ex in lm_val.select(range(min(n, len(lm_val)))):
+        ids = torch.tensor(ex["input_ids"]); m = torch.rand(len(ids), generator=g) < tv_
+        if not m.any(): m[0] = True
+        inp = ids.clone(); inp[m] = tokenizer.mask_token_id
+        with torch.no_grad():
+            pr = model(inp.unsqueeze(0).to(device)).logits[0].argmax(-1).cpu()
+        cor += (pr[m] == ids[m]).sum().item(); tot += int(m.sum())
+    return cor/tot
+print(f"[FIX] diffusion+80/10/10 고정-t(0.15) acc = {fixed_t_acc():.3f}   (기존 diffusion 0.084 / 표준MLM 0.469)", flush=True)
+
+# infill 데모
+demo = "옛날 옛날에 작은 토끼가 숲으로 갔어요"
+ids = tokenizer(demo, add_special_tokens=False)["input_ids"]
+import random; random.seed(0)
+mids = ids[:]; pos = sorted(random.sample(range(len(ids)), max(1, len(ids)//4)))
+for p in pos: mids[p] = tokenizer.mask_token_id
+with torch.no_grad():
+    pr = model(torch.tensor([mids]).to(device)).logits[0].argmax(-1).cpu().tolist()
+print("[infill] 원문:", demo, flush=True)
+print("[infill] 복원:", tokenizer.decode([pr[i] if mids[i]==tokenizer.mask_token_id else ids[i] for i in range(len(ids))]), flush=True)
