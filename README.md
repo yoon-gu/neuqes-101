@@ -75,8 +75,8 @@ scikit-learn 한 줄로 텍스트를 숫자로 바꾸는 일에서 출발해, �
 | 29 | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/29_benchmark_eval/29_benchmark_eval.ipynb) | (Ch 28 SFT 모델 + 비교) | (Ch 28과 동일) | **분야별 벤치마크**: 영어 (MMLU·HellaSwag·ARC·TruthfulQA·GSM8K·HumanEval) + 한국어 (KMMLU·HAERAE-Bench·LogicKor·KoBEST) | — (평가만) | — | — (`lm-evaluation-harness`) | task-format별 |
 | 30 | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/30_dpo/30_dpo.ipynb) | SFT base + frozen ref | BBPE | preference 쌍 (chosen/rejected) | `Linear(H,V)` | log-likelihood ratio | `DPO sigmoid loss` (`DPOTrainer`) | (chosen, rejected) pair |
 | 31 | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/31_grpo/31_grpo.ipynb) | SFT base | BBPE | verifiable-reward prompts (수학·코드) | `Linear(H,V)` + group advantage | softmax | `GRPO loss` (group relative, `GRPOTrainer`) | rollout group + verifier |
-| 32 | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/32_diffusion_intro/32_diffusion_intro.ipynb) | 작은 BERT-style + noise schedule (직접) | WordPiece | TinyStories | `Linear(H,V)` | parallel denoise (forward noise / reverse) | masked-diffusion denoising loss | noised token ids |
-| 33 | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/33_diffusion_train/33_diffusion_train.ipynb) | 작은 BERT-MLM diffusion (직접, scratch — Ch 32 붕괴 교정) | BPE 2048 (직접 학습, TinyStories) | TinyStories train[:100000] | MLM head | parallel denoise (carry-over semi-AR) | 흡수형 NELBO (시간가중 `1/t`) | masked token ids |
+| 32 | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/32_diffusion_intro/32_diffusion_intro.ipynb) | 작은 BERT-MLM diffusion (직접, scratch — 패러다임) | BPE 2048 (직접 학습, TinyStories) | TinyStories train[:100000] | MLM head | parallel denoise (기본 confidence remasking) | 흡수형 NELBO (시간가중 `1/t`) | masked token ids |
+| 33 | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/33_diffusion_train/33_diffusion_train.ipynb) | 작은 BERT-MLM diffusion (Ch 32와 동일 모델) | BPE 2048 (직접 학습, TinyStories) | TinyStories train[:100000] | MLM head | parallel denoise (**carry-over semi-AR + 반복억제**) | 흡수형 NELBO (시간가중 `1/t`) | masked token ids |
 | 34 | [![Open](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/34_ko_diffusion/34_ko_diffusion.ipynb) | 작은 BERT-MLM diffusion (한국어, scratch — 80/10/10으로 붕괴 교정) | BPE 4000 (직접 학습, TinyStories-Korean) | TinyStories-Korean | MLM head | parallel denoise (carry-over) | 마스크 자리 평균 CE (80/10/10 마스킹) | masked token ids |
 
 > Ch 4는 Ch 3 이진 분류 데이터를 그대로 가져와 **softmax+CE(2차원)** 로 풀어 sigmoid+BCE와의 동등성을 시연합니다. **Ch 10·11도 BERT에서 같은 두 방식을 따로 학습** 해 비교합니다 — Ch 10이 sigmoid+BCE 방식, Ch 11이 softmax+CE 방식.
@@ -109,7 +109,7 @@ Phase 0에서 익힌 태스크들을 이번엔 DistilBERT와 `Trainer`로 재정
 
 > 이 단계는 아직 집필·검증 중입니다.
 
-다음 토큰을 하나씩 잇는 autoregressive와 달리, 문장 전체를 한꺼번에 denoise하는 새 패러다임을 봅니다. 작은 mask-diffusion을 직접 구현해 개념을 잡고(Ch 32), 그 모델이 고빈도 토큰으로 무너지는 원인을 진단해 작은 diffusion LM을 실제로 coherent하게 학습시킵니다(Ch 33). Ch 34에서는 같은 레시피를 한국어로 옮기면 무너지는 지점을 진단하고, BERT의 80/10/10 마스킹으로 한국어 diffusion을 되살립니다.
+다음 토큰을 하나씩 잇는 autoregressive와 달리, 문장 전체를 한꺼번에 denoise하는 새 패러다임을 봅니다. 한 챕터에 한 축씩만 바꿉니다. 작은 mask-diffusion을 직접 구현해 영어 동화를 생성하고(Ch 32 — **패러다임**, 기본 샘플러라 반복이 남음), 같은 모델에 carry-over 샘플러와 반복 억제를 더해 그 반복을 걷어냅니다(Ch 33 — **샘플러**). Ch 34에서는 같은 레시피를 한국어로 옮기면 무너지는 지점을 진단하고, BERT의 80/10/10 마스킹으로 한국어 diffusion을 되살립니다(Ch 34 — **언어**).
 
 ## 학습 환경
 
