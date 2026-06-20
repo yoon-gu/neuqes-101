@@ -1,4 +1,4 @@
-# Colab 무료버전으로 BERT·GPT·Diffusion LM from scratch
+# Hugging Face로 시작하는 언어모델: Colab 무료버전으로 만드는 BERT·GPT·Diffusion LM from scratch
 
 > 영어도 한국어도 — 비싼 GPU도 결제도 없이 세 언어모델을 직접
 
