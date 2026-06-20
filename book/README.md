@@ -1,6 +1,6 @@
 # 출판용 LaTeX 원고
 
-이 폴더는 1-31장 Colab 노트북을 원천으로 만든 출판용 LaTeX 프로젝트입니다.
+이 폴더는 1-34장 Colab 노트북을 원천으로 만든 출판용 LaTeX 프로젝트입니다.
 
 ## 빌드
 
@@ -11,7 +11,7 @@ python3 book/tools/notebook_to_tex.py --execute
 latexmk -xelatex book/main.tex
 ```
 
-PDF는 `book/build/neuqes-101-ch01-31-manuscript.pdf`에 생성됩니다.
+PDF는 `book/build/neuqes-101-ch01-34-manuscript.pdf`에 생성됩니다.
 
 ## 구조
 
@@ -20,7 +20,7 @@ PDF는 `book/build/neuqes-101-ch01-31-manuscript.pdf`에 생성됩니다.
 - `themes/`: 색상 팔레트 테마. 현재 기본값은 `slate.sty` (Cool Slate)
 - `preamble/`: 폰트, 페이지 레이아웃, 색인 스타일
 - `frontmatter/`: 표지, 속표지, 서문
-- `chapters/`: 1-31장 출판용 원고
+- `chapters/`: 1-34장 출판용 원고
 - `appendices/`: 검증 전 부록 노트북의 자리 표시 원고
 - `backmatter/`: 마무리와 색인
 - `tools/notebook_to_tex.py`: 노트북 원천에서 장 원고를 재생성하는 스크립트

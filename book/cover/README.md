@@ -19,7 +19,7 @@ book/cover/
 latexmk -xelatex book/main.tex
 ```
 
-산출물: `book/build/neuqes-101-ch01-31-manuscript.pdf` 의 첫 페이지가 이 표지.
+산출물: `book/build/neuqes-101-ch01-34-manuscript.pdf` 의 첫 페이지가 이 표지.
 
 ### 단독 빌드 (표지만 시연)
 

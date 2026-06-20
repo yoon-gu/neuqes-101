@@ -129,14 +129,16 @@
 
 \phasepart{5}
   {Diffusion 언어모델}
-  {mask diffusion · 작은 언어모델 붕괴 진단과 교정}
-  {Diffusion LM · Absorbing Mask}
+  {mask diffusion · 병렬 denoise와 샘플러, 한국어 확장}
+  {Diffusion LM · Parallel Denoising}
   {
-    \chapline{Ch 32}{작은 Diffusion LM 첫 실험}{Collapse Diagnosis}
-    \chapline{Ch 33}{작은 Diffusion LM 학습 교정}{BPE 2048 · Carry-over Sampler}
+    \chapline{Ch 32}{작은 Diffusion LM 입문}{Parallel Denoising}
+    \chapline{Ch 33}{Diffusion LM 샘플러 교정}{Carry-over Sampler}
+    \chapline{Ch 34}{한국어 Diffusion LM}{80/10/10 Masking}
   }
-\setcounter{chapter}{32}
+\input{chapters/ch32_diffusion_intro}
 \input{chapters/ch33_diffusion_train}
+\input{chapters/ch34_ko_diffusion}
 
 \appendix
 \appendixpart

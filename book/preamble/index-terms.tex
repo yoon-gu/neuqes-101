@@ -1,16 +1,125 @@
 % 공통 색인 후보. 각 장 원고에서도 장별 핵심어를 추가합니다.
+% 정렬 prefix 규칙: 0=한글 우선, 1=영문/코드/API.
 \index{1Loss@Loss}
 \index{0손실 함수@손실 함수}
+\index{0손실 함수@손실 함수!평균제곱오차@평균제곱오차}
+\index{0손실 함수@손실 함수!이진 교차 엔트로피@이진 교차 엔트로피}
+\index{0손실 함수@손실 함수!교차 엔트로피@교차 엔트로피}
+\index{0손실 함수@손실 함수!다음 토큰 예측@다음 토큰 예측}
+\index{0손실 함수@손실 함수!보조 손실@보조 손실}
+\index{0손실 함수@손실 함수!선호 정렬@선호 정렬}
+\index{0손실 함수@손실 함수!검증 보상@검증 보상}
+\index{0손실 함수@손실 함수!시간 가중 손실@시간 가중 손실}
+\index{1Loss@Loss!MSELoss@MSELoss}
+\index{1Loss@Loss!BCEWithLogitsLoss@BCEWithLogitsLoss}
+\index{1Loss@Loss!CrossEntropyLoss@CrossEntropyLoss}
+\index{1Loss@Loss!CausalLM@CausalLM}
+\index{1Loss@Loss!DPO loss@DPO loss}
+\index{1Loss@Loss!GRPO loss@GRPO loss}
+\index{1Loss@Loss!diffusion loss@diffusion loss}
 \index{1Output Head@Output Head}
 \index{0출력 헤드@출력 헤드}
+\index{0출력 헤드@출력 헤드!회귀 헤드@회귀 헤드}
+\index{0출력 헤드@출력 헤드!이진 분류 헤드@이진 분류 헤드}
+\index{0출력 헤드@출력 헤드!다중 클래스 헤드@다중 클래스 헤드}
+\index{0출력 헤드@출력 헤드!다중 라벨 헤드@다중 라벨 헤드}
+\index{0출력 헤드@출력 헤드!언어 모델링 헤드@언어 모델링 헤드}
+\index{0출력 헤드@출력 헤드!보조 헤드@보조 헤드}
+\index{1Output Head@Output Head!regression head@regression head}
+\index{1Output Head@Output Head!classification head@classification head}
+\index{1Output Head@Output Head!LM head@LM head}
+\index{1Output Head@Output Head!MLM head@MLM head}
 \index{1Activation@Activation}
 \index{0활성화 함수@활성화 함수}
+\index{0활성화 함수@활성화 함수!시그모이드@시그모이드}
+\index{0활성화 함수@활성화 함수!소프트맥스@소프트맥스}
+\index{1Activation@Activation!sigmoid@sigmoid}
+\index{1Activation@Activation!softmax@softmax}
 \index{1Tokenizer@Tokenizer}
 \index{0토크나이저@토크나이저}
+\index{0토크나이저@토크나이저!TF-IDF@TF-IDF}
+\index{0토크나이저@토크나이저!워드피스@워드피스}
+\index{0토크나이저@토크나이저!BPE@BPE}
+\index{0토크나이저@토크나이저!바이트 레벨 BPE@바이트 레벨 BPE}
+\index{0토크나이저@토크나이저!한국어 토크나이저@한국어 토크나이저}
+\index{0토크나이저@토크나이저!토크나이저 fertility@토크나이저 fertility}
+\index{1Tokenizer@Tokenizer!TfidfVectorizer@TfidfVectorizer}
+\index{1Tokenizer@Tokenizer!WordPiece@WordPiece}
+\index{1Tokenizer@Tokenizer!BPE@BPE}
+\index{1Tokenizer@Tokenizer!ByteLevel BPE@ByteLevel BPE}
+\index{1Tokenizer@Tokenizer!BBPE@BBPE}
+\index{1Tokenizer@Tokenizer!PreTrainedTokenizerFast@PreTrainedTokenizerFast}
+\index{0태스크@태스크!회귀@회귀}
+\index{0태스크@태스크!이진 분류@이진 분류}
+\index{0태스크@태스크!다중 클래스 분류@다중 클래스 분류}
+\index{0태스크@태스크!다중 라벨 분류@다중 라벨 분류}
+\index{0태스크@태스크!사전학습@사전학습}
+\index{0태스크@태스크!계속 사전학습@계속 사전학습}
+\index{0태스크@태스크!지도 미세조정@지도 미세조정}
+\index{0태스크@태스크!정렬 학습@정렬 학습}
+\index{0태스크@태스크!벤치마크 평가@벤치마크 평가}
+\index{0태스크@태스크!Diffusion 언어모델@Diffusion 언어모델}
+\index{1Task@Task!Regression@Regression}
+\index{1Task@Task!Binary classification@Binary classification}
+\index{1Task@Task!Multi-class classification@Multi-class classification}
+\index{1Task@Task!Multi-label classification@Multi-label classification}
+\index{1Task@Task!Pretraining@Pretraining}
+\index{1Task@Task!Continual pretraining@Continual pretraining}
+\index{1Task@Task!SFT@SFT}
+\index{1Task@Task!Alignment@Alignment}
+\index{1Task@Task!Benchmark evaluation@Benchmark evaluation}
+\index{1Task@Task!Diffusion LM@Diffusion LM}
+\index{0학습 단계@학습 단계!사전학습@사전학습}
+\index{0학습 단계@학습 단계!계속 사전학습@계속 사전학습}
+\index{0학습 단계@학습 단계!지도 미세조정@지도 미세조정}
+\index{0학습 단계@학습 단계!선호 정렬@선호 정렬}
+\index{0학습 단계@학습 단계!검증 보상 정렬@검증 보상 정렬}
+\index{1Training stage@Training stage!pretraining@pretraining}
+\index{1Training stage@Training stage!continual pretraining@continual pretraining}
+\index{1Training stage@Training stage!SFT@SFT}
+\index{1Training stage@Training stage!DPO@DPO}
+\index{1Training stage@Training stage!GRPO@GRPO}
+\index{1Training stage@Training stage!diffusion training@diffusion training}
+\index{0모델 계열@모델 계열!sklearn@sklearn}
+\index{0모델 계열@모델 계열!BERT@BERT}
+\index{0모델 계열@모델 계열!GPT@GPT}
+\index{0모델 계열@모델 계열!Diffusion LM@Diffusion LM}
+\index{1Model family@Model family!scikit-learn@scikit-learn}
+\index{1Model family@Model family!BERT@BERT}
+\index{1Model family@Model family!GPT@GPT}
+\index{1Model family@Model family!KoGPT2@KoGPT2}
+\index{1Model family@Model family!Diffusion LM@Diffusion LM}
+\index{0평가@평가!정확도@정확도}
+\index{0평가@평가!정밀도@정밀도}
+\index{0평가@평가!재현율@재현율}
+\index{0평가@평가!F1@F1}
+\index{0평가@평가!혼동 행렬@혼동 행렬}
+\index{0평가@평가!AUC@AUC}
+\index{0평가@평가!로그우도@로그우도}
+\index{0평가@평가!LLM 심판@LLM 심판}
+\index{0평가@평가!사람 평가@사람 평가}
+\index{1Evaluation@Evaluation!accuracy@accuracy}
+\index{1Evaluation@Evaluation!precision@precision}
+\index{1Evaluation@Evaluation!recall@recall}
+\index{1Evaluation@Evaluation!F1@F1}
+\index{1Evaluation@Evaluation!confusion matrix@confusion matrix}
+\index{1Evaluation@Evaluation!AUC@AUC}
+\index{1Evaluation@Evaluation!log-likelihood@log-likelihood}
+\index{1Evaluation@Evaluation!LLM-as-judge@LLM-as-judge}
 \index{1Google Colab@Google Colab}
 \index{0구글 코랩@구글 코랩}
 \index{1T4 GPU@T4 GPU}
+\index{0하드웨어@하드웨어!CPU RAM@CPU RAM}
+\index{0하드웨어@하드웨어!GPU VRAM@GPU VRAM}
+\index{0하드웨어@하드웨어!스토리지@스토리지}
+\index{1Hardware@Hardware!CPU RAM@CPU RAM}
+\index{1Hardware@Hardware!GPU VRAM@GPU VRAM}
+\index{1Hardware@Hardware!Storage@Storage}
 \index{1Hugging Face@Hugging Face}
+\index{1Hugging Face@Hugging Face!transformers@transformers}
+\index{1Hugging Face@Hugging Face!datasets@datasets}
+\index{1Hugging Face@Hugging Face!tokenizers@tokenizers}
+\index{1Hugging Face@Hugging Face!trl@trl}
 \index{1scikit-learn@scikit-learn}
 \index{0변화추적표@변화추적표}
 \index{0실습@실습}

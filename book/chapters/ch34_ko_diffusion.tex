@@ -1,0 +1,241 @@
+% Generated from executed/34_ko_diffusion.ipynb and pages/34-ko_diffusion*.md.
+
+\chapter[한국어 Diffusion LM]{한국어 diffusion LM: 80/10/10 마스킹으로 안정화}
+\label{ch:34}
+\markboth{한국어 Diffusion LM}{한국어 Diffusion LM}
+
+\chaptermeta{34_ko_diffusion/34_ko_diffusion.ipynb}{https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/34_ko_diffusion/34_ko_diffusion.ipynb}{한국어 TinyStories에서 diffusion LM을 학습하며 naive 마스킹 붕괴와 BERT식 80/10/10 마스킹을 비교}
+
+\index{1Korean Diffusion LM@Korean Diffusion LM}
+\index{1BBPE@BBPE}
+\index{1BERT 80 10 10 masking@BERT 80/10/10 masking}
+\index{1plain CE@plain CE}
+\index{1unigram collapse@unigram collapse}
+\index{1TinyStories Korean@TinyStories-Korean}
+\index{1g0ster TinyStories Korean@g0ster/TinyStories-Korean}
+\index{1ByteLevelBPETokenizer@ByteLevelBPETokenizer}
+\index{1vocab 4000@vocab 4000}
+\index{1mask id@mask\_id}
+\index{1fixed t accuracy@fixed-t accuracy}
+\index{1naive diffusion@naive diffusion}
+\index{1stable recipe@stable recipe}
+\index{1learning rate 5e 4@learning\_rate=5e-4}
+\index{1BertForMaskedLM@BertForMaskedLM}
+\index{1Korean generation@Korean generation}
+\index{1Korean BBPE@Korean BBPE}
+\index{1masking stabilization@masking stabilization}
+\index{1plain cross entropy@plain cross entropy}
+\index{1BERT style masking@BERT-style masking}
+\index{1denoising stability@denoising stability}
+\index{0한국어 diffusion@한국어 diffusion}
+\index{0유니그램 붕괴@유니그램 붕괴}
+\index{0마스킹 안정화@마스킹 안정화}
+\index{0한국어 Diffusion LM@한국어 Diffusion LM}
+\index{0한국어 TinyStories@한국어 TinyStories}
+\index{0한국어 BBPE@한국어 BBPE}
+\index{0한국어 생성@한국어 생성}
+\index{0한국어 토크나이저@한국어 토크나이저}
+\index{0BERT식 마스킹@BERT식 마스킹}
+\index{080 10 10 마스킹@80/10/10 마스킹}
+\index{0plain CE@plain CE}
+\index{0고정 t 정확도@고정 t 정확도}
+\index{0naive diffusion@naive diffusion}
+\index{0안정화 레시피@안정화 레시피}
+\index{0복원 정확도@복원 정확도}
+\index{0denoising 안정성@denoising 안정성}
+
+\section{누적 추적표}
+
+\begin{booktable}{34장 누적 추적표}{tab:ch34-trace}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{@{}lllll@{}}
+\toprule
+장 & 언어 & tokenizer & 마스킹 방식 & 핵심 결과 \\
+\midrule
+\ref{ch:32}장 & 영어 & BPE 2048 & absorbing mask + \(1/t\) & train loss 3.7148, 생성 작동 \\
+\ref{ch:33}장 & 영어 & BPE 2048 & 동일, 샘플러 교정 & 4-gram 반복률 0.177 \(\to\) 0.000 \\
+\textbf{34장} & \textbf{한국어} & \textbf{BBPE 4000} & \textbf{BERT 80/10/10 + plain CE} & \textbf{train loss 4.1260, fixed-\(t\) acc 0.652} \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{booktable}
+
+\section{변경점}
+
+본 장은 diffusion LM을 한국어로 옮깁니다. 데이터는 \inlinecode{g0ster/TinyStories-Korean}, tokenizer는 BBPE vocab 4000입니다. 단순히 영어 레시피를 한국어에 적용하면 유니그램 붕괴가 나타납니다. 해결책은 BERT의 80/10/10 마스킹과 plain CE입니다.
+
+\begin{booktable}{34장 변경점 요약}{tab:ch34-diff}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{@{}lll@{}}
+\toprule
+축 & \ref{ch:33}장 영어 diffusion & \ref{ch:34}장 한국어 diffusion \\
+\midrule
+데이터 & TinyStories & TinyStories-Korean \\
+tokenizer & BPE 2048 & BBPE 4000 \\
+초기 현상 & 영어 생성은 작동, 반복이 남음 & naive 마스킹은 loss \(\approx 7\), unigram collapse \\
+교정 & 샘플러 반복 억제 & 80/10/10 마스킹 + plain CE + lr \(5\times10^{-4}\) \\
+정량 결과 & fixed-\(t\) acc 0.717 & fixed-\(t\) acc 0.652 \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{booktable}
+
+\section{실습: 한국어 데이터와 BBPE}
+
+\begin{lstlisting}
+from datasets import load_dataset
+from tokenizers import ByteLevelBPETokenizer
+from transformers import BertConfig, BertForMaskedLM
+
+raw = load_dataset("g0ster/TinyStories-Korean")
+train_ds = raw["train"].select(range(50000))
+val_ds = raw["validation"].select(range(500))
+
+tokenizer = ByteLevelBPETokenizer()
+tokenizer.train_from_iterator(
+    train_ds["text"],
+    vocab_size=4000,
+    special_tokens=["[PAD]", "[UNK]", "[MASK]"],
+)
+\end{lstlisting}
+
+\noindent\emph{위 코드 읽기.}
+한국어는 음절·형태소·공백 패턴이 영어와 다르므로 vocab을 4000으로 늘렸습니다. BBPE는 byte 기반이라 별도 형태소 분석기 없이도 한국어 문자열을 다룰 수 있습니다.
+
+\begin{lstlisting}[style=bookoutput]
+stories 50000 500
+한때 벤이라는 이름의 어린 소년이 있었어요. 벤은 주변 세계를
+탐험하는 것을 좋아했답니다. 그는 가게에 전시되어 있던 아름다운
+꽃병들 같은 멋진 것들을 많이 봤어요.
+
+vocab 4000 mask_id 2
+chunks 75941 746
+\end{lstlisting}
+
+\section{해부: 왜 naive diffusion이 무너졌나}
+
+영어 레시피를 그대로 옮긴 naive 방식은 거의 모든 정보가 \inlinecode{[MASK]}로 사라지는 시간 구간에서 한국어 분포를 안정적으로 복원하지 못했습니다. 손실은 대략 7 근처, 즉 \(\ln(4000)=8.2940\)보다 낮지만 의미 있는 문장 생성으로 이어지기에는 부족한 수준에 머물렀습니다.
+
+\begin{booktable}{34장 naive와 안정화 레시피 비교}{tab:ch34-naive-stable}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{@{}lll@{}}
+\toprule
+항목 & naive diffusion & 안정화 레시피 \\
+\midrule
+마스킹 & 100\% \inlinecode{[MASK]} 중심 & 80\% \inlinecode{[MASK]}, 10\% random, 10\% original \\
+loss & 시간가중 diffusion surrogate & \inlinecode{BertForMaskedLM} 기본 plain CE \\
+학습률 & 영어 레시피 상속 & \(5\times10^{-4}\) \\
+진단 & unigram collapse, fixed-\(t\) acc 0.081 & coherent 생성, fixed-\(t\) acc 0.652 \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{booktable}
+
+\section{80/10/10 마스킹}
+
+\begin{lstlisting}
+def bert_style_mask(input_ids, mask_id, vocab_size):
+    masked = torch.rand_like(input_ids.float()) < 0.15
+    labels = input_ids.clone()
+    labels[~masked] = -100
+
+    replace_prob = torch.rand_like(input_ids.float())
+    noisy = input_ids.clone()
+    noisy[masked & (replace_prob < 0.8)] = mask_id
+
+    random_tokens = torch.randint(vocab_size, input_ids.shape)
+    random_pos = masked & (replace_prob >= 0.8) & (replace_prob < 0.9)
+    noisy[random_pos] = random_tokens[random_pos]
+    return noisy, labels
+\end{lstlisting}
+
+\noindent\emph{위 코드 읽기.}
+마스크된 위치 중 80\%는 \inlinecode{[MASK]}로 바꾸고, 10\%는 랜덤 토큰으로 바꾸며, 10\%는 원본을 유지합니다. 원본 유지가 섞이면 모델은 항상 \inlinecode{[MASK]}만 보는 상황에서 벗어나 실제 문장 토큰 주변의 조건을 더 자주 봅니다.
+
+\section{학습 결과}
+
+\begin{lstlisting}
+config = BertConfig(
+    vocab_size=4000,
+    hidden_size=256,
+    num_hidden_layers=4,
+    num_attention_heads=4,
+    intermediate_size=1024,
+    max_position_embeddings=128,
+)
+model = BertForMaskedLM(config).to(device)
+\end{lstlisting}
+
+\begin{lstlisting}[style=bookoutput]
+params(M) 4.29
+elapsed 20.20min | step 30000 | train_loss 4.1260 | baseline ln(V) 8.2940
+\end{lstlisting}
+
+\textbf{출력 해석.}
+모델은 4.29M parameters입니다. vocab 4000 때문에 \ref{ch:32}장 영어 모델보다 조금 큽니다. \inlinecode{train\_loss} 4.1260은 random baseline 8.2940보다 충분히 낮고, naive diffusion의 붕괴 상태와 구분됩니다.
+
+\section{생성 결과}
+
+\begin{lstlisting}[style=bookoutput]
+=== unconditional (all-[MASK] -> generate, default sampler) ===
+[0]  공원에 도착해서 맥스는 맥스라는 큰 공을 봤어요. "와, 정말
+멋진 공이야! 우리 공으로 같이 놀자!" 맥스는 웃으며 "그래, 가자!"
+라고 말했어요. 그들은 함께 놀면서 재미있게 놀았어요.
+
+[1] 옛날 옛적에, 팀이라는 작은 소년이 있었어요. 팀은 하루 종일
+장난감 자동차를 가지고 노는 것을 좋아했죠. 맑은 어느 날, 팀은
+마당에서 수 있는 가장 좋아하는 장난감을 발견했어요.
+
+=== conditional ('옛날 옛날에') ===
+[0] 옛날 옛날에, 큰 빨간 기차가 있었어요. 그 기차는 많은 색깔의
+바퀴를 가지고 있었지요. 매일 파란 기차를 함께 노는 것을 좋아했답니다.
+\end{lstlisting}
+
+\textbf{출력 해석.}
+완벽한 문장은 아니지만 한국어 동화체의 인물, 사물, 대화 구조가 생성됩니다. naive 레시피의 unigram collapse와 달리 문장 단위의 연결이 생깁니다.
+
+\section{정량 진단}
+
+\begin{lstlisting}[style=bookoutput]
+[diag] fixed-t(0.15) top-1 acc = 0.652   (naive diffusion 0.081)
+\end{lstlisting}
+
+\textbf{출력 해석.}
+고정-\(t=0.15\)에서 top-1 accuracy가 0.081에서 0.652로 올라갑니다. 이는 샘플 몇 개만 좋아진 것이 아니라, 중간 노이즈 상태에서 원래 토큰을 복원하는 능력 자체가 개선됐다는 뜻입니다.
+
+\section{AR·표준 MLM·Diffusion 비교}
+
+\begin{booktable}{34장 한국어 생성 레시피 비교}{tab:ch34-methods}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{@{}llll@{}}
+\toprule
+방식 & 학습 신호 & 강점 & 본 장의 관찰 \\
+\midrule
+AR & next-token & 생성 기준선이 강함 & 순차 생성 비용 존재 \\
+표준 MLM & 15\% mask CE & 안정적 표현 학습 & 생성 모델로 쓰려면 샘플러 필요 \\
+naive diffusion & 높은 mask 비율 복원 & 병렬 생성 가능성 & 한국어에서 unigram collapse \\
+80/10/10 diffusion & BERT식 mask CE & 안정성과 생성 가능성 절충 & coherent 한국어 생성 \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{booktable}
+
+\begin{faqBox}{Q1. 왜 한국어에서는 영어 레시피를 그대로 쓰면 안 되나요?}
+데이터와 tokenizer가 바뀌면 같은 마스킹 비율도 다른 난이도가 됩니다. 한국어 BBPE 4000에서는 높은 마스크 비율이 모델을 너무 어려운 복원 문제로 몰아 유니그램 붕괴를 만들었습니다.
+\end{faqBox}
+
+\begin{faqBox}{Q2. 80/10/10은 diffusion이라기보다 BERT MLM 아닌가요?}
+맞습니다. 본 장의 안정화 레시피는 BERT MLM의 안정성을 빌립니다. 목적은 “순수한 수식”보다 T4에서 실제로 작동하는 한국어 diffusion 생성 실험을 확보하는 것입니다.
+\end{faqBox}
+
+\begin{faqBox}{Q3. \inlinecode{plain CE}로 바꾸면 \(1/t\) diffusion loss를 포기한 것 아닌가요?}
+본 장에서는 한국어 안정성을 우선합니다. \(1/t\) surrogate는 이론적 연결이 분명하지만, 작은 모델·짧은 학습·한국어 BBPE 조건에서는 plain CE가 더 안정적으로 작동했습니다.
+\end{faqBox}
+
+\begin{faqBox}{Q4. fixed-\(t\) acc 0.652는 어떻게 읽어야 하나요?}
+\(t=0.15\)로 일부 토큰을 가린 뒤, 가려진 위치의 원래 토큰을 top-1로 맞힌 비율입니다. naive diffusion의 0.081과 비교하면 복원 능력이 크게 개선됐습니다.
+\end{faqBox}
+
+\begin{previewBox}{미리보기}
+Phase 5의 다음 확장은 더 큰 한국어 데이터, 더 정교한 denoise schedule, 그리고 AR 모델과의 동일 compute 비교입니다. 현재 장들은 작은 모델에서 diffusion LM이 실제로 작동하려면 학습 레시피와 샘플러를 함께 봐야 한다는 기준선을 세웁니다.
+\end{previewBox}
