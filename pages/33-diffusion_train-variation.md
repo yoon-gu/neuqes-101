@@ -102,7 +102,3 @@ Lily's mom said, "I don't know what to do it!" Her mom replied, "Of course if I 
 
 Her mom explained, "You
 ```
-
-**결과 해석**
-
-네 설정(A-D) 모두 `"Once upon a time, there was a little girl named Lily..."`로 시작하는 일관된 이야기를 냅니다. 반복억제를 켠 B-D는 앞서 본 돌림노래 루프 없이 대화와 사건이 이어지고, block을 16으로 더 잘게 쪼갠 D는 국소적으로 조금 더 매끄럽습니다. 같은 가중치인데 디코딩만으로 결이 달라지는 것을 직접 확인할 수 있습니다.
