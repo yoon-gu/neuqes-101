@@ -76,7 +76,4 @@ model.fit(X, y)                              # 내부에서 sigmoid + log loss
 
 ## 이 장의 구성
 
-- [03-1. 실습: `LogisticRegression`으로 이진 분류](03-sklearn_binary-practice.md)
-- [03-2. 해부: sigmoid는 logit을 어떻게 확률로 바꾸나](03-sklearn_binary-anatomy.md)
-- [03-3. 변형: 임계값(threshold)을 옮기면](03-sklearn_binary-variation.md)
-- [03-4. 정리와 FAQ](03-sklearn_binary-wrapup.md)
+[[SubPages]]

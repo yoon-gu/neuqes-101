@@ -76,7 +76,4 @@ mean_squared_error(y, model.predict(X))    # 평가
 
 ## 이 장의 구성
 
-- [02-1. 실습: 별점 1-5를 그대로 회귀하기](02-sklearn_regression-practice.md)
-- [02-2. 해부: "출력은 그냥 숫자다"](02-sklearn_regression-anatomy.md)
-- [02-3. 변형: 별점을 [0, 1]로 정규화](02-sklearn_regression-variation.md)
-- [02-4. 정리와 FAQ](02-sklearn_regression-wrapup.md)
+[[SubPages]]
