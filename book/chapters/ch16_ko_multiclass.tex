@@ -219,11 +219,11 @@ else:
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 PyTorch:        2.11.0+cu128
 CUDA available: True
 GPU:             Tesla T4
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{baseline VRAM}:
 
@@ -239,12 +239,12 @@ GPU:             Tesla T4
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Wed Jun 17 21:47:31 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
 N/A 45C P8 11W / 70W | 3MiB / 15360MiB | 0% Default
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{데이터 준비}
@@ -335,12 +335,12 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 sampled train: 5000
 sampled eval:  1000
 
 Token length (sample 200): mean=15.8, median=16, max=27
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{토큰화 --- \ref{ch:15}장 패턴 그대로}
@@ -381,14 +381,14 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Dataset({
     features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'],
     num_rows: 5000
 })
 
 First sample label: 3  (int 0-6)
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{\texorpdfstring{모델 로드}{모델 로드}}
@@ -432,7 +432,7 @@ print(f"id2label:             {model.config.id2label}")
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Key                                        | Status     | 
 -------------------------------------------+------------+-
 classifier.weight                          | MISSING    | 
@@ -443,7 +443,7 @@ Parameters:             110,622,727  (110.6 M)
 Trainable parameters:   110,622,727  (100.0%)
 Classifier:           Linear(in_features=768, out_features=7, bias=True)
 id2label: {0: 'IT/Science', 1: 'Economy', 2: 'Society', 3: 'Life&Culture',...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{\ref{ch:15}장과의 파라미터 수 비교} --- 7클래스로 늘어났는데도 모델은 \emph{거의 안 무거워짐}:
 
@@ -472,12 +472,12 @@ classifier \inlinecode{Linear(768,\ K)} & 1,538 & \textbf{5,383} \\
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Wed Jun 17 21:47:56 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
 N/A 44C P8 15W / 70W | 3MiB / 15360MiB | 0% Default
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{학습}
@@ -563,7 +563,7 @@ print(f"random baseline loss (K=7): {np.log(7):.4f}")
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Epoch  Train...  Valid...  Accuracy  Macro...  Macro...  Macro F1  Auc Ovr
 -----  --------  --------  --------  --------  --------  --------  --------
 1      0.443754  0.466340  0.849000  0.833858  0.873362  0.850291  0.979081
@@ -571,7 +571,7 @@ Epoch  Train...  Valid...  Accuracy  Macro...  Macro...  Macro F1  Auc Ovr
 
 Training done — mean train loss: 0.4690
 random baseline loss (K=7): 1.9459
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{5\baselineskip}
 \begin{lstlisting}
@@ -579,12 +579,12 @@ random baseline loss (K=7): 1.9459
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Wed Jun 17 21:48:38 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
 N/A 61C P0 38W / 70W | 2195MiB / 15360MiB | 61% Default
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{평가}
@@ -603,7 +603,7 @@ for k, v in eval_metrics.items():
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Train...  Valid...  Epoch  Accuracy  Macro...  Macro...  Macro F1  Auc Ovr
 --------  --------  -----  --------  --------  --------  --------  --------
 0.297638  0.422089  2      0.855000  0.849210  0.870505  0.858413  0.982096
@@ -614,7 +614,7 @@ klue/bert-base KLUE-YNAT — evaluation:
      eval_macro_recall: 0.8705
          eval_macro_f1: 0.8584
           eval_auc_ovr: 0.9821
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -647,11 +647,11 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 logits shape:    (1000, 7)
 top-1 prob range: [0.3380, 0.9917]
 top-1 prob mean: correct=0.9051, wrong=0.7234
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{7\baselineskip}
 \begin{lstlisting}
@@ -663,7 +663,7 @@ print(classification_report(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 precision    recall  f1-score   support
 
   IT/Science     0.7857    0.9483    0.8594        58
@@ -677,7 +677,7 @@ Life&Culture     0.8212    0.8493    0.8350       146
     accuracy                         0.8550      1000
    macro avg     0.8492    0.8705    0.8584      1000
 weighted avg     0.8578    0.8550    0.8553      1000
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \subsection{혼동 행렬 --- 어디서 혼동하는가}
@@ -718,9 +718,9 @@ plt.show()
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 <Figure size 850x700 with 2 Axes>
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{KLUE-YNAT 7분류 혼동 행렬}{fig:ch16-confusion-matrix}
 \includegraphics[width=0.86\linewidth]{assets/figures/ch16_confusion_matrix.png}
@@ -798,9 +798,9 @@ plt.show()
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 <Figure size 900x500 with 1 Axes>
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{정답 여부에 따른 KLUE-YNAT 최상위 확률 분포}{fig:ch16-top1-probability}
 \includegraphics[width=0.88\linewidth]{assets/figures/ch16_top1_probability.png}

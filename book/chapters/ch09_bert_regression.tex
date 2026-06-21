@@ -245,12 +245,12 @@ else:
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Wed Jun 17 21:30:31 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
 N/A 39C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{데이터 준비}
@@ -323,7 +323,7 @@ print(f"problem_type:  {model.config.problem_type}")
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Key                     | Status     | 
 ------------------------+------------+-
 classifier.weight       | MISSING    | 
@@ -335,7 +335,7 @@ classifier.bias         | MISSING    |
 Parameters:    66,954,241
 Classifier:    Linear(in_features=768, out_features=1, bias=True)
 problem_type:  regression
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{경고 메시지를 보셨을 겁니다} --- \inlinecode{Some\ weights\ of\ DistilBertForSequenceClassification\ were\ not\ initialized\ ...}. 분류 헤드(\inlinecode{Linear(768,\ 1)})가 새로 만들어지면서 \emph{랜덤 초기화} 됐다는 알림입니다. 이 부분이 학습으로 채워지고, BERT 본체는 사전학습 가중치를 미세 조정합니다 (transfer learning의 본 모습).
 
@@ -376,13 +376,13 @@ print(f"\nDefault — all layers are trainable")
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Total parameters:        66,954,241  (67.0 M)
 Trainable parameters:    66,954,241  (67.0 M, 100.0%)
 Frozen parameters:                0  (0.0 M, 0.0%)
 
 Default — all layers are trainable
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \subsection{BERT 본체 동결}
@@ -465,12 +465,12 @@ if torch.cuda.is_available():
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Wed Jun 17 21:31:10 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
 N/A 41C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 모델 가중치(\textasciitilde67M 파라미터, fp32 \textasciitilde255 MB)가 GPU에 올라간 상태입니다. 학습이 시작되면 \emph{옵티마이저 모멘텀(2배) + gradient(1배)} 가 추가되어 VRAM이 더 늘어납니다.
 
@@ -511,9 +511,9 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Total training steps: 500
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{10\baselineskip}
 \begin{lstlisting}
@@ -549,14 +549,14 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Epoch  Training...  Validati...  Mse       Mae       R2
 -----  -----------  -----------  --------  --------  --------
 1      0.768790     0.703477     0.703477  0.668927  0.638973
 2      0.553886     0.646681     0.646681  0.611532  0.668121
 
 Training done — mean train loss: 1.0480
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 학습이 진행되는 동안 step별 loss와 에폭별 평가 metric이 출력됩니다. \textbf{핵심 관찰}:
 
@@ -590,12 +590,12 @@ Training done — mean train loss: 1.0480
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Wed Jun 17 21:31:42 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
 N/A 62C P0 72W / 70W | 1573MiB / 15360MiB | 71% Default
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 학습 후 VRAM 상태입니다. 학습 \emph{중} 에는 옵티마이저 모멘텀과 gradient가 추가되어 더 큰 VRAM을 잠시 쓰지만, 학습이 끝나면 일부가 해제됩니다 (단, PyTorch 캐시 할당자가 다음 사용을 위해 일부 메모리를 보유).
 
@@ -639,7 +639,7 @@ for k, v in bert_metrics.items():
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Training...  Validati...  Epoch  Mse       Mae       R2
 -----------  -----------  -----  --------  --------  --------
 0.553886     0.646681     2      0.646681  0.611532  0.668121
@@ -648,7 +648,7 @@ BERT evaluation:
               eval_mse: 0.6467
               eval_mae: 0.6115
                eval_r2: 0.6681
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -700,12 +700,12 @@ pd.DataFrame(rows).round(4)
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 model           mse     mae     r2
 -  --------------  ------  ------  ------
 0  sklearn Lin...  1.5597  1.0086  0.1996
 1  DistilBERT...   0.6467  0.6115  0.6681
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{해석 가이드} (실제 숫자는 random seed에 따라 조금씩 다릅니다):
 
@@ -735,7 +735,7 @@ df_compare["Residual"] = df_compare["Predicted"] - df_compare["Actual star"]
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 \end{lstlisting}
 \par\vspace{0.9em}
 
@@ -763,7 +763,7 @@ for i, x_val in enumerate([1, 2, 3, 4, 5]):
 ax.set_title("Predicted star distribution per actual class")
 ax.legend(loc="upper left")
 plt.tight_layout()
-\end{lstlisting}
+\end{bookoutputbox}
 
 \noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
@@ -773,9 +773,9 @@ plt.show()
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 <Figure size 1100x500 with 1 Axes>
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{정답 별점별 BERT와 sklearn 회귀 예측 분포}{fig:ch09-predicted-violin}
 \includegraphics[width=0.92\linewidth]{assets/figures/ch09_predicted_violin.png}
@@ -836,9 +836,9 @@ plt.show()
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 <Figure size 1100x500 with 1 Axes>
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{정답 별점별 잔차 분포 비교}{fig:ch09-residual-violin}
 \includegraphics[width=0.92\linewidth]{assets/figures/ch09_residual_violin.png}

@@ -231,7 +231,7 @@ print(df["star"].value_counts().sort_index())
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 If the error persists, please let us know by opening an issue on GitHub (ht...
 Total samples: 5000
 star
@@ -241,7 +241,7 @@ star
 4    1021
 5     975
 Name: count, dtype: int64
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -267,7 +267,7 @@ print(f"Positive rate: {df_bin['y'].mean():.1%}")
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Binarized samples: 4040  (3-star excluded)
 Class distribution:
 y
@@ -275,7 +275,7 @@ y
 1    1996
 Name: count, dtype: int64
 Positive rate: 49.4%
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -303,10 +303,10 @@ print(f"X_test:  {X_test.shape}, y_test:  {y_test.shape}")
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 X_train: (3232, 10000), y_train: (3232,)
 X_test:  (808, 10000), y_test:  (808,)
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -345,9 +345,9 @@ print(
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Test accuracy: 0.8639
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -375,7 +375,7 @@ print(
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 y_proba shape: (808, 2)  (per sample: [P(0), P(1)])
 
 First 5 predicted probabilities:
@@ -387,7 +387,7 @@ First 5 predicted probabilities:
 4  0.2420  0.7580
 
 Row sums (should be 1): [1. 1. 1. 1. 1.]
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -423,12 +423,12 @@ print(f"sklearn first 5: {proba_sklearn[:5].round(4)}")
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Max diff (manual vs sklearn): 1.11e-16
 
 Manual first 5:  [0.4477 0.1001 0.1591 0.6653 0.758 ]
 sklearn first 5: [0.4477 0.1001 0.1591 0.6653 0.758 ]
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -450,11 +450,11 @@ print(f"Diff:        {abs(manual_bce - sklearn_bce):.2e}")
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Manual BCE:  0.383569
 sklearn BCE: 0.383569
 Diff:        0.00e+00
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -478,7 +478,7 @@ print(
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 precision    recall  f1-score   support
 
     negative       0.87      0.86      0.86       409
@@ -494,7 +494,7 @@ confusion matrix:
  [ 53 346]]
   TN=352, FP=57
   FN=53, TP=346
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -534,14 +534,14 @@ print(df_t.to_string(index=False))
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 threshold  accuracy  precision  recall     f1
        0.3    0.7686     0.6840  0.9875 0.8082
        0.4    0.8527     0.7929  0.9499 0.8643
        0.5    0.8639     0.8586  0.8672 0.8628
        0.6    0.8366     0.9159  0.7368 0.8167
        0.7    0.7772     0.9700  0.5664 0.7152
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 

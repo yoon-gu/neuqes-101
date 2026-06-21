@@ -973,11 +973,11 @@ print(
 )
 \end{lstlisting}
 
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 BEFORE DPO - reward margin (n=64)
   mean margin     : 0.000
   reward accuracy : 0.500  (ratio of margin>0; policy=ref tie -> 50%)
-\end{lstlisting}
+\end{bookoutputbox}
 
 \textbf{출력 해석.}
 DPO 전에는 policy와 reference가 같으므로 reward margin이 정확히 0입니다. 이를 승패가 아니라 무승부로 보면 reward accuracy 기준선은 0.000이 아니라 0.500입니다.
@@ -1072,13 +1072,13 @@ if torch.cuda.is_available():
     )
 \end{lstlisting}
 
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 === DPO summary ===
 elapsed     : 2.37 min
 global_step : 94
 train_loss  : 0.7071
 final peak  : 2414 MiB
-\end{lstlisting}
+\end{bookoutputbox}
 
 \section{\texorpdfstring{DPO 전·후 reward margin 비교 --- \emph{선호가 정렬됐는가}}{DPO 전·후 reward margin 비교 --- 선호가 정렬됐는가}}
 
@@ -1126,11 +1126,11 @@ print(
 )
 \end{lstlisting}
 
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 AFTER DPO - reward margin (n=64)
   mean margin     : 12.721  (before: 0.000)
   reward accuracy : 0.844  (before: 0.500)
-\end{lstlisting}
+\end{bookoutputbox}
 
 \textbf{출력 해석.}
 DPO 후 평균 margin은 0.000에서 12.721로 이동했고, reward accuracy는 무승부 기준선 0.500에서 0.844로 올라갔습니다. 즉 policy가 chosen 응답을 rejected 응답보다 더 높은 implicit reward로 평가하게 됐습니다.

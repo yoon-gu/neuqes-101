@@ -214,7 +214,7 @@ print(df["label"].value_counts().sort_index())
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 If the error persists, please let us know by opening an issue on GitHub (ht...
 Total samples: 5000
 Class distribution (label 0-4 = star 1-5):
@@ -225,7 +225,7 @@ label
 3    1021
 4     975
 Name: count, dtype: int64
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -253,9 +253,9 @@ print(
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 X_train: (4000, 10000), y_train distribution: [813, 822, 768, 817, 780]
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -285,11 +285,11 @@ print(f"Improvement over baseline: {acc - baseline:+.4f}")
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Test accuracy: 0.5110
 baseline (uniform guess): 0.2000
 Improvement over baseline: +0.3110
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -313,7 +313,7 @@ print(
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 predict_proba shape: (1000, 5)  (N, K=5)
 Row sums (should be 1): [1. 1. 1. 1. 1.]
 
@@ -322,7 +322,7 @@ First 3 sample probability distributions:
 0  0.357  0.307  0.163  0.081  0.092
 1  0.136  0.339  0.348  0.138  0.040
 2  0.614  0.233  0.052  0.042  0.059
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -341,7 +341,7 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 precision    recall  f1-score   support
 
           1★       0.62      0.77      0.69       204
@@ -353,7 +353,7 @@ precision    recall  f1-score   support
     accuracy                           0.51      1000
    macro avg       0.50      0.51      0.50      1000
 weighted avg       0.50      0.51      0.50      1000
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -374,14 +374,14 @@ print(cm_df)
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 pred 1★  pred 2★  pred 3★  pred 4★  pred 5★
 true 1★      158       36        2        4        4
 true 2★       54       72       52       16       11
 true 3★       23       50       68       37       14
 true 4★       11       20       37       88       48
 true 5★       10        3        6       51      125
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -529,7 +529,7 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 OvR estimators count: 5
 Each estimator is a separate LogisticRegression for 'class k vs rest'
   estimator 0 coef_ shape: (1, 10000)  (1, V)
@@ -547,7 +547,7 @@ True star:    2★
   5★            0.0919      0.0882            0.0948
 --------------------------------------------------------
   sum            1.0000      0.9307            1.0000
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -610,7 +610,7 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 multinomial accuracy: 0.5110
 OvR accuracy:         0.5070
 Diff: 0.0040
@@ -620,7 +620,7 @@ OvR raw row sum distribution (pre-normalization):
   max:  1.387
   mean: 0.982
   → 5 independent sigmoids; rows do not sum to exactly 1
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 

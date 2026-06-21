@@ -10,6 +10,7 @@
 \RequirePackage{caption}
 \RequirePackage[most]{tcolorbox}
 \RequirePackage{listings}
+\RequirePackage{fvextra}
 \RequirePackage{etoolbox}
 \tcbuselibrary{listings, skins}
 \usetikzlibrary{calc, positioning}
@@ -133,6 +134,25 @@
   belowskip=4pt
 }
 \lstset{style=bookpython}
+
+% 출력 블록은 listings 대신 fvextra를 사용합니다.
+% listings는 CJK 멀티바이트 문자열을 글자 단위로 안정적으로 끊지 못해
+% 공백 없는 긴 한글 생성문이 오른쪽 마진을 넘는 문제가 있습니다.
+\DefineVerbatimEnvironment{bookoutputbox}{Verbatim}{
+  breaklines=true,
+  breakanywhere=true,
+  breaksymbolleft={},
+  breaksymbolright={},
+  fontsize=\small,
+  formatcom=\color{taInk},
+  frame=leftline,
+  framerule=2.4pt,
+  framesep=6pt,
+  rulecolor=\color{taSlateMute},
+  fillcolor=\color{taPaper},
+  xleftmargin=1.4em,
+  tabsize=2
+}
 
 \tcbset{
   taboxbase/.style={

@@ -391,12 +391,12 @@ else:
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Wed Jun 17 21:41:56 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
 N/A 39C P8 12W / 70W | 3MiB / 15360MiB | 0% Default
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{데이터 준비}
@@ -447,9 +447,9 @@ print(f"K (aspects): {K}, aspects: {ASPECTS}")
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 K (aspects): 5, aspects: ['food', 'service', 'price', 'ambiance', 'location']
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -527,7 +527,7 @@ for v in [0.0, 0.25, 0.5, 0.75, 1.0]:
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 aux score range: [0.00, 1.00]
 aux score mean: 0.495, std: 0.354
 
@@ -537,7 +537,7 @@ Aux score distribution (train):
   0.50  (star 3): 960 samples (19.2%)
   0.75  (star 4): 1021 samples (20.4%)
   1.00  (star 5): 975 samples (19.5%)
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{토큰화}
@@ -581,7 +581,7 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Dataset({
 features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels', 'aux_...
     num_rows: 5000
@@ -589,7 +589,7 @@ features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels', 'aux_...
 
 First sample labels: [0.0, 1.0, 0.0, 0.0, 1.0]
 First sample aux_labels: 1.00
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{\texorpdfstring{커스텀 Data Collator}{커스텀 Data Collator}}
@@ -893,12 +893,12 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Wed Jun 17 21:43:06 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
 N/A 60C P0 67W / 70W | 1619MiB / 15360MiB | 69% Default
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{평가}
@@ -979,10 +979,10 @@ print(f"Eval samples:      {len(labels_eval)}")
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Main logits shape: (1000, 5)
 Eval samples:      1000
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{lambda=0 기준선 비교}
@@ -1087,7 +1087,7 @@ print(cmp.round(4).to_string(index=False))
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 metric  no aux (lambda=0)  with aux (lambda=1)  delta (aux - no_aux)
 loss 0.3091 0.4758 0.1667
 hamming_loss 0.1138 0.1958 0.0820
@@ -1101,7 +1101,7 @@ macro_auc 0.9081 0.8293 -0.0788
 runtime 1.1311 0.9760 -0.1551
 samples_per_second 884.1300 1024.5580 140.4280
 steps_per_second 28.2920 32.7860 4.4940
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{해석 가이드}
 

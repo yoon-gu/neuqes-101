@@ -102,7 +102,7 @@ tokenizer.train_from_iterator(
 \noindent\emph{위 코드 읽기.}
 한국어는 음절·형태소·공백 패턴이 영어와 다르므로 vocab을 4000으로 늘렸습니다. BBPE는 byte 기반이라 별도 형태소 분석기 없이도 한국어 문자열을 다룰 수 있습니다.
 
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 stories 50000 500
 한때 벤이라는 이름의 어린 소년이 있었어요. 벤은 주변 세계를
 탐험하는 것을 좋아했답니다. 그는 가게에 전시되어 있던 아름다운
@@ -110,7 +110,7 @@ stories 50000 500
 
 vocab 4000 mask_id 2
 chunks 75941 746
-\end{lstlisting}
+\end{bookoutputbox}
 
 \section{해부: 왜 naive diffusion이 무너졌나}
 
@@ -166,17 +166,17 @@ config = BertConfig(
 model = BertForMaskedLM(config).to(device)
 \end{lstlisting}
 
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 params(M) 4.29
 elapsed 20.20min | step 30000 | train_loss 4.1260 | baseline ln(V) 8.2940
-\end{lstlisting}
+\end{bookoutputbox}
 
 \textbf{출력 해석.}
 모델은 4.29M parameters입니다. vocab 4000 때문에 \ref{ch:32}장 영어 모델보다 조금 큽니다. \inlinecode{train\_loss} 4.1260은 random baseline 8.2940보다 충분히 낮고, naive diffusion의 붕괴 상태와 구분됩니다.
 
 \section{생성 결과}
 
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 === unconditional (all-[MASK] -> generate, default sampler) ===
 [0]  공원에 도착해서 맥스는 맥스라는 큰 공을 봤어요. "와, 정말
 멋진 공이야! 우리 공으로 같이 놀자!" 맥스는 웃으며 "그래, 가자!"
@@ -189,16 +189,16 @@ elapsed 20.20min | step 30000 | train_loss 4.1260 | baseline ln(V) 8.2940
 === conditional ('옛날 옛날에') ===
 [0] 옛날 옛날에, 큰 빨간 기차가 있었어요. 그 기차는 많은 색깔의
 바퀴를 가지고 있었지요. 매일 파란 기차를 함께 노는 것을 좋아했답니다.
-\end{lstlisting}
+\end{bookoutputbox}
 
 \textbf{출력 해석.}
 완벽한 문장은 아니지만 한국어 동화체의 인물, 사물, 대화 구조가 생성됩니다. naive 레시피의 unigram collapse와 달리 문장 단위의 연결이 생깁니다.
 
 \section{정량 진단}
 
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 [diag] fixed-t(0.15) top-1 acc = 0.652   (naive diffusion 0.081)
-\end{lstlisting}
+\end{bookoutputbox}
 
 \textbf{출력 해석.}
 고정-\(t=0.15\)에서 top-1 accuracy가 0.081에서 0.652로 올라갑니다. 이는 샘플 몇 개만 좋아진 것이 아니라, 중간 노이즈 상태에서 원래 토큰을 복원하는 능력 자체가 개선됐다는 뜻입니다.

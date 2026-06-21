@@ -266,12 +266,12 @@ else:
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Wed Jun 17 21:32:42 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
 N/A 43C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{데이터 준비}
@@ -404,12 +404,12 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Wed Jun 17 21:33:06 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
 N/A 44C P8 14W / 70W | 3MiB / 15360MiB | 0% Default
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{학습}
@@ -500,12 +500,12 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Wed Jun 17 21:33:38 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
 N/A 61C P0 68W / 70W | 1579MiB / 15360MiB | 69% Default
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{평가}
@@ -524,7 +524,7 @@ for k, v in eval_metrics.items():
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Train...  Valid...  Epoch  Accuracy  Preci...  Recall    F1        Auc
 --------  --------  -----  --------  --------  --------  --------  --------
 0.159778  0.281910  2      0.902985  0.897019  0.892183  0.894595  0.968480
@@ -535,7 +535,7 @@ BERT method A evaluation:
            eval_recall: 0.8922
                eval_f1: 0.8946
               eval_auc: 0.9685
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -572,7 +572,7 @@ print(pd.DataFrame({
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Logit range: [-4.57, 4.11]
 Prob range:  [0.0102, 0.9838]
 Positive prediction rate (prob >= 0.5): 45.9%
@@ -584,7 +584,7 @@ First 5 samples:
      1   4.04 0.9827     1
      1   3.71 0.9761     1
      1   4.06 0.9830     1
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \subsection{\texorpdfstring{확률 분포}{확률 분포}}
@@ -633,9 +633,9 @@ plt.show()
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 <Figure size 900x500 with 1 Axes>
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{방식 A의 sigmoid 확률 분포}{fig:ch10-probability-kde}
 \includegraphics[width=0.88\linewidth]{assets/figures/ch10_probability_kde.png}
@@ -678,9 +678,9 @@ plt.show()
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 <Figure size 900x500 with 1 Axes>
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{방식 A의 sigmoid 이전 logit 분포}{fig:ch10-logit-kde}
 \includegraphics[width=0.88\linewidth]{assets/figures/ch10_logit_kde.png}
@@ -717,7 +717,7 @@ print(classification_report(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 precision    recall  f1-score   support
 
     negative     0.9080    0.9122    0.9101       433
@@ -726,7 +726,7 @@ precision    recall  f1-score   support
     accuracy                         0.9030       804
    macro avg     0.9025    0.9022    0.9024       804
 weighted avg     0.9030    0.9030    0.9030       804
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{결과 저장}

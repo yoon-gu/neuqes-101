@@ -107,30 +107,30 @@ if torch.cuda.is_available():
     print("GPU:", torch.cuda.get_device_name(0))
 \end{lstlisting}
 
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 torch 2.11.0+cu128 | device cuda | fp16 True
 GPU: Tesla T4
-\end{lstlisting}
+\end{bookoutputbox}
 
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 vocab_size : 2048
 mask_id    : 2 | pad_id: 0
 sample tok : ['<sp>Once', '<sp>upon', '<sp>a', '<sp>time',
               '<sp>there', '<sp>was', '<sp>a', '<sp>little',
               '<sp>cat', '.']
-\end{lstlisting}
+\end{bookoutputbox}
 
 \noindent\emph{출력 해석.}
 실행본의 ByteLevel BPE 토큰은 공백 표시 기호를 포함합니다. 원고에서는 폰트 누락을 피하기 위해 그 기호를 \inlinecode{<sp>}로 표기했습니다. 의미는 “앞에 공백이 붙은 토큰”입니다.
 
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 #params 3.79M | embedding share 13.9%
 
 === summary ===
 elapsed 18.50 min | step 30000 | train_loss 3.5916
 random baseline ln(V) = 7.6246
 peak VRAM 627 MiB
-\end{lstlisting}
+\end{bookoutputbox}
 
 \textbf{출력 해석.}
 최종 \inlinecode{train\_loss}는 3.5916입니다. \ref{ch:32}장의 3.7148과 같은 규모이며, 본 장의 품질 차이는 loss가 아니라 샘플러에서 확인해야 합니다.
@@ -173,10 +173,10 @@ def sample_with_top_p(logits, temperature=0.8, top_p=0.92):
 
 샘플러 변경 효과는 두 지표로 봅니다. 고정-\(t\) 복원 정확도는 모델이 중간 노이즈 상태에서 원래 토큰을 얼마나 맞히는지 보고, 4-gram 반복률은 생성 결과의 짧은 반복을 봅니다.
 
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 [diag] fixed-t(0.15) top-1 accuracy = 0.717
 [diag] 4-gram repeat rate  A(default)=0.177  B(rep-suppressed)=0.000
-\end{lstlisting}
+\end{bookoutputbox}
 
 \textbf{출력 해석.}
 고정-\(t=0.15\)에서 top-1 accuracy는 0.717입니다. 모델 자체가 복원 문제를 어느 정도 풀고 있음을 보여줍니다. 같은 모델에서 4-gram 반복률이 0.177에서 0.000으로 내려갔으므로, 본 장의 개선은 학습보다 샘플러의 반복 억제에서 온다고 해석할 수 있습니다.
@@ -185,7 +185,7 @@ def sample_with_top_p(logits, temperature=0.8, top_p=0.92):
 
 아래 출력은 같은 학습 모델과 같은 프롬프트에서 샘플러만 바꾼 결과입니다.
 
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 === sampler sweep (same model, prompt 'Once upon a time') ===
 
 ----- A) default temp0.7/topk40 -----
@@ -204,7 +204,7 @@ wanted to catch it.
 
 Lily picked up and tried to grab it inside. But then, she found a rock
 on the ground and started to run away.
-\end{lstlisting}
+\end{bookoutputbox}
 
 \textbf{출력 해석.}
 A는 \inlinecode{ball with it}처럼 같은 의미 단위가 가까운 거리에서 반복됩니다. B는 완벽한 이야기는 아니지만 같은 짧은 구를 되풀이하는 현상이 줄어듭니다. 이 차이가 4-gram 반복률 0.177 \(\to\) 0.000과 맞물립니다.

@@ -302,11 +302,11 @@ else:
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 PyTorch:        2.11.0+cu128
 CUDA available: True
 GPU:             Tesla T4
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{영어 코퍼스}
@@ -345,14 +345,14 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 english corpus: 5,000 sentences
 first sample (truncated):
 Unfortunately, the frustration of being Dr. Goldberg's patient is a repeat...
 
 char length stats:
   mean: 735, median: 548, max: 5038
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{한국어 코퍼스}
@@ -382,7 +382,7 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 downloading NSMC train from GitHub...
   total rows: 149,995
 
@@ -392,7 +392,7 @@ first sample:
 
 char length stats:
   mean: 34, median: 26, max: 143
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{토크나이저 학습}
@@ -488,9 +488,9 @@ print(
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 helper builders ready: build_wordpiece(), build_wordlevel()
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -549,14 +549,14 @@ print(
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 [1/4] en WordPiece  trained in 2.48s  vocab=8000
 [2/4] ko WordPiece  trained in 0.59s  vocab=8000
 [3/4] en WordLevel  trained in 0.48s  vocab=8000
 [4/4] ko WordLevel  trained in 0.09s  vocab=8000
 
 total time: 3.64s
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \subsection{어휘 확인}
@@ -600,7 +600,7 @@ vocab_peek(tok_ko_wl, "ko WordLevel")
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 === en WordPiece  (size=8000) ===
   first 5 ids (specials): ['[PAD]', '[UNK]', '[CLS]', '[SEP]', '[MASK]']
 ids 5-20 : ['!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-'...
@@ -618,7 +618,7 @@ ids 5-20 : ['.', 'the', ',', 'and', 'I', 'a', 'to', "'", 'was', 'of', '\\',...
 
 === ko WordLevel  (size=8000) ===
 ...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{관찰}
 
@@ -680,7 +680,7 @@ show_tokens(tok_ko_wl, SAMPLE_KO, "ko WordLevel")
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 ==============================================================================
 ENGLISH sample: The food was unforgettable and the service was excellent.
 ==============================================================================
@@ -698,7 +698,7 @@ KOREAN sample: 이 영화는 정말 재미있어요. 배우들 연기도 훌륭�
 ['[CLS]', '이', '영화는', '정말', '재미있어요', '.', '배우들', '연기도', '...
 
 ...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{해석 가이드}
 
@@ -757,13 +757,13 @@ print(stats.to_string(index=False))
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 tokenizer  mean_tokens  median_tokens  p95_tokens
 en WordPiece      176.571          139.0      469.05
 en WordLevel      159.220          126.5      426.10
 ko WordPiece       19.805           15.0       57.05
 ko WordLevel        9.106            7.0       27.00
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -841,9 +841,9 @@ plt.show()
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 <Figure size 1400x500 with 2 Axes>
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{WordPiece와 WordLevel의 문장당 토큰 수 분포}{fig:ch19-token-length-distribution}
 \includegraphics[width=0.92\linewidth]{assets/figures/ch19_token_length_distribution.png}
@@ -904,13 +904,13 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 tokenizer unk_pct
 en WordPiece   0.00%
 en WordLevel   4.62%
 ko WordPiece   0.08%
 ko WordLevel  43.74%
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -933,9 +933,9 @@ plt.show()
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 <Figure size 900x500 with 1 Axes>
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{토크나이저별 미등록 토큰 비율 비교}{fig:ch19-unk-rate-bar}
 \includegraphics[width=0.72\linewidth]{assets/figures/ch19_unk_rate_bar.png}
@@ -999,13 +999,13 @@ print(summary_2x2.to_string(index=False))
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 language algorithm vocab_size mean_tokens_per_sent p95_tokens_per_sent unk_...
 English WordPiece 8000 176.57 469.05 0.00
 English WordLevel 8000 159.22 426.10 4.62
 Korean WordPiece 8000 19.80 57.05 0.08
 Korean WordLevel 8000 9.11 27.00 43.74
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \subsection{교차 언어 적용}
@@ -1077,7 +1077,7 @@ print(cross_df.to_string(index=False))
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 input_lang    tokenizer tokenizer_train_lang  n_tokens  n_unk  unk_pct   match
 EN en_WordPiece EN 13 0 0.0 OK same
 EN en_WordLevel EN 11 0 0.0 OK same
@@ -1087,7 +1087,7 @@ EN en_WordLevel EN 11 0 0.0 OK same
         KO en_WordLevel                   EN         6      5     83.3 X cross
 KO ko_WordPiece KO 14 0 0.0 OK same
 KO ko_WordLevel KO 6 4 66.7 OK same
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -1109,7 +1109,7 @@ for lang, text in cross_examples:
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 ==============================================================================
 
 [input (EN)]  The food was absolutely delicious and the service was great.
@@ -1123,7 +1123,7 @@ X en_WordPiece ( 8 tokens, UNK 5): ['[CLS]', '[UNK]', '[UNK]', '[UNK]', '[U...
 X en_WordLevel ( 6 tokens, UNK 5): ['[UNK]', '[UNK]', '[UNK]', '[UNK]', '[U...
 ko_WordPiece ( 14 tokens, UNK 0): ['[CLS]', '음', '##식이', '정말', '맛', '...
 ko_WordLevel ( 6 tokens, UNK 4): ['[UNK]', '정말', '[UNK]', '[UNK]', '[UNK]...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -1147,9 +1147,9 @@ plt.tight_layout(); plt.show()
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 <Figure size 850x360 with 2 Axes>
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{학습 언어와 입력 언어가 다를 때의 미등록 토큰 비율}{fig:ch19-cross-language-heatmap}
 \includegraphics[width=0.78\linewidth]{assets/figures/ch19_cross_language_heatmap.png}
@@ -1212,13 +1212,13 @@ for p in sorted(os.listdir("./tokenizers_ch19")):
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 saved 4 tokenizer files:
   ./tokenizers_ch19/en_wordlevel.json  (172.5 KB)
   ./tokenizers_ch19/en_wordpiece.json  (170.3 KB)
   ./tokenizers_ch19/ko_wordlevel.json  (205.9 KB)
   ./tokenizers_ch19/ko_wordpiece.json  (251.5 KB)
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{8\baselineskip}
 \begin{lstlisting}
@@ -1231,11 +1231,11 @@ print(f"match           : {enc_orig == enc_loaded}")
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 original tokens : ['[CLS]', 'the', 'food', 'was', 'unf', '##orge', '##tt',...
 loaded tokens : ['[CLS]', 'the', 'food', 'was', 'unf', '##orge', '##tt', '#...
 match           : True
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -1274,7 +1274,7 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 vocab_size      : 8000
 pad_token_id    : 0
 cls_token_id    : 2
@@ -1282,7 +1282,7 @@ cls_token_id    : 2
 input_ids shape : torch.Size([1, 15])
 input_ids : [2, 107, 218, 128, 4814, 5350, 3762, 300, 115, 107, 312, 128, 9...
 decoded : [CLS] the food was unforgettable and the service was excellent. [...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \begin{previewBox}{미리보기}
 \textbf{다음 장의 다리} --- 20장 부터는 이 wrap 패턴으로 토크나이저를 모델에 연결합니다. 단, \emph{학습 안정성} 을 위해 20장+ 는 \emph{직접 학습한 토크나이저 대신} 표준 사전학습 토크나이저 (\inlinecode{bert-base-uncased}, \inlinecode{klue/bert-base}) 를 가져옴 --- \ref{ch:19}장의 \emph{경험} 위에 표준 도구의 신뢰성을 얹는 구조.
@@ -1325,13 +1325,13 @@ print(df_sweep.to_string(index=False))
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 vocab_size  actual_vocab  mean_tokens  p95_tokens  unk_rate_pct
        1000          1000      209.815      557.35           0.0
        4000          4000      161.980      436.85           0.0
        8000          8000      152.510      412.30           0.0
       16000         16000      148.095      398.30           0.0
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -1376,9 +1376,9 @@ plt.show()
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 <Figure size 900x500 with 2 Axes>
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{WordPiece 어휘 수에 따른 토큰 길이와 미등록 토큰 비율}{fig:ch19-vocab-sweep}
 \includegraphics[width=0.78\linewidth]{assets/figures/ch19_vocab_sweep.png}

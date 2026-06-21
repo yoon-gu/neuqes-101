@@ -221,10 +221,10 @@ print(f"Sample count: {len(df)}")
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 If the error persists, please let us know by opening an issue on GitHub (ht...
 Sample count: 5000
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -261,10 +261,10 @@ print(f"X_test:  {X_test.shape}, y_test:  {y_test.shape}")
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 X_train: (4000, 10000), y_train: (4000,)
 X_test:  (1000, 10000), y_test:  (1000,)
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -318,12 +318,12 @@ print(f"Test  R²:  {r2_score(y_test, y_pred_test):.4f}")
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Train MSE: 0.0000
 Test  MSE: 1.5565
 Test  MAE: 0.9952
 Test  R²:  0.2139
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -374,11 +374,11 @@ plt.show()
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Pred range: [-1.55, 7.15]
 True range: [1, 5]
 <Figure size 640x480 with 1 Axes>
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -408,11 +408,11 @@ print(f"Diff:        {abs(manual_mse - sklearn_mse):.2e}")
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Manual MSE: 1.556471
 sklearn MSE: 1.556471
 Diff:        0.00e+00
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -465,11 +465,11 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Test MSE (normalized space): 0.0973
 Test MSE (back to star space): 1.5565
 Test MSE (no normalization):    1.5565
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -495,13 +495,13 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Normalized model pred range: [-0.638, 1.538]
 Ideal range: [0, 1]
 
 Predictions < 0: 85 (8.5%)
 Predictions > 1: 92 (9.2%)
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 

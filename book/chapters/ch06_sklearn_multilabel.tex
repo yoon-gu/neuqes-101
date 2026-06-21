@@ -265,10 +265,10 @@ print(f"Total samples: {len(df)}")
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 If the error persists, please let us know by opening an issue on GitHub (ht...
 Total samples: 5000
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -339,13 +339,13 @@ print(f"First 3 multi-hot labels:\n{Y[:3]}")
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Y shape: (5000, 5)  (n_samples, n_aspects)
 First 3 multi-hot labels:
 [[0 1 0 0 1]
  [0 0 0 0 1]
  [0 0 0 1 0]]
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -386,7 +386,7 @@ for n in range(K + 1):
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Per-aspect activation rate (over all 5,000 samples):
        food: 55.6%  (2778 samples)
     service: 49.6%  (2480 samples)
@@ -402,7 +402,7 @@ Active label distribution:
   3 labels: 957 samples  (19.1%)
   4 labels: 277 samples  (5.5%)
   5 labels: 55 samples  (1.1%)
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -429,10 +429,10 @@ print(f"X_test:  {X_test.shape}, Y_test:  {Y_test.shape}")
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 X_train: (4000, 10000), Y_train: (4000, 5)
 X_test:  (1000, 10000), Y_test:  (1000, 5)
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -474,10 +474,10 @@ except ValueError as e:
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Failed: ValueError
    Message: y should be a 1d array, got an array of shape (4000, 5) instead.
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -558,7 +558,7 @@ print(
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 OvR fit succeeded!
   Number of binary classifiers: 5
   Each estimator type:          LogisticRegression
@@ -576,7 +576,7 @@ proba shape:  (1000, 5)
 
 First 3 sample predicted probabilities (per-label):
 ...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -643,7 +643,7 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Review preview (200 chars):
 Okay, so I just went to Vegas for the first time for my 21st birthday. Basi...
 Active labels: 3
@@ -658,7 +658,7 @@ Active labels: 3
 ----------------------------------------------------------------
        sum                                                1.8566
   mean BCE                                       / 5      0.3713
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -735,12 +735,12 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Subset accuracy (all match): 0.4930
 Hamming loss (mean per-label error): 0.1372
 micro F1: 0.7749
 macro F1: 0.6467
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -755,7 +755,7 @@ print(classification_report(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 precision    recall  f1-score   support
 
         food       0.90      0.90      0.90       564
@@ -768,7 +768,7 @@ precision    recall  f1-score   support
    macro avg       0.93      0.55      0.65      1747
 weighted avg       0.92      0.68      0.74      1747
  samples avg       0.69      0.58      0.61      1747
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -799,7 +799,7 @@ print(df_t.to_string(index=False))
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 threshold  subset_acc  hamming  micro_F1  macro_F1
        0.2       0.230   0.2706    0.7170    0.6978
        0.3       0.468   0.1478    0.8127    0.7889
@@ -807,7 +807,7 @@ threshold  subset_acc  hamming  micro_F1  macro_F1
        0.5       0.493   0.1372    0.7749    0.6467
        0.6       0.415   0.1658    0.6989    0.5172
        0.7       0.342   0.2036    0.5928    0.3877
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 

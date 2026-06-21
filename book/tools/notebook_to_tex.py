@@ -3603,9 +3603,9 @@ def output_to_latex(source: str, outputs: list[dict]) -> str:
         text = compact_nvidia_smi_output(text)
     return (
         "\\noindent\\textbf{출력.}\n"
-        "\\begin{lstlisting}[style=bookoutput]\n"
+        "\\begin{bookoutputbox}\n"
         + text
-        + "\n\\end{lstlisting}\n"
+        + "\n\\end{bookoutputbox}\n"
         "\\par\\vspace{0.9em}"
     )
 

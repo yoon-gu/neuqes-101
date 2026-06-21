@@ -222,9 +222,9 @@ df["star"] = df["label"] + 1   # 0-4 -> 1-5
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 If the error persists, please let us know by opening an issue on GitHub (ht...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -253,9 +253,9 @@ print(
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 X_train: (3232, 10000), positive rate: 49.4%
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -299,11 +299,11 @@ print(f"Diff: {abs(acc_a - acc_b):.4f}")
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Method A (sigmoid + BCE) accuracy: 0.8639
 Method B (softmax + CE)  accuracy: 0.8639
 Diff: 0.0000
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -333,7 +333,7 @@ print(f"Mean diff: {np.abs(p_a - p_b).mean():.4f}")
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Method A predict_proba shape: (808, 2)
 Method B predict_proba shape: (808, 2)
 (sklearn returns [P(0), P(1)] for both -- sigmoid output expanded to two co...
@@ -344,7 +344,7 @@ Method B: [0.4477 0.1001 0.1591 0.6653 0.758 ]
 
 Max diff:  0.0000
 Mean diff: 0.0000
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -413,7 +413,7 @@ print(
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 z_0    z_1        softmax([z0,z1])_1      sigmoid(z1-z0)
 
 ------------------------------------------------------------
@@ -423,7 +423,7 @@ z_0    z_1        softmax([z0,z1])_1      sigmoid(z1-z0)
    3.0    2.0                0.26894142          0.26894142
 
 Max diff: 2.22e-16  (numerical noise)
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -487,7 +487,7 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Method A coef_ shape:      (1, 10000)
 Method B coef_ shape:      (1, 10000)
 Method A intercept_ shape: (1,)
@@ -501,7 +501,7 @@ intercept_ max diff: 0.00e+00
 (small difference is only solver convergence noise; same model essentially)
 
 True (2, V) two-logit head appears in PyTorch (Ch 10/11 BERT binary).
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 

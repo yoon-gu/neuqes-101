@@ -191,11 +191,11 @@ else:
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 PyTorch:        2.11.0+cu128
 CUDA available: True
 GPU:            Tesla T4
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \subsection{\texorpdfstring{GPU 메모리 확인}{GPU 메모리 확인}}
@@ -214,12 +214,12 @@ T4의 총 VRAM은 \textbf{약 15.36 GB} (= 15,360 MiB). 모델·옵티마이저�
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Wed Jun 17 21:13:25 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
 N/A 43C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{무엇을 봐야 하나} --- 출력 가운데 줄 \inlinecode{Memory-Usage} 칸:
 
@@ -278,10 +278,10 @@ classifier("I love using Hugging Face! It's so simple.")
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 If the error persists, please let us know by opening an issue on GitHub (ht...
 [{'label': 'POSITIVE', 'score': 0.9998088479042053}]
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{DistilBERT(SST-2)가 VRAM에 올라간 직후의 nvidia-smi:}
 
@@ -297,12 +297,12 @@ If the error persists, please let us know by opening an issue on GitHub (ht...
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Wed Jun 17 21:13:54 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
 N/A 45C P0 26W / 70W | 423MiB / 15360MiB | 2% Default
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 baseline과 비교하면 \inlinecode{Memory-Usage} 가 늘어났을 겁니다. \textbf{얼마나 늘어났을까?} --- 모델 파라미터 수에서 거꾸로 추정해봅니다.
 
@@ -391,11 +391,11 @@ for r in results:
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 {'label': 'POSITIVE', 'score': 0.9998798370361328}
 {'label': 'NEGATIVE', 'score': 0.9997876286506653}
 {'label': 'NEGATIVE', 'score': 0.9820851683616638}
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \begin{codeRead}
 \textbf{1--5행}의 \inlinecode{results = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{for r in results:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
@@ -424,9 +424,9 @@ generator(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 [{'generated_text': "Hugging Face is the only new movie ever made about the...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{8\baselineskip}
 \begin{lstlisting}
@@ -439,7 +439,7 @@ unmasker("Hugging Face is a [MASK] for NLP.")
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 ----------------------------+------------+--+-
 
 [{'score': 0.04617200419306755,
@@ -457,7 +457,7 @@ unmasker("Hugging Face is a [MASK] for NLP.")
  {'score': 0.025830449536442757,
   'token': 19240,
 ...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{3개 pipeline(DistilBERT + GPT-2 + BERT-base)이 모두 VRAM에 쌓인 상태:}
 
@@ -469,12 +469,12 @@ unmasker("Hugging Face is a [MASK] for NLP.")
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Wed Jun 17 21:14:16 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
 N/A 48C P0 35W / 70W | 1401MiB / 15360MiB | 9% Default
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{파라미터 수 합계로 예측한 모델 가중치 vs 실제 VRAM 증가} --- 차이가 PyTorch 오버헤드입니다.
 
@@ -514,7 +514,7 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 model        params       fp32 size
 -----------------------------------------------------------------
             DistilBERT (SST-2)       67.0 M        255.4 MB
@@ -523,7 +523,7 @@ model        params       fp32 size
 -----------------------------------------------------------------
                          total      300.9 M       1147.9 MB
                          in GB                       1.12 GB
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{실제 nvidia-smi VRAM 사용량과 비교} --- 위 합계(\textasciitilde 수백 MB)에 \textbf{PyTorch CUDA 컨텍스트 + 캐시 할당자 \textasciitilde{} 200-400 MB} 를 더한 값이 nvidia-smi 의 \inlinecode{Memory-Usage} 와 비슷할 겁니다.
 
@@ -613,12 +613,12 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Model: distilbert/distilbert-base-uncased-finetuned-sst-2-english
 Model class:         DistilBertForSequenceClassification
 Tokenizer class:     BertTokenizer
 Label mapping:       {0: 'NEGATIVE', 1: 'POSITIVE'}
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 기본 모델은 \textbf{\inlinecode{distilbert-base-uncased-finetuned-sst-2-english}} 입니다.
 
@@ -670,12 +670,12 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Loaded
   tokenizer class: BertTokenizer
   model class:     DistilBertForSequenceClassification
   model device:    cuda:0
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{\inlinecode{pipeline} 위에 추가로 \emph{같은 DistilBERT} 가 올라간 상태} --- VRAM이 또 한 번 늘어났습니다. 같은 가중치라도 별도 객체이면 별도 메모리.
 
@@ -687,12 +687,12 @@ Loaded
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Wed Jun 17 21:14:22 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
 N/A 49C P0 26W / 70W | 1671MiB / 15360MiB | 0% Default
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \begin{quote}
 \textbf{잠깐, \inlinecode{Auto}가 뭔가요?}
@@ -732,14 +732,14 @@ for key, value in inputs.items():
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Tokens: ['i', 'love', 'using', 'hugging', 'face', '!']
 
 Model inputs:
 input_ids: tensor([[ 101, 1045, 2293, 2478, 17662, 2227, 999, 102]])
   token_type_ids: tensor([[0, 0, 0, 0, 0, 0, 0, 0]])
   attention_mask: tensor([[1, 1, 1, 1, 1, 1, 1, 1]])
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{관찰 포인트}
 
@@ -765,7 +765,7 @@ for token_id in inputs["input_ids"][0]:
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 ID    token
 ------------------------------
   101    '[CLS]'
@@ -776,7 +776,7 @@ ID    token
  2227    'face'
   999    '!'
   102    '[SEP]'
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \subsection{모델 추론}
@@ -800,12 +800,12 @@ print(f"Logits device: {outputs.logits.device}")
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Output object: SequenceClassifierOutput
 Logits shape:  torch.Size([1, 2])  (batch=1, classes=2: NEGATIVE, POSITIVE)
 Logits:        tensor([[-3.9266,  4.2142]], device='cuda:0')
 Logits device: cuda:0
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 로짓(logits)은 모델이 출력한 \textbf{정규화되지 않은 점수}. shape \texttt{{[}1,\ 2{]}}는 “배치 1개, 클래스 2개”를 의미합니다.
 
@@ -833,11 +833,11 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Probabilities: tensor([[2.9132e-04, 9.9971e-01]], device='cuda:0')
 
 Final result: {'label': 'POSITIVE', 'score': 0.9997}
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{잠깐 --- \inlinecode{transformers} 안에는 softmax 함수가 없나요?}
 
@@ -877,13 +877,13 @@ print(f"\n  values: {p1}")
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Do all three forms agree?
   torch.softmax vs F.softmax:    True
   torch.softmax vs nn.Softmax:   True
 
   values: tensor([[2.9132e-04, 9.9971e-01]], device='cuda:0')
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{보너스 --- 학습 코드에서 자주 보이는 \inlinecode{log\_softmax}}
 
@@ -910,10 +910,10 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 pipeline result:    [{'label': 'POSITIVE', 'score': 0.9997085928916931}]
 manual 4-step:      [{'label': 'POSITIVE', 'score': 0.9997}]
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{토크나이저 어휘 비교}
@@ -959,13 +959,13 @@ for name, tok in tokenizer_specs.items():
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 model  vocab_size                             class
 ----------------------------------------------------------------------------
      distilbert-base-uncased      30,522                     BertTokenizer
              bert-base-cased      28,996                     BertTokenizer
                         gpt2      50,257                     GPT2Tokenizer
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \begin{codeRead}
 \textbf{1--5행}의 \inlinecode{tokenizer\_specs = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{9행}의 \inlinecode{for name, tok in tokenize...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
@@ -996,7 +996,7 @@ for sent in sample_sentences:
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Input: 'I love using Hugging Face!'
 distilbert-base-uncased (6 tokens) ['i', 'love', 'using', 'hugging', 'face'...
 bert-base-cased (7 tokens) ['I', 'love', 'using', 'Hu', '##gging', 'Face',...
@@ -1006,7 +1006,7 @@ Input: 'Tokenization is fascinating.'
 distilbert-base-uncased (5 tokens) ['token', '##ization', 'is', 'fascinatin...
 bert-base-cased (6 tokens) ['To', '##ken', '##ization', 'is', 'fascinating'...
 gpt2 (5 tokens) ['Token', 'ization', '<sp>is', '<sp>fascinating', '.']
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \subsection{특수 토큰}
@@ -1068,7 +1068,7 @@ for name, tok in tokenizer_specs.items():
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 model           BOS/CLS           EOS/SEP         PAD         UNK
 ---------------------------------------------------------------------------...
 distilbert-base-uncased [CLS] [SEP] [PAD] [UNK]
@@ -1078,7 +1078,7 @@ gpt2 <|endoftext|> <|endoftext|> — <|endoftext|>
 distilbert-base-uncased.special_tokens_map = {'unk_token': '[UNK]', 'sep_to...
 bert-base-cased.special_tokens_map = {'unk_token': '[UNK]', 'sep_token': '[...
 gpt2.special_tokens_map = {'bos_token': '<|endoftext|>', 'eos_token': '<|en...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{관찰 포인트}
 

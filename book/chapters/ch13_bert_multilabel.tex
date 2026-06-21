@@ -270,12 +270,12 @@ else:
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Wed Jun 17 21:39:27 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
 N/A 40C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{데이터 준비}
@@ -340,10 +340,10 @@ print(f"aspects: {ASPECTS}")
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 K (number of aspects): 5
 aspects: ['food', 'service', 'price', 'ambiance', 'location']
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -413,7 +413,7 @@ for n in range(K + 1):
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Per-aspect activation rate (train):
        food: 55.6%  (2778 / 5000)
     service: 49.6%  (2480 / 5000)
@@ -429,7 +429,7 @@ Active label distribution (train):
   3 labels active: 957 samples (19.1%)
   4 labels active: 277 samples (5.5%)
   5 labels active: 55 samples (1.1%)
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{\ref{ch:12}장과의 한 줄 차이}: \texttt{out{[}“labels”{]}\ =\ {[}int(l)\ for\ l\ in\ batch{[}“label”{]}{]}} → \texttt{out{[}“labels”{]}\ =\ {[}list(map(float,\ a))\ for\ a\ in\ batch{[}“aspects”{]}{]}}. 라벨이 \emph{int 스칼라} 가 아니라 \emph{길이 5 multi-hot float 벡터}. 이 형식 + \inlinecode{problem\_type="multi\_label\_classification"} 두 가지가 BCE per-label 자동 매핑의 트리거.
 
@@ -522,12 +522,12 @@ print(f"id2label:             {model.config.id2label}")
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Wed Jun 17 21:40:03 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
 N/A 42C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{학습}
@@ -633,12 +633,12 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Wed Jun 17 21:40:42 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
 N/A 62C P0 70W / 70W | 1577MiB / 15360MiB | 73% Default
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{평가}
@@ -657,7 +657,7 @@ for k, v in eval_metrics.items():
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Train... Valid... Epoch Hammi... Micro F1 Micro... Micro... Macro F1 Macro....
 -------- -------- ----- -------- -------- -------- -------- -------- ------...
 0.285646 0.293182 2 0.102000 0.839824 0.915127 0.775972 0.801891 0.925907 0...
@@ -674,7 +674,7 @@ BERT multi-label evaluation:
             eval_runtime: 0.9146
   eval_samples_per_second: 1093.3460
    eval_steps_per_second: 34.9870
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -720,7 +720,7 @@ print(classification_report(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 precision    recall  f1-score   support
 
         food     0.9347    0.9330    0.9338       552
@@ -733,7 +733,7 @@ precision    recall  f1-score   support
    macro avg     0.9259    0.7229    0.8019      1723
 weighted avg     0.9170    0.7760    0.8310      1723
  samples avg     0.7733    0.6906    0.7114      1723
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \subsection{샘플 단위 해석}

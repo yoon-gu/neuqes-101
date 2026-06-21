@@ -198,13 +198,13 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 PyTorch:        2.11.0+cu128
 CUDA available: True
 GPU:            Tesla T4
 
 No model weights loaded in this chapter; VRAM stays roughly flat.
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \begin{codeRead}
 \inlinecode{numpy, pandas, PyTorch, datasets, transformers} 같은 주요 패키지를 불러옵니다.
@@ -240,7 +240,7 @@ print(f"  text:  {ds['train'][0]['text'][:200]}...")
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 train samples: 650,000
 test samples:  50,000
 
@@ -249,7 +249,7 @@ features: {'label': ClassLabel(names=['1 star', '2 star', '3 stars', '4 sta...
 First sample:
   label: 4  (0-4 = stars 1-5)
 text: dr. goldberg offers everything i look for in a general practitioner....
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{5\baselineskip}
 \begin{lstlisting}
@@ -259,14 +259,14 @@ print(f"\nfirst sample text: {small[0]['text'][:150]}...")
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Dataset({
     features: ['label', 'text'],
     num_rows: 5000
 })
 
 first sample text: I stalk this truck. I've been to industrial parks where...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{토크나이저 옵션}
@@ -287,11 +287,11 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Class:     BertTokenizer
 vocab:     30,522
 pad_token: [PAD]  (id=0)
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \begin{codeRead}
 \textbf{1행}의 \inlinecode{tokenizer = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
@@ -323,13 +323,13 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Input (first 150 chars): I stalk this truck. I've been to industrial parks...
 
 input_ids length: 75
 First 30 IDs: [101, 1045, 23899, 2023, 4744, 1012, 1045, 1005, 2310, 2042,...
 Decoded first 30: [CLS] i stalk this truck. i ' ve been to industrial parks...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \subsection{\texorpdfstring{동적 패딩}{동적 패딩}}
@@ -373,7 +373,7 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 padding=False:
   sentence 0: 5 tokens
   sentence 1: 75 tokens
@@ -382,7 +382,7 @@ padding=True (return_tensors='pt'):
   input_ids shape: torch.Size([2, 75])
 attention_mask sentence 0: tensor([1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0...
 attention_mask sentence 1: tensor([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \subsection{\texorpdfstring{고정 길이 패딩}{padding=“max\_length”, max\_length=128 --- 고정 길이}}
@@ -419,12 +419,12 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 shape: torch.Size([2, 128])  (batch 2, max_length=128)
 
 attention_mask=1 ratio: 31.2%
   -> short sentence is mostly padding (compute wasted)
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \subsection{\texorpdfstring{긴 입력 자르기}{긴 입력 자르기}}
@@ -466,12 +466,12 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 [transformers] Token indices sequence length is longer than the specified m...
 truncation=False: 1602 tokens  (may exceed BERT limit 512)
 truncation=True, max_length=128: 128 tokens
   Last token: [SEP] (= [SEP], always appended)
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \subsection{attention mask}
@@ -531,7 +531,7 @@ for max_len in [64, 128, 256, 512]:
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Token length distribution over 1,000 samples:
   min:    2
   mean:   177
@@ -546,7 +546,7 @@ Fraction truncated at various max_length:
   max_length=128:  50.9% truncated
   max_length=256:  21.6% truncated
   max_length=512:   3.9% truncated
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{해석}: 학습 시 \inlinecode{max\_length=128} 로 두면 95\% 이상 정상, 5\% 정도만 잘립니다 (Yelp 리뷰가 대부분 짧음). \inlinecode{max\_length=512} 면 거의 모든 리뷰를 보존하지만 평균 패딩 비율이 60-70\%라 메모리·시간 낭비.
 
@@ -595,7 +595,7 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Dataset({
 features: ['label', 'text', 'input_ids', 'token_type_ids', 'attention_mask'],
     num_rows: 5000
@@ -603,7 +603,7 @@ features: ['label', 'text', 'input_ids', 'token_type_ids', 'attention_mask'],
 
 First sample input_ids length: 128  (= 128, fixed)
 First sample attention_mask sum: 75  (real tokens)
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \subsection{\texorpdfstring{샘플 필터링}{샘플 필터링}}
@@ -626,10 +626,10 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Positive samples: 1,996 / 5,000 = 39.9%
 Short samples:    2,520 / 5,000 = 50.4%
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \subsection{\texorpdfstring{텐서 형식 변환}{with\_format(“torch”) --- 텐서 형식으로}}
@@ -665,11 +665,11 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 input_ids:      Tensor, dtype=torch.int64, shape=torch.Size([128])
 attention_mask: Tensor, shape=torch.Size([128])
 label:          4  (0-4 = stars 1-5)
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{\texorpdfstring{DataLoader 변환}{DataLoader 변환}}
@@ -709,13 +709,13 @@ print(f"label values:         {batch['label'].tolist()}")
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 batch keys:           ['label', 'input_ids', 'attention_mask']
 input_ids shape:      torch.Size([8, 128])      (= [batch_size, max_length])
 attention_mask shape: torch.Size([8, 128])
 label shape:          torch.Size([8])
 label values:         [1, 3, 3, 3, 1, 1, 3, 3]
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{\texorpdfstring{DataCollator}{DataCollator}}
@@ -789,7 +789,7 @@ for i, batch in enumerate(dyn_loader):
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Per-batch shape (batch_size=8, varies):
  batch             shape    real_tok   total    fill
      0          (8, 128)         832    1024     81%
@@ -797,7 +797,7 @@ Per-batch shape (batch_size=8, varies):
      2          (8, 128)         761    1024     74%
      3          (8, 128)         770    1024     75%
      4          (8, 128)         762    1024     74%
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{정적 vs 동적 padding 비교}
 
@@ -1019,14 +1019,14 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
                 method  real_tokens  total_tokens fill_rate
 static (max_length=128)         4873          6400     76.1%
  dynamic (DataCollator)         4873          6400     76.1%
 
 Dynamic vs static total tokens: 100.0% -> ~0% reduction
 (this much self-attention compute saved -> faster training, less memory)
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \subsection{\texorpdfstring{MLM 마스킹}{MLM 마스킹}}
@@ -1073,13 +1073,13 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 input_ids shape: torch.Size([3, 128])
 labels shape:    torch.Size([3, 128])  (-100 positions ignored by loss)
 
 [MASK] tokens: 44 / 384 (11.5%)
   (of the 15% masked: 80% [MASK], 10% random token, 10% kept -- so [MASK] rate ~12%)
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \Needspace{11\baselineskip}
@@ -1115,7 +1115,7 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 original     masked     label changed
      [CLS]      [CLS] (ignored)        
          i          i (ignored)        
@@ -1133,7 +1133,7 @@ industrial industrial (ignored)
      where      where (ignored)        
          i          i (ignored)        
 ...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \subsection{CLM 입력 구성}

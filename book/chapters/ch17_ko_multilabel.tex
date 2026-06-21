@@ -322,12 +322,12 @@ elif DEVICE == "cpu":
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 PyTorch:        2.11.0+cu128
 CUDA available: True
 Device:         cuda
 GPU:             Tesla T4
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{baseline VRAM} (CUDA 환경에서만 의미 있는 출력 --- Colab T4 기준):
 
@@ -343,12 +343,12 @@ GPU:             Tesla T4
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Wed Jun 17 21:49:36 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
 N/A 40C P8 12W / 70W | 3MiB / 15360MiB | 0% Default
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{데이터 준비}
@@ -409,7 +409,7 @@ for ex in ds["train"].select(range(2)):
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 splits: ['train', 'validation']
 sizes: [('train', 45678), ('validation', 9107)]
 label names (7): ['IT과학', '경제', '사회', '생활문화', '세계', '스포츠', '...
@@ -417,7 +417,7 @@ label names (7): ['IT과학', '경제', '사회', '생활문화', '세계', '스
 first 2 raw samples:
   label=3 (Life&Culture)  text='유튜브 내달 2일까지 크리에이터 지원 공간 운영'
   label=3 (Life&Culture)  text='어버이날 맑다가 흐려져…남부지방 옅은 황사'
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \subsection{다중 라벨 샘플 합성}
@@ -546,7 +546,7 @@ for n in range(K + 1):
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Per-category activation rate (train):
   IT/Science (label 0): 22.0%  (1100 / 5000)
     Economy (label 1): 25.2%  (1260 / 5000)
@@ -560,7 +560,7 @@ Mean active labels per sample: 1.85 (expected ~1.86: two draws, occasional...
 Active label distribution (train):
   1 labels active: 732 samples (14.6%)
   2 labels active: 4268 samples (85.4%)
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{토큰화 --- \ref{ch:16}장 패턴, 라벨 형식만 multi-hot}
@@ -630,7 +630,7 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Token length (combined, sample 200): mean=30.0, median=30, max=41
 Dataset({
     features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'],
@@ -638,7 +638,7 @@ Dataset({
 })
 
 First sample label: [0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0] (length-7 multi-hot...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{\texorpdfstring{모델 로드}{모델 로드}}
@@ -686,7 +686,7 @@ print(f"id2label:             {model.config.id2label}")
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Key                                        | Status     | 
 -------------------------------------------+------------+-
 classifier.bias                            | MISSING    | 
@@ -698,7 +698,7 @@ Trainable parameters:   110,622,727  (100.0%)
 Classifier:           Linear(in_features=768, out_features=7, bias=True)
 problem_type:         multi_label_classification
 id2label: {0: 'IT/Science', 1: 'Economy', 2: 'Society', 3: 'Life&Culture',...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{\ref{ch:16}장과 파라미터 수가 \emph{완전히 동일}} --- 둘 다 \inlinecode{Linear(768,\ 7)} 헤드. 차이는 \inlinecode{problem\_type} 한 줄뿐입니다. 같은 모델이 \emph{어떻게 해석되고 어떤 loss 로 학습되는가} 만 바뀝니다. 이게 \ref{ch:16}장과 \ref{ch:17}장의 변경이 “한 가지 축” 인 이유 --- \emph{task 의 의미} 만 single-label 에서 multi-label 로 옮기고 나머지는 전부 고정합니다.
 
@@ -710,12 +710,12 @@ id2label: {0: 'IT/Science', 1: 'Economy', 2: 'Society', 3: 'Life&Culture',...
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Wed Jun 17 21:49:57 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
 N/A 42C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{학습}
@@ -812,14 +812,14 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Epoch Train... Valid... Hammi... Micro F1 Micro... Micro... Macro F1 Macro....
 ----- -------- -------- -------- -------- -------- -------- -------- ------...
 1 0.234161 0.246369 0.088714 0.819319 0.838594 0.800910 0.819910 0.824380 0...
 2 0.175915 0.208742 0.072429 0.853764 0.866004 0.841866 0.851982 0.846523 0...
 
 Training done — mean train loss: 0.2661
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{5\baselineskip}
 \begin{lstlisting}
@@ -827,12 +827,12 @@ Training done — mean train loss: 0.2661
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Wed Jun 17 21:50:40 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
 N/A 63C P0 75W / 70W | 2209MiB / 15360MiB | 74% Default
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{평가}
@@ -853,7 +853,7 @@ for k, v in eval_metrics.items():
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Train... Valid... Epoch Hammi... Micro F1 Micro... Micro... Macro F1 Macro....
 -------- -------- ----- -------- -------- -------- -------- -------- ------...
 0.175915 0.208742 2 0.072429 0.853764 0.866004 0.841866 0.851982 0.846523 0...
@@ -870,7 +870,7 @@ klue/bert-base KLUE-YNAT multi-label — evaluation:
             eval_runtime: 0.6860
   eval_samples_per_second: 1457.7020
    eval_steps_per_second: 46.6460
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -903,7 +903,7 @@ for k in range(K):
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 logits shape: (1000, 7)
 prob ranges per category:
   IT/Science: [0.0076, 0.9774]  true rate=12.6%, pred rate=13.0%
@@ -913,7 +913,7 @@ prob ranges per category:
       World: [0.0088, 0.9889]  true rate=15.9%, pred rate=16.7%
      Sports: [0.0091, 0.9888]  true rate=11.7%, pred rate=12.7%
    Politics: [0.0087, 0.9853]  true rate=15.6%, pred rate=16.8%
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{8\baselineskip}
 \begin{lstlisting}
@@ -926,7 +926,7 @@ print(classification_report(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 precision    recall  f1-score   support
 
   IT/Science     0.7538    0.7778    0.7656       126
@@ -941,7 +941,7 @@ Life&Culture     0.8706    0.8957    0.8830       278
    macro avg     0.8465    0.8596    0.8520      1758
 weighted avg     0.8687    0.8419    0.8536      1758
  samples avg     0.8883    0.8585    0.8553      1758
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \subsection{카테고리별 sigmoid 확률 KDE (7 패널)}
@@ -1002,9 +1002,9 @@ plt.show()
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 <Figure size 1534.83x560 with 7 Axes>
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{KLUE-YNAT 다중 라벨 카테고리별 sigmoid 확률 분포}{fig:ch17-label-probability-facets}
 \includegraphics[width=0.90\linewidth]{assets/figures/ch17_label_probability_facets.png}
@@ -1084,9 +1084,9 @@ plt.show()
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 <Figure size 1500x600 with 4 Axes>
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{KLUE-YNAT 합성 다중 라벨의 공동 활성 행렬}{fig:ch17-cooccurrence}
 \includegraphics[width=0.92\linewidth]{assets/figures/ch17_cooccurrence.png}
@@ -1192,7 +1192,7 @@ for label_kind, idx in samples:
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 ===========================================================================...
 sample #0  (both categories correct)
 ===========================================================================...
@@ -1210,7 +1210,7 @@ text: 새 현대미술 양식 꽃피운 U+6545강국진 개인전 [SEP] 음성�
   true:      ['Society', 'Life&Culture']
   predicted: ['Society', 'Life&Culture']
 ...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{읽는 법}
 
@@ -1330,12 +1330,12 @@ print(f"F1 at default 0.5:        micro={micro_f1s[list(np.round(thresholds,2)).
 \textbf{그림 읽기} --- 그림~\ref{fig:ch17-threshold-sweep}는 기본 임계값 0.5가 항상 최적은 아니라는 점을 보여줍니다. micro F1과 macro F1의 최고점이 서로 다른 위치에 놓일 수 있으므로, 운영 환경에서는 전체 평균뿐 아니라 카테고리별 성능까지 함께 보고 임계값을 정해야 합니다.
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 <Figure size 900x500 with 1 Axes>
 best micro F1 threshold: 0.35  (F1=0.8628)
 best macro F1 threshold: 0.45  (F1=0.8566)
 F1 at default 0.5:        micro=0.8538, macro=0.8520
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{해석} --- threshold 0.5 가 \emph{항상} 최적은 아닙니다. 활성률이 낮은 카테고리가 있으면 \emph{낮은 threshold} 가 recall 을 끌어올려 F1 이 더 좋아질 수 있습니다. 운영 단계에선 validation set 에서 \emph{카테고리별로} 최적 threshold 를 찾아 저장해 두고 추론 시 적용 (FAQ Q1).
 

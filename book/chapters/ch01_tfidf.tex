@@ -179,7 +179,7 @@ print(dataset)
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 If the error persists, please let us know by opening an issue on GitHub (ht...
 DatasetDict({
     train: Dataset({
@@ -191,7 +191,7 @@ DatasetDict({
         num_rows: 50000
     })
 })
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -211,14 +211,14 @@ df.head(3)
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Sample count: 5000
    label  text
 -  -----  ------------------------
 0  4      I stalk this truck. I...
 1  2      who really knows if t...
 2  4      I LOVE Bloom Salon......
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -239,7 +239,7 @@ print(counts)
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 <Figure size 640x480 with 1 Axes>
 label
 0    1017
@@ -248,7 +248,7 @@ label
 3    1021
 4     975
 Name: count, dtype: int64
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -264,7 +264,7 @@ df[["len_words"]].describe()
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 len_words
 count  5000.000000
 mean    133.811400
@@ -274,7 +274,7 @@ min       1.000000
 50%     100.000000
 75%     177.000000
 max     977.000000
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -314,12 +314,12 @@ print(
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 shape: (5000, 10000)  (n_docs, vocab_size)
 non-zero entries: 405,803
 total cells: 50,000,000
 sparsity: 99.19%  (fraction of empty cells)
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -337,10 +337,10 @@ print(f"Tokenized: {analyzer(sample)}")
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Input sentence: 'I love using Hugging Face!'
 Tokenized: ['love', 'using', 'hugging', 'face']
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -379,7 +379,7 @@ for i in top:
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Vocab size: 10,000
 First 20: ['00', '000', '00am', '00pm', '05', '05nparfrm9annokwdi3bbq', '08...
 
@@ -394,7 +394,7 @@ Top 10 most frequent words
                is   7,760
                in   7,593
              that   6,756
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -432,9 +432,9 @@ print(f"shape: {X_tfidf.shape}")
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 shape: (5000, 10000)
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 
@@ -468,7 +468,7 @@ for i in top:
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Review preview (200 chars):
 I stalk this truck. I've been to industrial parks where I pretend to be a t...
 
@@ -484,7 +484,7 @@ I stalk this truck. I've been to industrial parks where I pretend to be a t...
           pride       1    0.2046
           bowls       1    0.1988
           gotta       1    0.1898
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 

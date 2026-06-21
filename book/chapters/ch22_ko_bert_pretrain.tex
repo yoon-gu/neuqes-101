@@ -311,12 +311,12 @@ elif DEVICE == "cpu":
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 PyTorch:        2.11.0+cu128
 CUDA available: True
 Device:         cuda
 GPU:             Tesla T4
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{baseline VRAM} (CUDA 환경에서만 의미 있는 출력 --- Colab T4 기준):
 
@@ -328,12 +328,12 @@ GPU:             Tesla T4
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Wed Jun 17 22:01:31 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
 N/A 42C P8 11W / 70W | 3MiB / 15360MiB | 0% Default
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{한국어 Wikipedia 데이터 준비}
@@ -373,7 +373,7 @@ for i in range(3):
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 downloading Korean Wikipedia (wikimedia/wikipedia, 20231101.ko)...
   total articles: 647,897
 
@@ -388,7 +388,7 @@ Article 1 (수학): 수학(U+6578U+5B78, , 줄여서 math)은 수, 양, 구조, 
 Article 2 (수학 상수): 수학에서 상수란 그 값이 변하지 않는 불변량으로, 변수...
 
 수
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -446,7 +446,7 @@ for i in range(3):
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 sampled train: 5,000 paragraphs
 sampled eval:  500 paragraphs
 
@@ -464,7 +464,7 @@ Sample 0: 원(U+5143)은 시호에 쓰이는 글자다. 《일주서》 시법�
  염위 원제 (추존)
  하 원제 (추존)
 ...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{\texorpdfstring{토크나이저 로드와 비교}{토크나이저 로드와 비교}}
@@ -508,7 +508,7 @@ print(f"ids:    {enc['input_ids'][0].tolist()}")
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 tokenizer:        klue/bert-base
 vocab_size:       32,000
 model_max_length: 512
@@ -522,7 +522,7 @@ special tokens:
 Korean sample: '이 영화 정말 재미있어요!'
 tokens (8): ['[CLS]', '이', '영화', '정말', '재미있', '##어요', '!', '[SEP]']
 ids:    [2, 1504, 3771, 3944, 6001, 10283, 5, 3]
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \subsection{같은 한국어 문장을 두 토크나이저로 --- \ref{ch:19}장 §5-4 cross-language 검증}
@@ -573,7 +573,7 @@ print(cross_df.to_string(index=False))
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 sentence              tokenizer  n_tokens  n_unk  unk_pct
 이 영화 정말 재미있어요! bert-base-uncased (EN) 15 1 6.7
 이 영화 정말 재미있어요! klue/bert-base (KO) 6 0 0.0
@@ -581,7 +581,7 @@ sentence              tokenizer  n_tokens  n_unk  unk_pct
 음식이 맛있었고 서비스도 훌륭했습니다. klue/bert-base (KO) 12 0 0.0
 별로였어요. 시간 낭비. bert-base-uncased (EN) 13 1 7.7
 별로였어요. 시간 낭비. klue/bert-base (KO) 7 0 0.0
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -604,7 +604,7 @@ for sent in ko_sentences:
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 ==============================================================================
 
 [Korean input] 이 영화 정말 재미있어요!
@@ -618,7 +618,7 @@ klue/bert-base (KO) ( 12 tokens, UNK 0): ['음식', '##이', '맛있', '##었', 
 [Korean input] 별로였어요. 시간 낭비.
 bert-base-uncased (EN) ( 13 tokens, UNK 1): ['[UNK]', '.', 'U+1109', '##U+1...
 klue/bert-base (KO) ( 7 tokens, UNK 0): ['별로', '##였', '##어요', '.', '시...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{관찰 --- \ref{ch:19}장 §5-4 결론의 실측 확인}
 
@@ -746,7 +746,7 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 lm_train: Dataset({
     features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'],
     num_rows: 3924
@@ -762,7 +762,7 @@ eval blocks:  429   (approx. 54,912 tokens)
 
 sample block 0 first 20 ids: [1478, 12, 244, 13, 1497, 24307, 2170, 8026, 2...
 sample block 0 first 20 tok: ['원', '(', 'U+5143', ')', '은', '시호', '##에...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{\texorpdfstring{작은 \inlinecode{BertConfig} + \inlinecode{BertForMaskedLM} --- random init (\ref{ch:20}장과 동일)}{작은 BertConfig + BertForMaskedLM --- random init (\ref{ch:20}장과 동일)}}
@@ -851,7 +851,7 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Config: hidden=256, layer=4, head=4, intermediate=1024
 max_position_embeddings: 128
 vocab_size:              32,000  (klue/bert-base)
@@ -861,7 +861,7 @@ Trainable:              11,483,136
   embeddings:            8,225,792  (71.6%)  (vocab 32000 x hidden 256)
   encoder (4 layer):     3,159,040  (27.5%)
   MLM head:                 98,304  (0.9%)  (tied with embeddings)
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{관찰} --- vocab 이 약 32,000 (\ref{ch:20}장의 30,522 보다 약간 큼) 이라 임베딩 테이블이 살짝 더 큽니다. 그래도 본체 구조는 동일 --- encoder body 2M + 임베딩 8M 수준의 작은 BERT.
 
@@ -933,12 +933,12 @@ print(f"loss positions:        {n_loss_pos:>4} / {total_tokens}  "
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 batch shape: input_ids=(2, 128), labels=(2, 128)
 masked tokens (call 1):   22 / 256  (8.59%)
 masked tokens (call 2):   27 / 256  (10.55%)
 loss positions:          30 / 256  (11.72%)  (labels != -100)
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \subsection{{[}MASK{]} 가 들어가는 원리 --- 한 눈에 보는 80/10/10 (한국어 풀버전)}
@@ -1020,7 +1020,7 @@ print(demo_df.to_string(index=False))
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 pos original after_collator  label_id what_happened
    0    [CLS]          [CLS]      -100             -
    1        이              이      -100             -
@@ -1038,7 +1038,7 @@ pos original after_collator  label_id what_happened
   13      ##했            ##했      -100             -
   14      ##습            ##습      -100             -
 ...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -1097,7 +1097,7 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Total tokens:                        8,192
 Selected for loss (target 15%):      1,209  (14.76%)
   └─ replaced with [MASK]:             955  (78.99% of selected)
@@ -1105,7 +1105,7 @@ Selected for loss (target 15%):      1,209  (14.76%)
   └─ kept as original:                 135  (11.17% of selected)
 
 Target: 선택 15% / 그 중 80-10-10 으로 [MASK]-random-kept. 표본 크면 비율...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{관전 포인트}
 
@@ -1190,7 +1190,7 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 [transformers] warmup_ratio is deprecated and will be removed in v5.2. Use...
 epochs:        2
 batch size:    32
@@ -1198,7 +1198,7 @@ learning rate: 0.0005
 fp16:          True
 train blocks:  3,924
 steps / epoch: 122
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \subsection{사전학습 전 기준선}
@@ -1304,7 +1304,7 @@ for sent in test_sentences:
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Training Loss  Validation Loss  Epoch
 -------------  ---------------  -----
 No log         10.447138        0
@@ -1321,7 +1321,7 @@ input: 태양계에는 행성이 [MASK] 개 있다.
 
 input: 이 영화 정말 [MASK].
 ...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -1343,7 +1343,7 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Epoch  Training Loss  Validation Loss
 -----  -------------  ---------------
 1      7.660039       7.714057
@@ -1352,7 +1352,7 @@ Epoch  Training Loss  Validation Loss
 Korean MLM pretraining done in 0.3 min
 mean train loss: 7.8204
 random baseline loss (uniform over vocab): 10.3735
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{5\baselineskip}
 \begin{lstlisting}
@@ -1360,12 +1360,12 @@ random baseline loss (uniform over vocab): 10.3735
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Wed Jun 17 22:02:36 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
 N/A 54C P0 58W / 70W | 3449MiB / 15360MiB | 37% Default
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{학습 결과}
@@ -1422,9 +1422,9 @@ else:
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 <Figure size 900x500 with 1 Axes>
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{한국어 작은 BERT의 MLM 사전학습 loss 곡선}{fig:ch22-mlm-training-loss}
 \centering
@@ -1466,7 +1466,7 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Training Loss  Validation Loss  Epoch
 -------------  ---------------  -----
 7.424983       7.558918         2
@@ -1477,7 +1477,7 @@ Training Loss  Validation Loss  Epoch
   perplexity (exp loss):  1917.77
   random baseline PPL:    32,000  (uniform over vocab)
   -> model narrowed vocab to approx. 1918 candidates per masked position
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{사전학습 전후 비교}
@@ -1526,7 +1526,7 @@ for sent in test_sentences:
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Training Loss  Validation Loss  Epoch
 -------------  ---------------  -----
 7.424983       7.566011         2
@@ -1543,7 +1543,7 @@ input: 대한민국의 수도는 [MASK]이다.
 input: 태양계에는 행성이 [MASK] 개 있다.
   top-5 after pretraining: ['.', '##의', ',', '##다', ')']
 ...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \subsection{평가 손실과 perplexity}
@@ -1565,12 +1565,12 @@ print(metric_compare.round(4).to_string(index=False))
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Before vs After — eval metrics
          metric  before (random)  after (2 epoch)  random baseline
       eval_loss          10.4471           7.5660          10.3735
 eval_perplexity       34445.6443        1931.4213       32000.0000
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -1614,9 +1614,9 @@ plt.show()
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 <Figure size 1200x500 with 2 Axes>
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{한국어 MLM 평가 손실과 perplexity 변화}{fig:ch22-eval-loss-ppl}
 \centering
@@ -1656,12 +1656,12 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 ----------------------------+------------+--+-
 
 Our small BERT params: 11.5M
 Reference BERT params: 110.7M  (10x larger)
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -1765,7 +1765,7 @@ for _, row in top5_compare.iterrows():
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Before (random) vs Ours (small BERT, ko wiki 5K) vs Reference (klue/bert-ba...
 ===========================================================================...
 input: 대한민국의 수도는 [MASK]이다.
@@ -1783,7 +1783,7 @@ input: 이 영화 정말 [MASK].
   ours  (small, 5K para)     : ., ,, ##의, ), ##다
   ref   (klue/bert-base)     : 좋아, [UNK], ., 좋아해, 좋아한다
 ...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{해석 가이드 --- 사전학습이 만든 차이}
 
@@ -1840,14 +1840,14 @@ for f in sorted(os.listdir(SAVE_DIR)):
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Saved to: ./ch22_small_bert_mlm_ko
 Files:
                      config.json  0.7 KB
                model.safetensors  43.8 MB
                   tokenizer.json  734.4 KB
            tokenizer_config.json  0.4 KB
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{저장된 파일 구조} --- \ref{ch:20}장과 동일한 HF 표준 레이아웃:
 

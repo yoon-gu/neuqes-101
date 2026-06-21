@@ -414,12 +414,12 @@ print(f"use fp16   : {USE_FP16}")
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 device     : cuda  (Tesla T4)
 VRAM total : 14.56 GiB
 torch      : 2.11.0+cu128
 use fp16   : True
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{\texorpdfstring{TinyStories 데이터 로드 --- \emph{\ref{ch:24}장과 완전히 동일}}{TinyStories 데이터 로드 --- \ref{ch:24}장과 완전히 동일}}
@@ -456,7 +456,7 @@ print(raw_train[0]["text"][:400])
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 train: Dataset({
     features: ['text'],
     num_rows: 30000
@@ -472,7 +472,7 @@ One day, a little girl named Lily found a needle in her room. She knew it w...
 Lily went to her mom and said, "Mom, I found this needle. Can you share it...
 
 To
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{\texorpdfstring{\inlinecode{gpt2} 토크나이저·모델 로드 --- \emph{모델 로드 한 줄로 학습 단계 2 진입}}{gpt2 토크나이저·모델 로드 --- 모델 로드 한 줄로 학습 단계 2 진입}}
@@ -549,7 +549,7 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 load done: 9.4s
 
 === model ===
@@ -565,7 +565,7 @@ tokenizer    : GPT2Tokenizer
 model: GPT2LMHeadModel
   - body : GPT2Model  (Decoder, causal attention)
   - head : Linear(in=768, out=50257)
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \begin{codeRead}
@@ -708,7 +708,7 @@ print(tokenizer.decode(lm_train[0]["input_ids"])[:200])
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 [transformers] Token indices sequence length is longer than the specified m...
 
 train chunks: 51,863  (block_size=128)
@@ -717,7 +717,7 @@ approx. train tokens: 6.64 M
 
 first chunk decode (first 200 chars):
 One day, a little girl named Lily found a needle in her room. She knew it w...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \textbf{비교 관전 포인트} --- 같은 30K stories 가 \emph{gpt2 BPE (vocab 50,257)} 로 토큰화되면 \ref{ch:24}장의 \emph{직접 학습 BPE (vocab 2,048)} 보다 \emph{토큰 수가 적습니다} --- vocab 이 클수록 한 토큰이 더 긴 byte 시퀀스를 표현하므로. 같은 데이터의 토큰 수 차이가 \emph{토크나이저 vocab 크기의 직접적 효과}.
@@ -789,7 +789,7 @@ for p in PROMPTS:
 \textbf{해석 가이드 --- \emph{\ref{ch:24}장 random init} vs \emph{\ref{ch:25}장 gpt2 사전학습} 의 직전 비교}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 ======================================================================
 BEFORE continual pretraining - gpt2 pretrained on WebText, as-is
 ======================================================================
@@ -807,7 +807,7 @@ The little girl has been at her desk all day...for two hours. She's got a p...
 [prompt] A big dog
 A big dog is a dog that loves to eat, but is also a dog that's afraid to do...
 ...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \begin{itemize}
@@ -950,14 +950,14 @@ if torch.cuda.is_available():
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 === continual pretraining summary ===
 elapsed       : 19.22 min
 global_step   : 3242
 train_loss    : 2.0699
 vocab ln (random baseline): 10.8249  (we start MUCH lower than this)
 final peak    : 1450 MiB
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \Needspace{11\baselineskip}
@@ -1043,7 +1043,7 @@ for p in PROMPTS:
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 ======================================================================
 AFTER continual pretraining - gpt2 + TinyStories 30K
 ======================================================================
@@ -1062,7 +1062,7 @@ A big dog was wandering around and he noticed some old people lying on the...
 The old people smiled and said, "I'm glad you are so kind. I'm sorry you ca...
 
 The big dog felt
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \Needspace{11\baselineskip}
@@ -1083,7 +1083,7 @@ for p, before, after in zip(PROMPTS, before_outputs, after_outputs):
 \textbf{해석 가이드 --- continual pretraining 의 도메인 적응 효과}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 ==============================================================================
 Ch 25 BEFORE (gpt2 as-is) vs AFTER (gpt2 + TinyStories continual pretrain)
 ==============================================================================
@@ -1106,7 +1106,7 @@ Her mom hugged her and said, "It's so much fun to ride a bike in the park....
 
 PROMPT  : A big dog
 ...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \begin{itemize}
@@ -1203,7 +1203,7 @@ for p, before, after in zip(PROMPTS, before_outputs, after_outputs):
 \textbf{해석 가이드 --- 세 셋업의 격차}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 ===========================================================================...
 3-way comparison: Ch 24 (3M scratch) vs Ch 25 BEFORE vs Ch 25 AFTER
 ===========================================================================...
@@ -1224,7 +1224,7 @@ Ch 24 (scratch) : The little girl was very happy. She wanted to play with h...
 Ch 25 BEFORE : has been at her desk all day...for two hours. She's got a pe...
 Ch 2
 ...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \begin{itemize}

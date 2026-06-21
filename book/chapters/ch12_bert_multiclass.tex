@@ -256,12 +256,12 @@ else:
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Wed Jun 17 21:37:09 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
 N/A 52C P8 11W / 70W | 3MiB / 15360MiB | 0% Default
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{데이터 준비}
@@ -414,12 +414,12 @@ classifier (\inlinecode{Linear(768→K)}) & 1,538 & \textbf{3,845} \\
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Wed Jun 17 21:37:42 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
 N/A 51C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{학습}
@@ -524,12 +524,12 @@ print(f"random baseline loss (K=5): {np.log(5):.4f}")
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Wed Jun 17 21:38:21 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
 N/A 68C P0 37W / 70W | 1577MiB / 15360MiB | 73% Default
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{평가}
@@ -548,7 +548,7 @@ for k, v in eval_metrics.items():
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Train...  Valid...  Epoch  Accuracy  Macro...  Macro...  Macro F1  Auc Ovr
 --------  --------  -----  --------  --------  --------  --------  --------
 0.915353  1.000076  2      0.562000  0.558259  0.564504  0.560654  0.865174
@@ -559,7 +559,7 @@ BERT 5-class evaluation:
        eval_macro_recall: 0.5645
            eval_macro_f1: 0.5607
             eval_auc_ovr: 0.8652
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -653,9 +653,9 @@ plt.show()
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 <Figure size 700x600 with 2 Axes>
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{5클래스 Yelp 분류의 혼동 행렬}{fig:ch12-confusion-matrix}
 \includegraphics[width=0.76\linewidth]{assets/figures/ch12_confusion_matrix.png}
@@ -761,7 +761,7 @@ print(classification_report(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 precision    recall  f1-score   support
 
           1★     0.6667    0.7273    0.6957       220
@@ -773,7 +773,7 @@ precision    recall  f1-score   support
     accuracy                         0.5620      1000
    macro avg     0.5583    0.5645    0.5607      1000
 weighted avg     0.5568    0.5620    0.5587      1000
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{BERT와 TF-IDF 비교}
@@ -880,14 +880,14 @@ print(cmp.round(4).to_string(index=False))
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 metric  sklearn (TF-IDF)   BERT  BERT - sklearn
        accuracy            0.5420 0.5620          0.0200
 macro_precision            0.5377 0.5583          0.0205
    macro_recall            0.5410 0.5645          0.0235
        macro_f1            0.5380 0.5607          0.0227
         auc_ovr            0.8420 0.8652          0.0232
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \subsection{혼동 행렬 비교}

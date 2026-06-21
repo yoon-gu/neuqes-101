@@ -409,12 +409,12 @@ elif DEVICE == "cpu":
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 PyTorch:        2.11.0+cu128
 CUDA available: True
 Device:         cuda
 GPU:             Tesla T4
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{baseline VRAM} (CUDA 환경에서만 의미 있는 출력 --- Colab T4 기준):
 
@@ -426,12 +426,12 @@ GPU:             Tesla T4
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Wed Jun 17 22:03:53 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
 N/A 45C P8 12W / 70W | 3MiB / 15360MiB | 0% Default
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{NSMC 이진 분류 데이터 로드 --- \ref{ch:15}장과 같은 split}
@@ -508,7 +508,7 @@ print(ds_train_full)
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 downloading NSMC train/test from GitHub...
   train: 149,995 rows
   test:  49,997 rows
@@ -526,7 +526,7 @@ first 3 train samples:
 
 Dataset({
 ...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{\texorpdfstring{토크나이저 --- \inlinecode{klue/bert-base} (\ref{ch:22}장과 동일)}{토크나이저 --- klue/bert-base (\ref{ch:22}장과 동일)}}
@@ -567,14 +567,14 @@ print(f"tokens ({len(tokens)}): {tokens}")
 \end{codeRead}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 tokenizer:        klue/bert-base
 vocab_size:       32,000
 model_max_length: 512
 
 NSMC-domain sample: '이 영화 정말 재미있었고 배우들 연기도 훌륭했어요.'
 tokens (16): ['[CLS]', '이', '영화', '정말', '재미있', '##었', '##고', '배...
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{MLM 사전학습 --- \ref{ch:22}장 패턴 압축 재현 (한국어 Wikipedia, 1 epoch)}
@@ -624,10 +624,10 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Small BERT config: hidden=256, layer=4, head=4
 Total parameters:  11,483,136  (11.48 M)
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -830,14 +830,14 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 [transformers] warmup_ratio is deprecated and will be removed in v5.2. Use...
 MLM epochs:        3
 MLM batch size:    32
 MLM learning rate: 0.0005
 MLM fp16:          True
 MLM steps:         144
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -856,7 +856,7 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Epoch  Training Loss  Validation Loss
 -----  -------------  ---------------
 1      8.093575       7.848547
@@ -866,7 +866,7 @@ Epoch  Training Loss  Validation Loss
 MLM pretraining done in 0.2 min
 mean train loss: 7.9176
 random baseline (ln vocab): 10.3735
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{10\baselineskip}
 \begin{lstlisting}
@@ -881,14 +881,14 @@ print(f"(random baseline PPL: {tokenizer.vocab_size:,})")
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Training Loss  Validation Loss  Epoch
 -------------  ---------------  -----
 7.489806       7.816072         3
 MLM eval loss:        7.8161
 MLM eval perplexity:  2480.14
 (random baseline PPL: 32,000)
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{관전 포인트} --- 한국어 Wikipedia paragraphs 에서 MLM loss 가 \emph{random baseline 10.37} 에서 시작해 5-7 부근까지 떨어졌다면 본체가 \emph{일반 한국어 어휘·문맥 구조의 일부} 를 학습한 상태. perplexity 로 환산하면 vocab 약 32,000 중 \emph{수백-수천 개 후보} 로 좁혀진 정도. \ref{ch:22}장의 2 epoch 보다는 약간 얕지만, \emph{NSMC 분류 fine-tune 출발점} 으로는 충분합니다 --- 본체가 \emph{일반 한국어 구조} 를 가지면 \emph{영화 리뷰 비격식 도메인} 도 fine-tune 으로 빠르게 적응.
 
@@ -990,7 +990,7 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 본체 가중치 복사 완료
 missing keys (분류 측에만 있는 부분): 2 e.g. ['pooler.dense.weight', 'poole...
   unexpected keys (MLM 측 잉여):       0  e.g. []
@@ -999,7 +999,7 @@ Classification model parameters:
   body (embeddings + encoder + pooler): 11,450,624  (100.0%)
   classifier head Linear(256, 2):              514  (0.0%)
   total:                                 11,451,138  (11.45 M)
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \textbf{\inlinecode{bert.load\_state\_dict} 가 한 일} --- \inlinecode{BertForMaskedLM} 과 \inlinecode{BertForSequenceClassification} 둘 다 \emph{내부에 같은 \inlinecode{BertModel}} (이름 \inlinecode{self.bert}) 을 갖습니다. 그 본체만 통째로 옮긴 셈. MLM head (\inlinecode{cls.predictions}) 와 분류 head (\inlinecode{classifier}) 는 \emph{모델 객체의 다른 자리} 라 자동으로 분리됩니다.
 
@@ -1047,7 +1047,7 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Dataset({
     features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'],
     num_rows: 5000
@@ -1055,7 +1055,7 @@ Dataset({
 
 First sample label: 1  (int 0 or 1)
 Token length stats — mean: 21.9, median: 17, max: 117
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -1139,7 +1139,7 @@ print(f"random baseline (ln 2): {math.log(2):.4f}")
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Epoch  Train...  Valid...  Accuracy  Preci...  Recall    F1        Auc
 -----  --------  --------  --------  --------  --------  --------  --------
 1      0.689621  0.691119  0.524000  0.613861  0.124248  0.206667  0.552118
@@ -1148,7 +1148,7 @@ Epoch  Train...  Valid...  Accuracy  Preci...  Recall    F1        Auc
 Classification fine-tune done in 0.2 min
 mean train loss: 0.6904
 random baseline (ln 2): 0.6931
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{5\baselineskip}
 \begin{lstlisting}
@@ -1156,12 +1156,12 @@ random baseline (ln 2): 0.6931
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Wed Jun 17 22:05:02 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
 N/A 55C P0 33W / 70W | 821MiB / 15360MiB | 23% Default
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{평가}
@@ -1183,7 +1183,7 @@ for k, v in cls_eval_metrics.items():
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Train...  Valid...  Epoch  Accuracy  Preci...  Recall    F1        Auc
 --------  --------  -----  --------  --------  --------  --------  --------
 0.687569  0.687069  2      0.542000  0.556164  0.406814  0.469907  0.558462
@@ -1194,7 +1194,7 @@ Ch 23 small BERT (scratch MLM 3 epoch on Korean Wikipedia + NSMC fine-tune)...
            eval_recall: 0.4068
                eval_f1: 0.4699
               eval_auc: 0.5585
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \Needspace{10\baselineskip}
 \begin{lstlisting}
@@ -1229,7 +1229,7 @@ print(classification_report(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 Logits shape: (1000, 2)
 Predicted positive rate: 36.5%
 Top-1 prob mean: correct=0.5314, wrong=0.5273
@@ -1242,7 +1242,7 @@ Top-1 prob mean: correct=0.5314, wrong=0.5273
     accuracy                         0.5420      1000
    macro avg     0.5450    0.5417    0.5334      1000
 weighted avg     0.5450    0.5420    0.5335      1000
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \subsection{학습 곡선}
@@ -1288,9 +1288,9 @@ else:
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 <Figure size 900x500 with 1 Axes>
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{한국어 작은 BERT의 NSMC fine-tune loss 곡선}{fig:ch23-finetune-loss}
 \centering
@@ -1337,9 +1337,9 @@ plt.show()
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 <Figure size 600x500 with 2 Axes>
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{한국어 작은 BERT의 NSMC 혼동 행렬}{fig:ch23-confusion-matrix}
 \centering
@@ -1443,9 +1443,9 @@ plt.show()
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 <Figure size 1000x500 with 1 Axes>
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{KLUE-BERT와 한국어 작은 BERT의 NSMC 지표 비교}{fig:ch23-ch15-compare}
 \centering

@@ -972,7 +972,7 @@ print(
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 #params           : 4.22 M
 weight tying      : True  (lm_head <-> wte shared)
 fp32 weight size  : 16.08 MiB
@@ -980,7 +980,7 @@ fp32 weight size  : 16.08 MiB
 model: GPT2LMHeadModel
   - body : GPT2Model  (Decoder, causal attention)
   - head : Linear(in=256, out=4000)
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \section{\texorpdfstring{학습 \emph{전} generation - 비교 기준선 (random init baseline)}{학습 전 generation - 비교 기준선 (random init baseline)}}
@@ -1176,14 +1176,14 @@ if torch.cuda.is_available():
 \end{lstlisting}
 
 \noindent\textbf{출력.}
-\begin{lstlisting}[style=bookoutput]
+\begin{bookoutputbox}
 === training summary ===
 elapsed       : 0.90 min
 global_step   : 1500
 train_loss    : 4.5487
 random baseline (ln vocab): 8.2940
 final peak    : 66 MiB
-\end{lstlisting}
+\end{bookoutputbox}
 \par\vspace{0.9em}
 
 \Needspace{11\baselineskip}
