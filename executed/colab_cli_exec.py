@@ -66,8 +66,10 @@ def main():
         subprocess.run(["git", "clone", "-q", "--depth", "1", "--branch", branch,
                         f"https://github.com/{repo}.git", str(work)], check=True)
     else:
-        subprocess.run(["git", "-C", str(work), "checkout", "-q", branch], check=True)
-        subprocess.run(["git", "-C", str(work), "pull", "-q", "--depth", "1"], check=False)
+        # shallow clone 에서 pull 은 최신을 못 가져올 때가 있어, fetch + reset --hard 로 확실히 동기화
+        subprocess.run(["git", "-C", str(work), "fetch", "-q", "--depth", "1", "origin", branch], check=False)
+        subprocess.run(["git", "-C", str(work), "checkout", "-q", branch], check=False)
+        subprocess.run(["git", "-C", str(work), "reset", "-q", "--hard", f"origin/{branch}"], check=False)
 
     exec_dir = work / "executed"
     exec_dir.mkdir(exist_ok=True)
