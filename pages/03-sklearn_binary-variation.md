@@ -17,16 +17,12 @@ for t in thresholds:
     )
     acc = accuracy_score(y_test, y_pred_t)
     rows.append({"threshold": t, "accuracy": acc, "precision": p, "recall": r, "f1": f1})
-```
 
-**위 코드 읽기.** 모델을 다시 학습하지 않고, 고정된 `proba_pos`(positive 확률)에 임계값 `t`만 바꿔 가며 `(proba_pos >= t)`로 0/1을 새로 자릅니다. 임계값마다 precision/recall/F1/accuracy를 모아 임계값이 지표에 미치는 영향만 분리해서 봅니다.
-
-```python
 df_t = pd.DataFrame(rows).round(4)
 print(df_t.to_string(index=False))
 ```
 
-**위 코드 읽기.** 모은 결과를 `DataFrame`으로 만들어 임계값별 지표를 한 표에 나란히 보여 줍니다. 행을 위아래로 훑으면 임계값이 오를 때 precision과 recall이 어떻게 반대로 움직이는지 한눈에 드러납니다.
+**위 코드 읽기** `(proba_pos >= t).astype(int)` 로 같은 확률에 임계값만 바꿔 가며 0/1 을 다시 자릅니다. 모델을 다시 학습하지 않고 임계값만 옮겨 precision·recall 이 어떻게 맞바뀌는지 한 표로 비교합니다.
 
 **▶ 실행 결과**
 
@@ -41,4 +37,4 @@ print(df_t.to_string(index=False))
 
 **결과 해석**
 
-임계값을 0.3 → 0.7로 올리면 precision은 0.6840 → 0.9700으로 오르고 recall은 0.9875 → 0.5664로 떨어져, 예고한 trade-off가 그대로 나타납니다. 정확도와 F1은 0.5 근처에서 가장 높아, 균형 데이터에서는 기본 임계값 0.5가 합리적인 출발점임을 보여 줍니다.
+임계값을 0.3에서 0.7로 올리면 precision은 0.68→0.97로 오르지만 recall은 0.99→0.57로 무너집니다. 정확도·F1은 0.5 부근에서 가장 높고, 어느 지표를 우선할지는 모델이 아니라 도메인이 정한다는 걸 숫자가 그대로 보여줍니다.

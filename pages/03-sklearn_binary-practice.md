@@ -6,6 +6,8 @@
 !pip install -q datasets scikit-learn pandas matplotlib
 ```
 
+Yelp 리뷰 데이터셋에서 5,000건을 뽑아 데이터프레임으로 만듭니다. 원본 라벨은 0-4이므로 1을 더해 1-5점 별점으로 바꾸고, 별점별 분포를 확인합니다. 뒤에서 이 별점을 이진 라벨로 변환할 것이라 분포가 고른지 미리 살펴봅니다.
+
 ```python
 import numpy as np
 import pandas as pd
@@ -20,7 +22,9 @@ from sklearn.metrics import (
 )
 
 plt.rcParams["axes.unicode_minus"] = False
+```
 
+```python
 dataset = load_dataset("Yelp/yelp_review_full")
 SAMPLE_SIZE = 5000
 ds = dataset["train"].shuffle(seed=42).select(range(SAMPLE_SIZE))
@@ -29,6 +33,8 @@ df["star"] = df["label"] + 1   # 0-4 → 1-5
 print(f"Total samples: {len(df)}")
 print(df["star"].value_counts().sort_index())
 ```
+
+**위 코드 읽기** `shuffle(seed=42).select(range(SAMPLE_SIZE))` 로 5,000 건만 추리고 `df["label"] + 1` 로 별점을 1-5 로 되돌립니다. 아직은 5단계 별점 그대로이며, 다음 셀에서 이를 이진 라벨로 바꿉니다.
 
 **▶ 실행 결과**
 
@@ -43,7 +49,7 @@ star
 Name: count, dtype: int64
 ```
 
-별점 1-5 회귀 라벨을 0/1 이진 라벨로 바꾸는 단계입니다. 중립에 가까운 3점은 아예 제외하고, 4-5점을 positive(1), 1-2점을 negative(0)로 매핑합니다. 양쪽 클래스 비율이 비슷한지(positive rate)를 함께 확인해 둡니다.
+별점을 이진 라벨로 바꿉니다. 긍정도 부정도 아닌 3점은 빼고, 4-5점은 positive(1), 1-2점은 negative(0)로 묶습니다. 두 클래스가 얼마나 균형 잡혔는지 분포와 positive 비율을 함께 출력합니다.
 
 ```python
 # 별점 3은 애매하므로 제외, 4-5 → 1 (positive), 1-2 → 0 (negative)
@@ -54,6 +60,8 @@ print(f"Binarized samples: {len(df_bin)}  (3-star excluded)")
 print(f"Class distribution:\n{df_bin['y'].value_counts().sort_index()}")
 print(f"Positive rate: {df_bin['y'].mean():.1%}")
 ```
+
+**위 코드 읽기** `df["star"] != 3` 으로 중립인 3점을 통째로 버리고, `(df_bin["star"] >= 4)` 로 4-5점을 positive(1), 1-2점을 negative(0)로 가릅니다. 애매한 중간을 빼야 두 클래스가 또렷이 갈립니다.
 
 **▶ 실행 결과**
 
@@ -67,14 +75,22 @@ Name: count, dtype: int64
 Positive rate: 49.4%
 ```
 
-학습/평가 분할 후 텍스트를 TF-IDF 벡터로 바꿉니다. `stratify=df_bin["y"]`로 분할 후에도 두 클래스 비율이 유지되도록 하고, `tfidf.fit_transform`은 학습 데이터로만 어휘를 학습한 뒤 평가 데이터에는 `transform`만 적용해 정보 누수를 막습니다.
+**결과 해석**
+
+3점을 빼고 4-5점을 positive, 1-2점을 negative로 묶으니 양쪽이 49.4% 대 50.6%로 거의 반반입니다. 균형 잡힌 데이터라 뒤에서 정확도(accuracy)를 성능 지표로 그대로 신뢰할 수 있습니다.
+
+데이터를 8 대 2로 train/test로 나눕니다. `stratify`로 두 클래스 비율을 양쪽에 똑같이 유지하고, 그다음 TF-IDF로 텍스트를 숫자 벡터로 바꿉니다. 벡터화는 train에 `fit_transform`, test에는 `transform`만 써서 test 정보가 학습에 새지 않게 합니다.
 
 ```python
 X_text_train, X_text_test, y_train, y_test = train_test_split(
     df_bin["text"], df_bin["y"],
     test_size=0.2, random_state=42, stratify=df_bin["y"],
 )
+```
 
+**위 코드 읽기** `stratify=df_bin["y"]` 가 핵심으로, train/test 양쪽에 positive·negative 비율을 똑같이 맞춰 한쪽으로 쏠린 분할을 막습니다.
+
+```python
 tfidf = TfidfVectorizer(max_features=10000)
 X_train = tfidf.fit_transform(X_text_train)
 X_test = tfidf.transform(X_text_test)
@@ -82,6 +98,8 @@ X_test = tfidf.transform(X_text_test)
 print(f"X_train: {X_train.shape}, y_train: {y_train.shape}")
 print(f"X_test:  {X_test.shape}, y_test:  {y_test.shape}")
 ```
+
+**위 코드 읽기** train 에만 `fit_transform` 으로 어휘를 학습하고 test 에는 `transform` 만 적용해, test 정보가 어휘 학습에 새지 않게 합니다.
 
 **▶ 실행 결과**
 
@@ -105,6 +123,8 @@ y_pred = model.predict(X_test)
 print(f"Test accuracy: {accuracy_score(y_test, y_pred):.4f}")
 ```
 
+**위 코드 읽기** `LogisticRegression` 이 BCE(log loss)를 최소화하는 `w, b` 를 찾고, `predict` 는 확률 0.5 를 기준으로 0/1 을 자릅니다. `max_iter=1000` 은 최적화가 수렴하도록 반복 횟수를 넉넉히 준 것입니다.
+
 **▶ 실행 결과**
 
 ```text
@@ -113,7 +133,9 @@ Test accuracy: 0.8639
 
 **결과 해석**
 
-TF-IDF + `LogisticRegression`만으로 평가 정확도 약 86%를 얻었습니다. 클래스가 거의 균형(positive 49.4%)이라 이 accuracy는 그대로 신뢰할 만한 지표입니다.
+같은 TF-IDF·5,000건인데 정확도가 86.4%까지 오릅니다 — Ch 2의 5단계 회귀(R² 0.21)보다 쉬운 건 문제를 "몇 점"에서 "좋다/나쁘다" 둘로 줄였기 때문입니다. 모델과 특징을 그대로 둔 채 태스크만 단순화해도 성능이 크게 달라진다는 점을 보여줍니다.
+
+0/1 예측 대신 `predict_proba`로 각 샘플의 확률을 꺼내 봅니다. 출력은 `[P(neg), P(pos)]` 두 열로 나오며, 두 확률을 더하면 항상 1이 되는지 확인합니다. 임계값을 옮겨 가며 예측을 바꿀 수 있도록 이 확률을 손에 쥐는 단계입니다.
 
 ```python
 # predict_proba는 [P(y=0), P(y=1)] 형태로 두 확률을 모두 줌
@@ -121,16 +143,10 @@ y_proba = model.predict_proba(X_test)
 print(f"y_proba shape: {y_proba.shape}  (per sample: [P(0), P(1)])")
 print(f"\nFirst 5 predicted probabilities:")
 print(pd.DataFrame(y_proba[:5], columns=["P(neg)", "P(pos)"]).round(4))
-```
 
-**위 코드 읽기.** `predict()`가 0/1 라벨만 주는 것과 달리 `predict_proba`는 샘플마다 `[P(y=0), P(y=1)]` 두 확률을 함께 돌려줍니다. 그래서 출력 shape가 `(N, 2)`가 되고, positive 확률만 쓰고 싶을 때는 `y_proba[:, 1]`로 두 번째 열을 꺼냅니다.
-
-```python
 # 두 확률을 합치면 항상 1
 print(f"\nRow sums (should be 1): {y_proba.sum(axis=1)[:5]}")
 ```
-
-**위 코드 읽기.** 두 열은 같은 사건의 여집합이므로 `P(neg) + P(pos)`가 항상 1입니다. `sum(axis=1)`로 행 합이 모두 1임을 확인하면, sigmoid가 만든 확률이 제대로 정규화되어 있다는 점검이 됩니다.
 
 **▶ 실행 결과**
 
@@ -147,7 +163,3 @@ First 5 predicted probabilities:
 
 Row sums (should be 1): [1. 1. 1. 1. 1.]
 ```
-
-**결과 해석**
-
-샘플마다 `P(neg)`와 `P(pos)`가 나오고, 0번 샘플처럼 0.5523/0.4477로 애매한 경우와 4번 샘플처럼 0.2420/0.7580으로 확신이 큰 경우가 섞여 있습니다. 행 합이 모두 정확히 1이라 두 확률이 정상적으로 정규화되었음을 알 수 있습니다.

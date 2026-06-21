@@ -15,41 +15,33 @@ X_tfidf = tfidf.fit_transform(df["text"])
 print(f"shape: {X_tfidf.shape}")
 ```
 
+**위 코드 읽기** `TfidfVectorizer` 는 `CountVectorizer` 와 같은 방식으로 어휘를 만들되, 횟수에 IDF 가중치를 곱해 흔한 단어의 비중을 낮춥니다. 행렬 모양은 (5000, 10000) 으로 똑같지만 칸에 담기는 값이 횟수에서 TF-IDF 점수로 바뀝니다.
+
 **▶ 실행 결과**
 
 ```text
 shape: (5000, 10000)
 ```
 
-한 리뷰(`doc_id=0`)를 골라, 같은 단어의 단순 횟수와 TF-IDF 값을 나란히 비교합니다. TF-IDF 기준으로 상위 10개를 뽑아, 횟수 정렬과 무엇이 달라지는지 한 문서 안에서 직접 확인하는 부분입니다.
+첫 번째 리뷰 한 건을 골라 단순 횟수와 TF-IDF 점수를 나란히 비교합니다. 같은 문서의 `CountVectorizer` 행과 `TfidfVectorizer` 행을 꺼내 TF-IDF 점수가 높은 순으로 상위 10개 단어를 출력합니다. 횟수는 똑같이 1인 단어들이 TF-IDF에서는 점수가 갈린다는 점을 눈여겨봅니다.
 
 ```python
 doc_id = 0
 review = df["text"].iloc[doc_id]
 print("Review preview (200 chars):")
 print(f"{review[:200]}...\n")
-```
 
-**위 코드 읽기.** 비교 대상 문서의 원문 앞 200자를 먼저 출력해, 아래 상위 단어들이 실제로 이 리뷰의 내용과 맞는지 눈으로 대조할 수 있게 합니다.
-
-```python
 vocab_tf = tfidf.get_feature_names_out()
 cv_row = np.asarray(X_count[doc_id].todense()).flatten()
 tfidf_row = np.asarray(X_tfidf[doc_id].todense()).flatten()
 
 top = np.argsort(tfidf_row)[::-1][:10]
-```
 
-**위 코드 읽기.** `X_count[doc_id]` 와 `X_tfidf[doc_id]` 는 같은 문서의 행을 각각 횟수·TF-IDF 형태로 꺼낸 것입니다. `.todense()` 로 희소 행을 펼쳐 일반 배열로 바꾼 뒤, `np.argsort(tfidf_row)[::-1][:10]` 으로 TF-IDF 값이 큰 상위 10개 단어 인덱스를 고릅니다.
-
-```python
 print(f"{'word':>15}  {'count':>6}  {'tfidf':>8}")
 print("-" * 35)
 for i in top:
     print(f"{vocab_tf[i]:>15}  {cv_row[i]:>6}  {tfidf_row[i]:>8.4f}")
 ```
-
-**위 코드 읽기.** 같은 단어에 대해 `count`(단순 횟수)와 `tfidf`(가중치) 값을 한 줄에 나란히 출력합니다. 횟수는 1로 똑같아도 TF-IDF 값은 단어마다 달라지는데, 그 차이가 바로 IDF의 희귀도 가중치에서 나옵니다.
 
 **▶ 실행 결과**
 

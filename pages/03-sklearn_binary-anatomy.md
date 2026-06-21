@@ -13,7 +13,7 @@ proba_manual = 1 / (1 + np.exp(-logits))
 proba_sklearn = y_proba[:, 1]   # P(y=1)
 ```
 
-**위 코드 읽기.** `X_test @ model.coef_.T + model.intercept_`가 바로 Ch 2와 같은 선형 결합 $z = w^\top x + b$이고, 그 결과를 `1 / (1 + np.exp(-logits))`에 통과시켜 직접 sigmoid를 계산합니다. 이 손수 계산한 확률을 sklearn의 `predict_proba`의 positive 열 `y_proba[:, 1]`과 비교할 준비를 합니다.
+**위 코드 읽기** `X_test @ model.coef_.T + model.intercept_` 가 logit $z = w^\top x + b$ 를 그대로 계산하고, `1 / (1 + np.exp(-logits))` 이 sigmoid 입니다. 이 둘을 손으로 이어 `predict_proba` 의 P(y=1)을 재현합니다.
 
 ```python
 # 둘이 같은가?
@@ -24,8 +24,6 @@ print(f"\nManual first 5:  {proba_manual[:5].round(4)}")
 print(f"sklearn first 5: {proba_sklearn[:5].round(4)}")
 ```
 
-**위 코드 읽기.** 두 확률 배열의 최대 절대 차이를 구해 sklearn이 정말 "logit에 sigmoid를 씌운 값"을 내놓는지 검증합니다. 차이가 0에 가까우면 `predict_proba`가 블랙박스가 아니라 우리가 손으로 잰 식과 똑같다는 뜻입니다.
-
 **▶ 실행 결과**
 
 ```text
@@ -35,9 +33,7 @@ Manual first 5:  [0.4477 0.1001 0.1591 0.6653 0.758 ]
 sklearn first 5: [0.4477 0.1001 0.1591 0.6653 0.758 ]
 ```
 
-**결과 해석**
-
-최대 차이가 `1.11e-16`로 부동소수점 오차 수준이고, 앞 5개 값도 소수점 4자리까지 완전히 일치합니다. `predict_proba`가 정확히 sigmoid에 logit을 넣은 결과임이 수치로 확인됩니다.
+이번엔 BCE(log loss)를 공식대로 직접 계산해 sklearn의 `log_loss`와 비교합니다. 정답이 1이면 $-\log(p)$, 0이면 $-\log(1-p)$를 더해 평균 내는 게 전부입니다. 둘이 정확히 일치하면 BCE가 별도의 마법이 아니라 확률에 로그를 씌운 단순한 식임이 드러납니다.
 
 ```python
 # BCE(log loss)도 직접 계산 가능
@@ -52,6 +48,8 @@ print(f"sklearn BCE: {sklearn_bce:.6f}")
 print(f"Diff:        {abs(manual_bce - sklearn_bce):.2e}")
 ```
 
+**위 코드 읽기** `-(y * np.log(p) + (1 - y) * np.log(1 - p)).mean()` 한 줄이 BCE 정의 그대로입니다 — 정답이 1이면 $-\log p$, 0이면 $-\log(1-p)$ 를 더해 평균 냅니다. sklearn 의 `log_loss` 와 맞춰 보며 BCE 가 확률에 로그를 씌운 단순한 식임을 확인합니다.
+
 **▶ 실행 결과**
 
 ```text
@@ -60,11 +58,7 @@ sklearn BCE: 0.383569
 Diff:        0.00e+00
 ```
 
-**결과 해석**
-
-수식 $-[y\log p + (1-y)\log(1-p)]$를 직접 평균 낸 값이 sklearn의 `log_loss`와 소수점 6자리까지 정확히 같습니다. BCE(sklearn: log loss)가 별도 개념이 아니라 바로 이 한 줄 수식임을 보여줍니다.
-
-정확도 한 숫자로는 클래스별 성능 차이가 가려지므로, 클래스별 precision/recall/F1과 혼동 행렬을 함께 봅니다. 혼동 행렬은 `[[TN, FP], [FN, TP]]` 배치라 어느 방향으로 오분류가 쏠리는지까지 드러납니다.
+정확도 하나로는 가려지는 클래스별 성능을 들여다봅니다. `classification_report`로 negative·positive 각각의 precision·recall·f1을 뽑고, confusion matrix로 어떤 방향으로 틀리는지(TN/FP/FN/TP)를 확인합니다. 오분류가 한쪽으로 쏠리는지를 눈여겨봅니다.
 
 ```python
 print(classification_report(y_test, y_pred, target_names=["negative", "positive"]))
@@ -96,4 +90,4 @@ confusion matrix:
 
 **결과 해석**
 
-두 클래스의 precision/recall/F1이 모두 0.86 부근으로 대칭적이라, 한쪽으로 치우치지 않고 고르게 맞히고 있습니다. 혼동 행렬에서도 오분류가 FP=57, FN=53으로 비슷해 특정 방향 편향이 없습니다.
+precision과 recall이 두 클래스 모두 0.86 언저리로 고르고, 오분류도 FP 57건과 FN 53건으로 거의 대칭입니다. 한쪽으로 치우쳐 찍는 모델이 아니라 positive·negative를 비슷한 신뢰도로 가른다는 뜻입니다.
