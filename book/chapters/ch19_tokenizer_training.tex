@@ -116,7 +116,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output & Loss \\
 17 & klue/bert-base & WordPiece (한국어, 사전학습) & KLUE-YNAT 합성 multi-label & \inlinecode{Linear(H,\ 7)} & \inlinecode{BCEWithLogitsLoss} \\
 18 & klue/bert-base + 보조 & WordPiece (한국어, 사전학습) & KLUE-YNAT 합성 + 보조 라벨 & 메인(7) + 보조 & \inlinecode{BCEWithLogitsLoss} + \(\lambda L_{\mathrm{aux}}\) \\
 \textbf{19 ← 여기 (Phase 3 시작)} & --- (토크나이저 학습 전용) & \textbf{WordPiece + WordLevel} (둘 다 \emph{직접 학습}) & \textbf{Yelp text + NSMC text} & --- & --- \\
-20 (다음) & 작은 BERT (직접, scratch) & \inlinecode{bert-base-uncased} 토크나이저 (가져옴) & Yelp text & MLM head & \inlinecode{CrossEntropyLoss} (masked) \\
+20 (다음) & 작은 BERT (직접, scratch) & \inlinecode{bert-base-uncased} 토크나이저 (가져옴) & Wikitext-103 paragraphs & MLM head & \inlinecode{CrossEntropyLoss} (masked) \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}

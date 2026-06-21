@@ -472,7 +472,7 @@ NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 N/A 41C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
-모델 가중치(\textasciitilde67M 파라미터, fp32 \textasciitilde255 MB)가 GPU에 올라간 상태입니다. 학습이 시작되면 \emph{옵티마이저 모멘텀(2배) + gradient(1배)} 가 추가되어 VRAM이 더 늘어납니다.
+모델 가중치(헤드 포함 약 67M 파라미터, fp32 약 255 MB)가 GPU에 올라간 상태입니다. 학습이 시작되면 \emph{옵티마이저 모멘텀(2배) + gradient(1배)} 가 추가되어 VRAM이 더 늘어납니다.
 
 
 
@@ -605,7 +605,7 @@ N/A 62C P0 72W / 70W | 1573MiB / 15360MiB | 71% Default
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}ll@{}}
 \toprule
-구성 요소 & 크기 (DistilBERT 67M 기준) \\
+구성 요소 & 크기 (DistilBERT 본체 약 66M, 헤드 포함 약 67M 기준) \\
 \midrule
 
 모델 가중치 (fp16) & \textasciitilde128 MB \\

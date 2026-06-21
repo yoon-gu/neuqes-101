@@ -163,10 +163,10 @@ Loss & \inlinecode{CrossEntropyLoss} (vocab 약 32,000 logits) & \textbf{\inline
 
 본체 파라미터 & 약 110M & \textbf{약 10M} & \ref{ch:23}장 은 1/11 작음 \\
 사전학습 코퍼스 & 한국어 위키 + 모두의 말뭉치 + 뉴스 + 댓글 (약 8.4B 토큰, 일반 도메인) & \textbf{한국어 Wikipedia paragraphs 5K (약 50만-80만 토큰, 일반 도메인)} & 약 10,000배 격차, \textbf{둘 다 일반 한국어 코퍼스} \\
-사전학습 시간 & TPU 수일 & \textbf{T4 약 8-10분} & \\
+사전학습 시간 & TPU 수일 & \textbf{T4 약 0.2분} & \\
 Fine-tune 도메인 & NSMC 이진 (사전학습과 다른 도메인) & NSMC 이진 (사전학습과 다른 도메인) & \textbf{둘 다 일반 한국어 \(\to\) NSMC transfer 라 fair} \\
 분류 fine-tune 셋업 & \ref{ch:15}장 = 이 장 동일 (같은 데이터, 같은 hyperparams) & & 변하는 건 \emph{본체 출발점} 뿐 \\
-기대 accuracy & 약 85-88\% & \textbf{약 65-75\% 예상} & 비교는 실측치로 확인 \\
+기대 accuracy & 약 85-88\% & \textbf{약 0.54 실측} & 비교는 실측치로 확인 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -890,7 +890,7 @@ MLM eval perplexity:  2480.14
 (random baseline PPL: 32,000)
 \end{bookoutputbox}
 \par\vspace{0.9em}
-\textbf{관전 포인트} --- 한국어 Wikipedia paragraphs 에서 MLM loss 가 \emph{random baseline 10.37} 에서 시작해 5-7 부근까지 떨어졌다면 본체가 \emph{일반 한국어 어휘·문맥 구조의 일부} 를 학습한 상태. perplexity 로 환산하면 vocab 약 32,000 중 \emph{수백-수천 개 후보} 로 좁혀진 정도. \ref{ch:22}장의 2 epoch 보다는 약간 얕지만, \emph{NSMC 분류 fine-tune 출발점} 으로는 충분합니다 --- 본체가 \emph{일반 한국어 구조} 를 가지면 \emph{영화 리뷰 비격식 도메인} 도 fine-tune 으로 빠르게 적응.
+\textbf{관전 포인트} --- 한국어 Wikipedia paragraphs 에서 MLM loss 가 \emph{random baseline 10.37} 에서 시작해 약 7 부근까지 떨어졌다면 본체가 \emph{일반 한국어 어휘·문맥 구조의 일부} 를 학습한 상태. perplexity 로 환산하면 vocab 약 32,000 중 \emph{수천 개 후보} 로 좁혀진 정도. \ref{ch:22}장의 2 epoch 보다는 약간 얕지만, \emph{NSMC 분류 fine-tune 출발점} 으로는 충분합니다 --- 본체가 \emph{일반 한국어 구조} 를 가지면 \emph{영화 리뷰 비격식 도메인} 도 fine-tune 으로 빠르게 적응.
 
 \begin{quote}
 \textbf{체크포인트 저장은 생략} --- 노트북 안에서 바로 본체 가중치를 분류 모델로 옮기기 때문. \ref{ch:22}장 처럼 디스크에 저장하려면 \inlinecode{mlm\_model.save\_pretrained("./ch23\_mlm\_ckpt")} 한 줄.
@@ -1363,7 +1363,7 @@ plt.show()
 
 본체 파라미터 & 약 110M & 약 10M \\
 사전학습 코퍼스 & 한국어 위키 + 모두의 말뭉치 + 뉴스 + 댓글 (약 8.4B 토큰) & 한국어 Wikipedia paragraphs 5K (약 50만-80만 토큰) \\
-사전학습 시간 & TPU 수일 & T4 약 8-10분 \\
+사전학습 시간 & TPU 수일 & T4 약 0.2분 \\
 Fine-tune 도메인 & NSMC 이진 (다른 도메인) & NSMC 이진 (다른 도메인) \\
 분류 fine-tune 셋업 & (둘 다 같음 --- 5K/1K, batch 16, lr 2e-5, 2 epoch, fp16) & \\
 \bottomrule
@@ -1465,7 +1465,7 @@ plt.show()
 \item
   \textbf{\ref{ch:15}장} (\inlinecode{klue/bert-base}, 약 110M, 약 8.4B 토큰 대규모 한국어 사전학습): accuracy 약 85-88\%, AUC 약 0.92-0.94
 \item
-  \textbf{\ref{ch:23}장 ours} (small BERT, 한국어 Wikipedia 2K paragraphs \(\times\) 3 epoch 사전학습): accuracy 약 65-75\%, AUC 약 0.75-0.85
+  \textbf{\ref{ch:23}장 ours} (small BERT, 한국어 Wikipedia 2K paragraphs \(\times\) 3 epoch 사전학습): accuracy 약 0.54, AUC 약 0.56
 \end{itemize}
 
 \textbf{\ref{ch:15}장 vs \ref{ch:23}장 ours}: accuracy 약 10-20\%p 격차. 두 모델이 \emph{같은 transfer 패턴} (일반 한국어 위키 \(\to\) NSMC) 을 따르므로 격차의 거의 전부가 \emph{사전학습 규모의 가치} --- 약 8.4B 토큰의 \emph{일반 한국어 지식} 이 \inlinecode{klue/bert-base} 본체에 압축되어 있어, NSMC 같은 \emph{비격식 구어체 도메인} 에도 빠르게 적응합니다. \emph{작은 일반 사전학습 \textless{} 대규모 일반 사전학습} 의 본질은 단순 양적 차이가 아니라 \emph{도메인 다양성의 질적 차이} --- \inlinecode{klue/bert-base} 는 위키 + 뉴스 + 블로그·댓글까지 포함한 약 8.4B 토큰으로 비격식 한국어 도메인도 \emph{이미 본 적이 있어} transfer 가 자연스럽습니다.
@@ -1567,7 +1567,7 @@ NSMC 의 \emph{짧은 한 줄} 은 분류 신호가 \emph{한두 단어에 집�
 
 본체 파라미터 & 약 110M & 약 10M (11x 작음) \\
 사전학습 코퍼스 & 약 8.4B 토큰 (한국어 위키 + 모두의 말뭉치 + 뉴스 + 댓글) & 약 20만-30만 토큰 (위키 2K paragraphs \(\times\) 3 epoch) --- \emph{약 30,000x 격차} \\
-사전학습 시간 & TPU 수일 & T4 약 8-12분 \\
+사전학습 시간 & TPU 수일 & T4 약 0.2분 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -1706,7 +1706,7 @@ for i in confident_wrong[:5]:
 \item
   \emph{random init} 만 가지고 NSMC fine-tune: accuracy 약 50-60\% (부록에서 측정 --- 한국어 환경에선 negative transfer 로 \emph{작은 사전학습 모델} 과 비등하거나 역전될 수도)
 \item
-  \emph{작은 일반 도메인 사전학습 + fine-tune} (본 장): accuracy 약 65-75\%
+  \emph{작은 일반 도메인 사전학습 + fine-tune} (본 장): accuracy 약 0.54, AUC 약 0.56
 \item
   \emph{대규모 일반 도메인 사전학습 + fine-tune} (\ref{ch:15}장): accuracy 약 85-88\% (실무 baseline)
 \end{itemize}

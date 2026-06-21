@@ -381,13 +381,13 @@ print(f"id2label:             {model.config.id2label}")
 DistilBERT body & 66,362,880 & 66,362,880 \\
 pre\_classifier (\inlinecode{Linear(768→768)}) & 590,592 & 590,592 \\
 classifier (\inlinecode{Linear(768→K)}) & \textbf{769} (=768+1) & \textbf{1,538} (=768·2+2) \\
-합계 & 66,955,010 & 66,955,778 \\
+합계 & 66,954,241 & 66,955,010 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
-방식 B의 분류 헤드 파라미터가 정확히 \emph{2배} 입니다. 차이는 \textbf{769개} --- 전체 67M 중 0.001\%. 이 미세한 자유도 차이가 두 방식의 \emph{최종 확률} 을 거의 같게, \emph{학습된 가중치} 는 미묘하게 다르게 만듭니다.
+방식 B의 분류 헤드 파라미터가 정확히 \emph{2배} 입니다. 차이는 \textbf{769개} --- 헤드 포함 약 67M 중 0.001\%. 이 미세한 자유도 차이가 두 방식의 \emph{최종 확률} 을 거의 같게, \emph{학습된 가중치} 는 미묘하게 다르게 만듭니다.
 
 
 
@@ -1106,7 +1106,7 @@ model = AutoModelForSequenceClassification.from_pretrained(
 & \ref{ch:04}장 (sklearn) & \ref{ch:11}장 (BERT) \\
 \midrule
 
-두 모델이 \emph{같은 가중치} 를 학습? & \textbf{사실상 그렇다} --- 작은 모델이라 두 방식이 같은 최적해로 수렴 & 아니다 --- 67M 파라미터 중 일부가 random init 차이로 다른 곳에 정착 \\
+두 모델이 \emph{같은 가중치} 를 학습? & \textbf{사실상 그렇다} --- 작은 모델이라 두 방식이 같은 최적해로 수렴 & 아니다 --- 헤드 포함 약 67M 파라미터 중 일부가 random init 차이로 다른 곳에 정착 \\
 \inlinecode{predict\_proba} 가 정확히 같은가? & \textbf{거의 일치} (소수점 4-5자리까지) & \emph{근사적으로} 일치 (Pearson 0.99+, MAE 0.01-0.05) \\
 차이의 출처 & sklearn 옵티마이저 수렴 정밀도 & random init + dropout + GPU 비결정성 \\
 \bottomrule
@@ -1143,7 +1143,7 @@ sklearn에서는 두 \emph{방식} 의 차이가 BERT보다 훨씬 작습니다.
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
 \item
-  \textbf{모델 크기}: sklearn LogReg는 \textasciitilde10K 파라미터. BERT는 67M. 작은 모델이 큰 모델보다 \emph{유일한 최적해} 로 수렴하기 쉽습니다.
+  \textbf{모델 크기}: sklearn LogReg는 \textasciitilde10K 파라미터. BERT는 헤드 포함 약 67M. 작은 모델이 큰 모델보다 \emph{유일한 최적해} 로 수렴하기 쉽습니다.
 \item
   \textbf{무작위성 원천}: sklearn LogReg는 \inlinecode{liblinear}/\inlinecode{lbfgs} 같은 결정론적 옵티마이저 기본. BERT는 SGD 기반 + GPU + dropout 으로 \emph{원천적으로} 비결정적.
 \item

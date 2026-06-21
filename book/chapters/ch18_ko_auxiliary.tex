@@ -211,7 +211,7 @@ L = \underbrace{\frac{1}{N \cdot K}\sum_{i,k}\text{BCE}(z_{i,k}^\text{main}, y_{
 이 장에선 \textbf{\(\lambda=0.1\)} 로 학습하고 \(\lambda=0\) baseline 과 비교, 변형 섹션에서 \(\lambda \in \{0.0, 0.1, 1.0\}\) 스윕으로 효과 분포를 봅니다.
 
 \begin{quote}
-\textbf{Auxiliary 가 \emph{새 task} 가 아니라 \emph{loss 보조항} 인 이유} --- \inlinecode{n\_active} 회귀가 \emph{추론 시 결과} 로 필요한 게 아닙니다. 운영에선 메인 multi-label 만 쓰고 보조 헤드는 \emph{호출조차 하지 않음}. 학습 \emph{과정} 에서 BERT 본체를 더 일반적인 표상으로 끌고 가려는 \emph{정규화} 신호일 뿐 --- 그래서 \emph{task 축의 변화} 가 아니라 \emph{loss 축의 변화} 로 분류됩니다 (CLAUDE.md 의 “Auxiliary = loss 보조항” 규칙).
+\textbf{Auxiliary 가 \emph{새 task} 가 아니라 \emph{loss 보조항} 인 이유} --- \inlinecode{n\_active} 회귀가 \emph{추론 시 결과} 로 필요한 게 아닙니다. 운영에선 메인 multi-label 만 쓰고 보조 헤드는 \emph{호출조차 하지 않음}. 학습 \emph{과정} 에서 BERT 본체를 더 일반적인 표상으로 끌고 가려는 \emph{정규화} 신호일 뿐 --- 그래서 \emph{task 축의 변화} 가 아니라 \emph{loss 축의 변화} 로 분류됩니다.
 \end{quote}
 
 
@@ -1863,7 +1863,7 @@ def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=N
 
 \begin{faqBox}{Q7. (실무) Phase 2 (한국어, \ref{ch:15}--\ref{ch:18}장) 가 끝났습니다. Phase 3 에서 토크나이저를 \emph{직접 학습} 하는 이유는?}
 
-\ref{ch:01}--\ref{ch:18}장 모두 \emph{사전학습 토크나이저} (sklearn TF-IDF 토큰화, BERT WordPiece) 에 의존했습니다. Phase 3 (19-20장) 는 이 의존을 끊고 \emph{어휘 자체를 코퍼스에서 학습}:
+\ref{ch:01}--\ref{ch:18}장 모두 \emph{사전학습 토크나이저} (sklearn TF-IDF 토큰화, BERT WordPiece) 에 의존했습니다. Phase 3 (19-23장) 는 이 의존을 끊고 \emph{어휘 자체를 코퍼스에서 학습}:
 
 \begin{itemize}
 \tightlist

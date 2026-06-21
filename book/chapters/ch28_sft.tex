@@ -118,7 +118,7 @@ Ch & 모델 & 토크나이저 & 데이터 & \inlinecode{labels\ =\ -100} 자리 
 25 & \inlinecode{gpt2} (124M, 사전학습) & BPE (gpt2 그대로, vocab 50,257) & 영어 TinyStories 30K & pad 만 & \inlinecode{CrossEntropyLoss} (next-token) - continual pretraining \\
 26 & 작은 GPT2 (한국어, 약 3M, scratch) & BBPE (직접 학습, vocab 약 4,000) & 한국어 TinyStories 30K & pad 만 & \inlinecode{CrossEntropyLoss} (next-token) \\
 27 & KoGPT2 \inlinecode{skt/kogpt2-base-v2} (125M) & BBPE (KoGPT2 그대로, vocab 51,200) & 한국어 TinyStories 30K & pad 만 & \inlinecode{CrossEntropyLoss} (next-token) - continual pretraining \\
-\textbf{28 \(\leftarrow\) 여기} & \textbf{KoGPT2 \inlinecode{skt/kogpt2-base-v2} (125M, 동일)} & \textbf{BBPE (KoGPT2 그대로, vocab 51,200, 동일)} & \textbf{KoAlpaca instruction-response 쌍 (약 3-5K)} & \textbf{prompt 부분 (\inlinecode{\#\#\#\ 응답:} 앞 전부)} & \textbf{\inlinecode{CrossEntropyLoss} (next-token, \emph{답변 부분만}) --- SFT} \\
+\textbf{28 \(\leftarrow\) 여기} & \textbf{KoGPT2 \inlinecode{skt/kogpt2-base-v2} (125M, 동일)} & \textbf{BBPE (KoGPT2 그대로, vocab 51,200, 동일)} & \textbf{KoAlpaca instruction-response 쌍 (약 3K, 3,000 샘플)} & \textbf{prompt 부분 (\inlinecode{\#\#\#\ 응답:} 앞 전부)} & \textbf{\inlinecode{CrossEntropyLoss} (next-token, \emph{답변 부분만}) --- SFT} \\
 29 (다음) & \ref{ch:28}장 SFT 모델 + 비교 & (동일) & 분야별 벤치마크 (KMMLU / HAERAE / MMLU ...) & - (평가만) & - (\inlinecode{lm-evaluation-harness}) \\
 \bottomrule
 \end{tabular}
@@ -902,6 +902,16 @@ if torch.cuda.is_available():
         f"{torch.cuda.max_memory_allocated()/1024**2:.0f} MiB"
     )
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+=== SFT summary ===
+elapsed     : 2.38 min
+global_step : 188
+train_loss  : 3.7007
+final peak  : 1453 MiB
+\end{bookoutputbox}
+\par\vspace{0.9em}
 
 \section{\texorpdfstring{학습 곡선 --- \emph{답변 부분에서만 계산된} loss}{학습 곡선 --- 답변 부분에서만 계산된 loss}}
 

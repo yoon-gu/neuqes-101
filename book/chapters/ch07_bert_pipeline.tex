@@ -346,7 +346,7 @@ print(
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
-dtype & bytes/param & DistilBERT(67M) 예상 크기 \\
+dtype & bytes/param & DistilBERT(약 66M 본체) 예상 크기 \\
 \midrule
 
 \textbf{fp32} (기본 학습) & 4 & \textasciitilde255 MB \\
@@ -533,7 +533,7 @@ model        params       fp32 size
 \begin{itemize}
 \tightlist
 \item
-  \textbf{DistilBERT (\textasciitilde67M)}: BERT-base에서 layer를 절반으로 줄여 학습한 경량화 모델. 추론 속도 \textasciitilde2배.
+  \textbf{DistilBERT (약 66M 본체, 헤드 포함 약 67M)}: BERT-base에서 layer를 절반으로 줄여 학습한 경량화 모델. 추론 속도 \textasciitilde2배.
 \item
   \textbf{GPT-2 small (\textasciitilde124M)}: 파라미터는 BERT-base보다 약간 많고, 어휘(50K)도 더 큼.
 \item
@@ -1105,7 +1105,7 @@ gpt2.special_tokens_map = {'bos_token': '<|endoftext|>', 'eos_token': '<|en...
 \item
   GPT-2는 더 다양한 웹 텍스트(Reddit 등)로 학습됐고 BPE라 어휘가 더 풍부.
 \item
-  한국어 BERT(\inlinecode{klue/bert-base}, \ref{ch:14}장)는 한국어 코퍼스로 다시 학습돼 한국어 어휘를 보유 --- 같은 문장 \inlinecode{"안녕"} 도 영어 BERT면 \texttt{{[}UNK{]}} 또는 글자 단위로 쪼개지지만 한국어 BERT엔 한 토큰으로 들어갑니다.
+  한국어 BERT(\inlinecode{klue/bert-base}, \ref{ch:15}장)는 한국어 코퍼스로 다시 학습돼 한국어 어휘를 보유 --- 같은 문장 \inlinecode{"안녕"} 도 영어 BERT면 \texttt{{[}UNK{]}} 또는 글자 단위로 쪼개지지만 한국어 BERT엔 한 토큰으로 들어갑니다.
 \end{itemize}
 
 \textbf{실무 함의}: 모델을 갈아 끼울 때 토크나이저도 \emph{반드시 짝} 으로 바꿔야 합니다. \inlinecode{AutoTokenizer.from\_pretrained(model\_name)} 의 model\_name 이 모델 자체와 일치해야 하는 이유 --- 학습 때 본 어휘와 추론 때 입력 어휘가 같아야 모델이 의미를 이해합니다.
@@ -1449,7 +1449,7 @@ from transformers import AutoTokenizer
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 \end{lstlisting}
 
-실무에선 \textbf{거의 항상 \inlinecode{AutoTokenizer}} 를 씁니다. \inlinecode{Auto} 계열은 모델 카드(\inlinecode{config.json}) 에서 어떤 클래스를 써야 할지 자동 추론하므로, 다른 모델로 갈아끼우는 실험이 매우 쉽습니다. \ref{ch:14}장의 한국어 BERT(\inlinecode{klue/bert-base}) 도 같은 패턴으로 로드됩니다 --- 코드 한 줄도 안 바꾸고요.
+실무에선 \textbf{거의 항상 \inlinecode{AutoTokenizer}} 를 씁니다. \inlinecode{Auto} 계열은 모델 카드(\inlinecode{config.json}) 에서 어떤 클래스를 써야 할지 자동 추론하므로, 다른 모델로 갈아끼우는 실험이 매우 쉽습니다. \ref{ch:15}장의 한국어 BERT(\inlinecode{klue/bert-base}) 도 같은 패턴으로 로드됩니다 --- 코드 한 줄도 안 바꾸고요.
 \end{faqBox}
 
 

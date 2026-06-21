@@ -826,7 +826,7 @@ Per-batch shape (batch_size=8, varies):
 Collator & 용도 & 자주 쓰이는 곳 \\
 \midrule
 
-\inlinecode{DataCollatorWithPadding} & 분류·회귀 --- \inlinecode{input\_ids}/\inlinecode{attention\_mask} 동적 padding & \textbf{\ref{ch:09}--\ref{ch:13}장 모든 분류 학습 (기본)} \\
+\inlinecode{DataCollatorWithPadding} & 분류·회귀 --- \inlinecode{input\_ids}/\inlinecode{attention\_mask} 동적 padding & \textbf{\ref{ch:09}--\ref{ch:14}장 모든 Trainer 학습 (기본)} \\
 \inlinecode{DataCollatorForLanguageModeling} & MLM --- 입력의 15\%를 \texttt{{[}MASK{]}} 로 가려 라벨 생성 & BERT 사전학습 재현, MLM 헤드 학습 \\
 \inlinecode{DataCollatorForSeq2Seq} & seq2seq --- encoder/decoder input 둘 다 padding & T5, BART 같은 인코더-디코더 학습 \\
 \inlinecode{DataCollatorForTokenClassification} & NER 같은 토큰 단위 라벨링 --- labels도 padding & NER, POS tagging \\
@@ -840,7 +840,7 @@ Collator & 용도 & 자주 쓰이는 곳 \\
 
 이 장에서 만든 \emph{데이터 파이프라인 부품들}이 다음 장부터 학습 코드에서 어떤 자리에 들어가는지 미리 그려두면, \ref{ch:09}장 이후 코드가 훨씬 익숙해 보입니다.
 
-\subsubsection{\texorpdfstring{패턴 A --- \inlinecode{Trainer} (커리큘럼 기본, \ref{ch:09}--\ref{ch:13}장 대부분)}{패턴 A --- Trainer (커리큘럼 기본, \ref{ch:09}--\ref{ch:13}장 대부분)}}
+\subsubsection{\texorpdfstring{패턴 A --- \inlinecode{Trainer} (커리큘럼 기본, \ref{ch:09}--\ref{ch:14}장 대부분)}{패턴 A --- Trainer (커리큘럼 기본, \ref{ch:09}--\ref{ch:14}장 대부분)}}
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -927,13 +927,13 @@ for batch in loader:
 \end{adjustbox}
 \end{booktable}
 
-\textbf{요점}: 이 장에서 익힌 부품들이 \ref{ch:09}--\ref{ch:13}장에서 \emph{그대로 입력으로} 들어갑니다. \inlinecode{Trainer} 는 그 부품들을 묶어 학습 루프를 자동화한 것뿐이며, 안에서 일어나는 일은 패턴 B와 같습니다. 커스텀 학습이 필요해지면 패턴 B로 분해해 다시 짤 수 있다는 점이 \ref{ch:08}장을 손에 익혀두는 가장 큰 이유입니다.
+\textbf{요점}: 이 장에서 익힌 부품들이 \ref{ch:09}--\ref{ch:14}장에서 \emph{그대로 입력으로} 들어갑니다. \inlinecode{Trainer} 는 그 부품들을 묶어 학습 루프를 자동화한 것뿐이며, 안에서 일어나는 일은 패턴 B와 같습니다. 커스텀 학습이 필요해지면 패턴 B로 분해해 다시 짤 수 있다는 점이 \ref{ch:08}장을 손에 익혀두는 가장 큰 이유입니다.
 
 
 
 \section{Collator 실습}
 
-DataCollator의 다양한 모습을 직접 돌려봅니다 --- 동적 padding의 효율을 \emph{숫자로} 확인하고, BERT 사전학습에 쓰는 MLM collator를 시연하며, 마지막으로 \emph{직접 작성한 collator} 까지 보면 \ref{ch:13}장 보조 loss 같은 커스텀 학습이 어떻게 가능한지 감이 잡힙니다.
+DataCollator의 다양한 모습을 직접 돌려봅니다 --- 동적 padding의 효율을 \emph{숫자로} 확인하고, BERT 사전학습에 쓰는 MLM collator를 시연하며, 마지막으로 \emph{직접 작성한 collator} 까지 보면 \ref{ch:14}장 보조 loss 같은 커스텀 학습이 어떻게 가능한지 감이 잡힙니다.
 
 
 
@@ -1255,7 +1255,7 @@ print(
 
 \subsection{\texorpdfstring{커스텀 collate\_fn}{커스텀 collate\_fn}}
 
-위에서 본 \inlinecode{DataCollatorWithPadding} 와 \inlinecode{DataCollatorForLanguageModeling} 은 \inlinecode{transformers} 가 task별로 미리 만들어준 도구입니다. 그러나 \emph{우리 task} 가 표준 형식에서 벗어나면 (예: \ref{ch:13}장 보조 loss처럼 라벨이 두 종류) 직접 함수를 작성해야 합니다.
+위에서 본 \inlinecode{DataCollatorWithPadding} 와 \inlinecode{DataCollatorForLanguageModeling} 은 \inlinecode{transformers} 가 task별로 미리 만들어준 도구입니다. 그러나 \emph{우리 task} 가 표준 형식에서 벗어나면 (예: \ref{ch:14}장 보조 loss처럼 라벨이 두 종류) 직접 함수를 작성해야 합니다.
 
 \inlinecode{collate\_fn} 의 시그니처는 단순합니다 --- 입력은 \emph{샘플 dict의 리스트}, 출력은 \emph{batch dict} (각 키에 stacked 텐서).
 
@@ -1326,7 +1326,7 @@ print(
 
 \textbf{관찰}: \inlinecode{collate\_fn} 한 함수가 \emph{batch 단위 변환의 집결지} 입니다. 라벨 형식 변환, 추가 메타정보 부착, 다중 라벨 dict 등 무엇이든 여기서 처리할 수 있습니다.
 
-\ref{ch:13}장 보조 loss는 이 패턴을 그대로 사용 --- 메인 라벨(multi-hot)과 보조 라벨(별점 float)을 한 dict 안에 같이 담아서 모델이 두 loss를 합쳐 계산하도록 합니다. \emph{학습 코드의 어디에도 collate\_fn 정의가 없는데 학습이 잘 되네?} 라고 느낀다면, 그건 \inlinecode{Trainer} 가 \inlinecode{tokenizer} 만 보고 \inlinecode{DataCollatorWithPadding} 을 자동 생성한 결과일 가능성이 큽니다 --- 직접 짜야 하는 순간엔 위 패턴이 출발점입니다.
+\ref{ch:14}장 보조 loss는 이 패턴을 그대로 사용 --- 메인 라벨(multi-hot)과 보조 라벨(별점 float)을 한 dict 안에 같이 담아서 모델이 두 loss를 합쳐 계산하도록 합니다. \emph{학습 코드의 어디에도 collate\_fn 정의가 없는데 학습이 잘 되네?} 라고 느낀다면, 그건 \inlinecode{Trainer} 가 \inlinecode{tokenizer} 만 보고 \inlinecode{DataCollatorWithPadding} 을 자동 생성한 결과일 가능성이 큽니다 --- 직접 짜야 하는 순간엔 위 패턴이 출발점입니다.
 
 
 

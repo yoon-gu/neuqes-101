@@ -241,7 +241,7 @@ delta                                                 : +0.016
 
 \begin{bookoutputbox}
 peak VRAM (max over training): 3670 MiB
-(policy only, ref-free, num_generations=8, fp16)
+(policy + weak KL anchor, beta=0.04, num_generations=8, fp16)
 \end{bookoutputbox}
 
 \begin{bookfigurelabel}[H]{KoGPT2 GRPO 학습 중 reward와 VRAM 흐름}{fig:ch31-grpo-kogpt2-curves}

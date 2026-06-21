@@ -1151,7 +1151,7 @@ BERT 장들 (\ref{ch:20}·\ref{ch:22}장) 과 \emph{완전히 같은} Trainer �
 \item
   \inlinecode{DataCollatorForLanguageModeling(mlm=False)} \(\to\) \inlinecode{labels\ =\ input\_ids} (next-token prediction)
 \item
-  \inlinecode{max\_steps=1500}, \inlinecode{batch\_size=32}, \inlinecode{fp16=True} - T4 약 15-18분
+  \inlinecode{max\_steps=1500}, \inlinecode{batch\_size=32}, \inlinecode{fp16=True} - T4 약 1분
 \item
   \inlinecode{eval\_steps=150} 으로 train / val loss 추이 관찰
 \end{itemize}
@@ -1340,7 +1340,7 @@ plt.tight_layout(); plt.show()
 <Figure size 1300x400 with 2 Axes>
 \end{bookoutputbox}
 \par\vspace{0.9em}
-\textbf{관전 포인트} - 학습 첫 step loss 가 약 7.6 (random baseline \inlinecode{ln(2048)}) 부근에서 시작해 \emph{수백 step 안에 약 4-5} 로 빠르게 떨어지고, 1500 step 끝에 \emph{약 2.5-3.0} 부근에서 안정화되면 정상. perplexity 로 환산하면 vocab 2,048 중 \emph{약 12-20 개 후보} 로 좁힌 상태 - 다음 토큰을 \emph{어느 정도 결정적} 으로 뽑는 수준.
+\textbf{관전 포인트} - 학습 첫 step loss 가 약 7.6 (random baseline \inlinecode{ln(2048)}) 부근에서 시작해 \emph{수백 step 안에 약 4-5} 로 빠르게 떨어지고, 1500 step 끝에 \emph{train\_loss 약 3.8} 부근이면 정상. perplexity 로 환산하면 vocab 2,048 중 \emph{약 12-20 개 후보} 로 좁힌 상태 - 다음 토큰을 \emph{어느 정도 결정적} 으로 뽑는 수준.
 
 
 
@@ -1842,10 +1842,10 @@ labels[:prompt_len] = [-100] * prompt_len
 
 모델 크기 & 약 3M params & \textbf{약 124M (40배)} \\
 사전학습 & from scratch (random init) & \textbf{OpenAI WebText 약 40GB 사전학습} \\
-TinyStories 학습 & 사전학습 그 자체 (1500 steps) & \textbf{continual pretraining} (수백 steps 면 충분) \\
+TinyStories 학습 & 사전학습 그 자체 (1500 steps) & \textbf{continual pretraining} (약 3,000 step 규모) \\
 토크나이저 & 직접 학습 BPE vocab 2,048 & \textbf{gpt2 BPE vocab 50,257 (그대로)} \\
 Generation 품질 & grammatical 한 동화 풍 영어 & \textbf{자연스러운 동화 + 일반 도메인 폭} \\
-학습 시간 & 약 18분 (사전학습) & \textbf{약 5-8분} (continual pretraining 만) \\
+학습 시간 & 약 1분 (사전학습) & \textbf{약 19분} (continual pretraining)  \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -1867,7 +1867,7 @@ Generation 품질 & grammatical 한 동화 풍 영어 & \textbf{자연스러운 
 \item
   \textbf{같은 TinyStories 30K} 데이터 (본 장와 동일) 로 \textbf{continual pretraining} (계속 사전학습 / continual learning --- \emph{같은 CausalLM task, 새 데이터, head 그대로}. \emph{task adaptation 의미의 fine-tune 이 아니라 단계 2})
 \item
-  \textbf{핵심 비교}: 본 장 (3M, from scratch, 18분) vs \ref{ch:25}장 (124M, continual pretraining, 5-8분) 의 generation 품질·학습 곡선 격차
+  \textbf{핵심 비교}: 본 장 (3M, from scratch, T4 약 1분) vs \ref{ch:25}장 (124M, continual pretraining, T4 약 19분) 의 generation 품질·학습 곡선 격차
 \item
   \emph{trainer 자체는 \ref{ch:24}장과 동일} (\inlinecode{transformers.Trainer} + \inlinecode{DataCollatorForLanguageModeling(mlm=False)}) --- \emph{변하는 건 모델 로드 한 줄 + lr (scratch 5e-4 \(\to\) continual pretraining 2e-5)}
 \item

@@ -154,7 +154,7 @@ Loss & \inlinecode{CrossEntropyLoss} (vocab 30,522 logits) & \textbf{\inlinecode
 \end{adjustbox}
 \end{booktable}
 
-같은 토크나이저 (\inlinecode{bert-base-uncased}) 가 두 데이터셋의 모든 텍스트를 처리. 본체가 \emph{위키 일반 어휘} 로 사전학습된 표상이 \emph{영화 리뷰 도메인 토큰} 에 얼마나 잘 전이되는가가 본 장의 측정 대상.
+같은 토크나이저 (\inlinecode{bert-base-uncased}) 가 두 데이터셋의 모든 텍스트를 처리. 본체가 \emph{위키 일반 어휘} 로 사전학습된 표상이 \emph{Yelp 리뷰(식당·업체) 도메인 토큰} 에 얼마나 잘 전이되는가가 본 장의 측정 대상.
 
 \subsection{DistilBERT 비교의 의미}
 
@@ -167,10 +167,10 @@ Loss & \inlinecode{CrossEntropyLoss} (vocab 30,522 logits) & \textbf{\inlinecode
 
 본체 파라미터 & 약 66M & \textbf{약 10M} & \ref{ch:21}장 은 1/6 작음 \\
 사전학습 코퍼스 & Wikipedia + BookCorpus (약 33억 토큰, 일반 도메인) & \textbf{Wikitext-103 paragraphs 5K (약 70만-100만 토큰, 일반 도메인)} & 약 3000-5000배 격차, \textbf{둘 다 일반 위키} \\
-사전학습 시간 & TPU 수일 (대규모 인프라) & \textbf{T4 약 10분} & \\
+사전학습 시간 & TPU 수일 (대규모 인프라) & \textbf{T4 약 0.3분} & \\
 Fine-tune 도메인 & Yelp 이진 (사전학습과 다른 도메인) & Yelp 이진 (사전학습과 다른 도메인) & \textbf{둘 다 일반 \(\to\) Yelp transfer 라 fair} \\
 분류 fine-tune 셋업 & \ref{ch:10}장 = 이 장 동일 (같은 데이터, 같은 hyperparams) & & 변하는 건 \emph{본체 출발점} 뿐 \\
-기대 accuracy & 약 92-95\% & \textbf{약 75-85\% 예상} & 비교는 실측치로 확인 \\
+기대 accuracy & 약 0.90 & \textbf{약 0.65 실측} & 비교는 실측치로 확인 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -267,7 +267,7 @@ random baseline 은 \emph{세 셋업 모두 같음} --- 사전학습이 \emph{�
 \item
   \textbf{Wikitext-103 (MLM 사전학습)}: 일반 위키 어휘 --- 지명·인명·과학·역사 용어 (\inlinecode{capital}, \inlinecode{theorem}, \inlinecode{dynasty}, \inlinecode{proton} ...) 가 풍부. 격식 있는 문장 구조.
 \item
-  \textbf{Yelp polarity (분류 fine-tune)}: 영화 리뷰 어휘 --- 감성 형용사·구어체 (\inlinecode{amazing}, \inlinecode{terrible}, \inlinecode{loved}, \inlinecode{awful} ...) 가 풍부. 비격식 구어체.
+  \textbf{Yelp polarity (분류 fine-tune)}: Yelp 리뷰(식당·업체) 어휘 --- 감성 형용사·구어체 (\inlinecode{amazing}, \inlinecode{terrible}, \inlinecode{loved}, \inlinecode{awful} ...) 가 풍부. 비격식 구어체.
 \end{itemize}
 
 같은 \inlinecode{bert-base-uncased} vocab (Wiki + BookCorpus 학습) 이 두 도메인을 \emph{모두} 합리적으로 커버 --- \emph{위키 본문} 의 격식 어휘는 본 장 사전학습이 직접 본 분포, \emph{Yelp 감성 어휘} 는 fine-tune 단계에서 본체가 적응. \emph{토크나이저는 운명공동체} 라 vocab 미스매치가 없습니다.
@@ -1084,7 +1084,7 @@ MLM eval perplexity:  1339.60
 (random baseline PPL: 30,522)
 \end{bookoutputbox}
 \par\vspace{0.9em}
-\textbf{관전 포인트} --- Wikitext-103 paragraphs 에서 MLM loss 가 \emph{random baseline 10.33} 에서 시작해 4-6 부근까지 떨어졌다면 본체가 \emph{일반 위키 어휘·문맥 구조의 일부} 를 학습한 상태. perplexity 로 환산하면 vocab 30,522 중 \emph{수백 개 후보} 로 좁혀진 정도. \ref{ch:20}장의 2 epoch 보다는 약간 얕지만, \emph{Yelp 분류 fine-tune 출발점} 으로는 충분합니다 --- 본체가 \emph{일반 영어 구조} 를 가지면 \emph{영화 리뷰 도메인} 도 fine-tune 으로 빠르게 적응.
+\textbf{관전 포인트} --- Wikitext-103 paragraphs 에서 MLM loss 가 \emph{random baseline 10.33} 에서 시작해 약 7 부근까지 떨어졌다면 본체가 \emph{일반 위키 어휘·문맥 구조의 일부} 를 학습한 상태. perplexity 로 환산하면 vocab 30,522 중 \emph{약 1,300개 후보} 로 좁혀진 정도. \ref{ch:20}장의 2 epoch 보다는 약간 얕지만, \emph{Yelp 분류 fine-tune 출발점} 으로는 충분합니다 --- 본체가 \emph{일반 영어 구조} 를 가지면 \emph{Yelp 리뷰(식당·업체) 도메인} 도 fine-tune 으로 빠르게 적응.
 
 \begin{quote}
 \textbf{체크포인트 저장은 생략} --- 노트북 안에서 바로 본체 가중치를 분류 모델로 옮기기 때문. \ref{ch:20}장 처럼 디스크에 저장하려면 \inlinecode{mlm\_model.save\_pretrained("./ch21\_mlm\_ckpt")} 한 줄.
@@ -1548,7 +1548,7 @@ plt.show()
 
 본체 파라미터 & 약 66M & 약 10M & \ref{ch:21}장 은 1/6 크기 \\
 사전학습 코퍼스 & Wikipedia + BookCorpus (약 33억 토큰, 일반 도메인) & Wikitext-103 paragraphs 5K (약 70만-100만 토큰, 일반 도메인) & 약 3000-5000배 격차, \textbf{둘 다 일반 위키} \\
-사전학습 시간 & TPU 수일 & T4 약 10-12분 & \\
+사전학습 시간 & TPU 수일 & T4 약 0.3분 & \\
 Fine-tune 도메인 & Yelp 이진 (사전학습과 다른 도메인) & Yelp 이진 (사전학습과 다른 도메인) & \textbf{둘 다 일반 \(\to\) Yelp transfer} \\
 분류 fine-tune 셋업 & (같음 --- 5K/1K, batch 16, lr 2e-5, 2 epoch, fp16) & & 본체 외 통제 \\
 \bottomrule
@@ -1653,9 +1653,9 @@ plt.show()
 \begin{itemize}
 \tightlist
 \item
-  \ref{ch:10}장 (DistilBERT, 대규모 Wiki+BookCorpus 사전학습): accuracy 약 92-95\%, AUC 약 0.97-0.99
+  \ref{ch:10}장 (DistilBERT, 대규모 Wiki+BookCorpus 사전학습): accuracy 약 0.90
 \item
-  \ref{ch:21}장 (작은 BERT, Wikitext-103 2K paragraphs \(\times\) 3 epoch 사전학습): accuracy 약 75-85\%, AUC 약 0.85-0.92
+  \ref{ch:21}장 (작은 BERT, Wikitext-103 2K paragraphs \(\times\) 3 epoch 사전학습): accuracy 약 0.65, AUC 약 0.71
 \end{itemize}
 
 \textbf{accuracy 10-15\%p 격차} 가 나옵니다. 두 모델이 \emph{같은 transfer 패턴} (일반 위키 \(\to\) Yelp) 을 따르므로 이 격차의 거의 전부가 \emph{사전학습 규모의 가치} --- Wikipedia + BookCorpus 약 33억 토큰의 \emph{일반 영어 지식} 이 DistilBERT 본체에 압축되어 있어, Yelp 같은 \emph{다른 도메인} 에도 빠르게 적응합니다.
@@ -1856,7 +1856,7 @@ T4 메모리 안에서는 가능합니다. 정확도 변화 추정:
 \midrule
 
 hidden=128, layer=2 & 약 5M & 약 5분 & 65-72\% \\
-\textbf{hidden=256, layer=4 (이 장)} & \textbf{약 10M} & \textbf{약 20분} & \textbf{75-85\%} \\
+\textbf{hidden=256, layer=4 (이 장)} & \textbf{약 10M} & \textbf{약 0.6분} & \textbf{약 65\%} \\
 hidden=384, layer=6 & 약 20M & 약 30분 & 78-88\% (T4 30분 한계) \\
 hidden=512, layer=8 & 약 35M & 약 45분 & 80-90\% (T4 30분 룰 위반) \\
 hidden=768, layer=12 (BERT-base) & 약 110M & 수일 & 90\%+ (대규모 사전학습 데이터 필요) \\

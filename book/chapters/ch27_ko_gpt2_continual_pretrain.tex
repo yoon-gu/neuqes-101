@@ -189,7 +189,7 @@ Loss & CE next-token (\inlinecode{labels\ =\ input\_ids.clone()}) & CE next-toke
 본체 출발점 & \inlinecode{GPT2LMHeadModel(config)} random init (약 3M) & \inlinecode{AutoModelForCausalLM.from\_pretrained("skt/kogpt2-base-v2")} (125M) & \textbf{다름} \\
 토크나이저 & BBPE 직접 학습 (vocab 약 4,000) & \inlinecode{PreTrainedTokenizerFast.from\_pretrained("skt/kogpt2-base-v2",\ ...)} (vocab 51,200) & \textbf{다름} (본체와 운명공동체) \\
 학습률 & 5e-4 (scratch 표준) & \textbf{2e-5} (continual pretraining 표준) & \textbf{다름} \\
-학습 step & 약 1,500 & \textbf{약 1 epoch (수백 step)} & \textbf{다름} (본체 이미 학습됨) \\
+학습 step & 약 1,500 & \textbf{약 3,000 (global\_step 3033)} & \textbf{다름} (본체 이미 학습됨) \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -217,7 +217,7 @@ Trainer & \inlinecode{transformers.Trainer} & \textbf{\inlinecode{transformers.T
 Data collator & \inlinecode{DataCollatorForLanguageModeling(mlm=False)} & \textbf{(동일)} \\
 Loss & CE next-token (\inlinecode{labels\ =\ input\_ids.clone()}) & \textbf{(동일)} \\
 \textbf{학습률} & 5e-4 & \textbf{2e-5} --- \emph{유일한 hyperparam 큰 차이} \\
-학습 step & 약 1,500 (T4 약 18분) & \textbf{약 1 epoch (T4 약 8-12분)} --- 본체 이미 학습됨 \\
+학습 step & 약 1,500 (T4 약 1분) & \textbf{약 3,000 (T4 약 17분)} --- 본체 이미 학습됨 \\
 Generation 품질 & 동화 풍 단순 한국어 & \textbf{자연스러운 동화 + 일반 도메인 폭} --- 메시지 \\
 \bottomrule
 \end{tabular}
@@ -304,7 +304,7 @@ SFT (단계 3) 는 28장에서 본격. \emph{왜 모델이 한국어 instruction
 
 균등 추측 (KoGPT2 vocab 51,200) & \(1/51200\) & \textbf{10.84} --- random baseline (도달 불필요) \\
 KoGPT2 사전학습 그대로, TinyStories 평가 & \(0.05\) - \(0.10\) 범위 & \textbf{2.5 - 3.0} --- \emph{시작점} (이미 좋음) \\
-Continual pretraining 후 (수백 step) & \(0.10\) - \(0.20\) 범위 & \textbf{1.6 - 2.3} --- \emph{도달점} \\
+Continual pretraining 후 (약 3,000 step) & \(0.10\) - \(0.20\) 범위 & \textbf{1.6 - 2.3} --- \emph{도달점} \\
 Reference: 학습 길게 했을 때 & \(0.25\)+ & 약 1.4 \\
 \bottomrule
 \end{tabular}
@@ -1201,8 +1201,8 @@ for p, before, after in zip(PROMPTS, before_outputs, after_outputs):
 
 시작 loss & 약 8.29 (\inlinecode{ln(4000)}, random baseline) & \textbf{약 3.0-4.0} (KoGPT2 pretrained, TinyStories 평가) \\
 도달 loss (학습 끝) & 약 2.5-3.0 & \textbf{약 2.0-2.5} \\
-학습 step & 1,500 & \textbf{약 1 epoch (수백 step, batch effective 16)} \\
-학습 시간 (T4) & 약 18분 & \textbf{약 8-12분} \\
+학습 step & 1,500 & \textbf{약 3,000} (global\_step 3033, 48,513 chunks / effective batch 16) \\
+학습 시간 (T4) & 약 1분 & \textbf{약 17분} \\
 Vocab 차원 & 약 4,000 & \textbf{51,200} (loss 단위 다름 --- 직접 비교 어려움) \\
 Generation 품질 & 동화 풍 단순 한국어 & \textbf{자연스러운 동화 + 일반 도메인 어휘} \\
 \bottomrule

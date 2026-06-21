@@ -127,7 +127,7 @@ Task (메인) & 5라벨 multi-label & (그대로) \\
 
 \medskip\noindent\textbf{왜 보조 태스크가 메인 태스크에 도움이 되는가}
 
-BERT 본체(67M 파라미터)가 \emph{공유} 되어 메인 헤드와 보조 헤드가 같은 768-dim CLS 표현을 입력으로 받습니다. 보조 task가 메인과 \emph{부분적으로 상관} 이면 보조 학습이 본체를 \emph{더 일반적인 표현} 으로 끌고 가서 메인 정확도까지 올라갑니다. 다음 섹션에서 \emph{어떤 상황에서 왜 도움이 되는지} 다섯 갈래로 자세히 봅니다.
+BERT 본체(약 66M 파라미터)가 \emph{공유} 되어 메인 헤드와 보조 헤드가 같은 768-dim CLS 표현을 입력으로 받습니다. 보조 task가 메인과 \emph{부분적으로 상관} 이면 보조 학습이 본체를 \emph{더 일반적인 표현} 으로 끌고 가서 메인 정확도까지 올라갑니다. 다음 섹션에서 \emph{어떤 상황에서 왜 도움이 되는지} 다섯 갈래로 자세히 봅니다.
 
 
 
@@ -702,7 +702,7 @@ print(f"Main classifier:      {model.classifier}")
 print(f"Aux head:             {model.aux_head}")
 \end{lstlisting}
 
-\textbf{보조 헤드는 \textasciitilde770개 파라미터} --- 768→1 Linear의 weight + bias. 전체 67M 의 \emph{0.001\%}. 이 \emph{미세한 추가 자유도} 만으로 멀티태스크 학습이 동작합니다.
+\textbf{보조 헤드는 \textasciitilde770개 파라미터} --- 768→1 Linear의 weight + bias. 헤드 포함 전체 약 67M의 \emph{0.001\%}. 이 \emph{미세한 추가 자유도} 만으로 멀티태스크 학습이 동작합니다.
 
 
 
@@ -1410,7 +1410,7 @@ class DistilBertForSequenceClassification:
 \item
   보조 헤드 위에 가중치가 \textasciitilde770개라 데이터에 \emph{과적합} 할 위험도 적습니다.
 \item
-  BERT 본체(67M)는 이미 표상이 풍부해 작은 head가 \emph{읽어내기만} 하면 됨.
+  BERT 본체(약 66M)는 이미 표상이 풍부해 작은 head가 \emph{읽어내기만} 하면 됨.
 \end{enumerate}
 
 대조적으로 \emph{BERT 본체를 random init 부터} 학습하려면 수백 GB 데이터가 필요합니다. 사전학습 + 작은 head fine-tune 패턴이 강력한 이유.

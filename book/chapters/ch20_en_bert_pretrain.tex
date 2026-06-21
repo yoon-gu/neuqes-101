@@ -139,7 +139,7 @@ Loss & 없음 (vocab + merge rules 가 산출물) & \textbf{\inlinecode{CrossEnt
 
 \subsection{왜 일반 위키로 사전학습하는가}
 
-원본 BERT (Devlin et al., 2018) 는 \emph{영어 Wikipedia + BookCorpus} 라는 \textbf{일반 도메인} 코퍼스로 사전학습한 뒤, \emph{완전히 다른 downstream task} (GLUE, SQuAD 등) 로 fine-tune 했습니다. 본 장도 같은 패턴 --- Wikitext-103 \emph{일반 위키 paragraphs} 로 MLM 사전학습 \(\to\) \ref{ch:21}장에서 \emph{영화 리뷰 (Yelp)} 라는 \emph{다른 도메인} 으로 transfer.
+원본 BERT (Devlin et al., 2018) 는 \emph{영어 Wikipedia + BookCorpus} 라는 \textbf{일반 도메인} 코퍼스로 사전학습한 뒤, \emph{완전히 다른 downstream task} (GLUE, SQuAD 등) 로 fine-tune 했습니다. 본 장도 같은 패턴 --- Wikitext-103 \emph{일반 위키 paragraphs} 로 MLM 사전학습 \(\to\) \ref{ch:21}장에서 \emph{Yelp 리뷰(식당·업체)} 라는 \emph{다른 도메인} 으로 transfer.
 
 만약 Yelp text 로 MLM 사전학습한 뒤 Yelp 분류로 fine-tune 하면 \emph{domain-adaptive pretraining} (DAPT) 에 가까워져 \emph{일반 표상 학습 \(\to\) 다른 task transfer} 의 본질이 흐려집니다. \emph{일반 도메인 \(\to\) 다른 도메인 transfer} 가 \emph{진짜 사전학습-fine-tune 패러다임}. 22장 (한국어 위키 \(\to\) NSMC 분류) 가 같은 패턴.
 
@@ -255,7 +255,7 @@ MLM loss & PPL & 해석 \\
   \textbf{\ref{ch:20}장의 \inlinecode{bert-base-uncased} 30K WordPiece (Wiki + BookCorpus 학습)}: 위키 어휘를 \emph{덜 쪼개짐}. 30K vocab + 일반 영어 학습이라 일반 도메인 + Yelp 같은 task 도메인 \emph{둘 다} 폭넓게 커버.
 \end{itemize}
 
-본 장의 사전학습 데이터 (Wikitext-103) 와 토크나이저 (\inlinecode{bert-base-uncased}) 가 \emph{둘 다 일반 위키 분포} 라 \emph{vocab 미스매치} 가 작습니다. \ref{ch:21}장에서 Yelp 분류로 fine-tune 할 때도 같은 토크나이저로 \emph{문체 다른} 도메인을 처리 --- 일반 영어 어휘는 거의 덜 쪼개지고, \emph{영화 리뷰 특유 표현} 만 약간 더 분할되는 정도.
+본 장의 사전학습 데이터 (Wikitext-103) 와 토크나이저 (\inlinecode{bert-base-uncased}) 가 \emph{둘 다 일반 위키 분포} 라 \emph{vocab 미스매치} 가 작습니다. \ref{ch:21}장에서 Yelp 분류로 fine-tune 할 때도 같은 토크나이저로 \emph{문체 다른} 도메인을 처리 --- 일반 영어 어휘는 거의 덜 쪼개지고, \emph{Yelp 리뷰 특유 표현} 만 약간 더 분할되는 정도.
 
 \subsection{토크나이저와 모델의 결합}
 
@@ -428,7 +428,7 @@ ids: [101, 1996, 3007, 1997, 2605, 2003, 3000, 1010, 2284, 2006, 1996, 1647...
 
 \section{데이터 준비}
 
-원본 BERT 가 영어 Wikipedia + BookCorpus 라는 \emph{일반 도메인} 코퍼스로 사전학습한 정신을 따라, 본 장도 \textbf{Wikitext-103} 본문으로 MLM 사전학습합니다 --- \emph{task 도메인 (Yelp 영화 리뷰) 으로 사전학습하면 domain-adaptive pretraining 에 가까워져 사전학습의 진짜 메시지 (일반 표상 학습 \(\to\) 다른 task 로 transfer) 가 흐려지기 때문}.
+원본 BERT 가 영어 Wikipedia + BookCorpus 라는 \emph{일반 도메인} 코퍼스로 사전학습한 정신을 따라, 본 장도 \textbf{Wikitext-103} 본문으로 MLM 사전학습합니다 --- \emph{task 도메인 (Yelp 리뷰(식당·업체)) 으로 사전학습하면 domain-adaptive pretraining 에 가까워져 사전학습의 진짜 메시지 (일반 표상 학습 \(\to\) 다른 task 로 transfer) 가 흐려지기 때문}.
 
 \textbf{원본}: \inlinecode{Salesforce/wikitext}, config \inlinecode{wikitext-103-raw-v1} (CC-BY-SA, 정제된 영문 위키 paragraphs). HF Hub 정제본 --- line 단위로 이미 정리되어 있어 빈 줄 / 너무 짧은 줄 / 너무 긴 줄만 제외하면 바로 사용 가능. \ref{ch:21}장의 분류 fine-tune (Yelp 이진) 은 \emph{완전히 다른 도메인} --- 사전학습 \(\to\) fine-tune transfer 메시지가 정직해집니다. 22장의 한국어 (한국어 Wikipedia paragraphs) 와 \emph{대칭} 패턴.
 
@@ -529,7 +529,7 @@ MLM 사전학습의 표준 입력 포맷은 \emph{고정 길이 블록}. 변동 
 
 \textbf{해결책}: 모든 문서를 \emph{이어 붙여 토큰 스트림} 으로 만든 뒤, \inlinecode{block\_size=128} 단위로 자름. 문장 경계가 사라지는 trade-off 가 있지만, BERT 사전학습은 \emph{임의 위치의 토큰 예측} 이라 문장 경계가 중요하지 않음.
 
-Wikitext-103 paragraphs 는 \emph{제한 50-2000자 필터링} 으로 평균 문장 길이가 일정 (수백 자 위주). 5,000 paragraphs 가 \inlinecode{block\_size=128} 로 잘리면 약 1,000-2,000 블록 정도로 정리됩니다. 코드는 HF \inlinecode{examples/pytorch/language-modeling/run\_mlm.py} 의 \inlinecode{group\_texts} 함수를 그대로 따른 표준 패턴.
+Wikitext-103 paragraphs 는 \emph{제한 50-2000자 필터링} 으로 평균 문장 길이가 일정 (수백 자 위주). 5,000 paragraphs 가 \inlinecode{block\_size=128} 로 잘리면 실행본 기준 5,352개 블록 정도로 정리됩니다. 코드는 HF \inlinecode{examples/pytorch/language-modeling/run\_mlm.py} 의 \inlinecode{group\_texts} 함수를 그대로 따른 표준 패턴.
 
 
 
@@ -1646,7 +1646,7 @@ input: The food at this restaurant was absolutely [MASK].
 \item
   \textbf{\inlinecode{eval\_loss}}: random baseline \texttt{ln\ V\ \$\textbackslash{}approx\$\ 10.33} 에서 약 5-7 부근까지 떨어졌으면 본체가 \emph{언어 구조 일부} 를 학습. \emph{완전한} BERT 수준은 아니어도 표준 BERT 가 학습한 것의 \emph{방향} 은 맞춤.
 \item
-  \textbf{\inlinecode{perplexity}}: 30,522 (vocab 전체) 에서 수십-수백 부근으로. \emph{마스크 자리마다 후보를 약 50-500 개로 좁힌 상태} 라는 직관적 해석.
+  \textbf{\inlinecode{perplexity}}: 30,522 (vocab 전체) 에서 약 1,200-1,300 부근으로. \emph{마스크 자리마다 후보를 약 1,200-1,300개로 좁힌 상태} 라는 직관적 해석.
 \item
   \textbf{top-5 토큰} (3-way 비교):
 
@@ -1665,7 +1665,7 @@ input: The food at this restaurant was absolutely [MASK].
 \textbf{세 모델의 격차가 정확히 \emph{데이터 규모 + 모델 크기 + 학습 시간} 의 격차} --- 우리 작은 BERT (10M, 5K paragraphs, 2 epoch) \(\to\) reference (110M, 3.3B tokens, 40 epoch) 사이에 \emph{데이터 약 5,000배, 파라미터 11배, epoch 20배}. 그 격차가 top-5 의 \emph{질적 차이} 로 정확히 드러납니다.
 \end{quote}
 
-이 장의 작은 BERT 는 \emph{Wikitext-103 5K paragraphs \(\times\) 2 epoch} 로 학습한 \emph{일반 도메인 mini BERT}. 위키 도메인은 직접 본 분포라 향상이 빠르지만, Yelp 영화 리뷰 영역은 \emph{다른 도메인} 이라 fine-tune 단계에서 적응이 필요합니다 --- 이게 \emph{진짜 사전학습 \(\to\) fine-tune 패러다임} 의 핵심. \ref{ch:21}장에서 Yelp 이진 분류로 fine-tune 할 때 진짜 transfer 비교 --- \emph{우리가 직접 만든 작은 영어 BERT (일반 위키 5K, 약 10M)} vs \emph{\ref{ch:10}장의 DistilBERT (대규모 Wikipedia+BookCorpus, 약 66M)} vs \emph{random init baseline}.
+이 장의 작은 BERT 는 \emph{Wikitext-103 5K paragraphs \(\times\) 2 epoch} 로 학습한 \emph{일반 도메인 mini BERT}. 위키 도메인은 직접 본 분포라 향상이 빠르지만, Yelp 리뷰(식당·업체) 영역은 \emph{다른 도메인} 이라 fine-tune 단계에서 적응이 필요합니다 --- 이게 \emph{진짜 사전학습 \(\to\) fine-tune 패러다임} 의 핵심. \ref{ch:21}장에서 Yelp 이진 분류로 fine-tune 할 때 진짜 transfer 비교 --- \emph{우리가 직접 만든 작은 영어 BERT (일반 위키 5K, 약 10M)} vs \emph{\ref{ch:10}장의 DistilBERT (대규모 Wikipedia+BookCorpus, 약 66M)} vs \emph{random init baseline}.
 
 
 
@@ -1952,7 +1952,7 @@ model.half().save_pretrained("./ch20_small_bert_mlm")
 hidden\_size & 256 & 768 & 표현 공간 차원이 1/3 \(\to\) 미세한 의미 구분 어려움 \\
 num\_layers & 4 & 12 & \emph{깊은} 추론 (구문 \(\to\) 의미 \(\to\) 문맥) 단계 부족 \\
 학습 데이터 & 5K paragraphs (약 700K-1M 토큰, Wikitext-103) & 33억 토큰 (BERT-base) & 어휘 다양성·문맥 풍부함 격차 약 5000배 \\
-학습 시간 & 20분 & 4 일 (TPU v3-256) & 압축한 \emph{정보량} 자체가 다름 \\
+학습 시간 & MLM 약 0.4분 (데이터 다운로드 제외) & 4 일 (TPU v3-256) & 압축한 \emph{정보량} 자체가 다름 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -1972,7 +1972,7 @@ num\_layers & 4 & 12 & \emph{깊은} 추론 (구문 \(\to\) 의미 \(\to\) 문�
 \item
   이 장의 \inlinecode{./ch20\_small\_bert\_mlm} 체크포인트를 \inlinecode{AutoModelForSequenceClassification.from\_pretrained(...,\ num\_labels=2)} 로 로드 \(\to\) MLM head 떼고 분류 헤드 부착
 \item
-  \textbf{Yelp 이진 분류 fine-tune} (\ref{ch:10}·\ref{ch:11}장과 같은 데이터·셋업) --- \emph{완전히 다른 도메인 transfer}. 일반 위키로 사전학습한 본체가 \emph{영화 리뷰 도메인} 에 얼마나 잘 적응하는가 측정
+  \textbf{Yelp 이진 분류 fine-tune} (\ref{ch:10}·\ref{ch:11}장과 같은 데이터·셋업) --- \emph{완전히 다른 도메인 transfer}. 일반 위키로 사전학습한 본체가 \emph{Yelp 리뷰(식당·업체) 도메인} 에 얼마나 잘 적응하는가 측정
 \item
   \textbf{핵심 비교}: 이번 작은 사전학습 BERT (약 10M params, Wikitext-103 5K paragraphs MLM) vs \ref{ch:10}장의 DistilBERT (약 66M params, 대규모 Wikipedia + BookCorpus 사전학습). 둘 다 \emph{일반 도메인 \(\to\) Yelp transfer} 라 비교가 \emph{fair} --- \emph{사전학습 규모} 차이만 측정됨
 \item

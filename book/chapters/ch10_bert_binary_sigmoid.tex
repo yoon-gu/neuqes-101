@@ -884,7 +884,7 @@ loss = BCEWithLogitsLoss()(logits, labels)
 \item
   \textbf{단어 표현}: TF-IDF는 단어 독립 벡터, BERT는 문맥 attention. \inlinecode{"not\ bad"} vs \inlinecode{"bad"} 구분이 BERT만 가능.
 \item
-  \textbf{모델 capacity}: TF-IDF + LogReg는 \textasciitilde10K개 가중치, BERT는 67M개. 표현력 6,700배 차이.
+  \textbf{모델 capacity}: TF-IDF + LogReg는 \textasciitilde10K개 가중치, BERT는 헤드 포함 약 67M개. 표현력 6,700배 차이.
 \item
   \textbf{사전학습}: BERT는 위키피디아·BookCorpus로 미리 학습돼 일반 언어 지식이 모델에 인코딩됨.
 \end{enumerate}

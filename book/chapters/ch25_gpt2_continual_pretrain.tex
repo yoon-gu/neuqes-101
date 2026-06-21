@@ -139,7 +139,7 @@ Loss & CE next-token (\inlinecode{labels\ =\ input\_ids.clone()}) & CE next-toke
 본체 출발점 & \inlinecode{GPT2LMHeadModel(config)} random init (3M) & \inlinecode{AutoModelForCausalLM.from\_pretrained("gpt2")} (124M) & \textbf{다름} \\
 토크나이저 & BPE 직접 학습 (vocab 2,048) & \inlinecode{AutoTokenizer.from\_pretrained("gpt2")} (vocab 50,257) & \textbf{다름} (본체와 운명공동체) \\
 학습률 & 3e-4 (scratch 표준) & \textbf{2e-5} (continual pretraining 표준) & \textbf{다름} \\
-학습 step & 약 1,500 & \textbf{약 500-800} & \textbf{다름} (본체 이미 학습됨) \\
+학습 step & 약 1,500 & \textbf{약 3,200 (global\_step 3242)} & \textbf{다름} (본체 이미 학습됨) \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -167,7 +167,7 @@ Trainer & \inlinecode{transformers.Trainer} & \textbf{\inlinecode{transformers.T
 Data collator & \inlinecode{DataCollatorForLanguageModeling(mlm=False)} & \textbf{(동일)} \\
 Loss & CE next-token (\inlinecode{labels\ =\ input\_ids.clone()}) & \textbf{(동일)} \\
 \textbf{학습률} & 3e-4 & \textbf{2e-5} --- \emph{유일한 hyperparam 큰 차이} \\
-학습 step & 약 1,500 (T4 약 18분) & \textbf{약 500-800 (T4 약 8-10분)} --- 본체 이미 학습됨 \\
+학습 step & 약 1,500 (T4 약 1분) & \textbf{약 3,200 (T4 약 19분)} --- 본체 이미 학습됨 \\
 Generation 품질 & grammatical 한 동화 풍 & \textbf{자연스러운 동화 + 일반 도메인 폭} --- 메시지 \\
 \bottomrule
 \end{tabular}
@@ -254,7 +254,7 @@ SFT (단계 3) 는 28장에서 본격적으로 다룹니다. \emph{왜 모델이
 
 균등 추측 (gpt2 vocab 50,257) & \(1/50257\) & \textbf{10.82} --- random baseline (도달 불필요) \\
 gpt2 사전학습 그대로, TinyStories 평가 & \(0.05\) - \(0.10\) 범위 & \textbf{2.5 - 3.0} --- \emph{우리 시작점} (이미 좋음) \\
-Continual pretraining 후 (수백 step) & \(0.10\) - \(0.20\) 범위 & \textbf{1.6 - 2.3} --- \emph{우리 도달점} \\
+Continual pretraining 후 (약 3,200 step) & \(0.10\) - \(0.20\) 범위 & \textbf{1.6 - 2.3} --- \emph{우리 도달점} \\
 Reference: 학습 길게 했을 때 & \(0.25\)+ & 약 1.4 \\
 \bottomrule
 \end{tabular}
@@ -826,7 +826,7 @@ A big dog is a dog that loves to eat, but is also a dog that's afraid to do...
 
 \section{\texorpdfstring{Continual Pretraining --- \emph{trainer 코드는 \ref{ch:24}장과 거의 동일}}{Continual Pretraining --- trainer 코드는 \ref{ch:24}장과 거의 동일}}
 
-\ref{ch:24}장과 \emph{완전히 같은 구조} 의 \inlinecode{Trainer} 코드. 변하는 곳은 \textbf{lr (\texttt{3e-4\ \$\textbackslash{}to\$\ 2e-5})} 와 \textbf{step 수 (\texttt{1500\ \$\textbackslash{}to\$\ 약\ 500-800})} 두 곳.
+\ref{ch:24}장과 \emph{완전히 같은 구조} 의 \inlinecode{Trainer} 코드. 변하는 곳은 \textbf{lr (\texttt{3e-4\ \$\textbackslash{}to\$\ 2e-5})} 와 \textbf{step 수 (\texttt{1500\ \$\textbackslash{}to\$\ 약\ 3,200})} 두 곳.
 
 \subsection{\texorpdfstring{왜 lr 가 작아지는가 --- \inlinecode{2e-5} 의 정확한 의미}{왜 lr 가 작아지는가 --- 2e-5 의 정확한 의미}}
 
@@ -1256,8 +1256,8 @@ Ch 2
 
 시작 loss & 약 7.62 (\inlinecode{ln(2048)}, random baseline) & \textbf{약 3.0-4.0} (gpt2 pretrained, TinyStories 평가) \\
 도달 loss (학습 끝) & 약 2.5-3.0 & \textbf{약 2.0-2.5} \\
-학습 step & 1,500 & \textbf{약 460} (1 epoch, batch effective 16) \\
-학습 시간 (T4) & 약 18분 & \textbf{약 8-10분} \\
+학습 step & 1,500 & \textbf{약 3,200} (global\_step 3242, 51,863 chunks / effective batch 16) \\
+학습 시간 (T4) & 약 1분 & \textbf{약 19분} \\
 Vocab 차원 & 2,048 & \textbf{50,257} (loss 단위 다름 --- 직접 비교 어려움) \\
 Generation 품질 & grammatical 한 동화 & \textbf{자연스러운 동화 + 일반 도메인 어휘} \\
 \bottomrule

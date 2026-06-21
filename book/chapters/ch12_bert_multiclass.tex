@@ -398,13 +398,13 @@ print(f"id2label:             {model.config.id2label}")
 DistilBERT body & 66,362,880 & 66,362,880 \\
 pre\_classifier (\inlinecode{Linear(768→768)}) & 590,592 & 590,592 \\
 classifier (\inlinecode{Linear(768→K)}) & 1,538 & \textbf{3,845} \\
-합계 & 66,955,778 & \textbf{66,958,085} \\
+합계 & 66,955,010 & \textbf{66,957,317} \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
-분류 헤드만 K에 비례해 늘어나지만 (768·K + K), DistilBERT body가 \textasciitilde67M이라 K=2 ↔ K=5 전체 차이는 0.003\%. \textbf{K가 늘어났다고 모델이 \emph{훨씬} 무거워지지는 않는다} 는 점이 multi-class BERT의 매력 중 하나.
+분류 헤드만 K에 비례해 늘어나지만 (768·K + K), DistilBERT body가 약 66M이라 K=2 ↔ K=5 전체 차이는 0.003\%. \textbf{K가 늘어났다고 모델이 \emph{훨씬} 무거워지지는 않는다} 는 점이 multi-class BERT의 매력 중 하나.
 
 
 
@@ -778,7 +778,7 @@ weighted avg     0.5568    0.5620    0.5587      1000
 
 \section{BERT와 TF-IDF 비교}
 
-같은 데이터에 \ref{ch:05}장 셋업(TF-IDF + multinomial LogReg)을 \emph{이 노트북 안에서} 다시 학습해 비교합니다. \textbf{BERT 67M 파라미터가 진짜로 도움이 되는가?} 가 이 비교의 핵심 질문 --- sklearn은 GPU 없이도 몇 초 만에 끝나기 때문에 self-contained로 부담 없이 포함됩니다.
+같은 데이터에 \ref{ch:05}장 셋업(TF-IDF + multinomial LogReg)을 \emph{이 노트북 안에서} 다시 학습해 비교합니다. \textbf{BERT 헤드 포함 약 67M 파라미터가 진짜로 도움이 되는가?} 가 이 비교의 핵심 질문 --- sklearn은 GPU 없이도 몇 초 만에 끝나기 때문에 self-contained로 부담 없이 포함됩니다.
 
 
 
@@ -993,7 +993,7 @@ plt.show()
 \item
   혼동 행렬에서 ±1 이웃 클래스 혼동이 많다는 것은 무엇을 시사합니까?
 \item
-  BERT의 67M 파라미터가 sklearn의 \textasciitilde100K 파라미터(TF-IDF 5클래스)보다 정확도가 \emph{몇 \%p} 높다면 그 비용을 감수할 가치가 있다고 판단할 수 있나요?
+  BERT의 헤드 포함 약 67M 파라미터가 sklearn의 \textasciitilde100K 파라미터(TF-IDF 5클래스)보다 정확도가 \emph{몇 \%p} 높다면 그 비용을 감수할 가치가 있다고 판단할 수 있나요?
 \end{enumerate}
 
 
