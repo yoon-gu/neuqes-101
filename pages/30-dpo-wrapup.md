@@ -46,7 +46,7 @@ DPO 의 통찰은 *"reward model 의 최적 정책을 닫힌 형태로 풀면, r
 
 *진짜로 reference 를 빼면* (`reference_free` 류 옵션 또는 ORPO):
 - KL 제약이 사라져 *원본에서 멀어지는 것을 막을 닻이 없어집니다*
-- chosen 확률만 무한정 키우다 *모델이 붕괴 (한 패턴 반복, 문법 붕괴)* 할 위험
+- chosen 확률만 무한정 키우다 *모델이 collapse (한 패턴 반복, 문법 collapse)* 할 위험
 - ORPO 는 *reference 없이도* 작동하도록 *loss 를 다르게 설계* 한 변종 (SFT 와 preference 를 한 번에)
 
 ```python
@@ -60,12 +60,12 @@ trainer = DPOTrainer(model=policy, ref_model=None, args=cfg,
 
 β 는 *reference 에서 벗어나는 정도* 를 제어합니다 (KL 제약의 세기):
 
-- **β 너무 큼** (예: 1.0): reference 제약이 *거의 없음* → policy 가 preference 에 강하게 끌려가 *빨리 정렬* 되지만, *원본 SFT 의 일반 능력이 붕괴* (degeneration)·*reward hacking* 위험. margin 만 키우려고 *답변 품질을 희생* 할 수 있습니다
+- **β 너무 큼** (예: 1.0): reference 제약이 *거의 없음* → policy 가 preference 에 강하게 끌려가 *빨리 정렬* 되지만, *원본 SFT 의 일반 능력이 collapse* (degeneration)·*reward hacking* 위험. margin 만 키우려고 *답변 품질을 희생* 할 수 있습니다
 - **β 너무 작음** (예: 0.01): reference 제약이 *매우 강함* → policy 가 reference 근처에 묶여 *거의 안 움직임* → 정렬이 느리거나 안 됨
 
 ```python
 # 0.1 에서 시작. reward accuracy 가 안 오르면 0.2-0.3 으로,
-# 답변이 망가지면 (반복/붕괴) 0.05 로 낮춰 보세요.
+# 답변이 망가지면 (반복/collapse) 0.05 로 낮춰 보세요.
 dpo_config.beta = 0.1
 ```
 

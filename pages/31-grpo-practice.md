@@ -375,7 +375,7 @@ grpo_config = GRPOConfig(
     # 신호 정규화: std 나눗셈 제거(난이도 bias·과증폭 차단)
     scale_rewards=False,
     loss_type="dr_grpo",
-    # 붕괴 방지: lr 낮추고(정석 ~1e-6 근처) clip 강화, 짧은 RL 에 cosine 금지
+    # collapse 방지: lr 낮추고(정석 ~1e-6 근처) clip 강화, 짧은 RL 에 cosine 금지
     learning_rate=5e-6,
     lr_scheduler_type="constant_with_warmup",
     warmup_ratio=0.1,

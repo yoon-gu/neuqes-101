@@ -49,7 +49,7 @@ mask = torch.rand(B, L) < t.unsqueeze(1)
 
 **정상이고, 작은 from-scratch diffusion 의 *구조적* 한계입니다.** 두 가지를 구분하세요.
 
-1. **greedy 붕괴** — 전부 `[MASK]` 에서 greedy(argmax) 로 뽑으면 문맥 없는 첫 step 에서 최빈 토큰(`.`)이 모든 자리 최고 confidence 라 *마침표만 반복* 됩니다. 그래서 `diffusion_generate` 의 기본은 sampling (`temperature=1.0, top_k=50`). greedy 는 진단·비교용으로만.
+1. **greedy collapse** — 전부 `[MASK]` 에서 greedy(argmax) 로 뽑으면 문맥 없는 첫 step 에서 최빈 토큰(`.`)이 모든 자리 최고 confidence 라 *마침표만 반복* 됩니다. 그래서 `diffusion_generate` 의 기본은 sampling (`temperature=1.0, top_k=50`). greedy 는 진단·비교용으로만.
 2. **규모 한계** — sampling 으로 바꿔도 작은 모델의 unconditional 생성은 거칩니다. 이건 *알고리즘이 아니라 규모* 문제예요: 같은 작은 규모에서 *표준 BERT MLM(고정 15%) 도 복원이 비슷하게 약하고*, `1/t` 재가중 유무도 차이가 없습니다. loss 가 `ln(vocab)` 에서 잘 내려간 것 자체가 학습은 정상이라는 뜻.
 
 품질을 올리려면 규모를 키우거나(아래) — 더 현실적으로는 *사전학습된 작은 모델* 을 쓰면 됩니다 (Ch 33).

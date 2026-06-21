@@ -137,13 +137,13 @@ implicit reward 차이 (margin) 가 커질수록 loss 가 어떻게 줄어드는
 
 ### β 의 역할 — reference 에서 벗어나는 정도
 
-- **β 큼** (예: 0.5): reference 제약이 *느슨* → policy 가 preference 에 강하게 끌려가 *빨리 정렬되지만* reference 에서 멀어져 *붕괴 (degeneration)·reward hacking* 위험
+- **β 큼** (예: 0.5): reference 제약이 *느슨* → policy 가 preference 에 강하게 끌려가 *빨리 정렬되지만* reference 에서 멀어져 *collapse (degeneration)·reward hacking* 위험
 - **β 작음** (예: 0.05): reference 제약이 *강함* → 안전하지만 *정렬이 느림*
 - 기본값 **0.1** 이 무난한 출발점
 
 ### 왜 frozen reference 가 필요한가
 
-reference 가 없으면 (또는 β=0), 모델은 *chosen 의 확률을 무한정 올리고 rejected 를 0 으로* 밀어붙입니다 — 그 과정에서 *원본 SFT 의 일반 능력이 붕괴* 합니다 (한 패턴만 반복하거나, 문법이 무너지는 등). **frozen reference 는 "원본에서 너무 멀어지지 마라" 는 닻** 입니다:
+reference 가 없으면 (또는 β=0), 모델은 *chosen 의 확률을 무한정 올리고 rejected 를 0 으로* 밀어붙입니다 — 그 과정에서 *원본 SFT 의 일반 능력이 collapse* 합니다 (한 패턴만 반복하거나, 문법이 무너지는 등). **frozen reference 는 "원본에서 너무 멀어지지 마라" 는 닻** 입니다:
 
 - $\log \pi_\theta - \log \pi_{\text{ref}}$ 가 *상대적* 비교 → policy 가 reference 근처에 머물도록 KL 제약을 거는 효과
 - *정렬하면서도 SFT 의 능력을 보존* — reward hacking·degeneration 방지

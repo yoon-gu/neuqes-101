@@ -291,7 +291,7 @@ def diffusion_generate(active_model, length=64, steps=16, temperature=1.0, top_k
     '''전부 [MASK] 에서 시작해 steps 번 denoise. prompt_ids 를 주면 앞부분 고정 (조건부 생성).
 
     기본은 sampling (temperature>0). temperature=0 으로 두면 greedy 인데,
-    작은 모델 + 전부-[MASK] 출발에서는 greedy 가 최빈 토큰('.')만 뽑는 *붕괴* 가 잘 일어나
+    작은 모델 + 전부-[MASK] 출발에서는 greedy 가 최빈 토큰('.')만 뽑는 *collapse* 가 잘 일어나
     sampling 을 기본값으로 둡니다 (아래 한계 노트 참고).'''
     active_model.eval()
     dev = active_model.device
@@ -317,7 +317,7 @@ def diffusion_generate(active_model, length=64, steps=16, temperature=1.0, top_k
             pred = torch.multinomial(scaled.softmax(-1), 1).squeeze(-1)
             conf = probs.gather(-1, pred.unsqueeze(-1)).squeeze(-1)
         else:
-            conf, pred = probs.max(dim=-1)                      # greedy (최빈 토큰 붕괴 주의)
+            conf, pred = probs.max(dim=-1)                      # greedy (최빈 토큰 collapse 주의)
 
         is_mask = (x[0] == mask_id) & (~fixed)                  # 지금 마스킹된 (생성 대상) 자리
         # 일단 마스킹된 자리를 예측으로 채운 잠정 시퀀스
