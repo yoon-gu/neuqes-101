@@ -30,6 +30,7 @@ import hashlib
 import datetime
 import time
 import threading
+import shutil
 from pathlib import Path
 
 PER_CELL_TIMEOUT = 60 * 60  # 셀당 최대 실행 시간(초). GPU 학습 챕터 여유 있게.
@@ -59,17 +60,13 @@ def main():
     from nbclient import NotebookClient
     from nbclient.exceptions import CellExecutionError
 
-    # 1) 본인 fork clone (이미 있으면 최신화)
+    # 1) 본인 fork clone — 매번 work 를 지우고 fresh clone(stale 방지).
+    #    VM 재사용 시 shallow clone 의 pull/reset 이 최신을 못 받는 일이 있어, 통째로 다시 받는다.
     work = Path("/content") / repo.split("/")[-1]
-    if not work.is_dir():
-        # 얕은 클론(--depth 1) — 챕터별 새 VM 방식에서 클론 비용을 줄인다. 히스토리 불필요.
-        subprocess.run(["git", "clone", "-q", "--depth", "1", "--branch", branch,
-                        f"https://github.com/{repo}.git", str(work)], check=True)
-    else:
-        # shallow clone 에서 pull 은 최신을 못 가져올 때가 있어, fetch + reset --hard 로 확실히 동기화
-        subprocess.run(["git", "-C", str(work), "fetch", "-q", "--depth", "1", "origin", branch], check=False)
-        subprocess.run(["git", "-C", str(work), "checkout", "-q", branch], check=False)
-        subprocess.run(["git", "-C", str(work), "reset", "-q", "--hard", f"origin/{branch}"], check=False)
+    if work.is_dir():
+        shutil.rmtree(work, ignore_errors=True)
+    subprocess.run(["git", "clone", "-q", "--depth", "1", "--branch", branch,
+                    f"https://github.com/{repo}.git", str(work)], check=True)
 
     exec_dir = work / "executed"
     exec_dir.mkdir(exist_ok=True)
