@@ -24,7 +24,7 @@
 | **10 ← 여기** | DistilBERT 파인튜닝 | `AutoTokenizer.from_pretrained(...)` | Yelp 이진화 | **`Linear(H, 1)`** | **sigmoid** | **`BCEWithLogitsLoss`** |
 | 11 (다음) | DistilBERT 파인튜닝 | 같음 | Yelp 이진화 | `Linear(H, 2)` | softmax | `CrossEntropyLoss` |
 
-전체 20챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
+전체 챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
 
 ## 변경점 (Diff from Ch 9)
 

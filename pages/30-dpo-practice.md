@@ -138,9 +138,9 @@ print("\n=== preference sample 0 ===")
 ex0 = dpo_ds[0]
 print("--- prompt ---")
 print(ex0["prompt"])
-print("--- chosen (선호) ---")
+print("--- chosen (preferred) ---")
 print(ex0["chosen"][:200])
-print("\n--- rejected (덜 선호) ---")
+print("\n--- rejected (less preferred) ---")
 print(ex0["rejected"][:200])
 ```
 
@@ -159,10 +159,10 @@ formatted dataset: Dataset({
 
 ### 응답:
 
---- chosen (선호) ---
+--- chosen (preferred) ---
 숫자 집합의 표준 편차를 계산하려면 다음 단계를 따르세요:1. 숫자의 평균(평균)을 계산합니다.2. 각 숫자에서 평균을 뺀 다음 결과를 제곱합니다.3. 제곱 차이의 평균을 계산합니다.4. 제곱 차이의 평균의 제곱근을 구합니다.주어진 숫자 [1, 2, …(뒤 60자 생략)
 
---- rejected (덜 선호) ---
+--- rejected (less preferred) ---
 배열 [1, 2, 3, 4, 5]의 표준 편차를 구하려면 먼저 배열의 평균을 계산해야 합니다. 이렇게 하려면 배열의 모든 숫자를 합산하고 배열의 총 숫자 수로 나눕니다. 이 경우 (1+2+3+4+5)/5 = 16입니다. 따라서 배열의 평균은 16입니다 …(뒤 60자 생략)
 ```
 
@@ -224,16 +224,16 @@ for p in ref_model.parameters():
 
 n_trainable_ref = sum(p.requires_grad for p in ref_model.parameters())
 print(f"reference model: frozen  (trainable params = {n_trainable_ref})")
-print("policy   : 학습 대상 (gradient 흐름)")
-print("reference: 고정 (gradient 안 흐름) - KL 제약의 닻")
+print("policy   : trainable (gradient flows)")
+print("reference: frozen (no gradient) - the anchor for the KL constraint")
 ```
 
 **▶ 실행 결과**
 
 ```text
 reference model: frozen  (trainable params = 0)
-policy   : 학습 대상 (gradient 흐름)
-reference: 고정 (gradient 안 흐름) - KL 제약의 닻
+policy   : trainable (gradient flows)
+reference: frozen (no gradient) - the anchor for the KL constraint
 ```
 
 ```python
@@ -273,7 +273,7 @@ margin = r_w - r_l
 loss = -math.log(1.0 / (1.0 + math.exp(-BETA * margin)))   # -log sigmoid(beta*margin)
 
 print("=" * 60)
-print("DPO loss - 한 샘플로 손계산 (response-only log-prob)")
+print("DPO loss - manual calculation on one sample (response-only log-prob)")
 print("=" * 60)
 print(f"log pi_theta(chosen)    : {pi_w:10.3f}")
 print(f"log pi_ref  (chosen)    : {ref_w:10.3f}")
@@ -290,7 +290,7 @@ print(f"DPO loss = -log sigmoid(beta*margin) = {loss:8.4f}   (beta={BETA})")
 
 ```text
 ============================================================
-DPO loss - 한 샘플로 손계산 (response-only log-prob)
+DPO loss - manual calculation on one sample (response-only log-prob)
 ============================================================
 log pi_theta(chosen)    :   -579.046
 log pi_ref  (chosen)    :   -579.046
@@ -351,7 +351,7 @@ before_margins = reward_margins(policy, ref_model, dpo_ds, n=64)
 acc_before = float((before_margins > 0).mean() + 0.5 * (before_margins == 0).mean())  # 무승부(margin=0)=0.5
 print(f"BEFORE DPO - reward margin (n={len(before_margins)})")
 print(f"  mean margin     : {before_margins.mean():.3f}")
-print(f"  reward accuracy : {acc_before:.3f}  (ratio of margin>0; policy=ref 라 margin=0 → 무승부 50%)")
+print(f"  reward accuracy : {acc_before:.3f}  (ratio of margin>0; policy=ref so margin=0 -> tie 50%)")
 ```
 
 **▶ 실행 결과**
@@ -359,7 +359,7 @@ print(f"  reward accuracy : {acc_before:.3f}  (ratio of margin>0; policy=ref 라
 ```text
 BEFORE DPO - reward margin (n=64)
   mean margin     : 0.000
-  reward accuracy : 0.500  (ratio of margin>0; policy=ref 라 margin=0 → 무승부 50%)
+  reward accuracy : 0.500  (ratio of margin>0; policy=ref so margin=0 -> tie 50%)
 ```
 
 ```python

@@ -424,7 +424,7 @@ Per-batch shape (batch_size=8, varies):
      4          (8, 128)         762    1024     74%
 ```
 
-DataCollator의 다양한 모습을 직접 돌려봅니다 — 동적 padding의 효율을 *숫자로* 확인하고, BERT 사전학습에 쓰는 MLM collator를 시연하며, 마지막으로 *직접 작성한 collator* 까지 보면 Ch 13 보조 loss 같은 커스텀 학습이 어떻게 가능한지 감이 잡힙니다.
+DataCollator의 다양한 모습을 직접 돌려봅니다 — 동적 padding의 효율을 *숫자로* 확인하고, BERT 사전학습에 쓰는 MLM collator를 시연하며, 마지막으로 *직접 작성한 collator* 까지 보면 Ch 14 보조 loss 같은 커스텀 학습이 어떻게 가능한지 감이 잡힙니다.
 
 ### 실험 1 — 정적 vs 동적 padding 효율을 숫자로
 
@@ -681,14 +681,14 @@ Observation: at non-padding positions, input_ids and labels match.
 
 ### 실험 3 — 커스텀 `collate_fn` 직접 작성
 
-위에서 본 `DataCollatorWithPadding` 와 `DataCollatorForLanguageModeling` 은 `transformers` 가 task별로 미리 만들어준 도구입니다. 그러나 *우리 task* 가 표준 형식에서 벗어나면 (예: Ch 13 보조 loss처럼 라벨이 두 종류) 직접 함수를 작성해야 합니다.
+위에서 본 `DataCollatorWithPadding` 와 `DataCollatorForLanguageModeling` 은 `transformers` 가 task별로 미리 만들어준 도구입니다. 그러나 *우리 task* 가 표준 형식에서 벗어나면 (예: Ch 14 보조 loss처럼 라벨이 두 종류) 직접 함수를 작성해야 합니다.
 
 `collate_fn` 의 시그니처는 단순합니다 — 입력은 *샘플 dict의 리스트*, 출력은 *batch dict* (각 키에 stacked 텐서).
 
 ```python
 def custom_collate(batch_list):
     # 샘플 dict 리스트 → batch dict.
-    # Ch 13 보조 loss를 미리 흉내내 라벨을 두 종류로 만들어 둠:
+    # Ch 14 보조 loss를 미리 흉내내 라벨을 두 종류로 만들어 둠:
     #   - main_label: 0-4 정수 (분류 라벨)
     #   - aux_score:  0.0-1.0 float (정규화한 별점)
 
@@ -731,4 +731,4 @@ aux_score (float):      [1.0, 0.5, 1.0, 0.0]
 
 **관찰**: `collate_fn` 한 함수가 *batch 단위 변환의 집결지* 입니다. 라벨 형식 변환, 추가 메타정보 부착, 다중 라벨 dict 등 무엇이든 여기서 처리할 수 있습니다.
 
-Ch 13 보조 loss는 이 패턴을 그대로 사용 — 메인 라벨(multi-hot)과 보조 라벨(별점 float)을 한 dict 안에 같이 담아서 모델이 두 loss를 합쳐 계산하도록 합니다. *학습 코드의 어디에도 collate_fn 정의가 없는데 학습이 잘 되네?* 라고 느낀다면, 그건 `Trainer` 가 `tokenizer` 만 보고 `DataCollatorWithPadding` 을 자동 생성한 결과일 가능성이 큽니다 — 직접 짜야 하는 순간엔 위 패턴이 출발점입니다.
+Ch 14 보조 loss는 이 패턴을 그대로 사용 — 메인 라벨(multi-hot)과 보조 라벨(별점 float)을 한 dict 안에 같이 담아서 모델이 두 loss를 합쳐 계산하도록 합니다. *학습 코드의 어디에도 collate_fn 정의가 없는데 학습이 잘 되네?* 라고 느낀다면, 그건 `Trainer` 가 `tokenizer` 만 보고 `DataCollatorWithPadding` 을 자동 생성한 결과일 가능성이 큽니다 — 직접 짜야 하는 순간엔 위 패턴이 출발점입니다.

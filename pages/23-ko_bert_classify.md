@@ -14,7 +14,7 @@ self-contained 노트북: Ch 22 의 MLM 학습을 짧게 재현 → 같은 본�
 1. 🚀 **분류 데이터**: NSMC 이진 (e9t/nsmc, GitHub raw TSV, Ch 15 와 같은 5K/1K split, seed 42)
 2. 🔤 **토크나이저**: `klue/bert-base` (Ch 22 와 동일)
 3. 📥 **MLM 사전학습 데이터**: `wikimedia/wikipedia` `20231101.ko` paragraphs 5K (일반 도메인 — *분류용 NSMC 와 별도*)
-4. 🏗️ **MLM 사전학습 재현 (Ch 22 압축본)**: 같은 작은 BertConfig 로 1 epoch 만 짧게
+4. 🏗️ **MLM 사전학습 재현 (Ch 22 압축본)**: 같은 작은 BertConfig 로 2K paragraphs × 3 epoch
 5. 🔀 **헤드 교체**: `BertForMaskedLM` → `BertForSequenceClassification(num_labels=2)`. 본체는 그대로, MLM head 떼고 분류 head 부착
 6. 🚀 **분류 fine-tune**: Trainer fp16, 2 epoch
 7. 🔬 **평가**: accuracy / precision / recall / F1 / AUC (Ch 15 / Ch 21 과 같은 5종) + confusion matrix
@@ -74,7 +74,7 @@ self-contained 노트북: Ch 22 의 MLM 학습을 짧게 재현 → 같은 본�
 | 사전학습 시간 | TPU 수일 | **T4 약 8-10분** | |
 | Fine-tune 도메인 | NSMC 이진 (사전학습과 다른 도메인) | NSMC 이진 (사전학습과 다른 도메인) | **둘 다 일반 한국어 → NSMC transfer 라 fair** |
 | 분류 fine-tune 셋업 | Ch 15 = 이번 챕터 동일 (같은 데이터, 같은 hyperparams) | | 변하는 건 *본체 출발점* 뿐 |
-| 기대 accuracy | 약 85-88% | **약 65-75% 예상** | 비교는 실측치로 확인 |
+| 실측 accuracy | 약 0.86 | **약 0.54** | 실행본 기준 (Ch 15=0.86, Ch 23=0.5420). 짧은 사전학습(MLM 약 0.2분)이라 동전 던지기에 가까움 |
 
 비교가 *공정* 한 이유 — Ch 15 도 본 챕터도 둘 다 *일반 도메인 한국어 사전학습 → NSMC 분류 transfer* 의 같은 패턴. *사전학습 규모* (약 10,000배) 와 *모델 크기* (11배) 만 차이. 만약 Ch 23 이 NSMC text 로 사전학습했다면 비교가 unfair 했을 것 — domain-adaptive pretraining 우위 때문.
 
@@ -178,9 +178,9 @@ NSMC = Naver Sentiment Movie Corpus. 한국어 *binary* 감성 분류의 표준 
 
 vocab 약 32,000 의 한국어 WordPiece. MLM 사전학습과 분류 fine-tune 전 구간에서 *같은 토크나이저* 를 써야 본체가 학습한 임베딩의 의미가 유지됩니다.
 
-## MLM 사전학습 — Ch 22 패턴 압축 재현 (한국어 Wikipedia, 1 epoch)
+## MLM 사전학습 — Ch 22 패턴 압축 재현 (한국어 Wikipedia, 3 epoch)
 
-이 노트북을 *self-contained* 로 만들기 위해 Ch 22 의 MLM 사전학습을 여기서 짧게 재현합니다. Ch 22 보다 *짧은 1 epoch* (시간 단축) 라 사전학습 깊이는 얕지만, *random init 보다는 낫다* 는 차이를 만들기에는 충분합니다.
+이 노트북을 *self-contained* 로 만들기 위해 Ch 22 의 MLM 사전학습을 여기서 짧게 재현합니다. Ch 22 (5K paragraphs) 보다 *데이터를 줄이고 (2K) 3 epoch* 로 돌려 시간을 단축하면서도, *random init 보다는 낫다* 는 차이를 만들기에는 충분합니다.
 
 **MLM 사전학습 데이터는 *분류용 NSMC 와 별도*** — `wikimedia/wikipedia` config `20231101.ko` paragraphs 5K 를 *새로 로드*. 본 챕터의 *진짜 transfer 메시지* — *일반 한국어 위키 사전학습 → NSMC 영화 리뷰 분류 transfer* 가 노트북 한 구조에 자연스럽게 들어맞도록 *두 데이터셋이 공존*. 같은 토크나이저 (`klue/bert-base`) 가 두 도메인을 모두 처리.
 
@@ -229,11 +229,11 @@ vocab 약 32,000 의 한국어 WordPiece. MLM 사전학습과 분류 fine-tune �
 
 **관찰 — *동일 transfer 패턴 안에서 사전학습 규모 격차* 가 NSMC 정확도에 어떻게 드러나나**
 
-전형적으로:
-- **Ch 15** (`klue/bert-base`, 약 110M, 약 8.4B 토큰 대규모 한국어 사전학습): accuracy 약 85-88%, AUC 약 0.92-0.94
-- **Ch 23 ours** (small BERT, 한국어 Wikipedia 2K paragraphs × 3 epoch 사전학습): accuracy 약 65-75%, AUC 약 0.75-0.85
+실측 (실행본 기준):
+- **Ch 15** (`klue/bert-base`, 약 110M, 약 8.4B 토큰 대규모 한국어 사전학습): accuracy 약 0.86, AUC 약 0.93
+- **Ch 23 ours** (small BERT, 한국어 Wikipedia 2K paragraphs × 3 epoch 사전학습): accuracy 약 0.54, AUC 약 0.56 (동전 던지기 수준 — MLM 약 0.2분의 짧은 사전학습 한계)
 
-**Ch 15 vs Ch 23 ours**: accuracy 약 10-20%p 격차. 두 모델이 *같은 transfer 패턴* (일반 한국어 위키 → NSMC) 을 따르므로 격차의 거의 전부가 *사전학습 규모의 가치* — 약 8.4B 토큰의 *일반 한국어 지식* 이 `klue/bert-base` 본체에 압축되어 있어, NSMC 같은 *비격식 구어체 도메인* 에도 빠르게 적응합니다. *작은 일반 사전학습 < 대규모 일반 사전학습* 의 본질은 단순 양적 차이가 아니라 *도메인 다양성의 질적 차이* — `klue/bert-base` 는 위키 + 뉴스 + 블로그·댓글까지 포함한 약 8.4B 토큰으로 비격식 한국어 도메인도 *이미 본 적이 있어* transfer 가 자연스럽습니다.
+**Ch 15 vs Ch 23 ours**: accuracy 약 32%p 격차. 두 모델이 *같은 transfer 패턴* (일반 한국어 위키 → NSMC) 을 따르므로 격차의 거의 전부가 *사전학습 규모의 가치* — 약 8.4B 토큰의 *일반 한국어 지식* 이 `klue/bert-base` 본체에 압축되어 있어, NSMC 같은 *비격식 구어체 도메인* 에도 빠르게 적응합니다. *작은 일반 사전학습 < 대규모 일반 사전학습* 의 본질은 단순 양적 차이가 아니라 *도메인 다양성의 질적 차이* — `klue/bert-base` 는 위키 + 뉴스 + 블로그·댓글까지 포함한 약 8.4B 토큰으로 비격식 한국어 도메인도 *이미 본 적이 있어* transfer 가 자연스럽습니다.
 
 > NSMC 는 *짧은 한 줄 리뷰* 이고 *반어·맞춤법 흔들림·라벨 노이즈* 가 섞여 있어 영어 Yelp (Ch 21) 보다 *살짝 더 어려운* 데이터. 작은 모델 + 작은 사전학습 환경에서는 그 어려움이 더 두드러집니다 — 한국어 환경 특유의 *negative transfer 가능성* 까지 포함한 정량 비교는 부록을 참조하세요.
 

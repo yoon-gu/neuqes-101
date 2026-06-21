@@ -25,7 +25,7 @@
 | **16 ← 여기** | klue/bert-base | 같음 | **KLUE-YNAT (뉴스 7분류)** | **`Linear(H, 7)`** | softmax | `CrossEntropyLoss` |
 | 17 (다음) | klue/bert-base | 같음 | KLUE-YNAT 합성 multi-label | `Linear(H, 7)` | sigmoid (per-label) | `BCEWithLogitsLoss` (per-label) |
 
-전체 20챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
+전체 챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
 
 ## 변경점 (Diff from Ch 15)
 
@@ -67,11 +67,11 @@ K=7 의 random baseline loss = $\log 7 = 1.946$. 학습 첫 step 에서 loss 가
 
 Ch 15 와 *완전히 동일* — `klue/bert-base` 한국어 WordPiece. 토크나이저는 K 변화에 무관 (라벨 처리는 모델 측 일).
 
-> **Phase 2 안에서는 토크나이저 고정** — Ch 15·16·17·18 모두 같은 한국어 WordPiece. Phase 3 (Ch 19-20) 에서 비로소 *직접 학습한 워드레벨 토크나이저* 가 등장.
+> **Phase 2 안에서는 토크나이저 고정** — Ch 15·16·17·18 모두 같은 한국어 WordPiece. Phase 3 (Ch 19-23) 에서 비로소 *직접 학습한 워드레벨 토크나이저* 가 등장.
 
 ### 헤드라인 토큰화 예시
 
-NSMC 영화 리뷰는 보통 *짧은 한 줄* (~20 토큰), KLUE-YNAT 뉴스 헤드라인은 *조금 더 정형* 된 한국어 (~25-30 토큰). 같은 한국어지만 *문체가 다른* 두 도메인 — 도메인 적응이 어떻게 이뤄지는지 확인할 좋은 비교.
+NSMC 영화 리뷰는 보통 *짧은 한 줄* (약 20 토큰), KLUE-YNAT 뉴스 헤드라인도 비슷하게 짧아 *평균 약 16 토큰 (최대 27)*. 같은 한국어지만 *문체가 다른* 두 도메인 — 도메인 적응이 어떻게 이뤄지는지 확인할 좋은 비교.
 
 **baseline VRAM**:
 

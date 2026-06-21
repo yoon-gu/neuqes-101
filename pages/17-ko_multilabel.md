@@ -28,7 +28,7 @@ KLUE-YNAT 에는 multi-label 정답이 없습니다. 그래서 *서로 다른 �
 | **17 ← 여기** | klue/bert-base | 같음 | **KLUE-YNAT 합성 multi-label (두 헤드라인 결합)** | `Linear(H, 7)` | **sigmoid (per-label)** | **`BCEWithLogitsLoss` (per-label)** |
 | 18 (다음) | klue/bert-base | 같음 | KLUE-YNAT 합성 multi-label + 라벨 개수 보조 | `Linear(H, 7)` 메인 + `Linear(H, 1)` 보조 | sigmoid + 없음 | `BCE(per-label) + λ·MSE` |
 
-전체 20챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
+전체 챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
 
 ## 변경점 (Diff from Ch 16)
 
@@ -105,11 +105,11 @@ softmax 는 출력의 *합 = 1* 을 강제합니다 ($\sum_k \mathrm{softmax}(z)
 
 Ch 16 과 *완전히 동일* — `klue/bert-base` 한국어 WordPiece. 토크나이저는 라벨 *형식* (int 스칼라든 multi-hot 벡터든) 에 무관하므로 변화 없음.
 
-> **Phase 2 안에서는 토크나이저 고정** — Ch 15·16·17·18 모두 같은 한국어 WordPiece. Phase 3 (Ch 19-20) 에서 비로소 *직접 학습한 워드레벨 토크나이저* 가 등장.
+> **Phase 2 안에서는 토크나이저 고정** — Ch 15·16·17·18 모두 같은 한국어 WordPiece. Phase 3 (Ch 19-23) 에서 비로소 *직접 학습한 워드레벨 토크나이저* 가 등장.
 
 ### 결합 헤드라인 토큰화 예시
 
-Ch 16 은 헤드라인 *한 줄* (-25-30 토큰) 이었지만, Ch 17 은 두 헤드라인을 `[SEP]` 로 이어붙여 *길이가 약 2배* (-50-60 토큰) 가 됩니다. `max_length=128` 안에 충분히 들어갑니다.
+Ch 16 은 헤드라인 *한 줄* (평균 약 16 토큰) 이었지만, Ch 17 은 두 헤드라인을 `[SEP]` 로 이어붙여 *길이가 약 2배* (평균 약 30 토큰, 최대 41) 가 됩니다. `max_length=128` 안에 충분히 들어갑니다.
 
 두 문장을 잇는 `[SEP]` 토큰은 BERT 가 *문장 경계* 를 인식하는 특수 토큰입니다 — NSP (Next Sentence Prediction) 사전학습에서 쓰던 그 토큰. 결합 헤드라인에선 두 주제의 경계 역할을 합니다.
 

@@ -24,7 +24,7 @@
 | **13 ← 여기** | DistilBERT 파인튜닝 | 같음 | **Yelp + 항목 키워드 합성** | **`Linear(H, 5)`** | **sigmoid (per-label)** | **`BCEWithLogitsLoss` (per-label)** |
 | 14 (다음) | DistilBERT 파인튜닝 | 같음 | Yelp + 항목 + 별점 보조 | `Linear(H, 5)` 메인 + `Linear(H, 1)` 보조 | sigmoid + 없음 | `BCE(per-label) + λ·MSE` |
 
-전체 20챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
+전체 챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
 
 ## 변경점 (Diff from Ch 12)
 

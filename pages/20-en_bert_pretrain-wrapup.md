@@ -29,7 +29,7 @@
 ```python
 # 이번 챕터 (Ch 20 → Ch 21) 흐름 — 원본 BERT 와 같은 정신
 # 일반 위키 (Wikitext-103) 로 MLM 사전학습
-# 영화 리뷰 (Yelp) 로 분류 fine-tune  ← 다른 도메인 transfer
+# Yelp 리뷰(식당·업체) 로 분류 fine-tune  ← 다른 도메인 transfer
 
 # 만약 Yelp 로 사전학습 → Yelp 분류 fine-tune 이었다면
 # domain-adaptive pretraining 에 가까워져 transfer 메시지가 약해짐
@@ -137,7 +137,7 @@ model.half().save_pretrained("./ch20_small_bert_mlm")
 | hidden_size | 256 | 768 | 표현 공간 차원이 1/3 → 미세한 의미 구분 어려움 |
 | num_layers | 4 | 12 | *깊은* 추론 (구문 → 의미 → 문맥) 단계 부족 |
 | 학습 데이터 | 5K paragraphs (약 700K-1M 토큰, Wikitext-103) | 33억 토큰 (BERT-base) | 어휘 다양성·문맥 풍부함 격차 약 5000배 |
-| 학습 시간 | 20분 | 4 일 (TPU v3-256) | 압축한 *정보량* 자체가 다름 |
+| 학습 시간 | 약 0.4분 (MLM 2 epoch) | 4 일 (TPU v3-256) | 압축한 *정보량* 자체가 다름 |
 
 **결론**: 이번 챕터의 산출물은 *fine-tune 출발점으로는 random 보다 나음* 정도. *zero-shot* 또는 *복잡한 downstream* 에선 표준 BERT 와 비교 불가. *작은 모델 + 작은 데이터로도 일반 도메인 사전학습이 가능하다는 메커니즘* 을 *경험* 하는 게 이 챕터의 목적이고, *실용 모델* 은 표준 사전학습품을 가져다 쓰는 게 정답.
 
@@ -146,7 +146,7 @@ model.half().save_pretrained("./ch20_small_bert_mlm")
 **Chapter 21. 영어 BERT 분류 (Ch 20 사전학습 모델 fine-tune) — *일반 도메인 → 다른 도메인 transfer***
 
 - 이번 챕터의 `./ch20_small_bert_mlm` 체크포인트를 `AutoModelForSequenceClassification.from_pretrained(..., num_labels=2)` 로 로드 → MLM head 떼고 분류 헤드 부착
-- **Yelp 이진 분류 fine-tune** (Ch 10·11 과 같은 데이터·셋업) — *완전히 다른 도메인 transfer*. 일반 위키로 사전학습한 본체가 *영화 리뷰 도메인* 에 얼마나 잘 적응하는가 측정
+- **Yelp 이진 분류 fine-tune** (Ch 10·11 과 같은 데이터·셋업) — *완전히 다른 도메인 transfer*. 일반 위키로 사전학습한 본체가 *Yelp 리뷰(식당·업체) 도메인* 에 얼마나 잘 적응하는가 측정
 - **핵심 비교**: 이번 작은 사전학습 BERT (약 10M params, Wikitext-103 5K paragraphs MLM) vs Ch 10 의 DistilBERT (약 66M params, 대규모 Wikipedia + BookCorpus 사전학습). 둘 다 *일반 도메인 → Yelp transfer* 라 비교가 *fair* — *사전학습 규모* 차이만 측정됨
 - 작은 모델 + 작은 데이터 사전학습이 *얼마나 도움 되는가* 의 정량 측정 — fine-tune 학습 곡선·최종 accuracy·confusion matrix 모두 나란히
 - 일부러 *random init* baseline (사전학습 없이 분류 직접) 도 함께 학습해 *사전학습의 순 효과* 분리

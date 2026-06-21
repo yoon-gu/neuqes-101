@@ -120,7 +120,7 @@ def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=N
 
 ### Q7. (실무) Phase 2 (한국어, Ch 15-18) 가 끝났습니다. Phase 3 에서 토크나이저를 *직접 학습* 하는 이유는?
 
-Ch 1-18 모두 *사전학습 토크나이저* (sklearn TF-IDF 토큰화, BERT WordPiece) 에 의존했습니다. Phase 3 (Ch 19-20) 는 이 의존을 끊고 *어휘 자체를 코퍼스에서 학습*:
+Ch 1-18 모두 *사전학습 토크나이저* (sklearn TF-IDF 토큰화, BERT WordPiece) 에 의존했습니다. Phase 3 (Ch 19-23) 는 이 의존을 끊고 *어휘 자체를 코퍼스에서 학습*:
 
 - **Ch 19**: BPE / WordPiece / Unigram 알고리즘을 직접 돌려 어휘 만들기 → 토큰화가 *데이터에 따라 어떻게 달라지는지* 직관.
 - **Ch 20**: 학습한 토크나이저로 *작은 BERT 를 처음부터* 사전학습 → 사전학습 의존 없는 경험.

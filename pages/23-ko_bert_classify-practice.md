@@ -428,9 +428,9 @@ cls_model = BertForSequenceClassification(cls_config)
 
 # MLM 본체 (embeddings + encoder) 를 분류 모델로 *복사* — pooler 까지 같이
 missing, unexpected = cls_model.bert.load_state_dict(mlm_model.bert.state_dict(), strict=False)
-print(f"본체 가중치 복사 완료")
-print(f"  missing keys (분류 측에만 있는 부분): {len(missing)}  e.g. {missing[:3] if missing else []}")
-print(f"  unexpected keys (MLM 측 잉여):       {len(unexpected)}  e.g. {unexpected[:3] if unexpected else []}")
+print(f"Body weights copied")
+print(f"  missing keys (classification-only): {len(missing)}  e.g. {missing[:3] if missing else []}")
+print(f"  unexpected keys (MLM-only surplus): {len(unexpected)}  e.g. {unexpected[:3] if unexpected else []}")
 
 # 파라미터 수 비교
 total_cls = sum(p.numel() for p in cls_model.parameters())
@@ -445,9 +445,9 @@ print(f"  total:                                 {total_cls:>10,}  ({total_cls/1
 **▶ 실행 결과**
 
 ```text
-본체 가중치 복사 완료
-  missing keys (분류 측에만 있는 부분): 2  e.g. ['pooler.dense.weight', 'pooler.dense.bias']
-  unexpected keys (MLM 측 잉여):       0  e.g. []
+Body weights copied
+  missing keys (classification-only): 2  e.g. ['pooler.dense.weight', 'pooler.dense.bias']
+  unexpected keys (MLM-only surplus): 0  e.g. []
 
 Classification model parameters:
   body (embeddings + encoder + pooler): 11,450,624  (100.0%)

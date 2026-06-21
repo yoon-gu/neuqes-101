@@ -43,10 +43,10 @@ $$\mathrm{KL}(P_{\text{gen}} \,\|\, P_{\text{unigram}}) = \sum_{v} P_{\text{gen}
 
 | 샘플러 | 4-gram 반복률 |
 |---|---|
-| 반복 억제 없음 | 0.173 |
+| 반복 억제 없음 | 0.177 |
 | 반복 억제 적용 | **0.000** |
 
-반복 억제가 없을 때의 0.173은 생성문 4-gram의 약 17%가 어딘가에서 다시 등장한다는 뜻으로, 자연스러운 문장이라기엔 높습니다. 반복 억제를 켜면 0.000으로 떨어집니다. 여기서 쓴 장치는 세 가지입니다. 이미 사용한 토큰의 로짓을 깎는 repetition penalty(1.3), 바로 왼쪽 토큰과 동일한 예측을 막는 no-immediate-repeat, 그리고 분포 꼬리를 잘라 안정화하는 temperature 0.8 + top-p 0.92입니다.
+반복 억제가 없을 때의 0.177은 생성문 4-gram의 약 18%가 어딘가에서 다시 등장한다는 뜻으로, 자연스러운 문장이라기엔 높습니다. 반복 억제를 켜면 0.000으로 떨어집니다. 여기서 쓴 장치는 세 가지입니다. 이미 사용한 토큰의 로짓을 깎는 repetition penalty(1.3), 바로 왼쪽 토큰과 동일한 예측을 막는 no-immediate-repeat, 그리고 분포 꼬리를 잘라 안정화하는 temperature 0.8 + top-p 0.92입니다.
 
 한 가지 균형을 분명히 해 둡니다. 4-gram 반복률 0.000은 그 자체로 "좋은 글"의 증거가 아닙니다. 무작위로 단어를 뽑아도 반복은 0이 나올 수 있으니까요. 이 숫자는 진단 1(조건부 학습됨)과 진단 2(구조 있음)가 이미 통과한 **뒤에** 읽어야 의미가 있습니다. 모델은 구조를 배웠고, 샘플러는 그 구조를 같은 조각으로 망치지 않는다 — 세 숫자를 함께 읽을 때 비로소 이 결론이 섭니다.
 
@@ -78,7 +78,7 @@ def fixed_t_acc(t_val=0.15, n=128):
             pr = model(inp.unsqueeze(0).to(device)).logits[0].argmax(-1).cpu()
         cor += (pr[m] == ids[m]).sum().item(); tot += int(m.sum())
     return cor / tot
-print(f"[진단] 고정-t(0.15) top-1 accuracy = {fixed_t_acc():.3f}")
+print(f"[diag] fixed-t(0.15) top-1 accuracy = {fixed_t_acc():.3f}")
 
 # 반복도 측정: 생성문의 4-gram 중복 비율 (낮을수록 좋음)
 def rep4(text):
@@ -89,12 +89,12 @@ def rep4(text):
 import statistics
 bestB = [generate(model, prompt_ids=pid, temperature=0.8, top_p=0.92, rep_penalty=1.3, no_immediate_repeat=True) for _ in range(5)]
 baseA = [generate(model, prompt_ids=pid, temperature=0.7, top_k=40, top_p=1.0, rep_penalty=1.0, no_immediate_repeat=False) for _ in range(5)]
-print(f"[진단] 4-gram 반복률  A(기존)={statistics.mean(map(rep4,baseA)):.3f}  B(반복억제)={statistics.mean(map(rep4,bestB)):.3f}  (낮을수록 좋음)")
+print(f"[diag] 4-gram repeat rate  A(baseline)={statistics.mean(map(rep4,baseA)):.3f}  B(repeat-suppressed)={statistics.mean(map(rep4,bestB)):.3f}  (lower is better)")
 ```
 
 **▶ 실행 결과**
 
 ```text
-[진단] 고정-t(0.15) top-1 accuracy = 0.717
-[진단] 4-gram 반복률  A(기존)=0.177  B(반복억제)=0.000  (낮을수록 좋음)
+[diag] fixed-t(0.15) top-1 accuracy = 0.717
+[diag] 4-gram repeat rate  A(baseline)=0.177  B(repeat-suppressed)=0.000  (lower is better)
 ```

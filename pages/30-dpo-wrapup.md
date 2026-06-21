@@ -64,7 +64,7 @@ trainer = DPOTrainer(model=policy, ref_model=None, args=cfg,
 - **β 너무 작음** (예: 0.01): reference 제약이 *매우 강함* → policy 가 reference 근처에 묶여 *거의 안 움직임* → 정렬이 느리거나 안 됨
 
 ```python
-# 1 에서 시작. reward accuracy 가 안 오르면 0.2-0.3 으로,
+# 0.1 에서 시작. reward accuracy 가 안 오르면 0.2-0.3 으로,
 # 답변이 망가지면 (반복/붕괴) 0.05 로 낮춰 보세요.
 dpo_config.beta = 0.1
 ```

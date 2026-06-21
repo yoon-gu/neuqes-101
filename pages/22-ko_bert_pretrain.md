@@ -2,7 +2,7 @@
 
 **환경**: Google Colab **T4 GPU 필수**.
 
-**예상 소요 시간**: 약 20-25분 (토크나이저 로드 + ko 위키 다운로드 + paragraph split·토큰화 약 3분 + MLM 2 epoch 약 15-20분 + 평가/저장)
+**예상 소요 시간**: 약 5-8분 (토크나이저 로드 + ko 위키 다운로드·paragraph split·토큰화가 대부분을 차지 + MLM 2 epoch 약 0.3분 + 평가/저장). 전체 소요는 데이터 다운로드가 지배합니다.
 
 
 ## 학습 흐름
@@ -23,7 +23,7 @@
 | Ch | 모델 | 토크나이저 | 데이터 | Output Head | Activation | Loss |
 |---|---|---|---|---|---|---|
 | 19 | — (토크나이저 학습 전용) | WordPiece + WordLevel (둘 다 직접 학습) | Yelp text + NSMC text | — | — | — |
-| 20 | 작은 BERT (직접, scratch) | `bert-base-uncased` 토크나이저 (가져옴) | `yelp_polarity` text (라벨 무시) | MLM head | softmax (MLM) | `CrossEntropyLoss` (masked token) |
+| 20 | 작은 BERT (직접, scratch) | `bert-base-uncased` 토크나이저 (가져옴) | Wikitext-103 paragraphs (일반 도메인) | MLM head | softmax (MLM) | `CrossEntropyLoss` (masked token) |
 | 21 | Ch 20 사전학습 BERT + 분류 헤드 | (Ch 20과 동일) | Yelp 이진화 | `Linear(H, 2)` | softmax | `CrossEntropyLoss` |
 | **22 ← 여기** | **작은 BERT (직접, scratch) — 한국어** | **`klue/bert-base` 토크나이저 (가져옴)** | **한국어 Wikipedia paragraphs** | **MLM head** | softmax (MLM) | **`CrossEntropyLoss` (masked token)** |
 | 23 (다음) | Ch 22 사전학습 BERT + 분류 헤드 | (Ch 22와 동일) | NSMC 이진 | `Linear(H, 2)` | softmax | `CrossEntropyLoss` |
@@ -38,7 +38,7 @@
 |---|---|---|
 | **언어** | 영어 | **한국어** ← *유일한 변화* |
 | 토크나이저 | `bert-base-uncased` (vocab 30,522, 영어 WordPiece) | **`klue/bert-base` (vocab 약 32,000, 한국어 WordPiece)** |
-| 데이터 | `fancyzhx/yelp_polarity` text 5K (라벨 무시) | **한국어 Wikipedia paragraphs 5K (`wikimedia/wikipedia` 20231101.ko)** |
+| 데이터 | Wikitext-103 paragraphs 5K (일반 도메인, `Salesforce/wikitext`) | **한국어 Wikipedia paragraphs 5K (`wikimedia/wikipedia` 20231101.ko)** |
 | 본체 hyperparam | `BertConfig(hidden=256, layer=4, head=4, intermediate=1024)` | (그대로) |
 | 모델 클래스 | `BertForMaskedLM` (random init) | (그대로) |
 | Collator | `DataCollatorForLanguageModeling(mlm_probability=0.15)` | (그대로) |

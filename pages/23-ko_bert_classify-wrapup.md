@@ -31,9 +31,9 @@
 | 데이터 양 (원본) | 56만 train | 15만 train |
 
 ```python
-# Yelp 평균 토큰 길이
-yelp_lens = [len(tokenizer(t)["input_ids"]) for t in ds_train_full[:1000]["text"]]
-nsmc_lens = [len(tokenizer(t)["input_ids"]) for t in ds_train_full[:1000]["text"]]
+# Yelp(Ch 21) vs NSMC(이 챕터) 평균 토큰 길이 비교
+yelp_lens = [len(tokenizer(t)["input_ids"]) for t in ds_train_full[:1000]["text"]]      # Ch 21 Yelp 텍스트
+nsmc_lens = [len(tokenizer(t)["input_ids"]) for t in df_train["document"][:1000]]       # 이 챕터 NSMC 리뷰
 # Yelp: 약 100-150 토큰, NSMC: 약 20-30 토큰
 ```
 
@@ -128,15 +128,15 @@ for i in confident_wrong[:5]:
     print(f"  pred={cls_preds[i]} true={cls_labels[i]} text={tokenizer.decode(cls_eval[int(i)]['input_ids'], skip_special_tokens=True)[:80]}")
 ```
 
-자신 있게 틀린 sample 중 일부는 *진짜 라벨 노이즈* (반어법, 이중 의미, 라벨러 실수). 분류 정확도가 *천정 100%* 가 안 되는 본질적 이유 중 하나. NSMC 의 *알려진 한계* — 학습자가 정확도 89% 가 *데이터 한계의 안쪽* 이라는 걸 알면 *과적합 의심* 을 피할 수 있습니다.
+자신 있게 틀린 sample 중 일부는 *진짜 라벨 노이즈* (반어법, 이중 의미, 라벨러 실수). 분류 정확도가 *천정 100%* 가 안 되는 본질적 이유 중 하나. NSMC 의 *알려진 한계* — `klue/bert-base` 같은 대규모 사전학습 모델도 NSMC 에서 약 86% 안팎이 천장이라는 걸 알면 *과적합 의심* 을 피할 수 있습니다.
 
 ### Q7. (이론) Phase 3 가 끝났는데, *원본 BERT 정신* 의 핵심 메시지를 한 줄로 정리하면 뭐가 남나요?
 
 **일반 도메인 사전학습 + 다른 도메인 fine-tune transfer 가 *task 별 from-scratch 학습 보다 압도적으로 효율적*** 이라는 것이 Phase 3 의 한 줄 결론. 본 챕터의 2-way 비교와 부록의 random init baseline 이 그 직접 증거:
 
-- *random init* 만 가지고 NSMC fine-tune: accuracy 약 50-60% (부록에서 측정 — 한국어 환경에선 negative transfer 로 *작은 사전학습 모델* 과 비등하거나 역전될 수도)
-- *작은 일반 도메인 사전학습 + fine-tune* (본 챕터): accuracy 약 65-75%
-- *대규모 일반 도메인 사전학습 + fine-tune* (Ch 15): accuracy 약 85-88% (실무 baseline)
+- *random init* 만 가지고 NSMC fine-tune: accuracy 약 0.50-0.55 (부록에서 측정 — 한국어 환경에선 negative transfer 로 *작은 사전학습 모델* 과 비등하거나 역전될 수도)
+- *작은 일반 도메인 사전학습 + fine-tune* (본 챕터): accuracy 약 0.54 (실측 — MLM 약 0.2분의 짧은 사전학습이라 동전 던지기에 가까움)
+- *대규모 일반 도메인 사전학습 + fine-tune* (Ch 15): accuracy 약 0.86 (실무 baseline)
 
 세 셋업의 격차가 *사전학습 데이터 양·도메인 다양성 + 모델 크기* 에 거의 비례 (한국어는 도메인 다양성 변수가 특히 중요). *task 도메인으로 직접 사전학습* 하지 않고 *일반 위키* 만으로도 충분한 transfer 가 일어난다는 게 *원본 BERT 의 진짜 통찰*.
 

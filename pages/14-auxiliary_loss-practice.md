@@ -350,13 +350,13 @@ class AuxTrainer(Trainer):
         return loss
 
 
-print("AuxTrainer 정의 완료 — Trainer 의 compute_loss 만 교체.")
+print("AuxTrainer defined — only compute_loss is overridden in Trainer.")
 ```
 
 **▶ 실행 결과**
 
 ```text
-AuxTrainer 정의 완료 — Trainer 의 compute_loss 만 교체.
+AuxTrainer defined — only compute_loss is overridden in Trainer.
 ```
 
 평가 단계에서 메인 multi-label 성능을 재는 함수를 정의합니다. 로짓에 sigmoid를 적용해 확률로 바꾼 뒤 0.5 임계값으로 예측을 정하고, hamming loss와 micro/macro 평균의 F1, precision, recall, 그리고 macro AUC를 한꺼번에 계산합니다. 보조 헤드는 여기서 평가하지 않고 메인 태스크에만 집중하는 점을 눈여겨보세요.

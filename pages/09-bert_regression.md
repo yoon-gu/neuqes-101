@@ -19,7 +19,7 @@
 | 7-8 | DistilBERT (추론·데이터 파이프라인) | `AutoTokenizer.from_pretrained(...)` | Yelp / 영어 예시 | 사전학습 헤드 | softmax | — |
 | **9 ← 여기** | **DistilBERT 파인튜닝** | `AutoTokenizer.from_pretrained(...)` | Yelp (별점 1-5, Ch 2와 동일) | **`Linear(H, 1)`** | 없음 | **`MSELoss`** |
 
-전체 20챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
+전체 챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
 
 ## 변경점 (Diff from Ch 8)
 
@@ -92,7 +92,7 @@ Ch 7에서는 사전학습된 분류 헤드(`distilbert-base-uncased-finetuned-s
 
 이번 챕터는 4,000건이라 default(전체 학습)이 가장 좋은 선택입니다.
 
-모델 가중치(~67M 파라미터, fp32 ~255 MB)가 GPU에 올라간 상태입니다. 학습이 시작되면 *옵티마이저 모멘텀(2배) + gradient(1배)* 가 추가되어 VRAM이 더 늘어납니다.
+모델 가중치(약 67M 파라미터, fp32 약 255 MB)가 GPU에 올라간 상태입니다. 학습이 시작되면 *옵티마이저 모멘텀(2배) + gradient(1배)* 가 추가되어 VRAM이 더 늘어납니다.
 
 ## `TrainingArguments` + `Trainer`
 

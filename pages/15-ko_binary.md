@@ -24,14 +24,14 @@
 | **15 ← 여기 (Phase 2 시작)** | **`klue/bert-base`** | **WordPiece (한국어)** | **NSMC (네이버 영화 리뷰)** | `Linear(H, 2)` | softmax | `CrossEntropyLoss` |
 | 16 (다음) | klue/bert-base | WordPiece (한국어) | KLUE-YNAT (뉴스 7분류) | `Linear(H, 7)` | softmax | `CrossEntropyLoss` |
 
-전체 20챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
+전체 챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
 
 ## 변경점 (Diff from Ch 11)
 
 | 축 | Ch 11 (영어 binary) | Ch 15 (한국어 binary) |
 |---|---|---|
 | **언어** | 영어 | **한국어** |
-| 모델 본체 | `distilbert-base-uncased` (66M) | **`klue/bert-base`** (110M, BERT-base full size) |
+| 모델 본체 | `distilbert-base-uncased` (약 66M) | **`klue/bert-base`** (110M, BERT-base full size) |
 | 토크나이저 | 영어 WordPiece (vocab 30K) | **한국어 WordPiece** (vocab 32K) |
 | 데이터 | Yelp 이진화 (5K샘플 / max_len 128) | **NSMC** 5K샘플 / max_len 128 |
 | `num_labels` | 2 | 2 (그대로) |
@@ -66,7 +66,7 @@ $$L = -\frac{1}{N}\sum_{i=1}^{N}\log \hat p_{i, y_i} \quad\text{where}\quad \hat
 
 | 토크나이저 | 결과 토큰 | 토큰 수 |
 |---|---|---|
-| `distilbert-base-uncased` (영어) | `['이', '영', '##화', '정', '##말', '재', '##미', '##있', '##었', '##어', '##요']` 같이 *글자 단위* 로 산산조각 (또는 [UNK] 가득) | 11+ |
+| `distilbert-base-uncased` (영어) | `['ᄋ', '##ᅵ', 'ᄋ', '##ᅧ', '##ᆼ', '##ᄒ', '##ᅪ', 'ᄌ', '##ᅥ', '##ᆼ', '##ᄆ', '##ᅡ', '##ᆯ', '[UNK]']` 같이 *자모(초·중·종성) 단위* 로 산산조각 (또는 [UNK] 가득) | 14 |
 | `klue/bert-base` (한국어) | `['이', '영화', '정말', '재미있', '##었', '##어요']` — *의미 있는 어휘* 단위 | 6 |
 
 영어 토크나이저는 한국어를 *낯선 문자열* 로 보고 글자 단위까지 쪼갭니다. 한국어 토크나이저는 *재미있·었·어요* 를 어휘적 의미 단위로 분할 — 모델이 임베딩을 통해 *의미* 를 잡을 수 있는 형태.
@@ -117,7 +117,7 @@ Ch 11 에서 `distilbert-base-uncased` 였던 자리만 `klue/bert-base` 로 교
 |---|---|---|
 | Layer 수 | 6 | 12 (BERT-base full) |
 | Hidden size H | 768 | 768 |
-| 총 파라미터 | 67M | **110M** |
+| 총 파라미터 | 약 67M (헤드 포함) | **110M** |
 
 `klue/bert-base` 는 BERT-base 풀 사이즈 (12 레이어). DistilBERT 는 그 절반(6 레이어)으로 distill 한 *경량* 모델. 그래서 같은 5K 샘플 학습이 *약 1.5-2 배* 시간이 더 걸립니다.
 

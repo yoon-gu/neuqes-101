@@ -132,7 +132,7 @@ tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 # GPT-2로 바꾸려면 → 문자열만 "gpt2"로 변경
 ```
 
-실무에선 **거의 항상 `AutoTokenizer`** 를 씁니다. `Auto` 계열은 모델 카드(`config.json`) 에서 어떤 클래스를 써야 할지 자동 추론하므로, 다른 모델로 갈아끼우는 실험이 매우 쉽습니다. Ch 14의 한국어 BERT(`klue/bert-base`) 도 같은 패턴으로 로드됩니다 — 코드 한 줄도 안 바꾸고요.
+실무에선 **거의 항상 `AutoTokenizer`** 를 씁니다. `Auto` 계열은 모델 카드(`config.json`) 에서 어떤 클래스를 써야 할지 자동 추론하므로, 다른 모델로 갈아끼우는 실험이 매우 쉽습니다. Ch 15의 한국어 BERT(`klue/bert-base`) 도 같은 패턴으로 로드됩니다 — 코드 한 줄도 안 바꾸고요.
 
 ## 삽질 코너 (선택)
 

@@ -6,7 +6,7 @@
 | `trl.GRPOConfig` | `GRPOTrainer` 설정 (`TrainingArguments` 상속 + `num_generations`·`max_completion_length`·`beta` 등) | **새로 등장** |
 | `reward_funcs` (verifier) | 생성 답을 채점하는 callable (또는 list). `(completions, **kwargs)` → `list[float]` | **새로 등장** (DPO 는 preference 데이터, reward 함수 없음) |
 | `GRPOConfig(num_generations=4)` | group size — 한 prompt 당 생성 답 개수 (rollout) | **새로 등장** |
-| `GRPOConfig(beta=0.0)` | KL 제약 강도. 0 = ref-free (reference 없이, 메모리 절약) | **새로 등장** (DPO 의 beta 와 의미 비슷하나 기본 0) |
+| `GRPOConfig(beta=0.04)` | KL 제약 강도. 작은 값으로 reference(=SFT 모델) 근처에 묶어 붕괴·hacking 완화 (0 = ref-free) | **새로 등장** (DPO 의 beta 와 의미 비슷) |
 | group relative advantage | `(r - mean) / (std + eps)` — group 평균이 baseline (critic 대체) | **새로 등장** (DPO 는 쌍 비교, advantage 없음) |
 | `model.generate(num_return_sequences=k)` | rollout — 한 prompt 에 여러 답 생성 | **새로 등장** (DPO 는 생성 불필요) |
 | `PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2", ...)` | KoGPT2 BBPE (AutoTokenizer 함정 회피) | **공유** (Ch 27 이후 고정) |
@@ -113,8 +113,8 @@ PPO 는 *actor + critic + reward model + reference* **4 모델** 을 동시에 �
 
 ```python
 # PPO: actor + critic + reward model + reference (4 모델) -> T4 초과
-# GRPO: policy 하나 (beta=0 ref-free) + verifier(함수) -> T4 가능
-GRPOConfig(num_generations=4, beta=0.0, use_vllm=False)   # ref-free + HF generate
+# GRPO: policy + 작은 KL 앵커(reference=SFT 모델) + verifier(함수) -> T4 가능
+GRPOConfig(num_generations=4, beta=0.04, use_vllm=False)   # 작은 KL 앵커 + HF generate
 ```
 
 > 단 GRPO 도 *rollout (매 step 생성)* 은 PPO 와 공유하므로, *생성 비용* 은 듭니다. T4 에서는 group·step·generation 길이를 작게 잡아 통제합니다.

@@ -190,6 +190,6 @@ labels[:prompt_len] = [-100] * prompt_len   # <- 이 한 줄이 SFT 의 핵심
 | Ch 26 | 1 (한국어) | 작은 GPT scratch | 한국어 TinyStories | 한국어 단계 1 |
 | **Ch 27 ← 여기** | **2 (한국어)** | **KoGPT2 125M** | **한국어 TinyStories (동일)** | **한국어 단계 2: continual pretraining** |
 | Ch 28 | 3 | KoGPT2 + SFT | 한국어 instruction 데이터 | **단계 3: SFT** (`labels[:prompt_len] = -100`) |
-| Ch 29-30 | 4 | SFT 모델 + DPO / GRPO | preference / verifier reward | **단계 4: Alignment** |
+| Ch 30-31 | 4 | SFT 모델 + DPO / GRPO | preference / verifier reward | **단계 4: Alignment** |
 
 > **변하는 축** (Ch 27 → Ch 28): *학습 단계* (continual pretraining → SFT). 본체·언어는 같고, *데이터 형식 + `labels = -100` 자리* 만 바뀜. 본 챕터의 collator 출력 (거의 모든 자리 학습) 이 *그 한 줄과 정확히 대비되는 기준선* — Ch 28 이 Phase 4 thread 의 클라이맥스인 이유.

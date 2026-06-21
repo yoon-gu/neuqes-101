@@ -279,7 +279,7 @@ $$\text{모델 가중치 크기} \approx \text{파라미터 수} \times \text{dt
 
 **학습이 되면 메모리는 더 커집니다** — Adam 옵티마이저는 모델당 *추가로 2배* (1차·2차 모멘텀)를 더 들고, gradient도 *모델 크기만큼* 한 벌 — 즉 학습 중엔 **fp32 기준 파라미터 × 4배 정도** 의 VRAM이 필요합니다. Ch 9에서 다시 다룹니다.
 
-**참고**: 처음 실행 시 모델 다운로드(약 250MB)에 30초~1분 정도 걸립니다. 두 번째부터는 캐시되어 즉시 실행.
+**참고**: 처음 실행 시 모델 다운로드(약 250MB)에 30초-1분 정도 걸립니다. 두 번째부터는 캐시되어 즉시 실행.
 
 여러 문장도 한 번에:
 
@@ -318,7 +318,7 @@ generator("Hugging Face is", max_length=30, num_return_sequences=1)
 **▶ 실행 결과**
 
 ```text
-[{'generated_text': "Hugging Face is the only new movie ever made about the murder of a girl in India. The film follows an innocent girl, Ja …(뒤 593자 생략)
+[{'generated_text': "Hugging Face is the only new movie ever made about the murder of a girl in India. The film follows an innocent girl, Ja …(593 more chars omitted)
 ```
 
 이번엔 `fill-mask` task로 문장 속 `[MASK]` 자리에 들어갈 단어를 BERT가 예측하게 합니다. GPT-2가 이어 쓰기를 했다면, BERT는 앞뒤 문맥을 모두 보고 빈칸을 채우는 방식이라는 점이 대비됩니다. 후보 단어와 각 확률(score)이 함께 출력되니 모델이 무엇을 떠올렸는지 살펴보세요.

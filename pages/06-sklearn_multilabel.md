@@ -24,7 +24,7 @@
 | 5 | `LogisticRegression()` (multinomial 자동) | `TfidfVectorizer()` | Yelp 5클래스 | (5차원) | softmax | `CrossEntropyLoss` |
 | **6 ← 여기** | `OneVsRestClassifier(LogisticRegression())` | `TfidfVectorizer()` | Yelp + 항목 키워드 합성 | (5차원) | **sigmoid (각각 독립)** | **`BCEWithLogitsLoss` per-label** |
 
-전체 20챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
+전체 챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
 
 ## 변경점 (Diff from Ch 5)
 
@@ -74,7 +74,7 @@ $$L = \frac{1}{N \cdot K}\sum_{i=1}^{N}\sum_{k=1}^{K}\bigl[-y_{ik}\log \hat p_{i
 baseline = $\log 2 = 0.693$ — 모든 라벨에 0.5를 줄 때 (BCE에서 K=2 분포의 균등 추측과 같은 값). 학습된 모델은 이 값보다 작아야 정상.
 
 ```python
-# PyTorch (Ch 12 이후, multi-label)
+# PyTorch (Ch 13 이후, multi-label)
 criterion = nn.BCEWithLogitsLoss()
 loss = criterion(logits, targets.float())   # logits: (N, K), targets: (N, K) multi-hot
 
@@ -123,7 +123,7 @@ per-label BCE는 위 표처럼 5개 손실을 *독립적으로* 합산하므로 
 3. **정답이 노이지** — 우리 라벨 자체가 진짜 정답이 아닌 휴리스틱이라, 모델 성능을 이 정답에 비교하는 건 결국 "모델이 휴리스틱을 얼마나 따라 했나"를 잴 뿐.
 4. **빈 라벨**: 모든 항목이 0인 샘플도 있음 (`{n_labels_per_sample == 0).sum()` 건). 실제 multi-label 데이터에선 보통 최소 한 라벨은 보장.
 
-**그럼 왜 합성을 쓰나?** — 학습 코드의 *형태* 와 *평가 지표 해석* 을 익히는 게 이 챕터의 목적이기 때문입니다. Ch 12 BERT multi-label에서 **같은 합성 라벨** 을 그대로 사용하므로 비교가 깔끔하게 됩니다. 진짜 multi-label 데이터(예: GoEmotions, Reuters)는 라벨이 사람 손으로 만들어져 있어 비용이 큽니다.
+**그럼 왜 합성을 쓰나?** — 학습 코드의 *형태* 와 *평가 지표 해석* 을 익히는 게 이 챕터의 목적이기 때문입니다. Ch 13 BERT multi-label에서 **같은 합성 라벨** 을 그대로 사용하므로 비교가 깔끔하게 됩니다. 진짜 multi-label 데이터(예: GoEmotions, Reuters)는 라벨이 사람 손으로 만들어져 있어 비용이 큽니다.
 
 ## Phase 0 마무리 — sklearn vs HuggingFace 미리보기
 
@@ -149,7 +149,7 @@ HF의 `Trainer`는 학습 *과정* 을 명시합니다 — 학습률, 배치 크
 | **loss를 직접 보나** | 거의 안 봄 (fit 후 평가만) | 매 step마다 loss 출력 + 곡선 추적 (학습이 망가지면 즉시 보임) |
 | **하드웨어** | CPU, 단일 스레드 위주 | **GPU 필수** (fp16, gradient accumulation 등) |
 | **loss 함수 지정** | 모델 클래스에 내장 (LogReg = log loss) | `problem_type` 자동 매핑 또는 `compute_loss` 오버라이드 |
-| **모델 크기** | 수만 ~ 수십만 파라미터 | 사전학습 BERT — 6천만 ~ 수억 파라미터 |
+| **모델 크기** | 수만-수십만 파라미터 | 사전학습 BERT — 6천만-수억 파라미터 |
 | **학습 시간 (Yelp 5,000)** | 1초 미만 | T4 GPU에서 2-5분 |
 
 ### 코드 형태 미리보기 (Ch 9 BERT 회귀에서 본격 등장)

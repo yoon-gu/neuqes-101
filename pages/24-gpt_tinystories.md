@@ -2,7 +2,7 @@
 
 **환경**: Google Colab **T4 GPU 필수**.
 
-**예상 소요 시간**: 약 25-30분 (데이터 로드 약 2분 + BPE 토크나이저 학습 약 3분 + 학습 전 generation 약 30초 + 모델 학습 약 18분 + 학습 후 generation + reference 비교 약 2분)
+**예상 소요 시간**: 약 8-12분 (데이터 로드 약 2분 + BPE 토크나이저 학습 약 3분 + 학습 전 generation 약 30초 + 모델 학습 약 1분 + 학습 후 generation + reference 비교 약 2분)
 
 
 ## 학습 흐름
@@ -35,9 +35,9 @@
 
 ## Phase 전환 — Encoder (BERT) → Decoder (GPT) 패러다임
 
-Ch 7-23 의 BERT 챕터들이 *encoder + masked token 예측 + task head 부착 fine-tune* 패러다임이라면, Phase 4 (Ch 24-30) 는 *decoder + next-token 예측 + LM head 그대로 + SFT(behavior alignment)* 패러다임입니다. 본 챕터가 그 출발점.
+Ch 7-23 의 BERT 챕터들이 *encoder + masked token 예측 + task head 부착 fine-tune* 패러다임이라면, Phase 4 (Ch 24-31) 는 *decoder + next-token 예측 + LM head 그대로 + SFT(behavior alignment)* 패러다임입니다. 본 챕터가 그 출발점.
 
-| 축 | Phase 1·2·3 (BERT, Ch 7-23) | **Phase 4 (GPT, Ch 24-30)** |
+| 축 | Phase 1·2·3 (BERT, Ch 7-23) | **Phase 4 (GPT, Ch 24-31)** |
 |---|---|---|
 | 본체 | Encoder (양방향 attention) | **Decoder (causal / masked attention)** |
 | 사전학습 task | MLM (가려진 토큰 예측) | **CausalLM (next-token 예측)** |
@@ -129,14 +129,14 @@ $$L_{\text{CLM}} = -\frac{1}{n-1} \sum_{i=1}^{n-1} \log P(x_{i+1} \mid x_1, \dot
 | 모델 상태 | 정답 토큰 확률 | $-\log p$ |
 |---|---|---|
 | 균등 추측 (random init 직후) | $1/2048 \approx 4.88 \times 10^{-4}$ | **7.62** ← random baseline |
-| 약하게 학습 (정답 확률 0.02) | $0.02$ | 3.91 |
-| 잘 학습된 작은 GPT (정답 확률 0.05-0.15) | $0.05$ - $0.15$ | **1.9 - 3.0** ← 이번 챕터 목표 영역 |
+| 약하게 학습 (정답 확률 0.02) | $0.02$ | **3.91** ← 1500 step (1분) 도달 영역 |
+| 잘 학습된 작은 GPT (정답 확률 0.05-0.15) | $0.05$ - $0.15$ | $1.9$ - $3.0$ (더 길게 학습 시) |
 | 큰 사전학습 GPT (정답 확률 0.3+) | $0.3$ | 1.20 |
 | 완벽 (정답 확률 1.0) | $1.0$ | 0.00 |
 
 **관전 포인트**:
 - 학습 첫 step loss 가 약 7.6 부근이면 random init 직후 *균등 추측* 상태. 첫 100 step 안에 빠르게 떨어지면 vocab + 모델 정상.
-- 목표는 *vocab 후보를 좁히는* 단계 (약 2-3). TinyStories 의 단순한 어휘·문법 덕분에 3M 짜리 작은 모델로도 도달 가능.
+- 1분 (1500 step) 학습으로 누적 평균 `train_loss` 가 *약 3.8* 까지 내려갑니다. *vocab 후보를 좁히는* 단계로 충분히 진입한 수준 - TinyStories 의 단순한 어휘·문법 덕분에 3M 짜리 작은 모델로도 도달 가능합니다. 더 길게 학습하면 약 2-3 까지 더 내려갑니다.
 
 ### Perplexity (PPL)
 
@@ -145,8 +145,8 @@ $\text{PPL} = e^{L}$ — *다음 토큰을 평균 몇 후보 중에서 고민하
 | CLM loss | PPL | 해석 |
 |---|---|---|
 | 7.62 | 2,048 | 균등 (전체 vocab) |
-| 4.0 | 55 | 약 50 개 후보 |
-| 2.5 | 12 | 약 12 개 후보 ← 본 챕터 목표 |
+| 4.0 | 55 | 약 50 개 후보 ← 1500 step (1분) 도달 영역 |
+| 2.5 | 12 | 약 12 개 후보 (더 길게 학습 시) |
 | 1.0 | 2.7 | 거의 결정적 |
 
 > MLM 의 `ln(30522) ≈ 10.33` random baseline 과 같은 직관. *vocab 차원* 만 작아진 것 (2,048).
@@ -281,10 +281,10 @@ Ch 20·22 의 *사전학습 전 [MASK] top-5 후보* 와 같은 역할. random i
 BERT 챕터들 (Ch 20·22) 과 *완전히 같은* Trainer 패턴 - 바뀌는 건 모델 클래스와 collator 의 `mlm=False` 두 곳.
 
 - `DataCollatorForLanguageModeling(mlm=False)` → `labels = input_ids` (next-token prediction)
-- `max_steps=1500`, `batch_size=32`, `fp16=True` - T4 약 15-18분
+- `max_steps=1500`, `batch_size=32`, `fp16=True` - T4 약 1분
 - `eval_steps=150` 으로 train / val loss 추이 관찰
 
-**관전 포인트** - 학습 첫 step loss 가 약 7.6 (random baseline `ln(2048)`) 부근에서 시작해 *수백 step 안에 약 4-5* 로 빠르게 떨어지고, 1500 step 끝에 *약 2.5-3.0* 부근에서 안정화되면 정상. perplexity 로 환산하면 vocab 2,048 중 *약 12-20 개 후보* 로 좁힌 상태 - 다음 토큰을 *어느 정도 결정적* 으로 뽑는 수준.
+**관전 포인트** - 학습 첫 step loss 가 약 7.6 (random baseline `ln(2048)`) 부근에서 시작해 *수백 step 안에 약 4-5* 로 빠르게 떨어지고, 1500 step 끝에 누적 평균 `train_loss` 가 *약 3.8* 까지 내려가면 정상 (`train_loss` 는 학습 내내 본 step 들의 누적 평균이라 마지막 step 의 순간 loss 보다 다소 높게 보입니다). perplexity 로 환산하면 vocab 2,048 중 *수십 개 후보* 로 좁힌 상태 - 다음 토큰을 *어느 정도 결정적* 으로 뽑는 수준.
 
 ## 학습 *후* generation + before/after 비교
 

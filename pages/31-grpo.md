@@ -200,7 +200,7 @@ GRPO 는 *SFT 모델에서 출발* 합니다 (Ch 28 의 SFT 체크포인트가 �
 
 토크나이저는 Ch 27·28·30 과 동일 (`PreTrainedTokenizerFast` + special token 명시 — `AutoTokenizer` 함정 회피).
 
-## 5 SFT 워밍스타트 — GRPO 의 비제로 시작점 만들기
+## 2.5 SFT 워밍스타트 — GRPO 의 비제로 시작점 만들기
 
 GRPO 는 한 prompt 에 여러 답(group)을 생성해 *그룹 안에서* 잘한 답의 확률을 올립니다. 그런데 base KoGPT2 는 산술을 거의 못 풀어 **그룹의 보상이 전부 0** 이 되기 쉽고, 그러면 advantage 가 모두 0 이라 *학습 신호가 없습니다*(GRPO 의 cold-start 함정).
 
@@ -239,9 +239,9 @@ $$A_i = \frac{r_i - \text{mean}(r)}{\text{std}(r) + \varepsilon}$$
 
 > **rollout 주의 (T4 시간·메모리)**: GRPO 는 *매 step 여러 답을 생성* 하므로 무겁습니다 (DPO 보다 generation 비용이 큼). T4 + 30분 룰을 지키려면: **group size 작게 (`num_generations=4`) + 짧은 generation (`max_completion_length` 작게) + 작은 batch + 적은 step**. 시간이 빡빡하면 `N_TRAIN` 이나 step 을 더 줄이세요.
 
-> **`trl` 버전 주의**: `GRPOConfig` 는 `max_completion_length` 를 받지만 `max_prompt_length` 는 버전에 따라 없습니다. `beta` 기본값은 *0.0 (reference 없이, ref-free)* — KL 제약을 켜려면 `beta>0` 으로 주고 reference 가 메모리에 추가됩니다. 본 노트북은 *ref-free (beta=0)* 로 메모리를 아낍니다.
+> **`trl` 버전 주의**: `GRPOConfig` 는 `max_completion_length` 를 받지만 `max_prompt_length` 는 버전에 따라 없습니다. `beta` 는 KL 제약의 세기로, 0 으로 두면 reference 없이(ref-free) 돌지만 정책이 SFT 모델에서 멀어지는 것을 막을 닻이 사라집니다. 본 노트북은 *작은 KL 앵커 (`beta=0.04`)* 로 reference (= SFT 모델) 근처에 묶어 붕괴·reward hacking 을 완화합니다.
 
-## 5 🎯 난이도 필터 — GRPO 가 배울 *신호* 만들기
+## 4.5 🎯 난이도 필터 — GRPO 가 배울 *신호* 만들기
 
 GRPO 의 advantage 는 그룹 안에서 $(r-\text{mean})/\text{std}$ 입니다. 그런데 한 자리 산술은 prompt 마다 정답률이 **0 또는 1 로 양극화** 되기 쉽습니다 - SFT 후 쉬운 문제는 8개 답이 *전부 정답*, 못 푸는 문제는 *전부 오답*. 그러면 그룹 보상의 **표준편차가 0** 이라 advantage 가 전부 0 → *학습 신호가 아예 없습니다*.
 
@@ -306,7 +306,7 @@ GRPO 의 advantage 는 $A_i = (r_i - \text{mean}) / (\text{std} + \varepsilon)$ 
 
 ### 부록에서 reward 가 실제로 오르는 모습 확인
 
-이 레버들을 적용해 reward 가 *실제로 오르는* GRPO 는 부록 [`appendix_qwen_grpo_hpo.ipynb`](./appendix_qwen_grpo_hpo.ipynb) 에서 봅니다. 부록은:
+이 레버들을 적용해 reward 가 *실제로 오르는* GRPO 는 부록 [`31_grpo_appendix.ipynb`](./31_grpo_appendix.ipynb) 에서 봅니다. 부록은:
 
 - **(2) 더 강한 base** — `Qwen/Qwen2.5-0.5B-Instruct` (Ch 29 에서 쓴, 산술을 *가끔 맞히는* 모델) 로 교체
 - **(4) format reward** — correctness reward + format reward 두 개를 조합해 *0 만 나오는 것* 을 방지

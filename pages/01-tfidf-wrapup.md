@@ -87,7 +87,7 @@ tokenizer = Mecab().morphs  # 함수: str -> list[str]
 TfidfVectorizer(tokenizer=tokenizer, token_pattern=None)
 ```
 
-이 커리큘럼에서는 Phase 2(Ch 13-16, 한국어)에서 `klue/bert-base`의 한국어 WordPiece 토크나이저를, Phase 3(Ch 18)에서 형태소 기반 워드레벨 토크나이저를 직접 다룹니다.
+이 커리큘럼에서는 Phase 2(Ch 15-18, 한국어)에서 `klue/bert-base`의 한국어 WordPiece 토크나이저를, Phase 3(Ch 19부터)에서 형태소 기반 워드레벨 토크나이저를 직접 다룹니다.
 
 ### Q6. (이론) sparse 행렬이 dense 행렬보다 메모리에 유리한 이유는 무엇인가요? `.toarray()`로 바꾸면 왜 메모리가 폭발할 수 있나요?
 

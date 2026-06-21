@@ -25,7 +25,7 @@
 | **11 ← 여기** | DistilBERT 파인튜닝 | 같음 | Yelp 이진화 (Ch 10과 동일) | **`Linear(H, 2)`** | **softmax** | **`CrossEntropyLoss`** |
 | 12 (다음) | DistilBERT 파인튜닝 | 같음 | Yelp 5클래스 | `Linear(H, 5)` | softmax | `CrossEntropyLoss` |
 
-전체 20챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
+전체 챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
 
 ## 변경점 (Diff from Ch 10)
 
@@ -91,7 +91,7 @@ Ch 10과 동일한 `distilbert-base-uncased` WordPiece 토크나이저, 동일�
 | DistilBERT body | 66,362,880 | 66,362,880 |
 | pre_classifier (`Linear(768→768)`) | 590,592 | 590,592 |
 | classifier (`Linear(768→K)`) | **769** (=768+1) | **1,538** (=768·2+2) |
-| 합계 | 66,955,010 | 66,955,778 |
+| 합계 | 66,954,241 | 66,955,010 |
 
 방식 B의 분류 헤드 파라미터가 정확히 *2배* 입니다. 차이는 **769개** — 전체 67M 중 0.001%. 이 미세한 자유도 차이가 두 방식의 *최종 확률* 을 거의 같게, *학습된 가중치* 는 미묘하게 다르게 만듭니다.
 

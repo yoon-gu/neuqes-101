@@ -137,12 +137,12 @@ Ch 25 = *OpenAI 가 사전학습한 `gpt2` (124M params, WebText 약 40GB) 를 T
 |---|---|---|
 | 모델 크기 | 약 3M params | **약 124M (40배)** |
 | 사전학습 | from scratch (random init) | **OpenAI WebText 약 40GB 사전학습** |
-| TinyStories 학습 | 사전학습 그 자체 (1500 steps) | **continual pretraining** (수백 steps 면 충분) |
+| TinyStories 학습 | 사전학습 그 자체 (1500 steps) | **continual pretraining** (1 epoch, 약 3,200 steps) |
 | 토크나이저 | 직접 학습 BPE vocab 2,048 | **gpt2 BPE vocab 50,257 (그대로)** |
 | Generation 품질 | grammatical 한 동화 풍 영어 | **자연스러운 동화 + 일반 도메인 폭** |
-| 학습 시간 | 약 18분 (사전학습) | **약 5-8분** (continual pretraining 만) |
+| 학습 시간 | 약 1분 (사전학습) | **약 19분** (124M 본체 continual pretraining) |
 
-**핵심 메시지**: *대규모 일반 사전학습된 본체* + *작은 도메인 continual pretraining* 이 *작은 from-scratch 모델* 보다 *빠르게, 그리고 좋게* 도달합니다. *왜 실무는 보통 from-scratch 가 아니라 사전학습 모델을 가져와 새 데이터로 계속 학습하거나 SFT 하는가* 의 답. (단계 3 SFT 는 Ch 28 에서 본격.)
+**핵심 메시지**: *대규모 일반 사전학습된 본체* + *작은 도메인 continual pretraining* 이 *작은 from-scratch 모델* 보다 *낮은 loss 에서 출발해 더 좋게* 도달합니다 (학습 시간은 124M 본체라 오히려 더 깁니다). *왜 실무는 보통 from-scratch 가 아니라 사전학습 모델을 가져와 새 데이터로 계속 학습하거나 SFT 하는가* 의 답. (단계 3 SFT 는 Ch 28 에서 본격.)
 
 ## 다음 챕터 예고
 
@@ -150,7 +150,7 @@ Ch 25 = *OpenAI 가 사전학습한 `gpt2` (124M params, WebText 약 40GB) 를 T
 
 - `AutoModelForCausalLM.from_pretrained("gpt2")` - OpenAI WebText 약 40GB 로 사전학습된 124M params 모델 로드
 - **같은 TinyStories 30K** 데이터 (본 챕터와 동일) 로 **continual pretraining** (계속 사전학습 / continual learning — *같은 CausalLM task, 새 데이터, head 그대로*. *task adaptation 의미의 fine-tune 이 아니라 단계 2*)
-- **핵심 비교**: 본 챕터 (3M, from scratch, 18분) vs Ch 25 (124M, continual pretraining, 5-8분) 의 generation 품질·학습 곡선 격차
+- **핵심 비교**: 본 챕터 (3M, from scratch, 약 1분) vs Ch 25 (124M, continual pretraining, 약 19분) 의 generation 품질·학습 곡선 격차
 - *trainer 자체는 Ch 24 와 동일* (`transformers.Trainer` + `DataCollatorForLanguageModeling(mlm=False)`) — *변하는 건 모델 로드 한 줄 + lr (scratch 5e-4 → continual pretraining 2e-5)*
 - 작은 데이터 + 큰 사전학습 모델 = *왜 실무가 from-scratch 가 아니라 사전학습 모델 위에 계속 학습 패턴인가* 의 정량 답변
 - *진짜 task adaptation 의미의 fine-tune (instruction tuning)* 은 Ch 28 SFT 에서 본격 등장

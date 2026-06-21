@@ -2,7 +2,7 @@
 
 **환경**: Google Colab **T4 GPU 필수**.
 
-**예상 소요 시간**: 약 25-30분 (데이터 로드·story 복원 약 3분 + BBPE 토크나이저 학습 약 3분 + 학습 전 generation 약 30초 + 모델 학습 약 18분 + 학습 후 generation 약 2분)
+**예상 소요 시간**: 약 10-15분 (데이터 로드·story 복원 약 3분 + BBPE 토크나이저 학습 약 3분 + 학습 전 generation 약 30초 + 모델 학습 약 1분 + 학습 후 generation 약 2분)
 
 
 ## 학습 흐름
@@ -55,10 +55,10 @@ Phase 4 는 영어 (Ch 24-25) 와 한국어 (Ch 26-27) 가 *같은 학습 단계
 | 모델 클래스 | `GPT2LMHeadModel(config)` random init | (그대로) |
 | Collator | `DataCollatorForLanguageModeling(mlm=False)` | (그대로) |
 | Loss | `CrossEntropyLoss` (next-token, vocab 2,048 logits) | **`CrossEntropyLoss`** (next-token, vocab 약 4,000 logits) |
-| 학습률 | 5e-4 (scratch) | (그대로) |
+| 학습률 | 3e-4 (scratch) | **5e-4** ← 한국어 vocab 에 맞춘 미세 조정 |
 | 산출물 | 영어 동화 풍 generation | **한국어 동화 풍 generation** |
 
-> **변경점 한 가지 원칙** — Phase 4 안에서 *언어 축* 만 변합니다. 본체 구조도 학습 셋업도 Ch 24 와 동일. *같은 코드를 한국어 토크나이저 + 한국어 데이터로 돌렸을 때 같은 결 (말이 되는 한국어 동화) 이 나오는가* 가 본 챕터의 검증 포인트.
+> **핵심 변경은 *언어 축*** — Phase 4 안에서 토크나이저 학습 코퍼스와 데이터가 한국어로 바뀝니다. 본체 구조는 Ch 24 와 동일하고, 학습률만 한국어 vocab 에 맞춰 `3e-4 → 5e-4` 로 미세 조정했습니다. *같은 코드를 한국어 토크나이저 + 한국어 데이터로 돌렸을 때 같은 결 (말이 되는 한국어 동화) 이 나오는가* 가 본 챕터의 검증 포인트.
 
 ### 왜 한국어는 토크나이저를 *직접* 학습하나 — Ch 25 의 결론 잇기
 
@@ -73,7 +73,7 @@ Ch 24 에서 도입한 *GPT 시대 학습 4단계* 표. 본 챕터는 단계 1 (
 | 1 | **Pretraining** (사전학습) | random init 본체부터 일반 코퍼스로 학습 | 거의 모든 토큰 (pad 만 `-100`) | Ch 24 | **Ch 26 ← 여기** |
 | 2 | **Continual pretraining** (계속 사전학습) | 사전학습된 본체 + 새 데이터 + 같은 task | 거의 모든 토큰 (단계 1 과 동일) | Ch 25 | Ch 27 |
 | 3 | **SFT** (Supervised Fine-Tuning) | instruction-response 쌍으로 행동 정렬 | **답변 토큰만** (`labels[:prompt_len] = -100`) | - | Ch 28 |
-| 4 | **Alignment** (DPO / GRPO) | preference / verifier reward 로 선호 정렬 | (RL 내부) | - | Ch 29-30 |
+| 4 | **Alignment** (DPO / GRPO) | preference / verifier reward 로 선호 정렬 | (RL 내부) | - | Ch 30-31 |
 
 **영어·한국어 대칭** — 단계 1·2 가 영어 (Ch 24·25) ↔ 한국어 (Ch 26·27) 로 짝지어집니다.
 
@@ -124,13 +124,13 @@ $$L_{\text{CLM}} = -\frac{1}{n-1} \sum_{i=1}^{n-1} \log P(x_{i+1} \mid x_1, \dot
 | 모델 상태 | 정답 토큰 확률 | $-\log p$ |
 |---|---|---|
 | 균등 추측 (random init 직후) | $1/4000 = 2.5 \times 10^{-4}$ | **약 8.29** ← random baseline |
-| 약하게 학습 (정답 확률 0.02) | $0.02$ | 3.91 |
-| 잘 학습된 작은 GPT (정답 확률 0.05-0.15) | $0.05$ - $0.15$ | **1.9 - 3.0** ← 이번 챕터 목표 영역 |
+| 약하게 학습 (정답 확률 0.01-0.02) | $0.01$ - $0.02$ | **3.9 - 4.6** ← 1500 step (1분) 도달 영역 (번역체) |
+| 잘 학습된 작은 GPT (정답 확률 0.05-0.15) | $0.05$ - $0.15$ | $1.9$ - $3.0$ (더 길게 학습 시) |
 | 큰 사전학습 GPT (정답 확률 0.3+) | $0.3$ | 1.20 |
 
 **관전 포인트**:
 - 학습 첫 step loss 가 약 8.3 부근이면 random init 직후 *균등 추측* 상태. 첫 100 step 안에 빠르게 떨어지면 vocab + 모델 정상.
-- 목표는 *vocab 후보를 좁히는* 단계 (약 2.5-3.0). 한국어 TinyStories 의 단순한 어휘·문법 덕분에 3M 짜리 작은 모델로도 도달 가능 — Ch 24 (영어) 와 같은 결.
+- 1분 (1500 step) 학습으로 누적 평균 `train_loss` 가 *약 4.5* 까지 내려갑니다. 번역체 한국어라 영어 챕터 (약 3.8) 보다 다소 높지만, *vocab 후보를 좁히는* 단계로 진입한 수준 — Ch 24 (영어) 와 같은 결. 더 길게 학습하면 약 2.5-3.0 까지 내려갑니다.
 
 > Ch 24 의 `ln(2048) ≈ 7.62` 와 같은 직관. *vocab 차원* 만 약간 커진 것 (약 4,000) — 학습 동역학에는 영향 없고, *학습 종료 loss 의 절대값* 을 영어 챕터와 비교할 때만 미세 보정.
 
@@ -216,10 +216,10 @@ Ch 24 의 *사전학습 전 generation* 과 같은 역할. random init 모델은
 Ch 24 와 *완전히 같은* Trainer 패턴 — 모델 클래스·collator·hyperparams 모두 동일. 변하는 건 *데이터 (한국어) + 토크나이저 (BBPE)* 뿐.
 
 - `DataCollatorForLanguageModeling(mlm=False)` → `labels = input_ids` (next-token prediction)
-- `max_steps=1500`, `batch_size=32`, `lr=5e-4`, `fp16=True` - T4 약 15-18분
+- `max_steps=1500`, `batch_size=32`, `lr=5e-4`, `fp16=True` - T4 약 1분
 - `eval_steps=150` 으로 train / val loss 추이 관찰
 
-**관전 포인트** - 학습 첫 step loss 가 약 8.3 (random baseline `ln(4000)`) 부근에서 시작해 *수백 step 안에 약 4-5* 로 빠르게 떨어지고, 1500 step 끝에 *약 2.5-3.0* 부근에서 안정화되면 정상. Ch 24 (영어) 와 같은 수렴 곡선이 한국어에서도 나오는지가 본 챕터의 핵심 관찰 — *언어가 달라도 작은 GPT + 30K stories 의 학습 동역학은 비슷하다*.
+**관전 포인트** - 학습 첫 step loss 가 약 8.3 (random baseline `ln(4000)`) 부근에서 시작해 *수백 step 안에 약 5* 로 빠르게 떨어지고, 1500 step 끝에 누적 평균 `train_loss` 가 *약 4.5* 까지 내려가면 정상. 한국어는 번역체 데이터라 영어 챕터 (Ch 24, 약 3.8) 보다 도달 loss 가 다소 높지만, *수백 step 안에 random baseline 에서 빠르게 떨어지는 수렴 곡선* 자체는 동일합니다 — *언어가 달라도 작은 GPT + 30K stories 의 학습 동역학은 비슷하다*.
 
 ## 학습 *후* generation + before/after 비교
 

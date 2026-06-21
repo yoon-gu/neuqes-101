@@ -34,7 +34,7 @@ Phase 5 의 첫 챕터. Ch 24-31 까지 다룬 **GPT (decoder, autoregressive, �
 | 20 | 작은 BERT (영어, scratch) | `bert-base-uncased` (가져옴) | Wikitext-103 | MLM head | 고정 15% 마스킹-복원 | `CrossEntropyLoss` (masked 15%) |
 | 24 | 작은 GPT2 (직접, scratch) | BPE (직접 학습) | TinyStories | `Linear(H, V)` | autoregressive (왼→오 순차) | `CrossEntropyLoss` (next-token) |
 | 31 | SFT base + GRPO | BBPE | verifiable-reward | `Linear(H, V)` + group adv. | autoregressive + RL | `GRPO loss` |
-| **32 ← 여기** | **작은 BERT-style (직접, scratch)** | **BPE 2048 (`bert-base-uncased` 가져옴)** | **TinyStories** | **`Linear(H, V)`** | **parallel denoise (가변 마스킹 + 반복 복원)** | **masked-diffusion denoising loss (`1/t` 재가중)** |
+| **32 ← 여기** | **작은 BERT-style (직접, scratch)** | **ByteLevel BPE 2048 (직접 학습 + `[MASK]`)** | **TinyStories** | **`Linear(H, V)`** | **parallel denoise (가변 마스킹 + 반복 복원)** | **masked-diffusion denoising loss (`1/t` 재가중)** |
 | 33 (다음) | MDLM (170M) / DiffuGPT (124M) 사전학습 | (각 모델 토크나이저) | 영어 사전학습 추론 시연 | `Linear(H, V)` | parallel denoise (추론만) | — |
 
 전체 챕터 표는 [루트 README](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표) 를 참고하세요.
@@ -86,19 +86,19 @@ $$L = \mathbb{E}_{t \sim U(0,1)} \left[ \frac{1}{t} \cdot \frac{1}{L} \sum_{i:\,
 - $1/t$ 재가중: $t$ 가 작으면 (조금 가림) 가려진 토큰이 적으니 합이 작아지는데, $1/t$ 로 곱해 *마스킹 비율에 무관* 하게 스케일을 맞춤. 이 재가중 덕분에 *학습 목표가 log-likelihood 의 upper bound* 가 됩니다 (LLaDA / MDLM 의 핵심 항)
 - $t \sim U(0,1)$: 매 step 마다 *다른 난이도* 의 복원 문제를 풀게 함 — 5% 만 가린 쉬운 문제부터 95% 가린 거의-무에서-생성 문제까지
 
-### 숫자로 감 잡기 (vocab = 30,522)
+### 숫자로 감 잡기 (vocab = 2,048)
 
-random init 직후 모델은 가려진 자리를 *균등 추측* → 정답 확률 $1/30522$, 토큰당 $-\log p \approx \ln(30522) = 10.33$.
+random init 직후 모델은 가려진 자리를 *균등 추측* → 정답 확률 $1/2048$, 토큰당 $-\log p \approx \ln(2048) = 7.62$.
 
-| 마스킹 비율 $t$ | 가린 토큰 수 (L=128) | 가린 자리 합 ($\approx t L \times 10.33$) | $\times \frac{1}{t}\frac{1}{L}$ 후 | 해석 |
+| 마스킹 비율 $t$ | 가린 토큰 수 (L=128) | 가린 자리 합 ($\approx t L \times 7.62$) | $\times \frac{1}{t}\frac{1}{L}$ 후 | 해석 |
 |---|---|---|---|---|
-| 0.10 | 약 13 | 약 134 | **10.33** | 조금 가린 쉬운 복원 |
-| 0.50 | 약 64 | 약 661 | **10.33** | 절반 가림 |
-| 0.90 | 약 115 | 약 1188 | **10.33** | 거의 무에서 생성 |
+| 0.10 | 약 13 | 약 99 | **7.62** | 조금 가린 쉬운 복원 |
+| 0.50 | 약 64 | 약 488 | **7.62** | 절반 가림 |
+| 0.90 | 약 115 | 약 877 | **7.62** | 거의 무에서 생성 |
 
 **관전 포인트**:
-- `1/t` 재가중 덕분에 *어떤 t 든 baseline loss 가 똑같이 `ln(vocab) ≈ 10.33`* 으로 정렬됩니다. Ch 20 MLM 의 random baseline `ln(30522) ≈ 10.33` 과 정확히 같은 값 — *마스킹 비율만 일반화* 했지 loss 의 척도는 그대로입니다.
-- 학습 첫 step loss 가 약 10.3 부근에서 시작해 빠르게 떨어지면 정상. 목표는 약 4-6 영역 (작은 모델 + TinyStories).
+- `1/t` 재가중 덕분에 *어떤 t 든 baseline loss 가 똑같이 `ln(vocab) ≈ 7.62`* 로 정렬됩니다. 직접 학습한 BPE 2048 의 random baseline `ln(2048) ≈ 7.62` 와 같은 값 — *마스킹 비율만 일반화* 했지 loss 의 척도는 그대로입니다.
+- 학습 첫 step loss 가 약 7.6 부근에서 시작해 빠르게 떨어지면 정상. 목표는 약 3.7 부근 (작은 모델 + TinyStories).
 - $t$ 가 1 에 가까울수록 (거의 다 가림) *문맥 정보가 거의 없어* 복원이 어려움 → diffusion 생성이 *여러 step 에 나눠* 조금씩 푸는 이유.
 
 ## 마스킹 thread 클라이맥스 — *고정 15%* (BERT) → *가변 0-100%* (diffusion)
@@ -143,9 +143,9 @@ Ch 24 (GPT) 와 *완전히 같은 데이터* — `roneneldan/TinyStories` (Eldan
 
 학습 split 의 처음 **30,000 stories** 만 사용 (T4 30분 룰 안).
 
-## WordPiece 토크나이저 가져오기 (`bert-base-uncased`)
+## ByteLevel BPE 2048 직접 학습 + `[MASK]` 추가
 
-Ch 20·22 처럼 표준 BERT 토크나이저를 그대로 로드합니다. 핵심은 `[MASK]` 토큰의 존재.
+Ch 19·24 처럼 TinyStories 코퍼스에 ByteLevel BPE 를 vocab 2,048 으로 직접 학습하고, `[PAD]`·`[UNK]`·`[MASK]` 특수 토큰을 더해 씁니다. 핵심은 `[MASK]` 토큰의 존재 (직접 학습이라 `special_tokens` 로 명시 추가).
 
 **관전 포인트** — `[MASK]` 가 섞인 시퀀스가 바로 diffusion 의 *중간 상태* $x_t$ 입니다. 학습은 *가려진 자리를 맞히는 것*, 생성은 *전부 `[MASK]` 에서 시작해 반복적으로 채우는 것*. Ch 20 의 MLM 과 토큰 수준에서는 똑같이 생겼습니다 — 차이는 *마스킹 비율* 과 *반복 횟수*.
 
@@ -171,7 +171,7 @@ Ch 20·24 와 같은 전처리 패턴 — 전체 코퍼스를 토큰화해 이�
 
 diffusion 의 본체는 *bidirectional encoder* — 가려진 자리를 *좌·우 양방향 문맥* 으로 복원해야 하니 BERT 계열이 자연스럽습니다. `BertForMaskedLM` 을 *random init* 으로 작게 띄웁니다 (Ch 20 의 작은 BERT 와 같은 패턴).
 
-- `num_hidden_layers=4, num_attention_heads=4, hidden_size=256` → 약 13M params (대부분 임베딩)
+- `num_hidden_layers=4, num_attention_heads=4, hidden_size=256` → 약 3.79M params (작은 vocab 2048 덕분에 임베딩도 가벼움)
 - `max_position_embeddings = BLOCK_SIZE = 128`
 - MLM head (`Linear(H, V)`) 가 *가려진 자리의 토큰 분포* 를 출력 — 이게 곧 diffusion 의 denoiser
 
@@ -203,9 +203,9 @@ BERT/GPT 챕터들과 같은 `Trainer` 패턴이지만, *loss 를 직접 정의*
 
 - `DiffusionCollator` → 매 배치 가변 마스킹 + `t` 반환
 - `compute_loss` → 가려진 자리 CE 를 샘플별로 합산해 `1/t` 곱한 뒤 평균
-- `max_steps=1500`, `batch_size=32`, `fp16=True` - T4 약 13-15분
+- `max_steps=30000`, `batch_size=64`, `fp16=True` - T4 약 19분
 
-**관전 포인트** - `1/t` 재가중 덕분에 첫 step loss 가 약 10.3 (`ln(30522)`) 부근에서 시작 (Ch 20 MLM 의 random baseline 과 같은 값!). 빠르게 떨어져 1500 step 끝에 *약 4-6* 부근에서 안정화되면 정상. 작은 모델 + TinyStories 라 완벽하진 않지만 *가려진 자리를 문맥으로 복원* 하는 능력이 본체에 새겨집니다.
+**관전 포인트** - `1/t` 재가중 덕분에 첫 step loss 가 약 7.6 (`ln(2048)`) 부근에서 시작 (직접 학습한 BPE 2048 의 random baseline 과 같은 값!). 빠르게 떨어져 30000 step 끝에 *약 3.7* 부근에서 안정화되면 정상. 작은 모델 + TinyStories 라 완벽하진 않지만 *가려진 자리를 문맥으로 복원* 하는 능력이 본체에 새겨집니다.
 
 ## 학습 *후* denoise + 궤적 시각화
 

@@ -441,13 +441,13 @@ class AuxTrainer(Trainer):
         return (loss, outputs) if return_outputs else loss
 
 
-print("AuxTrainer 정의 완료 — Trainer 의 compute_loss 만 교체.")
+print("AuxTrainer defined — only Trainer.compute_loss is overridden.")
 ```
 
 **▶ 실행 결과**
 
 ```text
-AuxTrainer 정의 완료 — Trainer 의 compute_loss 만 교체.
+AuxTrainer defined — only Trainer.compute_loss is overridden.
 ```
 
 메인 multi-label task를 평가하는 지표 함수로, logits에 sigmoid를 씌워 0.5 임계값으로 예측을 만든 뒤 hamming loss와 micro/macro F1·precision·recall, macro-AUC를 계산합니다. 보조 task는 여기서 다루지 않고 뒤에서 따로 평가합니다.

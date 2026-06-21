@@ -196,7 +196,7 @@ sft_args = TrainingArguments(
 sft_trainer = Trainer(model=policy, args=sft_args, train_dataset=sft_tok,
                       data_collator=DataCollatorForLanguageModeling(tokenizer, mlm=False))
 t0 = time.time(); sft_trainer.train()
-print(f"SFT 워밍스타트 완료 ({(time.time()-t0)/60:.1f}min) - policy 가 이제 산술 포맷을 안다")
+print(f"SFT warmstart done ({(time.time()-t0)/60:.1f}min) - policy now knows the arithmetic format")
 ```
 
 **▶ 실행 결과**
@@ -205,7 +205,7 @@ print(f"SFT 워밍스타트 완료 ({(time.time()-t0)/60:.1f}min) - policy 가 �
 [transformers] warmup_ratio is deprecated and will be removed in v5.2. Use `warmup_steps` instead.
 [transformers] `loss_type=None` was set in the config but it is unrecognized. Using the default loss: `ForCausalLMLoss`.
 <IPython.core.display.HTML object>
-SFT 워밍스타트 완료 (1.2min) - policy 가 이제 산술 포맷을 안다
+SFT warmstart done (1.2min) - policy now knows the arithmetic format
 ```
 
 ```python
@@ -348,13 +348,13 @@ def pass_rate(model, prompt, gold, k=8):
 pool = make_arithmetic(500, max_operand=9, seed=SEED + 3)
 keep = [ex for ex in pool if 0.25 <= pass_rate(policy, ex["prompt"], ex["answer"]) <= 0.875]
 grpo_ds = Dataset.from_list(keep[:256]) if len(keep) >= 16 else grpo_ds  # 너무 적으면 원본 유지
-print(f"난이도 필터: pool {len(pool)} -> 중간난이도 {len(grpo_ds)}개 (그룹에 정답·오답 섞임 → advantage std>0)")
+print(f"difficulty filter: pool {len(pool)} -> {len(grpo_ds)} medium-difficulty (groups mix correct/wrong -> advantage std>0)")
 ```
 
 **▶ 실행 결과**
 
 ```text
-난이도 필터: pool 500 -> 중간난이도 256개 (그룹에 정답·오답 섞임 → advantage std>0)
+difficulty filter: pool 500 -> 256 medium-difficulty (groups mix correct/wrong -> advantage std>0)
 ```
 
 ```python

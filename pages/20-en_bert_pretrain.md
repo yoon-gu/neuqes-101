@@ -1,8 +1,8 @@
-**목표**: Phase 3 의 두 번째 챕터. Ch 19 에서 *토크나이저를 직접 학습* 해 봤다면, 이번엔 **모델 본체를 직접 random init 해 사전학습** 합니다. 표준 BERT 보다 *훨씬 작은* (약 10M params) BERT 를 짜서 **일반 도메인 Wikitext-103** paragraphs 로 **Masked Language Modeling (MLM)** 사전학습. 원본 BERT 의 Wikipedia + BookCorpus 정신을 따라 *task 도메인이 아닌* 일반 위키 본문 사용 — Ch 21 의 분류 fine-tune (Yelp 영화 리뷰) 은 *완전히 다른 도메인* 으로 *일반 표상 → 다른 task* transfer 메시지가 정직해집니다. 토크나이저는 학습 안정성을 위해 표준 `bert-base-uncased` 를 그대로 가져옵니다.
+**목표**: Phase 3 의 두 번째 챕터. Ch 19 에서 *토크나이저를 직접 학습* 해 봤다면, 이번엔 **모델 본체를 직접 random init 해 사전학습** 합니다. 표준 BERT 보다 *훨씬 작은* (약 10M params) BERT 를 짜서 **일반 도메인 Wikitext-103** paragraphs 로 **Masked Language Modeling (MLM)** 사전학습. 원본 BERT 의 Wikipedia + BookCorpus 정신을 따라 *task 도메인이 아닌* 일반 위키 본문 사용 — Ch 21 의 분류 fine-tune (Yelp 리뷰(식당·업체)) 은 *완전히 다른 도메인* 으로 *일반 표상 → 다른 task* transfer 메시지가 정직해집니다. 토크나이저는 학습 안정성을 위해 표준 `bert-base-uncased` 를 그대로 가져옵니다.
 
 **환경**: Google Colab **T4 GPU 필수**.
 
-**예상 소요 시간**: 약 20-25분 (`bert-base-uncased` 토크나이저 로드 + Wikitext-103 다운로드 + 5K paragraphs 필터링·토큰화 약 3분 + MLM 2 epoch 약 15-20분 + 평가/저장)
+**예상 소요 시간**: 약 5-8분 (`bert-base-uncased` 토크나이저 로드 + Wikitext-103 다운로드·필터링·토큰화가 대부분을 차지 + MLM 2 epoch 약 0.4분 + 평가/저장). 전체 소요는 데이터 다운로드가 지배합니다.
 
 
 ## 학습 흐름
@@ -51,7 +51,7 @@
 
 ### 왜 task corpus (Yelp) 가 아니라 일반 위키인가 — 원본 BERT 의 정신
 
-원본 BERT (Devlin et al., 2018) 는 *영어 Wikipedia + BookCorpus* 라는 **일반 도메인** 코퍼스로 사전학습한 뒤, *완전히 다른 downstream task* (GLUE, SQuAD 등) 로 fine-tune 했습니다. 본 챕터도 같은 패턴 — Wikitext-103 *일반 위키 paragraphs* 로 MLM 사전학습 → Ch 21 에서 *영화 리뷰 (Yelp)* 라는 *다른 도메인* 으로 transfer.
+원본 BERT (Devlin et al., 2018) 는 *영어 Wikipedia + BookCorpus* 라는 **일반 도메인** 코퍼스로 사전학습한 뒤, *완전히 다른 downstream task* (GLUE, SQuAD 등) 로 fine-tune 했습니다. 본 챕터도 같은 패턴 — Wikitext-103 *일반 위키 paragraphs* 로 MLM 사전학습 → Ch 21 에서 *Yelp 리뷰(식당·업체)* 라는 *다른 도메인* 으로 transfer.
 
 만약 Yelp text 로 MLM 사전학습한 뒤 Yelp 분류로 fine-tune 하면 *domain-adaptive pretraining* (DAPT) 에 가까워져 *일반 표상 학습 → 다른 task transfer* 의 본질이 흐려집니다. *일반 도메인 → 다른 도메인 transfer* 가 *진짜 사전학습-fine-tune 패러다임*. Ch 22 (한국어 위키 → NSMC 분류) 가 같은 패턴.
 
@@ -114,7 +114,7 @@ $$L_{\text{MLM}} = -\frac{1}{|M|} \sum_{i \in M} \log P(x_i \mid x_{\setminus M}
 - **Ch 19 의 8K WordPiece (Yelp 5K 학습)**: 학습 코퍼스 (Yelp) 분포에 *최적화* 되어 있어 *위키 도메인 단어* (`Seine`, `capital`, `located` 등) 가 작은 조각으로 쪼개짐 — Yelp 에 적게 등장하는 어휘일수록 더 잘게 분할.
 - **Ch 20 의 `bert-base-uncased` 30K WordPiece (Wiki + BookCorpus 학습)**: 위키 어휘를 *덜 쪼개짐*. 30K vocab + 일반 영어 학습이라 일반 도메인 + Yelp 같은 task 도메인 *둘 다* 폭넓게 커버.
 
-본 챕터의 사전학습 데이터 (Wikitext-103) 와 토크나이저 (`bert-base-uncased`) 가 *둘 다 일반 위키 분포* 라 *vocab 미스매치* 가 작습니다. Ch 21 에서 Yelp 분류로 fine-tune 할 때도 같은 토크나이저로 *문체 다른* 도메인을 처리 — 일반 영어 어휘는 거의 덜 쪼개지고, *영화 리뷰 특유 표현* 만 약간 더 분할되는 정도.
+본 챕터의 사전학습 데이터 (Wikitext-103) 와 토크나이저 (`bert-base-uncased`) 가 *둘 다 일반 위키 분포* 라 *vocab 미스매치* 가 작습니다. Ch 21 에서 Yelp 분류로 fine-tune 할 때도 같은 토크나이저로 *문체 다른* 도메인을 처리 — 일반 영어 어휘는 거의 덜 쪼개지고, *Yelp 리뷰 특유 표현* 만 약간 더 분할되는 정도.
 
 ### "토크나이저는 모델과 운명공동체"
 
@@ -134,7 +134,7 @@ vocab 30,522 의 영어 WordPiece. *모델은 random init* 이지만 토크나�
 
 ## 데이터 — Wikitext-103 paragraphs (일반 도메인 사전학습 코퍼스)
 
-원본 BERT 가 영어 Wikipedia + BookCorpus 라는 *일반 도메인* 코퍼스로 사전학습한 정신을 따라, 본 챕터도 **Wikitext-103** 본문으로 MLM 사전학습합니다 — *task 도메인 (Yelp 영화 리뷰) 으로 사전학습하면 domain-adaptive pretraining 에 가까워져 사전학습의 진짜 메시지 (일반 표상 학습 → 다른 task 로 transfer) 가 흐려지기 때문*.
+원본 BERT 가 영어 Wikipedia + BookCorpus 라는 *일반 도메인* 코퍼스로 사전학습한 정신을 따라, 본 챕터도 **Wikitext-103** 본문으로 MLM 사전학습합니다 — *task 도메인 (Yelp 리뷰(식당·업체)) 으로 사전학습하면 domain-adaptive pretraining 에 가까워져 사전학습의 진짜 메시지 (일반 표상 학습 → 다른 task 로 transfer) 가 흐려지기 때문*.
 
 **원본**: `Salesforce/wikitext`, config `wikitext-103-raw-v1` (CC-BY-SA, 정제된 영문 위키 paragraphs). HF Hub 정제본 — line 단위로 이미 정리되어 있어 빈 줄 / 너무 짧은 줄 / 너무 긴 줄만 제외하면 바로 사용 가능. Ch 21 의 분류 fine-tune (Yelp 이진) 은 *완전히 다른 도메인* — 사전학습 → fine-tune transfer 메시지가 정직해집니다. Ch 22 의 한국어 (한국어 Wikipedia paragraphs) 와 *대칭* 패턴.
 
@@ -144,7 +144,7 @@ MLM 사전학습의 표준 입력 포맷은 *고정 길이 블록*. 변동 길�
 
 **해결책**: 모든 문서를 *이어 붙여 토큰 스트림* 으로 만든 뒤, `block_size=128` 단위로 자름. 문장 경계가 사라지는 trade-off 가 있지만, BERT 사전학습은 *임의 위치의 토큰 예측* 이라 문장 경계가 중요하지 않음.
 
-Wikitext-103 paragraphs 는 *제한 50-2000자 필터링* 으로 평균 문장 길이가 일정 (수백 자 위주). 5,000 paragraphs 가 `block_size=128` 로 잘리면 약 1,000-2,000 블록 정도로 정리됩니다. 코드는 HF `examples/pytorch/language-modeling/run_mlm.py` 의 `group_texts` 함수를 그대로 따른 표준 패턴.
+Wikitext-103 paragraphs 는 *제한 50-2000자 필터링* 으로 평균 문장 길이가 일정 (수백 자 위주). 5,000 paragraphs 가 `block_size=128` 로 잘리면 약 5,352 블록 (약 68만 토큰) 으로 정리됩니다. 코드는 HF `examples/pytorch/language-modeling/run_mlm.py` 의 `group_texts` 함수를 그대로 따른 표준 패턴.
 
 ## 작은 `BertConfig` + `BertForMaskedLM` — random init
 
@@ -211,7 +211,7 @@ collator 가 매 batch 마다 *무작위로 15% 토큰을 [MASK]* 로 바꾸고,
 ## 평가 — MLM loss 곡선 + perplexity + masked token 예측
 
 학습이 *실제로 진행* 됐는지 세 각도로 확인:
-1. step-by-step train loss 곡선 — 빠르게 10.33 (random baseline) → 5 이하로 떨어졌는지
+1. step-by-step train loss 곡선 — 빠르게 10.33 (random baseline) → 약 7 부근으로 떨어졌는지
 2. eval set 의 perplexity — 외부 텍스트에서도 일관된 수준인지
 3. 임의 문장에 `[MASK]` 를 끼워 top-5 후보 출력 — *어떤 단어를 예측하는지* 정성 평가
 
@@ -235,8 +235,8 @@ collator 가 매 batch 마다 *무작위로 15% 토큰을 [MASK]* 로 바꾸고,
 
 **해석 가이드 — 사전학습이 만든 차이**
 
-- **`eval_loss`**: random baseline `ln V ≈ 10.33` 에서 약 5-7 부근까지 떨어졌으면 본체가 *언어 구조 일부* 를 학습. *완전한* BERT 수준은 아니어도 표준 BERT 가 학습한 것의 *방향* 은 맞춤.
-- **`perplexity`**: 30,522 (vocab 전체) 에서 수십-수백 부근으로. *마스크 자리마다 후보를 약 50-500 개로 좁힌 상태* 라는 직관적 해석.
+- **`eval_loss`**: random baseline `ln V ≈ 10.33` 에서 약 7 부근까지 떨어졌으면 본체가 *언어 구조 일부* 를 학습. *완전한* BERT 수준은 아니어도 표준 BERT 가 학습한 것의 *방향* 은 맞춤.
+- **`perplexity`**: 30,522 (vocab 전체) 에서 약 1,200 부근으로. *마스크 자리마다 후보를 약 1,200 개로 좁힌 상태* 라는 직관적 해석.
 - **top-5 토큰** (3-way 비교):
   - *before (random)*: 자주 등장하는 *관사·전치사·특수문자* (`the`, `a`, `,`, `.`, `of`) — random init 이지만 logits 가 미세하게 흔들려 *통계적 빈도* 높은 토큰만 뽑힘.
   - *ours (small BERT, 5K paragraphs × 2 epoch)*: 위키 도메인은 *방향성이 보이기 시작* — 일반 부사·형용사, 위키 어휘 일부. 다만 정답 토큰 (`paris`, `0` 등) 이 top-5 안에 *안정적으로* 들어오지는 못함. **데이터·모델 크기 부족의 한계**.
@@ -244,7 +244,7 @@ collator 가 매 batch 마다 *무작위로 15% 토큰을 [MASK]* 로 바꾸고,
 
 > **세 모델의 격차가 정확히 *데이터 규모 + 모델 크기 + 학습 시간* 의 격차** — 우리 작은 BERT (10M, 5K paragraphs, 2 epoch) → reference (110M, 3.3B tokens, 40 epoch) 사이에 *데이터 약 5,000배, 파라미터 11배, epoch 20배*. 그 격차가 top-5 의 *질적 차이* 로 정확히 드러납니다.
 
-이번 챕터의 작은 BERT 는 *Wikitext-103 5K paragraphs × 2 epoch* 로 학습한 *일반 도메인 mini BERT*. 위키 도메인은 직접 본 분포라 향상이 빠르지만, Yelp 영화 리뷰 영역은 *다른 도메인* 이라 fine-tune 단계에서 적응이 필요합니다 — 이게 *진짜 사전학습 → fine-tune 패러다임* 의 핵심. Ch 21 에서 Yelp 이진 분류로 fine-tune 할 때 진짜 transfer 비교 — *우리가 직접 만든 작은 영어 BERT (일반 위키 5K, 약 10M)* vs *Ch 10 의 DistilBERT (대규모 Wikipedia+BookCorpus, 약 66M)* vs *random init baseline*.
+이번 챕터의 작은 BERT 는 *Wikitext-103 5K paragraphs × 2 epoch* 로 학습한 *일반 도메인 mini BERT*. 위키 도메인은 직접 본 분포라 향상이 빠르지만, Yelp 리뷰(식당·업체) 영역은 *다른 도메인* 이라 fine-tune 단계에서 적응이 필요합니다 — 이게 *진짜 사전학습 → fine-tune 패러다임* 의 핵심. Ch 21 에서 Yelp 이진 분류로 fine-tune 할 때 진짜 transfer 비교 — *우리가 직접 만든 작은 영어 BERT (일반 위키 5K, 약 10M)* vs *Ch 10 의 DistilBERT (대규모 Wikipedia+BookCorpus, 약 66M)* vs *random init baseline*.
 
 ## 모델 저장 — Ch 21 에서 재사용
 

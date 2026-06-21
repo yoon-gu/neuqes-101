@@ -6,7 +6,7 @@
 | `DiffusionCollator` (직접 구현) | 매 배치 `t ~ U(0,1)` 가변 마스킹 | Ch 33-34 - 실전 모델은 내부에 동등 로직 |
 | `1/t` 재가중 loss (`compute_loss` 오버라이드) | masked-diffusion denoising 목표 (log-likelihood bound) | (개념) LLaDA / MDLM 의 핵심 항 |
 | `diffusion_generate` (low-confidence remasking) | 전부 `[MASK]` → 반복 denoise 생성 | Ch 33-34 - 실전 sampler 의 단순화판 |
-| `[MASK]` 토큰 (WordPiece 내장) | forward (가리기) + reverse (생성) 의 캔버스 | Ch 33-34 - 모델별 mask 토큰 |
+| `[MASK]` 토큰 (BPE 2048 에 special token 으로 추가, id 2) | forward (가리기) + reverse (생성) 의 캔버스 | Ch 33-34 - 모델별 mask 토큰 |
 | denoise 궤적 시각화 | 마스크 → 단어 병렬 채움 관찰 | (개념) AR 과의 핵심 대비 |
 
 ## 체크포인트 질문
@@ -75,11 +75,17 @@ trade-off: `steps` ↑ → 품질 ↑, 속도 ↓. 실전에선 *길이의 절�
 
 본 챕터에서 안 빨라 보이는 이유: 작은 모델 + 짧은 시퀀스라 forward 1회가 워낙 빨라 *오버헤드가 묻힘*. 긴 시퀀스 + 큰 모델 + 최적화된 sampler 에서 이점이 드러납니다. 다만 *현재 실전 성숙도* 는 autoregressive 가 여전히 앞섭니다 (KV-cache 등 최적화 누적). diffusion 은 *발전 중인 대안*.
 
-### Q6. (실무) 왜 GPT 의 BPE 토크나이저 대신 BERT 의 WordPiece 를 썼나요?
+### Q6. (실무) BPE 2048 을 직접 학습하면서 `[MASK]` 토큰은 어떻게 마련했나요?
 
-**`[MASK]` 토큰이 내장돼 있어서** 입니다. diffusion 의 forward/reverse 모두 `[MASK]` 가 핵심인데, GPT-2 BPE 는 `<|endoftext|>` 하나만 있고 `[MASK]` 가 없습니다. WordPiece (`bert-base-uncased`) 는 `[MASK]` (id 103) 를 처음부터 보유 → 추가 작업 없이 바로 사용. bidirectional encoder (`BertForMaskedLM`) 와도 자연스럽게 짝이 맞습니다 (둘 다 BERT 계열).
+**BPE 를 학습할 때 `special_tokens` 로 함께 등록** 했습니다. diffusion 의 forward/reverse 모두 `[MASK]` 가 핵심인데, 일반 BPE/WordPiece 어휘에는 `[MASK]` 가 없을 수 있습니다. 이 챕터는 작은 from-scratch 모델에 맞춰 *vocab 을 작게* 가져가려고 `bert-base-uncased` 의 WordPiece(30,522) 를 그대로 쓰지 않고, TinyStories 코퍼스에 ByteLevel BPE 를 vocab 2,048 으로 직접 학습합니다. 이때 `BpeTrainer(special_tokens=["[PAD]", "[UNK]", "[MASK]"])` 로 세 특수 토큰을 어휘 맨 앞에 고정 배정해 `[MASK]` 가 id 2 에 자리 잡습니다.
 
-GPT BPE 로도 `[MASK]` 를 새 special token 으로 추가하면 가능하지만, 임베딩을 새로 학습해야 해 작은 데이터에선 불리합니다.
+```python
+trainer = trainers.BpeTrainer(vocab_size=2048,
+                              special_tokens=["[PAD]", "[UNK]", "[MASK]"])
+# 학습 후: tokenizer.mask_token_id == 2
+```
+
+모델은 `BertForMaskedLM` 을 *random init* 으로 띄우므로 임베딩도 처음부터 함께 학습됩니다 — `[MASK]` 임베딩이 별도 부담이 아니라 본체와 같이 자라납니다. bidirectional encoder (`BertForMaskedLM`) 와 `[MASK]` 기반 denoising 이 자연스럽게 짝을 이룹니다.
 
 ### Q7. (이론) 그럼 앞으로 autoregressive 는 사라지나요?
 
@@ -96,4 +102,4 @@ GPT BPE 로도 `[MASK]` 를 새 special token 으로 추가하면 가능하지�
 - 본 챕터 작은 from-scratch 모델과 *품질 격차* 를 직접 체감 — *같은 알고리즘, 충분한 규모* 면 unconditional 생성이 얼마나 달라지는지.
 - (대형 맛보기) LLaDA-8B 는 4bit 양자화로 *선택 실습*.
 
-> **변하는 축**: *모델 출발점* (scratch 약 13M → 사전학습 170M / 124M). 메커니즘 (병렬 denoise) 은 본 챕터에서 이미 손으로 구현해 봤습니다. Ch 34 에서 *한국어 diffusion + autoregressive 직접 비교* 로 Phase 5 를 마무리합니다.
+> **변하는 축**: *모델 출발점* (scratch 약 3.79M → 사전학습 170M / 124M). 메커니즘 (병렬 denoise) 은 본 챕터에서 이미 손으로 구현해 봤습니다. Ch 34 에서 *한국어 diffusion + autoregressive 직접 비교* 로 Phase 5 를 마무리합니다.

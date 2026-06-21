@@ -144,7 +144,7 @@ print(f"  active aspects: {[a for a, v in zip(ASPECTS, train_full[0]['aspects'])
 train: 5000, eval: 1000
 
 First sample:
-  text: I stalk this truck.  I've been to industrial parks where I pretend to be a tech worker standing in line, strip mall parking lots, an …(뒤 21자 생략)
+  text: I stalk this truck.  I've been to industrial parks where I pretend to be a tech worker standing in line, strip mall parking lots, an …(21 more chars omitted)
   aspects (multi-hot): [0.0, 1.0, 0.0, 0.0, 1.0]
   active aspects: ['service', 'location']
 ```
@@ -546,7 +546,7 @@ for label_kind, idx in [("many active labels", idx_many), ("few active labels", 
 ==============================================================================
 sample #29  (many active labels)
 ==============================================================================
-text (truncated): It's hard to complain about this place given the price I got it for! \n**Warning** This is a long review, there is a lot t …(뒤 201자 생략)
+text (truncated): It's hard to complain about this place given the price I got it for! \n**Warning** This is a long review, there is a lot t …(201 more chars omitted)
 
     aspect    true      prob    pred (>=0.5)  match
        food       1    0.2553               0    ✗

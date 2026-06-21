@@ -2,7 +2,7 @@
 
 **환경**: Google Colab **T4 GPU 필수**.
 
-**예상 소요 시간**: 약 20-28분 (KoAlpaca 로드·포맷 약 2분 + KoGPT2 로드 약 2분 + collator labels 마스킹 시각화 약 1분 + SFT 학습 약 12-18분 + SFT 전·후 instruction following 비교 약 3분)
+**예상 소요 시간**: 약 10-15분 (KoAlpaca 로드·포맷 약 2분 + KoGPT2 로드 약 2분 + collator labels 마스킹 시각화 약 1분 + SFT 학습 약 2-3분 (3,000 샘플 1 epoch, 188 step) + SFT 전·후 instruction following 비교 약 3분)
 
 
 ## 학습 흐름
@@ -26,7 +26,7 @@
 | 25 | `gpt2` (124M, 사전학습) | BPE (gpt2 그대로, vocab 50,257) | 영어 TinyStories 30K | pad 만 | `CrossEntropyLoss` (next-token) - continual pretraining |
 | 26 | 작은 GPT2 (한국어, 약 3M, scratch) | BBPE (직접 학습, vocab 약 4,000) | 한국어 TinyStories 30K | pad 만 | `CrossEntropyLoss` (next-token) |
 | 27 | KoGPT2 `skt/kogpt2-base-v2` (125M) | BBPE (KoGPT2 그대로, vocab 51,200) | 한국어 TinyStories 30K | pad 만 | `CrossEntropyLoss` (next-token) - continual pretraining |
-| **28 ← 여기** | **KoGPT2 `skt/kogpt2-base-v2` (125M, 동일)** | **BBPE (KoGPT2 그대로, vocab 51,200, 동일)** | **KoAlpaca instruction-response 쌍 (약 3-5K)** | **prompt 부분 (`### 응답:` 앞 전부)** | **`CrossEntropyLoss` (next-token, *답변 부분만*) — SFT** |
+| **28 ← 여기** | **KoGPT2 `skt/kogpt2-base-v2` (125M, 동일)** | **BBPE (KoGPT2 그대로, vocab 51,200, 동일)** | **KoAlpaca instruction-response 쌍 (약 3K, 3,000 샘플)** | **prompt 부분 (`### 응답:` 앞 전부)** | **`CrossEntropyLoss` (next-token, *답변 부분만*) — SFT** |
 | 29 (다음) | Ch 28 SFT 모델 + 비교 | (동일) | 분야별 벤치마크 (KMMLU / HAERAE / MMLU ...) | - (평가만) | - (`lm-evaluation-harness`) |
 
 전체 챕터 표는 [루트 README](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표) 를 참고하세요.

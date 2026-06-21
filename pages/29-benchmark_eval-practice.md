@@ -20,35 +20,35 @@ def extract_int_match(pred, gold):
     nums = re.findall(r"-?\d+", pred)
     return bool(nums) and nums[0] == gold
 
-print("question        : 6 곱하기 4는?")
+print("question        : 6 x 4 = ?")
 print(f"gold answer     : {gold!r}\n")
 for name, ans in [("answer_a", answer_a), ("answer_b", answer_b)]:
     em = exact_match(ans, gold)
     nm = extract_int_match(ans, gold)
     print(f"{name} = {ans!r}")
-    print(f"   exact match        : {em}   (둘 다 내용은 맞는데 exact 는 False)")
+    print(f"   exact match        : {em}   (correct content, but exact == False)")
     print(f"   extract-int match  : {nm}\n")
 
-print("=> exact match 는 형식이 다르면 내용이 맞아도 '틀림'.")
-print("   생성 평가는 이래서 task 마다 정교한 채점(숫자 추출/n-gram/LLM judge)이 필요합니다.")
+print("=> exact match marks correct content as wrong when the format differs.")
+print("   generation eval thus needs task-specific scoring (number extraction / n-gram / LLM judge).")
 ```
 
 **▶ 실행 결과**
 
 ```text
-question        : 6 곱하기 4는?
+question        : 6 x 4 = ?
 gold answer     : '24'
 
 answer_a = '정답은 24입니다.'
-   exact match        : False   (둘 다 내용은 맞는데 exact 는 False)
+   exact match        : False   (correct content, but exact == False)
    extract-int match  : True
 
 answer_b = '이십사'
-   exact match        : False   (둘 다 내용은 맞는데 exact 는 False)
+   exact match        : False   (correct content, but exact == False)
    extract-int match  : False
 
-=> exact match 는 형식이 다르면 내용이 맞아도 '틀림'.
-   생성 평가는 이래서 task 마다 정교한 채점(숫자 추출/n-gram/LLM judge)이 필요합니다.
+=> exact match marks correct content as wrong when the format differs.
+   generation eval thus needs task-specific scoring (number extraction / n-gram / LLM judge).
 ```
 
 **결과 해석**
@@ -226,7 +226,7 @@ from datasets import load_dataset
 
 N_HELLASWAG = 50  # T4 30분 룰 - subset 만. 전체 500문항은 너무 오래 걸림
 hellaswag = load_dataset("skt/kobest_v1", "hellaswag", split="test").select(range(N_HELLASWAG))
-print(f"HellaSwag subset : {len(hellaswag)} 문항 (4지선다)")
+print(f"HellaSwag subset : {len(hellaswag)} items (4-way multiple choice)")
 print(f"columns          : {hellaswag.column_names}")
 
 # 한 문항 예시
@@ -241,7 +241,7 @@ print("label   :", ex["label"])
 **▶ 실행 결과**
 
 ```text
-HellaSwag subset : 50 문항 (4지선다)
+HellaSwag subset : 50 items (4-way multiple choice)
 columns          : ['context', 'ending_1', 'ending_2', 'ending_3', 'ending_4', 'label']
 
 --- example ---
@@ -310,7 +310,7 @@ def eval_boolq(dataset):
 acc_boolq = eval_boolq(boolq)
 print(f"KoBEST BoolQ  (n={len(boolq)})")
 print(f"  acc             : {acc_boolq:.3f}")
-print(f"  random baseline : 0.500  (2지선다)")
+print(f"  random baseline : 0.500  (2-way choice)")
 ```
 
 **▶ 실행 결과**
@@ -318,7 +318,7 @@ print(f"  random baseline : 0.500  (2지선다)")
 ```text
 KoBEST BoolQ  (n=50)
   acc             : 0.460
-  random baseline : 0.500  (2지선다)
+  random baseline : 0.500  (2-way choice)
 ```
 
 **결과 해석**
@@ -379,7 +379,7 @@ def eval_generation(problems, shots: str):
 
 acc_gen, gen_df = eval_generation(ARITHMETIC, FEWSHOT)
 print(gen_df.to_string(index=False))
-print(f"\nfew-shot 산술 정확도 : {acc_gen:.3f}  (n={len(ARITHMETIC)})")
+print(f"\nfew-shot arithmetic accuracy : {acc_gen:.3f}  (n={len(ARITHMETIC)})")
 ```
 
 **▶ 실행 결과**
@@ -393,7 +393,7 @@ print(f"\nfew-shot 산술 정확도 : {acc_gen:.3f}  (n={len(ARITHMETIC)})")
 100 빼기 37은 얼마인가요? 정답은 63입니다. \n\n이런 문제들은 대부분 숫자의 차    63      63 True
 13 더하기 28은 얼마인가요? 정답은 41입니다. \n\n이런 문제들은 어떤 숫자를 더하    41      41 True
 
-few-shot 산술 정확도 : 1.000  (n=6)
+few-shot arithmetic accuracy : 1.000  (n=6)
 ```
 
 **결과 해석**
@@ -413,8 +413,8 @@ compare = pd.DataFrame({
     "accuracy": [round(acc_zero, 3), round(acc_few, 3)],
 })
 print(compare.to_string(index=False))
-print(f"\nin-context learning 효과 : {acc_few - acc_zero:+.3f}  (few - zero)")
-print("(작은 모델·작은 subset 이라 변동 큼 - 경향만 참고. 큰 모델일수록 효과 뚜렷)")
+print(f"\nin-context learning effect : {acc_few - acc_zero:+.3f}  (few - zero)")
+print("(small model / small subset, so the value is noisy - read as a trend only; the effect is clearer on larger models)")
 ```
 
 **▶ 실행 결과**
@@ -424,8 +424,8 @@ print("(작은 모델·작은 subset 이라 변동 큼 - 경향만 참고. 큰 �
 zero-shot (0 examples)     0.333
  few-shot (2 examples)     1.000
 
-in-context learning 효과 : +0.667  (few - zero)
-(작은 모델·작은 subset 이라 변동 큼 - 경향만 참고. 큰 모델일수록 효과 뚜렷)
+in-context learning effect : +0.667  (few - zero)
+(small model / small subset, so the value is noisy - read as a trend only; the effect is clearer on larger models)
 ```
 
 **결과 해석**
@@ -439,8 +439,8 @@ try:
     print(f"lm-eval version : {lm_eval.__version__}")
     HAS_LM_EVAL = True
 except ImportError:
-    print("lm-eval 미설치 - 이 셀은 건너뜁니다 (셋업 셀의 pip install lm-eval 참고).")
-    print("§2-§4 의 직접 구현은 lm-eval 없이도 모두 동작합니다.")
+    print("lm-eval not installed - skipping this cell (see the setup cell's pip install lm-eval).")
+    print("The hand-written implementations in §2-§4 all run without lm-eval.")
     HAS_LM_EVAL = False
 ```
 
@@ -474,7 +474,7 @@ if HAS_LM_EVAL:
             if isinstance(v, float):
                 print(f"  {k:14s}: {v:.3f}")
 else:
-    print("lm-eval 미설치 - §2 의 직접 구현 결과를 표준 점수로 참고하세요.")
+    print("lm-eval not installed - use the §2 hand-written results as the standard score.")
 ```
 
 **▶ 실행 결과**

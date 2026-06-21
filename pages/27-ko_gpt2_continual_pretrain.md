@@ -2,7 +2,7 @@
 
 **환경**: Google Colab **T4 GPU 필수**.
 
-**예상 소요 시간**: 약 15-20분 (데이터 로드·story 복원 약 3분 + KoGPT2 로드·토큰화 약 2분 + 학습 전 baseline generation 약 1분 + continual pretraining 약 8-12분 + 학습 후 generation + 3-way 비교 약 2분)
+**예상 소요 시간**: 약 25-30분 (데이터 로드·story 복원 약 3분 + KoGPT2 로드·토큰화 약 2분 + 학습 전 baseline generation 약 1분 + continual pretraining 약 17분 + 학습 후 generation + 3-way 비교 약 2분)
 
 
 ## 학습 흐름
@@ -55,7 +55,7 @@ Phase 4 는 영어 (Ch 24-25) 와 한국어 (Ch 26-27) 가 *같은 학습 단계
 | 본체 출발점 | `GPT2LMHeadModel(config)` random init (약 3M) | `AutoModelForCausalLM.from_pretrained("skt/kogpt2-base-v2")` (125M) | **다름** |
 | 토크나이저 | BBPE 직접 학습 (vocab 약 4,000) | `PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2", ...)` (vocab 51,200) | **다름** (본체와 운명공동체) |
 | 학습률 | 5e-4 (scratch 표준) | **2e-5** (continual pretraining 표준) | **다름** |
-| 학습 step | 약 1,500 | **약 1 epoch (수백 step)** | **다름** (본체 이미 학습됨) |
+| 학습 step | 약 1,500 | **약 3,000** (48,513 chunks / eff. batch 16, 1 epoch) | **다름** (lr 만 작아짐) |
 
 > **세 줄 차이가 곧 *학습 단계 2 (continual pretraining)* 의 정의** — 같은 task, 같은 collator, 같은 loss, 같은 trainer. *모델 로드 한 줄 + 토크나이저 한 줄 + lr 한 숫자* 만 바꾸면 됩니다. Ch 25 (영어) 에서 본 격리 실험의 한국어 재확인.
 
@@ -70,7 +70,7 @@ Phase 4 는 영어 (Ch 24-25) 와 한국어 (Ch 26-27) 가 *같은 학습 단계
 | Data collator | `DataCollatorForLanguageModeling(mlm=False)` | **(동일)** |
 | Loss | CE next-token (`labels = input_ids.clone()`) | **(동일)** |
 | **학습률** | 5e-4 | **2e-5** ← *유일한 hyperparam 큰 차이* |
-| 학습 step | 약 1,500 (T4 약 18분) | **약 1 epoch (T4 약 8-12분)** — 본체 이미 학습됨 |
+| 학습 step | 약 1,500 (T4 약 1분) | **약 3,000 (T4 약 17분)** — 125M 본체라 step 당 비용이 큼 |
 | Generation 품질 | 동화 풍 단순 한국어 | **자연스러운 동화 + 일반 도메인 폭** ← 메시지 |
 
 > **핵심**: *Ch 26 ↔ Ch 27 은 데이터·trainer·collator·loss 모두 같고 본체 출발점·토크나이저·lr 만 다름*. **trainer 코드 차이가 극단적으로 적음** — 그게 GPT 시대 학습 단계 2 (continual pretraining) 의 본질. *task adaptation 의미의 fine-tune 이 아닙니다* — head 바뀌지 않고, task (next-token 예측) 바뀌지 않습니다. 데이터만 바뀝니다. Ch 24→Ch 25 (영어) 에서 본 그 격리 실험의 한국어 짝.
@@ -84,7 +84,7 @@ Ch 24 에서 도입한 GPT 시대 학습 4단계 표의 *단계 2 (continual pre
 | 1 | **Pretraining** (사전학습) | 일반 코퍼스 위에 random init 본체부터 학습 | pad 만 | Ch 24 | Ch 26 | |
 | 2 | **Continual pretraining** (계속 사전학습 / continual learning) | *사전학습된 본체* 를 *새 데이터* 로 *같은 CausalLM task* 더 학습. **head 그대로, task 그대로, 데이터만 새로** | pad 만 (단계 1 과 동일) | Ch 25 | **Ch 27 ← 여기** | ✅ |
 | 3 | **SFT** (Supervised Fine-Tuning / Instruction tuning) | instruction-response 쌍으로 *행동 정렬*. `labels[:prompt_len] = -100` 으로 답변 부분만 학습 | **prompt 부분** | - | Ch 28 | |
-| 4 | **Alignment** (DPO / RLHF / GRPO) | preference 또는 verifier reward 로 *선호 정렬* | (RL 내부) | - | Ch 29-30 | |
+| 4 | **Alignment** (DPO / RLHF / GRPO) | preference 또는 verifier reward 로 *선호 정렬* | (RL 내부) | - | Ch 30-31 | |
 
 ### Ch 27 은 *SFT 가 아닙니다*
 
@@ -237,7 +237,7 @@ Ch 26 의 *random init baseline* 은 *한국어와 거리 먼 byte 조각* 이�
 
 ## Continual Pretraining — *trainer 코드는 Ch 26 과 거의 동일*
 
-Ch 26 과 *완전히 같은 구조* 의 `Trainer` 코드. 변하는 곳은 **lr (`5e-4 → 2e-5`)** 와 **step 설정 (max_steps → 1 epoch)**, 그리고 **메모리 제약 대응 (batch 4 + grad accum 4)** 입니다.
+Ch 26 과 *완전히 같은 구조* 의 `Trainer` 코드. 변하는 곳은 **lr (`5e-4 → 2e-5`)** 와 **step 설정 (max_steps → 1 epoch, 48,513 chunks / eff. batch 16 ≈ 약 3,000 step)**, 그리고 **메모리 제약 대응 (batch 4 + grad accum 4)** 입니다.
 
 ### 왜 lr 가 작아지는가 — `2e-5` 의 정확한 의미
 
@@ -287,13 +287,13 @@ Ch 26 의 *작은 from-scratch 모델* (약 3M, 한국어 TinyStories 1500 step)
 | 항목 | Ch 26 (3M scratch) | **Ch 27 (125M continual pretrain)** |
 |---|---|---|
 | 시작 loss | 약 8.29 (`ln(4000)`, random baseline) | **약 3.0-4.0** (KoGPT2 pretrained, TinyStories 평가) |
-| 도달 loss (학습 끝) | 약 2.5-3.0 | **약 2.0-2.5** |
-| 학습 step | 1,500 | **약 1 epoch (수백 step, batch effective 16)** |
-| 학습 시간 (T4) | 약 18분 | **약 8-12분** |
+| 도달 loss (학습 끝, 누적 평균 `train_loss`) | 약 4.5 | **약 2.49** |
+| 학습 step | 1,500 | **약 3,000** (1 epoch, 48,513 chunks / eff. batch 16) |
+| 학습 시간 (T4) | 약 1분 | **약 17분** |
 | Vocab 차원 | 약 4,000 | **51,200** (loss 단위 다름 — 직접 비교 어려움) |
 | Generation 품질 | 동화 풍 단순 한국어 | **자연스러운 동화 + 일반 도메인 어휘** |
 
-> **요점**: Ch 27 은 *훨씬 적은 step 으로 더 낮은 loss* 도달 — 사전학습된 본체의 *시작 이점*. 다만 *loss 의 절대값* 은 vocab 단위가 달라 직접 비교 어려움 (vocab 약 13배 차이). *Generation 품질* 로는 §7 의 3-way 비교가 정성적 차이를 보여줍니다.
+> **요점**: Ch 27 은 *시작부터 낮은 loss* 에서 출발해 더 낮은 지점까지 내려갑니다 — 사전학습된 본체의 *시작 이점*. step·시간은 Ch 26 보다 오히려 더 큽니다 (125M 본체 + chunk 수가 많아 1 epoch 이 길어짐). 다만 *loss 의 절대값* 은 vocab 단위가 달라 직접 비교 어려움 (vocab 약 13배 차이). *Generation 품질* 로는 §7 의 3-way 비교가 정성적 차이를 보여줍니다.
 
 > Ch 27 의 결과만 보면 *대규모 사전학습 + continual pretraining* 이 압도적으로 보이지만, *3M params + 대규모 사전학습* (가상의 비교군) 이라면 어떻게 될까요 — *모델 크기와 사전학습 데이터를 분리하는 비교* 는 본 챕터의 셋업으로는 어렵습니다. 그게 *실험 설계의 한계* 이자 *학습 단계 2 의 실용성* — 실무는 보통 *큰 사전학습 모델을 그대로 가져와 continual pretraining* 하는 게 비용 대비 최선이라 (영어 Ch 25 §8 의 한국어판).
 

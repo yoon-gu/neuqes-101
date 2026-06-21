@@ -385,7 +385,7 @@ print(f"  └─ replaced with [MASK]:   {n_mask:>7,}  ({100 * n_mask / n_select
 print(f"  └─ replaced with random:   {n_random:>7,}  ({100 * n_random / n_selected:5.2f}% of selected)")
 print(f"  └─ kept as original:       {n_kept:>7,}  ({100 * n_kept / n_selected:5.2f}% of selected)")
 print()
-print("이론치: 선택 15% / 그 중 80-10-10 으로 [MASK]-random-kept. 표본이 작아 약간 흔들리지만 비율 일치.")
+print("Theory: select 15%, split 80-10-10 into [MASK]-random-kept. Small sample wobbles a bit but ratios match.")
 ```
 
 **▶ 실행 결과**
@@ -397,7 +397,7 @@ Selected for loss (target 15%):      1,217  (14.86%)
   └─ replaced with random:       121  ( 9.94% of selected)
   └─ kept as original:           135  (11.09% of selected)
 
-이론치: 선택 15% / 그 중 80-10-10 으로 [MASK]-random-kept. 표본이 작아 약간 흔들리지만 비율 일치.
+Theory: select 15%, split 80-10-10 into [MASK]-random-kept. Small sample wobbles a bit but ratios match.
 ```
 
 MLM 사전학습용 `TrainingArguments` 와 `Trainer` 를 구성합니다. T4 에서 fp16 을 켜고 배치 32·3 epoch 로 맞추며, 마지막에 총 학습 step 수를 미리 출력해 한 epoch 당 몇 step 이 도는지 가늠합니다.
@@ -519,9 +519,9 @@ cls_model = BertForSequenceClassification(cls_config)
 
 # MLM 본체 (embeddings + encoder) 를 분류 모델로 *복사* — pooler 까지 같이
 missing, unexpected = cls_model.bert.load_state_dict(mlm_model.bert.state_dict(), strict=False)
-print(f"본체 가중치 복사 완료")
-print(f"  missing keys (분류 측에만 있는 부분): {len(missing)}  e.g. {missing[:3] if missing else []}")
-print(f"  unexpected keys (MLM 측 잉여):       {len(unexpected)}  e.g. {unexpected[:3] if unexpected else []}")
+print(f"Body weights copied")
+print(f"  missing keys (classification-only): {len(missing)}  e.g. {missing[:3] if missing else []}")
+print(f"  unexpected keys (MLM-only surplus): {len(unexpected)}  e.g. {unexpected[:3] if unexpected else []}")
 
 # 파라미터 수 비교
 total_cls = sum(p.numel() for p in cls_model.parameters())
@@ -536,9 +536,9 @@ print(f"  total:                                 {total_cls:>10,}  ({total_cls/1
 **▶ 실행 결과**
 
 ```text
-본체 가중치 복사 완료
-  missing keys (분류 측에만 있는 부분): 2  e.g. ['pooler.dense.weight', 'pooler.dense.bias']
-  unexpected keys (MLM 측 잉여):       0  e.g. []
+Body weights copied
+  missing keys (classification-only): 2  e.g. ['pooler.dense.weight', 'pooler.dense.bias']
+  unexpected keys (MLM-only surplus): 0  e.g. []
 
 Classification model parameters:
   body (embeddings + encoder + pooler): 11,072,256  (100.0%)
@@ -815,14 +815,14 @@ plt.show()
 기성 사전학습 DistilBERT 로 같은 데이터를 분류한 Ch 10 의 전형적 수치를 기준으로 두고, 이번 장 작은 BERT 의 지표와 나란히 비교합니다. metric 별 차이(delta)를 표로 출력해, 사전학습의 양과 질이 분류 성능 격차로 얼마나 환산되는지 수치로 확인합니다.
 
 ```python
-# Ch 10 reference 수치 — yelp_polarity 5K/1K + DistilBERT fine-tune 2 epoch 의 *전형적* 결과
+# Ch 10 reference 수치 — Yelp/yelp_review_full 별점 이진화 5K/1K + DistilBERT fine-tune 2 epoch 의 실측 결과
 # (실측치는 학습자가 Ch 10 노트북을 돌려 본인 값으로 갱신 권장)
 CH10_REFERENCE = {
-    "accuracy":  0.93,
-    "precision": 0.93,
-    "recall":    0.93,
-    "f1":        0.93,
-    "auc":       0.98,
+    "accuracy":  0.9030,
+    "precision": 0.8970,
+    "recall":    0.8922,
+    "f1":        0.8946,
+    "auc":       0.9685,
 }
 
 ch21_metrics = {k.replace("eval_", ""): v for k, v in cls_eval_metrics.items()
@@ -844,16 +844,16 @@ print(comparison.round(4).to_string(index=False))
 ```text
 Ch10 vs Ch21 — classification metrics
    metric  Ch10 DistilBERT (ref)  Ch21 small BERT  delta (Ch21 - Ch10)
- accuracy                   0.93           0.6490              -0.2810
-precision                   0.93           0.6338              -0.2962
-   recall                   0.93           0.6508              -0.2792
-       f1                   0.93           0.6422              -0.2878
-      auc                   0.98           0.7079              -0.2721
+ accuracy                 0.9030           0.6490              -0.2540
+precision                 0.8970           0.6338              -0.2632
+   recall                 0.8922           0.6508              -0.2414
+       f1                 0.8946           0.6422              -0.2524
+      auc                 0.9685           0.7079              -0.2606
 ```
 
 **결과 해석**
 
-모든 지표에서 Ch 10 의 기성 사전학습 DistilBERT 가 0.28 - 0.30 포인트 앞섭니다. 대규모 코퍼스로 오래 사전학습한 본체와, 위키 2 천 단락으로 잠깐 사전학습한 작은 본체의 차이가 분류 성능 격차로 그대로 환산된 결과입니다.
+모든 지표에서 Ch 10 의 기성 사전학습 DistilBERT 가 0.24 - 0.26 포인트 앞섭니다. 대규모 코퍼스로 오래 사전학습한 본체와, 위키 2 천 단락으로 잠깐 사전학습한 작은 본체의 차이가 분류 성능 격차로 그대로 환산된 결과입니다.
 
 같은 비교를 막대그래프로 그려 두 모델의 지표 차이를 한눈에 보여 줍니다. metric 마다 두 막대의 높이 차가 일정한지 살피면, 사전학습 출발점이 모든 지표에 고르게 영향을 준다는 점을 시각적으로 확인할 수 있습니다.
 

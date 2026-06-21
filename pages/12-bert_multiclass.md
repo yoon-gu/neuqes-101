@@ -23,7 +23,7 @@
 | **12 ← 여기** | DistilBERT 파인튜닝 | 같음 | **Yelp 5클래스** | **`Linear(H, 5)`** | softmax | `CrossEntropyLoss` |
 | 13 (다음) | DistilBERT 파인튜닝 | 같음 | Yelp + 항목 키워드 (5라벨 multi-label) | `Linear(H, 5)` | sigmoid (per-label) | `BCEWithLogitsLoss` (per-label) |
 
-전체 20챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
+전체 챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
 
 ## 변경점 (Diff from Ch 11)
 
@@ -91,9 +91,9 @@ Ch 11 셋업에서 K=2 → K=5 한 줄 변화.
 | DistilBERT body | 66,362,880 | 66,362,880 |
 | pre_classifier (`Linear(768→768)`) | 590,592 | 590,592 |
 | classifier (`Linear(768→K)`) | 1,538 | **3,845** |
-| 합계 | 66,955,778 | **66,958,085** |
+| 합계 | 66,955,010 | **66,957,317** |
 
-분류 헤드만 K에 비례해 늘어나지만 (768·K + K), DistilBERT body가 ~67M이라 K=2 ↔ K=5 전체 차이는 0.003%. **K가 늘어났다고 모델이 *훨씬* 무거워지지는 않는다** 는 점이 multi-class BERT의 매력 중 하나.
+분류 헤드만 K에 비례해 늘어나지만 (768·K + K), DistilBERT body가 약 66M이라 K=2 ↔ K=5 전체 차이는 0.003%. **K가 늘어났다고 모델이 *훨씬* 무거워지지는 않는다** 는 점이 multi-class BERT의 매력 중 하나.
 
 ## 학습 — Ch 11과 동일한 hyperparams
 

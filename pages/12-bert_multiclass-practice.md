@@ -112,7 +112,7 @@ Class distribution (train):
 
 First sample:
   label: 4  (star 5)
-  text:  I stalk this truck.  I've been to industrial parks where I pretend to be a tech worker standing in line, strip mall parking lots, a …(뒤 72자 생략)
+  text:  I stalk this truck.  I've been to industrial parks where I pretend to be a tech worker standing in line, strip mall parking lots, a …(72 more chars omitted)
 ```
 
 리뷰 본문을 토큰화하면서 라벨을 함께 정리합니다. multi-class 분류에서는 라벨이 0-4 정수 스칼라 그대로여야 하므로 `int`로 변환해 `labels` 키에 담고, 토큰화가 끝나면 원본 `text`·`label` 컬럼을 제거해 `Trainer`가 바로 쓸 수 있는 형태로 만듭니다.

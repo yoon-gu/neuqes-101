@@ -29,7 +29,7 @@
 | 17 | klue/bert-base | WordPiece (한국어, 사전학습) | KLUE-YNAT 합성 multi-label | `Linear(H, 7)` | `BCEWithLogitsLoss` |
 | 18 | klue/bert-base + 보조 | WordPiece (한국어, 사전학습) | KLUE-YNAT 합성 + 보조 라벨 | 메인(7) + 보조 | `BCEWithLogitsLoss + λ·L_aux` |
 | **19 ← 여기 (Phase 3 시작)** | — (토크나이저 학습 전용) | **WordPiece + WordLevel** (둘 다 *직접 학습*) | **Yelp text + NSMC text** | — | — |
-| 20 (다음) | 작은 BERT (직접, scratch) | `bert-base-uncased` 토크나이저 (가져옴) | Yelp text | MLM head | `CrossEntropyLoss` (masked) |
+| 20 (다음) | 작은 BERT (직접, scratch) | `bert-base-uncased` 토크나이저 (가져옴) | Wikitext-103 (일반 도메인 위키) | MLM head | `CrossEntropyLoss` (masked) |
 
 전체 챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
 
@@ -176,7 +176,7 @@ eval 코퍼스 (별도 sample 1,000 문장) 에 4 토크나이저를 적용해 *
 **시사점**
 
 - **단일 언어 corpus 로 학습한 토크나이저는 다른 언어에 거의 못 씁니다.** 모델을 통째 다른 언어로 재사용하려면 *vocab 부터* 그 언어 데이터를 보고 학습해야 합니다.
-- **multilingual 모델** (mBERT, XLM-R, mT5 등)은 *수십~백여 언어 corpus 를 섞어* 토크나이저를 학습해 *공통 vocab* 을 만듭니다 — 그래서 한 모델로 여러 언어 입력이 가능.
+- **multilingual 모델** (mBERT, XLM-R, mT5 등)은 *수십-백여 언어 corpus 를 섞어* 토크나이저를 학습해 *공통 vocab* 을 만듭니다 — 그래서 한 모델로 여러 언어 입력이 가능.
 - **byte-level BPE** (GPT-2/RoBERTa) 나 **SentencePiece(Unigram)** (T5/Llama) 같은 *byte/character 단위 fallback* 이 있는 토크나이저는 UNK 가 원리상 없습니다 — 단 비-학습 언어는 *매우 긴 토큰 시퀀스* 가 되어 비효율적.
 
 > 즉 "토크나이저는 모델의 언어를 *물리적으로 결정* 한다" 가 이 챕터의 큰 결론. Ch 20-23 에서 사전학습 모델의 토크나이저 (`bert-base-uncased` / `klue/bert-base`) 를 그대로 가져오는 이유 — 모델 본체와 *vocab 일치* 가 필수.

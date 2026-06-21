@@ -607,7 +607,7 @@ print(f"  └─ replaced with [MASK]:         {n_mask:>7,}  ({100 * n_mask / n_
 print(f"  └─ replaced with random:         {n_random:>7,}  ({100 * n_random / n_selected:5.2f}% of selected)")
 print(f"  └─ kept as original:             {n_kept:>7,}  ({100 * n_kept / n_selected:5.2f}% of selected)")
 print()
-print("Target: 선택 15% / 그 중 80-10-10 으로 [MASK]-random-kept. 표본 크면 비율 안정.")
+print("Target: select 15%, split 80-10-10 into [MASK]-random-kept. Ratios stabilize with larger samples.")
 ```
 
 **▶ 실행 결과**
@@ -619,7 +619,7 @@ Selected for loss (target 15%):      1,209  (14.76%)
   └─ replaced with random:             119  ( 9.84% of selected)
   └─ kept as original:                 135  (11.17% of selected)
 
-Target: 선택 15% / 그 중 80-10-10 으로 [MASK]-random-kept. 표본 크면 비율 안정.
+Target: select 15%, split 80-10-10 into [MASK]-random-kept. Ratios stabilize with larger samples.
 ```
 
 **결과 해석**

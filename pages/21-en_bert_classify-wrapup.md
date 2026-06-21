@@ -48,7 +48,7 @@ model = AutoModelForSequenceClassification.from_pretrained(
 ```python
 # 본 챕터 (Ch 21) 흐름 — 원본 BERT 와 같은 정신
 # 일반 위키 (Wikitext-103) 로 MLM 사전학습  ← 다른 도메인
-# 영화 리뷰 (Yelp) 로 분류 fine-tune       ← task 도메인
+# Yelp 리뷰(식당·업체) 로 분류 fine-tune    ← task 도메인
 # -> "일반 표상이 다른 도메인에도 적용되는가?" 의 시험 (= 원본 BERT 의 GLUE/SQuAD 흐름)
 
 # 만약 Yelp text MLM 사전학습 → Yelp 분류였다면
@@ -143,7 +143,7 @@ T4 메모리 안에서는 가능합니다. 정확도 변화 추정:
 | 모델 크기 | 파라미터 | T4 학습 시간 (MLM 3 epoch + cls 2 epoch) | 예상 accuracy |
 |---|---|---|---|
 | hidden=128, layer=2 | 약 5M | 약 5분 | 65-72% |
-| **hidden=256, layer=4 (이번 챕터)** | **약 10M** | **약 20분** | **75-85%** |
+| **hidden=256, layer=4 (이번 챕터)** | **약 10M** | **약 1분** | **약 65% (실측 0.6490)** |
 | hidden=384, layer=6 | 약 20M | 약 30분 | 78-88% (T4 30분 한계) |
 | hidden=512, layer=8 | 약 35M | 약 45분 | 80-90% (T4 30분 룰 위반) |
 | hidden=768, layer=12 (BERT-base) | 약 110M | 수일 | 90%+ (대규모 사전학습 데이터 필요) |
@@ -156,7 +156,7 @@ T4 메모리 안에서는 가능합니다. 정확도 변화 추정:
 
 - Ch 20 의 영어 패턴을 한국어로 그대로: 작은 BertConfig + `klue/bert-base` 토크나이저 (가져옴) + **한국어 Wikipedia paragraphs MLM** (일반 도메인)
 - 토크나이저·데이터만 한국어로 바뀜. 본체 구조·MLM 셋업은 *완전히 같음*
-- Ch 22 → Ch 23 (한국어 NSMC 분류) 흐름은 본 챕터 (Ch 20 → Ch 21, 영어) 와 *대칭* — 둘 다 *일반 위키 사전학습 → 영화 리뷰 분류 transfer*
+- Ch 22 → Ch 23 (한국어 NSMC 분류) 흐름은 본 챕터 (Ch 20 → Ch 21, 영어) 와 *대칭* — 둘 다 *일반 위키 사전학습 → 다른 도메인 분류 transfer* (영어는 Yelp 리뷰(식당·업체), 한국어는 NSMC 영화 리뷰)
 
 > **변하는 축**: Phase 3 안에서 *언어* (영어 → 한국어). 모델 구조·학습 셋업·*일반 도메인 → task 도메인 transfer 패턴* 은 동일.
 

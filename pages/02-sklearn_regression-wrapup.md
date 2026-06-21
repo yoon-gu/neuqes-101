@@ -66,7 +66,7 @@ $$w = (X^\top X)^{-1} X^\top y$$
 
 ```python
 y_pred_clipped = np.clip(y_pred_test, 1, 5)
-print(f"Test MSE (clip 후): {mean_squared_error(y_test, y_pred_clipped):.4f}")
+print(f"Test MSE (after clip): {mean_squared_error(y_test, y_pred_clipped):.4f}")
 ```
 
 3. **출력에 sigmoid를 붙인다**: 다음 챕터의 방법. 활성화 함수로 모델 단계에서 [0, 1]을 강제.
@@ -80,7 +80,7 @@ print(f"Test MSE (clip 후): {mean_squared_error(y_test, y_pred_clipped):.4f}")
 - **회귀가 자연스러운 이유**: 별점은 **순서(ordinal)** 가 있습니다. 4점과 5점이 가깝다는 정보를 회귀는 보존합니다 (loss가 거리 기반).
 - **분류가 자연스러운 이유**: 클래스 사이 간격이 균등하지 않을 수 있습니다. 1점과 2점의 차이, 4점과 5점의 차이가 같은 의미일까요? 사람마다 다릅니다. 분류는 클래스 간 거리를 가정하지 않습니다.
 
-이 커리큘럼에서는 두 관점을 모두 보여줍니다 — Ch 2 (회귀) → Ch 4 (5클래스 분류). 같은 데이터를 두 방식으로 다룰 때 결과가 어떻게 달라지는지 비교하면 회귀와 분류의 차이가 손에 잡힙니다.
+이 커리큘럼에서는 두 관점을 모두 보여줍니다 — Ch 2 (회귀) → Ch 5 (5클래스 분류). 같은 데이터를 두 방식으로 다룰 때 결과가 어떻게 달라지는지 비교하면 회귀와 분류의 차이가 손에 잡힙니다.
 
 ## 삽질 코너 (선택)
 
@@ -96,7 +96,7 @@ model_b = LinearRegression().fit(X_train, y_train * 100)
 pred_a = model_a.predict(X_test)
 pred_b = model_b.predict(X_test) / 100   # 다시 1-5 스케일로
 
-print(f"A vs B 예측 차이 최대: {np.abs(pred_a - pred_b).max():.2e}")
+print(f"Max prediction diff (A vs B): {np.abs(pred_a - pred_b).max():.2e}")
 ```
 
 힌트: 닫힌 형태 풀이에서 라벨에 상수를 곱하면 가중치도 같은 비율로 바뀔 뿐, 예측을 같은 스케일로 되돌리면 정확히 같은 값이 나와야 합니다.

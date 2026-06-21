@@ -19,7 +19,7 @@
 |---|---|---|---|---|---|
 | **1 ← 여기** | (TF-IDF) | `TfidfVectorizer()` | — | — | — |
 
-전체 20챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
+전체 챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
 
 ## 시작점에서
 

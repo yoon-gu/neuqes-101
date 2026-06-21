@@ -88,9 +88,10 @@ HF 의 continual pretraining / fine-tuning 표준 lr 범위: `1e-5` - `5e-5`. SF
 tokenizer = AutoTokenizer.from_pretrained("gpt2")
 sample_korean = "옛날 옛적에 작은 토끼가 살았어요."
 enc = tokenizer(sample_korean)
-print(f"한국어 토큰 수: {len(enc['input_ids'])}")  # 보통 영어 같은 의미보다 5-10배 많은 토큰
-print(f"토큰 (decode 일부): {tokenizer.convert_ids_to_tokens(enc['input_ids'])[:10]}")
-# byte-level 조각들 -> 사실상 vocab 전체가 한국어를 표현 못함
+# 같은 의미의 영어보다 보통 5-10배 많은 토큰으로 쪼개집니다
+print(f"Korean token count : {len(enc['input_ids'])}")
+print(f"tokens (first 10)  : {tokenizer.convert_ids_to_tokens(enc['input_ids'])[:10]}")
+# byte-level 조각들이라 vocab 전체가 사실상 한국어를 표현하지 못합니다
 ```
 
 결과:

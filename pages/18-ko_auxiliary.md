@@ -32,7 +32,7 @@ Ch 14(영어 auxiliary, 별점 회귀 보조)의 한국어 버전입니다. 보�
 | **18 ← 여기** | klue/bert-base + **보조 헤드** | 같음 | KLUE-YNAT 합성 multi-label + **활성 개수** | **메인(7) + 보조(1)** | 메인 sigmoid + 보조 없음 | **`BCE per-label + λ·MSE`** |
 | 19 (다음 Phase 3) | (없음) — 토크나이저 학습 | **직접 학습한 워드레벨** | (코퍼스) | — | — | — |
 
-전체 20챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
+전체 챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
 
 ## 변경점 (Diff from Ch 17)
 
@@ -83,7 +83,7 @@ $$L = \underbrace{\frac{1}{N \cdot K}\sum_{i,k}\text{BCE}(z_{i,k}^\text{main}, y
 
 이번 챕터에선 **λ=0.1** 로 학습하고 λ=0 baseline 과 비교, §10 의 변형 섹션에서 λ ∈ {0.0, 0.1, 1.0} 스윕으로 효과 분포를 봅니다.
 
-> **Auxiliary 가 *새 task* 가 아니라 *loss 보조항* 인 이유** — `n_active` 회귀가 *추론 시 결과* 로 필요한 게 아닙니다. 운영에선 메인 multi-label 만 쓰고 보조 헤드는 *호출조차 하지 않음*. 학습 *과정* 에서 BERT 본체를 더 일반적인 표상으로 끌고 가려는 *정규화* 신호일 뿐 — 그래서 *task 축의 변화* 가 아니라 *loss 축의 변화* 로 분류됩니다 (CLAUDE.md 의 "Auxiliary = loss 보조항" 규칙).
+> **Auxiliary 가 *새 task* 가 아니라 *loss 보조항* 인 이유** — `n_active` 회귀가 *추론 시 결과* 로 필요한 게 아닙니다. 운영에선 메인 multi-label 만 쓰고 보조 헤드는 *호출조차 하지 않음*. 학습 *과정* 에서 BERT 본체를 더 일반적인 표상으로 끌고 가려는 *정규화* 신호일 뿐입니다. 그래서 이 변화는 *task 축* 이 아니라 *loss 축* 에 보조 항을 더하는 변화로 분류됩니다 — 보조 헤드는 task 를 신설하는 게 아니라 손실에 항을 추가할 뿐입니다.
 
 ## 토크나이저 노트
 
