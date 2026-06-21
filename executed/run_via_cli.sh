@@ -68,9 +68,11 @@ try:
 except Exception: sys.exit(1)' "$1" 2>/dev/null
 }
 
-resolve() {  # 인자(번호/폴더명) → 챕터 폴더명. 못 찾으면 1.
+resolve() {  # 인자(번호/폴더명/부록 stem) → 실행 키. 못 찾으면 1.
     local spec="$1" nn m
     [ -d "$ROOT/$spec" ] && { echo "$spec"; return 0; }
+    # 부록 노트북 stem (어느 챕터 폴더 안 <spec>.ipynb) — 키를 그대로 반환
+    if ls "$ROOT"/[0-9][0-9]_*/"$spec".ipynb >/dev/null 2>&1; then echo "$spec"; return 0; fi
     if printf '%s' "$spec" | grep -qE '^[0-9]+$'; then
         nn=$(printf '%02d' "$spec")
         m=$(cd "$ROOT" && ls -d "${nn}"_*/ 2>/dev/null | head -1 | sed 's#/##')

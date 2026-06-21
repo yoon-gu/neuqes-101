@@ -79,6 +79,9 @@ def main():
             nb = d / (d.name + ".ipynb")
             if nb.exists():
                 out.append((d.name, nb))
+            # 부록 노트북(<폴더>/<폴더>_*.ipynb) — 키는 노트북 stem
+            for sub in sorted(d.glob(d.name + "_*.ipynb")):
+                out.append((sub.stem, sub))
         return out
 
     def source_hash(nb_path):
