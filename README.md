@@ -12,7 +12,7 @@ scikit-learn 한 줄로 텍스트를 숫자로 바꾸는 일에서 출발해, �
 
 웹에서 장별로 읽는 것과 같은 내용을, 인쇄·오프라인용으로 한 권에 묶은 PDF 원고입니다. 표지·목차·각주까지 조판해 그대로 출력하거나 태블릿에서 읽기 좋습니다.
 
-- **최신 PDF 내려받기 (Ch 1-34)** — [neuqes-101-ch01-34-manuscript.pdf](https://github.com/yoon-gu/neuqes-101/releases/download/phase5-manuscript-v0.6.1/neuqes-101-ch01-34-manuscript.pdf)
+- **최신 PDF 내려받기 (Ch 1-34)** — [neuqes-101-ch01-34-manuscript.pdf](https://github.com/yoon-gu/neuqes-101/releases/download/phase5-manuscript-v0.6.2/neuqes-101-ch01-34-manuscript.pdf)
 - 버전별 원고는 [Releases](https://github.com/yoon-gu/neuqes-101/releases)에서 받을 수 있습니다.
 
 > 집필이 진행되며 장이 더해질 때마다 새 버전을 올립니다. 최신 PDF는 항상 위 **Releases** 최신 항목에서 확인하실 수 있습니다.
