@@ -29,7 +29,3 @@ print(df_t.to_string(index=False))
        0.6       0.415   0.1658    0.6989    0.5172
        0.7       0.342   0.2036    0.5928    0.3877
 ```
-
-**결과 해석**
-
-임계값을 0.4로 낮추면 subset accuracy·hamming·micro F1이 모두 기본값 0.5보다 좋아집니다. recall이 낮던 드문 라벨(price·ambiance·location)을 더 적극적으로 켜주기 때문이며, multi-label에서는 0.5가 늘 최선은 아니라는 걸 보여줍니다.

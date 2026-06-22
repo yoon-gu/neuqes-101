@@ -26,7 +26,7 @@
   * [05-3. 변형: multinomial vs OvR](pages/05-sklearn_multiclass-variation.md)
   * [05-4. 정리와 FAQ](pages/05-sklearn_multiclass-wrapup.md)
 * [06. 다중 라벨 분류 (Multi-label Classification & Per-label BCE)](pages/06-sklearn_multilabel.md)
-  * [06-1. 실습 2: `OneVsRestClassifier` (이번엔 argmax 없이)](pages/06-sklearn_multilabel-practice.md)
+  * [06-1. 실습: `OneVsRestClassifier` (이번엔 argmax 없이)](pages/06-sklearn_multilabel-practice.md)
   * [06-2. 해부: multi-label 평가 지표](pages/06-sklearn_multilabel-anatomy.md)
   * [06-3. 변형: 라벨별 임계값(threshold) 변경](pages/06-sklearn_multilabel-variation.md)
   * [06-4. 정리와 FAQ](pages/06-sklearn_multilabel-wrapup.md)

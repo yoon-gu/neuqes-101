@@ -2,8 +2,8 @@
 
 | 이름 | 한 줄 설명 | 다음 챕터에서 |
 |---|---|---|
-| `sklearn.multiclass.OneVsRestClassifier` | K개 독립 binary 분류기를 묶고 multi-label 모드 자동 감지 | Ch 13 BERT multi-label에서 같은 패러다임을 BERT로 |
-| `sklearn.metrics.hamming_loss` | 라벨별 평균 오답 비율 | Ch 13에서도 평가 지표로 |
+| `sklearn.multiclass.OneVsRestClassifier` | K개 독립 binary 분류기를 묶고 multi-label 모드 자동 감지 | Ch 12 BERT multi-label에서 같은 패러다임을 BERT로 |
+| `sklearn.metrics.hamming_loss` | 라벨별 평균 오답 비율 | Ch 12에서도 평가 지표로 |
 | `sklearn.metrics.f1_score(average="micro" / "macro")` | multi-label F1 집계 방식 | — |
 | `sklearn.metrics.classification_report` | 라벨별 precision/recall/F1 한 번에 | — |
 
@@ -95,7 +95,7 @@ for k in range(K):
             best_t, best_f1 = t, f1
     best_thresholds.append(best_t)
 
-print(f"Best threshold per label: {dict(zip(ASPECTS, best_thresholds))}")
+print(f"라벨별 최적 임계값: {dict(zip(ASPECTS, best_thresholds))}")
 ```
 
 ⚠️ 주의: 위 코드는 *test set* 으로 임계값을 정해 보여준 것 — 실무에선 *별도 검증 데이터셋* 으로 임계값을 정하고 test에는 적용만 해야 합니다 (안 그러면 test에 누설).
@@ -140,7 +140,7 @@ X_pseudo = tfidf.transform(texts)
 model_pseudo = LogisticRegression(max_iter=1000)
 model_pseudo.fit(X_pseudo[:4000], y_pseudo_class[:4000])
 acc_pseudo = (model_pseudo.predict(X_pseudo[4000:]) == y_pseudo_class[4000:]).mean()
-print(f"Accuracy when forced into multi-class: {acc_pseudo:.4f}")
+print(f"강제로 multi-class화 한 경우 accuracy: {acc_pseudo:.4f}")
 ```
 
 힌트: 한 리뷰에 여러 항목이 동시에 있을 때 *하나만* 정답으로 골라 학습하면 정보가 사라집니다. 정답이 임의 선택이라 모델이 어느 라벨을 골라야 할지 모호해지고, multi-label 결과보다 정보가 적은 모델이 됩니다.

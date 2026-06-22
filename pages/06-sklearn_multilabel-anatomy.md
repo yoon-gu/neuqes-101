@@ -21,12 +21,6 @@ micro F1: 0.7749
 macro F1: 0.6467
 ```
 
-**결과 해석**
-
-지표를 어떻게 세느냐에 따라 점수가 크게 달라집니다. 라벨 5개가 전부 맞아야 하는 subset accuracy는 49%로 엄격하지만, 라벨별 오답률인 hamming loss는 0.14(평균 86% 정답)로 너그럽습니다. 빈도 큰 라벨에 가중되는 micro F1(0.77)이 라벨을 동등 가중하는 macro F1(0.65)보다 높은 건 드문 라벨의 성능이 낮기 때문입니다.
-
-전체 지표만으로는 어떤 라벨이 약한지 보이지 않으므로, 항목별로 쪼개 봅니다. `classification_report`로 5개 항목 각각의 precision·recall·F1과 support(정답 개수)를 한 표에 출력합니다. 빈도가 낮은 라벨에서 recall이 어떻게 달라지는지 눈여겨보세요.
-
 ```python
 # 항목별 precision/recall/F1
 print(classification_report(
@@ -52,7 +46,3 @@ print(classification_report(
 weighted avg       0.92      0.68      0.74      1747
  samples avg       0.69      0.58      0.61      1747
 ```
-
-**결과 해석**
-
-food·service는 precision·recall이 모두 0.9 안팎이지만, 드문 라벨(price·ambiance·location)은 precision은 높아도 recall이 0.3 내외로 무너집니다. 키워드가 적게 등장하는 항목일수록 모델이 확실할 때만 켜서 놓치는 게 많다는 뜻입니다.
