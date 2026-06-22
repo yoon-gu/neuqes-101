@@ -30,6 +30,13 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.multiclass import OneVsRestClassifier
 
+# matplotlib 한글 폰트 (Colab — NanumGothic). plot 의 한국어가 □ 로 깨지지 않게.
+import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run("apt-get -qq -y install fonts-nanum", shell=True)
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
 plt.rcParams["axes.unicode_minus"] = False
 
 print(f"PyTorch:        {torch.__version__}")
@@ -55,7 +62,7 @@ GPU:             Tesla T4
 **▶ 실행 결과**
 
 ```text
-Wed Jun 17 21:39:27 2026       
+Mon Jun 22 03:49:55 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -64,7 +71,7 @@ Wed Jun 17 21:39:27 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   40C    P8             10W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   46C    P8             11W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -76,8 +83,6 @@ Wed Jun 17 21:39:27 2026
 |  No running processes found                                                             |
 +-----------------------------------------------------------------------------------------+
 ```
-
-Yelp 리뷰에는 항목 라벨이 없으므로, 항목별 키워드 사전을 정의해 라벨을 합성합니다. `extract_aspects`는 한 리뷰에서 각 항목의 키워드가 단어 경계로 등장하는지 검사해 5차원 multi-hot 벡터를 만듭니다. 라벨이 서로 배타적이지 않아 여러 항목이 동시에 켜질 수 있다는 점이 multi-label의 핵심입니다.
 
 ```python
 ASPECT_KEYWORDS = {
@@ -114,8 +119,6 @@ K (number of aspects): 5
 aspects: ['food', 'service', 'price', 'ambiance', 'location']
 ```
 
-DistilBERT 토크나이저를 불러오고 Yelp 데이터에서 학습 5,000개·평가 1,000개를 추출합니다. 이어 `attach_aspects`로 모든 텍스트에 앞서 정의한 5차원 multi-hot 항목 벡터를 부착합니다. 첫 샘플의 활성 항목까지 출력해 합성 라벨이 의도대로 붙는지 눈으로 확인합니다.
-
 ```python
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
 
@@ -144,12 +147,10 @@ print(f"  active aspects: {[a for a, v in zip(ASPECTS, train_full[0]['aspects'])
 train: 5000, eval: 1000
 
 First sample:
-  text: I stalk this truck.  I've been to industrial parks where I pretend to be a tech worker standing in line, strip mall parking lots, an …(21 more chars omitted)
+  text: I stalk this truck.  I've been to industrial parks where I pretend to be a tech worker standing in line, strip mall parking lots, an …(뒤 21자 생략)
   aspects (multi-hot): [0.0, 1.0, 0.0, 0.0, 1.0]
   active aspects: ['service', 'location']
 ```
-
-합성한 라벨의 분포를 점검합니다. 항목별 활성률과 함께, 한 샘플에 평균 몇 개의 항목이 켜지는지·0개부터 5개까지 어떻게 퍼져 있는지를 집계합니다. 라벨별 빈도 차와 다중 활성 정도를 미리 보면 뒤의 평가 지표 해석이 쉬워집니다.
 
 ```python
 # 항목별 활성률
@@ -189,12 +190,6 @@ Active label distribution (train):
   5 labels active: 55 samples (1.1%)
 ```
 
-**결과 해석**
-
-food/service는 절반 가까이 활성이지만 ambiance/location은 20% 안팎으로 라벨별 빈도 차가 큽니다. 한 샘플에 평균 1.75개 항목이 켜지고 0개부터 5개까지 분포가 퍼져 있어, 라벨마다 독립 sigmoid로 다루는 multi-label 설정이 자연스럽습니다.
-
-텍스트를 토큰화하면서 multi-hot 항목 벡터를 `labels` 컬럼에 넣습니다. `BCEWithLogitsLoss`는 라벨을 float 텐서로 받으므로 정수 0/1이 아니라 실수로 변환합니다. 학습에 불필요한 원본 컬럼은 제거해 `input_ids`·`labels`만 남깁니다.
-
 ```python
 def tokenize_fn(batch):
     out = tokenizer(batch["text"], truncation=True, max_length=128)
@@ -219,8 +214,6 @@ Dataset({
 
 First sample label: [0.0, 1.0, 0.0, 0.0, 1.0]  (length-5 multi-hot float vector)
 ```
-
-DistilBERT에 5차원 분류 헤드를 얹어 모델을 만듭니다. `problem_type="multi_label_classification"`을 지정하면 `Trainer`가 라벨별 독립 sigmoid + `BCEWithLogitsLoss`를 자동으로 적용합니다. 헤드가 새로 초기화되며(분류기 5출력) 파라미터 수와 설정이 의도대로 잡혔는지 출력으로 확인합니다.
 
 ```python
 model = AutoModelForSequenceClassification.from_pretrained(
@@ -250,11 +243,11 @@ print(f"id2label:             {model.config.id2label}")
 [transformers] DistilBertForSequenceClassification LOAD REPORT from: distilbert-base-uncased
 Key                     | Status     | 
 ------------------------+------------+-
+vocab_projector.bias    | UNEXPECTED | 
 vocab_transform.bias    | UNEXPECTED | 
 vocab_layer_norm.weight | UNEXPECTED | 
-vocab_transform.weight  | UNEXPECTED | 
 vocab_layer_norm.bias   | UNEXPECTED | 
-vocab_projector.bias    | UNEXPECTED | 
+vocab_transform.weight  | UNEXPECTED | 
 classifier.weight       | MISSING    | 
 classifier.bias         | MISSING    | 
 pre_classifier.bias     | MISSING    | 
@@ -277,7 +270,7 @@ id2label:             {0: 'food', 1: 'service', 2: 'price', 3: 'ambiance', 4: 'l
 **▶ 실행 결과**
 
 ```text
-Wed Jun 17 21:40:03 2026       
+Mon Jun 22 03:50:22 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -286,7 +279,7 @@ Wed Jun 17 21:40:03 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   42C    P8             13W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   47C    P8             14W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -298,8 +291,6 @@ Wed Jun 17 21:40:03 2026
 |  No running processes found                                                             |
 +-----------------------------------------------------------------------------------------+
 ```
-
-평가용 지표 함수를 정의합니다. 라벨별 logit에 sigmoid를 씌워 확률로 바꾸고 0.5 임계값으로 multi-hot 예측을 만든 뒤, Hamming loss와 micro·macro F1을 계산합니다. micro는 전체 라벨을 합산하고 macro는 라벨별 F1을 동일 가중으로 평균하므로, 빈도가 다른 라벨에서 두 값이 갈리는 점을 눈여겨봅니다.
 
 ```python
 def compute_metrics(eval_pred):
@@ -335,8 +326,6 @@ def compute_metrics(eval_pred):
     return out
 ```
 
-학습 설정을 구성하고 `Trainer`로 파인튜닝을 실행합니다. T4 제약에 맞춰 배치 16·2에폭·`fp16=True`로 두고, 앞서 만든 `compute_metrics`를 연결해 에폭마다 평가가 돌게 합니다. 끝나면 평균 학습 손실을 출력합니다.
-
 ```python
 training_args = TrainingArguments(
     output_dir="./ch13_output",
@@ -369,12 +358,8 @@ print(f"\nTraining done — mean train loss: {train_result.training_loss:.4f}")
 
 ```text
 <IPython.core.display.HTML object>
-Training done — mean train loss: 0.3983
+Training done — mean train loss: 0.4126
 ```
-
-**결과 해석**
-
-평균 학습 손실 0.3983은 5개 라벨 각각의 per-label BCEWithLogitsLoss를 모두 합산-평균한 값입니다. 단일 라벨 분류보다 항이 많아 절대값을 다른 챕터와 직접 비교하기는 어렵고, 실제 성능은 다음 평가 지표로 판단합니다.
 
 ```python
 !nvidia-smi
@@ -383,7 +368,7 @@ Training done — mean train loss: 0.3983
 **▶ 실행 결과**
 
 ```text
-Wed Jun 17 21:40:42 2026       
+Mon Jun 22 03:51:02 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -392,7 +377,7 @@ Wed Jun 17 21:40:42 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   62C    P0             70W /   70W |    1577MiB /  15360MiB |     73%      Default |
+| N/A   63C    P0             34W /   70W |    1577MiB /  15360MiB |     72%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -401,11 +386,9 @@ Wed Jun 17 21:40:42 2026
 |  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
 |        ID   ID                                                               Usage      |
 |=========================================================================================|
-|    0   N/A  N/A           13525      C   /usr/bin/python3                       1574MiB |
+|    0   N/A  N/A            1283      C   /usr/bin/python3                       1574MiB |
 +-----------------------------------------------------------------------------------------+
 ```
-
-학습된 모델을 평가 셋에 돌려 앞서 정의한 모든 지표를 한 번에 계산합니다. 손실뿐 아니라 Hamming loss·micro/macro F1·AUC가 함께 출력되어 multi-label 성능을 여러 각도로 읽을 수 있습니다.
 
 ```python
 # 평가 metric
@@ -422,25 +405,19 @@ for k, v in eval_metrics.items():
 <IPython.core.display.HTML object>
 <IPython.core.display.HTML object>
 BERT multi-label evaluation:
-               eval_loss: 0.2932
-       eval_hamming_loss: 0.1020
-           eval_micro_f1: 0.8398
-    eval_micro_precision: 0.9151
-       eval_micro_recall: 0.7760
-           eval_macro_f1: 0.8019
-    eval_macro_precision: 0.9259
-       eval_macro_recall: 0.7229
-          eval_macro_auc: 0.9155
-            eval_runtime: 0.9146
-  eval_samples_per_second: 1093.3460
-   eval_steps_per_second: 34.9870
+               eval_loss: 0.3204
+       eval_hamming_loss: 0.1246
+           eval_micro_f1: 0.7977
+    eval_micro_precision: 0.9056
+       eval_micro_recall: 0.7127
+           eval_macro_f1: 0.7239
+    eval_macro_precision: 0.9155
+       eval_macro_recall: 0.6447
+          eval_macro_auc: 0.8994
+            eval_runtime: 0.9157
+  eval_samples_per_second: 1092.1120
+   eval_steps_per_second: 34.9480
 ```
-
-**결과 해석**
-
-micro F1 0.8398에 비해 macro F1 0.8019이 낮은데, 빈도 낮은 라벨까지 동일 가중치로 평균하는 macro 쪽이 손해를 보기 때문입니다. precision(0.92)이 recall(0.78)보다 높아 0.5 임계값에서 모델이 보수적으로 라벨을 켜고 있으며, macro AUC 0.9155는 임계값과 무관하게 라벨별 순위 분리력 자체는 우수함을 보여줍니다.
-
-평가 셋 전체의 logit을 뽑아 sigmoid 확률과 0.5 임계값 예측을 직접 만듭니다. 라벨별로 확률 범위와 실제 활성률·예측 활성률을 나란히 출력해, 어떤 항목에서 모델이 양성을 충분히 켜지 못하는지 확인합니다.
 
 ```python
 # logits → per-label sigmoid → multi-hot 예측
@@ -463,18 +440,12 @@ for k, a in enumerate(ASPECTS):
 <IPython.core.display.HTML object>
 logits shape: (1000, 5)
 prob ranges per label:
-       food: [0.0319, 0.9882]  true rate=55.2%, pred rate=55.1%
-    service: [0.0494, 0.9794]  true rate=49.7%, pred rate=47.6%
-      price: [0.0563, 0.8972]  true rate=30.4%, pred rate=17.4%
-   ambiance: [0.0196, 0.9381]  true rate=16.8%, pred rate=10.2%
-   location: [0.0316, 0.9322]  true rate=20.2%, pred rate=15.8%
+       food: [0.0280, 0.9871]  true rate=55.2%, pred rate=56.5%
+    service: [0.0412, 0.9794]  true rate=49.7%, pred rate=46.5%
+      price: [0.0873, 0.7026]  true rate=30.4%, pred rate=7.9%
+   ambiance: [0.0253, 0.8920]  true rate=16.8%, pred rate=8.7%
+   location: [0.0310, 0.9285]  true rate=20.2%, pred rate=16.0%
 ```
-
-**결과 해석**
-
-food/service는 예측률이 실제율에 거의 맞지만, price(30.4%→17.4%)나 ambiance(16.8%→10.2%)처럼 빈도 낮은 라벨은 0.5 임계값에서 모델이 절반 가까이를 켜지 못합니다. 양성이 드문 라벨일수록 sigmoid 확률이 0.5를 넘기 어려워 recall이 떨어지는 multi-label의 전형적 패턴입니다.
-
-라벨별 precision·recall·F1을 한 표로 정리합니다. 항목마다 성능을 따로 보면, 빈도 낮은 라벨에서 precision은 높은데 recall이 주저앉는 불균형이 드러납니다.
 
 ```python
 # Per-label classification report
@@ -490,23 +461,17 @@ print(classification_report(
 ```text
               precision    recall  f1-score   support
 
-        food     0.9347    0.9330    0.9338       552
-     service     0.8761    0.8390    0.8571       497
-       price     0.9080    0.5197    0.6611       304
-    ambiance     0.9804    0.5952    0.7407       168
-    location     0.9304    0.7277    0.8167       202
+        food     0.9097    0.9312    0.9203       552
+     service     0.8839    0.8270    0.8545       497
+       price     0.8987    0.2336    0.3708       304
+    ambiance     0.9540    0.4940    0.6510       168
+    location     0.9313    0.7376    0.8232       202
 
-   micro avg     0.9151    0.7760    0.8398      1723
-   macro avg     0.9259    0.7229    0.8019      1723
-weighted avg     0.9170    0.7760    0.8310      1723
- samples avg     0.7733    0.6906    0.7114      1723
+   micro avg     0.9056    0.7127    0.7977      1723
+   macro avg     0.9155    0.6447    0.7239      1723
+weighted avg     0.9072    0.7127    0.7667      1723
+ samples avg     0.7343    0.6316    0.6586      1723
 ```
-
-**결과 해석**
-
-빈도 낮은 라벨은 precision은 높지만(price 0.91, ambiance 0.98) recall이 0.52-0.60으로 주저앉아 F1을 깎아먹습니다. 즉 모델은 켠 라벨은 거의 맞히지만 켜야 할 것을 놓치는 쪽으로 치우쳐 있고, 이 라벨들의 임계값을 0.5보다 낮추면 recall과 F1을 끌어올릴 여지가 있습니다.
-
-지표 대신 개별 사례를 직접 읽어 봅니다. 정답 항목이 가장 많은 샘플과 가장 적은 샘플을 골라, 원문과 함께 라벨별 정답·확률·예측을 한 줄씩 비교합니다. 어떤 항목에서 확률이 임계값 근처를 맴도는지 손으로 짚어 보는 단계입니다.
 
 ```python
 # 평가 셋에서 항목 활성이 가장 *많은* 샘플 1개 + 가장 *적은* 샘플 1개 골라 읽어보기
@@ -546,16 +511,16 @@ for label_kind, idx in [("many active labels", idx_many), ("few active labels", 
 ==============================================================================
 sample #29  (many active labels)
 ==============================================================================
-text (truncated): It's hard to complain about this place given the price I got it for! \n**Warning** This is a long review, there is a lot t …(201 more chars omitted)
+text (truncated): It's hard to complain about this place given the price I got it for! \n**Warning** This is a long review, there is a lot t …(뒤 201자 생략)
 
     aspect    true      prob    pred (>=0.5)  match
-       food       1    0.2553               0    ✗
-    service       1    0.5081               1    ✓
-      price       1    0.7802               1    ✓
-   ambiance       1    0.2684               0    ✗
-   location       1    0.7138               1    ✓
+       food       1    0.2910               0    ✗
+    service       1    0.3436               0    ✗
+      price       1    0.5005               1    ✓
+   ambiance       1    0.3828               0    ✗
+   location       1    0.8549               1    ✓
 
-  predicted: ['service', 'price', 'location']
+  predicted: ['price', 'location']
   true:      ['food', 'service', 'price', 'ambiance', 'location']
 
 ==============================================================================
@@ -564,24 +529,18 @@ sample #4  (few active labels)
 text (truncated): I don't quite get this place or why Asians love it, but it is very good :)
 
     aspect    true      prob    pred (>=0.5)  match
-       food       0    0.0903               0    ✓
-    service       0    0.0672               0    ✓
-      price       0    0.1050               0    ✓
-   ambiance       0    0.0460               0    ✓
-   location       0    0.0612               0    ✓
+       food       0    0.0792               0    ✓
+    service       0    0.0725               0    ✓
+      price       0    0.1344               0    ✓
+   ambiance       0    0.0440               0    ✓
+   location       0    0.0682               0    ✓
 
   predicted: []
   true:      []
 ```
 
-**결과 해석**
-
-5개 라벨이 모두 켜진 어려운 샘플에서는 food/ambiance를 놓쳐 3개만 맞혔는데, 두 라벨의 확률이 0.26-0.27로 0.5에 못 미친 경계 사례입니다. 반대로 라벨이 하나도 없는 샘플은 모든 확률이 0.1 아래로 깔끔히 떨어져, 라벨별 독립 sigmoid가 각 항목을 따로 끄고 켜는 구조가 잘 드러납니다.
-
-라벨별 sigmoid 확률 분포를 양성·음성으로 나눠 그립니다. 항목마다 작은 패널을 만들고 0.5 점선을 함께 표시해, 양성과 음성 봉우리가 임계값을 기준으로 얼마나 잘 갈라지는지 시각적으로 확인합니다.
-
 ```python
-sns.set_theme(style="whitegrid", context="talk")
+sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
 
 # Long-form DataFrame 만들기
 records = []
@@ -601,9 +560,9 @@ g.map_dataframe(
 )
 for ax in g.axes.flat:
     ax.axvline(0.5, color="black", lw=1.0, ls="--", alpha=0.6)
-    ax.set_xlabel("sigmoid prob")
+    ax.set_xlabel("sigmoid 확률")
 g.add_legend(title="label")
-g.fig.suptitle("Per-label sigmoid probability distribution by ground truth", y=1.03)
+g.fig.suptitle("라벨별 sigmoid 확률 분포 (실제 라벨 기준)", y=1.03)
 plt.tight_layout()
 plt.show()
 ```
@@ -611,12 +570,6 @@ plt.show()
 **▶ 실행 결과**
 
 ![output](../assets/13-bert_multilabel-out1.png)
-
-**결과 해석**
-
-라벨마다 양성(빨강)과 음성(파랑) 확률 분포가 0.5 점선을 기준으로 잘 갈라집니다. 다만 ambiance/location처럼 양성이 드문 라벨은 양성 봉우리가 점선 왼쪽까지 끌려와 있어, 0.5 임계값이 이들에게는 다소 높게 작동하며 recall 손실로 이어집니다.
-
-라벨 간 동시발생 구조를 들여다봅니다. 한 항목이 켜졌을 때 다른 항목이 함께 켜질 조건부 확률 행렬을 실제 라벨과 예측 라벨 각각에 대해 계산해 히트맵으로 나란히 그립니다. 라벨별 독립 sigmoid가 상관을 직접 모델링하지 않는데도 예측이 실제 동시발생 패턴을 따라가는지 비교하는 것이 핵심입니다.
 
 ```python
 def cooccurrence_matrix(Y):
@@ -638,17 +591,17 @@ cooc_pred = cooccurrence_matrix(preds)
 
 fig, axes = plt.subplots(1, 2, figsize=(13, 5))
 for ax, M, title in [
-    (axes[0], cooc_true, "True co-occurrence  P(j | i)"),
-    (axes[1], cooc_pred, "Predicted co-occurrence  P(j | i)"),
+    (axes[0], cooc_true, "실제 동시출현  P(j | i)"),
+    (axes[1], cooc_pred, "예측 동시출현  P(j | i)"),
 ]:
     sns.heatmap(
         M, annot=True, fmt=".2f", cmap="Blues", vmin=0, vmax=1,
         xticklabels=ASPECTS, yticklabels=ASPECTS,
-        cbar_kws={"label": "conditional probability"}, ax=ax,
+        cbar_kws={"label": "조건부 확률"}, ax=ax,
     )
     ax.set_title(title)
-    ax.set_xlabel("label j")
-    ax.set_ylabel("given label i")
+    ax.set_xlabel("라벨 j")
+    ax.set_ylabel("주어진 라벨 i")
 plt.tight_layout()
 plt.show()
 ```
@@ -656,12 +609,6 @@ plt.show()
 **▶ 실행 결과**
 
 ![output](../assets/13-bert_multilabel-out2.png)
-
-**결과 해석**
-
-실제 라벨 간 동시발생 패턴을 예측 행렬이 대체로 따라가지만, 빈도 낮은 라벨은 적게 켜진 만큼 예측 쪽 조건부 확률이 옅게 나옵니다. 라벨별 독립 sigmoid는 항목 간 상관을 직접 모델링하지 않는데도 본문 표현이 공통 신호를 담아 동시발생 구조가 어느 정도 재현되는 점이 흥미롭습니다.
-
-BERT와 견줄 베이스라인으로 Ch 6의 TF-IDF + OvR 로지스틱 회귀를 같은 데이터에 재현합니다. 라벨마다 독립 이진 분류기를 학습해(OneVsRest) multi-label을 처리하고, 동일한 0.5 임계값과 지표로 micro/macro F1·AUC·Hamming loss를 계산합니다. 같은 조건에서 BERT와 직접 비교하기 위한 기준선입니다.
 
 ```python
 # Ch 6 셋업 재현 — TF-IDF + OneVsRestClassifier(LogisticRegression)
@@ -707,12 +654,6 @@ sklearn TF-IDF + OvR LogReg:
   hamming loss:       0.1426
 ```
 
-**결과 해석**
-
-Ch 6를 재현한 TF-IDF + OvR LogReg 베이스라인은 micro F1 0.7634, macro F1 0.6141로, BERT보다 특히 macro 쪽이 크게 뒤집니다. 흥미롭게도 macro AUC는 0.9387로 BERT(0.9155)보다 살짝 높아, 순위 분리력 자체는 비슷해도 0.5 임계값에서 양성을 켜는 능력에서 격차가 벌어집니다.
-
-두 모델의 지표를 같은 표로 모아 차이를 한눈에 봅니다. 공통 지표마다 sklearn·BERT 값과 그 차이(BERT − sklearn)를 나란히 출력해, 격차가 precision에서 나는지 recall에서 나는지 가립니다.
-
 ```python
 metrics_bert = {
     k.replace("eval_", ""): v for k, v in eval_metrics.items()
@@ -743,21 +684,15 @@ print(cmp.round(4).to_string(index=False))
 
 ```text
          metric  sklearn (OvR)  BERT (this chapter)  BERT - sklearn
-   hamming_loss         0.1426               0.1020         -0.0406
-       micro_f1         0.7634               0.8398          0.0765
-micro_precision         0.8915               0.9151          0.0237
-   micro_recall         0.6674               0.7760          0.1085
-       macro_f1         0.6141               0.8019          0.1878
-macro_precision         0.9036               0.9259          0.0223
-   macro_recall         0.5307               0.7229          0.1923
-      macro_auc         0.9387               0.9155         -0.0231
+   hamming_loss         0.1426               0.1246         -0.0180
+       micro_f1         0.7634               0.7977          0.0343
+micro_precision         0.8915               0.9056          0.0141
+   micro_recall         0.6674               0.7127          0.0453
+       macro_f1         0.6141               0.7239          0.1099
+macro_precision         0.9036               0.9155          0.0119
+   macro_recall         0.5307               0.6447          0.1140
+      macro_auc         0.9387               0.8994         -0.0393
 ```
-
-**결과 해석**
-
-BERT의 이득은 거의 전부 recall에서 나옵니다. micro recall +0.11, macro recall +0.19로 크게 앞서는 반면 precision 차이는 미미하고 AUC는 오히려 sklearn이 약간 높습니다. 문맥을 읽는 BERT가 베이스라인이 놓치던 양성 라벨을 더 많이 건져 올려 F1 격차를 만든다는 뜻입니다.
-
-전체 평균이 아닌 라벨별 F1로 쪼개 두 모델을 비교합니다. 항목마다 sklearn과 BERT의 F1과 그 차이를 표로 내고 막대그래프로도 그려, 어느 항목에서 BERT의 이득이 집중되는지 또렷하게 드러냅니다.
 
 ```python
 def per_label_f1(Y_true, Y_pred):
@@ -785,12 +720,12 @@ fig, ax = plt.subplots(figsize=(10, 5))
 x_pos = np.arange(K)
 width = 0.38
 ax.bar(x_pos - width/2, f1_sk,   width, label="sklearn (OvR)",     color="#5B8DEF")
-ax.bar(x_pos + width/2, f1_bert, width, label="BERT (this chapter)", color="#F47272")
+ax.bar(x_pos + width/2, f1_bert, width, label="BERT (이번 챕터)", color="#F47272")
 ax.set_xticks(x_pos)
 ax.set_xticklabels(ASPECTS)
 ax.set_ylim(0, 1)
-ax.set_ylabel("Per-label F1")
-ax.set_title("Per-label F1 — sklearn OvR vs BERT")
+ax.set_ylabel("라벨별 F1")
+ax.set_title("라벨별 F1 — sklearn OvR vs BERT")
 ax.legend()
 plt.tight_layout()
 plt.show()
@@ -800,15 +735,11 @@ plt.show()
 
 ```text
   aspect  sklearn F1  BERT F1  BERT - sklearn
-    food      0.9057   0.9338          0.0281
- service      0.8833   0.8571         -0.0262
-   price      0.5271   0.6611          0.1340
-ambiance      0.3333   0.7407          0.4074
-location      0.4211   0.8167          0.3956
+    food      0.9057   0.9203          0.0146
+ service      0.8833   0.8545         -0.0288
+   price      0.5271   0.3708         -0.1563
+ambiance      0.3333   0.6510          0.3176
+location      0.4211   0.8232          0.4022
 ```
-
-**결과 해석**
-
-food/service처럼 빈도 높은 라벨은 두 모델이 비슷하지만, 빈도 낮은 ambiance(+0.41)와 location(+0.40)에서 BERT가 압도적으로 앞섭니다. 단어 일치에 의존하는 TF-IDF가 희소 라벨에서 표현이 부족한 반면, 사전학습 문맥 표현이 적은 양성 신호도 잡아내 격차가 가장 크게 벌어지는 지점입니다.
 
 ![output](../assets/13-bert_multilabel-out3.png)

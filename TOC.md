@@ -52,7 +52,7 @@
   * [12-1. 실습](pages/12-bert_multiclass-practice.md)
   * [12-2. 정리와 FAQ](pages/12-bert_multiclass-wrapup.md)
 * [13. BERT 다중 라벨 분류 (Multi-label & Per-label BCE)](pages/13-bert_multilabel.md)
-  * [13-1. 실습: per-label BCE 다중 라벨 분류](pages/13-bert_multilabel-practice.md)
+  * [13-1. 실습](pages/13-bert_multilabel-practice.md)
   * [13-2. 정리와 FAQ](pages/13-bert_multilabel-wrapup.md)
 * [14. 보조 손실과 멀티태스크 학습 (Auxiliary Loss)](pages/14-auxiliary_loss.md)
   * [14-1. 실습: 보조 손실 결합 학습](pages/14-auxiliary_loss-practice.md)

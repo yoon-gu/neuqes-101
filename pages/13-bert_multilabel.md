@@ -171,5 +171,4 @@ Ch 6의 sklearn 셋업을 *이 노트북 안에서* 다시 학습해 라벨별�
 
 ## 이 장의 구성
 
-- [13-1. 실습](13-bert_multilabel-practice.md)
-- [13-2. 정리와 FAQ](13-bert_multilabel-wrapup.md)
+[[SubPages]]
