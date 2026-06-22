@@ -20,7 +20,7 @@
 | 3 | `LogisticRegression()` | `TfidfVectorizer()` | Yelp 이진화 | (1차원) | sigmoid | `BCEWithLogitsLoss` |
 | **4 ← 여기** | `LogisticRegression()` (multinomial 자동) | `TfidfVectorizer()` | Yelp 이진화 (Ch 3과 동일) | **(2차원)** | **softmax** | **`CrossEntropyLoss`** |
 
-전체 챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
+전체 20챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
 
 ## 변경점 (Diff from Ch 3)
 
@@ -74,7 +74,4 @@ LogisticRegression(max_iter=1000)
 
 ## 이 장의 구성
 
-- [04-1. 실습: 두 방식을 나란히 학습](04-softmax_binary-practice.md)
-- [04-2. 해부: 수학적 동등성](04-softmax_binary-anatomy.md)
-- [04-3. 변형: sklearn은 왜 K=2 multinomial에서 `(2, V)` coef를 안 만드나?](04-softmax_binary-variation.md)
-- [04-4. 정리와 FAQ](04-softmax_binary-wrapup.md)
+[[SubPages]]

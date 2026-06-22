@@ -10,7 +10,7 @@ $$\text{CE} = -[y_1 \log \hat p_1 + y_0 \log \hat p_0] = -[y \log \hat p_1 + (1-
 
 확률·loss가 같으니 학습된 결정 경계도, gradient도 같습니다.
 
-먼저 식이 정말 일치하는지 임의의 logit 쌍으로 직접 확인합니다. logit 쌍 4개를 만들어 softmax의 두 번째 성분과 sigmoid(z1-z0)를 각각 계산해 표로 나란히 출력합니다. 두 열의 값이 자리까지 같은지, 마지막 줄의 최대 차이가 부동소수점 한계 수준으로 작은지 눈여겨보세요.
+먼저 식이 정말 일치하는지 임의의 logit 쌍으로 직접 확인합니다.
 
 ```python
 # 임의의 logit 쌍 4개를 만들어 softmax([z0,z1])_1 == sigmoid(z1 - z0) 인지 확인
@@ -40,7 +40,3 @@ print(f"\nMax diff: {np.abs(softmax_p1 - sigmoid_diff).max():.2e}  (numerical no
 
 Max diff: 2.22e-16  (numerical noise)
 ```
-
-**결과 해석**
-
-네 쌍 모두 softmax의 두 번째 성분과 sigmoid(z1-z0)가 8자리까지 일치하고, 차이는 부동소수점 한계인 2e-16뿐입니다. 식으로 보인 동등성이 숫자로도 그대로 성립합니다.
