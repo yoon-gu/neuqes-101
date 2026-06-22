@@ -249,6 +249,4 @@ Ch 20 과 같은 hyperparams — epoch 2, batch 32, lr 5e-4 (scratch 사전학�
 
 ## 이 장의 구성
 
-- [22-1. 실습](22-ko_bert_pretrain-practice.md)
-- [22-2. 변형 — 데이터 / 학습량 / 다른 한국어 코퍼스](22-ko_bert_pretrain-variation.md)
-- [22-3. 정리와 FAQ](22-ko_bert_pretrain-wrapup.md)
+[[SubPages]]

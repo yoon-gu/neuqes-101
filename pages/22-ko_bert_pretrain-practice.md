@@ -9,14 +9,14 @@
 **▶ 실행 결과**
 
 ```text
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸━━━ 10.3/11.2 MB 155.7 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 101.0 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 50.6 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.2/389.2 kB 38.3 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━╺━━━━━━━━━━━━━━━━━━━━ 23.4/48.9 MB 225.0 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 157.5 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 157.5 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 17.8 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 119.5 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 0.0/555.1 kB ? eta -:--:--
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 46.7 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.2/389.2 kB 36.4 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸━━━━━━━━━━ 36.4/48.9 MB 263.3 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 146.2 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 146.2 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 17.0 MB/s eta 0:00:00
 ```
 
 ```python
@@ -43,6 +43,14 @@ from transformers import (
 )
 
 plt.rcParams["axes.unicode_minus"] = False
+
+# matplotlib 한글 폰트 (Colab — NanumGothic). plot 의 한국어가 □ 로 깨지지 않게.
+import matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run("apt-get -qq -y install fonts-nanum", shell=True)
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
 
 # device 자동감지 — Colab(T4) 은 CUDA, 로컬 Mac 은 MPS, 그 외 CPU
 if torch.cuda.is_available():
@@ -77,7 +85,7 @@ GPU:             Tesla T4
 **▶ 실행 결과**
 
 ```text
-Wed Jun 17 22:01:31 2026       
+Mon Jun 22 12:19:24 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -86,7 +94,7 @@ Wed Jun 17 22:01:31 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   42C    P8             11W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   45C    P8             11W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -98,8 +106,6 @@ Wed Jun 17 22:01:31 2026
 |  No running processes found                                                             |
 +-----------------------------------------------------------------------------------------+
 ```
-
-사전학습 코퍼스로 한국어 Wikipedia 덤프를 내려받습니다. 영어 챕터의 wikitext 대신 한국어 위키를 쓰는 것이 이번 장의 핵심 변경점이며, 전체 기사 수와 앞 세 건의 본문 미리보기로 코퍼스가 제대로 로드됐는지 확인합니다.
 
 ```python
 from datasets import load_dataset
@@ -133,8 +139,6 @@ first 3 article previews:
 
 수
 ```
-
-기사 본문을 문단(paragraph) 단위로 잘라 학습 5,000개와 검증 500개를 채웁니다. 제목이나 메타처럼 너무 짧은 문단과 목록·인용처럼 너무 긴 문단은 길이 기준으로 걸러, T4 30분 안에 도는 깔끔한 학습 텍스트만 남깁니다. 샘플 길이 통계와 미리보기로 어떤 문단이 뽑혔는지 확인합니다.
 
 ```python
 SEED = 42
@@ -205,8 +209,6 @@ first sample preview:
  뉴스 애그리게이션(news aggregation)
 ```
 
-한국어로 사전학습된 `klue/bert-base` 토크나이저를 불러옵니다. vocab 크기와 특수 토큰 id를 출력하고, 한국어 문장 한 개를 토큰으로 쪼개 보면서 어미만 `##어요`처럼 서브워드로 붙는 한국어 분절 방식을 직접 확인합니다.
-
 ```python
 TOKENIZER_NAME = "klue/bert-base"
 tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_NAME)
@@ -246,12 +248,6 @@ Korean sample: '이 영화 정말 재미있어요!'
 tokens (8): ['[CLS]', '이', '영화', '정말', '재미있', '##어요', '!', '[SEP]']
 ids:    [2, 1504, 3771, 3944, 6001, 10283, 5, 3]
 ```
-
-**결과 해석**
-
-`klue/bert-base` 토크나이저는 한국어 문장을 `영화`, `재미있` 같은 의미 단위로 쪼개고, 어미 `##어요`만 서브워드로 붙여 8개 토큰으로 깔끔하게 처리합니다. 한국어 어휘로 학습된 vocab(32,000)이라 [UNK] 없이 자연스럽게 분절되는 점을 확인할 수 있습니다.
-
-영어 토크나이저(`bert-base-uncased`)도 함께 불러와 같은 한국어 문장에 둘 다 적용해 봅니다. 토크나이저별로 토큰 수와 [UNK] 비율을 표로 모아, 언어에 맞는 vocab을 쓰는 것이 분절 품질에 얼마나 영향을 주는지 수치로 비교합니다.
 
 ```python
 # 영어 토크나이저 (Ch 20 에서 사용한 것) 도 로드해 비교
@@ -296,12 +292,6 @@ print(cross_df.to_string(index=False))
         별로였어요. 시간 낭비.    klue/bert-base (KO)         7      0      0.0
 ```
 
-**결과 해석**
-
-같은 한국어 문장도 영어 토크나이저는 토큰 수가 2배 가까이 많고 [UNK]가 6.7-10.5% 발생하지만, 한국어 토크나이저는 토큰 수가 절반이면서 [UNK]가 0%입니다. 사전학습할 언어에 맞는 vocab을 쓰는 것이 왜 중요한지 수치로 드러납니다.
-
-앞의 비교를 실제 토큰 리스트로 펼쳐 봅니다. 두 토크나이저가 같은 한국어 문장을 각각 어떤 토큰들로 쪼개는지 첫 12개씩 출력해, 숫자뿐 아니라 분절 결과 자체를 눈으로 확인합니다.
-
 ```python
 # 실제 토큰 리스트도 한 번 보여줍니다 (첫 12 토큰)
 print("=" * 78)
@@ -333,12 +323,6 @@ for sent in ko_sentences:
   klue/bert-base (KO)          (  7 tokens, UNK  0): ['별로', '##였', '##어요', '.', '시간', '낭비', '.']
 ```
 
-**결과 해석**
-
-영어 토크나이저는 한글을 자모(`ᄋ`, `##ᅵ`) 단위로 산산이 부수거나 [UNK]로 흘려 버리는 반면, 한국어 토크나이저는 `별로`, `시간`, `낭비` 같은 단어를 통째로 잡아냅니다. 같은 입력이라도 토큰화가 이렇게 달라야 학습 신호가 의미 단위로 모입니다.
-
-학습 문단을 토큰 id로 변환합니다. 이후 블록 단위로 이어 붙여 자를 것이라 [CLS]/[SEP] 특수 토큰은 붙이지 않고, 길이 제한도 두지 않습니다. 변환된 첫 샘플의 토큰을 출력해 결과를 확인합니다.
-
 ```python
 BLOCK_SIZE = 128
 
@@ -368,8 +352,6 @@ tokenized_train: Dataset({
 first 30 input_ids of sample 0: [1478, 12, 244, 13, 1497, 24307, 2170, 8026, 2259, 8034, 2062, 18, 170, 16164, 2112, 171, 1325, 2520, 2097, 2170, 2259, 797, 2063, 2447, 2284, 12, 471, 353, 1, 1]
 first 30 tokens of sample 0:    ['원', '(', '元', ')', '은', '시호', '##에', '쓰이', '##는', '글자', '##다', '.', '《', '일주', '##서', '》', '시', '##법', '##해', '##에', '##는', '능', '##사', '##변', '##중', '(', '能', '思', '[UNK]', '[UNK]']
 ```
-
-모든 문단의 토큰 스트림을 하나로 이어 붙인 뒤 `BLOCK_SIZE`(128) 길이로 잘라 고정 크기 학습 블록을 만듭니다. 이렇게 하면 패딩 없이 토큰을 빈틈없이 채워 학습 효율을 높일 수 있고, `labels`를 `input_ids` 사본으로 둬 이후 collator가 마스킹 위치만 골라내게 합니다.
 
 ```python
 def group_texts(examples):
@@ -418,8 +400,6 @@ eval blocks:  429   (approx. 54,912 tokens)
 sample block 0 first 20 ids: [1478, 12, 244, 13, 1497, 24307, 2170, 8026, 2259, 8034, 2062, 18, 170, 16164, 2112, 171, 1325, 2520, 2097, 2170]
 sample block 0 first 20 tok: ['원', '(', '元', ')', '은', '시호', '##에', '쓰이', '##는', '글자', '##다', '.', '《', '일주', '##서', '》', '시', '##법', '##해', '##에']
 ```
-
-사전학습 가중치 없이 작은 BERT를 무작위 초기화로 새로 만듭니다. hidden 256, layer 4 규모로 줄여 T4에서 처음부터 학습 가능하게 하고, 파라미터를 embeddings·encoder·MLM head로 나눠 출력합니다. vocab이 큰 한국어라 embeddings가 전체의 70% 이상을 차지하는 점을 눈여겨봅니다.
 
 ```python
 HIDDEN_SIZE         = 256
@@ -472,8 +452,6 @@ Trainable:              11,483,136
   MLM head:                 98,304  (0.9%)  (tied with embeddings)
 ```
 
-MLM 마스킹을 담당할 collator를 만듭니다. 15% 확률로 토큰을 가려 학습 신호를 만드는데, 같은 입력을 두 번 통과시켜 매번 마스킹 위치가 달라지는지, 그리고 `labels`에서 -100이 아닌(=loss를 계산하는) 자리가 얼마나 되는지 확인합니다.
-
 ```python
 data_collator = DataCollatorForLanguageModeling(
     tokenizer=tokenizer,
@@ -505,12 +483,10 @@ print(f"loss positions:        {n_loss_pos:>4} / {total_tokens}  "
 
 ```text
 batch shape: input_ids=(2, 128), labels=(2, 128)
-masked tokens (call 1):   22 / 256  (8.59%)
-masked tokens (call 2):   27 / 256  (10.55%)
-loss positions:          30 / 256  (11.72%)  (labels != -100)
+masked tokens (call 1):   35 / 256  (13.67%)
+masked tokens (call 2):   26 / 256  (10.16%)
+loss positions:          45 / 256  (17.58%)  (labels != -100)
 ```
-
-한국어 문장 한 개에 collator를 적용해 토큰마다 무슨 일이 일어났는지 표로 풀어 봅니다. 각 자리가 미선택(-100)인지, [MASK]로 가려졌는지, 원본 유지(kept)인지, 무작위 교체인지 분류해 MLM의 80/10/10 규칙이 한 문장에서 어떻게 적용되는지 한눈에 보여줍니다.
 
 ```python
 # 한국어 예시 문장 한 개에 collator 한 번 적용 — 어떤 자리가 어떻게 바뀌나
@@ -575,12 +551,6 @@ print(demo_df.to_string(index=False))
   17    [SEP]          [SEP]      -100             -
 ```
 
-**결과 해석**
-
-18개 토큰 중 `영화`와 `훌륭` 두 자리만 선택돼 학습 대상이 되고, 나머지는 label이 -100이라 loss에서 빠집니다. `영화`는 [MASK]로 가려졌고 `##는`은 선택은 됐지만 원본 그대로 둔(kept) 경우로, 80/10/10 규칙이 한 문장에서 어떻게 적용되는지 한눈에 보입니다.
-
-한 문장에선 들쭉날쭉하던 마스킹 비율을 큰 배치로 확인합니다. 64개 블록을 한꺼번에 collator에 넣고 선택된 토큰의 [MASK]·random·kept 비율을 집계해, 표본이 커지면 목표 15%와 80/10/10에 실제로 수렴하는지 검증합니다.
-
 ```python
 # 큰 batch 통계 — 80/10/10 비율이 실제로 맞는지 확인 (한국어 lm_train 사용)
 torch.manual_seed(0)
@@ -607,7 +577,7 @@ print(f"  └─ replaced with [MASK]:         {n_mask:>7,}  ({100 * n_mask / n_
 print(f"  └─ replaced with random:         {n_random:>7,}  ({100 * n_random / n_selected:5.2f}% of selected)")
 print(f"  └─ kept as original:             {n_kept:>7,}  ({100 * n_kept / n_selected:5.2f}% of selected)")
 print()
-print("Target: select 15%, split 80-10-10 into [MASK]-random-kept. Ratios stabilize with larger samples.")
+print("Target: 선택 15% / 그 중 80-10-10 으로 [MASK]-random-kept. 표본 크면 비율 안정.")
 ```
 
 **▶ 실행 결과**
@@ -619,14 +589,8 @@ Selected for loss (target 15%):      1,209  (14.76%)
   └─ replaced with random:             119  ( 9.84% of selected)
   └─ kept as original:                 135  (11.17% of selected)
 
-Target: select 15%, split 80-10-10 into [MASK]-random-kept. Ratios stabilize with larger samples.
+Target: 선택 15% / 그 중 80-10-10 으로 [MASK]-random-kept. 표본 크면 비율 안정.
 ```
-
-**결과 해석**
-
-8,192개 토큰에서 14.76%가 학습 대상으로 선택됐고, 그 안에서 [MASK]:random:kept가 약 79:10:11로 목표 80/10/10에 근접합니다. 한 문장에선 들쭉날쭉하던 비율이 표본이 커지자 안정적으로 수렴하는 것을 확인할 수 있습니다.
-
-학습 설정을 정해 `Trainer`를 구성합니다. 무작위 초기화에서 처음부터 학습하므로 fine-tune(2e-5)보다 큰 learning rate(5e-4)를 쓰고, T4에서는 `fp16=True`로 메모리와 속도를 확보합니다. epoch당 step 수를 출력해 학습 규모를 가늠합니다.
 
 ```python
 USE_FP16 = (DEVICE == "cuda")   # T4 는 fp16, MPS/CPU 는 fp32
@@ -676,8 +640,6 @@ fp16:          True
 train blocks:  3,924
 steps / epoch: 122
 ```
-
-[MASK] 자리의 top-k 예측을 반환하는 함수를 정의하고, 학습 전 상태를 측정합니다. 위키 도메인과 NSMC 도메인 검증 문장을 섞어 두고, 무작위 초기화 모델의 eval_loss·perplexity와 [MASK] top-5 예측을 뽑아 학습이 시작되기 전의 출발점을 기록합니다.
 
 ```python
 # predict_mask 함수 정의 — 학습 전·후 두 번 호출하므로 먼저 정의
@@ -744,26 +706,20 @@ for sent in test_sentences:
 ==============================================================================
 BEFORE pretraining  (random init body)
 ==============================================================================
-  eval_loss       : 10.4471   (random baseline ln V = 10.3735)
-  eval_perplexity : 34,446     (random baseline V    = 32,000)
+  eval_loss       : 10.4255   (random baseline ln V = 10.3735)
+  eval_perplexity : 33,709     (random baseline V    = 32,000)
 input: 대한민국의 수도는 [MASK]이다.
-  top-5 before pretraining: ['서약', '정공', '##퐁', '회선', '슘']
+  top-5 before pretraining: ['##희정', '해석', '찬성', '전한', 'par']
 
 input: 태양계에는 행성이 [MASK] 개 있다.
-  top-5 before pretraining: ['양봉', '선거전', '##yp', '나중', 'D']
+  top-5 before pretraining: ['이씨', '저지른', '1958', '몰입', '끄집어내']
 
 input: 이 영화 정말 [MASK].
-  top-5 before pretraining: ['전유물', '대구', '##껄', '신기록', '학번']
+  top-5 before pretraining: ['계약서', '서귀', '스페인어', '드세요', 'William']
 
 input: 배우 연기가 [MASK] 좋았어요.
-  top-5 before pretraining: ['전유물', '대구', '신기록', '가구', '##르']
+  top-5 before pretraining: ['계약서', '서귀', '드세요', '스페인어', 'William']
 ```
-
-**결과 해석**
-
-학습 전 random init 모델은 eval_loss 10.45, perplexity 34,446으로 vocab 크기(32,000)에 해당하는 무작위 추측 수준입니다. [MASK] 예측도 `서약`, `##퐁`, `전유물`처럼 문맥과 무관한 토큰이라, 아직 한국어에 대해 아무것도 모른다는 출발점을 보여줍니다.
-
-실제 MLM 사전학습을 돌립니다. 가려진 토큰을 맞히도록 2 epoch 학습하고, 걸린 시간과 평균 train loss를 무작위 기준 loss(ln V)와 나란히 출력해 학습이 무작위 수준에서 얼마나 내려왔는지 가늠합니다.
 
 ```python
 t0 = time.time()
@@ -779,13 +735,9 @@ print(f"random baseline loss (uniform over vocab): {math.log(tokenizer.vocab_siz
 ```text
 <IPython.core.display.HTML object>
 Korean MLM pretraining done in 0.3 min
-mean train loss: 7.8204
+mean train loss: 7.7967
 random baseline loss (uniform over vocab): 10.3735
 ```
-
-**결과 해석**
-
-2 epoch 학습으로 train loss가 무작위 기준 10.37에서 7.82까지 내려와, 짧은 시간에도 모델이 분포를 좁히기 시작했음을 보여줍니다. 다만 0.3분이라는 극히 짧은 학습이라 완성 모델과는 거리가 멀고, 뒤의 예측 결과에서 그 한계가 드러납니다.
 
 ```python
 !nvidia-smi
@@ -794,7 +746,7 @@ random baseline loss (uniform over vocab): 10.3735
 **▶ 실행 결과**
 
 ```text
-Wed Jun 17 22:02:36 2026       
+Mon Jun 22 12:20:24 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -803,7 +755,7 @@ Wed Jun 17 22:02:36 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   54C    P0             58W /   70W |    3449MiB /  15360MiB |     37%      Default |
+| N/A   59C    P0             41W /   70W |    3449MiB /  15360MiB |     54%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -812,11 +764,9 @@ Wed Jun 17 22:02:36 2026
 |  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
 |        ID   ID                                                               Usage      |
 |=========================================================================================|
-|    0   N/A  N/A            1014      C   /usr/bin/python3                       3446MiB |
+|    0   N/A  N/A            1984      C   /usr/bin/python3                       3446MiB |
 +-----------------------------------------------------------------------------------------+
 ```
-
-학습 로그에 기록된 step별 train loss를 꺼내 곡선으로 그립니다. 무작위 기준선(ln V)을 점선으로 함께 표시해, loss가 그 아래로 내려가며 학습이 정상적으로 진행됐는지 시각적으로 확인합니다.
 
 ```python
 # 학습 로그에서 train loss 추출
@@ -827,14 +777,14 @@ if train_logs:
     steps, losses = zip(*train_logs)
     random_baseline = math.log(tokenizer.vocab_size)
 
-    sns.set_theme(style="whitegrid", context="talk")
+    sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
     fig, ax = plt.subplots(figsize=(9, 5))
-    ax.plot(steps, losses, "o-", color="#4878D0", label="train MLM loss")
+    ax.plot(steps, losses, "o-", color="#4878D0", label="학습 MLM loss")
     ax.axhline(random_baseline, color="black", lw=1.0, ls=":",
-               label=f"random baseline (ln V = {random_baseline:.2f})")
-    ax.set_xlabel("training step")
+               label=f"랜덤 기준선 (ln V = {random_baseline:.2f})")
+    ax.set_xlabel("학습 step")
     ax.set_ylabel("MLM loss (CrossEntropy)")
-    ax.set_title("MLM training loss — small BERT scratch on Korean Wikipedia")
+    ax.set_title("MLM 학습 loss — 한국어 위키백과 위에서 처음부터 학습한 small BERT")
     ax.legend()
     plt.tight_layout()
     plt.show()
@@ -845,12 +795,6 @@ else:
 **▶ 실행 결과**
 
 ![output](../assets/22-ko_bert_pretrain-out1.png)
-
-**결과 해석**
-
-train loss 곡선이 무작위 기준선(점선) 아래로 빠르게 떨어지며 학습이 정상적으로 진행됨을 보여줍니다. 다만 아직 곡선이 평평해지지 않아, 데이터나 epoch를 늘리면 더 내려갈 여지가 남아 있습니다.
-
-held-out 한국어 문단으로 학습 결과를 평가합니다. eval_loss를 지수화해 perplexity로 바꾸면 모델이 가려진 자리마다 후보를 몇 개로 좁혔는지 직관적으로 읽을 수 있어, 무작위 baseline(vocab 32,000) 대비 얼마나 개선됐는지 확인합니다.
 
 ```python
 eval_metrics = trainer.evaluate()
@@ -873,19 +817,13 @@ print(f"  -> model narrowed vocab to approx. {eval_ppl:.0f} candidates per maske
 <IPython.core.display.HTML object>
 <IPython.core.display.HTML object>
 === eval (held-out Korean Wikipedia paragraphs) ===
-               eval_loss: 7.5589
+               eval_loss: 7.5138
 
-  MLM loss:               7.5589
-  perplexity (exp loss):  1917.77
+  MLM loss:               7.5138
+  perplexity (exp loss):  1833.24
   random baseline PPL:    32,000  (uniform over vocab)
-  -> model narrowed vocab to approx. 1918 candidates per masked position
+  -> model narrowed vocab to approx. 1833 candidates per masked position
 ```
-
-**결과 해석**
-
-held-out 문단의 perplexity가 무작위 32,000에서 약 1,918로 줄어, 모델이 가려진 자리마다 후보를 32,000개에서 2,000개 안쪽으로 좁혔다는 뜻입니다. Ch 20 영어판과 마찬가지로 짧은 사전학습이라 여전히 높은 값이지만, 학습 신호가 분명히 들어갔습니다.
-
-학습 후의 eval_loss·perplexity를 학습 전 값과 나란히 출력하고, 같은 검증 문장에 [MASK] top-5를 다시 뽑습니다. 학습 전 무작위 토큰에서 어떤 토큰으로 예측이 옮겨 갔는지 비교해, 짧은 사전학습이 우선 무엇부터 학습하는지 살펴봅니다.
 
 ```python
 # ---- 사전학습 후 eval_loss / perplexity ----
@@ -920,28 +858,22 @@ for sent in test_sentences:
 ==============================================================================
 AFTER pretraining  (2 epoch MLM)
 ==============================================================================
-  eval_loss       : 7.5660   (before: 10.4471)
-  eval_perplexity : 1,931.42        (before: 34,446)
-  -> narrowed vocab to approx. 1931 candidates per masked position
+  eval_loss       : 7.5249   (before: 10.4255)
+  eval_perplexity : 1,853.59        (before: 33,709)
+  -> narrowed vocab to approx. 1854 candidates per masked position
 
 input: 대한민국의 수도는 [MASK]이다.
-  top-5 after pretraining: ['.', ',', '##의', '##다', '##년']
+  top-5 after pretraining: ['.', '##의', ',', '##에', '##는']
 
 input: 태양계에는 행성이 [MASK] 개 있다.
-  top-5 after pretraining: ['.', '##의', ',', '##다', ')']
+  top-5 after pretraining: ['.', '##의', '##다', '##에', ',']
 
 input: 이 영화 정말 [MASK].
-  top-5 after pretraining: ['.', ',', '##의', ')', '##다']
+  top-5 after pretraining: ['.', '##의', ',', ')', '##다']
 
 input: 배우 연기가 [MASK] 좋았어요.
-  top-5 after pretraining: ['.', ',', '##의', '##다', ')']
+  top-5 after pretraining: ['.', '##의', ',', ')', '##다']
 ```
-
-**결과 해석**
-
-학습 후 [MASK] 예측이 무작위 토큰에서 `.`, `,`, `##의`, `##다` 같은 한국어 고빈도 토큰으로 수렴했습니다. Ch 20 영어판과 똑같이, 짧은 사전학습은 우선 가장 흔한 조사·구두점부터 학습하므로 아직 `서울` 같은 내용어까지는 닿지 못한 단계입니다.
-
-학습 전후의 eval_loss와 perplexity를 무작위 baseline과 함께 한 표로 모읍니다. 세 값을 나란히 두면 사전학습이 만든 개선폭을 숫자로 한눈에 정리할 수 있습니다.
 
 ```python
 # 사전·사후 수치 비교 표
@@ -960,22 +892,20 @@ print(metric_compare.round(4).to_string(index=False))
 ```text
 Before vs After — eval metrics
          metric  before (random)  after (2 epoch)  random baseline
-      eval_loss          10.4471           7.5660          10.3735
-eval_perplexity       34445.6443        1931.4213       32000.0000
+      eval_loss          10.4255           7.5249          10.3735
+eval_perplexity       33708.8968        1853.5880       32000.0000
 ```
-
-앞 표의 수치를 막대 그래프 두 장으로 시각화합니다. eval_loss와 perplexity 각각에 무작위 기준선을 점선으로 얹어, 학습 후 값이 baseline 아래로 내려갔음을 직관적으로 보여줍니다. perplexity는 값 차이가 커서 로그 스케일로 그립니다.
 
 ```python
 # 막대 그래프 두 장 (eval_loss / perplexity)
-sns.set_theme(style="whitegrid", context="talk")
+sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
 fig, axes = plt.subplots(1, 2, figsize=(12, 5))
 
 loss_values = [pre_eval_loss, post_eval_loss]
-loss_labels = ["before (random)", "after (2 epoch)"]
+loss_labels = ["학습 전 (랜덤)", "학습 후 (2 epoch)"]
 axes[0].bar(loss_labels, loss_values, color=["#999999", "#EE854A"])
 axes[0].axhline(random_baseline_loss, color="black", lw=1.0, ls=":",
-                label=f"random baseline ln V = {random_baseline_loss:.2f}")
+                label=f"랜덤 기준선 ln V = {random_baseline_loss:.2f}")
 axes[0].set_ylabel("eval_loss")
 axes[0].set_title("MLM eval_loss")
 axes[0].legend(loc="upper right", fontsize=10)
@@ -984,7 +914,7 @@ ppl_values = [pre_eval_ppl, post_eval_ppl]
 axes[1].bar(loss_labels, ppl_values, color=["#999999", "#EE854A"])
 axes[1].set_yscale("log")
 axes[1].axhline(tokenizer.vocab_size, color="black", lw=1.0, ls=":",
-                label=f"random baseline V = {tokenizer.vocab_size:,}")
+                label=f"랜덤 기준선 V = {tokenizer.vocab_size:,}")
 axes[1].set_ylabel("perplexity (log scale)")
 axes[1].set_title("MLM perplexity")
 axes[1].legend(loc="upper right", fontsize=10)
@@ -996,12 +926,6 @@ plt.show()
 **▶ 실행 결과**
 
 ![output](../assets/22-ko_bert_pretrain-out2.png)
-
-**결과 해석**
-
-두 막대 모두 학습 후(주황) 값이 무작위 기준선(점선) 아래로 내려가, eval_loss와 perplexity가 함께 개선됐음을 시각적으로 확인할 수 있습니다. perplexity는 로그 스케일에서도 눈에 띄게 줄어 무작위 대비 약 16배 좁아진 셈입니다.
-
-충분히 학습된 정식 `klue/bert-base`를 불러와 비교 기준점으로 삼습니다. 우리 작은 모델과 파라미터 수를 견줘, 약 10배 큰 규모와 방대한 학습량의 차이가 곧이어 예측 품질에서 어떻게 드러날지 준비합니다.
 
 ```python
 # 표준 klue/bert-base 로드 — 학습이 충분히 잘 된 경우의 기준점
@@ -1024,17 +948,15 @@ print(f"Reference BERT params: {ref_param_count/1e6:.1f}M  ({ref_param_count/our
 Key                         | Status     |  | 
 ----------------------------+------------+--+-
 cls.seq_relationship.bias   | UNEXPECTED |  | 
-bert.pooler.dense.bias      | UNEXPECTED |  | 
-cls.seq_relationship.weight | UNEXPECTED |  | 
 bert.pooler.dense.weight    | UNEXPECTED |  | 
+cls.seq_relationship.weight | UNEXPECTED |  | 
+bert.pooler.dense.bias      | UNEXPECTED |  | 
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
 Our small BERT params: 11.5M
 Reference BERT params: 110.7M  (10x larger)
 ```
-
-참조 모델로 같은 검증 문장의 [MASK] top-5를 측정합니다. 우리 모델과 동일한 예측 함수를 reference 모델에도 적용해 결과를 모은 뒤, 메모리를 위해 참조 모델을 바로 해제합니다.
 
 ```python
 # Reference 모델로 같은 문장의 top-5 측정
@@ -1070,8 +992,6 @@ if torch.cuda.is_available():
     torch.cuda.empty_cache()
 ```
 
-학습 전(무작위)·우리 모델·정식 `klue/bert-base` 세 가지의 [MASK] top-5를 한 표로 나란히 출력합니다. 같은 문장에서 세 단계 예측을 비교하면, 학습량 차이가 예측 품질에 어떻게 나타나는지 직접 확인할 수 있습니다.
-
 ```python
 # 3-way top-5 비교 표
 rows = []
@@ -1100,31 +1020,25 @@ for _, row in top5_compare.iterrows():
 Before (random) vs Ours (small BERT, ko wiki 5K) vs Reference (klue/bert-base, approx. 8.4B tokens)
 ====================================================================================================
 input: 대한민국의 수도는 [MASK]이다.
-  before (random)            : 서약, 정공, ##퐁, 회선, 슘
-  ours  (small, 5K para)     : ., ,, ##의, ##다, ##년
+  before (random)            : ##희정, 해석, 찬성, 전한, par
+  ours  (small, 5K para)     : ., ##의, ,, ##에, ##는
   ref   (klue/bert-base)     : 서울, 광화문, 평양, 부산, 인천
 
 input: 태양계에는 행성이 [MASK] 개 있다.
-  before (random)            : 양봉, 선거전, ##yp, 나중, D
-  ours  (small, 5K para)     : ., ##의, ,, ##다, )
+  before (random)            : 이씨, 저지른, 1958, 몰입, 끄집어내
+  ours  (small, 5K para)     : ., ##의, ##다, ##에, ,
   ref   (klue/bert-base)     : 여러, 몇, 두, 세, 다섯
 
 input: 이 영화 정말 [MASK].
-  before (random)            : 전유물, 대구, ##껄, 신기록, 학번
-  ours  (small, 5K para)     : ., ,, ##의, ), ##다
+  before (random)            : 계약서, 서귀, 스페인어, 드세요, William
+  ours  (small, 5K para)     : ., ##의, ,, ), ##다
   ref   (klue/bert-base)     : 좋아, [UNK], ., 좋아해, 좋아한다
 
 input: 배우 연기가 [MASK] 좋았어요.
-  before (random)            : 전유물, 대구, 신기록, 가구, ##르
-  ours  (small, 5K para)     : ., ,, ##의, ##다, )
+  before (random)            : 계약서, 서귀, 드세요, 스페인어, William
+  ours  (small, 5K para)     : ., ##의, ,, ), ##다
   ref   (klue/bert-base)     : 너무, 정말, 참, 굉장히, 아주
 ```
-
-**결과 해석**
-
-충분히 학습한 `klue/bert-base`는 `대한민국의 수도는 [MASK]`에 `서울`, 수량 자리에 `여러`-`몇`, 감정 자리에 `너무`-`정말`처럼 문맥에 맞는 내용어를 정확히 채웁니다. 우리 모델은 아직 고빈도 토큰에 머물러 있는데, 이 격차가 곧 약 8.4B 토큰과 5,000 문단의 학습량 차이를 그대로 보여줍니다.
-
-사전학습한 모델과 토크나이저를 디스크에 저장합니다. 다음 챕터(Ch 23)에서 이 체크포인트를 불러와 fine-tune하므로, 저장된 파일과 용량을 출력해 모델이 제대로 기록됐는지 확인합니다.
 
 ```python
 SAVE_DIR = "./ch22_small_bert_mlm_ko"
