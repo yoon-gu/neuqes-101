@@ -152,5 +152,4 @@ x축 = 방식 A의 $p_A$, y축 = 방식 B의 $p_B$. 점 색은 정답 라벨.
 
 ## 이 장의 구성
 
-- [11-1. 실습](11-bert_binary_softmax-practice.md)
-- [11-2. 정리와 FAQ](11-bert_binary_softmax-wrapup.md)
+[[SubPages]]

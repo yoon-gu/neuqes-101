@@ -25,6 +25,13 @@ from sklearn.metrics import (
     classification_report, roc_auc_score,
 )
 
+# matplotlib 한글 폰트 (Colab — NanumGothic). plot 의 한국어가 □ 로 깨지지 않게.
+import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run("apt-get -qq -y install fonts-nanum", shell=True)
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
 plt.rcParams["axes.unicode_minus"] = False
 
 print(f"PyTorch:        {torch.__version__}")
@@ -50,7 +57,7 @@ GPU:             Tesla T4
 **▶ 실행 결과**
 
 ```text
-Wed Jun 17 21:34:39 2026       
+Mon Jun 22 03:44:42 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -59,7 +66,7 @@ Wed Jun 17 21:34:39 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   41C    P8             11W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   43C    P8             11W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -71,8 +78,6 @@ Wed Jun 17 21:34:39 2026
 |  No running processes found                                                             |
 +-----------------------------------------------------------------------------------------+
 ```
-
-토크나이저를 불러오고 Yelp 리뷰에서 학습 5,000개, 평가 1,000개를 뽑습니다. 별점 3점은 애매한 중립이라 제외하고, 4점 이상을 1(긍정) 그 외를 0(부정)으로 이진화합니다. Ch 10과 달리 라벨을 int 스칼라로 만드는 점을 눈여겨봐 주세요.
 
 ```python
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
@@ -106,8 +111,6 @@ eval  (after excluding 3-star): 804
 train positive rate: 49.4%
 ```
 
-리뷰 텍스트를 토큰화하고 라벨 컬럼을 정리합니다. 방식 B는 CrossEntropyLoss를 쓰므로 라벨을 int 스칼라로 넣는데, 길이-1 float 벡터를 쓰던 Ch 10과 대비되는 지점입니다. 학습에 필요 없는 원본 컬럼은 제거합니다.
-
 ```python
 def tokenize_fn(batch):
     out = tokenizer(batch["text"], truncation=True, max_length=128)
@@ -131,8 +134,6 @@ Dataset({
 
 First sample label: 1  (int scalar)
 ```
-
-DistilBERT에 분류 헤드를 붙여 모델을 만듭니다. `num_labels=2`와 `problem_type="single_label_classification"`을 주면 출력이 2차원이 되고 손실로 CrossEntropyLoss가 자동 매핑되는데, 이것이 BERT 분류의 표준 방식 B입니다. 새로 초기화되는 분류기 파라미터와 출력 차원이 2인 점을 확인해 주세요.
 
 ```python
 model = AutoModelForSequenceClassification.from_pretrained(
@@ -162,14 +163,14 @@ print(f"id2label:             {model.config.id2label}")
 [transformers] DistilBertForSequenceClassification LOAD REPORT from: distilbert-base-uncased
 Key                     | Status     | 
 ------------------------+------------+-
-vocab_layer_norm.weight | UNEXPECTED | 
-vocab_layer_norm.bias   | UNEXPECTED | 
-vocab_transform.weight  | UNEXPECTED | 
 vocab_projector.bias    | UNEXPECTED | 
+vocab_transform.weight  | UNEXPECTED | 
 vocab_transform.bias    | UNEXPECTED | 
+vocab_layer_norm.bias   | UNEXPECTED | 
+vocab_layer_norm.weight | UNEXPECTED | 
+classifier.bias         | MISSING    | 
 pre_classifier.bias     | MISSING    | 
 pre_classifier.weight   | MISSING    | 
-classifier.bias         | MISSING    | 
 classifier.weight       | MISSING    | 
 
 Notes:
@@ -189,7 +190,7 @@ id2label:             {0: 'negative', 1: 'positive'}
 **▶ 실행 결과**
 
 ```text
-Wed Jun 17 21:35:05 2026       
+Mon Jun 22 03:45:15 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -198,7 +199,7 @@ Wed Jun 17 21:35:05 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   42C    P8             14W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   43C    P8             13W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -210,8 +211,6 @@ Wed Jun 17 21:35:05 2026
 |  No running processes found                                                             |
 +-----------------------------------------------------------------------------------------+
 ```
-
-평가 지표를 계산하는 함수를 정의합니다. 2차원 logits에 softmax를 씌워 클래스 1의 확률을 얻고, argmax로 0/1 예측을 만들어 정확도, precision, recall, F1, AUC를 구합니다. 지수 계산 전 최댓값을 빼는 것은 오버플로를 막는 안정화 처리입니다.
 
 ```python
 def compute_metrics(eval_pred):
@@ -231,8 +230,6 @@ def compute_metrics(eval_pred):
         "auc":       float(roc_auc_score(labels, probs)),
     }
 ```
-
-학습 설정을 잡고 `Trainer`로 방식 B 모델을 학습합니다. T4 30분 제약에 맞춰 2 에폭, batch_size 16, `fp16=True`로 두었습니다. 학습이 끝나면 평균 train loss를 출력해 Ch 10의 sigmoid+BCE와 손실 규모를 비교할 수 있습니다.
 
 ```python
 training_args = TrainingArguments(
@@ -266,12 +263,8 @@ print(f"\nTraining done — mean train loss: {train_result.training_loss:.4f}")
 
 ```text
 <IPython.core.display.HTML object>
-Training done — mean train loss: 0.2599
+Training done — mean train loss: 0.2582
 ```
-
-**결과 해석**
-
-평균 train loss가 0.26 수준으로 안정적으로 내려갔습니다. 같은 데이터를 sigmoid+BCE로 학습한 Ch 10과 거의 같은 손실 규모로, 출력 차원만 2로 바뀌었을 뿐 학습 자체는 동일하게 진행됨을 보여줍니다.
 
 ```python
 !nvidia-smi
@@ -280,7 +273,7 @@ Training done — mean train loss: 0.2599
 **▶ 실행 결과**
 
 ```text
-Wed Jun 17 21:35:37 2026       
+Mon Jun 22 03:45:47 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -289,7 +282,7 @@ Wed Jun 17 21:35:37 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   59C    P0             58W /   70W |    1579MiB /  15360MiB |     78%      Default |
+| N/A   57C    P0             65W /   70W |    1579MiB /  15360MiB |     56%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -298,11 +291,9 @@ Wed Jun 17 21:35:37 2026
 |  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
 |        ID   ID                                                               Usage      |
 |=========================================================================================|
-|    0   N/A  N/A            8263      C   /usr/bin/python3                       1576MiB |
+|    0   N/A  N/A             629      C   /usr/bin/python3                       1576MiB |
 +-----------------------------------------------------------------------------------------+
 ```
-
-학습된 방식 B 모델을 평가 셋에서 측정합니다. 앞서 정의한 `compute_metrics`가 호출되어 정확도, precision, recall, F1, AUC가 한꺼번에 나옵니다. 이 값들을 뒤에서 방식 A와 나란히 비교하게 됩니다.
 
 ```python
 # 평가 metric
@@ -319,19 +310,13 @@ for k, v in eval_metrics.items():
 <IPython.core.display.HTML object>
 <IPython.core.display.HTML object>
 BERT method B evaluation:
-             eval_loss: 0.2716
+             eval_loss: 0.2656
          eval_accuracy: 0.9104
-        eval_precision: 0.9008
-           eval_recall: 0.9057
-               eval_f1: 0.9032
-              eval_auc: 0.9671
+        eval_precision: 0.9030
+           eval_recall: 0.9030
+               eval_f1: 0.9030
+              eval_auc: 0.9689
 ```
-
-**결과 해석**
-
-방식 B는 정확도 91.0%, AUC 0.967로 견고한 성능을 보입니다. 이진 데이터를 2차원 출력 + softmax + CrossEntropyLoss로 다뤘는데도, 1차원 sigmoid 방식과 다를 바 없는 수준의 결과가 나옵니다.
-
-방식 B의 raw logits를 꺼내 동등성을 숫자로 확인합니다. 2차원 logit (z0, z1)에서 z = z1 − z0를 만들면, softmax(z0, z1)의 클래스 1 확률이 sigmoid(z)와 같아진다는 것이 핵심입니다. 첫 5개 샘플에서 z가 클수록 prob_B가 1에 가까워지는지 눈여겨봐 주세요.
 
 ```python
 # logits → softmax → 클래스 1 확률 + 1차원 logit z = z1 - z0
@@ -367,27 +352,21 @@ print(pd.DataFrame({
 ```text
 <IPython.core.display.HTML object>
 logits2 (raw)  shape: (804, 2)
-logit z = z1-z0 range: [-4.98, 5.04]
-Prob range:            [0.0068, 0.9936]
-Positive prediction rate (prob >= 0.5): 46.4%
+logit z = z1-z0 range: [-5.10, 4.88]
+Prob range:            [0.0061, 0.9925]
+Positive prediction rate (prob >= 0.5): 46.1%
 
 First 5 samples:
  label    z0    z1  z=z1-z0  prob_B  pred
-     1 -1.88  2.50     4.38  0.9876     1
-     0  1.69 -1.64    -3.33  0.0345     0
-     1 -2.10  2.69     4.79  0.9918     1
-     1 -1.84  2.49     4.33  0.9870     1
-     1 -2.12  2.82     4.94  0.9929     1
+     1 -1.81  2.26     4.08  0.9833     1
+     0  1.47 -1.55    -3.02  0.0466     0
+     1 -2.05  2.60     4.65  0.9905     1
+     1 -1.69  2.29     3.99  0.9818     1
+     1 -2.13  2.64     4.77  0.9916     1
 ```
 
-**결과 해석**
-
-두 logit의 차이 z = z1 − z0가 클수록 prob_B가 1에 가까워집니다. 예컨대 z = 4.38이면 prob_B = 0.9876, z = −3.33이면 prob_B = 0.0345로, softmax(z0, z1)의 클래스 1 확률이 정확히 sigmoid(z1 − z0)와 같다는 동등성이 숫자로 확인됩니다.
-
-실제 label별로 예측 확률 분포를 그립니다. 0.5 경계를 기준으로 두 색이 얼마나 잘 갈라지는지를 보면 모델이 두 클래스를 확신 있게 구분하는지 가늠할 수 있습니다.
-
 ```python
-sns.set_theme(style="whitegrid", context="talk")
+sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
 
 df = pd.DataFrame({"prob": probs, "logit": logits, "label": labels})
 PAL = {0: "#5B8DEF", 1: "#F47272"}
@@ -399,9 +378,9 @@ sns.kdeplot(
     palette=PAL, clip=(0, 1), ax=ax,
 )
 ax.axvline(0.5, color="black", lw=1.2, ls="--", alpha=0.7)
-ax.set_title("Method B — Probability Distribution by Actual Label")
-ax.set_xlabel("Predicted probability  P(y=1) = softmax(logits)[1]")
-ax.set_ylabel("Density")
+ax.set_title("방식 B — 실제 라벨별 확률 분포")
+ax.set_xlabel("예측 확률  P(y=1) = softmax(logits)[1]")
+ax.set_ylabel("밀도")
 plt.tight_layout()
 plt.show()
 ```
@@ -409,12 +388,6 @@ plt.show()
 **▶ 실행 결과**
 
 ![output](../assets/11-bert_binary_softmax-out1.png)
-
-**결과 해석**
-
-실제 label별 확률 분포가 0과 1 양극단으로 깔끔하게 갈라집니다. 0.5 경계를 기준으로 두 색이 거의 겹치지 않아, 모델이 두 클래스를 확신 있게 구분하고 있음을 보여줍니다.
-
-이번에는 확률 대신 1차원 logit z = z1 − z0 축에서 분포를 그립니다. 0을 경계로 두 클래스가 갈라지는데, 이 logit이 곧 방식 A의 단일 출력에 대응합니다. sigmoid를 씌우면 앞의 확률 분포와 같은 그림이 됨을 떠올려 보세요.
 
 ```python
 fig, ax = plt.subplots(figsize=(9, 5))
@@ -424,9 +397,9 @@ sns.kdeplot(
     palette=PAL, ax=ax,
 )
 ax.axvline(0.0, color="black", lw=1.2, ls="--", alpha=0.7)
-ax.set_title("Method B — Logit Distribution  (z = z1 − z0)")
-ax.set_xlabel("Logit  z = z1 − z0")
-ax.set_ylabel("Density")
+ax.set_title("방식 B — logit 분포  (z = z1 − z0)")
+ax.set_xlabel("logit  z = z1 − z0")
+ax.set_ylabel("밀도")
 plt.tight_layout()
 plt.show()
 ```
@@ -434,12 +407,6 @@ plt.show()
 **▶ 실행 결과**
 
 ![output](../assets/11-bert_binary_softmax-out2.png)
-
-**결과 해석**
-
-확률 대신 z = z1 − z0 축에서 보면 두 클래스가 0을 경계로 양쪽으로 분리됩니다. 이 1차원 logit이 바로 방식 A의 단일 출력에 대응하며, sigmoid를 씌우면 앞의 확률 분포와 같은 그림이 됩니다.
-
-클래스별 상세 지표를 한눈에 보기 위해 분류 리포트를 출력합니다. negative와 positive 각각의 precision/recall/F1과 함께 macro/weighted 평균이 나옵니다. 클래스가 거의 균형이라 두 평균이 비슷하게 나오는지 확인해 주세요.
 
 ```python
 # 상세 분류 리포트
@@ -455,19 +422,13 @@ print(classification_report(
 ```text
               precision    recall  f1-score   support
 
-    negative     0.9188    0.9145    0.9167       433
-    positive     0.9008    0.9057    0.9032       371
+    negative     0.9169    0.9169    0.9169       433
+    positive     0.9030    0.9030    0.9030       371
 
     accuracy                         0.9104       804
-   macro avg     0.9098    0.9101    0.9099       804
-weighted avg     0.9105    0.9104    0.9105       804
+   macro avg     0.9099    0.9099    0.9099       804
+weighted avg     0.9104    0.9104    0.9104       804
 ```
-
-**결과 해석**
-
-negative와 positive 모두 precision/recall이 0.90 이상으로 고르게 잘 나옵니다. 클래스가 거의 균형(positive 약 49%)이라 macro와 weighted 평균이 거의 같은 값을 보입니다.
-
-이제 방식 A를 직접 학습해 두 방식을 비교합니다. 먼저 라벨만 방식 A 형식으로 바꿉니다. int 스칼라 0/1을 길이-1 float 벡터 [0.0]/[1.0]로 변환하는데, 텍스트와 attention_mask는 그대로 두고 라벨 형식만 다른 새 데이터셋을 만듭니다.
 
 ```python
 # 방식 A용 라벨 변환 — int 0/1 → 길이 1 multi-hot float [0.0]/[1.0]
@@ -489,8 +450,6 @@ print(f"Method B first sample label: {train_tok[0]['labels']}    (int scalar)")
 Method A first sample label: [1.0]  (length-1 float vector)
 Method B first sample label: 1    (int scalar)
 ```
-
-방식 A 모델을 만듭니다. `num_labels=1` + `problem_type="multi_label_classification"`로 두면 출력이 1차원이 되고 손실로 BCEWithLogitsLoss가 매핑되는데, 이것이 Ch 10과 동일한 sigmoid+BCE 셋업입니다. 분류기 출력 차원이 1인 점을 방식 B의 2와 비교해 보세요.
 
 ```python
 # 방식 A 모델 — Ch 10과 동일 셋업
@@ -525,14 +484,14 @@ print(f"Method A problem_type:  {model_A.config.problem_type}")
 [transformers] DistilBertForSequenceClassification LOAD REPORT from: distilbert-base-uncased
 Key                     | Status     | 
 ------------------------+------------+-
-vocab_layer_norm.weight | UNEXPECTED | 
-vocab_layer_norm.bias   | UNEXPECTED | 
-vocab_transform.weight  | UNEXPECTED | 
 vocab_projector.bias    | UNEXPECTED | 
+vocab_transform.weight  | UNEXPECTED | 
 vocab_transform.bias    | UNEXPECTED | 
+vocab_layer_norm.bias   | UNEXPECTED | 
+vocab_layer_norm.weight | UNEXPECTED | 
+classifier.bias         | MISSING    | 
 pre_classifier.bias     | MISSING    | 
 pre_classifier.weight   | MISSING    | 
-classifier.bias         | MISSING    | 
 classifier.weight       | MISSING    | 
 
 Notes:
@@ -541,8 +500,6 @@ Notes:
 Method A classifier:    Linear(in_features=768, out_features=1, bias=True)
 Method A problem_type:  multi_label_classification
 ```
-
-방식 A를 방식 B와 똑같은 하이퍼파라미터로 학습합니다. 에폭, batch_size, learning_rate를 동일하게 맞춰야 손실과 성능 차이가 라벨 형식과 손실 함수에서만 비롯됨을 깔끔하게 비교할 수 있습니다. train loss가 방식 B와 비슷하게 나오는지 눈여겨봐 주세요.
 
 ```python
 # 방식 A 학습 — Ch 10과 동일한 hyperparams (방식 B와도 동일)
@@ -580,12 +537,6 @@ print(f"\nMethod A training done — train loss: {train_result_A.training_loss:.
 Method A training done — train loss: 0.2588
 ```
 
-**결과 해석**
-
-방식 A의 train loss 0.2588은 방식 B의 0.2599와 사실상 같습니다. 라벨 형식(길이-1 float 벡터 대 int 스칼라)과 출력 차원만 다를 뿐, 같은 데이터에서 같은 손실 규모로 수렴함을 다시 확인할 수 있습니다.
-
-방식 A의 예측을 뽑고 평가합니다. 1차원 logit에 sigmoid를 씌워 확률을 만든 뒤 지표를 계산합니다. 두 데이터셋이 라벨 형식만 다르고 샘플 순서는 같으므로, assert로 라벨 일치를 검증해 뒤따르는 샘플별 비교가 어긋나지 않게 합니다.
-
 ```python
 # 방식 A 예측 추출
 preds_A_out = trainer_A.predict(eval_tok_A)
@@ -618,12 +569,6 @@ Method A evaluation:
               eval_auc: 0.9663
 ```
 
-**결과 해석**
-
-방식 A의 평가 지표(정확도 0.9055, AUC 0.9663)가 방식 B(0.9104, 0.9671)와 소수점 둘째 자리 수준에서 일치합니다. 같은 데이터를 sigmoid+BCE와 softmax+CE 어느 쪽으로 학습해도 성능이 사실상 동일하다는 점이 드러납니다.
-
-두 방식의 평가 지표를 한 표로 모아 차이를 직접 봅니다. 공통 지표마다 방식 A와 B 값을 나란히 놓고 절댓값 차이 |A−B|를 계산합니다. 모든 차이가 얼마나 작은지가 동등성의 요약입니다.
-
 ```python
 metrics_A = {k.replace("eval_", ""): v for k, v in eval_metrics_A.items()
              if k.startswith("eval_") and isinstance(v, float)}
@@ -644,19 +589,13 @@ print(cmp.round(4).to_string(index=False))
 
 ```text
    metric  method A (sigmoid+BCE)  method B (softmax+CE)  |A-B|
-     loss                  0.2811                 0.2716 0.0094
+     loss                  0.2811                 0.2656 0.0155
  accuracy                  0.9055                 0.9104 0.0050
-precision                  0.9041                 0.9008 0.0033
-   recall                  0.8895                 0.9057 0.0162
-       f1                  0.8967                 0.9032 0.0065
-      auc                  0.9663                 0.9671 0.0009
+precision                  0.9041                 0.9030 0.0011
+   recall                  0.8895                 0.9030 0.0135
+       f1                  0.8967                 0.9030 0.0062
+      auc                  0.9663                 0.9689 0.0026
 ```
-
-**결과 해석**
-
-모든 지표에서 두 방식의 차이가 0.02 이하이며, AUC 차이는 0.0009에 불과합니다. 방식 A와 방식 B가 같은 문제를 푸는 동일한 해법의 두 표현임을 한 표로 요약해 줍니다.
-
-집계 지표를 넘어 샘플 하나하나의 확률이 일치하는지를 산점도로 봅니다. 각 점의 x는 방식 A 확률, y는 방식 B 확률이고, y = x 대각선에 몰릴수록 두 방식이 같은 확률을 낸다는 뜻입니다. Pearson 상관과 평균 절대차도 함께 출력해 정량화합니다.
 
 ```python
 df_cmp = pd.DataFrame({
@@ -671,11 +610,11 @@ sns.scatterplot(
     palette={0: "#5B8DEF", 1: "#F47272"}, alpha=0.55, s=35, ax=ax,
 )
 ax.plot([0, 1], [0, 1], color="black", lw=1.3, ls="--", alpha=0.7,
-        label="y = x (perfect equivalence)")
+        label="y = x (완전 일치)")
 ax.set_xlim(-0.02, 1.02); ax.set_ylim(-0.02, 1.02)
-ax.set_xlabel("Method A — P(y=1) = sigmoid(z_A)")
-ax.set_ylabel("Method B — P(y=1) = softmax(z_0, z_1)[1]")
-ax.set_title("Method A vs Method B — per-sample probability agreement")
+ax.set_xlabel("방식 A — P(y=1) = sigmoid(z_A)")
+ax.set_ylabel("방식 B — P(y=1) = softmax(z_0, z_1)[1]")
+ax.set_title("방식 A vs 방식 B — 샘플별 확률 일치도")
 ax.legend(loc="upper left")
 plt.tight_layout()
 plt.show()
@@ -691,15 +630,9 @@ print(f"Mean abs diff |A-B|: {mae:.4f}")
 ![output](../assets/11-bert_binary_softmax-out3.png)
 
 ```text
-Pearson corr:        0.9904  (1.0 = perfect equivalence)
-Mean abs diff |A-B|: 0.0220
+Pearson corr:        0.9883  (1.0 = perfect equivalence)
+Mean abs diff |A-B|: 0.0239
 ```
-
-**결과 해석**
-
-샘플별 확률을 점으로 찍으면 대부분 y = x 대각선에 몰려 있고, Pearson 상관 0.9904, 평균 절대차 0.022로 두 방식의 예측 확률이 거의 한 점 한 점 일치합니다. 학습 무작위성에서 오는 미세한 흔들림을 빼면 사실상 같은 확률을 내보냅니다.
-
-마지막으로 확률이 아니라 최종 0/1 결정이 얼마나 일치하는지를 봅니다. 0.5를 경계로 두 방식의 예측을 만든 뒤, 일치율과 함께 양쪽 다 맞음/한쪽만 맞음/둘 다 틀림으로 사분면을 나눠 셉니다. 한쪽만 맞은 경우가 얼마나 드문지가 동등성의 마지막 증거입니다.
 
 ```python
 pred_A = (probs_A >= 0.5).astype(int)
@@ -723,15 +656,11 @@ print(f"  both wrong:             {both_wrong:.1%}")
 **▶ 실행 결과**
 
 ```text
-Agreement rate (A vs B predictions): 98.3%
+Agreement rate (A vs B predictions): 97.8%
 
 Prediction quadrants:
-  both correct:           89.9%
-  only A correct (B wrong): 0.6%
-  only B correct (A wrong): 1.1%
-  both wrong:             8.3%
+  both correct:           89.7%
+  only A correct (B wrong): 0.9%
+  only B correct (A wrong): 1.4%
+  both wrong:             8.1%
 ```
-
-**결과 해석**
-
-두 방식의 예측이 98.3%에서 일치하고, 한쪽만 맞은 경우는 1.7%에 그칩니다. 결국 sigmoid+BCE와 softmax+CE는 같은 데이터에서 거의 같은 결정을 내리며, 이진 분류에서 둘이 동등한 선택지임을 마무리로 확인해 줍니다.
