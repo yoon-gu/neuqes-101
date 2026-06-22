@@ -683,9 +683,9 @@ def convert(nb: dict, num: int, slug: str, title: str,
     ov.extend(groups["overview"])
     present_subs = [(g, sl, sub_titles.get(g, dt)) for g, sl, dt in SUBPAGES
                     if groups[g] or (g == "practice" and setup_code)]
-    roadmap = ["## 이 장의 구성", ""]  # 헤딩 아래 빈 줄 — 전자책 PDF 변환 오류 방지([wikidocs 전자책 작성시 주의할 점](https://wikidocs.net/198723))
-    for idx, (g, sl, t) in enumerate(present_subs, 1):
-        roadmap.append(f"- [{num:02d}-{idx}. {t}]({stem}-{sl}.md)")
+    # 헤딩 아래 빈 줄 — 전자책 PDF 변환 오류 방지([wikidocs 전자책 작성시 주의할 점](https://wikidocs.net/198723)).
+    # [[SubPages]]는 WikiDocs가 하위 페이지 목록을 자동 생성하는 매크로(명시적 링크 목록 대신 사용).
+    roadmap = ["## 이 장의 구성", "", "[[SubPages]]"]
     ov.append("\n".join(roadmap))
     (pages_dir / f"{stem}.md").write_text("\n\n".join(ov).strip() + "\n", encoding="utf-8")
     toc_entries.append((f"{num:02d}. {title}", f"pages/{stem}.md"))

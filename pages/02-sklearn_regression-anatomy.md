@@ -16,6 +16,8 @@ print(f"sklearn MSE: {sklearn_mse:.6f}")
 print(f"Diff:        {abs(manual_mse - sklearn_mse):.2e}")
 ```
 
+**위 코드 읽기** `((y_test - y_pred_test) ** 2).mean()` 한 줄이 MSE 정의 그대로입니다 — 오차를 제곱해 평균 낼 뿐입니다. 이를 `mean_squared_error` 결과와 맞춰 보며 loss 가 특별한 마법이 아님을 확인합니다.
+
 **▶ 실행 결과**
 
 ```text

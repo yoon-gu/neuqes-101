@@ -22,7 +22,9 @@ from sklearn.metrics import (
 )
 
 plt.rcParams["axes.unicode_minus"] = False
+```
 
+```python
 dataset = load_dataset("Yelp/yelp_review_full")
 SAMPLE_SIZE = 5000
 ds = dataset["train"].shuffle(seed=42).select(range(SAMPLE_SIZE))
@@ -31,6 +33,8 @@ df["star"] = df["label"] + 1   # 0-4 → 1-5
 print(f"Total samples: {len(df)}")
 print(df["star"].value_counts().sort_index())
 ```
+
+**위 코드 읽기** `shuffle(seed=42).select(range(SAMPLE_SIZE))` 로 5,000 건만 추리고 `df["label"] + 1` 로 별점을 1-5 로 되돌립니다. 아직은 5단계 별점 그대로이며, 다음 셀에서 이를 이진 라벨로 바꿉니다.
 
 **▶ 실행 결과**
 
@@ -57,6 +61,8 @@ print(f"Class distribution:\n{df_bin['y'].value_counts().sort_index()}")
 print(f"Positive rate: {df_bin['y'].mean():.1%}")
 ```
 
+**위 코드 읽기** `df["star"] != 3` 으로 중립인 3점을 통째로 버리고, `(df_bin["star"] >= 4)` 로 4-5점을 positive(1), 1-2점을 negative(0)로 가릅니다. 애매한 중간을 빼야 두 클래스가 또렷이 갈립니다.
+
 **▶ 실행 결과**
 
 ```text
@@ -80,7 +86,11 @@ X_text_train, X_text_test, y_train, y_test = train_test_split(
     df_bin["text"], df_bin["y"],
     test_size=0.2, random_state=42, stratify=df_bin["y"],
 )
+```
 
+**위 코드 읽기** `stratify=df_bin["y"]` 가 핵심으로, train/test 양쪽에 positive·negative 비율을 똑같이 맞춰 한쪽으로 쏠린 분할을 막습니다.
+
+```python
 tfidf = TfidfVectorizer(max_features=10000)
 X_train = tfidf.fit_transform(X_text_train)
 X_test = tfidf.transform(X_text_test)
@@ -88,6 +98,8 @@ X_test = tfidf.transform(X_text_test)
 print(f"X_train: {X_train.shape}, y_train: {y_train.shape}")
 print(f"X_test:  {X_test.shape}, y_test:  {y_test.shape}")
 ```
+
+**위 코드 읽기** train 에만 `fit_transform` 으로 어휘를 학습하고 test 에는 `transform` 만 적용해, test 정보가 어휘 학습에 새지 않게 합니다.
 
 **▶ 실행 결과**
 
@@ -110,6 +122,8 @@ model.fit(X_train, y_train)
 y_pred = model.predict(X_test)
 print(f"Test accuracy: {accuracy_score(y_test, y_pred):.4f}")
 ```
+
+**위 코드 읽기** `LogisticRegression` 이 BCE(log loss)를 최소화하는 `w, b` 를 찾고, `predict` 는 확률 0.5 를 기준으로 0/1 을 자릅니다. `max_iter=1000` 은 최적화가 수렴하도록 반복 횟수를 넉넉히 준 것입니다.
 
 **▶ 실행 결과**
 

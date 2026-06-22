@@ -7,7 +7,11 @@
 ```python
 cv = CountVectorizer(max_features=10000)
 X_count = cv.fit_transform(df["text"])
+```
 
+**위 코드 읽기** `CountVectorizer(max_features=10000)` 는 가장 자주 쓰인 단어 1만 개로 어휘를 제한하고, `fit_transform` 이 어휘 학습과 횟수 벡터화를 한 번에 합니다. 결과 `X_count` 는 0 이 대부분이라 희소(sparse) 행렬로 저장됩니다.
+
+```python
 print(f"shape: {X_count.shape}  (n_docs, vocab_size)")
 print(f"non-zero entries: {X_count.nnz:,}")
 print(f"total cells: {X_count.shape[0] * X_count.shape[1]:,}")

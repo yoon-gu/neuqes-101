@@ -12,7 +12,11 @@ model_norm = LinearRegression()
 model_norm.fit(X_train, y_train_norm)
 
 y_pred_norm = model_norm.predict(X_test)
+```
 
+**위 코드 읽기** `(y_train - 1) / 4` 로 별점 1-5 를 [0, 1] 로 압축한 뒤 같은 `LinearRegression` 을 다시 학습합니다. 라벨 스케일만 바꿨을 뿐 모델 구조는 Ch 2 와 동일합니다.
+
+```python
 # 정규화 공간에서의 MSE
 print(f"Test MSE (normalized space): {mean_squared_error(y_test_norm, y_pred_norm):.4f}")
 
@@ -21,6 +25,8 @@ y_pred_back = y_pred_norm * 4 + 1
 print(f"Test MSE (back to star space): {mean_squared_error(y_test, y_pred_back):.4f}")
 print(f"Test MSE (no normalization):    {mean_squared_error(y_test, y_pred_test):.4f}")
 ```
+
+**위 코드 읽기** `y_pred_norm * 4 + 1` 로 예측을 다시 별점 공간으로 되돌려 정규화하지 않은 모델과 MSE 를 비교합니다. 두 값이 같게 나오면 라벨 스케일링이 예측 품질을 바꾸지 못한다는 증거가 됩니다.
 
 **▶ 실행 결과**
 

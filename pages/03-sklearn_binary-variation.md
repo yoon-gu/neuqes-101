@@ -22,6 +22,8 @@ df_t = pd.DataFrame(rows).round(4)
 print(df_t.to_string(index=False))
 ```
 
+**위 코드 읽기** `(proba_pos >= t).astype(int)` 로 같은 확률에 임계값만 바꿔 가며 0/1 을 다시 자릅니다. 모델을 다시 학습하지 않고 임계값만 옮겨 precision·recall 이 어떻게 맞바뀌는지 한 표로 비교합니다.
+
 **▶ 실행 결과**
 
 ```text

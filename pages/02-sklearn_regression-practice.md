@@ -38,13 +38,21 @@ Sample count: 5000
 ```python
 # 별점은 0-4로 저장돼 있으니 1-5로 변환
 df["star"] = df["label"] + 1
+```
 
+**위 코드 읽기** `df["label"]` 은 0부터 시작하는 원본 별점이라 1을 더해 사람이 읽는 1-5 척도로 되돌립니다. 이 `star` 값이 곧 회귀가 맞춰야 할 정답이 됩니다.
+
+```python
 # train / test split
 X_text_train, X_text_test, y_train, y_test = train_test_split(
     df["text"], df["star"].astype(float),
     test_size=0.2, random_state=42,
 )
+```
 
+**위 코드 읽기** 라벨을 `.astype(float)` 로 넘기는 것이 회귀의 핵심입니다 — 정수로 두면 분류처럼 보이지만, float 으로 둬야 "4.7" 같은 연속 예측과 정답의 거리를 MSE로 잴 수 있습니다. `random_state=42` 로 분할을 고정해 매 실행 결과를 같게 만듭니다.
+
+```python
 # TF-IDF (Ch 1과 같은 설정)
 tfidf = TfidfVectorizer(max_features=10000)
 X_train = tfidf.fit_transform(X_text_train)
@@ -53,6 +61,8 @@ X_test = tfidf.transform(X_text_test)
 print(f"X_train: {X_train.shape}, y_train: {y_train.shape}")
 print(f"X_test:  {X_test.shape}, y_test:  {y_test.shape}")
 ```
+
+**위 코드 읽기** train 에만 `fit_transform` 으로 어휘와 IDF를 학습하며 벡터화하고, test 에는 `transform` 만 적용해 train 에서 배운 어휘만 씁니다. test 로 어휘를 다시 학습하면 정보 누설이 되므로 이 비대칭은 의도된 설계입니다.
 
 **▶ 실행 결과**
 

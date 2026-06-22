@@ -15,6 +15,8 @@ X_tfidf = tfidf.fit_transform(df["text"])
 print(f"shape: {X_tfidf.shape}")
 ```
 
+**위 코드 읽기** `TfidfVectorizer` 는 `CountVectorizer` 와 같은 방식으로 어휘를 만들되, 횟수에 IDF 가중치를 곱해 흔한 단어의 비중을 낮춥니다. 행렬 모양은 (5000, 10000) 으로 똑같지만 칸에 담기는 값이 횟수에서 TF-IDF 점수로 바뀝니다.
+
 **▶ 실행 결과**
 
 ```text

@@ -11,7 +11,11 @@ logits = logits.flatten()
 # sigmoid 적용
 proba_manual = 1 / (1 + np.exp(-logits))
 proba_sklearn = y_proba[:, 1]   # P(y=1)
+```
 
+**위 코드 읽기** `X_test @ model.coef_.T + model.intercept_` 가 logit $z = w^\top x + b$ 를 그대로 계산하고, `1 / (1 + np.exp(-logits))` 이 sigmoid 입니다. 이 둘을 손으로 이어 `predict_proba` 의 P(y=1)을 재현합니다.
+
+```python
 # 둘이 같은가?
 diff = np.abs(proba_manual - proba_sklearn).max()
 print(f"Max diff (manual vs sklearn): {diff:.2e}")
@@ -43,6 +47,8 @@ print(f"Manual BCE:  {manual_bce:.6f}")
 print(f"sklearn BCE: {sklearn_bce:.6f}")
 print(f"Diff:        {abs(manual_bce - sklearn_bce):.2e}")
 ```
+
+**위 코드 읽기** `-(y * np.log(p) + (1 - y) * np.log(1 - p)).mean()` 한 줄이 BCE 정의 그대로입니다 — 정답이 1이면 $-\log p$, 0이면 $-\log(1-p)$ 를 더해 평균 냅니다. sklearn 의 `log_loss` 와 맞춰 보며 BCE 가 확률에 로그를 씌운 단순한 식임을 확인합니다.
 
 **▶ 실행 결과**
 

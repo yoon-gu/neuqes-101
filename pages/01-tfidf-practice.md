@@ -49,6 +49,8 @@ print(f"Sample count: {len(df)}")
 df.head(3)
 ```
 
+**위 코드 읽기** `shuffle(seed=42).select(range(SAMPLE_SIZE))` 가 전체 65만 건을 섞은 뒤 앞 5,000 건만 잘라 가볍게 다룰 표본을 만듭니다. `seed=42` 를 고정해 누가 돌려도 같은 표본이 나오고, `to_pandas()` 로 옮겨 익숙한 형태로 들여다봅니다.
+
 **▶ 실행 결과**
 
 ```text
