@@ -25,6 +25,13 @@ from sklearn.metrics import (
     classification_report, roc_auc_score,
 )
 
+# matplotlib 한글 폰트 (Colab — NanumGothic). plot 의 한국어가 □ 로 깨지지 않게.
+import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run("apt-get -qq -y install fonts-nanum", shell=True)
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
 plt.rcParams["axes.unicode_minus"] = False
 
 print(f"PyTorch:        {torch.__version__}")
@@ -50,7 +57,7 @@ GPU:             Tesla T4
 **▶ 실행 결과**
 
 ```text
-Wed Jun 17 21:32:42 2026       
+Mon Jun 22 03:42:33 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -59,7 +66,7 @@ Wed Jun 17 21:32:42 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   43C    P8             10W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   49C    P8             14W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -71,8 +78,6 @@ Wed Jun 17 21:32:42 2026
 |  No running processes found                                                             |
 +-----------------------------------------------------------------------------------------+
 ```
-
-DistilBERT 토크나이저를 불러오고 Yelp 리뷰 데이터에서 학습 5,000개, 평가 1,000개를 뽑습니다. 이어 별점 3(중립)을 제외하고 4-5점을 1, 1-2점을 0으로 이진화합니다. 별점 3을 빼는 이유는 긍정과 부정의 경계가 모호한 샘플을 학습에서 미리 걸러 내기 위해서입니다.
 
 ```python
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
@@ -112,8 +117,6 @@ eval  (after excluding 3-star): 804
 train positive rate: 49.4%
 ```
 
-텍스트를 토큰화하면서 라벨을 길이 1짜리 float 벡터로 만듭니다. `Trainer`가 `problem_type="multi_label_classification"`을 보고 `BCEWithLogitsLoss`를 자동으로 적용하려면 라벨이 `[1.0]` 같은 multi-hot 실수 텐서여야 하기 때문입니다. 토큰화가 끝나면 모델 입력에 필요 없는 원본 컬럼을 제거합니다.
-
 ```python
 def tokenize_fn(batch):
     out = tokenizer(batch["text"], truncation=True, max_length=128)
@@ -138,8 +141,6 @@ Dataset({
 
 First sample label: [1.0]  (length-1 float vector)
 ```
-
-DistilBERT에 출력 차원 1짜리 분류 헤드를 올려 모델을 만듭니다. `num_labels=1`에 `problem_type="multi_label_classification"`을 함께 지정해 sigmoid+BCE 방식(방식 A)을 쓰도록 합니다. 분류 헤드가 `out_features=1` Linear로 새로 초기화되는지, problem_type이 의도대로 잡혔는지 출력에서 확인해 보세요.
 
 ```python
 model = AutoModelForSequenceClassification.from_pretrained(
@@ -166,15 +167,15 @@ print(f"problem_type:         {model.config.problem_type}")
 [transformers] DistilBertForSequenceClassification LOAD REPORT from: distilbert-base-uncased
 Key                     | Status     | 
 ------------------------+------------+-
-vocab_transform.weight  | UNEXPECTED | 
-vocab_layer_norm.weight | UNEXPECTED | 
-vocab_projector.bias    | UNEXPECTED | 
-vocab_transform.bias    | UNEXPECTED | 
 vocab_layer_norm.bias   | UNEXPECTED | 
+vocab_layer_norm.weight | UNEXPECTED | 
+vocab_transform.bias    | UNEXPECTED | 
+vocab_transform.weight  | UNEXPECTED | 
+vocab_projector.bias    | UNEXPECTED | 
 pre_classifier.weight   | MISSING    | 
-classifier.bias         | MISSING    | 
 pre_classifier.bias     | MISSING    | 
 classifier.weight       | MISSING    | 
+classifier.bias         | MISSING    | 
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
@@ -192,7 +193,7 @@ problem_type:         multi_label_classification
 **▶ 실행 결과**
 
 ```text
-Wed Jun 17 21:33:06 2026       
+Mon Jun 22 03:42:58 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -201,7 +202,7 @@ Wed Jun 17 21:33:06 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   44C    P8             14W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   49C    P8             14W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -213,8 +214,6 @@ Wed Jun 17 21:33:06 2026
 |  No running processes found                                                             |
 +-----------------------------------------------------------------------------------------+
 ```
-
-평가 때 쓸 지표 계산 함수를 정의합니다. 모델이 내놓는 logit에 직접 sigmoid를 적용해 확률로 바꾸고, 0.5를 기준으로 0/1 예측을 만든 뒤 정확도·정밀도·재현율·F1·AUC를 계산합니다. AUC는 임계값과 무관하게 확률 순위 자체의 품질을 보는 지표라 함께 넣었습니다.
 
 ```python
 def compute_metrics(eval_pred):
@@ -235,8 +234,6 @@ def compute_metrics(eval_pred):
         "auc":       float(roc_auc_score(labels, probs)),
     }
 ```
-
-학습 설정을 정의하고 `Trainer`로 묶어 실제 파인튜닝을 돌립니다. T4에서 30분 안에 끝나도록 2 에폭, batch size 16, `fp16=True`로 잡았습니다. 끝나면 평균 학습 loss가 출력되며, 에폭마다 평가가 함께 수행됩니다.
 
 ```python
 training_args = TrainingArguments(
@@ -270,7 +267,7 @@ print(f"\nTraining done — mean train loss: {train_result.training_loss:.4f}")
 
 ```text
 <IPython.core.display.HTML object>
-Training done — mean train loss: 0.2558
+Training done — mean train loss: 0.2617
 ```
 
 ```python
@@ -280,7 +277,7 @@ Training done — mean train loss: 0.2558
 **▶ 실행 결과**
 
 ```text
-Wed Jun 17 21:33:38 2026       
+Mon Jun 22 03:43:30 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -289,7 +286,7 @@ Wed Jun 17 21:33:38 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   61C    P0             68W /   70W |    1579MiB /  15360MiB |     69%      Default |
+| N/A   64C    P0             70W /   70W |    1579MiB /  15360MiB |     77%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -298,11 +295,9 @@ Wed Jun 17 21:33:38 2026
 |  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
 |        ID   ID                                                               Usage      |
 |=========================================================================================|
-|    0   N/A  N/A            6252      C   /usr/bin/python3                       1576MiB |
+|    0   N/A  N/A             673      C   /usr/bin/python3                       1576MiB |
 +-----------------------------------------------------------------------------------------+
 ```
-
-학습이 끝난 모델을 평가셋 전체에 대해 돌려 앞서 정의한 지표들을 한 번에 계산합니다. `eval_` 접두사가 붙은 float 값만 골라 보기 좋게 출력합니다.
 
 ```python
 # 평가 metric
@@ -319,19 +314,13 @@ for k, v in eval_metrics.items():
 <IPython.core.display.HTML object>
 <IPython.core.display.HTML object>
 BERT method A evaluation:
-             eval_loss: 0.2819
-         eval_accuracy: 0.9030
-        eval_precision: 0.8970
-           eval_recall: 0.8922
-               eval_f1: 0.8946
-              eval_auc: 0.9685
+             eval_loss: 0.2759
+         eval_accuracy: 0.8980
+        eval_precision: 0.8981
+           eval_recall: 0.8787
+               eval_f1: 0.8883
+              eval_auc: 0.9680
 ```
-
-**결과 해석**
-
-별점 3을 제외한 이진 분류에서 정확도 90.3%, AUC 0.97입니다. Ch 3의 sklearn(86%)보다 한 단계 높아, 같은 binary 태스크라도 sigmoid+BCE 헤드 아래 BERT 표현이 성능을 더 끌어올린다는 걸 보여줍니다.
-
-평가셋의 raw logit을 직접 받아 sigmoid로 확률로 변환하고, logit과 확률의 범위·양성 예측 비율을 살펴봅니다. 첫 5개 샘플을 표로 뽑아 logit 부호와 확률, 예측이 어떻게 연결되는지 눈으로 확인합니다.
 
 ```python
 # logit → 확률
@@ -356,28 +345,22 @@ print(pd.DataFrame({
 
 ```text
 <IPython.core.display.HTML object>
-Logit range: [-4.57, 4.11]
-Prob range:  [0.0102, 0.9838]
-Positive prediction rate (prob >= 0.5): 45.9%
+Logit range: [-4.41, 4.26]
+Prob range:  [0.0120, 0.9861]
+Positive prediction rate (prob >= 0.5): 45.1%
 
 First 5 samples:
  label  logit   prob  pred
-     1   3.77 0.9775     1
-     0  -3.29 0.0360     0
-     1   4.04 0.9827     1
-     1   3.71 0.9761     1
-     1   4.06 0.9830     1
+     1   3.70 0.9758     1
+     0  -3.38 0.0331     0
+     1   4.18 0.9849     1
+     1   3.87 0.9796     1
+     1   4.21 0.9854     1
 ```
-
-**결과 해석**
-
-logit이 [−4.57, 4.11], sigmoid를 통과한 확률이 [0.01, 0.98]에 퍼집니다. 첫 5개처럼 logit 부호(양수→1, 음수→0)가 그대로 예측을 가르고, |logit|이 클수록 확률이 0이나 1에 바싹 붙습니다.
-
-실제 라벨별로 예측 확률의 분포를 KDE 곡선으로 그립니다. 0.5 결정 경계를 기준으로 두 라벨이 얼마나 잘 갈라지는지, 어디서 겹치는지 한눈에 보기 위한 그림입니다.
 
 ```python
 # 메인: 확률 공간 KDE — seaborn으로 부드러운 분포 + 라벨별 hue
-sns.set_theme(style="whitegrid", context="talk")
+sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
 
 df = pd.DataFrame({"prob": probs, "logit": logits, "label": labels})
 PAL = {0: "#5B8DEF", 1: "#F47272"}  # 파랑=negative, 빨강=positive
@@ -389,9 +372,9 @@ sns.kdeplot(
     palette=PAL, clip=(0, 1), ax=ax,
 )
 ax.axvline(0.5, color="black", lw=1.2, ls="--", alpha=0.7)
-ax.set_title("Method A — Probability Distribution by Actual Label")
-ax.set_xlabel("Predicted probability  P(y=1)")
-ax.set_ylabel("Density")
+ax.set_title("방식 A — 실제 라벨별 확률 분포")
+ax.set_xlabel("예측 확률  P(y=1)")
+ax.set_ylabel("밀도")
 plt.tight_layout()
 plt.show()
 ```
@@ -399,12 +382,6 @@ plt.show()
 **▶ 실행 결과**
 
 ![output](../assets/10-bert_binary_sigmoid-out1.png)
-
-**결과 해석**
-
-두 라벨의 확률 분포가 0.5 경계를 두고 양쪽 끝(0 근처·1 근처)으로 갈라집니다. 모델이 대부분의 샘플을 자신 있게 분류한다는 뜻이고, 가운데에서 겹치는 구간이 오분류가 나는 영역입니다.
-
-같은 분포를 sigmoid 통과 전 logit 공간에서 다시 그립니다. z=0 경계를 기준으로 두 라벨이 좌우로 나뉘는 모습을 보면서, 확률 공간의 양극단 쏠림이 logit의 좌우 분리를 sigmoid가 눌러 만든 결과임을 비교해 보세요.
 
 ```python
 # 보조: logit 공간 KDE — sigmoid를 통과하기 전 모습
@@ -415,10 +392,10 @@ sns.kdeplot(
     palette=PAL, ax=ax,
 )
 ax.axvline(0.0, color="black", lw=1.2, ls="--", alpha=0.7,
-           label="decision boundary z=0")
-ax.set_title("Method A — Logit Distribution (pre-sigmoid)")
-ax.set_xlabel("Logit  z")
-ax.set_ylabel("Density")
+           label="결정 경계 z=0")
+ax.set_title("방식 A — logit 분포 (sigmoid 통과 전)")
+ax.set_xlabel("logit  z")
+ax.set_ylabel("밀도")
 plt.tight_layout()
 plt.show()
 ```
@@ -426,12 +403,6 @@ plt.show()
 **▶ 실행 결과**
 
 ![output](../assets/10-bert_binary_sigmoid-out2.png)
-
-**결과 해석**
-
-sigmoid 통과 전 logit 공간에서는 두 분포가 z=0 경계를 사이에 두고 좌우로 나뉩니다. 확률 공간의 0/1 양극단 쏠림이 사실은 logit의 좌우 분리를 sigmoid가 눌러 만든 모습임을 보여줍니다.
-
-negative와 positive 각 클래스별로 정밀도·재현율·F1을 한 표로 정리합니다. 전체 정확도만으로는 가려지는 클래스별 불균형이 있는지 확인하기 위한 상세 리포트입니다.
 
 ```python
 # 상세 분류 리포트
@@ -447,15 +418,13 @@ print(classification_report(
 ```text
               precision    recall  f1-score   support
 
-    negative     0.9080    0.9122    0.9101       433
-    positive     0.8970    0.8922    0.8946       371
+    negative     0.8980    0.9145    0.9062       433
+    positive     0.8981    0.8787    0.8883       371
 
-    accuracy                         0.9030       804
-   macro avg     0.9025    0.9022    0.9024       804
-weighted avg     0.9030    0.9030    0.9030       804
+    accuracy                         0.8980       804
+   macro avg     0.8980    0.8966    0.8972       804
+weighted avg     0.8980    0.8980    0.8979       804
 ```
-
-방식 A의 예측 확률·라벨과 지표 요약을 파일로 저장합니다. 다음 장(Ch 11)에서 softmax+CE 방식(방식 B)의 결과와 직접 비교하려고 미리 디스크에 남겨 두는 것입니다.
 
 ```python
 import json, os

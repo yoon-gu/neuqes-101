@@ -43,7 +43,7 @@
   * [09-2. 변형: 학습이 어디서 망가지는지 (개념만)](pages/09-bert_regression-variation.md)
   * [09-3. 정리와 FAQ](pages/09-bert_regression-wrapup.md)
 * [10. BERT 이진 분류: Sigmoid (BCE)](pages/10-bert_binary_sigmoid.md)
-  * [10-1. 실습: sigmoid + BCE 이진 분류](pages/10-bert_binary_sigmoid-practice.md)
+  * [10-1. 실습](pages/10-bert_binary_sigmoid-practice.md)
   * [10-2. 정리와 FAQ](pages/10-bert_binary_sigmoid-wrapup.md)
 * [11. BERT 이진 분류: Softmax (CE)](pages/11-bert_binary_softmax.md)
   * [11-1. 실습: softmax + CrossEntropy 이진 분류](pages/11-bert_binary_softmax-practice.md)

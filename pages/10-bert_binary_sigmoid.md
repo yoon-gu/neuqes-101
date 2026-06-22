@@ -141,5 +141,4 @@ Ch 11 노트북은 같은 세션에서 이어 돌리거나, 같은 데이터·se
 
 ## 이 장의 구성
 
-- [10-1. 실습](10-bert_binary_sigmoid-practice.md)
-- [10-2. 정리와 FAQ](10-bert_binary_sigmoid-wrapup.md)
+[[SubPages]]
