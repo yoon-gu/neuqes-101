@@ -9,14 +9,15 @@
 **▶ 실행 결과**
 
 ```text
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 825.1/825.1 kB 25.9 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 97.3 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 28.7 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.2/389.2 kB 24.4 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸━━━━━━━━━━━ 34.9/48.9 MB 192.2 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 156.2 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 156.2 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 15.0 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 825.1/825.1 kB 21.8 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━╺━━━━━━━━━━━━━━━━━ 6.2/11.2 MB 185.6 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 120.5 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 48.9 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.2/389.2 kB 39.5 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━╺━━━━━━━━━━━━━━━━━ 26.9/48.9 MB 179.3 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 215.2 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 215.2 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 19.4 MB/s eta 0:00:00
 ```
 
 ```python
@@ -62,6 +63,15 @@ random.seed(SEED)
 # fp16 은 CUDA 에서만 (MPS 는 미지원, CPU 는 의미 없음)
 USE_FP16 = (device.type == "cuda")
 print(f"use fp16     : {USE_FP16}")
+
+# matplotlib 한글 폰트 (Colab — NanumGothic). plot 의 한국어가 □ 로 깨지지 않게.
+import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run("apt-get -qq -y install fonts-nanum", shell=True)
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
+plt.rcParams["axes.unicode_minus"] = False
 ```
 
 **▶ 실행 결과**
@@ -167,7 +177,7 @@ transformer.h.{0...11}.attn.masked_bias | UNEXPECTED |  |
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
-load done: 17.0s
+load done: 17.1s
 
 === policy model ===
 #params      : 125.16 M
@@ -196,7 +206,7 @@ sft_args = TrainingArguments(
 sft_trainer = Trainer(model=policy, args=sft_args, train_dataset=sft_tok,
                       data_collator=DataCollatorForLanguageModeling(tokenizer, mlm=False))
 t0 = time.time(); sft_trainer.train()
-print(f"SFT warmstart done ({(time.time()-t0)/60:.1f}min) - policy now knows the arithmetic format")
+print(f"SFT 워밍스타트 완료 ({(time.time()-t0)/60:.1f}min) - policy 가 이제 산술 포맷을 안다")
 ```
 
 **▶ 실행 결과**
@@ -205,7 +215,7 @@ print(f"SFT warmstart done ({(time.time()-t0)/60:.1f}min) - policy now knows the
 [transformers] warmup_ratio is deprecated and will be removed in v5.2. Use `warmup_steps` instead.
 [transformers] `loss_type=None` was set in the config but it is unrecognized. Using the default loss: `ForCausalLMLoss`.
 <IPython.core.display.HTML object>
-SFT warmstart done (1.2min) - policy now knows the arithmetic format
+SFT 워밍스타트 완료 (1.2min) - policy 가 이제 산술 포맷을 안다
 ```
 
 ```python
@@ -348,13 +358,13 @@ def pass_rate(model, prompt, gold, k=8):
 pool = make_arithmetic(500, max_operand=9, seed=SEED + 3)
 keep = [ex for ex in pool if 0.25 <= pass_rate(policy, ex["prompt"], ex["answer"]) <= 0.875]
 grpo_ds = Dataset.from_list(keep[:256]) if len(keep) >= 16 else grpo_ds  # 너무 적으면 원본 유지
-print(f"difficulty filter: pool {len(pool)} -> {len(grpo_ds)} medium-difficulty (groups mix correct/wrong -> advantage std>0)")
+print(f"난이도 필터: pool {len(pool)} -> 중간난이도 {len(grpo_ds)}개 (그룹에 정답·오답 섞임 → advantage std>0)")
 ```
 
 **▶ 실행 결과**
 
 ```text
-difficulty filter: pool 500 -> 256 medium-difficulty (groups mix correct/wrong -> advantage std>0)
+난이도 필터: pool 500 -> 중간난이도 256개 (그룹에 정답·오답 섞임 → advantage std>0)
 ```
 
 ```python
@@ -445,7 +455,7 @@ Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
 <IPython.core.display.HTML object>
 === GRPO summary ===
-elapsed     : 0.49 min
+elapsed     : 0.48 min
 global_step : 32
 train_loss  : 5171634.2480
 final peak  : 2886 MiB
@@ -459,14 +469,14 @@ print(f"BEFORE GRPO - arithmetic accuracy                     : {acc_before:.3f}
 print(f"delta                                                 : {acc_after - acc_before:+.3f}")
 
 fig, ax = plt.subplots(figsize=(5.5, 4.5))
-bars = ax.bar(["before GRPO", "after GRPO"], [acc_before, acc_after],
+bars = ax.bar(["GRPO 전", "GRPO 후"], [acc_before, acc_after],
               color=["tab:gray", "tab:green"], alpha=0.85)
 for b, v in zip(bars, [acc_before, acc_after]):
     ax.text(b.get_x() + b.get_width() / 2, v + 0.01, f"{v:.2f}",
             ha="center", va="bottom")
-ax.set_ylabel("accuracy (verifier pass rate)")
+ax.set_ylabel("정확도 (verifier pass rate)")
 ax.set_ylim(0, 1)
-ax.set_title("GRPO before vs after - arithmetic accuracy")
+ax.set_title("GRPO 전 vs 후 - 산술 정확도")
 ax.grid(True, axis="y", alpha=0.3)
 plt.tight_layout(); plt.show()
 ```
@@ -498,12 +508,12 @@ fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 4))
 
 if reward_s:
     ax1.plot([s for s, _ in reward_s], [v for _, v in reward_s], "o-",
-             color="tab:green", label="reward (group mean)")
+             color="tab:green", label="reward (group 평균)")
 if reward_std_s:
     ax1.plot([s for s, _ in reward_std_s], [v for _, v in reward_std_s], "s--",
-             color="tab:orange", alpha=0.7, label="reward std (group diversity)")
+             color="tab:orange", alpha=0.7, label="reward std (group 다양성)")
 ax1.set_xlabel("step"); ax1.set_ylabel("reward")
-ax1.set_title("GRPO - reward and reward std")
+ax1.set_title("GRPO - reward 와 reward std")
 ax1.grid(True, alpha=0.3); ax1.legend()
 
 if steps and losses:

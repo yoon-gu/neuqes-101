@@ -200,7 +200,7 @@ GRPO 는 *SFT 모델에서 출발* 합니다 (Ch 28 의 SFT 체크포인트가 �
 
 토크나이저는 Ch 27·28·30 과 동일 (`PreTrainedTokenizerFast` + special token 명시 — `AutoTokenizer` 함정 회피).
 
-## 2.5 SFT 워밍스타트 — GRPO 의 비제로 시작점 만들기
+## 5 SFT 워밍스타트 — GRPO 의 비제로 시작점 만들기
 
 GRPO 는 한 prompt 에 여러 답(group)을 생성해 *그룹 안에서* 잘한 답의 확률을 올립니다. 그런데 base KoGPT2 는 산술을 거의 못 풀어 **그룹의 보상이 전부 0** 이 되기 쉽고, 그러면 advantage 가 모두 0 이라 *학습 신호가 없습니다*(GRPO 의 cold-start 함정).
 
@@ -241,7 +241,7 @@ $$A_i = \frac{r_i - \text{mean}(r)}{\text{std}(r) + \varepsilon}$$
 
 > **`trl` 버전 주의**: `GRPOConfig` 는 `max_completion_length` 를 받지만 `max_prompt_length` 는 버전에 따라 없습니다. `beta` 는 KL 제약의 세기로, 0 으로 두면 reference 없이(ref-free) 돌지만 정책이 SFT 모델에서 멀어지는 것을 막을 닻이 사라집니다. 본 노트북은 *작은 KL 앵커 (`beta=0.04`)* 로 reference (= SFT 모델) 근처에 묶어 collapse·reward hacking 을 완화합니다.
 
-## 4.5 🎯 난이도 필터 — GRPO 가 배울 *신호* 만들기
+## 5 🎯 난이도 필터 — GRPO 가 배울 *신호* 만들기
 
 GRPO 의 advantage 는 그룹 안에서 $(r-\text{mean})/\text{std}$ 입니다. 그런데 한 자리 산술은 prompt 마다 정답률이 **0 또는 1 로 양극화** 되기 쉽습니다 - SFT 후 쉬운 문제는 8개 답이 *전부 정답*, 못 푸는 문제는 *전부 오답*. 그러면 그룹 보상의 **표준편차가 0** 이라 advantage 가 전부 0 → *학습 신호가 아예 없습니다*.
 
@@ -318,6 +318,4 @@ GRPO 의 advantage 는 $A_i = (r_i - \text{mean}) / (\text{std} + \varepsilon)$ 
 
 ## 이 장의 구성
 
-- [31-1. 실습](31-grpo-practice.md)
-- [31-2. 변형: group size / format reward / 코드 verifier / 다른 task](31-grpo-variation.md)
-- [31-3. 정리와 FAQ](31-grpo-wrapup.md)
+[[SubPages]]
