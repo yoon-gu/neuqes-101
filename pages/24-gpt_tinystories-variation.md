@@ -1,4 +1,4 @@
-같은 prompt 에 `temperature / top_k / top_p` 만 바꿔 generation 스타일 변화 관찰. *학습된 본체는 그대로* - 변하는 건 *sampling 분포* 뿐. 보수적, 균형, nucleus, 다양 네 가지 설정을 차례로 돌리되, 매번 같은 seed 로 고정해 sampling 파라미터의 효과만 분리해 봅니다. 설정이 풀릴수록 문장이 다양해지지만 일관성은 떨어지는 흐름을 눈여겨보세요.
+같은 prompt 에 `temperature / top_k / top_p` 만 바꿔 generation 스타일 변화 관찰. *학습된 본체는 그대로* - 변하는 건 *sampling 분포* 뿐.
 
 ```python
 prompt = "Once upon a time, a little rabbit"

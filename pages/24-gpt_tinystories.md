@@ -315,6 +315,4 @@ T4 에서 약 1분 추가. 데이터·파라미터 격차가 generation 품질�
 
 ## 이 장의 구성
 
-- [24-1. 실습](24-gpt_tinystories-practice.md)
-- [24-2. 변형 - sampling hyperparam 비교](24-gpt_tinystories-variation.md)
-- [24-3. 정리와 FAQ](24-gpt_tinystories-wrapup.md)
+[[SubPages]]

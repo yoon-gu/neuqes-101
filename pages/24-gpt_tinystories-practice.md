@@ -9,14 +9,14 @@
 **▶ 실행 결과**
 
 ```text
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 136.2 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 48.6 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.2/389.2 kB 37.0 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 102.1 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 49.4 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.2/389.2 kB 38.0 MB/s eta 0:00:00
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 0.0/48.9 MB ? eta -:--:--
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸━━━ 45.0/48.9 MB 198.9 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 166.8 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 166.8 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 15.9 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╺━━━━━━ 40.4/48.9 MB 169.3 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 140.6 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 140.6 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 16.9 MB/s eta 0:00:00
 ```
 
 ```python
@@ -58,6 +58,15 @@ random.seed(SEED)
 # fp16 은 CUDA 에서만 (MPS 는 미지원, CPU 는 의미 없음)
 USE_FP16 = (device.type == "cuda")
 print(f"use fp16   : {USE_FP16}")
+
+# matplotlib 한글 폰트 (Colab — NanumGothic). plot 의 한국어가 □ 로 깨지지 않게.
+import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run("apt-get -qq -y install fonts-nanum", shell=True)
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
+plt.rcParams["axes.unicode_minus"] = False
 ```
 
 **▶ 실행 결과**
@@ -68,8 +77,6 @@ VRAM total : 14.56 GiB
 torch      : 2.11.0+cu128
 use fp16   : True
 ```
-
-TinyStories 데이터셋에서 학습 30,000편, 검증 500편을 내려받습니다. 작은 어휘로 쓰인 짧은 동화 모음이라 작은 GPT 로도 문장 구조를 빠르게 익힐 수 있습니다. 샘플 한 편을 출력해 어떤 문체인지 미리 확인합니다.
 
 ```python
 from datasets import load_dataset
@@ -104,8 +111,6 @@ Lily went to her mom and said, "Mom, I found this needle. Can you share it with 
 
 To
 ```
-
-이번에는 사전학습된 토크나이저를 쓰지 않고, TinyStories 본문으로 byte-level BPE 토크나이저를 직접 학습합니다. 어휘 크기를 2048 로 작게 잡아 동화 코퍼스에 딱 맞춘 뒤, HF 표준 인터페이스로 감싸 bos/eos/pad 를 모두 `<|endoftext|>` 로 둡니다(GPT-2 컨벤션). 학습이 끝나면 예시 문장을 인코딩, 디코딩해 토큰이 어떻게 쪼개지는지 살펴봅니다.
 
 ```python
 from tokenizers import Tokenizer
@@ -154,7 +159,7 @@ print(f"eos_token  : {tokenizer.eos_token}  id={tokenizer.eos_token_id}")
 **▶ 실행 결과**
 
 ```text
-BPE training done: 10.6s, vocab=2048
+BPE training done: 10.3s, vocab=2048
 
 === encode/decode demo ===
 input      : Once upon a time, a little rabbit went to the forest.
@@ -164,8 +169,6 @@ decode     : Once upon a time, a little rabbit went to the forest.
 vocab_size : 2048
 eos_token  : <|endoftext|>  id=0
 ```
-
-각 story 를 토큰화한 뒤 끝에 EOS 를 붙여 이야기 경계를 표시하고, 모든 토큰을 한 줄로 이어붙여 `BLOCK_SIZE=128` 단위로 잘라냅니다. 이렇게 고정 길이 블록으로 묶으면 padding 낭비 없이 CausalLM 학습에 바로 쓸 수 있습니다. 마지막에 블록 개수와 대략의 학습 토큰 수를 출력해 데이터 규모를 확인합니다.
 
 ```python
 BLOCK_SIZE = 128
@@ -220,8 +223,6 @@ first chunk decode (first 200 chars):
 One day, a little girl named Lily found a needle in her room. She knew it was difficult to play with it because it was sharp. Lily wanted to …(뒤 60자 생략)
 ```
 
-`mlm=False` 데이터 콜레이터가 어떤 labels 를 만드는지 미리 들여다봅니다. CausalLM 은 input_ids 를 그대로 복제해 labels 로 쓰기 때문에, MLM 처럼 대부분을 -100 으로 가리지 않고 거의 모든 자리가 다음 토큰 예측의 학습 신호가 됩니다. 두 방식의 학습 신호 비율을 직접 세어 비교하는 부분을 눈여겨보세요.
-
 ```python
 from transformers import DataCollatorForLanguageModeling
 
@@ -270,12 +271,6 @@ total positions      : 256
 (input_ids == labels) positions: 255/256  - clone as-is
 ```
 
-**결과 해석**
-
-MLM 은 가린 15% 자리에서만 학습 신호가 나오지만, CausalLM 은 거의 모든 자리(99.61%)가 다음 토큰 예측 대상이 됩니다. 같은 토큰 수로도 GPT 사전학습이 한 스텝당 5-6배 더 촘촘한 학습 신호를 얻는 셈입니다.
-
-이제 학습할 작은 GPT-2 를 직접 정의합니다. 임베딩 256, 레이어 4, 헤드 4 의 약 3M 파라미터짜리 디코더로, 본체는 causal attention 을 쓰는 `GPT2Model` 이고 head 는 어휘 크기로 사영하는 Linear 입니다. 파라미터 수와 weight tying 여부를 출력해 BERT 의 양방향 인코더와 어떻게 다른지 확인합니다.
-
 ```python
 from transformers import GPT2Config, GPT2LMHeadModel
 
@@ -313,8 +308,6 @@ model: GPT2LMHeadModel
   - body : GPT2Model  (Decoder, causal attention)
   - head : Linear(in=256, out=2048)
 ```
-
-학습을 시작하기 전에, 아직 무작위 가중치인 모델로 먼저 텍스트를 생성해 봅니다. `generate_text` 헬퍼로 같은 프롬프트 3개를 샘플링하고, 그 결과를 `before_outputs` 에 저장해 나중에 학습 후 출력과 나란히 비교합니다. 학습 전 출발점이 어떤 모습인지 눈으로 확인하는 단계입니다.
 
 ```python
 PROMPTS = [
@@ -365,12 +358,6 @@ The little girlakak everyush Sarahgged:un't different different# gl keepner Grai
 [prompt] A big dog
 A big dog cle music hisftere learnedpe fam pullve bat batinin paper paper teacherkes cr wear soup yes curi tw7 colors wall runlf This Sam bb …(뒤 113자 생략)
 ```
-
-**결과 해석**
-
-학습 전 무작위 가중치 모델은 단어를 띄엄띄엄 뱉을 뿐 문장이 되지 못하고, 같은 토큰을 반복하거나 깨진 글자(��)까지 섞입니다. 다음 토큰 분포가 아직 학습되지 않았을 때의 출발점을 그대로 보여 줍니다.
-
-이제 `Trainer` 로 본격적으로 사전학습을 돌립니다. T4 30분 제약에 맞춰 1500 스텝, batch_size 32, cosine 스케줄, `fp16=True` 로 설정하고, 스텝별 peak VRAM 을 기록하는 콜백도 함께 답니다. 학습이 끝나면 소요 시간과 train_loss 를 무작위 baseline(ln vocab)과 비교해 얼마나 줄었는지 확인합니다.
 
 ```python
 from transformers import (DataCollatorForLanguageModeling, Trainer,
@@ -456,12 +443,6 @@ random baseline (ln vocab): 7.6246
 final peak    : 60 MiB
 ```
 
-**결과 해석**
-
-train_loss 3.83 은 무작위 모델의 균일 분포 baseline(ln 2048 ≈ 7.62)의 절반 수준으로, 1500 스텝 약 1분 학습만으로도 다음 토큰을 상당히 좁혀 예측하게 됐음을 뜻합니다. peak VRAM 60 MiB 로 T4 의 16GB 에 한참 못 미쳐 여유가 큽니다.
-
-학습 로그를 꺼내 loss 곡선과 VRAM 추이를 두 패널로 그립니다. 왼쪽에는 train, eval loss 를 균일 baseline 점선과 함께 두어 얼마나 아래로 내려갔는지 보고, 오른쪽에는 스텝별 peak VRAM 을 그려 메모리가 평탄하게 유지됐는지 확인합니다.
-
 ```python
 # loss curve + VRAM trace
 log = trainer.state.log_history
@@ -477,20 +458,20 @@ if eval_pts:
     ax1.plot([s for s, _ in eval_pts], [l for _, l in eval_pts], "s-",
              color="tab:red", label="eval")
 ax1.axhline(math.log(tokenizer.vocab_size), ls=":", color="gray",
-            label=f"uniform baseline = ln({tokenizer.vocab_size}) approx. {math.log(tokenizer.vocab_size):.2f}")
+            label=f"무작위 추측 기준선 = ln({tokenizer.vocab_size}) approx. {math.log(tokenizer.vocab_size):.2f}")
 ax1.set_xlabel("step"); ax1.set_ylabel("cross-entropy loss")
-ax1.set_title("TinyGPT-2 on TinyStories - loss")
+ax1.set_title("TinyStories 로 학습한 TinyGPT-2 - loss")
 ax1.grid(True, alpha=0.3); ax1.legend()
 
 # VRAM (CUDA 만)
 if vram_cb.steps:
     ax2.plot(vram_cb.steps, vram_cb.peak_MiB, "o-", color="tab:green",
-             label="peak VRAM (per log window)")
+             label="최대 VRAM (로그 구간별)")
     ax2.set_title(f"VRAM trace  (bs=32, fp16, n_pos={BLOCK_SIZE})")
 else:
-    ax2.text(0.5, 0.5, "VRAM trace available on CUDA only",
+    ax2.text(0.5, 0.5, "VRAM 추적은 CUDA 에서만 가능",
              ha="center", va="center", transform=ax2.transAxes)
-    ax2.set_title("VRAM trace - CUDA only")
+    ax2.set_title("VRAM 추적 - CUDA 전용")
 ax2.set_xlabel("step"); ax2.set_ylabel("VRAM (MiB)")
 ax2.grid(True, alpha=0.3); ax2.legend()
 
@@ -500,12 +481,6 @@ plt.tight_layout(); plt.show()
 **▶ 실행 결과**
 
 ![output](../assets/24-gpt_tinystories-out1.png)
-
-**결과 해석**
-
-train, eval loss 모두 균일 baseline(점선) 아래로 빠르게 떨어진 뒤 완만해지고, 둘이 가까이 붙어 있어 과적합 없이 학습이 진행됐습니다. 오른쪽 VRAM 곡선은 스텝 내내 평탄해 메모리 누수 없이 안정적으로 돌았음을 보여 줍니다.
-
-학습이 끝난 같은 모델로, 학습 전과 동일한 프롬프트, 동일한 seed 로 다시 텍스트를 생성합니다. 결과를 `after_outputs` 에 담아 학습 전후가 공정하게 비교되도록 합니다. 1분 남짓 학습만으로 출력이 동화체 문장으로 바뀌었는지 살펴보세요.
 
 ```python
 torch.manual_seed(SEED)
@@ -540,12 +515,6 @@ A big dog, but they could go in the park. They ran away and the truck. The bird 
 
 "It's okay, it is not very curious. He is not
 ```
-
-**결과 해석**
-
-같은 무작위 모델이 1분 학습 뒤에는 "there was a girl named Lily" 처럼 TinyStories 의 동화체로 문법에 맞는 영어 문장을 이어 갑니다. 짧은 학습이라 "She thanked the garden" 같은 의미상 어색한 곳이 남지만, 다음 토큰 예측만으로 문장 구조를 익혔다는 점이 분명히 드러납니다.
-
-같은 프롬프트의 학습 전(BEFORE)과 학습 후(AFTER) 출력을 한 줄씩 나란히 찍어 직접 대조합니다. 프롬프트 부분을 잘라내고 이어진 생성 텍스트만 비교하면, 사전학습이 본체에 새긴 다음 토큰 분포의 변화가 한눈에 들어옵니다.
 
 ```python
 # before / after 나란히 - 사전학습이 본체에 새긴 next-token 분포의 직접적 증거
@@ -587,8 +556,6 @@ AFTER   : , but they could go in the park. They ran away and the truck. The bird
 
 "It's okay, it is not very curious. He is not
 ```
-
-비교 기준으로, OpenAI 가 WebText 로 사전학습한 진짜 gpt2(124M)를 내려받아 같은 프롬프트로 생성해 봅니다. 우리 3M 모델과 어휘 크기, 파라미터 수가 어떻게 다른지 출력하고, 생성 결과는 `ref_outputs` 에 모읍니다. 다 쓰고 나면 VRAM 을 비워 다음 셀에 부담을 주지 않습니다.
 
 ```python
 from transformers import AutoTokenizer, AutoModelForCausalLM
@@ -643,8 +610,6 @@ In the long run, we find that people who have an allergy to animals are less lik
 But these people are less likely to have
 ```
 
-마지막으로 세 출력을 한 자리에 모아 비교합니다. 무작위 초기 모델(BEFORE), TinyStories 로 학습한 우리 3M 모델(OURS), WebText 로 학습한 gpt2 124M(REF)을 같은 프롬프트로 줄 맞춰 보면, 모델 크기뿐 아니라 사전학습 코퍼스가 생성 스타일을 좌우한다는 점이 또렷이 드러납니다.
-
 ```python
 # 3-way 비교 - BEFORE (random) / OURS (3M, TinyStories) / REF (gpt2 124M, WebText)
 print("=" * 78)
@@ -693,7 +658,3 @@ OURS   : , but they could go in the park. They ran away and the truck. The bird 
 "It's okay, it is not
 ...
 ```
-
-**결과 해석**
-
-3M 짜리 우리 모델은 동화 어휘 안에서 매끄럽게 흐르고, 124M gpt2 는 WebText 로 학습돼 어휘는 풍부하지만 동화 프롬프트에도 뉴스, 에세이 톤으로 흘러갑니다. 모델 크기뿐 아니라 사전학습 코퍼스가 생성 스타일을 결정한다는 점이 같은 프롬프트 비교에서 또렷이 보입니다.
