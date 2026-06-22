@@ -28,6 +28,13 @@ from sklearn.metrics import (
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 
+# matplotlib 한글 폰트 (Colab — NanumGothic). plot 의 한국어가 □ 로 깨지지 않게.
+import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run("apt-get -qq -y install fonts-nanum", shell=True)
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
 plt.rcParams["axes.unicode_minus"] = False
 
 print(f"PyTorch:        {torch.__version__}")
@@ -53,7 +60,7 @@ GPU:             Tesla T4
 **▶ 실행 결과**
 
 ```text
-Wed Jun 17 21:37:09 2026       
+Mon Jun 22 03:47:31 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -62,7 +69,7 @@ Wed Jun 17 21:37:09 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   52C    P8             11W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   54C    P8             13W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -74,8 +81,6 @@ Wed Jun 17 21:37:09 2026
 |  No running processes found                                                             |
 +-----------------------------------------------------------------------------------------+
 ```
-
-DistilBERT 토크나이저를 불러오고 Yelp 리뷰 데이터셋에서 학습 5,000개·평가 1,000개를 무작위로 뽑습니다. 별점 5개(label 0-4)가 고르게 분포해 있는지 클래스별 개수를 출력해 확인하고, 첫 샘플의 라벨과 본문 일부를 미리 봅니다.
 
 ```python
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
@@ -112,10 +117,8 @@ Class distribution (train):
 
 First sample:
   label: 4  (star 5)
-  text:  I stalk this truck.  I've been to industrial parks where I pretend to be a tech worker standing in line, strip mall parking lots, a …(72 more chars omitted)
+  text:  I stalk this truck.  I've been to industrial parks where I pretend to be a tech worker standing in line, strip mall parking lots, a …(뒤 72자 생략)
 ```
-
-리뷰 본문을 토큰화하면서 라벨을 함께 정리합니다. multi-class 분류에서는 라벨이 0-4 정수 스칼라 그대로여야 하므로 `int`로 변환해 `labels` 키에 담고, 토큰화가 끝나면 원본 `text`·`label` 컬럼을 제거해 `Trainer`가 바로 쓸 수 있는 형태로 만듭니다.
 
 ```python
 def tokenize_fn(batch):
@@ -140,8 +143,6 @@ Dataset({
 
 First sample label: 4  (int scalar in 0-4)
 ```
-
-5클래스 분류 헤드를 붙인 DistilBERT를 불러옵니다. `num_labels=5`와 `problem_type="single_label_classification"`로 출력 차원과 loss(CrossEntropyLoss)를 지정하고, `id2label`·`label2id`로 정수 라벨과 별점 표기를 연결합니다. 출력에서 분류기 헤드(`classifier`)가 새로 초기화(MISSING)되었다는 점과 출력 차원이 5인 점을 눈여겨보세요.
 
 ```python
 STAR_LABELS = {0: "1★", 1: "2★", 2: "3★", 3: "4★", 4: "5★"}
@@ -173,15 +174,15 @@ print(f"id2label:             {model.config.id2label}")
 [transformers] DistilBertForSequenceClassification LOAD REPORT from: distilbert-base-uncased
 Key                     | Status     | 
 ------------------------+------------+-
-vocab_projector.bias    | UNEXPECTED | 
-vocab_layer_norm.bias   | UNEXPECTED | 
+vocab_transform.bias    | UNEXPECTED | 
 vocab_transform.weight  | UNEXPECTED | 
 vocab_layer_norm.weight | UNEXPECTED | 
-vocab_transform.bias    | UNEXPECTED | 
-classifier.weight       | MISSING    | 
+vocab_layer_norm.bias   | UNEXPECTED | 
+vocab_projector.bias    | UNEXPECTED | 
 pre_classifier.bias     | MISSING    | 
-classifier.bias         | MISSING    | 
 pre_classifier.weight   | MISSING    | 
+classifier.bias         | MISSING    | 
+classifier.weight       | MISSING    | 
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
@@ -200,7 +201,7 @@ id2label:             {0: '1★', 1: '2★', 2: '3★', 3: '4★', 4: '5★'}
 **▶ 실행 결과**
 
 ```text
-Wed Jun 17 21:37:42 2026       
+Mon Jun 22 03:47:57 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -209,7 +210,7 @@ Wed Jun 17 21:37:42 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   51C    P8             10W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   55C    P8             15W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -221,8 +222,6 @@ Wed Jun 17 21:37:42 2026
 |  No running processes found                                                             |
 +-----------------------------------------------------------------------------------------+
 ```
-
-평가 때 사용할 지표 계산 함수를 정의합니다. 5차원 logits에 안정 softmax를 적용해 확률을 구한 뒤 argmax로 예측 클래스를 뽑고, 정확도와 macro 평균 precision/recall/F1을 계산합니다. multi-class AUC는 One-vs-Rest 방식으로 구하되 일부 라벨이 빠지면 계산이 불가능하므로 `try`로 감싸 안전하게 처리합니다.
 
 ```python
 def compute_metrics(eval_pred):
@@ -246,8 +245,6 @@ def compute_metrics(eval_pred):
         out["auc_ovr"] = float("nan")
     return out
 ```
-
-학습 설정을 정하고 `Trainer`로 묶어 실제 학습을 시작합니다. T4 30분 제약에 맞춰 2에폭·배치 16·`fp16=True`로 설정했고, 학습이 끝나면 평균 학습 loss를 5클래스 무작위 추측 기준선 $\ln 5 \approx 1.6094$와 나란히 출력해 모델이 실제로 학습됐는지 가늠합니다.
 
 ```python
 training_args = TrainingArguments(
@@ -282,13 +279,9 @@ print(f"random baseline loss (K=5): {np.log(5):.4f}")
 
 ```text
 <IPython.core.display.HTML object>
-Training done — mean train loss: 1.0706
+Training done — mean train loss: 1.0802
 random baseline loss (K=5): 1.6094
 ```
-
-**결과 해석**
-
-평균 학습 loss 1.0706은 5클래스 무작위 추측의 기준선 $\ln 5 \approx 1.6094$보다 확연히 낮아, 모델이 별점 패턴을 실제로 학습했음을 보여 줍니다.
 
 ```python
 !nvidia-smi
@@ -297,7 +290,7 @@ random baseline loss (K=5): 1.6094
 **▶ 실행 결과**
 
 ```text
-Wed Jun 17 21:38:21 2026       
+Mon Jun 22 03:48:37 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -306,7 +299,7 @@ Wed Jun 17 21:38:21 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   68C    P0             37W /   70W |    1577MiB /  15360MiB |     73%      Default |
+| N/A   75C    P0             64W /   70W |    1577MiB /  15360MiB |     73%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -315,11 +308,9 @@ Wed Jun 17 21:38:21 2026
 |  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
 |        ID   ID                                                               Usage      |
 |=========================================================================================|
-|    0   N/A  N/A             921      C   /usr/bin/python3                       1574MiB |
+|    0   N/A  N/A            2000      C   /usr/bin/python3                       1574MiB |
 +-----------------------------------------------------------------------------------------+
 ```
-
-학습된 모델을 평가 셋에서 측정합니다. 앞서 정의한 `compute_metrics`가 자동으로 호출되어 정확도·macro F1·OvR AUC 등이 계산되며, `eval_`로 시작하는 실수 지표만 골라 보기 좋게 출력합니다.
 
 ```python
 # 평가 metric
@@ -336,19 +327,13 @@ for k, v in eval_metrics.items():
 <IPython.core.display.HTML object>
 <IPython.core.display.HTML object>
 BERT 5-class evaluation:
-               eval_loss: 1.0001
-           eval_accuracy: 0.5620
-    eval_macro_precision: 0.5583
-       eval_macro_recall: 0.5645
-           eval_macro_f1: 0.5607
-            eval_auc_ovr: 0.8652
+               eval_loss: 1.0000
+           eval_accuracy: 0.5580
+    eval_macro_precision: 0.5555
+       eval_macro_recall: 0.5595
+           eval_macro_f1: 0.5561
+            eval_auc_ovr: 0.8657
 ```
-
-**결과 해석**
-
-정확도 0.5620은 5클래스 무작위 기준선 0.2(=1/5)의 2.8배 수준이며, OvR AUC 0.8652는 정답 클래스에 더 높은 확률을 부여하는 순위 매김 능력이 정확도보다 한층 우수함을 보여 줍니다.
-
-평가 셋 전체에 대해 예측을 뽑아 모델의 확신도를 들여다봅니다. logits를 softmax로 확률화한 뒤 argmax로 예측 클래스를, max로 top-1 확률을 구하고, 맞힌 예측과 틀린 예측의 평균 top-1 확률을 비교합니다. 확신도가 정답 여부와 어떻게 연동되는지 첫 5개 샘플 표에서 확인해 보세요.
 
 ```python
 # logits → softmax → argmax
@@ -381,26 +366,20 @@ print(pd.DataFrame({
 ```text
 <IPython.core.display.HTML object>
 logits shape: (1000, 5)
-top-1 prob range: [0.2334, 0.8789]
-top-1 prob mean: correct=0.6330, wrong=0.5493
+top-1 prob range: [0.2245, 0.8730]
+top-1 prob mean: correct=0.6279, wrong=0.5414
 
 First 5 samples:
  label (star-1)  pred (star-1)  top-1 prob  correct?
-              2              4      0.5291     False
-              4              3      0.4671     False
-              1              0      0.7869     False
-              4              4      0.5081      True
-              3              3      0.6116      True
+              2              4      0.4724     False
+              4              3      0.4351     False
+              1              0      0.7647     False
+              4              4      0.4687      True
+              3              3      0.5864      True
 ```
 
-**결과 해석**
-
-맞힌 예측의 top-1 확률 평균(0.6330)이 틀린 예측(0.5493)보다 높아, 모델의 확신도가 정답 여부와 어느 정도 비례합니다. 다만 틀린 사례도 평균 0.55로 꽤 확신하고 있어 중간 별점에서는 오답에도 자신감이 남아 있음을 알 수 있습니다.
-
-5x5 혼동행렬을 그려 어떤 별점이 어떤 별점으로 헷갈리는지 봅니다. 각 행을 정답 라벨별로 정규화해 색은 재현율(비율)을, 칸 안 숫자는 실제 개수를 표시합니다. 오분류가 대각선 인접 칸에 몰리는지 살펴 별점의 순서형 성질을 확인합니다.
-
 ```python
-sns.set_theme(style="white", context="talk")
+sns.set_theme(style="white", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
 
 cm = confusion_matrix(labels, preds, labels=list(range(5)))
 # 정답 라벨별 정규화 — 각 행 합이 1이 되어 *재현율* 을 직접 읽을 수 있음
@@ -412,11 +391,11 @@ sns.heatmap(
     cmap="Blues", vmin=0, vmax=1,
     xticklabels=[STAR_LABELS[k] for k in range(5)],
     yticklabels=[STAR_LABELS[k] for k in range(5)],
-    cbar_kws={"label": "row-normalized (recall)"}, ax=ax,
+    cbar_kws={"label": "행 정규화 (재현율)"}, ax=ax,
 )
-ax.set_xlabel("Predicted star")
-ax.set_ylabel("Actual star")
-ax.set_title("Confusion Matrix — 5-class Yelp")
+ax.set_xlabel("예측 별점")
+ax.set_ylabel("실제 별점")
+ax.set_title("혼동 행렬 — 5-class Yelp")
 plt.tight_layout()
 plt.show()
 ```
@@ -424,12 +403,6 @@ plt.show()
 **▶ 실행 결과**
 
 ![output](../assets/12-bert_multiclass-out1.png)
-
-**결과 해석**
-
-혼동행렬의 오분류가 대각선 바로 옆 칸(인접 별점)에 몰려 있어, 별점이 순서형(ordinal) 척도라는 성질이 그대로 드러납니다. 양 끝(1★·5★)은 재현율이 높지만 가운데 별점일수록 인접 클래스와 헷갈리는 경향이 보입니다.
-
-top-1 확률 분포를 맞힌 예측과 틀린 예측으로 나눠 밀도 곡선으로 겹쳐 그립니다. 균등 확률선 1/K를 점선으로 표시해 기준을 잡고, 두 곡선이 얼마나 분리되는지로 top-1 확률을 신뢰도 지표로 쓸 수 있는지 가늠합니다.
 
 ```python
 df_top = pd.DataFrame({
@@ -445,10 +418,10 @@ sns.kdeplot(
     clip=(1/5, 1.0), ax=ax,
 )
 ax.axvline(1/5, color="black", lw=1.0, ls=":", alpha=0.5)
-ax.text(1/5, ax.get_ylim()[1]*0.95, "  uniform = 1/K", va="top", fontsize=10, alpha=0.6)
-ax.set_title("Top-1 probability — distribution split by correctness")
-ax.set_xlabel("top-1 predicted probability  max_k P(y=k)")
-ax.set_ylabel("Density")
+ax.text(1/5, ax.get_ylim()[1]*0.95, "  균등분포 = 1/K", va="top", fontsize=10, alpha=0.6)
+ax.set_title("top-1 확률 — 정답/오답으로 나눈 분포")
+ax.set_xlabel("top-1 예측 확률  max_k P(y=k)")
+ax.set_ylabel("밀도")
 plt.tight_layout()
 plt.show()
 ```
@@ -456,12 +429,6 @@ plt.show()
 **▶ 실행 결과**
 
 ![output](../assets/12-bert_multiclass-out2.png)
-
-**결과 해석**
-
-맞힌 예측(초록)의 분포가 틀린 예측(빨강)보다 오른쪽(높은 확률)으로 치우쳐 있어, top-1 확률을 신뢰도 지표로 어느 정도 활용할 수 있음을 시각적으로 확인할 수 있습니다. 두 분포가 균등 확률선 1/K 부근에서 상당히 겹쳐 5클래스 분류의 본질적인 모호함도 함께 드러납니다.
-
-별점별 precision·recall·F1을 한 표로 출력합니다. macro 평균 하나로 뭉뚱그리지 않고 클래스 단위로 펼쳐 보면, 어느 별점이 잘 분류되고 어느 별점이 어려운지 구체적으로 드러납니다.
 
 ```python
 # 클래스별 분류 리포트 (precision/recall/F1 클래스 단위)
@@ -477,22 +444,16 @@ print(classification_report(
 ```text
               precision    recall  f1-score   support
 
-          1★     0.6667    0.7273    0.6957       220
-          2★     0.4948    0.4460    0.4691       213
-          3★     0.5103    0.5051    0.5077       196
-          4★     0.4847    0.4634    0.4738       205
-          5★     0.6348    0.6807    0.6570       166
+          1★     0.6520    0.7409    0.6936       220
+          2★     0.5056    0.4225    0.4604       213
+          3★     0.5134    0.4898    0.5013       196
+          4★     0.4651    0.4878    0.4762       205
+          5★     0.6412    0.6566    0.6488       166
 
-    accuracy                         0.5620      1000
-   macro avg     0.5583    0.5645    0.5607      1000
-weighted avg     0.5568    0.5620    0.5587      1000
+    accuracy                         0.5580      1000
+   macro avg     0.5555    0.5595    0.5561      1000
+weighted avg     0.5535    0.5580    0.5542      1000
 ```
-
-**결과 해석**
-
-양 끝 별점(1★ F1 0.6957, 5★ F1 0.6570)이 가운데 별점(2★-4★ F1 0.47-0.51)보다 뚜렷이 잘 분류됩니다. 가운데 별점은 인접 별점과 어휘·감정 표현이 겹쳐 구분이 어렵다는 점이 클래스별 점수에 그대로 나타납니다.
-
-비교 기준선으로 Ch 5의 sklearn 셋업을 같은 데이터에 재현합니다. TF-IDF로 텍스트를 벡터화하고 multinomial 로지스틱 회귀를 학습한 뒤, BERT와 똑같은 지표(정확도·macro F1·OvR AUC)를 계산합니다. 파라미터 수가 약 100K로 BERT(67M)보다 훨씬 작다는 점을 함께 봅니다.
 
 ```python
 # Ch 5 셋업 재현 — TF-IDF + multinomial LogReg
@@ -534,12 +495,6 @@ sklearn TF-IDF + LogReg:
   AUC (OvR):          0.8420
 ```
 
-**결과 해석**
-
-TF-IDF + LogReg 기준선만으로도 정확도 0.5420, AUC 0.8420으로 무작위 추측을 크게 웃돕니다. 같은 5,000 샘플에서 단순 선형 모델이 이미 견고한 출발점을 제공한다는 점이 BERT 성능을 평가하는 비교 기준이 됩니다.
-
-BERT와 sklearn의 지표를 한 표로 나란히 정리하고 차이 열(BERT - sklearn)을 더합니다. 같은 지표끼리 직접 비교해 670배 많은 파라미터를 쓴 BERT가 5,000 샘플 규모에서 실제로 얼마나 앞서는지 수치로 확인합니다.
-
 ```python
 metrics_bert = {
     k.replace("eval_", ""): v for k, v in eval_metrics.items()
@@ -567,18 +522,12 @@ print(cmp.round(4).to_string(index=False))
 
 ```text
          metric  sklearn (TF-IDF)   BERT  BERT - sklearn
-       accuracy            0.5420 0.5620          0.0200
-macro_precision            0.5377 0.5583          0.0205
-   macro_recall            0.5410 0.5645          0.0235
-       macro_f1            0.5380 0.5607          0.0227
-        auc_ovr            0.8420 0.8652          0.0232
+       accuracy            0.5420 0.5580          0.0160
+macro_precision            0.5377 0.5555          0.0177
+   macro_recall            0.5410 0.5595          0.0185
+       macro_f1            0.5380 0.5561          0.0181
+        auc_ovr            0.8420 0.8657          0.0236
 ```
-
-**결과 해석**
-
-BERT가 모든 지표에서 sklearn을 앞서지만 그 차이는 정확도 +0.02, AUC +0.023 정도로 크지 않습니다. 670배 많은 파라미터(67M 대 100K)를 쓰고도 5,000 샘플 규모에서는 격차가 작아, 데이터가 적을 때 사전학습 모델의 이점이 제한적일 수 있음을 시사합니다.
-
-두 모델의 혼동행렬을 좌우로 나란히 그려 오분류 패턴을 직접 비교합니다. 같은 행 정규화·같은 색 척도로 맞춰, 두 모델 모두 대각선 인접 칸에 오분류가 몰리는지와 BERT 대각선이 더 진한지를 한눈에 살펴봅니다.
 
 ```python
 cm_bert = confusion_matrix(labels, preds, labels=list(range(5)))
@@ -599,8 +548,8 @@ for ax, cm_n, cm_raw, title in [
         cbar=False, ax=ax,
     )
     ax.set_title(title)
-    ax.set_xlabel("Predicted star")
-    ax.set_ylabel("Actual star")
+    ax.set_xlabel("예측 별점")
+    ax.set_ylabel("실제 별점")
 plt.tight_layout()
 plt.show()
 ```
@@ -608,7 +557,3 @@ plt.show()
 **▶ 실행 결과**
 
 ![output](../assets/12-bert_multiclass-out3.png)
-
-**결과 해석**
-
-두 모델 모두 오분류가 대각선 인접 칸에 몰리는 동일한 순서형 패턴을 보여, 가운데 별점에서 헷갈리는 현상은 모델 종류가 아니라 태스크 자체의 성질임을 알 수 있습니다. BERT 쪽 대각선이 약간 더 진해 전반적으로 조금 더 정확함을 시각적으로 확인할 수 있습니다.

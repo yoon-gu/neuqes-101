@@ -148,5 +148,4 @@ K=5에서는 *어느 한 클래스에 압도적인 자신감* 이 있는 경우�
 
 ## 이 장의 구성
 
-- [12-1. 실습](12-bert_multiclass-practice.md)
-- [12-2. 정리와 FAQ](12-bert_multiclass-wrapup.md)
+[[SubPages]]
