@@ -12,11 +12,7 @@ model_norm = LinearRegression()
 model_norm.fit(X_train, y_train_norm)
 
 y_pred_norm = model_norm.predict(X_test)
-```
 
-**위 코드 읽기** `(y_train - 1) / 4` 로 별점 1-5 를 [0, 1] 로 압축한 뒤 같은 `LinearRegression` 을 다시 학습합니다. 라벨 스케일만 바꿨을 뿐 모델 구조는 Ch 2 와 동일합니다.
-
-```python
 # 정규화 공간에서의 MSE
 print(f"Test MSE (normalized space): {mean_squared_error(y_test_norm, y_pred_norm):.4f}")
 
@@ -26,8 +22,6 @@ print(f"Test MSE (back to star space): {mean_squared_error(y_test, y_pred_back):
 print(f"Test MSE (no normalization):    {mean_squared_error(y_test, y_pred_test):.4f}")
 ```
 
-**위 코드 읽기** `y_pred_norm * 4 + 1` 로 예측을 다시 별점 공간으로 되돌려 정규화하지 않은 모델과 MSE 를 비교합니다. 두 값이 같게 나오면 라벨 스케일링이 예측 품질을 바꾸지 못한다는 증거가 됩니다.
-
 **▶ 실행 결과**
 
 ```text
@@ -35,12 +29,6 @@ Test MSE (normalized space): 0.0973
 Test MSE (back to star space): 1.5565
 Test MSE (no normalization):    1.5565
 ```
-
-**결과 해석**
-
-라벨을 [0, 1]로 압축한 모델도 별점 공간으로 되돌리면 MSE가 1.5565로, 정규화하지 않은 모델과 정확히 같습니다. 라벨 스케일을 바꾸는 건 단위 환산일 뿐이라 예측 품질 자체는 그대로라는 뜻이고, 출력을 범위 안에 가두려면 라벨이 아니라 모델 쪽(활성화 함수)을 손봐야 함을 확인시켜 줍니다.
-
-정규화한 모델의 예측 범위를 출력하고, [0, 1]을 벗어난 예측이 몇 개나 되는지 아래위로 세어 봅니다. 정답 라벨을 [0, 1]로 눌렀는데도 출력은 여전히 그 밖으로 새는지 수치로 확인하려는 것입니다. 8% 안팎이 경계를 벗어난다는 점에 주목하세요.
 
 ```python
 # 정규화한 모델도 여전히 [0, 1]을 벗어나는 값을 뱉는가?

@@ -66,7 +66,7 @@ $$w = (X^\top X)^{-1} X^\top y$$
 
 ```python
 y_pred_clipped = np.clip(y_pred_test, 1, 5)
-print(f"Test MSE (after clip): {mean_squared_error(y_test, y_pred_clipped):.4f}")
+print(f"Test MSE (clip 후): {mean_squared_error(y_test, y_pred_clipped):.4f}")
 ```
 
 3. **출력에 sigmoid를 붙인다**: 다음 챕터의 방법. 활성화 함수로 모델 단계에서 [0, 1]을 강제.
@@ -96,7 +96,7 @@ model_b = LinearRegression().fit(X_train, y_train * 100)
 pred_a = model_a.predict(X_test)
 pred_b = model_b.predict(X_test) / 100   # 다시 1-5 스케일로
 
-print(f"Max prediction diff (A vs B): {np.abs(pred_a - pred_b).max():.2e}")
+print(f"A vs B 예측 차이 최대: {np.abs(pred_a - pred_b).max():.2e}")
 ```
 
 힌트: 닫힌 형태 풀이에서 라벨에 상수를 곱하면 가중치도 같은 비율로 바뀔 뿐, 예측을 같은 스케일로 되돌리면 정확히 같은 값이 나와야 합니다.
