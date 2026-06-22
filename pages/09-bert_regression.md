@@ -162,6 +162,4 @@ Ch 6 끝에서 미리 본 코드 형태가 이제 실제로 등장합니다. `Tr
 
 ## 이 장의 구성
 
-- [09-1. 실습](09-bert_regression-practice.md)
-- [09-2. 변형 — 학습이 어디서 망가지는지 (개념만)](09-bert_regression-variation.md)
-- [09-3. 정리와 FAQ](09-bert_regression-wrapup.md)
+[[SubPages]]

@@ -22,6 +22,13 @@ from transformers import (
 )
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
+# matplotlib 한글 폰트 (Colab — NanumGothic). plot 의 한국어가 □ 로 깨지지 않게.
+import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run("apt-get -qq -y install fonts-nanum", shell=True)
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
 plt.rcParams["axes.unicode_minus"] = False
 
 print(f"PyTorch:        {torch.__version__}")
@@ -47,7 +54,7 @@ GPU:             Tesla T4
 **▶ 실행 결과**
 
 ```text
-Wed Jun 17 21:30:31 2026       
+Sun Jun 21 22:51:03 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -56,7 +63,7 @@ Wed Jun 17 21:30:31 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   39C    P8             10W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   36C    P8             13W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -68,8 +75,6 @@ Wed Jun 17 21:30:31 2026
 |  No running processes found                                                             |
 +-----------------------------------------------------------------------------------------+
 ```
-
-DistilBERT 토크나이저를 불러오고 Yelp 리뷰에서 train 4,000건·eval 1,000건만 뽑아, 별점(0-4)을 1-5 float 라벨로 바꿔 토큰화합니다. 데이터를 작게 자르는 건 T4에서 학습을 30분 안에 끝내기 위해서이고, 라벨을 정수가 아닌 float으로 두는 게 회귀의 핵심이라 Trainer가 이를 보고 분류가 아닌 회귀로 처리합니다. Trainer는 `labels` 컬럼을 자동으로 손실 계산에 쓰므로 컬럼 이름을 그대로 맞춰 둔 점을 눈여겨보세요.
 
 ```python
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
@@ -104,8 +109,6 @@ Dataset({
 First sample label: 5.0  (float)
 ```
 
-출력 차원 1짜리 회귀 헤드를 단 DistilBERT 분류 모델을 만들고 파라미터 수와 헤드 구조, problem_type을 확인합니다. `num_labels=1`과 `problem_type="regression"`을 함께 주면 헤드가 768→1 Linear 한 줄로 잡히고 손실이 MSELoss로 정해집니다. 출력에서 classifier 관련 키가 MISSING으로 뜨는 건 사전학습 체크포인트에 없던 헤드를 새로 초기화했다는 뜻이라, 지금부터 학습으로 채워야 함을 알려 줍니다.
-
 ```python
 model = AutoModelForSequenceClassification.from_pretrained(
     "distilbert-base-uncased",
@@ -123,15 +126,15 @@ print(f"problem_type:  {model.config.problem_type}")
 [transformers] DistilBertForSequenceClassification LOAD REPORT from: distilbert-base-uncased
 Key                     | Status     | 
 ------------------------+------------+-
-vocab_transform.bias    | UNEXPECTED | 
 vocab_layer_norm.bias   | UNEXPECTED | 
 vocab_projector.bias    | UNEXPECTED | 
-vocab_layer_norm.weight | UNEXPECTED | 
 vocab_transform.weight  | UNEXPECTED | 
-classifier.weight       | MISSING    | 
-pre_classifier.weight   | MISSING    | 
-pre_classifier.bias     | MISSING    | 
+vocab_layer_norm.weight | UNEXPECTED | 
+vocab_transform.bias    | UNEXPECTED | 
 classifier.bias         | MISSING    | 
+pre_classifier.bias     | MISSING    | 
+pre_classifier.weight   | MISSING    | 
+classifier.weight       | MISSING    | 
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
@@ -140,12 +143,6 @@ Parameters:    66,954,241
 Classifier:    Linear(in_features=768, out_features=1, bias=True)
 problem_type:  regression
 ```
-
-**결과 해석**
-
-num_labels=1 + problem_type="regression"을 주니 분류 헤드가 768→1 Linear 한 줄이 되고 Trainer가 자동으로 MSELoss를 씁니다. Ch 2의 선형 회귀 위에 DistilBERT 본체가 특징 추출기로 얹힌 구조입니다.
-
-전체·학습 가능·동결 파라미터 수를 세는 헬퍼를 정의하고 현재 모델은 모든 층이 학습 대상임을 확인합니다. `requires_grad`가 True인 파라미터만 학습되는데, 기본 상태에서는 BERT 본체와 헤드가 모두 켜져 있어 학습 가능 비율이 100%로 나옵니다. 바로 다음 셀에서 본체를 동결했을 때 이 숫자가 어떻게 달라지는지 비교하기 위한 기준입니다.
 
 ```python
 def param_summary(m):
@@ -170,8 +167,6 @@ Frozen parameters:                0  (0.0 M, 0.0%)
 
 Default — all layers are trainable
 ```
-
-시연용으로 모델을 하나 더 만들어 BERT 본체를 동결했을 때 학습 대상이 분류 헤드만 남는 것을 보여주고, 다 쓴 모델은 메모리에서 비웁니다. 본체 파라미터에 `requires_grad=False`를 주면 학습 대상이 약 59만 개(0.9%)로 줄어 빠르고 메모리도 적게 들지만, 본체가 태스크에 적응하지 못하는 대가가 따릅니다. 이 모델은 실제 학습엔 쓰지 않으므로 `del`과 `empty_cache()`로 VRAM을 곧바로 돌려주는 점을 봐 두세요.
 
 ```python
 # 시연용 — 같은 모델을 한 번 더 만들고 BERT 본체를 동결
@@ -207,15 +202,15 @@ if torch.cuda.is_available():
 [transformers] DistilBertForSequenceClassification LOAD REPORT from: distilbert-base-uncased
 Key                     | Status     | 
 ------------------------+------------+-
-vocab_transform.bias    | UNEXPECTED | 
 vocab_layer_norm.bias   | UNEXPECTED | 
 vocab_projector.bias    | UNEXPECTED | 
-vocab_layer_norm.weight | UNEXPECTED | 
 vocab_transform.weight  | UNEXPECTED | 
-classifier.weight       | MISSING    | 
-pre_classifier.weight   | MISSING    | 
-pre_classifier.bias     | MISSING    | 
+vocab_layer_norm.weight | UNEXPECTED | 
+vocab_transform.bias    | UNEXPECTED | 
 classifier.bias         | MISSING    | 
+pre_classifier.bias     | MISSING    | 
+pre_classifier.weight   | MISSING    | 
+classifier.weight       | MISSING    | 
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
@@ -238,7 +233,7 @@ Tradeoff: BERT body cannot adapt to the task — usually train the body too if d
 **▶ 실행 결과**
 
 ```text
-Wed Jun 17 21:31:10 2026       
+Sun Jun 21 22:51:27 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -247,7 +242,7 @@ Wed Jun 17 21:31:10 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   41C    P8             13W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   37C    P8             13W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -259,8 +254,6 @@ Wed Jun 17 21:31:10 2026
 |  No running processes found                                                             |
 +-----------------------------------------------------------------------------------------+
 ```
-
-T4에서 30분 안에 끝나도록 에폭·배치 크기·learning rate·fp16 등 학습 인자를 정합니다. `fp16=True`는 T4에서 메모리와 속도를 아끼는 핵심 설정이고(bf16은 T4가 지원하지 않습니다), `save_strategy="no"`로 체크포인트 저장을 꺼 디스크와 VRAM을 절약합니다. total step 수가 데이터 크기·배치·에폭으로 어떻게 500이 되는지 함께 확인해 두세요.
 
 ```python
 training_args = TrainingArguments(
@@ -286,8 +279,6 @@ print(f"Total training steps: {len(train_tok) // training_args.per_device_train_
 Total training steps: 500
 ```
 
-평가 때 MSE·MAE·R²를 계산하도록 compute_metrics 함수를 정의합니다. 회귀 출력은 (N, 1) 형태라 `flatten()`으로 1차원으로 펴 준 뒤 sklearn 지표 함수에 그대로 넘깁니다. Trainer는 이 함수를 매 평가마다 호출해 손실 외에 사람이 해석하기 쉬운 지표들을 같이 보여 줍니다.
-
 ```python
 # 평가 지표를 직접 정의 — sklearn 헬퍼 그대로 활용
 def compute_metrics(eval_pred):
@@ -299,8 +290,6 @@ def compute_metrics(eval_pred):
         "r2":  float(r2_score(labels, preds)),
     }
 ```
-
-모델·인자·데이터셋·지표를 묶어 Trainer를 만들고 실제 파인튜닝을 실행합니다. `processing_class=tokenizer` 한 줄이 패딩을 처리하는 DataCollatorWithPadding을 자동으로 만들어 주므로 배치마다 길이를 직접 맞출 필요가 없습니다. `trainer.train()`이 끝나면 평균 train loss가 찍히는데, 이 값이 곧 회귀 MSE라는 점을 평가 단계와 비교해 두세요.
 
 ```python
 trainer = Trainer(
@@ -321,7 +310,7 @@ print(f"\nTraining done — mean train loss: {train_result.training_loss:.4f}")
 
 ```text
 <IPython.core.display.HTML object>
-Training done — mean train loss: 1.0480
+Training done — mean train loss: 1.1182
 ```
 
 ```python
@@ -331,7 +320,7 @@ Training done — mean train loss: 1.0480
 **▶ 실행 결과**
 
 ```text
-Wed Jun 17 21:31:42 2026       
+Sun Jun 21 22:51:58 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -340,7 +329,7 @@ Wed Jun 17 21:31:42 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   62C    P0             72W /   70W |    1573MiB /  15360MiB |     71%      Default |
+| N/A   53C    P0             64W /   70W |    1573MiB /  15360MiB |     77%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -349,11 +338,9 @@ Wed Jun 17 21:31:42 2026
 |  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
 |        ID   ID                                                               Usage      |
 |=========================================================================================|
-|    0   N/A  N/A            9753      C   /usr/bin/python3                       1570MiB |
+|    0   N/A  N/A            9461      C   /usr/bin/python3                       1570MiB |
 +-----------------------------------------------------------------------------------------+
 ```
-
-학습된 모델을 eval 셋으로 평가해 MSE·MAE·R² 최종 지표를 출력합니다. `trainer.evaluate()`가 앞서 정의한 compute_metrics를 호출해 `eval_` 접두사가 붙은 지표들을 돌려줍니다. eval_loss와 eval_mse가 같은 값으로 나오는지 확인하면 회귀 손실이 곧 MSE임을 눈으로 검증할 수 있습니다.
 
 ```python
 # BERT 최종 평가 (eval_dataset 기준)
@@ -370,17 +357,11 @@ for k, v in bert_metrics.items():
 <IPython.core.display.HTML object>
 <IPython.core.display.HTML object>
 BERT evaluation:
-             eval_loss: 0.6467
-              eval_mse: 0.6467
-              eval_mae: 0.6115
-               eval_r2: 0.6681
+             eval_loss: 0.6539
+              eval_mse: 0.6539
+              eval_mae: 0.6180
+               eval_r2: 0.6644
 ```
-
-**결과 해석**
-
-2 에폭 파인튜닝 뒤 eval MSE 0.65, R² 0.67입니다. 별점을 평균 ±0.61(MAE) 안에서 맞힌다는 뜻이고, eval_loss와 eval_mse가 같은 값인 데서 회귀 손실이 곧 MSE임을 확인할 수 있습니다.
-
-비교 기준으로 같은 4,000건에 TF-IDF + sklearn LinearRegression을 학습해 같은 지표로 평가합니다. 토큰화 전 원문을 다시 불러와 TF-IDF로 벡터화하므로, DistilBERT와 데이터·라벨이 완전히 같아 모델 차이만 비교됩니다. Ch 2에서 다룬 선형 회귀 방식 그대로 두고, 다음 셀에서 BERT 지표와 나란히 놓아 단어 빈도 기반 모델의 한계를 보여 줍니다.
 
 ```python
 # 같은 4,000건으로 sklearn LinearRegression 학습 (Ch 2 방식)
@@ -415,8 +396,6 @@ sklearn LinearRegression evaluation:
   r2:  0.1996
 ```
 
-sklearn과 DistilBERT의 MSE·MAE·R²를 한 DataFrame으로 나란히 비교합니다. 두 모델의 지표를 같은 행 구조로 묶어 표로 만들면 어느 쪽이 별점을 더 잘 맞히는지 한눈에 들어옵니다. R²는 클수록, MSE·MAE는 작을수록 좋다는 방향을 기억하고 두 행을 비교해 보세요.
-
 ```python
 # 한 표로 비교
 rows = [
@@ -437,14 +416,8 @@ pd.DataFrame(rows).round(4)
 ```text
                       model     mse     mae      r2
 0  sklearn LinearRegression  1.5597  1.0086  0.1996
-1     DistilBERT fine-tuned  0.6467  0.6115  0.6681
+1     DistilBERT fine-tuned  0.6539  0.6180  0.6644
 ```
-
-**결과 해석**
-
-같은 4,000건·같은 별점 회귀인데 DistilBERT의 R²(0.67)가 sklearn TF-IDF(0.20)의 세 배가 넘고 MSE는 절반 이하입니다. 단어 빈도만 세는 선형 모델과 달리 문맥을 읽는 사전학습 표현이 회귀에서도 큰 차이를 만든다는 걸 보여줍니다.
-
-BERT 예측값을 받아 sklearn 예측과 함께 실제 별점·예측·잔차를 담은 long-form DataFrame으로 정리합니다. `trainer.predict`로 BERT 예측값을 꺼낸 뒤 두 모델의 예측을 세로로 쌓고 Model 열로 구분해, seaborn이 한 그래프에서 두 모델을 나눠 그릴 수 있는 형태로 만듭니다. 잔차(예측 − 실제) 열까지 미리 계산해 두어 다음 두 플롯이 이 DataFrame 하나만 보고 그려지도록 했습니다.
 
 ```python
 # BERT 예측값 직접 받기 (별도 evaluate 호출이지만 빠름)
@@ -466,8 +439,6 @@ df_compare["Residual"] = df_compare["Predicted"] - df_compare["Actual star"]
 <IPython.core.display.HTML object>
 ```
 
-실제 별점별 예측 분포를 두 모델로 나눠 split 바이올린 플롯으로 그리고 기준선을 함께 표시합니다. split 바이올린은 같은 별점 칸에서 BERT(왼쪽 반)와 sklearn(오른쪽 반)의 예측 분포를 맞붙여 보여 주어 두 모델을 직접 견줄 수 있습니다. 빨간 점선은 예측이 실제 별점과 정확히 일치하는 위치라, 분포가 이 선에 붙을수록 잘 맞힌다는 뜻으로 읽으세요.
-
 ```python
 fig, ax = plt.subplots(figsize=(11, 5))
 sns.violinplot(
@@ -476,7 +447,7 @@ sns.violinplot(
 )
 for i, x_val in enumerate([1, 2, 3, 4, 5]):
     ax.plot([i - 0.4, i + 0.4], [x_val, x_val], "r--", linewidth=1, alpha=0.7)
-ax.set_title("Predicted star distribution per actual class")
+ax.set_title("실제 별점별 예측 별점 분포")
 ax.legend(loc="upper left")
 plt.tight_layout()
 plt.show()
@@ -486,12 +457,6 @@ plt.show()
 
 ![output](../assets/09-bert_regression-out1.png)
 
-**결과 해석**
-
-BERT(왼쪽 반)는 실제 별점이 오를수록 예측 분포도 따라 올라가 빨간 기준선에 가깝게 붙지만, sklearn(오른쪽 반)은 가운데로 뭉쳐 1점·5점 극단을 잘 못 맞힙니다.
-
-이번에는 잔차(예측 − 실제)의 분포를 실제 별점별로 바이올린 플롯으로 그려 두 모델의 편향을 비교합니다. 잔차를 0 선(빨간 점선) 기준으로 보면 모델이 별점을 어느 쪽으로 치우치게 예측하는지가 드러납니다. 분포가 0 근처에 좁게 모이면 편향이 작은 것이고, 위아래로 크게 벌어지면 그 별점대를 평균 쪽으로 끌어당기는 편향이 있다는 신호입니다.
-
 ```python
 fig, ax = plt.subplots(figsize=(11, 5))
 sns.violinplot(
@@ -499,8 +464,8 @@ sns.violinplot(
     split=True, inner="quart", ax=ax,
 )
 ax.axhline(0, color="red", linestyle="--", linewidth=1, alpha=0.7)
-ax.set_title("Residual = Predicted − Actual, per actual class")
-ax.set_ylabel("Residual (predicted − actual)")
+ax.set_title("잔차 = 예측 − 실제, 실제 별점별 분포")
+ax.set_ylabel("잔차 (예측 − 실제)")
 ax.legend(loc="upper left")
 plt.tight_layout()
 plt.show()
@@ -509,7 +474,3 @@ plt.show()
 **▶ 실행 결과**
 
 ![output](../assets/09-bert_regression-out2.png)
-
-**결과 해석**
-
-잔차(예측−실제)가 BERT는 0 선 근처에 좁게 모이는데 sklearn은 1점에서 양(+)으로, 5점에서 음(−)으로 크게 치우칩니다. 선형 모델이 극단 별점을 평균 쪽으로 끌어당기는 회귀 특유의 편향이 그대로 보입니다.
