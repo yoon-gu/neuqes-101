@@ -209,6 +209,4 @@ Ch 14 에서 짚었던 4 가지 시나리오를 한국어 셋업에서도 그대
 
 ## 이 장의 구성
 
-- [18-1. 실습](18-ko_auxiliary-practice.md)
-- [18-2. 변형 — λ 스윕 효과 비교 (선택)](18-ko_auxiliary-variation.md)
-- [18-3. 정리와 FAQ](18-ko_auxiliary-wrapup.md)
+[[SubPages]]
