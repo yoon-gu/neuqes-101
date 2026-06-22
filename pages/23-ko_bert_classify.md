@@ -243,5 +243,4 @@ vocab 약 32,000 의 한국어 WordPiece. MLM 사전학습과 분류 fine-tune �
 
 ## 이 장의 구성
 
-- [23-1. 실습](23-ko_bert_classify-practice.md)
-- [23-2. 정리와 FAQ](23-ko_bert_classify-wrapup.md)
+[[SubPages]]

@@ -88,7 +88,7 @@
   * [22-2. 변형: 데이터 / 학습량 / 다른 한국어 코퍼스](pages/22-ko_bert_pretrain-variation.md)
   * [22-3. 정리와 FAQ](pages/22-ko_bert_pretrain-wrapup.md)
 * [23. 작은 BERT 이진 분류 (Korean NSMC Fine-tuning)](pages/23-ko_bert_classify.md)
-  * [23-1. 실습: 사전학습 BERT로 NSMC 분류](pages/23-ko_bert_classify-practice.md)
+  * [23-1. 실습](pages/23-ko_bert_classify-practice.md)
   * [23-2. 정리와 FAQ](pages/23-ko_bert_classify-wrapup.md)
 * [24. 작은 GPT 사전학습 (TinyStories Causal LM)](pages/24-gpt_tinystories.md)
   * [24-1. 실습: 작은 GPT 사전학습과 생성](pages/24-gpt_tinystories-practice.md)
