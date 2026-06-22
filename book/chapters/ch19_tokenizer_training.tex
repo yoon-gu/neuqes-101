@@ -576,12 +576,12 @@ print(
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-[1/4] en WordPiece  trained in 1.47s  vocab=8000
-[2/4] ko WordPiece  trained in 0.79s  vocab=8000
-[3/4] en WordLevel  trained in 0.83s  vocab=8000
-[4/4] ko WordLevel  trained in 0.13s  vocab=8000
+[1/4] en WordPiece  trained in 1.44s  vocab=8000
+[2/4] ko WordPiece  trained in 0.51s  vocab=8000
+[3/4] en WordLevel  trained in 0.51s  vocab=8000
+[4/4] ko WordLevel  trained in 0.08s  vocab=8000
 
-total time: 3.22s
+total time: 2.53s
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -804,7 +804,12 @@ ko WordLevel        9.106            7.0       27.00
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
-sns.set_theme(style="whitegrid", context="talk")
+sns.set_theme(
+    style="whitegrid",
+    context="talk",
+    font="NanumGothic",
+    rc={"axes.unicode_minus": False},
+)
 fig, axes = plt.subplots(
     1,
     2,
@@ -812,6 +817,12 @@ fig, axes = plt.subplots(
     sharey=True,
 )
 
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=14]
 sns.kdeplot(
     len_en_wp,
     ax=axes[0],
@@ -820,12 +831,6 @@ sns.kdeplot(
     alpha=0.4,
     label="WordPiece",
 )
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=17]
 sns.kdeplot(
     len_en_wl,
     ax=axes[0],
@@ -834,18 +839,18 @@ sns.kdeplot(
     alpha=0.4,
     label="WordLevel",
 )
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=30]
 axes[0].set_title("영어 (Yelp) — 문장당 토큰 수")
 axes[0].set_xlabel("문장당 토큰 수")
 axes[0].set_ylabel("밀도")
 axes[0].legend()
 axes[0].set_xlim(0, 400)
 
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=31]
 sns.kdeplot(
     len_ko_wp,
     ax=axes[1],
@@ -854,6 +859,12 @@ sns.kdeplot(
     alpha=0.4,
     label="WordPiece",
 )
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=44]
 sns.kdeplot(
     len_ko_wl,
     ax=axes[1],
@@ -862,12 +873,6 @@ sns.kdeplot(
     alpha=0.4,
     label="WordLevel",
 )
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{9\baselineskip}
-\begin{lstlisting}[firstnumber=47]
 axes[1].set_title("한국어 (NSMC) — 문장당 토큰 수")
 axes[1].set_xlabel("문장당 토큰 수")
 axes[1].legend()
@@ -950,7 +955,12 @@ ko WordLevel  43.74%
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
-sns.set_theme(style="whitegrid", context="talk")
+sns.set_theme(
+    style="whitegrid",
+    context="talk",
+    font="NanumGothic",
+    rc={"axes.unicode_minus": False},
+)
 fig, ax = plt.subplots(figsize=(9, 5))
 colors = ["#4878D0", "#EE854A", "#4878D0", "#EE854A"]
 bars = ax.bar(
@@ -961,6 +971,12 @@ bars = ax.bar(
 for bar, rate in zip(bars, unk_summary["unk_rate"]):
     ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.1,
             f"{rate:.2%}", ha="center", va="bottom", fontsize=11)
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
+
+\Needspace{7\baselineskip}
+\begin{lstlisting}[firstnumber=17]
 ax.set_ylabel("UNK 비율 (%)")
 ax.set_title("미등록 토큰 비율 — 동일 eval 코퍼스, vocab=8000")
 ax.tick_params(axis="x", rotation=15)
@@ -1115,7 +1131,7 @@ print(cross_df.to_string(index=False))
 input_lang    tokenizer tokenizer_train_lang  n_tokens  n_unk  unk_pct   match
 EN en_WordPiece EN 13 0 0.0 OK same
 EN en_WordLevel EN 11 0 0.0 OK same
-        EN ko_WordPiece                   KO        39      0      0.0 X cross
+        EN ko_WordPiece                   KO        40      0      0.0 X cross
         EN ko_WordLevel                   KO        11      7     63.6 X cross
         KO en_WordPiece                   EN         8      5     62.5 X cross
         KO en_WordLevel                   EN         6      5     83.3 X cross
@@ -1152,7 +1168,7 @@ for lang, text in cross_examples:
 [input (EN)]  The food was absolutely delicious and the service was great.
 en_WordPiece ( 13 tokens, UNK 0): ['[CLS]', 'the', 'food', 'was', 'absolute...
 en_WordLevel ( 11 tokens, UNK 0): ['The', 'food', 'was', 'absolutely', 'del...
-X ko_WordPiece ( 39 tokens, UNK 0): ['[CLS]', 'Th', '##e', 'f', '##oo', '##...
+X ko_WordPiece ( 40 tokens, UNK 0): ['[CLS]', 'Th', '##e', 'f', '##oo', '##...
 X ko_WordLevel ( 11 tokens, UNK 7): ['The', '[UNK]', '[UNK]', '[UNK]', '[UN...
 
 [input (KO)]  음식이 정말 맛있었고 서비스도 훌륭했습니다.
@@ -1253,7 +1269,7 @@ saved 4 tokenizer files:
   ./tokenizers_ch19/en_wordlevel.json  (172.5 KB)
   ./tokenizers_ch19/en_wordpiece.json  (170.3 KB)
   ./tokenizers_ch19/ko_wordlevel.json  (205.9 KB)
-  ./tokenizers_ch19/ko_wordpiece.json  (251.5 KB)
+  ./tokenizers_ch19/ko_wordpiece.json  (251.6 KB)
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1322,7 +1338,7 @@ pad_token_id    : 0
 cls_token_id    : 2
 
 input_ids shape : torch.Size([1, 15])
-input_ids : [2, 107, 218, 128, 4814, 5350, 3762, 300, 115, 107, 312, 128, 9...
+input_ids : [2, 107, 218, 128, 4814, 5350, 3763, 300, 115, 107, 312, 128, 9...
 decoded : [CLS] the food was unforgettable and the service was excellent. [...
 \end{bookoutputbox}
 \par\vspace{0.9em}
@@ -1375,7 +1391,7 @@ vocab_size  actual_vocab  mean_tokens  p95_tokens  unk_rate_pct
        1000          1000      209.815      557.35           0.0
        4000          4000      161.980      436.85           0.0
        8000          8000      152.510      412.30           0.0
-      16000         16000      148.095      398.30           0.0
+      16000         16000      148.100      398.30           0.0
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1383,11 +1399,22 @@ vocab_size  actual_vocab  mean_tokens  p95_tokens  unk_rate_pct
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
-sns.set_theme(style="whitegrid", context="talk")
+sns.set_theme(
+    style="whitegrid",
+    context="talk",
+    font="NanumGothic",
+    rc={"axes.unicode_minus": False},
+)
 fig, ax1 = plt.subplots(figsize=(9, 5))
 
 ax1.plot(
     df_sweep["vocab_size"],
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 숫자 결과를 그림으로 확인하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=11]
     df_sweep["mean_tokens"],
     "o-",
     color="tab:blue",
@@ -1400,10 +1427,10 @@ ax1.set_xscale("log")
 
 \end{lstlisting}
 
-\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=16]
+\begin{lstlisting}[firstnumber=21]
 ax2 = ax1.twinx()
 ax2.plot(
     df_sweep["vocab_size"],

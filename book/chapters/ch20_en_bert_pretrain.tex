@@ -384,10 +384,10 @@ GPU:             Tesla T4
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 23:18:20 2026
+Mon Jun 22 04:08:21 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 36C P8 9W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 36C P8 12W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1210,20 +1210,20 @@ for sent in test_sentences:
 \begin{bookoutputbox}
 Training Loss  Validation Loss  Epoch
 -------------  ---------------  -----
-No log         10.388824        0
+No log         10.383417        0
 ==============================================================================
 BEFORE pretraining  (random init body)
 ==============================================================================
-  eval_loss       : 10.3888   (random baseline ln V = 10.3262)
-  eval_perplexity : 32,494     (random baseline V    = 30,522)
+  eval_loss       : 10.3834   (random baseline ln V = 10.3262)
+  eval_perplexity : 32,319     (random baseline V    = 30,522)
 input: The capital of France is [MASK].
-top-5 before pretraining: ['camilla', 'carla', 'fiji', 'waterfront', 'legen...
+top-5 before pretraining: ['broadband', '##eti', 'weights', 'smack', '##umen']
 
 input: Water freezes at [MASK] degrees Celsius.
-top-5 before pretraining: ['locate', 'nouveau', '900', 'sinking', '[unused2...
+top-5 before pretraining: ['##hp', 'damages', 'slogan', '##ssion', '[unused...
 
 input: The food at this restaurant was absolutely [MASK].
-top-5 before pretraining: ['fiji', '##pres', 'arlington', 'sphere', 'legend...
+top-5 before pretraining: ['languages', 'sampling', '##pic', 'libretto', '#...
 ...
 \end{bookoutputbox}
 \par\vspace{0.9em}
@@ -1250,11 +1250,11 @@ print(
 \begin{bookoutputbox}
 Epoch  Training Loss  Validation Loss
 -----  -------------  ---------------
-1      7.221518       7.213772
-2      7.062019       7.056252
+1      7.215202       7.198018
+2      7.062257       7.058136
 
 MLM pretraining done in 0.4 min
-mean train loss: 7.4240
+mean train loss: 7.4179
 random baseline loss (uniform over vocab): 10.3262
 \end{bookoutputbox}
 \par\vspace{0.9em}
@@ -1268,10 +1268,10 @@ random baseline loss (uniform over vocab): 10.3262
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 23:19:25 2026
+Mon Jun 22 04:09:26 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 53C P0 79W / 70W | 3335MiB / 15360MiB | 55% Default
+N/A 51C P0 65W / 70W | 3335MiB / 15360MiB | 49% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1303,8 +1303,19 @@ if train_logs:
     steps, losses = zip(*train_logs)
     random_baseline = math.log(tokenizer.vocab_size)
 
-    sns.set_theme(style="whitegrid", context="talk")
+    sns.set_theme(
+        style="whitegrid",
+        context="talk",
+        font="NanumGothic",
+        rc={"axes.unicode_minus": False},
+    )
     fig, ax = plt.subplots(figsize=(9, 5))
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=15]
     ax.plot(
         steps,
         losses,
@@ -1312,12 +1323,6 @@ if train_logs:
         color="#4878D0",
         label="학습 MLM loss",
     )
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=17]
     ax.axhline(
         random_baseline,
         color="black",
@@ -1327,6 +1332,12 @@ if train_logs:
     )
     ax.set_xlabel("학습 step")
     ax.set_ylabel("MLM loss (CrossEntropy)")
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
+
+\Needspace{8\baselineskip}
+\begin{lstlisting}[firstnumber=31]
     ax.set_title("MLM 학습 loss — Wikitext-103 위에서 처음부터 학습한 small BERT")
     ax.legend()
     plt.tight_layout()
@@ -1336,7 +1347,7 @@ else:
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{log\_history = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{2행}의 \inlinecode{train\_logs = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{4행}의 \inlinecode{if train\_logs:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{5행}의 \inlinecode{steps, losses = zip(*trai...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{random\_baseline = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{8행}의 \inlinecode{sns.set\_theme(...)}에서는 이후 분석에서 사용할 값을 준비합니다.
+\textbf{1행}의 \inlinecode{log\_history = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{2행}의 \inlinecode{train\_logs = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{4행}의 \inlinecode{if train\_logs:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{5행}의 \inlinecode{steps, losses = zip(*trai...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{random\_baseline = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{8--13행}의 \inlinecode{sns.set\_theme(...)}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
 \begin{bookfigurelabel}[H]{작은 BERT의 MLM 사전학습 loss 곡선}{fig:ch20-mlm-training-loss}
@@ -1384,14 +1395,14 @@ print(
 \begin{bookoutputbox}
 Training Loss  Validation Loss  Epoch
 -------------  ---------------  -----
-7.062019       7.124473         2
+7.062257       7.120223         2
 === eval (held-out Wikitext-103 paragraphs) ===
-               eval_loss: 7.1245
+               eval_loss: 7.1202
 
-  MLM loss:               7.1245
-  perplexity (exp loss):  1241.99
+  MLM loss:               7.1202
+  perplexity (exp loss):  1236.73
   random baseline PPL:    30,522  (uniform over vocab)
-  -> model narrowed vocab to approx. 1242 candidates per masked position
+  -> model narrowed vocab to approx. 1237 candidates per masked position
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1446,19 +1457,19 @@ for sent in test_sentences:
 \begin{bookoutputbox}
 Training Loss  Validation Loss  Epoch
 -------------  ---------------  -----
-7.062019       7.124046         2
+7.062257       7.127809         2
 ==============================================================================
 AFTER pretraining  (2 epoch MLM on Wikitext-103)
 ==============================================================================
-  eval_loss       : 7.1240   (before: 10.3888)
-  eval_perplexity : 1,241.46        (before: 32,494)
-  -> narrowed vocab to approx. 1241 candidates per masked position
+  eval_loss       : 7.1278   (before: 10.3834)
+  eval_perplexity : 1,246.14        (before: 32,319)
+  -> narrowed vocab to approx. 1246 candidates per masked position
 
 input: The capital of France is [MASK].
-  top-5 after pretraining: ['the', ',', '.', 'and', 'in']
+  top-5 after pretraining: ['the', ',', '.', 'and', 'of']
 
 input: Water freezes at [MASK] degrees Celsius.
-  top-5 after pretraining: ['the', ',', '.', 'and', 'in']
+  top-5 after pretraining: ['the', ',', '.', 'and', 'of']
 
 ...
 \end{bookoutputbox}
@@ -1488,8 +1499,8 @@ print(metric_compare.round(4).to_string(index=False))
 \begin{bookoutputbox}
 Before vs After -- eval metrics
          metric  before (random)  after (2 epoch)  random baseline
-      eval_loss          10.3888           7.1240          10.3262
-eval_perplexity       32494.4151        1241.4637       30522.0000
+      eval_loss          10.3834           7.1278          10.3262
+eval_perplexity       32319.2119        1246.1431       30522.0000
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1497,7 +1508,12 @@ eval_perplexity       32494.4151        1241.4637       30522.0000
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
-sns.set_theme(style="whitegrid", context="talk")
+sns.set_theme(
+    style="whitegrid",
+    context="talk",
+    font="NanumGothic",
+    rc={"axes.unicode_minus": False},
+)
 fig, axes = plt.subplots(1, 2, figsize=(12, 5))
 
 loss_values = [pre_eval_loss, post_eval_loss]
@@ -1508,17 +1524,17 @@ axes[0].bar(
     color=["#999999", "#4878D0"],
 )
 axes[0].axhline(random_baseline_loss, color="black", lw=1.0, ls=":",
-                label=f"랜덤 기준선 ln V = {random_baseline_loss:.2f}")
-axes[0].set_ylabel("eval_loss")
-axes[0].set_title("MLM eval_loss")
-axes[0].legend(loc="upper right", fontsize=10)
-
 \end{lstlisting}
 
 \noindent\emph{앞 블록은 숫자 결과를 그림으로 확인하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=17]
+                label=f"랜덤 기준선 ln V = {random_baseline_loss:.2f}")
+axes[0].set_ylabel("eval_loss")
+axes[0].set_title("MLM eval_loss")
+axes[0].legend(loc="upper right", fontsize=10)
+
 ppl_values = [pre_eval_ppl, post_eval_ppl]
 axes[1].bar(
     loss_labels,
@@ -1530,6 +1546,12 @@ axes[1].axhline(tokenizer.vocab_size, color="black", lw=1.0, ls=":",
                 label=f"랜덤 기준선 V = {tokenizer.vocab_size:,}")
 axes[1].set_ylabel("perplexity (log scale)")
 axes[1].set_title("MLM perplexity")
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
+
+\Needspace{6\baselineskip}
+\begin{lstlisting}[firstnumber=33]
 axes[1].legend(loc="upper right", fontsize=10)
 
 plt.tight_layout()
@@ -1691,18 +1713,18 @@ for _, row in top5_compare.iterrows():
 Before (random) vs Ours (small BERT, 5K paragraphs) vs Reference (bert-base...
 ===========================================================================...
 input: The capital of France is [MASK].
-  before (random)        : camilla, carla, fiji, waterfront, legendary
-  ours  (small, 5K para) : the, ,, ., and, in
+  before (random)        : broadband, ##eti, weights, smack, ##umen
+  ours  (small, 5K para) : the, ,, ., and, of
   ref   (bert-base)      : paris, lille, lyon, marseille, tours
 
 input: Water freezes at [MASK] degrees Celsius.
-  before (random)        : locate, nouveau, 900, sinking, [unused298]
-  ours  (small, 5K para) : the, ,, ., and, in
+  before (random)        : ##hp, damages, slogan, ##ssion, [unused358]
+  ours  (small, 5K para) : the, ,, ., and, of
   ref   (bert-base)      : 100, 60, 50, 30, 90
 
 input: The food at this restaurant was absolutely [MASK].
-  before (random)        : fiji, ##pres, arlington, sphere, legendary
-  ours  (small, 5K para) : the, ,, ., and, in
+  before (random)        : languages, sampling, ##pic, libretto, ##orus
+  ours  (small, 5K para) : the, ,, ., and, of
   ref   (bert-base)      : delicious, amazing, fabulous, fantastic, incredible
 ...
 \end{bookoutputbox}

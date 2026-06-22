@@ -277,10 +277,10 @@ GPU:             Tesla T4
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 23:06:09 2026
+Mon Jun 22 03:56:11 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 36C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 44C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -598,8 +598,8 @@ print(
 \begin{bookoutputbox}
 Key                                        | Status     | 
 -------------------------------------------+------------+-
-classifier.weight                          | MISSING    | 
 classifier.bias                            | MISSING    | 
+classifier.weight                          | MISSING    | 
 
 - MISSING: those params were newly initialized because missing from the che...
 Parameters:             110,618,882  (110.6 M)
@@ -641,10 +641,10 @@ Hidden size H & 768 & 768 \\
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 23:06:29 2026
+Mon Jun 22 03:56:30 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 36C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 43C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -731,10 +731,10 @@ print(
 \begin{bookoutputbox}
 Epoch  Train...  Valid...  Accuracy  Preci...  Recall    F1        Auc
 -----  --------  --------  --------  --------  --------  --------  --------
-1      0.386037  0.344485  0.848000  0.840864  0.857715  0.849206  0.928992
-2      0.209452  0.386233  0.873000  0.879592  0.863727  0.871587  0.929092
+1      0.370798  0.348613  0.855000  0.847059  0.865731  0.856293  0.927040
+2      0.199243  0.388650  0.864000  0.877339  0.845691  0.861224  0.929182
 
-Training done -- mean train loss: 0.2997
+Training done -- mean train loss: 0.2939
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -747,10 +747,10 @@ Training done -- mean train loss: 0.2997
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 23:07:18 2026
+Mon Jun 22 03:57:18 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 59C P0 66W / 70W | 2627MiB / 15360MiB | 85% Default
+N/A 62C P0 61W / 70W | 2627MiB / 15360MiB | 55% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -779,14 +779,14 @@ for k, v in eval_metrics.items():
 \begin{bookoutputbox}
 Train...  Valid...  Epoch  Accuracy  Preci...  Recall    F1        Auc
 --------  --------  -----  --------  --------  --------  --------  --------
-0.209452  0.386233  2      0.873000  0.879592  0.863727  0.871587  0.929092
+0.199243  0.388650  2      0.864000  0.877339  0.845691  0.861224  0.929182
 klue/bert-base NSMC binary -- evaluation:
-             eval_loss: 0.3862
-         eval_accuracy: 0.8730
-        eval_precision: 0.8796
-           eval_recall: 0.8637
-               eval_f1: 0.8716
-              eval_auc: 0.9291
+             eval_loss: 0.3887
+         eval_accuracy: 0.8640
+        eval_precision: 0.8773
+           eval_recall: 0.8457
+               eval_f1: 0.8612
+              eval_auc: 0.9292
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -831,9 +831,9 @@ print(
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 logits2 (raw)  shape: (1000, 2)
-logit z = z1-z0 range: [-5.53, 5.28]
-prob range:           [0.0039, 0.9949]
-positive prediction rate (prob >= 0.5): 49.0%
+logit z = z1-z0 range: [-5.71, 5.19]
+prob range:           [0.0033, 0.9944]
+positive prediction rate (prob >= 0.5): 48.1%
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -852,12 +852,12 @@ print(classification_report(
 \begin{bookoutputbox}
 precision    recall  f1-score   support
 
-    negative     0.8667    0.8822    0.8744       501
-    positive     0.8796    0.8637    0.8716       499
+    negative     0.8516    0.8822    0.8667       501
+    positive     0.8773    0.8457    0.8612       499
 
-    accuracy                         0.8730      1000
-   macro avg     0.8731    0.8730    0.8730      1000
-weighted avg     0.8731    0.8730    0.8730      1000
+    accuracy                         0.8640      1000
+   macro avg     0.8645    0.8640    0.8639      1000
+weighted avg     0.8645    0.8640    0.8640      1000
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -867,12 +867,23 @@ weighted avg     0.8731    0.8730    0.8730      1000
 
 
 
-\Needspace{11\baselineskip}
+\Needspace{10\baselineskip}
 \begin{lstlisting}
-sns.set_theme(style="whitegrid", context="talk")
+sns.set_theme(
+    style="whitegrid",
+    context="talk",
+    font="NanumGothic",
+    rc={"axes.unicode_minus": False},
+)
 PAL = {0: "#5B8DEF", 1: "#F47272"}
 df_eval = pd.DataFrame({"prob": probs, "logit": logits, "label": labels})
 
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=10]
 fig, ax = plt.subplots(figsize=(9, 5))
 sns.kdeplot(
     data=df_eval, x="prob", hue="label",
@@ -997,17 +1008,17 @@ sample #580  (most confident positive)
 ==============================================================================
 text: 아 최고.. 지금 수능 끝나고 보고 있어요ㅠㅠ 현실적인 30대의 사랑이야기~
 true label:  1  (positive)
-prob(pos):   0.9949
-logit z:     +5.28
+prob(pos):   0.9944
+logit z:     +5.19
 prediction:  1 (positive)    match: OK
 
 ==============================================================================
-sample #834  (most confident negative)
+sample #169  (most confident negative)
 ==============================================================================
-text:        진자 재미없어..ㅋㅋ 액션은 볼만한데 CG안습
+text:        한마디로노잼 재미없음
 true label:  0  (negative)
-prob(pos):   0.0039
-logit z:     -5.53
+prob(pos):   0.0033
+logit z:     -5.71
 ...
 \end{bookoutputbox}
 \par\vspace{0.9em}

@@ -410,10 +410,10 @@ GPU:             Tesla T4
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 23:03:06 2026
+Mon Jun 22 03:52:59 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 45C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 42C P8 9W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -756,9 +756,9 @@ print(f"Aux head:             {model.aux_head}")
 \begin{bookoutputbox}
 Key                     | Status     | 
 ------------------------+------------+-
-pre_classifier.weight   | MISSING    | 
 classifier.bias         | MISSING    | 
 pre_classifier.bias     | MISSING    | 
+pre_classifier.weight   | MISSING    | 
 classifier.weight       | MISSING    | 
 
 - MISSING: those params were newly initialized because missing from the che...
@@ -965,10 +965,10 @@ print(
 \begin{bookoutputbox}
 Epoch Train... Valid... Hammi... Micro F1 Micro... Micro... Macro F1 Macro....
 ----- -------- -------- -------- -------- -------- -------- -------- ------...
-1 0.595967 0.573617 0.237400 0.613984 0.698225 0.547882 0.314569 0.280822 0...
-2 0.501972 0.501866 0.207800 0.632992 0.808664 0.520023 0.331620 0.323160 0...
+1 0.545290 0.534608 0.227800 0.598236 0.762590 0.492165 0.312462 0.304474 0...
+2 0.484252 0.486068 0.201400 0.643792 0.824275 0.528149 0.341416 0.528753 0...
 
-With-aux training done -- mean train loss: 0.5859
+With-aux training done -- mean train loss: 0.5629
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -985,10 +985,10 @@ With-aux training done -- mean train loss: 0.5859
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 23:04:15 2026
+Mon Jun 22 03:54:17 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 65C P0 68W / 70W | 1619MiB / 15360MiB | 63% Default
+N/A 61C P0 56W / 70W | 1619MiB / 15360MiB | 64% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1017,20 +1017,20 @@ for k, v in eval_metrics_aux.items():
 \begin{bookoutputbox}
 Train... Valid... Epoch Hammi... Micro F1 Micro... Micro... Macro F1 Macro....
 -------- -------- ----- -------- -------- -------- -------- -------- ------...
-0.501972 0.501866 2 0.207800 0.632992 0.808664 0.520023 0.331620 0.323160 0...
+0.484252 0.486068 2 0.201400 0.643792 0.824275 0.528149 0.341416 0.528753 0...
 With-aux (λ=1) -- main task metrics:
-               eval_loss: 0.5019
-       eval_hamming_loss: 0.2078
-           eval_micro_f1: 0.6330
-    eval_micro_precision: 0.8087
-       eval_micro_recall: 0.5200
-           eval_macro_f1: 0.3316
-    eval_macro_precision: 0.3232
-       eval_macro_recall: 0.3408
-          eval_macro_auc: 0.8009
-            eval_runtime: 0.9799
-  eval_samples_per_second: 1020.5360
-   eval_steps_per_second: 32.6570
+               eval_loss: 0.4861
+       eval_hamming_loss: 0.2014
+           eval_micro_f1: 0.6438
+    eval_micro_precision: 0.8243
+       eval_micro_recall: 0.5281
+           eval_macro_f1: 0.3414
+    eval_macro_precision: 0.5288
+       eval_macro_recall: 0.3475
+          eval_macro_auc: 0.8073
+            eval_runtime: 0.9810
+  eval_samples_per_second: 1019.4010
+   eval_steps_per_second: 32.6210
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1092,9 +1092,9 @@ print(f"  Pearson: {pear_aux:.4f}")
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 With-aux (λ=1) -- aux task metrics (star regression, 0-1 scale):
-  RMSE:    0.2086
-  R^2:     0.6425
-  Pearson: 0.8074
+  RMSE:    0.2067
+  R^2:     0.6493
+  Pearson: 0.8084
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1183,9 +1183,9 @@ print(
 \begin{bookoutputbox}
 Key                     | Status     | 
 ------------------------+------------+-
-pre_classifier.weight   | MISSING    | 
 classifier.bias         | MISSING    | 
 pre_classifier.bias     | MISSING    | 
+pre_classifier.weight   | MISSING    | 
 classifier.weight       | MISSING    | 
 
 - MISSING: those params were newly initialized because missing from the che...
@@ -1231,9 +1231,9 @@ No-aux (λ=0) baseline -- main task metrics:
     eval_macro_precision: 0.9205
        eval_macro_recall: 0.6737
           eval_macro_auc: 0.9081
-            eval_runtime: 1.0113
-  eval_samples_per_second: 988.8350
-   eval_steps_per_second: 31.6430
+            eval_runtime: 1.2089
+  eval_samples_per_second: 827.1860
+   eval_steps_per_second: 26.4700
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1277,18 +1277,18 @@ print(cmp.round(4).to_string(index=False))
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 metric  no aux (lambda=0)  with aux (lambda=1)  delta (aux - no_aux)
-loss 0.3091 0.5019 0.1928
-hamming_loss 0.1138 0.2078 0.0940
-micro_f1 0.8163 0.6330 -0.1833
-micro_precision 0.9199 0.8087 -0.1113
-micro_recall 0.7336 0.5200 -0.2136
-macro_f1 0.7577 0.3316 -0.4260
-macro_precision 0.9205 0.3232 -0.5973
-macro_recall 0.6737 0.3408 -0.3329
-macro_auc 0.9081 0.8009 -0.1072
-runtime 1.0113 0.9799 -0.0314
-samples_per_second 988.8350 1020.5360 31.7010
-steps_per_second 31.6430 32.6570 1.0140
+loss 0.3091 0.4861 0.1770
+hamming_loss 0.1138 0.2014 0.0876
+micro_f1 0.8163 0.6438 -0.1725
+micro_precision 0.9199 0.8243 -0.0957
+micro_recall 0.7336 0.5281 -0.2055
+macro_f1 0.7577 0.3414 -0.4163
+macro_precision 0.9205 0.5288 -0.3918
+macro_recall 0.6737 0.3475 -0.3262
+macro_auc 0.9081 0.8073 -0.1008
+runtime 1.2089 0.9810 -0.2279
+samples_per_second 827.1860 1019.4010 192.2150
+steps_per_second 26.4700 32.6210 6.1510
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1342,16 +1342,21 @@ label_cmp = pd.DataFrame({
 })
 print(label_cmp.round(4).to_string(index=False))
 
-sns.set_theme(style="whitegrid", context="talk")
+sns.set_theme(
+    style="whitegrid",
+    context="talk",
+    font="NanumGothic",
+    rc={"axes.unicode_minus": False},
+)
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=27]
 fig, ax = plt.subplots(figsize=(10, 5))
 x_pos = np.arange(K)
 width = 0.38
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 숫자 결과를 그림으로 확인하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=25]
 ax.bar(
     x_pos - width/2,
     f1_no_aux,
@@ -1359,6 +1364,12 @@ ax.bar(
     label="aux 없음 (lambda=0)",
     color="#5B8DEF",
 )
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=37]
 ax.bar(
     x_pos + width/2,
     f1_aux,
@@ -1368,12 +1379,6 @@ ax.bar(
 )
 ax.set_xticks(x_pos)
 ax.set_xticklabels(ASPECTS)
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
-
-\Needspace{8\baselineskip}
-\begin{lstlisting}[firstnumber=41]
 ax.set_ylim(0, 1)
 ax.set_ylabel("라벨별 F1")
 ax.set_title("라벨별 F1 — 보조 loss 효과")
@@ -1385,10 +1390,10 @@ plt.show()
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 aspect  no aux F1  with aux F1  delta (aux - no_aux)
-    food     0.9306       0.8849               -0.0457
- service     0.8653       0.7732               -0.0921
+    food     0.9306       0.9018               -0.0288
+ service     0.8653       0.7818               -0.0835
    price     0.4612       0.0000               -0.4612
-ambiance     0.7111       0.0000               -0.7111
+ambiance     0.7111       0.0235               -0.6876
 location     0.8202       0.0000               -0.8202
 \end{bookoutputbox}
 \par\vspace{0.9em}

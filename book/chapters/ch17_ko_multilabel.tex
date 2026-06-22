@@ -362,10 +362,10 @@ GPU:             Tesla T4
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 23:10:46 2026
+Mon Jun 22 04:00:43 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 38C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 39C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -743,10 +743,10 @@ id2label: {0: 'IT/Science', 1: 'Economy', 2: 'Society', 3: 'Life&Culture',...
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 23:11:11 2026
+Mon Jun 22 04:01:09 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 40C P8 14W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 38C P8 9W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -849,10 +849,10 @@ print(
 \begin{bookoutputbox}
 Epoch Train... Valid... Hammi... Micro F1 Micro... Micro... Macro F1 Macro....
 ----- -------- -------- -------- -------- -------- -------- -------- ------...
-1 0.236679 0.261181 0.105143 0.777374 0.830103 0.730944 0.801314 0.824455 0...
-2 0.178885 0.215059 0.076714 0.843577 0.864478 0.823663 0.846760 0.843967 0...
+1 0.239451 0.261441 0.098143 0.798711 0.823565 0.775313 0.811643 0.816980 0...
+2 0.175560 0.216631 0.074143 0.850043 0.863770 0.836746 0.848716 0.844496 0...
 
-Training done -- mean train loss: 0.2636
+Training done -- mean train loss: 0.2660
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -865,10 +865,10 @@ Training done -- mean train loss: 0.2636
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 23:11:57 2026
+Mon Jun 22 04:01:52 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 64C P0 76W / 70W | 2209MiB / 15360MiB | 75% Default
+N/A 63C P0 70W / 70W | 2209MiB / 15360MiB | 75% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -899,20 +899,20 @@ for k, v in eval_metrics.items():
 \begin{bookoutputbox}
 Train... Valid... Epoch Hammi... Micro F1 Micro... Micro... Macro F1 Macro....
 -------- -------- ----- -------- -------- -------- -------- -------- ------...
-0.178885 0.215059 2 0.076714 0.843577 0.864478 0.823663 0.846760 0.843967 0...
+0.175560 0.216631 2 0.074143 0.850043 0.863770 0.836746 0.848716 0.844496 0...
 klue/bert-base KLUE-YNAT multi-label -- evaluation:
-               eval_loss: 0.2151
-       eval_hamming_loss: 0.0767
-           eval_micro_f1: 0.8436
-    eval_micro_precision: 0.8645
-       eval_micro_recall: 0.8237
-           eval_macro_f1: 0.8468
-    eval_macro_precision: 0.8440
-       eval_macro_recall: 0.8534
-          eval_macro_auc: 0.9640
-            eval_runtime: 0.6981
-  eval_samples_per_second: 1432.5100
-   eval_steps_per_second: 45.8400
+               eval_loss: 0.2166
+       eval_hamming_loss: 0.0741
+           eval_micro_f1: 0.8500
+    eval_micro_precision: 0.8638
+       eval_micro_recall: 0.8367
+           eval_macro_f1: 0.8487
+    eval_macro_precision: 0.8445
+       eval_macro_recall: 0.8556
+          eval_macro_auc: 0.9623
+            eval_runtime: 0.6885
+  eval_samples_per_second: 1452.5010
+   eval_steps_per_second: 46.4800
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -956,13 +956,13 @@ for k in range(K):
 \begin{bookoutputbox}
 logits shape: (1000, 7)
 prob ranges per category:
-  IT/Science: [0.0098, 0.9773]  true rate=12.6%, pred rate=13.6%
-    Economy: [0.0107, 0.9865]  true rate=23.8%, pred rate=22.8%
-    Society: [0.0347, 0.9532]  true rate=68.4%, pred rate=55.9%
-  Life&Culture: [0.0137, 0.9869]  true rate=27.8%, pred rate=29.3%
-      World: [0.0140, 0.9900]  true rate=15.9%, pred rate=16.6%
-     Sports: [0.0098, 0.9918]  true rate=11.7%, pred rate=12.7%
-   Politics: [0.0088, 0.9901]  true rate=15.6%, pred rate=16.6%
+  IT/Science: [0.0113, 0.9731]  true rate=12.6%, pred rate=13.1%
+    Economy: [0.0165, 0.9889]  true rate=23.8%, pred rate=22.9%
+    Society: [0.0430, 0.9647]  true rate=68.4%, pred rate=58.7%
+  Life&Culture: [0.0148, 0.9864]  true rate=27.8%, pred rate=29.9%
+      World: [0.0109, 0.9884]  true rate=15.9%, pred rate=16.2%
+     Sports: [0.0103, 0.9898]  true rate=11.7%, pred rate=12.5%
+   Politics: [0.0093, 0.9884]  true rate=15.6%, pred rate=17.0%
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -982,18 +982,18 @@ print(classification_report(
 \begin{bookoutputbox}
 precision    recall  f1-score   support
 
-  IT/Science     0.7500    0.8095    0.7786       126
-     Economy     0.8333    0.7983    0.8155       238
-     Society     0.9267    0.7573    0.8335       684
-Life&Culture     0.8532    0.8993    0.8757       278
-       World     0.8614    0.8994    0.8800       159
-      Sports     0.8819    0.9573    0.9180       117
-    Politics     0.8012    0.8526    0.8261       156
+  IT/Science     0.7634    0.7937    0.7782       126
+     Economy     0.8428    0.8109    0.8266       238
+     Society     0.9267    0.7953    0.8560       684
+Life&Culture     0.8261    0.8885    0.8562       278
+       World     0.8704    0.8868    0.8785       159
+      Sports     0.8880    0.9487    0.9174       117
+    Politics     0.7941    0.8654    0.8282       156
 
-   micro avg     0.8645    0.8237    0.8436      1758
-   macro avg     0.8440    0.8534    0.8468      1758
-weighted avg     0.8697    0.8237    0.8430      1758
- samples avg     0.8862    0.8425    0.8435      1758
+   micro avg     0.8638    0.8367    0.8500      1758
+   macro avg     0.8445    0.8556    0.8487      1758
+weighted avg     0.8683    0.8367    0.8501      1758
+ samples avg     0.8820    0.8535    0.8485      1758
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1007,7 +1007,12 @@ weighted avg     0.8697    0.8237    0.8430      1758
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
-sns.set_theme(style="whitegrid", context="talk")
+sns.set_theme(
+    style="whitegrid",
+    context="talk",
+    font="NanumGothic",
+    rc={"axes.unicode_minus": False},
+)
 
 # Long-form DataFrame
 records = []
@@ -1022,7 +1027,7 @@ df_long = pd.DataFrame(records)
 \noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=11]
+\begin{lstlisting}[firstnumber=16]
 g = sns.FacetGrid(
     df_long, col="category", col_wrap=4, height=2.8, aspect=1.3,
     sharex=True, sharey=False,
@@ -1038,7 +1043,7 @@ for ax in g.axes.flat:
 \noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=21]
+\begin{lstlisting}[firstnumber=26]
     ax.axvline(
         0.5,
         color="black",
@@ -1250,13 +1255,13 @@ sample #0  (both categories correct)
 text: 새 현대미술 양식 꽃피운 U+6545강국진 개인전 [SEP] 음성군 충북 혁신도...
 
   category   true      prob   pred(>=0.5)  match
-  IT/Science      0    0.0637             0    O
-    Economy      0    0.0475             0    O
-    Society      1    0.5379             1    O
-  Life&Culture      1    0.9458             1    O
-      World      0    0.0764             0    O
-     Sports      0    0.0839             0    O
-   Politics      0    0.0466             0    O
+  IT/Science      0    0.0778             0    O
+    Economy      0    0.0643             0    O
+    Society      1    0.6206             1    O
+  Life&Culture      1    0.9396             1    O
+      World      0    0.0311             0    O
+     Sports      0    0.1226             0    O
+   Politics      0    0.0603             0    O
 
   true:      ['Society', 'Life&Culture']
   predicted: ['Society', 'Life&Culture']
@@ -1286,10 +1291,21 @@ text: 새 현대미술 양식 꽃피운 U+6545강국진 개인전 [SEP] 음성�
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
-sns.set_theme(style="whitegrid", context="talk")
+sns.set_theme(
+    style="whitegrid",
+    context="talk",
+    font="NanumGothic",
+    rc={"axes.unicode_minus": False},
+)
 
 thresholds = np.arange(0.1, 0.91, 0.05)
 micro_f1s, macro_f1s = [], []
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 숫자 결과를 그림으로 확인하는 단계입니다. 이어지는 블록에서는 예측 결과를 지표와 표로 요약하는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=10]
 for th in thresholds:
     preds_th = (probs >= th).astype(int)
     _, _, f1_mi, _ = precision_recall_fscore_support(
@@ -1302,17 +1318,16 @@ for th in thresholds:
         labels,
         preds_th,
         average="macro",
+        zero_division=0,
+    )
+    micro_f1s.append(f1_mi)
+    macro_f1s.append(f1_ma)
 \end{lstlisting}
 
 \noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-        zero_division=0,
-    )
-    micro_f1s.append(f1_mi)
-    macro_f1s.append(f1_ma)
-
+\begin{lstlisting}[firstnumber=26]
 best_micro_th = float(thresholds[int(np.argmax(micro_f1s))])
 best_macro_th = float(thresholds[int(np.argmax(macro_f1s))])
 
@@ -1329,7 +1344,7 @@ ax.plot(
 \noindent\emph{앞 블록은 숫자 결과를 그림으로 확인하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=33]
+\begin{lstlisting}[firstnumber=37]
 ax.plot(
     thresholds,
     macro_f1s,
@@ -1351,7 +1366,7 @@ ax.text(
 \noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=49]
+\begin{lstlisting}[firstnumber=53]
 ax.set_xlabel("결정 임계값")
 ax.set_ylabel("F1")
 ax.set_title("임계값 스윕 — micro vs macro F1")
@@ -1373,15 +1388,15 @@ print(f"F1 at default 0.5:        micro={micro_f1s[list(np.round(thresholds,2)).
 \noindent\emph{앞 블록은 숫자 결과를 그림으로 확인하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
 \Needspace{5\baselineskip}
-\begin{lstlisting}[firstnumber=65]
+\begin{lstlisting}[firstnumber=69]
       f"macro={macro_f1s[list(np.round(thresholds,2)).index(0.5)]:.4f}")
 \end{lstlisting}
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-best micro F1 threshold: 0.45  (F1=0.8529)
-best macro F1 threshold: 0.45  (F1=0.8493)
-F1 at default 0.5:        micro=0.8436, macro=0.8468
+best micro F1 threshold: 0.40  (F1=0.8542)
+best macro F1 threshold: 0.55  (F1=0.8508)
+F1 at default 0.5:        micro=0.8500, macro=0.8487
 \end{bookoutputbox}
 \par\vspace{0.9em}
 

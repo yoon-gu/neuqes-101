@@ -258,10 +258,10 @@ GPU:             Tesla T4
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 23:08:28 2026
+Mon Jun 22 03:58:31 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 41C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 45C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -483,8 +483,8 @@ print(f"id2label:             {model.config.id2label}")
 \begin{bookoutputbox}
 Key                                        | Status     | 
 -------------------------------------------+------------+-
-classifier.weight                          | MISSING    | 
 classifier.bias                            | MISSING    | 
+classifier.weight                          | MISSING    | 
 
 - MISSING: those params were newly initialized because missing from the che...
 Parameters:             110,622,727  (110.6 M)
@@ -524,10 +524,10 @@ classifier \inlinecode{Linear(768,\ K)} & 1,538 & \textbf{5,383} \\
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 23:08:49 2026
+Mon Jun 22 03:58:51 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 42C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 46C P8 14W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -619,10 +619,10 @@ print(f"random baseline loss (K=7): {np.log(7):.4f}")
 \begin{bookoutputbox}
 Epoch  Train...  Valid...  Accuracy  Macro...  Macro...  Macro F1  Auc Ovr
 -----  --------  --------  --------  --------  --------  --------  --------
-1      0.434593  0.472919  0.843000  0.824624  0.869729  0.843587  0.977282
-2      0.293521  0.434606  0.856000  0.846536  0.880312  0.861531  0.981056
+1      0.441529  0.465393  0.856000  0.838248  0.881824  0.856753  0.978641
+2      0.286288  0.402871  0.856000  0.849702  0.873584  0.860287  0.982976
 
-Training done -- mean train loss: 0.4844
+Training done -- mean train loss: 0.4626
 random baseline loss (K=7): 1.9459
 \end{bookoutputbox}
 \par\vspace{0.9em}
@@ -636,10 +636,10 @@ random baseline loss (K=7): 1.9459
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 23:09:31 2026
+Mon Jun 22 03:59:33 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 64C P0 65W / 70W | 2195MiB / 15360MiB | 57% Default
+N/A 65C P0 72W / 70W | 2195MiB / 15360MiB | 64% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -668,14 +668,14 @@ for k, v in eval_metrics.items():
 \begin{bookoutputbox}
 Train...  Valid...  Epoch  Accuracy  Macro...  Macro...  Macro F1  Auc Ovr
 --------  --------  -----  --------  --------  --------  --------  --------
-0.293521  0.434606  2      0.856000  0.846536  0.880312  0.861531  0.981056
+0.286288  0.402871  2      0.856000  0.849702  0.873584  0.860287  0.982976
 klue/bert-base KLUE-YNAT -- evaluation:
-             eval_loss: 0.4346
+             eval_loss: 0.4029
          eval_accuracy: 0.8560
-  eval_macro_precision: 0.8465
-     eval_macro_recall: 0.8803
-         eval_macro_f1: 0.8615
-          eval_auc_ovr: 0.9811
+  eval_macro_precision: 0.8497
+     eval_macro_recall: 0.8736
+         eval_macro_f1: 0.8603
+          eval_auc_ovr: 0.9830
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -718,8 +718,8 @@ print(
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 logits shape:    (1000, 7)
-top-1 prob range: [0.2778, 0.9923]
-top-1 prob mean: correct=0.8946, wrong=0.7319
+top-1 prob range: [0.2669, 0.9909]
+top-1 prob mean: correct=0.9033, wrong=0.7097
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -738,17 +738,17 @@ print(classification_report(
 \begin{bookoutputbox}
 precision    recall  f1-score   support
 
-  IT/Science     0.7887    0.9655    0.8682        58
-     Economy     0.8084    0.8599    0.8333       157
-     Society     0.8981    0.8150    0.8545       400
-Life&Culture     0.8025    0.8630    0.8317       146
-       World     0.9082    0.9175    0.9128        97
-      Sports     0.9452    0.9324    0.9388        74
-    Politics     0.7746    0.8088    0.7914        68
+  IT/Science     0.7857    0.9483    0.8594        58
+     Economy     0.8210    0.8471    0.8339       157
+     Society     0.8830    0.8300    0.8557       400
+Life&Culture     0.8129    0.8630    0.8372       146
+       World     0.9053    0.8866    0.8958        97
+      Sports     0.9459    0.9459    0.9459        74
+    Politics     0.7941    0.7941    0.7941        68
 
     accuracy                         0.8560      1000
-   macro avg     0.8465    0.8803    0.8615      1000
-weighted avg     0.8598    0.8560    0.8563      1000
+   macro avg     0.8497    0.8736    0.8603      1000
+weighted avg     0.8582    0.8560    0.8562      1000
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -762,7 +762,12 @@ weighted avg     0.8598    0.8560    0.8563      1000
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
-sns.set_theme(style="white", context="talk")
+sns.set_theme(
+    style="white",
+    context="talk",
+    font="NanumGothic",
+    rc={"axes.unicode_minus": False},
+)
 cm = confusion_matrix(
     labels,
     preds,
@@ -770,6 +775,12 @@ cm = confusion_matrix(
 )
 cm_norm = cm / cm.sum(axis=1, keepdims=True)
 
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=14]
 fig, ax = plt.subplots(figsize=(8.5, 7))
 sns.heatmap(
     cm_norm, annot=cm, fmt="d",
@@ -778,12 +789,6 @@ sns.heatmap(
     yticklabels=LABEL_NAMES_EN,
     cbar_kws={"label": "행 정규화 (recall)"}, ax=ax,
 )
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
-
-\Needspace{7\baselineskip}
-\begin{lstlisting}[firstnumber=17]
 ax.set_xlabel("예측 카테고리")
 ax.set_ylabel("실제 카테고리")
 ax.set_title("혼동 행렬 — KLUE-YNAT (7개 카테고리)")
@@ -832,12 +837,23 @@ K=7 에선 \emph{어느 한 클래스에 압도적 자신} 있는 경우 vs \emp
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
-sns.set_theme(style="whitegrid", context="talk")
+sns.set_theme(
+    style="whitegrid",
+    context="talk",
+    font="NanumGothic",
+    rc={"axes.unicode_minus": False},
+)
 df_top = pd.DataFrame({
     "top1_prob": top1_prob,
     "outcome":   np.where(correct, "맞음", "틀림"),
 })
 
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=12]
 fig, ax = plt.subplots(figsize=(9, 5))
 sns.kdeplot(
     data=df_top, x="top1_prob", hue="outcome",
@@ -848,18 +864,18 @@ sns.kdeplot(
 ax.axvline(1/7, color="black", lw=1.0, ls=":", alpha=0.5)
 ax.text(
     1/7,
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=17]
     ax.get_ylim()[1]*0.95,
     "  균등분포 = 1/K",
     va="top",
     fontsize=10,
     alpha=0.6,
 )
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{7\baselineskip}
+\begin{lstlisting}[firstnumber=28]
 ax.set_title("top-1 확률 — 정답 여부별 분포 (K=7)")
 ax.set_xlabel("top-1 예측 확률  max_k P(y=k)")
 ax.set_ylabel("밀도")
@@ -952,21 +968,21 @@ for label_str, idx in samples:
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 ==============================================================================
-sample #634  (most confident overall)
+sample #131  (most confident overall)
 ==============================================================================
-text:        프로농구 FA 최진수·조성민 소속팀과 재계약…문태종 결렬...
-true label:  5  (스포츠)
-prediction:  5  (스포츠)  match: OK
-top-1 prob:  0.9923
+text:        U+7F8E 시리아 북동부에 다국적 감시군 추진…미군 400명 잔류
+true label:  4  (세계)
+prediction:  4  (세계)  match: OK
+top-1 prob:  0.9909
 top-3 distribution:
-       스포츠: 0.9923
-        경제: 0.0018
-        세계: 0.0017
+        세계: 0.9909
+        정치: 0.0024
+      IT과학: 0.0014
 
 ==============================================================================
-sample #253  (most uncertain (~2/K))
+sample #929  (most uncertain (~2/K))
 ==============================================================================
-text:        즉석조리 배달 서비스 셰플리 서울 강북 지역에 오픈
+text:        수능 작년보다 쉬워…1등급 컷 국어·수학가 92점·수학나 88점
 ...
 \end{bookoutputbox}
 \par\vspace{0.9em}

@@ -285,10 +285,10 @@ GPU:             Tesla T4
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 22:53:13 2026
+Mon Jun 22 03:42:33 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 47C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 49C P8 14W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -442,9 +442,9 @@ print(
 Key                     | Status     | 
 ------------------------+------------+-
 pre_classifier.weight   | MISSING    | 
-classifier.bias         | MISSING    | 
-classifier.weight       | MISSING    | 
 pre_classifier.bias     | MISSING    | 
+classifier.weight       | MISSING    | 
+classifier.bias         | MISSING    | 
 
 - MISSING: those params were newly initialized because missing from the che...
 Parameters:              66,954,241  (67.0 M)
@@ -463,10 +463,10 @@ problem_type:         multi_label_classification
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 22:53:41 2026
+Mon Jun 22 03:42:58 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 49C P8 16W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 49C P8 14W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -553,10 +553,10 @@ print(
 \begin{bookoutputbox}
 Epoch  Train...  Valid...  Accuracy  Preci...  Recall    F1        Auc
 -----  --------  --------  --------  --------  --------  --------  --------
-1      0.242365  0.260320  0.907960  0.883721  0.921833  0.902375  0.966074
-2      0.165380  0.275755  0.902985  0.901370  0.886792  0.894022  0.967761
+1      0.244964  0.263394  0.905473  0.885117  0.913747  0.899204  0.966201
+2      0.159652  0.275900  0.898010  0.898072  0.878706  0.888283  0.967991
 
-Training done -- mean train loss: 0.2599
+Training done -- mean train loss: 0.2617
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -569,10 +569,10 @@ Training done -- mean train loss: 0.2599
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 22:54:15 2026
+Mon Jun 22 03:43:30 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 65C P0 37W / 70W | 1579MiB / 15360MiB | 76% Default
+N/A 64C P0 70W / 70W | 1579MiB / 15360MiB | 77% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -601,14 +601,14 @@ for k, v in eval_metrics.items():
 \begin{bookoutputbox}
 Train...  Valid...  Epoch  Accuracy  Preci...  Recall    F1        Auc
 --------  --------  -----  --------  --------  --------  --------  --------
-0.165380  0.275755  2      0.902985  0.901370  0.886792  0.894022  0.967761
+0.159652  0.275900  2      0.898010  0.898072  0.878706  0.888283  0.967991
 BERT method A evaluation:
-             eval_loss: 0.2758
-         eval_accuracy: 0.9030
-        eval_precision: 0.9014
-           eval_recall: 0.8868
-               eval_f1: 0.8940
-              eval_auc: 0.9678
+             eval_loss: 0.2759
+         eval_accuracy: 0.8980
+        eval_precision: 0.8981
+           eval_recall: 0.8787
+               eval_f1: 0.8883
+              eval_auc: 0.9680
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -654,17 +654,17 @@ print(pd.DataFrame({
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Logit range: [-4.44, 4.35]
-Prob range:  [0.0117, 0.9872]
-Positive prediction rate (prob >= 0.5): 45.4%
+Logit range: [-4.41, 4.26]
+Prob range:  [0.0120, 0.9861]
+Positive prediction rate (prob >= 0.5): 45.1%
 
 First 5 samples:
  label  logit   prob  pred
-     1   3.89 0.9800     1
-     0  -2.91 0.0515     0
-     1   4.21 0.9853     1
-     1   3.83 0.9787     1
-     1   4.27 0.9862     1
+     1   3.70 0.9758     1
+     0  -3.38 0.0331     0
+     1   4.18 0.9849     1
+     1   3.87 0.9796     1
+     1   4.21 0.9854     1
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -690,11 +690,22 @@ First 5 samples:
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
-sns.set_theme(style="whitegrid", context="talk")
+sns.set_theme(
+    style="whitegrid",
+    context="talk",
+    font="NanumGothic",
+    rc={"axes.unicode_minus": False},
+)
 
 df = pd.DataFrame({"prob": probs, "logit": logits, "label": labels})
 PAL = {0: "#5B8DEF", 1: "#F47272"}
 
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=11]
 fig, ax = plt.subplots(figsize=(9, 5))
 sns.kdeplot(
     data=df, x="prob", hue="label",
@@ -706,12 +717,6 @@ ax.set_title("방식 A — 실제 라벨별 확률 분포")
 ax.set_xlabel("예측 확률  P(y=1)")
 ax.set_ylabel("밀도")
 plt.tight_layout()
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}[firstnumber=17]
 plt.show()
 \end{lstlisting}
 
@@ -793,12 +798,12 @@ print(classification_report(
 \begin{bookoutputbox}
 precision    recall  f1-score   support
 
-    negative     0.9043    0.9169    0.9106       433
-    positive     0.9014    0.8868    0.8940       371
+    negative     0.8980    0.9145    0.9062       433
+    positive     0.8981    0.8787    0.8883       371
 
-    accuracy                         0.9030       804
-   macro avg     0.9028    0.9018    0.9023       804
-weighted avg     0.9030    0.9030    0.9029       804
+    accuracy                         0.8980       804
+   macro avg     0.8980    0.8966    0.8972       804
+weighted avg     0.8980    0.8980    0.8979       804
 \end{bookoutputbox}
 \par\vspace{0.9em}
 

@@ -275,10 +275,10 @@ GPU:             Tesla T4
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 22:58:13 2026
+Mon Jun 22 03:47:31 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 42C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 54C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -436,9 +436,9 @@ print(f"id2label:             {model.config.id2label}")
 \begin{bookoutputbox}
 Key                     | Status     | 
 ------------------------+------------+-
-classifier.bias         | MISSING    | 
-pre_classifier.weight   | MISSING    | 
 pre_classifier.bias     | MISSING    | 
+pre_classifier.weight   | MISSING    | 
+classifier.bias         | MISSING    | 
 classifier.weight       | MISSING    | 
 
 - MISSING: those params were newly initialized because missing from the che...
@@ -481,10 +481,10 @@ classifier (\texttt{Linear(768\$\textbackslash{}to\$K)}) & 1,538 & \textbf{3,845
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 22:58:40 2026
+Mon Jun 22 03:47:57 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 43C P8 14W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 55C P8 15W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -586,10 +586,10 @@ print(f"random baseline loss (K=5): {np.log(5):.4f}")
 \begin{bookoutputbox}
 Epoch  Train...  Valid...  Accuracy  Macro...  Macro...  Macro F1  Auc Ovr
 -----  --------  --------  --------  --------  --------  --------  --------
-1      1.099177  1.025679  0.560000  0.561094  0.561534  0.555512  0.861858
-2      0.901435  1.000385  0.576000  0.574240  0.577709  0.575556  0.865284
+1      1.113960  1.034595  0.550000  0.555570  0.550105  0.547013  0.862029
+2      0.921884  1.000020  0.558000  0.555456  0.559534  0.556056  0.865652
 
-Training done -- mean train loss: 1.0706
+Training done -- mean train loss: 1.0802
 random baseline loss (K=5): 1.6094
 \end{bookoutputbox}
 \par\vspace{0.9em}
@@ -603,10 +603,10 @@ random baseline loss (K=5): 1.6094
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 22:59:19 2026
+Mon Jun 22 03:48:37 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 63C P0 62W / 70W | 1577MiB / 15360MiB | 73% Default
+N/A 75C P0 64W / 70W | 1577MiB / 15360MiB | 73% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -635,14 +635,14 @@ for k, v in eval_metrics.items():
 \begin{bookoutputbox}
 Train...  Valid...  Epoch  Accuracy  Macro...  Macro...  Macro F1  Auc Ovr
 --------  --------  -----  --------  --------  --------  --------  --------
-0.901435  1.000385  2      0.576000  0.574240  0.577709  0.575556  0.865284
+0.921884  1.000020  2      0.558000  0.555456  0.559534  0.556056  0.865652
 BERT 5-class evaluation:
-               eval_loss: 1.0004
-           eval_accuracy: 0.5760
-    eval_macro_precision: 0.5742
-       eval_macro_recall: 0.5777
-           eval_macro_f1: 0.5756
-            eval_auc_ovr: 0.8653
+               eval_loss: 1.0000
+           eval_accuracy: 0.5580
+    eval_macro_precision: 0.5555
+       eval_macro_recall: 0.5595
+           eval_macro_f1: 0.5561
+            eval_auc_ovr: 0.8657
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -696,16 +696,16 @@ print(pd.DataFrame({
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 logits shape: (1000, 5)
-top-1 prob range: [0.2292, 0.8844]
-top-1 prob mean: correct=0.6315, wrong=0.5559
+top-1 prob range: [0.2245, 0.8730]
+top-1 prob mean: correct=0.6279, wrong=0.5414
 
 First 5 samples:
  label (star-1)  pred (star-1)  top-1 prob  correct?
-              2              4      0.5499     False
-              4              3      0.4615     False
-              1              0      0.7870     False
-              4              3      0.5301     False
-              3              3      0.6147      True
+              2              4      0.4724     False
+              4              3      0.4351     False
+              1              0      0.7647     False
+              4              4      0.4687      True
+              3              3      0.5864      True
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -731,7 +731,12 @@ First 5 samples:
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
-sns.set_theme(style="white", context="talk")
+sns.set_theme(
+    style="white",
+    context="talk",
+    font="NanumGothic",
+    rc={"axes.unicode_minus": False},
+)
 
 cm = confusion_matrix(
     labels,
@@ -746,7 +751,7 @@ cm_norm = cm / cm.sum(axis=1, keepdims=True)
 \noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=11]
+\begin{lstlisting}[firstnumber=16]
 fig, ax = plt.subplots(figsize=(7, 6))
 sns.heatmap(
     cm_norm, annot=cm, fmt="d",
@@ -863,15 +868,15 @@ print(classification_report(
 \begin{bookoutputbox}
 precision    recall  f1-score   support
 
-          1     0.6766    0.7227    0.6989       220
-          2     0.5130    0.4648    0.4877       213
-          3     0.5408    0.5408    0.5408       196
-          4     0.4976    0.4976    0.4976       205
-          5     0.6433    0.6627    0.6528       166
+          1     0.6520    0.7409    0.6936       220
+          2     0.5056    0.4225    0.4604       213
+          3     0.5134    0.4898    0.5013       196
+          4     0.4651    0.4878    0.4762       205
+          5     0.6412    0.6566    0.6488       166
 
-    accuracy                         0.5760      1000
-   macro avg     0.5742    0.5777    0.5756      1000
-weighted avg     0.5729    0.5760    0.5740      1000
+    accuracy                         0.5580      1000
+   macro avg     0.5555    0.5595    0.5561      1000
+weighted avg     0.5535    0.5580    0.5542      1000
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -991,11 +996,11 @@ print(cmp.round(4).to_string(index=False))
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 metric  sklearn (TF-IDF)   BERT  BERT - sklearn
-       accuracy            0.5420 0.5760          0.0340
-macro_precision            0.5377 0.5742          0.0365
-   macro_recall            0.5410 0.5777          0.0367
-       macro_f1            0.5380 0.5756          0.0376
-        auc_ovr            0.8420 0.8653          0.0233
+       accuracy            0.5420 0.5580          0.0160
+macro_precision            0.5377 0.5555          0.0177
+   macro_recall            0.5410 0.5595          0.0185
+       macro_f1            0.5380 0.5561          0.0181
+        auc_ovr            0.8420 0.8657          0.0236
 \end{bookoutputbox}
 \par\vspace{0.9em}
 

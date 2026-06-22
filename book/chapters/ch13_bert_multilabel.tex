@@ -289,10 +289,10 @@ GPU:             Tesla T4
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 23:00:37 2026
+Mon Jun 22 03:49:55 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 37C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 46C P8 11W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -564,8 +564,8 @@ print(f"id2label:             {model.config.id2label}")
 Key                     | Status     | 
 ------------------------+------------+-
 classifier.weight       | MISSING    | 
-pre_classifier.bias     | MISSING    | 
 classifier.bias         | MISSING    | 
+pre_classifier.bias     | MISSING    | 
 pre_classifier.weight   | MISSING    | 
 
 - MISSING: those params were newly initialized because missing from the che...
@@ -590,10 +590,10 @@ id2label: {0: 'food', 1: 'service', 2: 'price', 3: 'ambiance', 4: 'location'}
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 23:01:06 2026
+Mon Jun 22 03:50:22 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 38C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 47C P8 14W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -696,10 +696,10 @@ print(
 \begin{bookoutputbox}
 Epoch Train... Valid... Hammi... Micro F1 Micro... Micro... Macro F1 Macro....
 ----- -------- -------- -------- -------- -------- -------- -------- ------...
-1 0.388281 0.367738 0.154400 0.736519 0.893952 0.626233 0.587770 0.918140 0...
-2 0.295320 0.306529 0.112400 0.821926 0.905094 0.752757 0.772646 0.907819 0...
+1 0.391352 0.375564 0.158200 0.730494 0.884488 0.622171 0.579077 0.712338 0...
+2 0.313462 0.320437 0.124600 0.797662 0.905605 0.712710 0.723947 0.915523 0...
 
-Training done -- mean train loss: 0.4035
+Training done -- mean train loss: 0.4126
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -712,10 +712,10 @@ Training done -- mean train loss: 0.4035
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 23:01:44 2026
+Mon Jun 22 03:51:02 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 58C P0 55W / 70W | 1577MiB / 15360MiB | 74% Default
+N/A 63C P0 34W / 70W | 1577MiB / 15360MiB | 72% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -744,20 +744,20 @@ for k, v in eval_metrics.items():
 \begin{bookoutputbox}
 Train... Valid... Epoch Hammi... Micro F1 Micro... Micro... Macro F1 Macro....
 -------- -------- ----- -------- -------- -------- -------- -------- ------...
-0.295320 0.306529 2 0.112400 0.821926 0.905094 0.752757 0.772646 0.907819 0...
+0.313462 0.320437 2 0.124600 0.797662 0.905605 0.712710 0.723947 0.915523 0...
 BERT multi-label evaluation:
-               eval_loss: 0.3065
-       eval_hamming_loss: 0.1124
-           eval_micro_f1: 0.8219
-    eval_micro_precision: 0.9051
-       eval_micro_recall: 0.7528
-           eval_macro_f1: 0.7726
-    eval_macro_precision: 0.9078
-       eval_macro_recall: 0.6914
-          eval_macro_auc: 0.9101
-            eval_runtime: 0.9147
-  eval_samples_per_second: 1093.3090
-   eval_steps_per_second: 34.9860
+               eval_loss: 0.3204
+       eval_hamming_loss: 0.1246
+           eval_micro_f1: 0.7977
+    eval_micro_precision: 0.9056
+       eval_micro_recall: 0.7127
+           eval_macro_f1: 0.7239
+    eval_macro_precision: 0.9155
+       eval_macro_recall: 0.6447
+          eval_macro_auc: 0.8994
+            eval_runtime: 0.9157
+  eval_samples_per_second: 1092.1120
+   eval_steps_per_second: 34.9480
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -801,11 +801,11 @@ for k, a in enumerate(ASPECTS):
 \begin{bookoutputbox}
 logits shape: (1000, 5)
 prob ranges per label:
-       food: [0.0259, 0.9904]  true rate=55.2%, pred rate=55.6%
-    service: [0.0554, 0.9820]  true rate=49.7%, pred rate=46.7%
-      price: [0.0777, 0.8598]  true rate=30.4%, pred rate=16.0%
-   ambiance: [0.0282, 0.9313]  true rate=16.8%, pred rate=9.6%
-   location: [0.0350, 0.9240]  true rate=20.2%, pred rate=15.4%
+       food: [0.0280, 0.9871]  true rate=55.2%, pred rate=56.5%
+    service: [0.0412, 0.9794]  true rate=49.7%, pred rate=46.5%
+      price: [0.0873, 0.7026]  true rate=30.4%, pred rate=7.9%
+   ambiance: [0.0253, 0.8920]  true rate=16.8%, pred rate=8.7%
+   location: [0.0310, 0.9285]  true rate=20.2%, pred rate=16.0%
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -825,16 +825,16 @@ print(classification_report(
 \begin{bookoutputbox}
 precision    recall  f1-score   support
 
-        food     0.9227    0.9293    0.9260       552
-     service     0.8865    0.8330    0.8589       497
-       price     0.8625    0.4539    0.5948       304
-    ambiance     0.9583    0.5476    0.6970       168
-    location     0.9091    0.6931    0.7865       202
+        food     0.9097    0.9312    0.9203       552
+     service     0.8839    0.8270    0.8545       497
+       price     0.8987    0.2336    0.3708       304
+    ambiance     0.9540    0.4940    0.6510       168
+    location     0.9313    0.7376    0.8232       202
 
-   micro avg     0.9051    0.7528    0.8219      1723
-   macro avg     0.9078    0.6914    0.7726      1723
-weighted avg     0.9035    0.7528    0.8095      1723
- samples avg     0.7584    0.6707    0.6917      1723
+   micro avg     0.9056    0.7127    0.7977      1723
+   macro avg     0.9155    0.6447    0.7239      1723
+weighted avg     0.9072    0.7127    0.7667      1723
+ samples avg     0.7343    0.6316    0.6586      1723
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -905,13 +905,13 @@ sample #29  (many active labels)
 text (truncated): It's hard to complain about this place given the price I...
 
     aspect    true      prob    pred (>=0.5)  match
-       food       1    0.3318               0    X
-    service       1    0.5502               1    OK
-      price       1    0.7993               1    OK
-   ambiance       1    0.2925               0    X
-   location       1    0.5647               1    OK
+       food       1    0.2910               0    X
+    service       1    0.3436               0    X
+      price       1    0.5005               1    OK
+   ambiance       1    0.3828               0    X
+   location       1    0.8549               1    OK
 
-  predicted: ['service', 'price', 'location']
+  predicted: ['price', 'location']
   true:      ['food', 'service', 'price', 'ambiance', 'location']
 
 ==============================================================================
@@ -960,7 +960,12 @@ text (truncated): It's hard to complain about this place given the price I...
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
-sns.set_theme(style="whitegrid", context="talk")
+sns.set_theme(
+    style="whitegrid",
+    context="talk",
+    font="NanumGothic",
+    rc={"axes.unicode_minus": False},
+)
 
 records = []
 for k, a in enumerate(ASPECTS):
@@ -968,22 +973,28 @@ for k, a in enumerate(ASPECTS):
         records.append({"aspect": a, "prob": probs[i, k], "label": int(labels[i, k])})
 df_long = pd.DataFrame(records)
 
-g = sns.FacetGrid(
-    df_long, col="aspect", col_wrap=3, height=3.2, aspect=1.4,
-    sharex=True, sharey=False,
-)
-g.map_dataframe(
 \end{lstlisting}
 
 \noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=14]
+g = sns.FacetGrid(
+    df_long, col="aspect", col_wrap=3, height=3.2, aspect=1.4,
+    sharex=True, sharey=False,
+)
+g.map_dataframe(
     sns.kdeplot, x="prob", hue="label",
     fill=True, common_norm=False, alpha=0.5,
     palette={0: "#5B8DEF", 1: "#F47272"}, clip=(0, 1),
 )
 for ax in g.axes.flat:
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=24]
     ax.axvline(
         0.5,
         color="black",
@@ -993,12 +1004,6 @@ for ax in g.axes.flat:
     )
     ax.set_xlabel("sigmoid 확률")
 g.add_legend(title="label")
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{8\baselineskip}
-\begin{lstlisting}[firstnumber=28]
 g.fig.suptitle(
     "라벨별 sigmoid 확률 분포 (실제 라벨 기준)",
     y=1.03,
@@ -1226,14 +1231,14 @@ print(cmp.round(4).to_string(index=False))
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 metric  sklearn (OvR)  BERT (this chapter)  BERT - sklearn
-   hamming_loss         0.1426               0.1124         -0.0302
-       micro_f1         0.7634               0.8219          0.0586
-micro_precision         0.8915               0.9051          0.0136
-   micro_recall         0.6674               0.7528          0.0853
-       macro_f1         0.6141               0.7726          0.1586
-macro_precision         0.9036               0.9078          0.0042
-   macro_recall         0.5307               0.6914          0.1607
-      macro_auc         0.9387               0.9101         -0.0286
+   hamming_loss         0.1426               0.1246         -0.0180
+       micro_f1         0.7634               0.7977          0.0343
+micro_precision         0.8915               0.9056          0.0141
+   micro_recall         0.6674               0.7127          0.0453
+       macro_f1         0.6141               0.7239          0.1099
+macro_precision         0.9036               0.9155          0.0119
+   macro_recall         0.5307               0.6447          0.1140
+      macro_auc         0.9387               0.8994         -0.0393
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1313,11 +1318,11 @@ plt.show()
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 aspect  sklearn F1  BERT F1  BERT - sklearn
-    food      0.9057   0.9260          0.0203
- service      0.8833   0.8589         -0.0244
-   price      0.5271   0.5948          0.0678
-ambiance      0.3333   0.6970          0.3636
-location      0.4211   0.7865          0.3655
+    food      0.9057   0.9203          0.0146
+ service      0.8833   0.8545         -0.0288
+   price      0.5271   0.3708         -0.1563
+ambiance      0.3333   0.6510          0.3176
+location      0.4211   0.8232          0.4022
 \end{bookoutputbox}
 \par\vspace{0.9em}
 

@@ -259,10 +259,10 @@ GPU:             Tesla T4
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 22:55:24 2026
+Mon Jun 22 03:44:42 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 44C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 43C P8 11W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -409,10 +409,10 @@ print(f"id2label:             {model.config.id2label}")
 \begin{bookoutputbox}
 Key                     | Status     | 
 ------------------------+------------+-
-pre_classifier.weight   | MISSING    | 
-pre_classifier.bias     | MISSING    | 
-classifier.weight       | MISSING    | 
 classifier.bias         | MISSING    | 
+pre_classifier.bias     | MISSING    | 
+pre_classifier.weight   | MISSING    | 
+classifier.weight       | MISSING    | 
 
 - MISSING: those params were newly initialized because missing from the che...
 Parameters:              66,955,010  (67.0 M)
@@ -454,10 +454,10 @@ classifier (\texttt{Linear(768\$\textbackslash{}to\$K)}) & \textbf{769} (=768+1)
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 22:55:52 2026
+Mon Jun 22 03:45:15 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 45C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 43C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -547,10 +547,10 @@ print(
 \begin{bookoutputbox}
 Epoch  Train...  Valid...  Accuracy  Preci...  Recall    F1        Auc
 -----  --------  --------  --------  --------  --------  --------  --------
-1      0.236501  0.249757  0.899254  0.883598  0.900270  0.891856  0.968274
-2      0.157596  0.277606  0.902985  0.894879  0.894879  0.894879  0.969149
+1      0.234228  0.246899  0.902985  0.886544  0.905660  0.896000  0.968299
+2      0.153909  0.265578  0.910448  0.902965  0.902965  0.902965  0.968875
 
-Training done -- mean train loss: 0.2545
+Training done -- mean train loss: 0.2582
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -563,10 +563,10 @@ Training done -- mean train loss: 0.2545
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 22:56:24 2026
+Mon Jun 22 03:45:47 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 61C P0 66W / 70W | 1579MiB / 15360MiB | 63% Default
+N/A 57C P0 65W / 70W | 1579MiB / 15360MiB | 56% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -595,14 +595,14 @@ for k, v in eval_metrics.items():
 \begin{bookoutputbox}
 Train...  Valid...  Epoch  Accuracy  Preci...  Recall    F1        Auc
 --------  --------  -----  --------  --------  --------  --------  --------
-0.157596  0.277606  2      0.902985  0.894879  0.894879  0.894879  0.969149
+0.153909  0.265578  2      0.910448  0.902965  0.902965  0.902965  0.968875
 BERT method B evaluation:
-             eval_loss: 0.2776
-         eval_accuracy: 0.9030
-        eval_precision: 0.8949
-           eval_recall: 0.8949
-               eval_f1: 0.8949
-              eval_auc: 0.9691
+             eval_loss: 0.2656
+         eval_accuracy: 0.9104
+        eval_precision: 0.9030
+           eval_recall: 0.9030
+               eval_f1: 0.9030
+              eval_auc: 0.9689
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -663,17 +663,17 @@ print(pd.DataFrame({
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 logits2 (raw)  shape: (804, 2)
-logit z = z1-z0 range: [-4.97, 5.08]
-Prob range:            [0.0069, 0.9938]
+logit z = z1-z0 range: [-5.10, 4.88]
+Prob range:            [0.0061, 0.9925]
 Positive prediction rate (prob >= 0.5): 46.1%
 
 First 5 samples:
  label    z0    z1  z=z1-z0  prob_B  pred
-     1 -2.07  2.05     4.12  0.9841     1
-     0  1.50 -1.59    -3.09  0.0436     0
-     1 -2.50  2.36     4.86  0.9923     1
-     1 -2.10  2.06     4.16  0.9846     1
-     1 -2.49  2.41     4.90  0.9926     1
+     1 -1.81  2.26     4.08  0.9833     1
+     0  1.47 -1.55    -3.02  0.0466     0
+     1 -2.05  2.60     4.65  0.9905     1
+     1 -1.69  2.29     3.99  0.9818     1
+     1 -2.13  2.64     4.77  0.9916     1
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -687,11 +687,22 @@ First 5 samples:
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
-sns.set_theme(style="whitegrid", context="talk")
+sns.set_theme(
+    style="whitegrid",
+    context="talk",
+    font="NanumGothic",
+    rc={"axes.unicode_minus": False},
+)
 
 df = pd.DataFrame({"prob": probs, "logit": logits, "label": labels})
 PAL = {0: "#5B8DEF", 1: "#F47272"}
 
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=11]
 fig, ax = plt.subplots(figsize=(9, 5))
 sns.kdeplot(
     data=df, x="prob", hue="label",
@@ -703,12 +714,6 @@ ax.set_title("방식 B — 실제 라벨별 확률 분포")
 ax.set_xlabel("예측 확률  P(y=1) = softmax(logits)[1]")
 ax.set_ylabel("밀도")
 plt.tight_layout()
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}[firstnumber=17]
 plt.show()
 \end{lstlisting}
 
@@ -769,12 +774,12 @@ print(classification_report(
 \begin{bookoutputbox}
 precision    recall  f1-score   support
 
-    negative     0.9099    0.9099    0.9099       433
-    positive     0.8949    0.8949    0.8949       371
+    negative     0.9169    0.9169    0.9169       433
+    positive     0.9030    0.9030    0.9030       371
 
-    accuracy                         0.9030       804
-   macro avg     0.9024    0.9024    0.9024       804
-weighted avg     0.9030    0.9030    0.9030       804
+    accuracy                         0.9104       804
+   macro avg     0.9099    0.9099    0.9099       804
+weighted avg     0.9104    0.9104    0.9104       804
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -889,10 +894,10 @@ print(
 \begin{bookoutputbox}
 Key                     | Status     | 
 ------------------------+------------+-
-pre_classifier.weight   | MISSING    | 
-pre_classifier.bias     | MISSING    | 
-classifier.weight       | MISSING    | 
 classifier.bias         | MISSING    | 
+pre_classifier.bias     | MISSING    | 
+pre_classifier.weight   | MISSING    | 
+classifier.weight       | MISSING    | 
 
 - MISSING: those params were newly initialized because missing from the che...
 Method A classifier:    Linear(in_features=768, out_features=1, bias=True)
@@ -1026,12 +1031,12 @@ print(cmp.round(4).to_string(index=False))
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 metric  method A (sigmoid+BCE)  method B (softmax+CE)  |A-B|
-     loss                  0.2811                 0.2776 0.0035
- accuracy                  0.9055                 0.9030 0.0025
-precision                  0.9041                 0.8949 0.0092
-   recall                  0.8895                 0.8949 0.0054
-       f1                  0.8967                 0.8949 0.0019
-      auc                  0.9663                 0.9691 0.0029
+     loss                  0.2811                 0.2656 0.0155
+ accuracy                  0.9055                 0.9104 0.0050
+precision                  0.9041                 0.9030 0.0011
+   recall                  0.8895                 0.9030 0.0135
+       f1                  0.8967                 0.9030 0.0062
+      auc                  0.9663                 0.9689 0.0026
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1085,8 +1090,8 @@ print(f"Mean abs diff |A-B|: {mae:.4f}")
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Pearson corr:        0.9914  (1.0 = perfect equivalence)
-Mean abs diff |A-B|: 0.0215
+Pearson corr:        0.9883  (1.0 = perfect equivalence)
+Mean abs diff |A-B|: 0.0239
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1141,13 +1146,13 @@ print(f"  both wrong:             {both_wrong:.1%}")
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Agreement rate (A vs B predictions): 98.3%
+Agreement rate (A vs B predictions): 97.8%
 
 Prediction quadrants:
-  both correct:           89.6%
-  only A correct (B wrong): 1.0%
-  only B correct (A wrong): 0.7%
-  both wrong:             8.7%
+  both correct:           89.7%
+  only A correct (B wrong): 0.9%
+  only B correct (A wrong): 1.4%
+  both wrong:             8.1%
 \end{bookoutputbox}
 \par\vspace{0.9em}
 

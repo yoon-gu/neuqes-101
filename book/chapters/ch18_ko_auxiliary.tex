@@ -342,10 +342,10 @@ GPU:             Tesla T4
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 23:13:11 2026
+Mon Jun 22 04:03:06 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 36C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 37C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -858,10 +858,10 @@ Aux  head: Linear(in_features=768, out_features=1, bias=True)
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 23:13:34 2026
+Mon Jun 22 04:03:27 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 37C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 39C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1011,10 +1011,10 @@ print(
 \begin{bookoutputbox}
 Epoch Train... Valid... Hammi... Micro F1 Micro... Micro... Macro F1 Macro....
 ----- -------- -------- -------- -------- -------- -------- -------- ------...
-1 0.216916 0.241792 0.088571 0.819872 0.837886 0.802617 0.818150 0.822768 0...
-2 0.159218 0.209488 0.073857 0.851309 0.860966 0.841866 0.848430 0.841638 0...
+1 0.216313 0.235410 0.084571 0.828007 0.846200 0.810580 0.823780 0.829987 0...
+2 0.156416 0.205729 0.071429 0.856157 0.866123 0.846416 0.850732 0.845927 0...
 
-With-aux training done -- mean train loss: 0.2457
+With-aux training done -- mean train loss: 0.2448
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1031,10 +1031,10 @@ With-aux training done -- mean train loss: 0.2457
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 23:14:17 2026
+Mon Jun 22 04:04:11 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 60C P0 76W / 70W | 2189MiB / 15360MiB | 50% Default
+N/A 62C P0 78W / 70W | 2189MiB / 15360MiB | 54% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1063,20 +1063,20 @@ for k, v in eval_metrics_aux.items():
 \begin{bookoutputbox}
 Train... Valid... Epoch Hammi... Micro F1 Micro... Micro... Macro F1 Macro....
 -------- -------- ----- -------- -------- -------- -------- -------- ------...
-0.159218 0.209488 2 0.073857 0.851309 0.860966 0.841866 0.848430 0.841638 0...
+0.156416 0.205729 2 0.071429 0.856157 0.866123 0.846416 0.850732 0.845927 0...
 With-aux (lambda=0.1) -- main task metrics:
-               eval_loss: 0.2095
-       eval_hamming_loss: 0.0739
-           eval_micro_f1: 0.8513
-    eval_micro_precision: 0.8610
-       eval_micro_recall: 0.8419
-           eval_macro_f1: 0.8484
-    eval_macro_precision: 0.8416
-       eval_macro_recall: 0.8572
-          eval_macro_auc: 0.9633
-            eval_runtime: 0.6598
-  eval_samples_per_second: 1515.5030
-   eval_steps_per_second: 48.4960
+               eval_loss: 0.2057
+       eval_hamming_loss: 0.0714
+           eval_micro_f1: 0.8562
+    eval_micro_precision: 0.8661
+       eval_micro_recall: 0.8464
+           eval_macro_f1: 0.8507
+    eval_macro_precision: 0.8459
+       eval_macro_recall: 0.8579
+          eval_macro_auc: 0.9643
+            eval_runtime: 0.6873
+  eval_samples_per_second: 1455.0020
+   eval_steps_per_second: 46.5600
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1156,11 +1156,11 @@ print(
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 With-aux (lambda=0.1) -- aux task metrics (n_active regression):
-  RMSE:    0.3942
-  R^2:     0.1528
-  Pearson: 0.5140
+  RMSE:    0.4011
+  R^2:     0.1228
+  Pearson: 0.4766
 
-  Aux pred range: [1.167, 2.881]
+  Aux pred range: [1.029, 2.705]
   Aux true range: [1.0, 2.0]
 \end{bookoutputbox}
 \par\vspace{0.9em}
@@ -1210,18 +1210,18 @@ print(classification_report(
 Per-category report -- with aux (lambda=0.1):
               precision    recall  f1-score   support
 
-  IT/Science     0.7405    0.7698    0.7549       126
-     Economy     0.8355    0.8109    0.8230       238
-     Society     0.9112    0.8099    0.8576       684
-Life&Culture     0.8537    0.8813    0.8673       278
-       World     0.8606    0.8931    0.8765       159
-      Sports     0.8889    0.9573    0.9218       117
-    Politics     0.8012    0.8782    0.8379       156
+  IT/Science     0.7559    0.7619    0.7589       126
+     Economy     0.8604    0.8025    0.8304       238
+     Society     0.9199    0.8231    0.8688       684
+Life&Culture     0.8425    0.8849    0.8632       278
+       World     0.8675    0.9057    0.8862       159
+      Sports     0.8880    0.9487    0.9174       117
+    Politics     0.7874    0.8782    0.8303       156
 
-   micro avg     0.8610    0.8419    0.8513      1758
-   macro avg     0.8416    0.8572    0.8484      1758
-weighted avg     0.8638    0.8419    0.8513      1758
- samples avg     0.8835    0.8595    0.8527      1758
+   micro avg     0.8661    0.8464    0.8562      1758
+   macro avg     0.8459    0.8579    0.8507      1758
+weighted avg     0.8692    0.8464    0.8562      1758
+ samples avg     0.8875    0.8635    0.8561      1758
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1326,9 +1326,9 @@ No-aux (lambda=0) baseline -- main task metrics:
     eval_macro_precision: 0.8435
        eval_macro_recall: 0.8708
           eval_macro_auc: 0.9653
-            eval_runtime: 0.6920
-  eval_samples_per_second: 1445.0200
-   eval_steps_per_second: 46.2410
+            eval_runtime: 0.7098
+  eval_samples_per_second: 1408.8240
+   eval_steps_per_second: 45.0820
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1372,18 +1372,18 @@ print(cmp.round(4).to_string(index=False))
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 metric  no aux (lambda=0)  with aux (lambda=0.1)  delta (aux - no_aux)
-loss 0.1867 0.2095 0.0228
-hamming_loss 0.0701 0.0739 0.0037
-micro_f1 0.8600 0.8513 -0.0087
-micro_precision 0.8622 0.8610 -0.0012
-micro_recall 0.8578 0.8419 -0.0159
-macro_f1 0.8561 0.8484 -0.0076
-macro_precision 0.8435 0.8416 -0.0018
-macro_recall 0.8708 0.8572 -0.0135
-macro_auc 0.9653 0.9633 -0.0020
-runtime 0.6920 0.6598 -0.0322
-samples_per_second 1445.0200 1515.5030 70.4830
-steps_per_second 46.2410 48.4960 2.2550
+loss 0.1867 0.2057 0.0191
+hamming_loss 0.0701 0.0714 0.0013
+micro_f1 0.8600 0.8562 -0.0038
+micro_precision 0.8622 0.8661 0.0039
+micro_recall 0.8578 0.8464 -0.0114
+macro_f1 0.8561 0.8507 -0.0053
+macro_precision 0.8435 0.8459 0.0024
+macro_recall 0.8708 0.8579 -0.0129
+macro_auc 0.9653 0.9643 -0.0010
+runtime 0.7098 0.6873 -0.0225
+samples_per_second 1408.8240 1455.0020 46.1780
+steps_per_second 45.0820 46.5600 1.4780
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1437,16 +1437,21 @@ label_cmp = pd.DataFrame({
 })
 print(label_cmp.round(4).to_string(index=False))
 
-sns.set_theme(style="whitegrid", context="talk")
+sns.set_theme(
+    style="whitegrid",
+    context="talk",
+    font="NanumGothic",
+    rc={"axes.unicode_minus": False},
+)
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=27]
 fig, ax = plt.subplots(figsize=(11, 5))
 x_pos = np.arange(K)
 width = 0.38
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 숫자 결과를 그림으로 확인하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=25]
 ax.bar(
     x_pos - width/2,
     f1_no_aux,
@@ -1454,6 +1459,12 @@ ax.bar(
     label="aux 없음 (lambda=0)",
     color="#5B8DEF",
 )
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 숫자 결과를 그림으로 확인하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=37]
 ax.bar(
     x_pos + width/2,
     f1_aux,
@@ -1462,12 +1473,6 @@ ax.bar(
     color="#F47272",
 )
 ax.set_xticks(x_pos)
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=40]
 ax.set_xticklabels(
     LABEL_NAMES_EN,
     rotation=20,
@@ -1476,6 +1481,12 @@ ax.set_xticklabels(
 ax.set_ylim(0, 1)
 ax.set_ylabel("라벨별 F1")
 ax.set_title("카테고리별 F1 — 보조 loss 효과 (한국어 multi-label)")
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
+
+\Needspace{5\baselineskip}
+\begin{lstlisting}[firstnumber=53]
 ax.legend()
 plt.tight_layout()
 plt.show()
@@ -1484,13 +1495,13 @@ plt.show()
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 category  no aux F1  with aux F1  delta (aux - no_aux)
-  IT/Science     0.7739       0.7549               -0.0191
-     Economy     0.8213       0.8230                0.0018
-     Society     0.8736       0.8576               -0.0160
-Life&Culture     0.8646       0.8673                0.0027
-       World     0.8869       0.8765               -0.0103
-      Sports     0.9256       0.9218               -0.0038
-    Politics     0.8466       0.8379               -0.0087
+  IT/Science     0.7739       0.7589               -0.0151
+     Economy     0.8213       0.8304                0.0092
+     Society     0.8736       0.8688               -0.0047
+Life&Culture     0.8646       0.8632               -0.0014
+       World     0.8869       0.8862               -0.0007
+      Sports     0.9256       0.9174               -0.0083
+    Politics     0.8466       0.8303               -0.0163
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
