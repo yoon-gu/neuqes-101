@@ -15,15 +15,11 @@ X_tfidf = tfidf.fit_transform(df["text"])
 print(f"shape: {X_tfidf.shape}")
 ```
 
-**위 코드 읽기** `TfidfVectorizer` 는 `CountVectorizer` 와 같은 방식으로 어휘를 만들되, 횟수에 IDF 가중치를 곱해 흔한 단어의 비중을 낮춥니다. 행렬 모양은 (5000, 10000) 으로 똑같지만 칸에 담기는 값이 횟수에서 TF-IDF 점수로 바뀝니다.
-
 **▶ 실행 결과**
 
 ```text
 shape: (5000, 10000)
 ```
-
-첫 번째 리뷰 한 건을 골라 단순 횟수와 TF-IDF 점수를 나란히 비교합니다. 같은 문서의 `CountVectorizer` 행과 `TfidfVectorizer` 행을 꺼내 TF-IDF 점수가 높은 순으로 상위 10개 단어를 출력합니다. 횟수는 똑같이 1인 단어들이 TF-IDF에서는 점수가 갈린다는 점을 눈여겨봅니다.
 
 ```python
 doc_id = 0
