@@ -71,14 +71,14 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 
 12 & DistilBERT & WordPiece (영어) & Yelp 5클래스 & \inlinecode{Linear(H,\ 5)} & softmax & \inlinecode{CrossEntropyLoss} \\
 15 & klue/bert-base & WordPiece (한국어) & NSMC binary & \inlinecode{Linear(H,\ 2)} & softmax & \inlinecode{CrossEntropyLoss} \\
-\textbf{16 ← 여기} & klue/bert-base & 같음 & \textbf{KLUE-YNAT (뉴스 7분류)} & \textbf{\inlinecode{Linear(H,\ 7)}} & softmax & \inlinecode{CrossEntropyLoss} \\
+\textbf{16 \(\leftarrow\) 여기} & klue/bert-base & 같음 & \textbf{KLUE-YNAT (뉴스 7분류)} & \textbf{\inlinecode{Linear(H,\ 7)}} & softmax & \inlinecode{CrossEntropyLoss} \\
 17 (다음) & klue/bert-base & 같음 & KLUE-YNAT 합성 multi-label & \inlinecode{Linear(H,\ 7)} & sigmoid (per-label) & \inlinecode{BCEWithLogitsLoss} (per-label) \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
-전체 20장 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
+전체 장 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
 
 
 
@@ -91,7 +91,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 축 & \ref{ch:15}장 (한국어 binary) & \ref{ch:16}장 (한국어 multi-class) \\
 \midrule
 
-\textbf{Task} & 이진 분류 (K=2) & \textbf{7-클래스 분류 (K=7)} ← \emph{유일한 변화} \\
+\textbf{Task} & 이진 분류 (K=2) & \textbf{7-클래스 분류 (K=7)} \(\leftarrow\) \emph{유일한 변화} \\
 \inlinecode{num\_labels} & 2 & \textbf{7} \\
 데이터 & NSMC (영화 리뷰) & \textbf{KLUE-YNAT (뉴스 헤드라인)} \\
 라벨 형식 & int 0/1 & \textbf{int 0-6} \\
@@ -103,12 +103,12 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 \end{booktable}
 
 \begin{quote}
-\textbf{변경점 한 가지 원칙} --- Phase 2 안에선 \emph{task 차원} (K=2 → K=7) 만 바뀝니다. 한국어 셋업·hyperparams 는 \ref{ch:15}장과 \emph{완전히 같음}. 새 장의 학습 부담은 \emph{7클래스 평가 metric 의 해석} 에만 집중.
+\textbf{변경점 한 가지 원칙} --- Phase 2 안에선 \emph{task 차원} (K=2 \(\to\) K=7) 만 바뀝니다. 한국어 셋업·hyperparams 는 \ref{ch:15}장과 \emph{완전히 같음}. 새 장의 학습 부담은 \emph{7클래스 평가 metric 의 해석} 에만 집중.
 \end{quote}
 
 \subsection{\texorpdfstring{한국어 환경에서도 multi-class 일반화는 \emph{그대로} 작동}{한국어 환경에서도 multi-class 일반화는 그대로 작동}}
 
-\ref{ch:11}장 → \ref{ch:12}장 (영어 binary → multi-class) 에서 \inlinecode{num\_labels} 를 2 → 5 로만 바꿔도 모든 셋업이 그대로 동작했습니다. \ref{ch:15}장 → \ref{ch:16}장도 정확히 같은 패턴 --- \emph{softmax+CE 의 진짜 강점}: K 가 무엇이든 같은 식으로 일반화됩니다.
+\ref{ch:11}장 \(\to\) \ref{ch:12}장 (영어 binary \(\to\) multi-class) 에서 \inlinecode{num\_labels} 를 2 \(\to\) 5 로만 바꿔도 모든 셋업이 그대로 동작했습니다. \ref{ch:15}장 \(\to\) \ref{ch:16}장도 정확히 같은 패턴 --- \emph{softmax+CE 의 진짜 강점}: K 가 무엇이든 같은 식으로 일반화됩니다.
 
 
 
@@ -131,13 +131,13 @@ K=7 의 random baseline loss = \(\log 7 = 1.946\). 학습 첫 step 에서 loss �
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
-logits & softmax → \(\hat p_5\) & 손실 \\
+logits & softmax \(\to\) \(\hat p_5\) & 손실 \\
 \midrule
 
-모두 0 (균등) & \(1/7 \approx 0.143\) & \textbf{1.946} ← random \\
+모두 0 (균등) & \(1/7 \approx 0.143\) & \textbf{1.946} \(\leftarrow\) random \\
 정답 클래스만 +2 & \(\approx 0.471\) & 0.752 \\
 정답 클래스만 +5 & \(\approx 0.985\) & 0.015 \\
-다른 클래스 +5 (정답 0) & \(\approx 0.005\) & \textbf{5.302} ← 자신 있게 틀림 \\
+다른 클래스 +5 (정답 0) & \(\approx 0.005\) & \textbf{5.302} \(\leftarrow\) 자신 있게 틀림 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -152,12 +152,12 @@ logits & softmax → \(\hat p_5\) & 손실 \\
 \ref{ch:15}장과 \emph{완전히 동일} --- \inlinecode{klue/bert-base} 한국어 WordPiece. 토크나이저는 K 변화에 무관 (라벨 처리는 모델 측 일).
 
 \begin{quote}
-\textbf{Phase 2 안에서는 토크나이저 고정} --- \ref{ch:15}·\ref{ch:16}장·17·18 모두 같은 한국어 WordPiece. Phase 3 (19-23장) 에서 비로소 \emph{직접 학습한 워드레벨 토크나이저} 가 등장.
+\textbf{Phase 2 안에서는 토크나이저 고정} --- \ref{ch:15}·\ref{ch:16}장·17·18 모두 같은 한국어 WordPiece. Phase 3 (\ref{ch:19}--\ref{ch:23}장) 에서 비로소 \emph{직접 학습한 워드레벨 토크나이저} 가 등장.
 \end{quote}
 
 \subsection{헤드라인 토큰화 예시}
 
-NSMC 영화 리뷰는 보통 \emph{짧은 한 줄} (\textasciitilde20 토큰), KLUE-YNAT 뉴스 헤드라인은 \emph{조금 더 정형} 된 한국어 (\textasciitilde25-30 토큰). 같은 한국어지만 \emph{문체가 다른} 두 도메인 --- 도메인 적응이 어떻게 이뤄지는지 확인할 좋은 비교.
+NSMC 영화 리뷰는 보통 \emph{짧은 한 줄} (약 20 토큰), KLUE-YNAT 뉴스 헤드라인도 비슷하게 짧아 \emph{평균 약 16 토큰 (최대 27)}. 같은 한국어지만 \emph{문체가 다른} 두 도메인 --- 도메인 적응이 어떻게 이뤄지는지 확인할 좋은 비교.
 
 
 
@@ -192,14 +192,29 @@ from sklearn.metrics import (
     classification_report, roc_auc_score, confusion_matrix,
 \end{lstlisting}
 
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
+\noindent\emph{앞뒤 블록은 모두 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=17]
 )
 
+import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run(
+        "apt-get -qq -y install fonts-nanum",
+        shell=True,
+    )
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
 plt.rcParams["axes.unicode_minus"] = False
 
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=30]
 print(f"PyTorch:        {torch.__version__}")
 print(f"CUDA available: {torch.cuda.is_available()}")
 if torch.cuda.is_available():
@@ -225,6 +240,9 @@ CUDA available: True
 GPU:             Tesla T4
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \textbf{baseline VRAM}:
 
 
@@ -240,12 +258,14 @@ GPU:             Tesla T4
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Wed Jun 17 21:47:31 2026
+Sun Jun 21 23:08:28 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 45C P8 11W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 41C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \section{데이터 준비}
 
@@ -270,13 +290,13 @@ N/A 45C P8 11W / 70W | 3MiB / 15360MiB | 0% Default
 \end{adjustbox}
 \end{booktable}
 
-\inlinecode{datasets.load\_dataset("klue",\ "ynat")} 로 정상 로드 (parquet 기반).
+\inlinecode{datasets.load\_dataset("klue/klue",\ "ynat")} 로 정상 로드 (parquet 기반).
 
 
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
-ds = load_dataset("klue", "ynat")
+ds = load_dataset("klue/klue", "ynat")
 print(f"splits: {list(ds.keys())}")
 print(f"sizes: {[(k, len(v)) for k, v in ds.items()]}")
 print(
@@ -314,6 +334,30 @@ for ex in ds["train"].select(range(3)):
     )
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+splits: ['train', 'validation']
+sizes: [('train', 45678), ('validation', 9107)]
+label names: ['IT과학', '경제', '사회', '생활문화', '세계', '스포츠', '정치']
+
+Class distribution (train):
+     IT/Science  (label 0):  5235  (11.5%)
+        Economy  (label 1):  6118  (13.4%)
+        Society  (label 2):  5133  (11.2%)
+   Life&Culture  (label 3):  5751  (12.6%)
+          World  (label 4):  8320  (18.2%)
+         Sports  (label 5):  7742  (16.9%)
+       Politics  (label 6):  7379  (16.2%)
+
+first 3 samples:
+label=3 ( Life&Culture) title='유튜브 내달 2일까지 크리에이터 지원 공간 운영'
+  label=3 ( Life&Culture)  title='어버이날 맑다가 흐려져…남부지방 옅은 황사'
+label=2 ( Society) title='내년부터 국가RD 평가 때 논문건수는 반영 않는다'
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 SEED = 42
@@ -343,9 +387,11 @@ Token length (sample 200): mean=15.8, median=16, max=27
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
+
+
 \section{토큰화 --- \ref{ch:15}장 패턴 그대로}
 
-라벨 형식만 binary int → 0-6 int. 한 줄 차이.
+라벨 형식만 binary int \(\to\) 0-6 int. 한 줄 차이.
 
 
 
@@ -391,9 +437,11 @@ First sample label: 3  (int 0-6)
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
+
+
 \section{\texorpdfstring{모델 로드}{모델 로드}}
 
-\ref{ch:15}장 셋업에서 K=2 → K=7 한 줄 변화.
+\ref{ch:15}장 셋업에서 K=2 \(\to\) K=7 한 줄 변화.
 
 
 
@@ -445,6 +493,9 @@ Classifier:           Linear(in_features=768, out_features=7, bias=True)
 id2label: {0: 'IT/Science', 1: 'Economy', 2: 'Society', 3: 'Life&Culture',...
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \textbf{\ref{ch:15}장과의 파라미터 수 비교} --- 7클래스로 늘어났는데도 모델은 \emph{거의 안 무거워짐}:
 
 \begin{booktable}{16장 모델 로드 표}{tab:ch16-05}
@@ -473,12 +524,14 @@ classifier \inlinecode{Linear(768,\ K)} & 1,538 & \textbf{5,383} \\
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Wed Jun 17 21:47:56 2026
+Sun Jun 21 23:08:49 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 44C P8 15W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 42C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \section{학습}
 
@@ -566,13 +619,16 @@ print(f"random baseline loss (K=7): {np.log(7):.4f}")
 \begin{bookoutputbox}
 Epoch  Train...  Valid...  Accuracy  Macro...  Macro...  Macro F1  Auc Ovr
 -----  --------  --------  --------  --------  --------  --------  --------
-1      0.443754  0.466340  0.849000  0.833858  0.873362  0.850291  0.979081
-2      0.297638  0.422089  0.855000  0.849210  0.870505  0.858413  0.982096
+1      0.434593  0.472919  0.843000  0.824624  0.869729  0.843587  0.977282
+2      0.293521  0.434606  0.856000  0.846536  0.880312  0.861531  0.981056
 
-Training done — mean train loss: 0.4690
+Training done -- mean train loss: 0.4844
 random baseline loss (K=7): 1.9459
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{5\baselineskip}
 \begin{lstlisting}
 !nvidia-smi
@@ -580,16 +636,18 @@ random baseline loss (K=7): 1.9459
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Wed Jun 17 21:48:38 2026
+Sun Jun 21 23:09:31 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 61C P0 38W / 70W | 2195MiB / 15360MiB | 61% Default
+N/A 64C P0 65W / 70W | 2195MiB / 15360MiB | 57% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
+
+
 \section{평가}
 
-\ref{ch:12}장의 평가 패턴을 한국어 환경에서 재현. 7클래스라 혼동 행렬이 7×7 --- \emph{어떤 카테고리가 어떤 카테고리와 혼동하는지} 보는 데 핵심.
+\ref{ch:12}장의 평가 패턴을 한국어 환경에서 재현. 7클래스라 혼동 행렬이 7\(\times\)7 --- \emph{어떤 카테고리가 어떤 카테고리와 혼동하는지} 보는 데 핵심.
 
 
 
@@ -602,20 +660,27 @@ for k, v in eval_metrics.items():
         print(f"  {k:>20}: {v:.4f}")
 \end{lstlisting}
 
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{eval\_metrics = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{for k, v in eval\_metrics....}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{4행}의 \inlinecode{if k.startswith("eval\_")...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\end{codeRead}
+
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 Train...  Valid...  Epoch  Accuracy  Macro...  Macro...  Macro F1  Auc Ovr
 --------  --------  -----  --------  --------  --------  --------  --------
-0.297638  0.422089  2      0.855000  0.849210  0.870505  0.858413  0.982096
-klue/bert-base KLUE-YNAT — evaluation:
-             eval_loss: 0.4221
-         eval_accuracy: 0.8550
-  eval_macro_precision: 0.8492
-     eval_macro_recall: 0.8705
-         eval_macro_f1: 0.8584
-          eval_auc_ovr: 0.9821
+0.293521  0.434606  2      0.856000  0.846536  0.880312  0.861531  0.981056
+klue/bert-base KLUE-YNAT -- evaluation:
+             eval_loss: 0.4346
+         eval_accuracy: 0.8560
+  eval_macro_precision: 0.8465
+     eval_macro_recall: 0.8803
+         eval_macro_f1: 0.8615
+          eval_auc_ovr: 0.9811
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 preds_output = trainer.predict(eval_tok)
@@ -646,13 +711,20 @@ print(
 )
 \end{lstlisting}
 
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{preds\_output = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{2행}의 \inlinecode{logits = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{labels = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{exp = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{probs\_full = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{7행}의 \inlinecode{preds = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\end{codeRead}
+
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 logits shape:    (1000, 7)
-top-1 prob range: [0.3380, 0.9917]
-top-1 prob mean: correct=0.9051, wrong=0.7234
+top-1 prob range: [0.2778, 0.9923]
+top-1 prob mean: correct=0.8946, wrong=0.7319
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{7\baselineskip}
 \begin{lstlisting}
 print(classification_report(
@@ -666,19 +738,21 @@ print(classification_report(
 \begin{bookoutputbox}
 precision    recall  f1-score   support
 
-  IT/Science     0.7857    0.9483    0.8594        58
-     Economy     0.7929    0.8535    0.8221       157
-     Society     0.8880    0.8325    0.8594       400
-Life&Culture     0.8212    0.8493    0.8350       146
-       World     0.9062    0.8969    0.9016        97
-      Sports     0.9444    0.9189    0.9315        74
-    Politics     0.8060    0.7941    0.8000        68
+  IT/Science     0.7887    0.9655    0.8682        58
+     Economy     0.8084    0.8599    0.8333       157
+     Society     0.8981    0.8150    0.8545       400
+Life&Culture     0.8025    0.8630    0.8317       146
+       World     0.9082    0.9175    0.9128        97
+      Sports     0.9452    0.9324    0.9388        74
+    Politics     0.7746    0.8088    0.7914        68
 
-    accuracy                         0.8550      1000
-   macro avg     0.8492    0.8705    0.8584      1000
-weighted avg     0.8578    0.8550    0.8553      1000
+    accuracy                         0.8560      1000
+   macro avg     0.8465    0.8803    0.8615      1000
+weighted avg     0.8598    0.8560    0.8563      1000
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \subsection{혼동 행렬 --- 어디서 혼동하는가}
 
@@ -702,7 +776,7 @@ sns.heatmap(
     cmap="Blues", vmin=0, vmax=1,
     xticklabels=LABEL_NAMES_EN,
     yticklabels=LABEL_NAMES_EN,
-    cbar_kws={"label": "row-normalized (recall)"}, ax=ax,
+    cbar_kws={"label": "행 정규화 (recall)"}, ax=ax,
 )
 \end{lstlisting}
 
@@ -710,23 +784,19 @@ sns.heatmap(
 
 \Needspace{7\baselineskip}
 \begin{lstlisting}[firstnumber=17]
-ax.set_xlabel("Predicted category")
-ax.set_ylabel("Actual category")
-ax.set_title("Confusion Matrix — KLUE-YNAT (7 categories)")
+ax.set_xlabel("예측 카테고리")
+ax.set_ylabel("실제 카테고리")
+ax.set_title("혼동 행렬 — KLUE-YNAT (7개 카테고리)")
 plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-<Figure size 850x700 with 2 Axes>
-\end{bookoutputbox}
-\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{KLUE-YNAT 7분류 혼동 행렬}{fig:ch16-confusion-matrix}
+\centering
 \includegraphics[width=0.86\linewidth]{assets/figures/ch16_confusion_matrix.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch16-confusion-matrix}는 한국어 뉴스 헤드라인 7개 카테고리 사이의 혼동 패턴을 보여줍니다. 대각선은 정답이고, 정치와 경제처럼 주제가 가까운 카테고리 사이의 오답은 자연스러운 혼동으로 볼 수 있습니다.
+\textbf{그림 읽기} --- 그림~\ref{fig:ch16-confusion-matrix}에서 다음 내용을 확인합니다: KLUE-YNAT 7분류 혼동 행렬. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
 
 
 
@@ -742,14 +812,14 @@ plt.show()
   \begin{itemize}
   \tightlist
   \item
-    정치 ↔ 경제: 둘 다 정책·법안·국제 이슈 다뤄 \emph{경계가 모호} --- 자연스러운 혼동
+    정치 \(\leftrightarrow\) 경제: 둘 다 정책·법안·국제 이슈 다뤄 \emph{경계가 모호} --- 자연스러운 혼동
   \item
-    생활문화 ↔ 사회: 사회 이슈 vs 일상·문화 보도 --- 헤드라인 한 줄로는 사람도 혼동하는 경계
+    생활문화 \(\leftrightarrow\) 사회: 사회 이슈 vs 일상·문화 보도 --- 헤드라인 한 줄로는 사람도 혼동하는 경계
   \item
-    IT과학 ↔ 경제: 기업·산업 뉴스가 양쪽에 걸침 (예: “삼성전자 4분기 실적 발표”)
+    IT과학 \(\leftrightarrow\) 경제: 기업·산업 뉴스가 양쪽에 걸침 (예: “삼성전자 4분기 실적 발표”)
   \end{itemize}
 \item
-  \textbf{먼 클래스 혼동} (스포츠 ↔ 정치 등) 이 자주 보이면 라벨 노이즈나 학습 부족 신호.
+  \textbf{먼 클래스 혼동} (스포츠 \(\leftrightarrow\) 정치 등) 이 자주 보이면 라벨 노이즈나 학습 부족 신호.
 \end{itemize}
 
 
@@ -765,14 +835,14 @@ K=7 에선 \emph{어느 한 클래스에 압도적 자신} 있는 경우 vs \emp
 sns.set_theme(style="whitegrid", context="talk")
 df_top = pd.DataFrame({
     "top1_prob": top1_prob,
-    "outcome":   np.where(correct, "correct", "wrong"),
+    "outcome":   np.where(correct, "맞음", "틀림"),
 })
 
 fig, ax = plt.subplots(figsize=(9, 5))
 sns.kdeplot(
     data=df_top, x="top1_prob", hue="outcome",
     fill=True, common_norm=False, alpha=0.5,
-    palette={"correct": "#5BD17F", "wrong": "#E55050"},
+    palette={"맞음": "#5BD17F", "틀림": "#E55050"},
     clip=(1/7, 1.0), ax=ax,
 )
 ax.axvline(1/7, color="black", lw=1.0, ls=":", alpha=0.5)
@@ -785,28 +855,24 @@ ax.text(
 \Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=17]
     ax.get_ylim()[1]*0.95,
-    "  uniform = 1/K",
+    "  균등분포 = 1/K",
     va="top",
     fontsize=10,
     alpha=0.6,
 )
-ax.set_title("Top-1 probability — distribution split by correctness (K=7)")
-ax.set_xlabel("top-1 predicted probability  max_k P(y=k)")
-ax.set_ylabel("Density")
+ax.set_title("top-1 확률 — 정답 여부별 분포 (K=7)")
+ax.set_xlabel("top-1 예측 확률  max_k P(y=k)")
+ax.set_ylabel("밀도")
 plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-<Figure size 900x500 with 1 Axes>
-\end{bookoutputbox}
-\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{정답 여부에 따른 KLUE-YNAT 최상위 확률 분포}{fig:ch16-top1-probability}
+\centering
 \includegraphics[width=0.88\linewidth]{assets/figures/ch16_top1_probability.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch16-top1-probability}는 모델이 맞힌 헤드라인과 틀린 헤드라인에서 최상위 softmax 확률이 어떻게 달라지는지 비교합니다. 맞힌 샘플의 확률이 높고 틀린 샘플의 확률이 낮은 쪽에 분포할수록 모델의 자신감이 더 잘 보정되어 있습니다.
+\textbf{그림 읽기} --- 그림~\ref{fig:ch16-top1-probability}에서 다음 내용을 확인합니다: 정답 여부에 따른 KLUE-YNAT 최상위 확률 분포. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
 
 
 
@@ -864,7 +930,7 @@ for label_str, idx in samples:
     )
     print(
         f"prediction:  {preds[idx]}  ({LABEL_NAMES[preds[idx]]})  match: "
-        f"{'yes' if correct[idx] else 'no'}"
+        f"{'OK' if correct[idx] else 'X'}"
     )
     print(f"top-1 prob:  {top1_prob[idx]:.4f}")
 \end{lstlisting}
@@ -883,12 +949,36 @@ for label_str, idx in samples:
     print()
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+==============================================================================
+sample #634  (most confident overall)
+==============================================================================
+text:        프로농구 FA 최진수·조성민 소속팀과 재계약…문태종 결렬...
+true label:  5  (스포츠)
+prediction:  5  (스포츠)  match: OK
+top-1 prob:  0.9923
+top-3 distribution:
+       스포츠: 0.9923
+        경제: 0.0018
+        세계: 0.0017
+
+==============================================================================
+sample #253  (most uncertain (~2/K))
+==============================================================================
+text:        즉석조리 배달 서비스 셰플리 서울 강북 지역에 오픈
+...
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
 \textbf{관찰 포인트}
 
 \begin{itemize}
 \tightlist
 \item
-  \emph{가장 자신있는} 샘플은 보통 카테고리 \emph{시그널 단어} 가 명확 (예: “주가” → 경제, “월드컵” → 스포츠).
+  \emph{가장 자신있는} 샘플은 보통 카테고리 \emph{시그널 단어} 가 명확 (예: “주가” \(\to\) 경제, “월드컵” \(\to\) 스포츠).
 \item
   \emph{망설이는 샘플} 의 top-3 분포를 보면 모델이 \emph{어느 카테고리 사이에서 갈팡질팡} 하는지 보임. 정치/경제/사회 셋이 비슷한 확률이면 헤드라인 자체가 다중 카테고리에 걸침.
 \item
@@ -906,11 +996,11 @@ for label_str, idx in samples:
 이름 & 한 줄 설명 & 다음 장에서 \\
 \midrule
 
-\inlinecode{load\_dataset("klue",\ "ynat")} & KLUE 벤치마크 YNAT (한국어 뉴스 7분류) & 17장 에서 같은 데이터로 multi-label 합성 \\
+\inlinecode{load\_dataset("klue/klue",\ "ynat")} & KLUE 벤치마크 YNAT (한국어 뉴스 7분류) & \ref{ch:17}장에서 같은 데이터로 multi-label 합성 \\
 \texttt{ds{[}“train”{]}.features{[}“label”{]}.names} & datasets.ClassLabel 의 사람-읽는 이름 & id2label 자동 매핑에 사용 \\
-\inlinecode{seaborn.heatmap(...,\ xticklabels=한국어)} & 혼동 행렬 한국어 라벨 표시 & 17장도 사용 \\
+\inlinecode{seaborn.heatmap(...,\ xticklabels=한국어)} & 혼동 행렬 한국어 라벨 표시 & \ref{ch:17}장도 사용 \\
 \inlinecode{sklearn.metrics.precision\_recall\_fscore\_support(...,\ average="macro")} & 클래스별 평균 metric (불균형에 강함) & 분류 장마다 \\
-\inlinecode{roc\_auc\_score(...,\ multi\_class="ovr")} & multi-class AUC (One-vs-Rest) & 17장 multi-label 평가 \\
+\inlinecode{roc\_auc\_score(...,\ multi\_class="ovr")} & multi-class AUC (One-vs-Rest) & \ref{ch:17}장 multi-label 평가 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -928,7 +1018,7 @@ for label_str, idx in samples:
 \item
   macro F1 이 weighted F1 보다 \emph{훨씬} 낮으면 무엇을 의심해야 하나요?
 \item
-  혼동 행렬에서 \emph{정치 ↔ 경제} 혼동이 많은데 \emph{스포츠 ↔ 정치} 혼동은 거의 없는 이유는?
+  혼동 행렬에서 \emph{정치 \(\leftrightarrow\) 경제} 혼동이 많은데 \emph{스포츠 \(\leftrightarrow\) 정치} 혼동은 거의 없는 이유는?
 \item
   같은 klue/bert-base 가 NSMC binary (\ref{ch:15}장) 와 KLUE-YNAT 7분류 (\ref{ch:16}장) 에서 \emph{분류 헤드만} 다른데, 왜 두 task 모두 잘 동작하나요?
 \end{enumerate}
@@ -965,9 +1055,9 @@ KLUE-YNAT 가 \emph{입문에 편한 이유} --- datasets.load\_dataset 한 줄,
 \begin{itemize}
 \tightlist
 \item
-  \textbf{대칭 혼동} (예: 정치↔경제 양방향 비슷): 두 카테고리 \emph{경계가 모호} 하다는 신호. 헤드라인 한 줄로는 \emph{사람도 혼동하는} 데이터.
+  \textbf{대칭 혼동} (예: 정치\(\leftrightarrow\)경제 양방향 비슷): 두 카테고리 \emph{경계가 모호} 하다는 신호. 헤드라인 한 줄로는 \emph{사람도 혼동하는} 데이터.
 \item
-  \textbf{비대칭 혼동} (예: 정치 → 경제 는 흔한데 경제 → 정치 는 드뭄): 모델이 \emph{한쪽으로 편향} 됨. 가능한 원인:
+  \textbf{비대칭 혼동} (예: 정치 \(\to\) 경제 는 흔한데 경제 \(\to\) 정치 는 드뭄): 모델이 \emph{한쪽으로 편향} 됨. 가능한 원인:
 
   \begin{itemize}
   \tightlist
@@ -1020,7 +1110,7 @@ KLUE-YNAT 는 \emph{심한} 불균형이 아니라 (5K-8K 범위) class\_weight 
 
 \begin{faqBox}{Q4. (이론) 헤드라인 한 줄 (\textasciitilde30 토큰) 이 분류에 \emph{충분} 한가요?}
 
-대부분의 경우 충분합니다 --- \emph{카테고리} 라는 task 가 \emph{키워드 + 표현 스타일} 로 풀리고, 그 신호가 헤드라인에 \emph{압축} 되어 들어 있어요. 예: “월드컵 한국 vs 일본 16강전 시작” → 스포츠 신호 명확.
+대부분의 경우 충분합니다 --- \emph{카테고리} 라는 task 가 \emph{키워드 + 표현 스타일} 로 풀리고, 그 신호가 헤드라인에 \emph{압축} 되어 들어 있어요. 예: “월드컵 한국 vs 일본 16강전 시작” \(\to\) 스포츠 신호 명확.
 
 부족한 경우:
 
@@ -1083,20 +1173,20 @@ model_wrong = AutoModelForSequenceClassification.from_pretrained(
 )
 \end{lstlisting}
 
-힌트: 학습 시 \inlinecode{CrossEntropyLoss(logits.shape=(B,\ 2),\ targets\ in\ 0-6)} 가 호출되는데 target 값이 logits 의 클래스 차원 범위를 \emph{벗어남} → IndexError 또는 \emph{runtime cuda assert}. 모델 헤드가 라벨 범위와 \emph{일치해야} 한다는 단순하지만 흔한 실수.
+힌트: 학습 시 \inlinecode{CrossEntropyLoss(logits.shape=(B,\ 2),\ targets\ in\ 0-6)} 가 호출되는데 target 값이 logits 의 클래스 차원 범위를 \emph{벗어남} \(\to\) IndexError 또는 \emph{runtime cuda assert}. 모델 헤드가 라벨 범위와 \emph{일치해야} 한다는 단순하지만 흔한 실수.
 
 
 
 \begin{previewBox}{미리보기: 다음 장}
 
-\textbf{17장. 한국어 BERT Multi-label --- KLUE-YNAT 합성 multi-label}
+\textbf{\ref{ch:17}장. 한국어 BERT 다중 라벨 분류 (Korean Multi-label Classification)}
 
 \begin{itemize}
 \tightlist
 \item
-  같은 데이터·같은 모델, 단 \emph{task 만} single-label → multi-label
+  같은 데이터·같은 모델, 단 \emph{task 만} single-label \(\to\) multi-label
 \item
-  KLUE-YNAT 헤드라인 \emph{두 개를 결합} 해 인공 multi-label 데이터 합성 (\ref{ch:13}장의 항목 합성과 비슷한 패턴)
+  KLUE-YNAT 헤드라인 \emph{두 개를 결합} 해 인공 multi-label 데이터 합성 (\ref{ch:13}장의 측면 합성과 비슷한 패턴)
 \item
   \inlinecode{num\_labels=7} 그대로, 단 \inlinecode{problem\_type="multi\_label\_classification"} 으로 전환
 \item
@@ -1106,6 +1196,6 @@ model_wrong = AutoModelForSequenceClassification.from_pretrained(
 \end{itemize}
 
 \begin{quote}
-\textbf{변하는 축}: Phase 2 안에서 \emph{task 차원} (single-label → multi-label). 모델·토크나이저·hyperparams 는 그대로.
+\textbf{변하는 축}: Phase 2 안에서 \emph{task 차원} (single-label \(\to\) multi-label). 모델·토크나이저·hyperparams 는 그대로.
 \end{quote}
 \end{previewBox}

@@ -92,7 +92,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 \end{adjustbox}
 \end{booktable}
 
-전체 \ref{ch:20}장 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
+전체 장 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
 
 
 
@@ -196,7 +196,7 @@ mean_squared_error(y, model.predict(X))
 
 
 
-\Needspace{11\baselineskip}
+\Needspace{10\baselineskip}
 \begin{lstlisting}
 import numpy as np
 import pandas as pd
@@ -207,6 +207,21 @@ from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=10]
+import matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run(
+        "apt-get -qq -y install fonts-nanum",
+        shell=True,
+    )
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
 plt.rcParams["axes.unicode_minus"] = False
 
 dataset = load_dataset("Yelp/yelp_review_full")
@@ -345,31 +360,20 @@ print(
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=10]
-plt.hist(
-    y_pred_test,
-    bins=40,
-    alpha=0.6,
-    label="predicted",
-)
-plt.hist(y_test, bins=5, alpha=0.6, label="actual")
+plt.hist(y_pred_test, bins=40, alpha=0.6, label="예측")
+plt.hist(y_test, bins=5, alpha=0.6, label="실제")
 plt.axvline(
     1,
     color="red",
     linestyle="--",
     linewidth=1,
-    label="1 / 5 boundary",
+    label="1 / 5 경계",
 )
 plt.axvline(5, color="red", linestyle="--", linewidth=1)
-plt.xlabel("Star (1-5)")
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{6\baselineskip}
-\begin{lstlisting}[firstnumber=26]
-plt.ylabel("Count")
+plt.xlabel("별점 (1-5)")
+plt.ylabel("개수")
 plt.legend()
-plt.title("Prediction distribution: actual vs predicted")
+plt.title("예측 분포: 실제 vs 예측")
 plt.show()
 \end{lstlisting}
 
@@ -377,9 +381,15 @@ plt.show()
 \begin{bookoutputbox}
 Pred range: [-1.55, 7.15]
 True range: [1, 5]
-<Figure size 640x480 with 1 Axes>
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+\begin{bookfigurelabel}[H]{회귀 예측값과 실제 별점 분포}{fig:ch02-prediction-distribution}
+\centering
+\includegraphics[width=0.76\linewidth]{assets/figures/ch02_prediction_distribution.png}
+\end{bookfigurelabel}
+
+\textbf{그림 읽기} --- 그림~\ref{fig:ch02-prediction-distribution}에서 다음 내용을 확인합니다: 회귀 예측값과 실제 별점 분포. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
 
 
 
@@ -673,7 +683,7 @@ print(
   \textbf{분류가 자연스러운 이유}: 클래스 사이 간격이 균등하지 않을 수 있습니다. 1점과 2점의 차이, 4점과 5점의 차이가 같은 의미일까요? 사람마다 다릅니다. 분류는 클래스 간 거리를 가정하지 않습니다.
 \end{itemize}
 
-이 커리큘럼에서는 두 관점을 모두 보여줍니다 --- \ref{ch:02}장 (회귀) \(\to\) \ref{ch:04}장 (5클래스 분류). 같은 데이터를 두 방식으로 다룰 때 결과가 어떻게 달라지는지 비교하면 회귀와 분류의 차이가 구체적으로 이해할 수 있습니다.
+이 커리큘럼에서는 두 관점을 모두 보여줍니다 --- \ref{ch:02}장 (회귀) \(\to\) \ref{ch:05}장 (5클래스 분류). 같은 데이터를 두 방식으로 다룰 때 결과가 어떻게 달라지는지 비교하면 회귀와 분류의 차이가 구체적으로 이해할 수 있습니다.
 \end{faqBox}
 
 

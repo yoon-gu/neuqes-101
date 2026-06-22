@@ -99,7 +99,7 @@ Ch & 모델 & 토크나이저 & Output Head & Activation & Loss \\
 \end{adjustbox}
 \end{booktable}
 
-전체 \ref{ch:20}장 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
+전체 장 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
 
 
 
@@ -145,7 +145,7 @@ Ch & 모델 & 토크나이저 & Output Head & Activation & Loss \\
 
 
 
-\Needspace{9\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 import numpy as np
 import pandas as pd
@@ -153,6 +153,15 @@ import matplotlib.pyplot as plt
 from datasets import load_dataset
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 
+import matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run(
+        "apt-get -qq -y install fonts-nanum",
+        shell=True,
+    )
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
 plt.rcParams["axes.unicode_minus"] = False
 \end{lstlisting}
 
@@ -226,10 +235,10 @@ Sample count: 5000
 \Needspace{9\baselineskip}
 \begin{lstlisting}
 counts = df["label"].value_counts().sort_index()
-labels = [f"{i+1} star" for i in counts.index]
+labels = [f"{i+1}점" for i in counts.index]
 plt.bar(labels, counts.values)
-plt.title("Star rating distribution (sampled 5,000)")
-plt.ylabel("Reviews")
+plt.title("별점 분포 (5,000건 샘플)")
+plt.ylabel("리뷰 수")
 plt.show()
 print(counts)
 \end{lstlisting}
@@ -240,7 +249,6 @@ print(counts)
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-<Figure size 640x480 with 1 Axes>
 label
 0    1017
 1    1027
@@ -250,6 +258,13 @@ label
 Name: count, dtype: int64
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+\begin{bookfigurelabel}[H]{Yelp 5,000건 샘플의 별점 분포}{fig:ch01-star-distribution}
+\centering
+\includegraphics[width=0.72\linewidth]{assets/figures/ch01_star_distribution.png}
+\end{bookfigurelabel}
+
+\textbf{그림 읽기} --- 그림~\ref{fig:ch01-star-distribution}에서 다음 내용을 확인합니다: Yelp 5,000건 샘플의 별점 분포. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
 
 
 
@@ -642,7 +657,7 @@ tokenizer = Mecab().morphs
 TfidfVectorizer(tokenizer=tokenizer, token_pattern=None)
 \end{lstlisting}
 
-이 커리큘럼에서는 Phase 2(\ref{ch:13}--\ref{ch:16}장, 한국어)에서 \inlinecode{klue/bert-base}의 한국어 WordPiece 토크나이저를, Phase 3(\ref{ch:18}장)에서 형태소 기반 워드레벨 토크나이저를 직접 다룹니다.
+이 커리큘럼에서는 Phase 2(\ref{ch:15}--\ref{ch:18}장, 한국어)에서 \inlinecode{klue/bert-base}의 한국어 WordPiece 토크나이저를, Phase 3(\ref{ch:19}장부터)에서 형태소 기반 워드레벨 토크나이저를 직접 다룹니다.
 
 \end{faqBox}
 

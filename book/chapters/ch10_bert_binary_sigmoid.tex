@@ -68,7 +68,7 @@
 
 \section{변화추적표}
 
-\begin{booktable}{변화추적표}{tab:ch10-01}
+\begin{booktable}{10장 변화추적표}{tab:ch10-01}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lllllll@{}}
 \toprule
@@ -78,20 +78,20 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 3 & \inlinecode{LogisticRegression()} & \inlinecode{TfidfVectorizer()} & Yelp 이진화 & (1차원) & sigmoid & \inlinecode{BCEWithLogitsLoss} \\
 4 & \inlinecode{LogisticRegression()} (multinomial 자동) & \inlinecode{TfidfVectorizer()} & Yelp 이진화 (\ref{ch:03}장과 동일) & (2차원) & softmax & \inlinecode{CrossEntropyLoss} \\
 9 & DistilBERT 파인튜닝 & \inlinecode{AutoTokenizer.from\_pretrained(...)} & Yelp (별점 1-5) & \inlinecode{Linear(H,\ 1)} & 없음 & \inlinecode{MSELoss} \\
-\textbf{10 ← 여기} & DistilBERT 파인튜닝 & \inlinecode{AutoTokenizer.from\_pretrained(...)} & Yelp 이진화 & \textbf{\inlinecode{Linear(H,\ 1)}} & \textbf{sigmoid} & \textbf{\inlinecode{BCEWithLogitsLoss}} \\
+\textbf{10 \(\leftarrow\) 여기} & DistilBERT 파인튜닝 & \inlinecode{AutoTokenizer.from\_pretrained(...)} & Yelp 이진화 & \textbf{\inlinecode{Linear(H,\ 1)}} & \textbf{sigmoid} & \textbf{\inlinecode{BCEWithLogitsLoss}} \\
 11 (다음) & DistilBERT 파인튜닝 & 같음 & Yelp 이진화 & \inlinecode{Linear(H,\ 2)} & softmax & \inlinecode{CrossEntropyLoss} \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
-전체 20장 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
+전체 장 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
 
 
 
 \section{변경점: \ref{ch:09}장 대비}
 
-\begin{booktable}{변경점 요약}{tab:ch10-02}
+\begin{booktable}{10장 변경점 요약}{tab:ch10-02}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -100,11 +100,11 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 
 Task & 회귀 & \textbf{이진 분류 (방식 A)} \\
 \inlinecode{num\_labels} & 1 & \textbf{1} (그대로) \\
-\inlinecode{problem\_type} & \inlinecode{"regression"} & \textbf{\inlinecode{"multi\_label\_classification"}} ← BCE 자동 적용 트릭 \\
+\inlinecode{problem\_type} & \inlinecode{"regression"} & \textbf{\inlinecode{"multi\_label\_classification"}} \(\leftarrow\) BCE 자동 적용 트릭 \\
 Activation & 없음 & \textbf{sigmoid} (output head는 1차원, 학습 시 logit이 sigmoid 통과 후 BCE) \\
 Loss & \inlinecode{MSELoss} & \textbf{\inlinecode{BCEWithLogitsLoss}} \\
 라벨 & float (1-5) 별점 & \textbf{float {[}0.0 또는 1.0{]}} (multi-hot 1차원 벡터로 둠) \\
-데이터 & Yelp 별점 1-5 & \textbf{Yelp 이진화} (4-5 → 1, 1-2 → 0, 3 제외) \\
+데이터 & Yelp 별점 1-5 & \textbf{Yelp 이진화} (4-5 \(\to\) 1, 1-2 \(\to\) 0, 3 제외) \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -114,7 +114,7 @@ Loss & \inlinecode{MSELoss} & \textbf{\inlinecode{BCEWithLogitsLoss}} \\
 
 \inlinecode{Trainer} 의 자동 loss 매핑은 이렇게 작동합니다 (\ref{ch:09}장에서 본 표).
 
-\begin{booktable}{num\_labels=1 + problem\_type=“multi\_label\_classification” 의 트릭}{tab:ch10-03}
+\begin{booktable}{10장 num\_labels=1 + problem\_type=“multi\_label\_classification” 의 트릭 표}{tab:ch10-03}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}llll@{}}
 \toprule
@@ -122,8 +122,8 @@ Loss & \inlinecode{MSELoss} & \textbf{\inlinecode{BCEWithLogitsLoss}} \\
 \midrule
 
 \inlinecode{"regression"} & \inlinecode{MSELoss} & 보통 1 & float \\
-\inlinecode{"single\_label\_classification"} & \inlinecode{CrossEntropyLoss} & K (≥2) & int 인덱스 \\
-\inlinecode{"multi\_label\_classification"} & \textbf{\inlinecode{BCEWithLogitsLoss}} & K (≥1) & \textbf{multi-hot float} \\
+\inlinecode{"single\_label\_classification"} & \inlinecode{CrossEntropyLoss} & K (\(\ge\)2) & int 인덱스 \\
+\inlinecode{"multi\_label\_classification"} & \textbf{\inlinecode{BCEWithLogitsLoss}} & K (\(\ge\)1) & \textbf{multi-hot float} \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -159,7 +159,7 @@ L = -\frac{1}{N}\sum_{i=1}^{N}\left[\,y_i \log \hat p_i + (1 - y_i)\log(1 - \hat
 
 \textbf{숫자로 감 잡기} --- \ref{ch:03}장 표 그대로:
 
-\begin{booktable}{손실 노트}{tab:ch10-04}
+\begin{booktable}{10장 손실 노트 표}{tab:ch10-04}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -219,19 +219,29 @@ from sklearn.metrics import (
     classification_report, roc_auc_score,
 \end{lstlisting}
 
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
+\noindent\emph{앞뒤 블록은 모두 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
-\Needspace{5\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=17]
 )
 
+import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run(
+        "apt-get -qq -y install fonts-nanum",
+        shell=True,
+    )
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
 plt.rcParams["axes.unicode_minus"] = False
+
 \end{lstlisting}
 
 \noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=21]
+\begin{lstlisting}[firstnumber=30]
 print(f"PyTorch:        {torch.__version__}")
 print(f"CUDA available: {torch.cuda.is_available()}")
 if torch.cuda.is_available():
@@ -250,6 +260,14 @@ else:
 \inlinecode{numpy, pandas, matplotlib, PyTorch, datasets} 같은 주요 패키지를 불러옵니다.
 \end{codeRead}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+PyTorch:        2.11.0+cu128
+CUDA available: True
+GPU:             Tesla T4
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
 
 
 \textbf{baseline VRAM}:
@@ -267,12 +285,14 @@ else:
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Wed Jun 17 21:32:42 2026
+Sun Jun 21 22:53:13 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 43C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 47C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \section{데이터 준비}
 
@@ -284,12 +304,12 @@ N/A 43C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
 \begin{lstlisting}
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
 
-ds = load_dataset("yelp_review_full")
+ds = load_dataset("Yelp/yelp_review_full")
 train_full = ds["train"].shuffle(seed=42).select(range(5000))
 eval_full  = ds["test"].shuffle(seed=42).select(range(1000))
 
 def to_binary(example):
-    star = example["label"] + 1   # 0-4 → 1-5
+    star = example["label"] + 1   # 0-4 -> 1-5
     if star == 3:
         return False
     return True
@@ -310,9 +330,10 @@ def add_binary(batch):
 
 train_bin = train_full.filter(lambda x: (x["label"] + 1) != 3).map(add_binary, batched=True)
 eval_bin  = eval_full.filter(lambda x:  (x["label"] + 1) != 3).map(add_binary, batched=True)
+
 \end{lstlisting}
 
-\noindent\emph{앞 블록은 데이터를 불러오고 학습에 맞는 형태로 정리하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
 \Needspace{8\baselineskip}
 \begin{lstlisting}[firstnumber=24]
@@ -323,6 +344,16 @@ print(
     f"{sum(train_bin['binary']) / len(train_bin):.1%}"
 )
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+train (after excluding 3-star): 4040
+eval  (after excluding 3-star): 804
+train positive rate: 49.4%
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -336,27 +367,34 @@ def tokenize_fn(batch):
     out["labels"] = [[float(b)] for b in batch["binary"]]
     return out
 
+train_tok = train_bin.map(tokenize_fn, batched=True).remove_columns(["text", "label", "binary"])
+eval_tok  = eval_bin.map(tokenize_fn,  batched=True).remove_columns(["text", "label", "binary"])
+
 \end{lstlisting}
 
-\noindent\emph{앞뒤 블록은 모두 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=11]
-train_tok = train_bin.map(
-    tokenize_fn,
-    batched=True).remove_columns(["text", "label", "binary"],
-)
-eval_tok  = eval_bin.map(
-    tokenize_fn,
-    batched=True).remove_columns(["text", "label", "binary"],
-)
-
+\Needspace{7\baselineskip}
+\begin{lstlisting}[firstnumber=14]
 print(train_tok)
 print(
     f"\nFirst sample label: "
     f"{train_tok[0]['labels']}  (length-1 float vector)"
 )
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+Dataset({
+    features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'],
+    num_rows: 4040
+})
+
+First sample label: [1.0]  (length-1 float vector)
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \section{모델 로드}
 
@@ -376,6 +414,7 @@ def param_summary(m):
     total     = sum(p.numel() for p in m.parameters())
     trainable = sum(p.numel() for p in m.parameters() if p.requires_grad)
     return total, trainable
+
 \end{lstlisting}
 
 \noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
@@ -398,6 +437,25 @@ print(
 )
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+Key                     | Status     | 
+------------------------+------------+-
+pre_classifier.weight   | MISSING    | 
+classifier.bias         | MISSING    | 
+classifier.weight       | MISSING    | 
+pre_classifier.bias     | MISSING    | 
+
+- MISSING: those params were newly initialized because missing from the che...
+Parameters:              66,954,241  (67.0 M)
+Trainable parameters:    66,954,241  (100.0%)
+Classifier:           Linear(in_features=768, out_features=1, bias=True)
+problem_type:         multi_label_classification
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
 \Needspace{5\baselineskip}
 \begin{lstlisting}
 !nvidia-smi
@@ -405,12 +463,14 @@ print(
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Wed Jun 17 21:33:06 2026
+Sun Jun 21 22:53:41 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 44C P8 14W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 49C P8 16W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \section{학습}
 
@@ -422,7 +482,7 @@ N/A 44C P8 14W / 70W | 3MiB / 15360MiB | 0% Default
 \begin{lstlisting}
 def compute_metrics(eval_pred):
     logits, labels = eval_pred
-    logits = logits.flatten()         # (B, 1) → (B,)
+    logits = logits.flatten()         # (B, 1) -> (B,)
     labels = labels.flatten().astype(int)
 
     probs = 1.0 / (1.0 + np.exp(-logits))
@@ -471,7 +531,7 @@ training_args = TrainingArguments(
 
 \noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
 
-\Needspace{10\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=15]
 trainer = Trainer(
     model=model,
@@ -481,18 +541,26 @@ trainer = Trainer(
     processing_class=tokenizer,
     compute_metrics=compute_metrics,
 )
-\end{lstlisting}
 
-\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 학습 설정을 만들고 학습 루프를 실행하는 단계로 넘어갑니다.}
-
-\Needspace{7\baselineskip}
-\begin{lstlisting}[firstnumber=24]
 train_result = trainer.train()
 print(
     f"\nTraining done — mean train loss: "
     f"{train_result.training_loss:.4f}"
 )
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+Epoch  Train...  Valid...  Accuracy  Preci...  Recall    F1        Auc
+-----  --------  --------  --------  --------  --------  --------  --------
+1      0.242365  0.260320  0.907960  0.883721  0.921833  0.902375  0.966074
+2      0.165380  0.275755  0.902985  0.901370  0.886792  0.894022  0.967761
+
+Training done -- mean train loss: 0.2599
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \Needspace{5\baselineskip}
 \begin{lstlisting}
@@ -501,12 +569,14 @@ print(
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Wed Jun 17 21:33:38 2026
+Sun Jun 21 22:54:15 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 61C P0 68W / 70W | 1579MiB / 15360MiB | 69% Default
+N/A 65C P0 37W / 70W | 1579MiB / 15360MiB | 76% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \section{평가}
 
@@ -523,20 +593,27 @@ for k, v in eval_metrics.items():
         print(f"  {k:>20}: {v:.4f}")
 \end{lstlisting}
 
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{eval\_metrics = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{for k, v in eval\_metrics....}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{4행}의 \inlinecode{if k.startswith("eval\_")...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\end{codeRead}
+
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 Train...  Valid...  Epoch  Accuracy  Preci...  Recall    F1        Auc
 --------  --------  -----  --------  --------  --------  --------  --------
-0.159778  0.281910  2      0.902985  0.897019  0.892183  0.894595  0.968480
+0.165380  0.275755  2      0.902985  0.901370  0.886792  0.894022  0.967761
 BERT method A evaluation:
-             eval_loss: 0.2819
+             eval_loss: 0.2758
          eval_accuracy: 0.9030
-        eval_precision: 0.8970
-           eval_recall: 0.8922
-               eval_f1: 0.8946
-              eval_auc: 0.9685
+        eval_precision: 0.9014
+           eval_recall: 0.8868
+               eval_f1: 0.8940
+              eval_auc: 0.9678
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 preds_output = trainer.predict(eval_tok)
@@ -571,21 +648,27 @@ print(pd.DataFrame({
 }).to_string(index=False))
 \end{lstlisting}
 
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{preds\_output = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{2행}의 \inlinecode{logits = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{probs = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{4행}의 \inlinecode{labels = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\end{codeRead}
+
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Logit range: [-4.57, 4.11]
-Prob range:  [0.0102, 0.9838]
-Positive prediction rate (prob >= 0.5): 45.9%
+Logit range: [-4.44, 4.35]
+Prob range:  [0.0117, 0.9872]
+Positive prediction rate (prob >= 0.5): 45.4%
 
 First 5 samples:
  label  logit   prob  pred
-     1   3.77 0.9775     1
-     0  -3.29 0.0360     0
-     1   4.04 0.9827     1
-     1   3.71 0.9761     1
-     1   4.06 0.9830     1
+     1   3.89 0.9800     1
+     0  -2.91 0.0515     0
+     1   4.21 0.9853     1
+     1   3.83 0.9787     1
+     1   4.27 0.9862     1
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \subsection{\texorpdfstring{확률 분포}{확률 분포}}
 
@@ -619,9 +702,9 @@ sns.kdeplot(
     palette=PAL, clip=(0, 1), ax=ax,
 )
 ax.axvline(0.5, color="black", lw=1.2, ls="--", alpha=0.7)
-ax.set_title("Method A — Probability Distribution by Actual Label")
-ax.set_xlabel("Predicted probability  P(y=1)")
-ax.set_ylabel("Density")
+ax.set_title("방식 A — 실제 라벨별 확률 분포")
+ax.set_xlabel("예측 확률  P(y=1)")
+ax.set_ylabel("밀도")
 plt.tight_layout()
 \end{lstlisting}
 
@@ -632,17 +715,12 @@ plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-<Figure size 900x500 with 1 Axes>
-\end{bookoutputbox}
-\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{방식 A의 sigmoid 확률 분포}{fig:ch10-probability-kde}
+\centering
 \includegraphics[width=0.88\linewidth]{assets/figures/ch10_probability_kde.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch10-probability-kde}는 sigmoid 이후 확률이 정답 라벨에 따라 어디에 몰리는지 보여줍니다. 두 분포가 0과 1 쪽으로 분리될수록 binary head가 긍정/부정 신호를 잘 나누고 있다는 뜻입니다.
-
+\textbf{그림 읽기} --- 그림~\ref{fig:ch10-probability-kde}에서 다음 내용을 확인합니다: 방식 A의 sigmoid 확률 분포. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
 
 
 
@@ -669,25 +747,20 @@ sns.kdeplot(
     palette=PAL, ax=ax,
 )
 ax.axvline(0.0, color="black", lw=1.2, ls="--", alpha=0.7,
-           label="decision boundary z=0")
-ax.set_title("Method A — Logit Distribution (pre-sigmoid)")
-ax.set_xlabel("Logit  z")
-ax.set_ylabel("Density")
+           label="결정 경계 z=0")
+ax.set_title("방식 A — logit 분포 (sigmoid 통과 전)")
+ax.set_xlabel("logit  z")
+ax.set_ylabel("밀도")
 plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-<Figure size 900x500 with 1 Axes>
-\end{bookoutputbox}
-\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{방식 A의 sigmoid 이전 logit 분포}{fig:ch10-logit-kde}
+\centering
 \includegraphics[width=0.88\linewidth]{assets/figures/ch10_logit_kde.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch10-logit-kde}는 sigmoid를 통과하기 전 logit 공간에서 같은 현상을 봅니다. 확률 그림에서 0.5였던 결정 경계는 여기서 0이고, 양쪽으로 멀어질수록 모델의 확신이 커집니다.
-
+\textbf{그림 읽기} --- 그림~\ref{fig:ch10-logit-kde}에서 다음 내용을 확인합니다: 방식 A의 sigmoid 이전 logit 분포. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
 
 
 
@@ -720,14 +793,16 @@ print(classification_report(
 \begin{bookoutputbox}
 precision    recall  f1-score   support
 
-    negative     0.9080    0.9122    0.9101       433
-    positive     0.8970    0.8922    0.8946       371
+    negative     0.9043    0.9169    0.9106       433
+    positive     0.9014    0.8868    0.8940       371
 
     accuracy                         0.9030       804
-   macro avg     0.9025    0.9022    0.9024       804
-weighted avg     0.9030    0.9030    0.9030       804
+   macro avg     0.9028    0.9018    0.9023       804
+weighted avg     0.9030    0.9030    0.9029       804
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \section{결과 저장}
 
@@ -766,17 +841,23 @@ method_a_summary = {
 }
 with open("./shared_binary_results/method_a_summary.json", "w") as f:
     json.dump(method_a_summary, f, indent=2)
-\end{lstlisting}
 
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{6\baselineskip}
-\begin{lstlisting}[firstnumber=25]
 print("Saved: ./shared_binary_results/")
 for f in sorted(os.listdir("./shared_binary_results")):
     size_kb = os.path.getsize(f"./shared_binary_results/{f}") / 1024
     print(f"  {f}  ({size_kb:.1f} KB)")
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+Saved: ./shared_binary_results/
+  method_a_labels.npy  (6.4 KB)
+  method_a_probs.npy  (3.3 KB)
+  method_a_summary.json  (0.3 KB)
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \textbf{참고}: Colab은 세션이 끝나면 \inlinecode{./shared\_binary\_results/} 가 사라집니다. \emph{Drive에 보존} 하려면 다음과 같이 마운트.
 
@@ -797,7 +878,7 @@ shutil.copytree(
 
 \section{이 장에 등장한 라이브러리·함수}
 
-\begin{booktable}{새로 등장한 라이브러리}{tab:ch10-05}
+\begin{booktable}{10장 새로 등장한 라이브러리}{tab:ch10-05}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -805,9 +886,9 @@ shutil.copytree(
 \midrule
 
 \inlinecode{AutoModelForSequenceClassification(num\_labels=1,\ problem\_type="multi\_label\_classification")} & num\_labels=1 + multi\_label로 BCE 자동 매핑 & \ref{ch:12}--\ref{ch:13}장에서 multi-hot 라벨로 재사용 \\
-\inlinecode{sklearn.metrics.precision\_recall\_fscore\_support} & 이진 분류 지표 한 묶음 & 11·15장·17에서 동일 \\
+\inlinecode{sklearn.metrics.precision\_recall\_fscore\_support} & 이진 분류 지표 한 묶음 & \ref{ch:11}·\ref{ch:15}장·17에서 동일 \\
 \inlinecode{sklearn.metrics.roc\_auc\_score} & AUC 계산 (확률 임계값 무관) & 분류 장마다 사용 \\
-\inlinecode{numpy\ 1/(1+exp(-x))} & sigmoid 직접 구현 (모델 logit → 확률) & \ref{ch:07}장에서 본 동일 패턴 \\
+\inlinecode{numpy\ 1/(1+exp(-x))} & sigmoid 직접 구현 (모델 logit \(\to\) 확률) & \ref{ch:07}장에서 본 동일 패턴 \\
 \inlinecode{seaborn.kdeplot(...,\ hue=,\ fill=True,\ common\_norm=False)} & 라벨별 부드러운 분포를 \emph{각자} 정규화해 모양만 비교 & 분류 장마다 동일 패턴으로 재등장 \\
 \bottomrule
 \end{tabular}
@@ -865,9 +946,9 @@ loss = BCEWithLogitsLoss()(logits, labels)
 \begin{itemize}
 \tightlist
 \item
-  방식 A (이 장, num\_labels=1): shape \inlinecode{(batch,\ 1)}. flatten 후 sigmoid 적용 → 확률.
+  방식 A (이 장, num\_labels=1): shape \inlinecode{(batch,\ 1)}. flatten 후 sigmoid 적용 \(\to\) 확률.
 \item
-  방식 B (\ref{ch:11}장, num\_labels=2): shape \inlinecode{(batch,\ 2)}. softmax 적용 → 두 확률.
+  방식 B (\ref{ch:11}장, num\_labels=2): shape \inlinecode{(batch,\ 2)}. softmax 적용 \(\to\) 두 확률.
 \end{itemize}
 
 \inlinecode{compute\_metrics} 안에서 우리가 sigmoid·argmax·threshold 같은 후처리를 직접 합니다.
@@ -884,7 +965,7 @@ loss = BCEWithLogitsLoss()(logits, labels)
 \item
   \textbf{단어 표현}: TF-IDF는 단어 독립 벡터, BERT는 문맥 attention. \inlinecode{"not\ bad"} vs \inlinecode{"bad"} 구분이 BERT만 가능.
 \item
-  \textbf{모델 capacity}: TF-IDF + LogReg는 \textasciitilde10K개 가중치, BERT는 헤드 포함 약 67M개. 표현력 6,700배 차이.
+  \textbf{모델 capacity}: TF-IDF + LogReg는 \textasciitilde10K개 가중치, BERT는 67M개. 표현력 6,700배 차이.
 \item
   \textbf{사전학습}: BERT는 위키피디아·BookCorpus로 미리 학습돼 일반 언어 지식이 모델에 인코딩됨.
 \end{enumerate}
@@ -911,7 +992,7 @@ loss = BCEWithLogitsLoss()(logits, labels)
 
 \begin{faqBox}{Q6. (실무) 학습 도중 학습률을 어떻게 조정하나요?}
 
-\inlinecode{Trainer} 는 기본으로 \emph{linear warmup → linear decay} 스케줄러를 적용합니다. \inlinecode{lr\_scheduler\_type} 으로 바꿀 수 있습니다.
+\inlinecode{Trainer} 는 기본으로 \emph{linear warmup \(\to\) linear decay} 스케줄러를 적용합니다. \inlinecode{lr\_scheduler\_type} 으로 바꿀 수 있습니다.
 
 \Needspace{7\baselineskip}
 \begin{lstlisting}

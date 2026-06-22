@@ -114,9 +114,9 @@ Ch & 모델 & 토크나이저 & 데이터 & Output & Loss \\
 \midrule
 
 17 & klue/bert-base & WordPiece (한국어, 사전학습) & KLUE-YNAT 합성 multi-label & \inlinecode{Linear(H,\ 7)} & \inlinecode{BCEWithLogitsLoss} \\
-18 & klue/bert-base + 보조 & WordPiece (한국어, 사전학습) & KLUE-YNAT 합성 + 보조 라벨 & 메인(7) + 보조 & \inlinecode{BCEWithLogitsLoss} + \(\lambda L_{\mathrm{aux}}\) \\
-\textbf{19 ← 여기 (Phase 3 시작)} & --- (토크나이저 학습 전용) & \textbf{WordPiece + WordLevel} (둘 다 \emph{직접 학습}) & \textbf{Yelp text + NSMC text} & --- & --- \\
-20 (다음) & 작은 BERT (직접, scratch) & \inlinecode{bert-base-uncased} 토크나이저 (가져옴) & Wikitext-103 paragraphs & MLM head & \inlinecode{CrossEntropyLoss} (masked) \\
+18 & klue/bert-base + 보조 & WordPiece (한국어, 사전학습) & KLUE-YNAT 합성 + 보조 라벨 & 메인(7) + 보조 & \texttt{BCEWithLogitsLoss\ +\ \$\textbackslash{}lambda\$·L\_aux} \\
+\textbf{19 \(\leftarrow\) 여기 (Phase 3 시작)} & --- (토크나이저 학습 전용) & \textbf{WordPiece + WordLevel} (둘 다 \emph{직접 학습}) & \textbf{Yelp text + NSMC text} & --- & --- \\
+20 (다음) & 작은 BERT (직접, scratch) & \inlinecode{bert-base-uncased} 토크나이저 (가져옴) & Wikitext-103 (일반 도메인 위키) & MLM head & \inlinecode{CrossEntropyLoss} (masked) \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -124,7 +124,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output & Loss \\
 
 전체 장 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
 
-\textbf{Phase 3의 위치} --- \ref{ch:19}장은 토크나이저 토대를 다지고, 20-23장은 그 위에 작은 BERT의 사전학습과 분류를 올립니다. 단, 20장부터는 \emph{학습 안정성}을 위해 표준 사전학습 토크나이저(\inlinecode{bert-base-uncased}, \inlinecode{klue/bert-base})를 그대로 가져와 씁니다. \ref{ch:19}장은 “토크나이저가 어떻게 학습되는가”를 \emph{경험}하는 장입니다.
+\textbf{Phase 3 의 위치} --- \ref{ch:19}장 가 토크나이저 토대, \ref{ch:20}--\ref{ch:23}장 은 그 위에 올린 작은 BERT 의 사전학습 + 분류. 단, \ref{ch:20}장 부터는 \emph{학습 안정성} 을 위해 표준 사전학습 토크나이저 (\inlinecode{bert-base-uncased}, \inlinecode{klue/bert-base}) 를 그대로 가져와 씁니다. \ref{ch:19}장 는 “토크나이저가 어떻게 학습되나” 를 \emph{경험} 하는 장.
 
 
 
@@ -137,7 +137,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output & Loss \\
 축 & \ref{ch:18}장 (한국어 auxiliary) & \ref{ch:19}장 (토크나이저 학습 전용) \\
 \midrule
 
-\textbf{이 장의 task} & 분류 (메인 multi-label + 보조) & \textbf{분류 아예 없음 --- 토크나이저 학습 그 자체가 결과물} ← \emph{유일한 변화} \\
+\textbf{이 장의 task} & 분류 (메인 multi-label + 보조) & \textbf{분류 아예 없음 --- 토크나이저 학습 그 자체가 결과물} \(\leftarrow\) \emph{유일한 변화} \\
 모델 & \inlinecode{klue/bert-base} 파인튜닝 & 없음 \\
 토크나이저 & 사전학습된 것 \emph{로드만} & \textbf{WordPiece + WordLevel 둘 다 \emph{직접 학습}} \\
 데이터 & KLUE-YNAT 합성 multi-label + 보조 라벨 & Yelp text + NSMC text (라벨 무시, \emph{문장만} 사용) \\
@@ -232,7 +232,7 @@ Output / Loss & 메인 + 보조 + \(\lambda\) & 없음 (vocab + merge rules 가 
 \item
   \textbf{\ref{ch:19}장 (지금)}: \emph{같은 WordPiece 알고리즘} + 단순 비교용 WordLevel 을 두 언어 코퍼스에서 \emph{직접} 학습.
 \item
-  \textbf{20장+}: 다시 표준 사전학습 토크나이저로 --- 단, \emph{이제는 그 안에서 무엇이 벌어지는지 알고} 사용.
+  \textbf{\ref{ch:20}장+}: 다시 표준 사전학습 토크나이저로 --- 단, \emph{이제는 그 안에서 무엇이 벌어지는지 알고} 사용.
 \end{itemize}
 
 같은 알고리즘이 \emph{언어가 바뀌면 어떻게 다른 결과} 를 내는지 (영어 vs 한국어), \emph{알고리즘이 바뀌면 어떻게 다른 결과} 를 내는지 (WordPiece vs WordLevel) --- 2\(\times\)2 비교가 이 장의 핵심.
@@ -247,6 +247,8 @@ Output / Loss & 메인 + 보조 + \(\lambda\) & 없음 (vocab + merge rules 가 
 \begin{lstlisting}
 %pip install -q -U tokenizers transformers datasets
 \end{lstlisting}
+
+
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -279,6 +281,21 @@ from tokenizers.processors import TemplateProcessing
 from tokenizers.decoders import WordPiece as WordPieceDecoder
 from transformers import PreTrainedTokenizerFast
 
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=24]
+import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run(
+        "apt-get -qq -y install fonts-nanum",
+        shell=True,
+    )
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
 plt.rcParams["axes.unicode_minus"] = False
 
 \end{lstlisting}
@@ -286,7 +303,7 @@ plt.rcParams["axes.unicode_minus"] = False
 \noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=26]
+\begin{lstlisting}[firstnumber=35]
 print(f"PyTorch:        {torch.__version__}")
 print(f"CUDA available: {torch.cuda.is_available()}")
 if torch.cuda.is_available():
@@ -308,6 +325,8 @@ CUDA available: True
 GPU:             Tesla T4
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \section{영어 코퍼스}
 
@@ -355,6 +374,8 @@ char length stats:
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
+
+
 \section{한국어 코퍼스}
 
 \ref{ch:15}장과 같은 패턴으로 e9t/nsmc GitHub raw 에서 직접 다운로드. 라벨 무시, \inlinecode{document} 컬럼만 사용.
@@ -394,6 +415,8 @@ char length stats:
   mean: 34, median: 26, max: 143
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \section{토크나이저 학습}
 
@@ -492,6 +515,9 @@ print(
 helper builders ready: build_wordpiece(), build_wordlevel()
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 t0 = time.time()
@@ -550,14 +576,16 @@ print(
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-[1/4] en WordPiece  trained in 2.48s  vocab=8000
-[2/4] ko WordPiece  trained in 0.59s  vocab=8000
-[3/4] en WordLevel  trained in 0.48s  vocab=8000
-[4/4] ko WordLevel  trained in 0.09s  vocab=8000
+[1/4] en WordPiece  trained in 1.47s  vocab=8000
+[2/4] ko WordPiece  trained in 0.79s  vocab=8000
+[3/4] en WordLevel  trained in 0.83s  vocab=8000
+[4/4] ko WordLevel  trained in 0.13s  vocab=8000
 
-total time: 3.64s
+total time: 3.22s
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \subsection{어휘 확인}
 
@@ -620,6 +648,9 @@ ids 5-20 : ['.', 'the', ',', 'and', 'I', 'a', 'to', "'", 'was', 'of', '\\',...
 ...
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \textbf{관찰}
 
 \begin{itemize}
@@ -700,6 +731,9 @@ KOREAN sample: 이 영화는 정말 재미있어요. 배우들 연기도 훌륭�
 ...
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \textbf{해석 가이드}
 
 \begin{itemize}
@@ -761,10 +795,13 @@ print(stats.to_string(index=False))
 tokenizer  mean_tokens  median_tokens  p95_tokens
 en WordPiece      176.571          139.0      469.05
 en WordLevel      159.220          126.5      426.10
-ko WordPiece       19.805           15.0       57.05
+ko WordPiece       19.804           15.0       57.05
 ko WordLevel        9.106            7.0       27.00
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 sns.set_theme(style="whitegrid", context="talk")
@@ -797,9 +834,9 @@ sns.kdeplot(
     alpha=0.4,
     label="WordLevel",
 )
-axes[0].set_title("English (Yelp) — tokens per sentence")
-axes[0].set_xlabel("tokens per sentence")
-axes[0].set_ylabel("density")
+axes[0].set_title("영어 (Yelp) — 문장당 토큰 수")
+axes[0].set_xlabel("문장당 토큰 수")
+axes[0].set_ylabel("밀도")
 axes[0].legend()
 axes[0].set_xlim(0, 400)
 
@@ -831,8 +868,8 @@ sns.kdeplot(
 
 \Needspace{9\baselineskip}
 \begin{lstlisting}[firstnumber=47]
-axes[1].set_title("Korean (NSMC) — tokens per sentence")
-axes[1].set_xlabel("tokens per sentence")
+axes[1].set_title("한국어 (NSMC) — 문장당 토큰 수")
+axes[1].set_xlabel("문장당 토큰 수")
 axes[1].legend()
 axes[1].set_xlim(0, 80)
 
@@ -840,16 +877,12 @@ plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-<Figure size 1400x500 with 2 Axes>
-\end{bookoutputbox}
-\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{WordPiece와 WordLevel의 문장당 토큰 수 분포}{fig:ch19-token-length-distribution}
+\centering
 \includegraphics[width=0.92\linewidth]{assets/figures/ch19_token_length_distribution.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch19-token-length-distribution}은 같은 코퍼스를 WordPiece와 WordLevel로 나누었을 때 문장당 토큰 수가 어떻게 달라지는지 보여줍니다. WordPiece는 드문 단어를 작은 조각으로 분해하므로 토큰 수가 늘 수 있지만, 그 대신 미등록 토큰을 크게 줄입니다.
+\textbf{그림 읽기} --- 그림~\ref{fig:ch19-token-length-distribution}에서 다음 내용을 확인합니다: WordPiece와 WordLevel의 문장당 토큰 수 분포. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
 
 
 
@@ -912,6 +945,9 @@ ko WordPiece   0.08%
 ko WordLevel  43.74%
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 sns.set_theme(style="whitegrid", context="talk")
@@ -925,23 +961,19 @@ bars = ax.bar(
 for bar, rate in zip(bars, unk_summary["unk_rate"]):
     ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.1,
             f"{rate:.2%}", ha="center", va="bottom", fontsize=11)
-ax.set_ylabel("UNK rate (%)")
-ax.set_title("Unknown token rate — same eval corpus, vocab=8000")
+ax.set_ylabel("UNK 비율 (%)")
+ax.set_title("미등록 토큰 비율 — 동일 eval 코퍼스, vocab=8000")
 ax.tick_params(axis="x", rotation=15)
 plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-<Figure size 900x500 with 1 Axes>
-\end{bookoutputbox}
-\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{토크나이저별 미등록 토큰 비율 비교}{fig:ch19-unk-rate-bar}
+\centering
 \includegraphics[width=0.72\linewidth]{assets/figures/ch19_unk_rate_bar.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch19-unk-rate-bar}는 WordPiece가 WordLevel보다 미등록 토큰을 안정적으로 줄이는 이유를 보여줍니다. 특히 한국어처럼 어미와 조사가 다양하게 붙는 언어에서는 어절 단위 vocab만으로는 같은 어근의 변형을 모두 덮기 어렵습니다.
+\textbf{그림 읽기} --- 그림~\ref{fig:ch19-unk-rate-bar}에서 다음 내용을 확인합니다: 토크나이저별 미등록 토큰 비율 비교. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
 
 
 
@@ -963,7 +995,7 @@ plt.show()
 
 
 
-\subsection{2x2 비교 표}
+\subsection{\texorpdfstring{2\(\times\)2 비교 표 --- 한눈에 정리}{2\textbackslash times2 비교 표 --- 한눈에 정리}}
 
 같은 vocab=8000 일 때 \emph{언어 \(\times\) 알고리즘} 의 모든 조합.
 
@@ -1007,6 +1039,8 @@ Korean WordPiece 8000 19.80 57.05 0.08
 Korean WordLevel 8000 9.11 27.00 43.74
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \subsection{교차 언어 적용}
 
@@ -1089,6 +1123,9 @@ KO ko_WordPiece KO 14 0 0.0 OK same
 KO ko_WordLevel KO 6 4 66.7 OK same
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 print("=" * 78)
@@ -1125,6 +1162,9 @@ ko_WordPiece ( 14 tokens, UNK 0): ['[CLS]', '음', '##식이', '정말', '맛', 
 ko_WordLevel ( 6 tokens, UNK 4): ['[UNK]', '정말', '[UNK]', '[UNK]', '[UNK]...
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 fig, ax = plt.subplots(figsize=(8.5, 3.6))
@@ -1135,10 +1175,10 @@ pivot = cross_df.pivot(
 )
 pivot = pivot[list(tokenizers.keys())]
 sns.heatmap(pivot, annot=True, fmt=".1f", cmap="Reds", vmin=0, vmax=100,
-            cbar_kws={"label": "UNK rate (%)"}, ax=ax)
-ax.set_title("Cross-language UNK rate — tokenizer trained on (EN|KO) x input (EN|KO)")
-ax.set_xlabel("tokenizer (algorithm x training language)")
-ax.set_ylabel("input language")
+            cbar_kws={"label": "UNK 비율 (%)"}, ax=ax)
+ax.set_title("교차 언어 UNK 비율 — 학습 토크나이저 (EN|KO) x 입력 언어 (EN|KO)")
+ax.set_xlabel("토크나이저 (알고리즘 x 학습 언어)")
+ax.set_ylabel("입력 언어")
 plt.tight_layout(); plt.show()
 \end{lstlisting}
 
@@ -1146,16 +1186,12 @@ plt.tight_layout(); plt.show()
 \textbf{1행}의 \inlinecode{fig, ax = plt.subplots(fi...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{2--6행}의 \inlinecode{pivot = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{7행}의 \inlinecode{pivot = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{8--9행}의 \inlinecode{sns.heatmap(...)}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{10행}의 \inlinecode{ax.set\_title(...)}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{11행}의 \inlinecode{ax.set\_xlabel(...)}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-<Figure size 850x360 with 2 Axes>
-\end{bookoutputbox}
-\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{학습 언어와 입력 언어가 다를 때의 미등록 토큰 비율}{fig:ch19-cross-language-heatmap}
+\centering
 \includegraphics[width=0.78\linewidth]{assets/figures/ch19_cross_language_heatmap.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch19-cross-language-heatmap}의 대각선은 토크나이저를 학습한 언어와 입력 언어가 같은 경우입니다. 반대로 비대각선은 영어 토크나이저에 한국어를 넣거나 한국어 토크나이저에 영어를 넣은 경우로, vocab 자체가 언어를 강하게 제한한다는 점이 드러납니다.
+\textbf{그림 읽기} --- 그림~\ref{fig:ch19-cross-language-heatmap}에서 다음 내용을 확인합니다: 학습 언어와 입력 언어가 다를 때의 미등록 토큰 비율. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
 
 
 
@@ -1178,13 +1214,13 @@ plt.tight_layout(); plt.show()
 \item
   \textbf{단일 언어 corpus 로 학습한 토크나이저는 다른 언어에 거의 못 씁니다.} 모델을 통째 다른 언어로 재사용하려면 \emph{vocab 부터} 그 언어 데이터를 보고 학습해야 합니다.
 \item
-  \textbf{multilingual 모델} (mBERT, XLM-R, mT5 등)은 \emph{수십\textasciitilde 백여 언어 corpus 를 섞어} 토크나이저를 학습해 \emph{공통 vocab} 을 만듭니다 --- 그래서 한 모델로 여러 언어 입력이 가능.
+  \textbf{multilingual 모델} (mBERT, XLM-R, mT5 등)은 \emph{수십-백여 언어 corpus 를 섞어} 토크나이저를 학습해 \emph{공통 vocab} 을 만듭니다 --- 그래서 한 모델로 여러 언어 입력이 가능.
 \item
   \textbf{byte-level BPE} (GPT-2/RoBERTa) 나 \textbf{SentencePiece(Unigram)} (T5/Llama) 같은 \emph{byte/character 단위 fallback} 이 있는 토크나이저는 UNK 가 원리상 없습니다 --- 단 비-학습 언어는 \emph{매우 긴 토큰 시퀀스} 가 되어 비효율적.
 \end{itemize}
 
 \begin{quote}
-즉 “토크나이저는 모델의 언어를 \emph{물리적으로 결정} 한다” 가 이 장의 큰 결론. 20-23장에서 사전학습 모델의 토크나이저 (\inlinecode{bert-base-uncased} / \inlinecode{klue/bert-base}) 를 그대로 가져오는 이유 --- 모델 본체와 \emph{vocab 일치} 가 필수.
+즉 “토크나이저는 모델의 언어를 \emph{물리적으로 결정} 한다” 가 이 장의 큰 결론. \ref{ch:20}--\ref{ch:23}장에서 사전학습 모델의 토크나이저 (\inlinecode{bert-base-uncased} / \inlinecode{klue/bert-base}) 를 그대로 가져오는 이유 --- 모델 본체와 \emph{vocab 일치} 가 필수.
 \end{quote}
 
 
@@ -1220,6 +1256,9 @@ saved 4 tokenizer files:
   ./tokenizers_ch19/ko_wordpiece.json  (251.5 KB)
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{8\baselineskip}
 \begin{lstlisting}
 tok_en_wp_loaded = Tokenizer.from_file("./tokenizers_ch19/en_wordpiece.json")
@@ -1237,6 +1276,9 @@ loaded tokens : ['[CLS]', 'the', 'food', 'was', 'unf', '##orge', '##tt', '#...
 match           : True
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 hf_en_wp = PreTrainedTokenizerFast(
@@ -1284,8 +1326,11 @@ input_ids : [2, 107, 218, 128, 4814, 5350, 3762, 300, 115, 107, 312, 128, 9...
 decoded : [CLS] the food was unforgettable and the service was excellent. [...
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \begin{previewBox}{미리보기}
-\textbf{다음 장의 다리} --- 20장 부터는 이 wrap 패턴으로 토크나이저를 모델에 연결합니다. 단, \emph{학습 안정성} 을 위해 20장+ 는 \emph{직접 학습한 토크나이저 대신} 표준 사전학습 토크나이저 (\inlinecode{bert-base-uncased}, \inlinecode{klue/bert-base}) 를 가져옴 --- \ref{ch:19}장의 \emph{경험} 위에 표준 도구의 신뢰성을 얹는 구조.
+\textbf{다음 장의 다리} --- \ref{ch:20}장 부터는 이 wrap 패턴으로 토크나이저를 모델에 연결합니다. 단, \emph{학습 안정성} 을 위해 \ref{ch:20}장+ 는 \emph{직접 학습한 토크나이저 대신} 표준 사전학습 토크나이저 (\inlinecode{bert-base-uncased}, \inlinecode{klue/bert-base}) 를 가져옴 --- \ref{ch:19}장의 \emph{경험} 위에 표준 도구의 신뢰성을 얹는 구조.
 \end{previewBox}
 
 
@@ -1333,6 +1378,9 @@ vocab_size  actual_vocab  mean_tokens  p95_tokens  unk_rate_pct
       16000         16000      148.095      398.30           0.0
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 sns.set_theme(style="whitegrid", context="talk")
@@ -1343,48 +1391,41 @@ ax1.plot(
     df_sweep["mean_tokens"],
     "o-",
     color="tab:blue",
-    label="mean tokens / sent",
+    label="문장당 평균 토큰 수",
 )
 ax1.set_xlabel("vocab_size")
-ax1.set_ylabel(
-    "mean tokens per sentence",
-    color="tab:blue",
-)
+ax1.set_ylabel("문장당 평균 토큰 수", color="tab:blue")
 ax1.tick_params(axis="y", labelcolor="tab:blue")
+ax1.set_xscale("log")
+
 \end{lstlisting}
 
 \noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-ax1.set_xscale("log")
-
+\begin{lstlisting}[firstnumber=16]
 ax2 = ax1.twinx()
 ax2.plot(
     df_sweep["vocab_size"],
     df_sweep["unk_rate_pct"],
     "s--",
     color="tab:red",
-    label="UNK rate (%)",
+    label="UNK 비율 (%)",
 )
-ax2.set_ylabel("UNK rate (%)", color="tab:red")
+ax2.set_ylabel("UNK 비율 (%)", color="tab:red")
 ax2.tick_params(axis="y", labelcolor="tab:red")
 
-ax1.set_title("en WordPiece — vocab size sweep")
+ax1.set_title("en WordPiece — vocab 크기 스윕")
 plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-<Figure size 900x500 with 2 Axes>
-\end{bookoutputbox}
-\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{WordPiece 어휘 수에 따른 토큰 길이와 미등록 토큰 비율}{fig:ch19-vocab-sweep}
+\centering
 \includegraphics[width=0.78\linewidth]{assets/figures/ch19_vocab_sweep.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch19-vocab-sweep}은 vocab이 커질수록 평균 토큰 수와 미등록 토큰 비율이 줄어드는 경향을 요약합니다. 다만 vocab을 키우면 임베딩 테이블도 함께 커지므로, 작은 모델에서는 토큰 길이 절감과 파라미터 증가 사이의 균형을 잡아야 합니다.
+\textbf{그림 읽기} --- 그림~\ref{fig:ch19-vocab-sweep}에서 다음 내용을 확인합니다: WordPiece 어휘 수에 따른 토큰 길이와 미등록 토큰 비율. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
 
 
 
@@ -1401,7 +1442,7 @@ plt.show()
 \end{itemize}
 
 \begin{quote}
-\textbf{실무 가이드} --- 사전학습 BERT 와 같은 \emph{모델 크기} 를 노린다면 vocab 30K, 작은 모델 (20장의 scratch BERT) 이면 8K-16K 가 적절. vocab 이 커지면 임베딩 테이블 파라미터도 커지니 (\(V \times H\)) 모델 전체 크기와 함께 결정해야 합니다.
+\textbf{실무 가이드} --- 사전학습 BERT 와 같은 \emph{모델 크기} 를 노린다면 vocab 30K, 작은 모델 (\ref{ch:20}장의 scratch BERT) 이면 8K-16K 가 적절. vocab 이 커지면 임베딩 테이블 파라미터도 커지니 (\(V \times H\)) 모델 전체 크기와 함께 결정해야 합니다.
 \end{quote}
 
 
@@ -1415,13 +1456,13 @@ plt.show()
 이름 & 한 줄 설명 & 다음 장에서 \\
 \midrule
 
-\inlinecode{tokenizers.Tokenizer} & 학습·인코딩의 최상위 컨테이너 & 20장+ 는 사전학습 토크나이저를 \inlinecode{AutoTokenizer} 로 받음 \\
+\inlinecode{tokenizers.Tokenizer} & 학습·인코딩의 최상위 컨테이너 & \ref{ch:20}장+ 는 사전학습 토크나이저를 \inlinecode{AutoTokenizer} 로 받음 \\
 \inlinecode{tokenizers.models.WordPiece} & BERT 표준 subword 모델 & (동일 알고리즘이 BERT 사전학습에 사용) \\
 \inlinecode{tokenizers.models.WordLevel} & 어절 단위 (비교용) & \ref{ch:19}장 한정 \\
 \inlinecode{tokenizers.trainers.WordPieceTrainer} & likelihood 기반 vocab 학습 & 같음 \\
 \inlinecode{tokenizers.pre\_tokenizers.BertPreTokenizer} & BERT 표준 공백·구두점 분할 & 같음 \\
-\inlinecode{tokenizers.processors.TemplateProcessing} & \texttt{{[}CLS{]}\ /\ {[}SEP{]}} 자동 부착 & 20장+ MLM 입력 포맷 \\
-\inlinecode{transformers.PreTrainedTokenizerFast} & HF 표준 인터페이스로 wrap & 20장에서 표준 패턴 \\
+\inlinecode{tokenizers.processors.TemplateProcessing} & \texttt{{[}CLS{]}\ /\ {[}SEP{]}} 자동 부착 & \ref{ch:20}장+ MLM 입력 포맷 \\
+\inlinecode{transformers.PreTrainedTokenizerFast} & HF 표준 인터페이스로 wrap & \ref{ch:20}장에서 표준 패턴 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -1460,7 +1501,7 @@ plt.show()
   \textbf{WordPiece} (BERT 시리즈): \emph{언어 모델 likelihood 가 가장 많이 오르는} 쌍을 병합 (likelihood-based). 식: \(\text{score} = \dfrac{\text{count}(AB)}{\text{count}(A) \cdot \text{count}(B)}\).
 \end{itemize}
 
-실무적 차이는 \emph{작아} 두 알고리즘의 토큰화 결과가 비슷한 경우가 많습니다. 24장 (GPT prototype) 에서 BPE 를 직접 다룹니다.
+실무적 차이는 \emph{작아} 두 알고리즘의 토큰화 결과가 비슷한 경우가 많습니다. \ref{ch:24}장 (GPT prototype) 에서 BPE 를 직접 다룹니다.
 
 \end{faqBox}
 
@@ -1468,7 +1509,7 @@ plt.show()
 
 vocab 이 작으면 \emph{한 단어가 여러 조각} 으로 더 잘게 쪼개져 sequence 길이가 길어집니다. 길어진 sequence 는 attention 비용 (\(O(n^2)\)) 을 늘려 학습이 \emph{느려짐}. 반대로 vocab 이 크면 \emph{임베딩 테이블} 자체가 커져 모델 파라미터가 늘어남 (\(V \times H\), BERT-base 면 \(30000 \times 768 \approx 23M\)).
 
-실무 trade-off --- 모델이 작을수록 (이 장 다음 20장 처럼 \emph{scratch} 작은 BERT) 작은 vocab (8K-16K) 이 합리적, 큰 모델은 큰 vocab (30K-50K) 이 안정적.
+실무 trade-off --- 모델이 작을수록 (이 장 다음 \ref{ch:20}장 처럼 \emph{scratch} 작은 BERT) 작은 vocab (8K-16K) 이 합리적, 큰 모델은 큰 vocab (30K-50K) 이 안정적.
 
 \Needspace{5\baselineskip}
 \begin{lstlisting}
@@ -1483,7 +1524,7 @@ embed_params = vocab_size * hidden  # = 2.05M
 
 모델의 \texttt{{[}UNK{]}} 임베딩은 \emph{단 하나의 벡터} --- 어떤 단어가 \texttt{{[}UNK{]}} 로 변환되든 같은 임베딩으로 들어갑니다. 즉 \emph{모든 모르는 단어가 같은 자리에 모이는} 셈. 분류 task 라면 한 두 개 UNK 는 문맥으로 보완되어 큰 영향 없지만, 생성·번역 task 라면 정보 손실이 직접 출력에 드러납니다.
 
-이 장의 결과 (WordPiece 한국어 UNK 거의 0\% vs WordLevel 한국어 UNK 5-15\%) 는 한국어 생성 모델 (26장의 한국어 작은 GPT) 가 \emph{왜 byte-level BPE 같은 subword} 를 쓰는지의 직접적인 이유.
+이 장의 결과 (WordPiece 한국어 UNK 거의 0\% vs WordLevel 한국어 UNK 5-15\%) 는 한국어 생성 모델 (\ref{ch:26}장의 한국어 작은 GPT) 가 \emph{왜 byte-level BPE 같은 subword} 를 쓰는지의 직접적인 이유.
 
 \end{faqBox}
 
@@ -1509,7 +1550,7 @@ BERT 의 토큰화 결과를 그대로 재현하려면 \inlinecode{BertPreTokeni
 
 \end{faqBox}
 
-\begin{faqBox}{Q6. (실무) 학습한 토크나이저를 20장+ 에서 어떻게 사용하나요?}
+\begin{faqBox}{Q6. (실무) 학습한 토크나이저를 \ref{ch:20}장+ 에서 어떻게 사용하나요?}
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -1528,7 +1569,7 @@ enc = hf_tok(
 )
 \end{lstlisting}
 
-단, 20장+ 의 \emph{실제 노트북} 은 학습 안정성을 위해 \inlinecode{AutoTokenizer.from\_pretrained("bert-base-uncased")} 같은 표준 사전학습 토크나이저를 가져옵니다 --- 이 장에서 \emph{직접 학습이 가능함을 본 다음에야} 표준 도구로 돌아가는 흐름.
+단, \ref{ch:20}장+ 의 \emph{실제 노트북} 은 학습 안정성을 위해 \inlinecode{AutoTokenizer.from\_pretrained("bert-base-uncased")} 같은 표준 사전학습 토크나이저를 가져옵니다 --- 이 장에서 \emph{직접 학습이 가능함을 본 다음에야} 표준 도구로 돌아가는 흐름.
 
 \end{faqBox}
 
@@ -1554,7 +1595,7 @@ enc = hf_tok(
 
 \begin{previewBox}{미리보기: 다음 장}
 
-\textbf{20장. 작은 BERT 직접 사전학습 (영어 MLM)}
+\textbf{\ref{ch:20}장. 작은 BERT 직접 사전학습 (영어 MLM)}
 
 \begin{itemize}
 \tightlist
@@ -1569,7 +1610,7 @@ enc = hf_tok(
 \item
   Loss: \inlinecode{CrossEntropyLoss} (마스킹된 위치의 토큰 예측).
 \item
-  21장에서 이 사전학습 모델로 Yelp 이진 분류 \(\to\) \ref{ch:10}장 (DistilBERT 사전학습) 과 \emph{직접 비교} --- \emph{직접 사전학습한 작은 BERT} 가 \emph{대규모 사전학습된 DistilBERT} 와 얼마나 차이 나는지.
+  \ref{ch:21}장에서 이 사전학습 모델로 Yelp 이진 분류 \(\to\) \ref{ch:10}장 (DistilBERT 사전학습) 과 \emph{직접 비교} --- \emph{직접 사전학습한 작은 BERT} 가 \emph{대규모 사전학습된 DistilBERT} 와 얼마나 차이 나는지.
 \end{itemize}
 
 \begin{quote}

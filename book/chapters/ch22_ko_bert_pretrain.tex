@@ -88,9 +88,9 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 \midrule
 
 19 & --- (토크나이저 학습 전용) & WordPiece + WordLevel (둘 다 직접 학습) & Yelp text + NSMC text & --- & --- & --- \\
-20 & 작은 BERT (직접, scratch) & \inlinecode{bert-base-uncased} 토크나이저 (가져옴) & \inlinecode{yelp\_polarity} text (라벨 무시) & MLM head & softmax (MLM) & \inlinecode{CrossEntropyLoss} (masked token) \\
+20 & 작은 BERT (직접, scratch) & \inlinecode{bert-base-uncased} 토크나이저 (가져옴) & Wikitext-103 paragraphs (일반 도메인) & MLM head & softmax (MLM) & \inlinecode{CrossEntropyLoss} (masked token) \\
 21 & \ref{ch:20}장 사전학습 BERT + 분류 헤드 & (\ref{ch:20}장과 동일) & Yelp 이진화 & \inlinecode{Linear(H,\ 2)} & softmax & \inlinecode{CrossEntropyLoss} \\
-\textbf{22 ← 여기} & \textbf{작은 BERT (직접, scratch) --- 한국어} & \textbf{\inlinecode{klue/bert-base} 토크나이저 (가져옴)} & \textbf{한국어 Wikipedia paragraphs} & \textbf{MLM head} & softmax (MLM) & \textbf{\inlinecode{CrossEntropyLoss} (masked token)} \\
+\textbf{22 \(\leftarrow\) 여기} & \textbf{작은 BERT (직접, scratch) --- 한국어} & \textbf{\inlinecode{klue/bert-base} 토크나이저 (가져옴)} & \textbf{한국어 Wikipedia paragraphs} & \textbf{MLM head} & softmax (MLM) & \textbf{\inlinecode{CrossEntropyLoss} (masked token)} \\
 23 (다음) & \ref{ch:22}장 사전학습 BERT + 분류 헤드 & (\ref{ch:22}장과 동일) & NSMC 이진 & \inlinecode{Linear(H,\ 2)} & softmax & \inlinecode{CrossEntropyLoss} \\
 \bottomrule
 \end{tabular}
@@ -112,9 +112,9 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 축 & \ref{ch:20}장 (영어 MLM scratch) & \ref{ch:22}장 (한국어 MLM scratch) \\
 \midrule
 
-\textbf{언어} & 영어 & \textbf{한국어} ← \emph{유일한 변화} \\
+\textbf{언어} & 영어 & \textbf{한국어} \(\leftarrow\) \emph{유일한 변화} \\
 토크나이저 & \inlinecode{bert-base-uncased} (vocab 30,522, 영어 WordPiece) & \textbf{\inlinecode{klue/bert-base} (vocab 약 32,000, 한국어 WordPiece)} \\
-데이터 & \inlinecode{fancyzhx/yelp\_polarity} text 5K (라벨 무시) & \textbf{한국어 Wikipedia paragraphs 5K (\inlinecode{wikimedia/wikipedia} 20231101.ko)} \\
+데이터 & Wikitext-103 paragraphs 5K (일반 도메인, \inlinecode{Salesforce/wikitext}) & \textbf{한국어 Wikipedia paragraphs 5K (\inlinecode{wikimedia/wikipedia} 20231101.ko)} \\
 본체 hyperparam & \inlinecode{BertConfig(hidden=256,\ layer=4,\ head=4,\ intermediate=1024)} & (그대로) \\
 모델 클래스 & \inlinecode{BertForMaskedLM} (random init) & (그대로) \\
 Collator & \inlinecode{DataCollatorForLanguageModeling(mlm\_probability=0.15)} & (그대로) \\
@@ -138,7 +138,7 @@ Loss & \inlinecode{CrossEntropyLoss} (masked token, vocab 30,522 logits) & \text
 
 
 
-\section{손실 함수의 변화: MLM 유지}
+\section{\texorpdfstring{Loss 함수의 변화 --- \emph{없음}. \ref{ch:20}장과 같은 MLM CE}{Loss 함수의 변화 --- 없음. \ref{ch:20}장과 같은 MLM CE}}
 
 이 장는 \emph{언어만 바뀌고} loss 함수는 \ref{ch:20}장과 동일한 MLM CrossEntropyLoss. 가려진 위치의 \emph{원래 토큰} 을 vocab 차원 softmax 로 예측. 다만 vocab 크기가 살짝 달라 random baseline 이 미세하게 이동합니다.
 
@@ -183,7 +183,7 @@ L_{\text{MLM}} = -\frac{1}{\vert{}M\vert{}} \sum_{i \in M} \log P(x_i \mid x_{\s
 
 \subsection{학습 목표 영역 (\ref{ch:20}장과 같음)}
 
-\begin{booktable}{22장 학습 목표 영역}{tab:ch22-04}
+\begin{booktable}{22장 학습 목표 영역 (20장 과 같음) 표}{tab:ch22-04}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -231,7 +231,7 @@ L_{\text{MLM}} = -\frac{1}{\vert{}M\vert{}} \sum_{i \in M} \log P(x_i \mid x_{\s
 
 \subsection{\texorpdfstring{\inlinecode{labels\ =\ -100} 한 줄 환기}{labels = -100 한 줄 환기}}
 
-\inlinecode{DataCollatorForLanguageModeling} 이 가려지지 않은 자리에 \inlinecode{labels\ =\ -100} 을 채워 \emph{해당 위치의 CE loss 를 무시} 합니다 (PyTorch \inlinecode{CrossEntropyLoss} 의 \inlinecode{ignore\_index} 기본값). 같은 트릭이 Phase 4 의 SFT (27장) 에서 \emph{prompt 자리를 가리는} 방식으로 다시 등장합니다 --- \emph{적용 자리만 정반대}. 한국어 MLM 에서도 트릭 자체는 \emph{완전히 동일}.
+\inlinecode{DataCollatorForLanguageModeling} 이 가려지지 않은 자리에 \inlinecode{labels\ =\ -100} 을 채워 \emph{해당 위치의 CE loss 를 무시} 합니다 (PyTorch \inlinecode{CrossEntropyLoss} 의 \inlinecode{ignore\_index} 기본값). 같은 트릭이 Phase 4 의 SFT (\ref{ch:27}장) 에서 \emph{prompt 자리를 가리는} 방식으로 다시 등장합니다 --- \emph{적용 자리만 정반대}. 한국어 MLM 에서도 트릭 자체는 \emph{완전히 동일}.
 
 
 
@@ -243,6 +243,8 @@ L_{\text{MLM}} = -\frac{1}{\vert{}M\vert{}} \sum_{i \in M} \log P(x_i \mid x_{\s
 \begin{lstlisting}
 %pip install -q -U transformers datasets accelerate
 \end{lstlisting}
+
+
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -278,10 +280,26 @@ plt.rcParams["axes.unicode_minus"] = False
 
 \end{lstlisting}
 
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+\noindent\emph{앞뒤 블록은 모두 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=25]
+import matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run(
+        "apt-get -qq -y install fonts-nanum",
+        shell=True,
+    )
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
+
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=35]
 if torch.cuda.is_available():
     DEVICE = "cuda"
 elif getattr(torch.backends, "mps", None) is not None and torch.backends.mps.is_available():
@@ -297,7 +315,7 @@ print(f"Device:         {DEVICE}")
 \noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=35]
+\begin{lstlisting}[firstnumber=45]
 if DEVICE == "cuda":
     print(
         f"GPU:             "
@@ -318,6 +336,9 @@ Device:         cuda
 GPU:             Tesla T4
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \textbf{baseline VRAM} (CUDA 환경에서만 의미 있는 출력 --- Colab T4 기준):
 
 
@@ -329,12 +350,14 @@ GPU:             Tesla T4
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Wed Jun 17 22:01:31 2026
+Sun Jun 21 23:23:57 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 42C P8 11W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 39C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \section{한국어 Wikipedia 데이터 준비}
 
@@ -390,6 +413,9 @@ Article 2 (수학 상수): 수학에서 상수란 그 값이 변하지 않는 �
 수
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 SEED = 42
@@ -467,6 +493,8 @@ Sample 0: 원(U+5143)은 시호에 쓰이는 글자다. 《일주서》 시법�
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
+
+
 \section{\texorpdfstring{토크나이저 로드와 비교}{토크나이저 로드와 비교}}
 
 \inlinecode{klue/bert-base} 의 한국어 WordPiece (vocab 약 32,000) 를 그대로 가져옵니다. \emph{모델은 random init} 이지만 토크나이저는 \emph{완성품} --- \ref{ch:20}장의 영어 패턴과 동일.
@@ -524,6 +552,8 @@ tokens (8): ['[CLS]', '이', '영화', '정말', '재미있', '##어요', '!', '
 ids:    [2, 1504, 3771, 3944, 6001, 10283, 5, 3]
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \subsection{같은 한국어 문장을 두 토크나이저로 --- \ref{ch:19}장 §5-4 cross-language 검증}
 
@@ -583,6 +613,9 @@ sentence              tokenizer  n_tokens  n_unk  unk_pct
 별로였어요. 시간 낭비. klue/bert-base (KO) 7 0 0.0
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 print("=" * 78)
@@ -620,12 +653,15 @@ bert-base-uncased (EN) ( 13 tokens, UNK 1): ['[UNK]', '.', 'U+1109', '##U+1...
 klue/bert-base (KO) ( 7 tokens, UNK 0): ['별로', '##였', '##어요', '.', '시...
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \textbf{관찰 --- \ref{ch:19}장 §5-4 결론의 실측 확인}
 
 \begin{itemize}
 \tightlist
 \item
-  \textbf{\inlinecode{bert-base-uncased} (영어)}: 한국어 문장이 \emph{자모 단위} 조각으로 분해되거나 \texttt{{[}UNK{]}} 가 섞임. 토큰 수가 길게 폭증, \emph{의미 단위} 가 사라짐. 모델이 이 표현으로 학습해도 \emph{한국어 어휘 정보} 가 거의 없음.
+  \textbf{\inlinecode{bert-base-uncased} (영어)}: 한국어 문장이 \emph{자모 단위} (\inlinecode{U+110B}, \inlinecode{\#\#U+1175}, \inlinecode{\#\#U+1167} ...) 로 분해되거나 \texttt{{[}UNK{]}} 가 섞임. 토큰 수가 길게 폭증, \emph{의미 단위} 가 사라짐. 모델이 이 표현으로 학습해도 \emph{한국어 어휘 정보} 가 거의 없음.
 \item
   \textbf{\inlinecode{klue/bert-base} (한국어)}: 한국어 문장이 \emph{어절·형태소} 단위 (\inlinecode{이}, \inlinecode{영화}, \inlinecode{정말}, \inlinecode{재미있}, \inlinecode{\#\#어요}) 로 자연스럽게 쪼개짐. UNK 0개, 토큰 수가 짧고 \emph{의미 단위} 가 보존.
 \end{itemize}
@@ -636,7 +672,7 @@ klue/bert-base (KO) ( 7 tokens, UNK 0): ['별로', '##였', '##어요', '.', '�
 
 
 
-\section{토큰화와 토큰 그룹화}
+\section{\texorpdfstring{토큰화 + \inlinecode{group\_texts} --- \ref{ch:20}장 패턴 그대로}{토큰화 + group\_texts --- \ref{ch:20}장 패턴 그대로}}
 
 MLM 사전학습 표준 입력 포맷. 모든 문서를 \emph{이어 붙여 토큰 스트림} 으로 만든 뒤 \inlinecode{block\_size=128} 단위로 자릅니다. 문장 경계가 사라지는 trade-off 는 있지만 BERT 사전학습은 \emph{임의 위치의 토큰 예측} 이라 문장 경계가 중요하지 않습니다.
 
@@ -650,18 +686,8 @@ BLOCK_SIZE = 128
 
 def tokenize_function(examples):
 
-    return tokenizer(
-        examples["text"],
-        add_special_tokens=False,
-        truncation=False,
-    )
+    return tokenizer(examples["text"], add_special_tokens=False, truncation=False)
 
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=11]
 tokenized_train = train_ds_raw.map(
     tokenize_function, batched=True, remove_columns=["text"],
 )
@@ -672,12 +698,32 @@ print(f"tokenized_train: {tokenized_train}")
 print(
     f"first 30 input_ids of sample 0: "
     f"{tokenized_train[0]['input_ids'][:30]}"
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{7\baselineskip}
+\begin{lstlisting}[firstnumber=17]
 )
 print(
     f"first 30 tokens of sample 0:    "
     f"{tokenizer.convert_ids_to_tokens(tokenized_train[0]['input_ids'][:30])}"
 )
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+[transformers] Token indices sequence length is longer than the specified m...
+tokenized_train: Dataset({
+    features: ['input_ids', 'token_type_ids', 'attention_mask'],
+    num_rows: 5000
+})
+first 30 input_ids of sample 0: [1478, 12, 244, 13, 1497, 24307, 2170, 8026...
+first 30 tokens of sample 0: ['원', '(', 'U+5143', ')', '은', '시호', '##에...
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -764,6 +810,8 @@ sample block 0 first 20 ids: [1478, 12, 244, 13, 1497, 24307, 2170, 8026, 2...
 sample block 0 first 20 tok: ['원', '(', 'U+5143', ')', '은', '시호', '##에...
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \section{\texorpdfstring{작은 \inlinecode{BertConfig} + \inlinecode{BertForMaskedLM} --- random init (\ref{ch:20}장과 동일)}{작은 BertConfig + BertForMaskedLM --- random init (\ref{ch:20}장과 동일)}}
 
@@ -863,6 +911,9 @@ Trainable:              11,483,136
   MLM head:                 98,304  (0.9%)  (tied with embeddings)
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \textbf{관찰} --- vocab 이 약 32,000 (\ref{ch:20}장의 30,522 보다 약간 큼) 이라 임베딩 테이블이 살짝 더 큽니다. 그래도 본체 구조는 동일 --- encoder body 2M + 임베딩 8M 수준의 작은 BERT.
 
 \begin{quote}
@@ -935,17 +986,19 @@ print(f"loss positions:        {n_loss_pos:>4} / {total_tokens}  "
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 batch shape: input_ids=(2, 128), labels=(2, 128)
-masked tokens (call 1):   22 / 256  (8.59%)
-masked tokens (call 2):   27 / 256  (10.55%)
-loss positions:          30 / 256  (11.72%)  (labels != -100)
+masked tokens (call 1):   31 / 256  (12.11%)
+masked tokens (call 2):   26 / 256  (10.16%)
+loss positions:          36 / 256  (14.06%)  (labels != -100)
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \subsection{{[}MASK{]} 가 들어가는 원리 --- 한 눈에 보는 80/10/10 (한국어 풀버전)}
 
 \inlinecode{DataCollatorForLanguageModeling} 은 매 step 마다 \emph{입력 토큰의 약 15\%} 를 \emph{무작위로} 선택하고, 선택된 위치마다 세 가지 중 하나를 적용합니다.
 
-\begin{booktable}{22장 마스킹 80/10/10 규칙}{tab:ch22-05}
+\begin{booktable}{22장 {[}MASK{]} 가 들어가는 원리 - 한 눈에 보는 80/10/10 (한국어 풀버전) 표}{tab:ch22-05}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -963,7 +1016,7 @@ loss positions:          30 / 256  (11.72%)  (labels != -100)
 \textbf{나머지 85\%} 의 토큰은 \inlinecode{labels\ =\ -100} 으로 두어 \emph{loss 계산에서 제외} 됩니다 (PyTorch CE 의 \inlinecode{ignore\_index} 기본값). 즉 한 step 의 MLM loss 는 \emph{선택된 15\% 자리만} 모아 평균한 값.
 
 \begin{quote}
-이 \inlinecode{labels\ =\ -100} 트릭은 BERT-만의 것이 아닙니다 --- Phase 4 GPT 사전학습은 \emph{거의 모든 토큰} 을 학습 (\inlinecode{labels\ =\ input\_ids}), SFT (27장) 는 \emph{prompt 만 -100, 답변만 학습}. 같은 트릭, 정반대 자리. \ref{ch:21}장 / 영어 짝과 동일한 풀버전 시각화로 한국어 환경에서도 직접 확인.
+이 \inlinecode{labels\ =\ -100} 트릭은 BERT-만의 것이 아닙니다 --- Phase 4 GPT 사전학습은 \emph{거의 모든 토큰} 을 학습 (\inlinecode{labels\ =\ input\_ids}), SFT (\ref{ch:27}장) 는 \emph{prompt 만 -100, 답변만 학습}. 같은 트릭, 정반대 자리. \ref{ch:21}장 / 영어 짝과 동일한 풀버전 시각화로 한국어 환경에서도 직접 확인.
 \end{quote}
 
 
@@ -1040,6 +1093,9 @@ pos original after_collator  label_id what_happened
 ...
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 torch.manual_seed(0)
@@ -1107,6 +1163,9 @@ Selected for loss (target 15%):      1,209  (14.76%)
 Target: 선택 15% / 그 중 80-10-10 으로 [MASK]-random-kept. 표본 크면 비율...
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \textbf{관전 포인트}
 
 \begin{itemize}
@@ -1200,6 +1259,8 @@ train blocks:  3,924
 steps / epoch: 122
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \subsection{사전학습 전 기준선}
 
@@ -1307,22 +1368,26 @@ for sent in test_sentences:
 \begin{bookoutputbox}
 Training Loss  Validation Loss  Epoch
 -------------  ---------------  -----
-No log         10.447138        0
+No log         10.441866        0
 ==============================================================================
 BEFORE pretraining  (random init body)
 ==============================================================================
-  eval_loss       : 10.4471   (random baseline ln V = 10.3735)
-  eval_perplexity : 34,446     (random baseline V    = 32,000)
+  eval_loss       : 10.4419   (random baseline ln V = 10.3735)
+  eval_perplexity : 34,265     (random baseline V    = 32,000)
 input: 대한민국의 수도는 [MASK]이다.
-  top-5 before pretraining: ['서약', '정공', '##퐁', '회선', '슘']
+  top-5 before pretraining: ['침체기', '##로나', '도드라', '##쿤', '안정세']
 
 input: 태양계에는 행성이 [MASK] 개 있다.
-  top-5 before pretraining: ['양봉', '선거전', '##yp', '나중', 'D']
+  top-5 before pretraining: ['나와서', '이구', '소풍', '하나하나', '책정']
 
 input: 이 영화 정말 [MASK].
+  top-5 before pretraining: ['써도', '압수', 'EV', '새콤', '만반']
 ...
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 t0 = time.time()
@@ -1346,14 +1411,17 @@ print(
 \begin{bookoutputbox}
 Epoch  Training Loss  Validation Loss
 -----  -------------  ---------------
-1      7.660039       7.714057
-2      7.424983       7.581302
+1      7.639146       7.667417
+2      7.386172       7.537118
 
 Korean MLM pretraining done in 0.3 min
-mean train loss: 7.8204
+mean train loss: 7.7968
 random baseline loss (uniform over vocab): 10.3735
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{5\baselineskip}
 \begin{lstlisting}
 !nvidia-smi
@@ -1361,12 +1429,14 @@ random baseline loss (uniform over vocab): 10.3735
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Wed Jun 17 22:02:36 2026
+Sun Jun 21 23:25:01 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 54C P0 58W / 70W | 3449MiB / 15360MiB | 37% Default
+N/A 51C P0 40W / 70W | 3449MiB / 15360MiB | 57% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \section{학습 결과}
 
@@ -1401,7 +1471,7 @@ if train_logs:
         losses,
         "o-",
         color="#4878D0",
-        label="train MLM loss",
+        label="학습 MLM loss",
     )
 \end{lstlisting}
 
@@ -1410,10 +1480,10 @@ if train_logs:
 \Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=17]
     ax.axhline(random_baseline, color="black", lw=1.0, ls=":",
-               label=f"random baseline (ln V = {random_baseline:.2f})")
-    ax.set_xlabel("training step")
+               label=f"랜덤 기준선 (ln V = {random_baseline:.2f})")
+    ax.set_xlabel("학습 step")
     ax.set_ylabel("MLM loss (CrossEntropy)")
-    ax.set_title("MLM training loss — small BERT scratch on Korean Wikipedia")
+    ax.set_title("MLM 학습 loss — 한국어 위키백과 위에서 처음부터 학습한 small BERT")
     ax.legend()
     plt.tight_layout()
     plt.show()
@@ -1421,17 +1491,12 @@ else:
     print("No train loss logs found.")
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-<Figure size 900x500 with 1 Axes>
-\end{bookoutputbox}
-\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{한국어 작은 BERT의 MLM 사전학습 loss 곡선}{fig:ch22-mlm-training-loss}
 \centering
 \includegraphics[width=0.82\linewidth]{assets/figures/ch22_mlm_training_loss.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch22-mlm-training-loss}는 한국어 Wikipedia 문단으로 작은 BERT를 MLM 사전학습할 때의 train loss를 보여줍니다. 무작위 기준선 \(\log V\) 아래로 내려가는지가 핵심입니다. 절대값이 표준 \inlinecode{klue/bert-base} 수준에 도달하는지보다, 짧은 Colab 실습 안에서도 언어 모델 본체가 무작위 초기화 상태에서 벗어나는지를 확인하는 그림입니다.
+\textbf{그림 읽기} --- 그림~\ref{fig:ch22-mlm-training-loss}에서 다음 내용을 확인합니다: 한국어 작은 BERT의 MLM 사전학습 loss 곡선. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
 
 
 
@@ -1469,16 +1534,18 @@ print(
 \begin{bookoutputbox}
 Training Loss  Validation Loss  Epoch
 -------------  ---------------  -----
-7.424983       7.558918         2
+7.386172       7.513282         2
 === eval (held-out Korean Wikipedia paragraphs) ===
-               eval_loss: 7.5589
+               eval_loss: 7.5133
 
-  MLM loss:               7.5589
-  perplexity (exp loss):  1917.77
+  MLM loss:               7.5133
+  perplexity (exp loss):  1832.22
   random baseline PPL:    32,000  (uniform over vocab)
-  -> model narrowed vocab to approx. 1918 candidates per masked position
+  -> model narrowed vocab to approx. 1832 candidates per masked position
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \section{사전학습 전후 비교}
 
@@ -1529,24 +1596,27 @@ for sent in test_sentences:
 \begin{bookoutputbox}
 Training Loss  Validation Loss  Epoch
 -------------  ---------------  -----
-7.424983       7.566011         2
+7.386172       7.517107         2
 ==============================================================================
 AFTER pretraining  (2 epoch MLM)
 ==============================================================================
-  eval_loss       : 7.5660   (before: 10.4471)
-  eval_perplexity : 1,931.42        (before: 34,446)
-  -> narrowed vocab to approx. 1931 candidates per masked position
+  eval_loss       : 7.5171   (before: 10.4419)
+  eval_perplexity : 1,839.24        (before: 34,265)
+  -> narrowed vocab to approx. 1839 candidates per masked position
 
 input: 대한민국의 수도는 [MASK]이다.
-  top-5 after pretraining: ['.', ',', '##의', '##다', '##년']
+  top-5 after pretraining: ['.', '##의', ',', '##는', '##을']
 
 input: 태양계에는 행성이 [MASK] 개 있다.
-  top-5 after pretraining: ['.', '##의', ',', '##다', ')']
+  top-5 after pretraining: ['.', ',', '##의', '##에', '##다']
+
 ...
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
-\subsection{평가 손실과 perplexity}
+
+
+\subsection{eval\_loss / perplexity --- 수치 비교}
 
 두 측정치를 한 표·한 막대 그래프로.
 
@@ -1566,26 +1636,29 @@ print(metric_compare.round(4).to_string(index=False))
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Before vs After — eval metrics
+Before vs After -- eval metrics
          metric  before (random)  after (2 epoch)  random baseline
-      eval_loss          10.4471           7.5660          10.3735
-eval_perplexity       34445.6443        1931.4213       32000.0000
+      eval_loss          10.4419           7.5171          10.3735
+eval_perplexity       34264.5277        1839.2378       32000.0000
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 sns.set_theme(style="whitegrid", context="talk")
 fig, axes = plt.subplots(1, 2, figsize=(12, 5))
 
 loss_values = [pre_eval_loss, post_eval_loss]
-loss_labels = ["before (random)", "after (2 epoch)"]
+loss_labels = ["학습 전 (랜덤)", "학습 후 (2 epoch)"]
 axes[0].bar(
     loss_labels,
     loss_values,
     color=["#999999", "#EE854A"],
 )
 axes[0].axhline(random_baseline_loss, color="black", lw=1.0, ls=":",
-                label=f"random baseline ln V = {random_baseline_loss:.2f}")
+                label=f"랜덤 기준선 ln V = {random_baseline_loss:.2f}")
 axes[0].set_ylabel("eval_loss")
 axes[0].set_title("MLM eval_loss")
 axes[0].legend(loc="upper right", fontsize=10)
@@ -1604,7 +1677,7 @@ axes[1].bar(
 )
 axes[1].set_yscale("log")
 axes[1].axhline(tokenizer.vocab_size, color="black", lw=1.0, ls=":",
-                label=f"random baseline V = {tokenizer.vocab_size:,}")
+                label=f"랜덤 기준선 V = {tokenizer.vocab_size:,}")
 axes[1].set_ylabel("perplexity (log scale)")
 axes[1].set_title("MLM perplexity")
 axes[1].legend(loc="upper right", fontsize=10)
@@ -1613,17 +1686,12 @@ plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-<Figure size 1200x500 with 2 Axes>
-\end{bookoutputbox}
-\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{한국어 MLM 평가 손실과 perplexity 변화}{fig:ch22-eval-loss-ppl}
 \centering
 \includegraphics[width=0.82\linewidth]{assets/figures/ch22_eval_loss_ppl.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch22-eval-loss-ppl}는 사전학습 전후의 평가 손실과 perplexity를 나란히 비교합니다. Perplexity는 로그 축으로 보아야 변화가 읽힙니다. 값이 낮아질수록 마스크 위치에서 가능한 후보 토큰 공간을 더 좁힌다는 뜻이며, 23장에서 이 본체를 분류 헤드와 연결할 준비가 됩니다.
+\textbf{그림 읽기} --- 그림~\ref{fig:ch22-eval-loss-ppl}에서 다음 내용을 확인합니다: 한국어 MLM 평가 손실과 perplexity 변화. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
 
 
 
@@ -1663,6 +1731,9 @@ Our small BERT params: 11.5M
 Reference BERT params: 110.7M  (10x larger)
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 def predict_mask_with(text, ref, top_k=5):
@@ -1769,30 +1840,33 @@ for _, row in top5_compare.iterrows():
 Before (random) vs Ours (small BERT, ko wiki 5K) vs Reference (klue/bert-ba...
 ===========================================================================...
 input: 대한민국의 수도는 [MASK]이다.
-  before (random)            : 서약, 정공, ##퐁, 회선, 슘
-  ours  (small, 5K para)     : ., ,, ##의, ##다, ##년
+  before (random)            : 침체기, ##로나, 도드라, ##쿤, 안정세
+  ours  (small, 5K para)     : ., ##의, ,, ##는, ##을
   ref   (klue/bert-base)     : 서울, 광화문, 평양, 부산, 인천
 
 input: 태양계에는 행성이 [MASK] 개 있다.
-  before (random)            : 양봉, 선거전, ##yp, 나중, D
-  ours  (small, 5K para)     : ., ##의, ,, ##다, )
+  before (random)            : 나와서, 이구, 소풍, 하나하나, 책정
+  ours  (small, 5K para)     : ., ,, ##의, ##에, ##다
   ref   (klue/bert-base)     : 여러, 몇, 두, 세, 다섯
 
 input: 이 영화 정말 [MASK].
-  before (random)            : 전유물, 대구, ##껄, 신기록, 학번
-  ours  (small, 5K para)     : ., ,, ##의, ), ##다
+  before (random)            : 써도, 압수, EV, 새콤, 만반
+  ours  (small, 5K para)     : ., ##의, ,, (, ##년
   ref   (klue/bert-base)     : 좋아, [UNK], ., 좋아해, 좋아한다
 ...
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \textbf{해석 가이드 --- 사전학습이 만든 차이}
 
 \begin{itemize}
 \tightlist
 \item
-  \textbf{\inlinecode{eval\_loss}}: random baseline \(\ln V \approx 10.37\) 에서 약 5-7 부근까지 떨어졌으면 본체가 \emph{언어 구조 일부} 를 학습. \emph{완전한} 한국어 표상은 아니어도 \inlinecode{klue/bert-base} 가 학습한 것의 \emph{방향} 은 맞춤.
+  \textbf{\inlinecode{eval\_loss}}: random baseline \texttt{ln\ V\ \$\textbackslash{}approx\$\ 10.37} 에서 약 5-7 부근까지 떨어졌으면 본체가 \emph{언어 구조 일부} 를 학습. \emph{완전한} 한국어 표상은 아니어도 \inlinecode{klue/bert-base} 가 학습한 것의 \emph{방향} 은 맞춤.
 \item
-  \textbf{\inlinecode{perplexity}}: 32,000 (vocab 전체) 에서 약 1,900 부근으로. \emph{마스크 자리마다 후보를 약 1,900개로 좁힌 상태} 라는 직관적 해석.
+  \textbf{\inlinecode{perplexity}}: 32,000 (vocab 전체) 에서 수십-수백 부근으로. \emph{마스크 자리마다 후보를 약 50-500 개로 좁힌 상태} 라는 직관적 해석.
 \item
   \textbf{top-5 토큰} (3-way 비교):
 
@@ -1849,9 +1923,12 @@ Files:
            tokenizer_config.json  0.4 KB
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \textbf{저장된 파일 구조} --- \ref{ch:20}장과 동일한 HF 표준 레이아웃:
 
-\begin{booktable}{22장 모델 저장과 다음 장 재사용}{tab:ch22-06}
+\begin{booktable}{22장 모델 저장 - 23장 에서 재사용 표}{tab:ch22-06}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}ll@{}}
 \toprule
@@ -1911,7 +1988,7 @@ Files:
 
 \inlinecode{AutoTokenizer.from\_pretrained("klue/bert-base")} & 한국어 WordPiece (vocab 약 32,000) & 영어 \(\to\) 한국어 \\
 \inlinecode{load\_dataset("wikimedia/wikipedia",\ "20231101.ko")} & 한국어 Wikipedia HF 정제본 로드 & \inlinecode{load\_dataset("Salesforce/wikitext",\ ...)} (\ref{ch:20}장) --- 같은 패턴, 언어만 변경 \\
-\texttt{Dataset.from\_pandas(df{[}{[}"document"{]}{]}).rename\_column(...)} & pandas \(\to\) HF Dataset 변환 & \ref{ch:15}장과 같은 패턴 \\
+\texttt{Dataset.from\_pandas(df{[}{[}“document”{]}{]}).rename\_column(...)} & pandas \(\to\) HF Dataset 변환 & \ref{ch:15}장과 같은 패턴 \\
 \inlinecode{transformers.BertConfig} (동일) & 작은 BERT hyperparam & (\ref{ch:20}장 동일) \\
 \inlinecode{transformers.BertForMaskedLM(config)} (동일) & random init MLM 모델 & (\ref{ch:20}장 동일) \\
 \inlinecode{DataCollatorForLanguageModeling(mlm\_probability=0.15)} (동일) & 매 batch 동적 80/10/10 masking & (\ref{ch:20}장 동일) \\
@@ -1947,13 +2024,14 @@ Files:
 
 쓰면 \emph{거의 학습 안 됨} 입니다. 이 장 셀 2 하단의 비교 표가 그 답:
 
-\Needspace{8\baselineskip}
+\Needspace{9\baselineskip}
 \begin{lstlisting}
 tokenizer_en = AutoTokenizer.from_pretrained("bert-base-uncased")
 sent = "이 영화 정말 재미있어요!"
 toks = tokenizer_en.tokenize(sent)
-# ['jamo_1', '##jamo_2', 'jamo_3', '##jamo_4',
-#  '##jamo_5', '##jamo_6', '##jamo_7', '[UNK]',
+# ['U+110B', '##U+1175', 'U+110B', '##U+1167', '##U+11BC',
+# '##U+1112', '##U+116A', 'U+110C', '##U+1165', 
+# '##U+11BC', '##U+1106', '##U+1161', '##U+11AF', '[UNK]',
 # '!']
 \end{lstlisting}
 
@@ -2052,9 +2130,9 @@ loss = loss_fn(logits, labels)
 \begin{itemize}
 \tightlist
 \item
-  \textbf{GPT 사전학습} (24-26장): \inlinecode{labels\ =\ input\_ids.clone()} \(\to\) 사실상 \emph{모든 자리} 학습 (pad 만 -100)
+  \textbf{GPT 사전학습} (\ref{ch:24}--\ref{ch:26}장): \inlinecode{labels\ =\ input\_ids.clone()} \(\to\) 사실상 \emph{모든 자리} 학습 (pad 만 -100)
 \item
-  \textbf{SFT / Instruction Tuning} (27장): \texttt{labels{[}prompt\_mask{]}\ =\ -100} \(\to\) \emph{답변 부분만} 학습
+  \textbf{SFT / Instruction Tuning} (\ref{ch:27}장): \texttt{labels{[}prompt\_mask{]}\ =\ -100} \(\to\) \emph{답변 부분만} 학습
 \end{itemize}
 
 세 곳 모두 같은 \inlinecode{-100} 트릭, 적용 자리만 다릅니다. \ref{ch:21}장 §3 의 \emph{labels = -100 thread} 마크다운에 풀버전 설명.

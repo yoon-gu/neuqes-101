@@ -74,7 +74,7 @@
 
 \section{변화추적표}
 
-\begin{booktable}{변화추적표}{tab:ch13-01}
+\begin{booktable}{13장 변화추적표}{tab:ch13-01}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lllllll@{}}
 \toprule
@@ -84,29 +84,29 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 6 & \inlinecode{OneVsRestClassifier(LogisticRegression())} & \inlinecode{TfidfVectorizer()} & Yelp + 항목 키워드 합성 & (5차원) & sigmoid (각각) & \inlinecode{BCEWithLogitsLoss} per-label \\
 10 & DistilBERT 파인튜닝 & \inlinecode{AutoTokenizer.from\_pretrained(...)} & Yelp 이진화 & \inlinecode{Linear(H,\ 1)} & sigmoid & \inlinecode{BCEWithLogitsLoss} \\
 12 & DistilBERT 파인튜닝 & 같음 & Yelp 5클래스 & \inlinecode{Linear(H,\ 5)} & softmax & \inlinecode{CrossEntropyLoss} \\
-\textbf{13 ← 여기} & DistilBERT 파인튜닝 & 같음 & \textbf{Yelp + 항목 키워드 합성} & \textbf{\inlinecode{Linear(H,\ 5)}} & \textbf{sigmoid (per-label)} & \textbf{\inlinecode{BCEWithLogitsLoss} (per-label)} \\
-14 (다음) & DistilBERT 파인튜닝 & 같음 & Yelp + 항목 + 별점 보조 & \inlinecode{Linear(H,\ 5)} 메인 + \inlinecode{Linear(H,\ 1)} 보조 & sigmoid + 없음 & \inlinecode{BCE(per-label)} + $\lambda\cdot$\inlinecode{MSE} \\
+\textbf{13 \(\leftarrow\) 여기} & DistilBERT 파인튜닝 & 같음 & \textbf{Yelp + 항목 키워드 합성} & \textbf{\inlinecode{Linear(H,\ 5)}} & \textbf{sigmoid (per-label)} & \textbf{\inlinecode{BCEWithLogitsLoss} (per-label)} \\
+14 (다음) & DistilBERT 파인튜닝 & 같음 & Yelp + 항목 + 별점 보조 & \inlinecode{Linear(H,\ 5)} 메인 + \inlinecode{Linear(H,\ 1)} 보조 & sigmoid + 없음 & \texttt{BCE(per-label)\ +\ \$\textbackslash{}lambda\$·MSE} \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
-전체 20장 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
+전체 장 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
 
 
 
 \section{변경점: \ref{ch:12}장 대비}
 
-\begin{booktable}{변경점 요약}{tab:ch13-02}
+\begin{booktable}{13장 변경점 요약}{tab:ch13-02}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
 축 & \ref{ch:12}장 (multi-class) & \ref{ch:13}장 (multi-label) \\
 \midrule
 
-\textbf{Task} & 5클래스 \emph{single-label} (서로 배타적) & \textbf{5라벨 \emph{multi-label}} (동시 활성 가능) ← 본질적 변화 \\
+\textbf{Task} & 5클래스 \emph{single-label} (서로 배타적) & \textbf{5라벨 \emph{multi-label}} (동시 활성 가능) \(\leftarrow\) 본질적 변화 \\
 \inlinecode{num\_labels} & 5 & \textbf{5} (그대로!) \\
-\inlinecode{problem\_type} & \inlinecode{"single\_label\_classification"} & \textbf{\inlinecode{"multi\_label\_classification"}} ← BCE 자동 매핑 \\
+\inlinecode{problem\_type} & \inlinecode{"single\_label\_classification"} & \textbf{\inlinecode{"multi\_label\_classification"}} \(\leftarrow\) BCE 자동 매핑 \\
 Activation & softmax (합=1 강제) & \textbf{per-label sigmoid} (각각 독립 0-1) \\
 Loss & \inlinecode{CrossEntropyLoss} & \textbf{\inlinecode{BCEWithLogitsLoss}} per-label \\
 라벨 형식 & int 스칼라 (0-4) & \textbf{multi-hot float \texttt{{[}1,\ 0,\ 1,\ 0,\ 1{]}}} \\
@@ -130,12 +130,12 @@ softmax는 출력의 \emph{합 = 1} 을 강제합니다 (\(\sum_k \mathrm{softma
 \begin{itemize}
 \tightlist
 \item
-  \textbf{softmax 모델은 표현 불가}: P(food)=0.9 면 나머지 4 라벨 합이 0.1 로 강제 → \textquotesingle service=0.85 동시 활성\textquotesingle{} 이 \emph{수학적으로 불가능}.
+  \textbf{softmax 모델은 표현 불가}: P(food)=0.9 면 나머지 4 라벨 합이 0.1 로 강제 \(\to\) \textquotesingle service=0.85 동시 활성\textquotesingle{} 이 \emph{수학적으로 불가능}.
 \item
   \textbf{per-label sigmoid 모델은 표현 가능}: 각 라벨이 독립이라 P(food)=0.9 와 P(service)=0.85 가 동시에 자연스러움.
 \end{itemize}
 
-즉 task가 \emph{진짜 multi-label} 이라면 loss/activation 선택이 강제됩니다 (\ref{ch:06}장 에서 본 동일한 논리, BERT로 옮겨옴).
+즉 task가 \emph{진짜 multi-label} 이라면 loss/activation 선택이 강제됩니다 (\ref{ch:06}장에서 본 동일한 논리, BERT로 옮겨옴).
 
 
 
@@ -154,7 +154,7 @@ L = \frac{1}{N \cdot K}\sum_{i=1}^{N}\sum_{k=1}^{K}\left[ y_{i,k} \log \sigma(z_
 
 \textbf{숫자로 감 잡기 (K=5, 정답 multi-hot \(\mathbf{y} = [1, 0, 1, 0, 1]\))} --- logits 별 손실 분해:
 
-\begin{booktable}{손실 노트}{tab:ch13-03}
+\begin{booktable}{13장 손실 노트 표}{tab:ch13-03}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lllll@{}}
 \toprule
@@ -164,7 +164,7 @@ L = \frac{1}{N \cdot K}\sum_{i=1}^{N}\sum_{k=1}^{K}\left[ y_{i,k} \log \sigma(z_
 food & 1 & 3.0 & 0.953 & \(-\log 0.953 = 0.048\) \\
 service & 0 & -2.0 & 0.119 & \(-\log(1-0.119) = 0.127\) \\
 price & 1 & 0.5 & 0.622 & \(-\log 0.622 = 0.474\) \\
-ambiance & 0 & 1.5 & 0.818 & \(-\log(1-0.818) = 1.704\) ← 자신 있게 틀림 \\
+ambiance & 0 & 1.5 & 0.818 & \(-\log(1-0.818) = 1.704\) \(\leftarrow\) 자신 있게 틀림 \\
 location & 1 & -0.5 & 0.378 & \(-\log 0.378 = 0.974\) \\
 \bottomrule
 \end{tabular}
@@ -220,7 +220,7 @@ from sklearn.metrics import (
 
 \noindent\emph{앞뒤 블록은 모두 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
-\Needspace{8\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=17]
     roc_auc_score, hamming_loss,
 )
@@ -228,12 +228,22 @@ from sklearn.metrics import (
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.multiclass import OneVsRestClassifier
+
+import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run(
+        "apt-get -qq -y install fonts-nanum",
+        shell=True,
+    )
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
 \end{lstlisting}
 
 \noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=24]
+\begin{lstlisting}[firstnumber=33]
 plt.rcParams["axes.unicode_minus"] = False
 
 print(f"PyTorch:        {torch.__version__}")
@@ -254,6 +264,14 @@ else:
 \inlinecode{numpy, pandas, matplotlib, PyTorch, datasets} 같은 주요 패키지를 불러옵니다.
 \end{codeRead}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+PyTorch:        2.11.0+cu128
+CUDA available: True
+GPU:             Tesla T4
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
 
 
 \textbf{baseline VRAM}:
@@ -271,18 +289,20 @@ else:
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Wed Jun 17 21:39:27 2026
+Sun Jun 21 23:00:37 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 40C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 37C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \section{데이터 준비}
 
 Yelp 리뷰엔 multi-label 정답이 없습니다. \ref{ch:06}장에서처럼 5개 항목(aspect)별 키워드 사전을 만들어 텍스트에서 매칭 --- 어떤 키워드라도 등장하면 해당 항목을 1로 활성. 5차원 multi-hot 벡터가 합성됩니다.
 
-\begin{booktable}{데이터 준비}{tab:ch13-04}
+\begin{booktable}{13장 데이터 준비 표}{tab:ch13-04}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -300,7 +320,7 @@ Yelp 리뷰엔 multi-label 정답이 없습니다. \ref{ch:06}장에서처럼 5�
 \end{booktable}
 
 \begin{quote}
-\textbf{합성의 한계} --- 키워드 매칭은 \emph{언급한 항목} 만 잡고 \emph{언급한 항목이 긍정인지 부정인지} 는 알 수 없습니다. 또 \emph{키워드 없이} 항목이 표현된 경우(예: “10 minutes wait” → service)도 놓칩니다. 이 한계는 장 끝에서 솔직히 짚습니다.
+\textbf{합성의 한계} --- 키워드 매칭은 \emph{언급한 항목} 만 잡고 \emph{언급한 항목이 긍정인지 부정인지} 는 알 수 없습니다. 또 \emph{키워드 없이} 항목이 표현된 경우(예: “10 minutes wait” \(\to\) service)도 놓칩니다. 이 한계는 장 끝에서 솔직히 짚습니다.
 \end{quote}
 
 
@@ -345,11 +365,14 @@ K (number of aspects): 5
 aspects: ['food', 'service', 'price', 'ambiance', 'location']
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
 
-ds = load_dataset("yelp_review_full")
+ds = load_dataset("Yelp/yelp_review_full")
 train_full = ds["train"].shuffle(seed=42).select(range(5000))
 eval_full  = ds["test"].shuffle(seed=42).select(range(1000))
 
@@ -378,6 +401,19 @@ print(
     f"{[a for a, v in zip(ASPECTS, train_full[0]['aspects']) if v > 0]}"
 )
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+train: 5000, eval: 1000
+
+First sample:
+text: I stalk this truck. I've been to industrial parks where I pretend to...
+  aspects (multi-hot): [0.0, 1.0, 0.0, 0.0, 1.0]
+  active aspects: ['service', 'location']
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -431,7 +467,10 @@ Active label distribution (train):
   5 labels active: 55 samples (1.1%)
 \end{bookoutputbox}
 \par\vspace{0.9em}
-\textbf{\ref{ch:12}장과의 한 줄 차이}: \texttt{out{[}“labels”{]}\ =\ {[}int(l)\ for\ l\ in\ batch{[}“label”{]}{]}} → \texttt{out{[}“labels”{]}\ =\ {[}list(map(float,\ a))\ for\ a\ in\ batch{[}“aspects”{]}{]}}. 라벨이 \emph{int 스칼라} 가 아니라 \emph{길이 5 multi-hot float 벡터}. 이 형식 + \inlinecode{problem\_type="multi\_label\_classification"} 두 가지가 BCE per-label 자동 매핑의 트리거.
+
+
+
+\textbf{\ref{ch:12}장과의 한 줄 차이}: \texttt{out{[}“labels”{]}\ =\ {[}int(l)\ for\ l\ in\ batch{[}“label”{]}{]}} \(\to\) \texttt{out{[}“labels”{]}\ =\ {[}list(map(float,\ a))\ for\ a\ in\ batch{[}“aspects”{]}{]}}. 라벨이 \emph{int 스칼라} 가 아니라 \emph{길이 5 multi-hot float 벡터}. 이 형식 + \inlinecode{problem\_type="multi\_label\_classification"} 두 가지가 BCE per-label 자동 매핑의 트리거.
 
 
 
@@ -447,27 +486,34 @@ def tokenize_fn(batch):
     out["labels"] = [list(map(float, a)) for a in batch["aspects"]]
     return out
 
+train_tok = train_full.map(tokenize_fn, batched=True).remove_columns(["text", "label", "aspects"])
+eval_tok  = eval_full.map(tokenize_fn,  batched=True).remove_columns(["text", "label", "aspects"])
+
 \end{lstlisting}
 
-\noindent\emph{앞뒤 블록은 모두 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=11]
-train_tok = train_full.map(
-    tokenize_fn,
-    batched=True).remove_columns(["text", "label", "aspects"],
-)
-eval_tok  = eval_full.map(
-    tokenize_fn,
-    batched=True).remove_columns(["text", "label", "aspects"],
-)
-
+\Needspace{7\baselineskip}
+\begin{lstlisting}[firstnumber=14]
 print(train_tok)
 print(
     f"\nFirst sample label: "
     f"{train_tok[0]['labels']}  (length-5 multi-hot float vector)"
 )
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+Dataset({
+    features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'],
+    num_rows: 5000
+})
+
+First sample label: [0.0, 1.0, 0.0, 0.0, 1.0] (length-5 multi-hot float vec...
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \section{\texorpdfstring{모델 로드}{모델 로드}}
 
@@ -489,6 +535,7 @@ def param_summary(m):
     total     = sum(p.numel() for p in m.parameters())
     trainable = sum(p.numel() for p in m.parameters() if p.requires_grad)
     return total, trainable
+
 \end{lstlisting}
 
 \noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
@@ -512,6 +559,26 @@ print(
 print(f"id2label:             {model.config.id2label}")
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+Key                     | Status     | 
+------------------------+------------+-
+classifier.weight       | MISSING    | 
+pre_classifier.bias     | MISSING    | 
+classifier.bias         | MISSING    | 
+pre_classifier.weight   | MISSING    | 
+
+- MISSING: those params were newly initialized because missing from the che...
+Parameters:              66,957,317  (67.0 M)
+Trainable parameters:    66,957,317  (100.0%)
+Classifier:           Linear(in_features=768, out_features=5, bias=True)
+problem_type:         multi_label_classification
+id2label: {0: 'food', 1: 'service', 2: 'price', 3: 'ambiance', 4: 'location'}
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
 \textbf{\ref{ch:12}장과 파라미터 수가 \emph{완전히 동일}} --- 차이는 \inlinecode{problem\_type} 한 줄뿐. 같은 모델이 \emph{어떻게 해석되고 어떤 loss로 학습되는가} 만 바뀝니다.
 
 
@@ -523,12 +590,14 @@ print(f"id2label:             {model.config.id2label}")
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Wed Jun 17 21:40:03 2026
+Sun Jun 21 23:01:06 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 42C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 38C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \section{학습}
 
@@ -554,7 +623,7 @@ def compute_metrics(eval_pred):
 
 \noindent\emph{앞뒤 블록은 모두 예측 결과를 지표와 표로 요약하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
-\Needspace{8\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=13]
     p_mi, r_mi, f1_mi, _ = precision_recall_fscore_support(
         labels, preds, average="micro", zero_division=0,
@@ -562,12 +631,7 @@ def compute_metrics(eval_pred):
     out["micro_f1"] = float(f1_mi)
     out["micro_precision"] = float(p_mi)
     out["micro_recall"]    = float(r_mi)
-\end{lstlisting}
 
-\noindent\emph{앞뒤 블록은 모두 예측 결과를 지표와 표로 요약하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=20]
     p_ma, r_ma, f1_ma, _ = precision_recall_fscore_support(
         labels, preds, average="macro", zero_division=0,
     )
@@ -575,6 +639,12 @@ def compute_metrics(eval_pred):
     out["macro_precision"] = float(p_ma)
     out["macro_recall"]    = float(r_ma)
 
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{7\baselineskip}
+\begin{lstlisting}[firstnumber=27]
     try:
         out["macro_auc"] = float(roc_auc_score(labels, probs, average="macro"))
     except ValueError:
@@ -604,7 +674,7 @@ training_args = TrainingArguments(
 
 \noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
 
-\Needspace{10\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=15]
 trainer = Trainer(
     model=model,
@@ -614,18 +684,26 @@ trainer = Trainer(
     processing_class=tokenizer,
     compute_metrics=compute_metrics,
 )
-\end{lstlisting}
 
-\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 학습 설정을 만들고 학습 루프를 실행하는 단계로 넘어갑니다.}
-
-\Needspace{7\baselineskip}
-\begin{lstlisting}[firstnumber=24]
 train_result = trainer.train()
 print(
     f"\nTraining done — mean train loss: "
     f"{train_result.training_loss:.4f}"
 )
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+Epoch Train... Valid... Hammi... Micro F1 Micro... Micro... Macro F1 Macro....
+----- -------- -------- -------- -------- -------- -------- -------- ------...
+1 0.388281 0.367738 0.154400 0.736519 0.893952 0.626233 0.587770 0.918140 0...
+2 0.295320 0.306529 0.112400 0.821926 0.905094 0.752757 0.772646 0.907819 0...
+
+Training done -- mean train loss: 0.4035
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \Needspace{5\baselineskip}
 \begin{lstlisting}
@@ -634,12 +712,14 @@ print(
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Wed Jun 17 21:40:42 2026
+Sun Jun 21 23:01:44 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 62C P0 70W / 70W | 1577MiB / 15360MiB | 73% Default
+N/A 58C P0 55W / 70W | 1577MiB / 15360MiB | 74% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \section{평가}
 
@@ -656,26 +736,33 @@ for k, v in eval_metrics.items():
         print(f"  {k:>22}: {v:.4f}")
 \end{lstlisting}
 
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{eval\_metrics = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{for k, v in eval\_metrics....}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{4행}의 \inlinecode{if k.startswith("eval\_")...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\end{codeRead}
+
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 Train... Valid... Epoch Hammi... Micro F1 Micro... Micro... Macro F1 Macro....
 -------- -------- ----- -------- -------- -------- -------- -------- ------...
-0.285646 0.293182 2 0.102000 0.839824 0.915127 0.775972 0.801891 0.925907 0...
+0.295320 0.306529 2 0.112400 0.821926 0.905094 0.752757 0.772646 0.907819 0...
 BERT multi-label evaluation:
-               eval_loss: 0.2932
-       eval_hamming_loss: 0.1020
-           eval_micro_f1: 0.8398
-    eval_micro_precision: 0.9151
-       eval_micro_recall: 0.7760
-           eval_macro_f1: 0.8019
-    eval_macro_precision: 0.9259
-       eval_macro_recall: 0.7229
-          eval_macro_auc: 0.9155
-            eval_runtime: 0.9146
-  eval_samples_per_second: 1093.3460
-   eval_steps_per_second: 34.9870
+               eval_loss: 0.3065
+       eval_hamming_loss: 0.1124
+           eval_micro_f1: 0.8219
+    eval_micro_precision: 0.9051
+       eval_micro_recall: 0.7528
+           eval_macro_f1: 0.7726
+    eval_macro_precision: 0.9078
+       eval_macro_recall: 0.6914
+          eval_macro_auc: 0.9101
+            eval_runtime: 0.9147
+  eval_samples_per_second: 1093.3090
+   eval_steps_per_second: 34.9860
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 preds_output = trainer.predict(eval_tok)
@@ -699,15 +786,30 @@ preds  = (probs >= 0.5).astype(int)
 print(f"logits shape: {logits.shape}")
 print(f"prob ranges per label:")
 for k, a in enumerate(ASPECTS):
-    prob_min = probs[:, k].min()
-    prob_max = probs[:, k].max()
-    true_rate = labels[:, k].mean()
-    pred_rate = preds[:, k].mean()
-    print(
-        f"  {a:>9}: [{prob_min:.4f}, {prob_max:.4f}]  "
-        f"true={true_rate:.1%}, pred={pred_rate:.1%}"
-    )
+    print(f"  {a:>9}: [{probs[:, k].min():.4f}, {probs[:, k].max():.4f}]  "
+          f"true rate={labels[:, k].mean(
+              ):.1%},
+              pred rate={preds[:, k].mean():.1%}",
+          )
 \end{lstlisting}
+
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{preds\_output = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{2--5행}의 \inlinecode{logits = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{labels = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{8행}의 \inlinecode{probs = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{10행}의 \inlinecode{preds = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\end{codeRead}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+logits shape: (1000, 5)
+prob ranges per label:
+       food: [0.0259, 0.9904]  true rate=55.2%, pred rate=55.6%
+    service: [0.0554, 0.9820]  true rate=49.7%, pred rate=46.7%
+      price: [0.0777, 0.8598]  true rate=30.4%, pred rate=16.0%
+   ambiance: [0.0282, 0.9313]  true rate=16.8%, pred rate=9.6%
+   location: [0.0350, 0.9240]  true rate=20.2%, pred rate=15.4%
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \Needspace{8\baselineskip}
 \begin{lstlisting}
@@ -723,80 +825,130 @@ print(classification_report(
 \begin{bookoutputbox}
 precision    recall  f1-score   support
 
-        food     0.9347    0.9330    0.9338       552
-     service     0.8761    0.8390    0.8571       497
-       price     0.9080    0.5197    0.6611       304
-    ambiance     0.9804    0.5952    0.7407       168
-    location     0.9304    0.7277    0.8167       202
+        food     0.9227    0.9293    0.9260       552
+     service     0.8865    0.8330    0.8589       497
+       price     0.8625    0.4539    0.5948       304
+    ambiance     0.9583    0.5476    0.6970       168
+    location     0.9091    0.6931    0.7865       202
 
-   micro avg     0.9151    0.7760    0.8398      1723
-   macro avg     0.9259    0.7229    0.8019      1723
-weighted avg     0.9170    0.7760    0.8310      1723
- samples avg     0.7733    0.6906    0.7114      1723
+   micro avg     0.9051    0.7528    0.8219      1723
+   macro avg     0.9078    0.6914    0.7726      1723
+weighted avg     0.9035    0.7528    0.8095      1723
+ samples avg     0.7584    0.6707    0.6917      1723
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
-\subsection{샘플 단위 해석}
 
-평가 metric(F1, hamming loss, AUC)은 전체 평균이라 모델이 \emph{한 리뷰를 보고 어떻게 판단했는지} 바로 보이지 않습니다. 본격적인 분포 그림으로 가기 전에, 평가 셋에서 정답 항목이 많은 샘플과 적은 샘플을 하나씩 골라 5차원 출력을 문장 단위로 읽어보겠습니다.
 
-\Needspace{10\baselineskip}
+\subsection{샘플 단위 해석 --- 모델 출력을 읽어내는 법}
+
+평가 metric (F1·hamming·AUC) 은 \emph{전체 평균} 이라 모델이 \emph{한 리뷰를 보고 어떻게 판단했는지} 직관이 안 옵니다. 본격 시각화로 가기 전에, 5차원 출력을 \emph{문장 단위} 로 어떻게 해석하는지 두 샘플로 짚어 보겠습니다.
+
+
+
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 n_active = labels.sum(axis=1)
 idx_many = int(np.argmax(n_active))
-idx_few = int(np.argmin(n_active))
+idx_few  = int(np.argmin(n_active))
 
 texts = list(eval_full["text"])
-sample_ids = [
-    ("many active labels", idx_many),
-    ("few active labels", idx_few),
-]
-\end{lstlisting}
 
-\noindent\emph{위 코드는 평가 셋에서 비교할 샘플 두 개를 고르는 단계입니다. \inlinecode{labels.sum(axis=1)} 는 각 리뷰에 활성된 정답 항목 수를 세고, \inlinecode{idx\_many}와 \inlinecode{idx\_few}는 각각 가장 많은 경우와 가장 적은 경우의 위치를 저장합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=10]
-for label_kind, idx in sample_ids:
+for label_kind, idx in [("many active labels", idx_many), ("few active labels", idx_few)]:
     print("=" * 78)
     print(f"sample #{idx}  ({label_kind})")
     print("=" * 78)
-    text_preview = texts[idx][:320]
-    suffix = "..." if len(texts[idx]) > 320 else ""
-    print(f"text: {text_preview}{suffix}")
+    print(
+        f"text (truncated): {texts[idx][:320]}"
+        f"{'...' if len(texts[idx]) > 320 else ''}"
+    )
     print()
-    print(f"{'label':>10}  {'true':>6}  {'prob':>8}  {'pred':>6}  match")
-
-    for k, label_name in enumerate(ASPECTS):
-        true_value = int(labels[idx, k])
-        prob_value = float(probs[idx, k])
-        pred_value = int(preds[idx, k])
-        match = "yes" if true_value == pred_value else "no"
-        print(
-            f"  {label_name:>9}  {true_value:>6}  "
-            f"{prob_value:>8.4f}  {pred_value:>6}  {match}"
-        )
+    print(
 \end{lstlisting}
 
-\noindent\emph{반복문 안에서는 항목별 정답, 확률, 예측값을 한 줄씩 출력합니다. 코드 식별자 \inlinecode{ASPECTS}는 그대로 두지만, 본문에서는 이를 항목 라벨 목록으로 읽으면 됩니다.}
+\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=17]
+        f"{'aspect':>10}  {'true':>6}  {'prob':>8}  "
+        f"{'pred (>=0.5)':>14}  match"
+    )
+    for k, a in enumerate(ASPECTS):
+        t = int(labels[idx, k])
+        p = float(probs[idx, k])
+        pr = int(preds[idx, k])
+        ok = "OK" if t == pr else "X"
+        print(
+            f"  {a:>9}  {t:>6}  {p:>8.4f}  {pr:>14}    "
+            f"{ok}"
+        )
+
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 모델 출력을 확률이나 예측값으로 바꾸는 단계로 넘어갑니다.}
 
 \Needspace{8\baselineskip}
 \begin{lstlisting}[firstnumber=30]
-    pred_active = [
-        a for k, a in enumerate(ASPECTS) if preds[idx, k]
-    ]
-    true_active = [
-        a for k, a in enumerate(ASPECTS) if labels[idx, k]
-    ]
+    pred_active = [a for k, a in enumerate(ASPECTS) if preds[idx, k]]
+    true_active = [a for k, a in enumerate(ASPECTS) if labels[idx, k]]
     print()
     print(f"  predicted: {pred_active}")
     print(f"  true:      {true_active}")
     print()
 \end{lstlisting}
 
-\textbf{읽는 법} --- \inlinecode{true} 컬럼은 키워드 합성으로 만든 정답 multi-hot입니다. \inlinecode{prob}는 모델이 각 항목에 대해 독립적으로 낸 sigmoid 확률이고, 합이 1일 필요가 없습니다. \inlinecode{pred}는 지금 기준으로 \inlinecode{prob >= 0.5} 를 적용한 결과입니다. 마지막의 \inlinecode{predicted: [...]} 와 \inlinecode{true: [...]} 를 비교하면 모델이 한 리뷰에서 어떤 항목을 맞혔고 무엇을 놓쳤는지 한눈에 볼 수 있습니다.
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+==============================================================================
+sample #29  (many active labels)
+==============================================================================
+text (truncated): It's hard to complain about this place given the price I...
 
-이 표 같은 샘플별 비교를 평가 셋 전체에 대해 집계한 값이 앞에서 본 micro/macro F1입니다. micro는 모든 샘플과 항목 위치를 한꺼번에 세고, macro는 항목별 F1을 먼저 구한 뒤 평균을 냅니다. 활성률이 낮은 항목이 전체 평균 속에 묻히는지 확인하려면 macro 지표와 이런 샘플 단위 해석을 같이 보는 습관이 좋습니다.
+    aspect    true      prob    pred (>=0.5)  match
+       food       1    0.3318               0    X
+    service       1    0.5502               1    OK
+      price       1    0.7993               1    OK
+   ambiance       1    0.2925               0    X
+   location       1    0.5647               1    OK
+
+  predicted: ['service', 'price', 'location']
+  true:      ['food', 'service', 'price', 'ambiance', 'location']
+
+==============================================================================
+...
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
+\textbf{읽는 법 --- 표를 한 줄씩}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \textbf{\inlinecode{true} 컬럼} --- 키워드 합성으로 만든 \emph{정답 multi-hot}. 1 이면 “이 리뷰 본문에 그 항목 키워드가 등장했다”.
+\item
+  \textbf{\inlinecode{prob} 컬럼} --- 모델이 출력한 \emph{각 항목 sigmoid 확률} (독립). 합이 1 일 필요 없음 --- multi-label 의 본질.
+\item
+  \textbf{\inlinecode{pred} 컬럼} --- \texttt{prob\ \$\textbackslash{}ge\$\ 0.5} 이면 1, 아니면 0. \emph{임계값 0.5} 는 사후 후처리 --- 라벨별로 다른 값을 줄 수도 있음 (FAQ Q1).
+\item
+  \textbf{사람이 읽는 한 줄}: \texttt{predicted:\ {[}...{]}} 와 \texttt{true:\ {[}...{]}} 가 \emph{얼마나 겹치는지} --- 두 리스트가 같으면 완벽한 hit, 한 항목 차이면 \emph{near miss}, 전혀 다르면 모델이 헛다리.
+\end{enumerate}
+
+\textbf{이 표가 한 리뷰에 대해 보여주는 것}:
+
+\begin{itemize}
+\tightlist
+\item
+  모델이 \emph{어떤 항목에 자신} 있는지 (prob 0.9 이상)
+\item
+  어떤 항목에서 \emph{망설이는지} (prob 0.4-0.6 부근 --- threshold 살짝 옮기면 결과가 뒤집히는 자리)
+\item
+  키워드 합성 라벨의 한계가 드러나는 순간 --- 예: 본문에 “10 minutes wait” 처럼 service 를 \emph{키워드 없이} 묘사한 경우 정답은 \inlinecode{service=0} 인데 모델이 prob 0.7 로 활성할 수 있음. 이건 \emph{모델 오답이 아니라 합성 라벨의 누락} 으로 봐야 함.
+\end{itemize}
+
+\textbf{전체 metric 의 micro/macro F1 해석}: 위 표 같은 \emph{샘플별 (true vs pred) 비교} 를 평가 셋 1,000건에 대해 \emph{집계} 한 게 §4 상단 metric. micro 는 모든 (샘플 \(\times\) 라벨) 위치를 동등하게 세고, macro 는 항목 5개의 F1 을 평균. 활성률이 낮은 항목 (location 등) 의 정확도가 \emph{전체} 에 묻히는 걸 막으려면 macro 를 봅니다.
 
 
 
@@ -825,18 +977,12 @@ g.map_dataframe(
 
 \noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
-\Needspace{6\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=14]
     sns.kdeplot, x="prob", hue="label",
     fill=True, common_norm=False, alpha=0.5,
     palette={0: "#5B8DEF", 1: "#F47272"}, clip=(0, 1),
 )
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=18]
 for ax in g.axes.flat:
     ax.axvline(
         0.5,
@@ -845,10 +991,16 @@ for ax in g.axes.flat:
         ls="--",
         alpha=0.6,
     )
-    ax.set_xlabel("sigmoid prob")
+    ax.set_xlabel("sigmoid 확률")
 g.add_legend(title="label")
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{8\baselineskip}
+\begin{lstlisting}[firstnumber=28]
 g.fig.suptitle(
-    "Per-label sigmoid probability distribution by ground truth",
+    "라벨별 sigmoid 확률 분포 (실제 라벨 기준)",
     y=1.03,
 )
 plt.tight_layout()
@@ -856,11 +1008,11 @@ plt.show()
 \end{lstlisting}
 
 \begin{bookfigurelabel}[H]{라벨별 sigmoid 확률 분포}{fig:ch13-label-probability-facets}
+\centering
 \includegraphics[width=0.94\linewidth]{assets/figures/ch13_label_probability_facets.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch13-label-probability-facets}는 multi-label 문제에서 라벨별 sigmoid 확률 분포가 서로 다르게 생긴다는 점을 보여줍니다. 어떤 라벨은 0/1이 선명히 갈라지고, 어떤 라벨은 0.5 근처에서 더 많이 겹칩니다.
-
+\textbf{그림 읽기} --- 그림~\ref{fig:ch13-label-probability-facets}에서 다음 내용을 확인합니다: 라벨별 sigmoid 확률 분포. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
 
 
 
@@ -873,7 +1025,7 @@ plt.show()
 \item
   \textbf{활성률이 낮은 라벨} (예: location): label=1 샘플이 적어 곡선이 노이즈가 큼. 그래도 분리는 보여야 함.
 \item
-  \textbf{두 곡선이 0.5 근처에서 크게 겹치면} → 그 라벨은 모델이 잘 못 분리. 키워드 매칭이 \emph{얕아서} 진짜 신호를 못 잡았거나, 학습 데이터가 부족한 상태.
+  \textbf{두 곡선이 0.5 근처에서 크게 겹치면} \(\to\) 그 라벨은 모델이 잘 못 분리. 키워드 매칭이 \emph{얕아서} 진짜 신호를 못 잡았거나, 학습 데이터가 부족한 상태.
 \end{itemize}
 
 
@@ -905,41 +1057,42 @@ def cooccurrence_matrix(Y):
 
 \end{lstlisting}
 
-\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}[firstnumber=16]
-cooc_true = cooccurrence_matrix(labels)
-cooc_pred = cooccurrence_matrix(preds)
-\end{lstlisting}
-
 \noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=19]
+\begin{lstlisting}[firstnumber=16]
+cooc_true = cooccurrence_matrix(labels)
+cooc_pred = cooccurrence_matrix(preds)
+
 fig, axes = plt.subplots(1, 2, figsize=(13, 5))
 for ax, M, title in [
-    (axes[0], cooc_true, "True co-occurrence  P(j | i)"),
-    (axes[1], cooc_pred, "Predicted co-occurrence  P(j | i)"),
+    (axes[0], cooc_true, "실제 동시출현  P(j | i)"),
+    (axes[1], cooc_pred, "예측 동시출현  P(j | i)"),
 ]:
     sns.heatmap(
         M, annot=True, fmt=".2f", cmap="Blues", vmin=0, vmax=1,
         xticklabels=ASPECTS, yticklabels=ASPECTS,
-        cbar_kws={"label": "conditional probability"}, ax=ax,
+        cbar_kws={"label": "조건부 확률"}, ax=ax,
     )
     ax.set_title(title)
-    ax.set_xlabel("label j")
-    ax.set_ylabel("given label i")
+    ax.set_xlabel("라벨 j")
+    ax.set_ylabel("주어진 라벨 i")
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{5\baselineskip}
+\begin{lstlisting}[firstnumber=32]
 plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
 \begin{bookfigurelabel}[H]{정답 라벨과 예측 라벨의 공동 활성 패턴}{fig:ch13-cooccurrence}
+\centering
 \includegraphics[width=0.96\linewidth]{assets/figures/ch13_cooccurrence.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch13-cooccurrence}는 정답 라벨의 동시 등장 구조와 모델 예측의 동시 등장 구조를 비교합니다. 두 행렬이 비슷할수록 모델이 라벨 하나씩만 맞힌 것이 아니라 라벨 조합의 패턴도 따라가고 있다는 뜻입니다.
-
+\textbf{그림 읽기} --- 그림~\ref{fig:ch13-cooccurrence}에서 다음 내용을 확인합니다: 정답 라벨과 예측 라벨의 공동 활성 패턴. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
 
 
 
@@ -954,14 +1107,14 @@ plt.show()
 \item
   food와 service가 같이 자주 등장하면 두 모델 모두 0.5+ 값. \emph{true} 와 \emph{predicted} 가 거의 비슷한 패턴이면 모델이 라벨 구조를 잘 학습했다는 뜻.
 \item
-  \textbf{predicted cell이 true cell 보다 일관되게 높으면} → 모델이 라벨을 \emph{너무 많이} 활성하는 경향 (over-prediction). threshold를 0.5보다 높게 (예: 0.6) 두면 calibration 개선.
+  \textbf{predicted cell이 true cell 보다 일관되게 높으면} \(\to\) 모델이 라벨을 \emph{너무 많이} 활성하는 경향 (over-prediction). threshold를 0.5보다 높게 (예: 0.6) 두면 calibration 개선.
 \end{itemize}
 
 
 
 \section{\texorpdfstring{BERT와 sklearn 비교}{BERT와 sklearn 비교}}
 
-\ref{ch:06}장의 sklearn 셋업을 \emph{이 노트북 안에서} 다시 학습해 라벨별로 BERT와 비교합니다. \textbf{multi-label에서도 BERT의 헤드 포함 약 67M이 sklearn 대비 어디서 이기는가?}
+\ref{ch:06}장의 sklearn 셋업을 \emph{이 노트북 안에서} 다시 학습해 라벨별로 BERT와 비교합니다. \textbf{multi-label에서도 BERT의 67M이 sklearn 대비 어디서 이기는가?}
 
 
 
@@ -984,18 +1137,13 @@ clf.fit(X_train, Y_train_bin)
 
 \end{lstlisting}
 
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 모델 출력을 확률이나 예측값으로 바꾸는 단계로 넘어갑니다.}
+\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 예측 결과를 지표와 표로 요약하는 단계로 넘어갑니다.}
 
-\Needspace{5\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=16]
 probs_sk = clf.predict_proba(X_eval)        # (N, 5)
 preds_sk = (probs_sk >= 0.5).astype(int)    # (N, 5)
-\end{lstlisting}
 
-\noindent\emph{앞 블록은 모델 출력을 확률이나 예측값으로 바꾸는 단계입니다. 이어지는 블록에서는 예측 결과를 지표와 표로 요약하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=19]
 p_mi_sk, r_mi_sk, f1_mi_sk, _ = precision_recall_fscore_support(
     Y_eval_bin, preds_sk, average="micro", zero_division=0,
 )
@@ -1004,6 +1152,12 @@ p_ma_sk, r_ma_sk, f1_ma_sk, _ = precision_recall_fscore_support(
 )
 auc_sk = float(roc_auc_score(Y_eval_bin, probs_sk, average="macro"))
 
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=27]
 print(f"sklearn TF-IDF + OvR LogReg:")
 print(f"  vocabulary size:    {len(vec.vocabulary_):,}")
 print(f"  micro F1:           {f1_mi_sk:.4f}")
@@ -1012,14 +1166,19 @@ print(f"  macro AUC:          {auc_sk:.4f}")
 print(
     f"  hamming loss:       "
     f"{hamming_loss(Y_eval_bin, preds_sk):.4f}"
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}[firstnumber=35]
 )
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+sklearn TF-IDF + OvR LogReg:
+  vocabulary size:    20,000
+  micro F1:           0.7634
+  macro F1:           0.6141
+  macro AUC:          0.9387
+  hamming loss:       0.1426
+\end{bookoutputbox}
+\par\vspace{0.9em}
 
 
 
@@ -1047,18 +1206,13 @@ metrics_sk = {
     "macro_recall":    float(r_ma_sk),
 \end{lstlisting}
 
-\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+\noindent\emph{앞뒤 블록은 모두 예측 결과를 지표와 표로 요약하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
-\Needspace{5\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=17]
     "macro_auc":       auc_sk,
 }
-\end{lstlisting}
 
-\noindent\emph{앞뒤 블록은 모두 예측 결과를 지표와 표로 요약하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{10\baselineskip}
-\begin{lstlisting}[firstnumber=20]
 common = [k for k in metrics_bert if k in metrics_sk]
 cmp = pd.DataFrame({
     "metric":             common,
@@ -1068,6 +1222,22 @@ cmp = pd.DataFrame({
 cmp["BERT - sklearn"] = cmp["BERT (this chapter)"] - cmp["sklearn (OvR)"]
 print(cmp.round(4).to_string(index=False))
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+metric  sklearn (OvR)  BERT (this chapter)  BERT - sklearn
+   hamming_loss         0.1426               0.1124         -0.0302
+       micro_f1         0.7634               0.8219          0.0586
+micro_precision         0.8915               0.9051          0.0136
+   micro_recall         0.6674               0.7528          0.0853
+       macro_f1         0.6141               0.7726          0.1586
+macro_precision         0.9036               0.9078          0.0042
+   macro_recall         0.5307               0.6914          0.1607
+      macro_auc         0.9387               0.9101         -0.0286
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \subsection{라벨별 F1 비교}
 
@@ -1089,9 +1259,9 @@ f1_sk   = per_label_f1(Y_eval_bin, preds_sk)
 
 \end{lstlisting}
 
-\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
 
-\Needspace{9\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=13]
 label_cmp = pd.DataFrame({
     "aspect":     ASPECTS,
@@ -1100,15 +1270,16 @@ label_cmp = pd.DataFrame({
 })
 label_cmp["BERT - sklearn"] = label_cmp["BERT F1"] - label_cmp["sklearn F1"]
 print(label_cmp.round(4).to_string(index=False))
-\end{lstlisting}
 
-\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=21]
 fig, ax = plt.subplots(figsize=(10, 5))
 x_pos = np.arange(K)
 width = 0.38
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 숫자 결과를 그림으로 확인하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=24]
 ax.bar(
     x_pos - width/2,
     f1_sk,
@@ -1116,41 +1287,46 @@ ax.bar(
     label="sklearn (OvR)",
     color="#5B8DEF",
 )
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=31]
 ax.bar(
     x_pos + width/2,
     f1_bert,
     width,
-    label="BERT (this chapter)",
+    label="BERT (이번 챕터)",
     color="#F47272",
 )
 ax.set_xticks(x_pos)
 ax.set_xticklabels(ASPECTS)
-ax.set_ylim(0, 1)
-ax.set_ylabel("Per-label F1")
-ax.set_title("Per-label F1 — sklearn OvR vs BERT")
-ax.legend()
-plt.tight_layout()
 \end{lstlisting}
 
-\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
 
-\Needspace{5\baselineskip}
-\begin{lstlisting}[firstnumber=45]
+\Needspace{8\baselineskip}
+\begin{lstlisting}[firstnumber=40]
+ax.set_ylim(0, 1)
+ax.set_ylabel("라벨별 F1")
+ax.set_title("라벨별 F1 — sklearn OvR vs BERT")
+ax.legend()
+plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+aspect  sklearn F1  BERT F1  BERT - sklearn
+    food      0.9057   0.9260          0.0203
+ service      0.8833   0.8589         -0.0244
+   price      0.5271   0.5948          0.0678
+ambiance      0.3333   0.6970          0.3636
+location      0.4211   0.7865          0.3655
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
 \begin{bookfigurelabel}[H]{라벨별 F1: sklearn OvR와 BERT 비교}{fig:ch13-f1-compare}
+\centering
 \includegraphics[width=0.88\linewidth]{assets/figures/ch13_f1_compare.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch13-f1-compare}는 라벨별 F1을 sklearn OvR 기준선과 BERT 모델 사이에서 비교합니다. 라벨마다 막대 차이가 다르면, BERT의 문맥 이해가 모든 항목 라벨에 동일하게 도움이 되는 것은 아니라는 점을 읽을 수 있습니다.
-
+\textbf{그림 읽기} --- 그림~\ref{fig:ch13-f1-compare}에서 다음 내용을 확인합니다: 라벨별 F1: sklearn OvR와 BERT 비교. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
 
 
 
@@ -1161,7 +1337,7 @@ plt.show()
 \item
   키워드 매칭으로 합성한 라벨은 \emph{키워드 단어가 본질 신호} 라 sklearn TF-IDF가 의외로 강합니다 --- 라벨 정의 자체가 단어 빈도와 일치하기 때문.
 \item
-  BERT가 \emph{큰 폭으로} 이기는 라벨이 있다면 → 그 라벨의 \emph{합성 룰이 키워드만으로 안 잡히는 신호} 를 BERT가 추가로 학습한 것 (예: ambiance에서 “lighting was perfect” 같은 묘사).
+  BERT가 \emph{큰 폭으로} 이기는 라벨이 있다면 \(\to\) 그 라벨의 \emph{합성 룰이 키워드만으로 안 잡히는 신호} 를 BERT가 추가로 학습한 것 (예: ambiance에서 “lighting was perfect” 같은 묘사).
 \item
   BERT가 \emph{지는 라벨} 도 있을 수 있음 --- 키워드가 \emph{결정적} 인 라벨에서 sklearn은 \emph{완벽} 한 매칭, BERT는 \emph{근사} 라 약간의 noise가 들어감.
 \end{itemize}
@@ -1172,17 +1348,17 @@ plt.show()
 
 \section{이 장에 등장한 라이브러리·함수}
 
-\begin{booktable}{새로 등장한 라이브러리}{tab:ch13-05}
+\begin{booktable}{13장 새로 등장한 라이브러리}{tab:ch13-05}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
 이름 & 한 줄 설명 & 다음 장에서 \\
 \midrule
 
-\inlinecode{AutoModelForSequenceClassification(num\_labels=5,\ problem\_type="multi\_label\_classification")} & \ref{ch:12}장 셋업에서 problem\_type만 변경 → BCE per-label 자동 매핑 & \ref{ch:14}장에서 메인 헤드로 그대로 \\
-\inlinecode{sklearn.metrics.hamming\_loss} & 전체 (sample × label) 위치에서 틀린 비율 & multi-label 장마다 \\
-\inlinecode{precision\_recall\_fscore\_support(...,\ average="micro"/"macro")} & multi-label용 F1 --- micro는 라벨 합산, macro는 라벨 평균 & 14·17장·18 \\
-\inlinecode{roc\_auc\_score(...,\ average="macro")} & 라벨별 AUC를 평균 & 17·18장 \\
+\inlinecode{AutoModelForSequenceClassification(num\_labels=5,\ problem\_type="multi\_label\_classification")} & \ref{ch:12}장 셋업에서 problem\_type만 변경 \(\to\) BCE per-label 자동 매핑 & \ref{ch:14}장에서 메인 헤드로 그대로 \\
+\inlinecode{sklearn.metrics.hamming\_loss} & 전체 (sample \(\times\) label) 위치에서 틀린 비율 & multi-label 장마다 \\
+\inlinecode{precision\_recall\_fscore\_support(...,\ average="micro"/"macro")} & multi-label용 F1 --- micro는 라벨 합산, macro는 라벨 평균 & \ref{ch:14}·\ref{ch:17}장·18 \\
+\inlinecode{roc\_auc\_score(...,\ average="macro")} & 라벨별 AUC를 평균 & \ref{ch:17}·\ref{ch:18}장 \\
 \inlinecode{seaborn.FacetGrid\ +\ map\_dataframe} & 5개 라벨에 같은 KDE를 facet으로 & 라벨이 많은 시각화에 재등장 \\
 \inlinecode{OneVsRestClassifier(LogisticRegression())} & sklearn multi-label baseline & 비교용 \\
 \bottomrule
@@ -1220,7 +1396,7 @@ plt.show()
 \item
   \textbf{클래스 불균형}: 라벨 활성률이 5\% 인 라벨에선 0.5가 너무 보수적 --- 모델이 거의 안 활성. threshold를 0.2-0.3으로 낮추면 recall이 크게 올라감.
 \item
-  \textbf{F1 최적 threshold 탐색}: validation set에서 \emph{라벨별로} 0.1-0.9 grid search → F1 최대 지점 선택.
+  \textbf{F1 최적 threshold 탐색}: validation set에서 \emph{라벨별로} 0.1-0.9 grid search \(\to\) F1 최대 지점 선택.
 \end{itemize}
 
 \Needspace{11\baselineskip}
@@ -1250,7 +1426,7 @@ thresholds = [best_threshold(probs[:, k], labels[:, k])[0] for k in range(K)]
 
 기술적으론 됩니다. 단점이 큽니다.
 
-\begin{booktable}{FAQ}{tab:ch13-06}
+\begin{booktable}{13장 FAQ 표}{tab:ch13-06}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -1258,7 +1434,7 @@ thresholds = [best_threshold(probs[:, k], labels[:, k])[0] for k in range(K)]
 \midrule
 
 라벨 간 \emph{경쟁} 학습 & softmax가 자동으로 강제 & BCE per-label은 라벨 간 직접 신호 없음 \\
-confidence 의미 & 항상 합 = 1, 명확 & 5개 라벨의 sigmoid 확률, \emph{합 ≠ 1} \\
+confidence 의미 & 항상 합 = 1, 명확 & 5개 라벨의 sigmoid 확률, \emph{합 \(\ne\) 1} \\
 추론 후처리 & \inlinecode{argmax} 한 줄 & \inlinecode{argmax(probs)} 또는 \texttt{np.where(probs\ \textgreater{}\ th)} \\
 학습 수렴 속도 & 빠름 (라벨 경쟁 신호 있음) & 약간 느림 \\
 \bottomrule
@@ -1274,21 +1450,18 @@ multi-class가 \emph{명확히 single-label} 이면 CE가 정답. multi-label로
 
 \inlinecode{pos\_weight} 파라미터 --- \inlinecode{BCEWithLogitsLoss(pos\_weight=...)} 가 라벨별 양성 가중치를 받습니다.
 
-\Needspace{11\baselineskip}
+\Needspace{9\baselineskip}
 \begin{lstlisting}
 import torch
 from torch import nn
 
 pos_count = Y_train_bin.sum(axis=0)
 neg_count = len(Y_train_bin) - pos_count
-pos_weight = torch.tensor(
-    neg_count / np.maximum(pos_count, 1),
-    dtype=torch.float).to("cuda",
-)
+pos_weight = torch.tensor(neg_count / np.maximum(pos_count, 1), dtype=torch.float).to("cuda")
 loss_fn = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 \end{lstlisting}
 
-\inlinecode{Trainer.compute\_loss} 를 오버라이드해서 위 \inlinecode{loss\_fn} 으로 바꾸면 됩니다. 활성률 5\%인 라벨은 pos\_weight ≈ 19 → 양성 샘플의 손실이 19배 가중되어 모델이 양성 예측을 더 자주 하도록 강제.
+\inlinecode{Trainer.compute\_loss} 를 오버라이드해서 위 \inlinecode{loss\_fn} 으로 바꾸면 됩니다. 활성률 5\%인 라벨은 pos\_weight \(\approx\) 19 \(\to\) 양성 샘플의 손실이 19배 가중되어 모델이 양성 예측을 더 자주 하도록 강제.
 
 \end{faqBox}
 
@@ -1334,7 +1507,7 @@ Loss에는 결합 항이 없지만 \emph{gradient가 BERT 본체를 거쳐 흐�
   \begin{itemize}
   \tightlist
   \item
-    \textbf{Hierarchical labels}: 라벨을 트리로 구조화해 \emph{상위 → 하위} 단계적 분류 (예: “음식 \textgreater{} 한식 \textgreater{} 김치찌개”)
+    \textbf{Hierarchical labels}: 라벨을 트리로 구조화해 \emph{상위 \(\to\) 하위} 단계적 분류 (예: “음식 \textgreater{} 한식 \textgreater{} 김치찌개”)
   \item
     \textbf{Knowledge distillation}: 큰 multi-label 모델에서 작은 모델로 distill
   \end{itemize}
@@ -1401,7 +1574,7 @@ def tokenize_wrong(batch):
 \item
   추가: \emph{보조 헤드} \inlinecode{Linear(H,\ 1)} 로 별점 점수 회귀 (별점 정규화 0-1)
 \item
-  손실: \inlinecode{L\ =\ BCE\_per\_label(메인)} + $\lambda\cdot$\inlinecode{MSE(보조)} 가중합 ($\lambda$는 hyperparameter)
+  손실: \texttt{L\ =\ BCE\_per\_label(메인)\ +\ \$\textbackslash{}lambda\$\ ·\ MSE(보조)} 가중합 (\(\lambda\)는 hyperparameter)
 \item
   \inlinecode{Trainer.compute\_loss} 오버라이드로 두 헤드를 동시 학습
 \item
@@ -1409,6 +1582,6 @@ def tokenize_wrong(batch):
 \end{itemize}
 
 \begin{quote}
-\textbf{변하는 축}: 메인 task와 모델 본체는 그대로, \emph{Loss에 보조 항이 추가} 됩니다 --- Loss 축의 마지막 단계 (“BCE per-label → +Auxiliary”).
+\textbf{변하는 축}: 메인 task와 모델 본체는 그대로, \emph{Loss에 보조 항이 추가} 됩니다 --- Loss 축의 마지막 단계 (“BCE per-label \(\to\) +Auxiliary”).
 \end{quote}
 \end{previewBox}

@@ -304,7 +304,7 @@ print(
 )
 print(f"\nFirst 3 sample probability distributions:")
 print(
-    pd.DataFrame(proba_5[:3], columns=[f"P({i+1}★)" for i in range(5)]).round(3)
+    pd.DataFrame(proba_5[:3], columns=[f"P({i+1})" for i in range(5)]).round(3)
 )
 \end{lstlisting}
 
@@ -318,7 +318,7 @@ predict_proba shape: (1000, 5)  (N, K=5)
 Row sums (should be 1): [1. 1. 1. 1. 1.]
 
 First 3 sample probability distributions:
-   P(1★)  P(2★)  P(3★)  P(4★)  P(5★)
+   P(1)  P(2)  P(3)  P(4)  P(5)
 0  0.357  0.307  0.163  0.081  0.092
 1  0.136  0.339  0.348  0.138  0.040
 2  0.614  0.233  0.052  0.042  0.059
@@ -336,7 +336,7 @@ First 3 sample probability distributions:
 \Needspace{5\baselineskip}
 \begin{lstlisting}
 print(
-    classification_report(y_test, y_pred, target_names=[f"{i+1}★" for i in range(5)])
+    classification_report(y_test, y_pred, target_names=[f"{i+1}" for i in range(5)])
 )
 \end{lstlisting}
 
@@ -344,11 +344,11 @@ print(
 \begin{bookoutputbox}
 precision    recall  f1-score   support
 
-          1★       0.62      0.77      0.69       204
-          2★       0.40      0.35      0.37       205
-          3★       0.41      0.35      0.38       192
-          4★       0.45      0.43      0.44       204
-          5★       0.62      0.64      0.63       195
+          1       0.62      0.77      0.69       204
+          2       0.40      0.35      0.37       205
+          3       0.41      0.35      0.38       192
+          4       0.45      0.43      0.44       204
+          5       0.62      0.64      0.63       195
 
     accuracy                           0.51      1000
    macro avg       0.50      0.51      0.50      1000
@@ -363,8 +363,8 @@ weighted avg       0.50      0.51      0.50      1000
 cm = confusion_matrix(y_test, y_pred)
 cm_df = pd.DataFrame(
     cm,
-    index=[f"true {i+1}★" for i in range(5)],
-    columns=[f"pred {i+1}★" for i in range(5)],
+    index=[f"true {i+1}" for i in range(5)],
+    columns=[f"pred {i+1}" for i in range(5)],
 )
 print(cm_df)
 \end{lstlisting}
@@ -375,12 +375,12 @@ print(cm_df)
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-pred 1★  pred 2★  pred 3★  pred 4★  pred 5★
-true 1★      158       36        2        4        4
-true 2★       54       72       52       16       11
-true 3★       23       50       68       37       14
-true 4★       11       20       37       88       48
-true 5★       10        3        6       51      125
+pred 1  pred 2  pred 3  pred 4  pred 5
+true 1      158       36        2        4        4
+true 2       54       72       52       16       11
+true 3       23       50       68       37       14
+true 4       11       20       37       88       48
+true 5       10        3        6       51      125
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -442,14 +442,14 @@ true 5★       10        3        6       51      125
 
 \Needspace{10\baselineskip}
 \begin{lstlisting}
-             ┌──$\to$ 분류기 1:  "1★ vs 나머지"  ──$\to$ sigmoid ──$\to$ P_1
-             ├──$\to$ 분류기 2:  "2★ vs 나머지"  ──$\to$ sigmoid ──$\to$ P_2
-[입력 x] ──$\to$ ├──$\to$ 분류기 3:  "3★ vs 나머지"  ──$\to$ sigmoid ──$\to$ P_3
-             ├──$\to$ 분류기 4:  "4★ vs 나머지"  ──$\to$ sigmoid ──$\to$ P_4
-             └──$\to$ 분류기 5:  "5★ vs 나머지"  ──$\to$ sigmoid ──$\to$ P_5
+             ┌──$\to$ 분류기 1:  "1 vs 나머지"  ──$\to$ sigmoid ──$\to$ P_1
+             ├──$\to$ 분류기 2:  "2 vs 나머지"  ──$\to$ sigmoid ──$\to$ P_2
+[입력 x] ──$\to$ ├──$\to$ 분류기 3:  "3 vs 나머지"  ──$\to$ sigmoid ──$\to$ P_3
+             ├──$\to$ 분류기 4:  "4 vs 나머지"  ──$\to$ sigmoid ──$\to$ P_4
+             └──$\to$ 분류기 5:  "5 vs 나머지"  ──$\to$ sigmoid ──$\to$ P_5
 
    각 P_k 는 다른 P_j 와 무관한 독립 sigmoid 출력 (raw 합 $\ne$ 1)
-   예측: argmax(P_k) — sklearn이 표시할 땐 행을 정규화해 합 1로 보여줌
+   예측: argmax(P_k) -- sklearn이 표시할 땐 행을 정규화해 합 1로 보여줌
 \end{lstlisting}
 
 핵심 차이는 \textbf{클래스가 서로 경쟁하느냐} 입니다. multinomial은 한 logit이 커지면 다른 logit의 softmax 확률이 자동으로 줄어듭니다 (분모 공유). OvR의 각 sigmoid는 다른 클래스 학습과 독립적이라 P\_k 가 모두 동시에 0.8이 될 수도, 모두 0.1이 될 수도 있습니다.
@@ -503,7 +503,7 @@ p_ovr_norm = model_ovr.predict_proba(X_test)[sample_idx]
 \begin{lstlisting}[firstnumber=32]
 print("\nReview preview (200 chars):")
 print(f"{sample_text[:200]}...")
-print(f"True star:    {true_label + 1}★\n")
+print(f"True star:    {true_label + 1}\n")
 
 print(
     f"{'class':>8}  {'multinomial':>14}  {'OvR raw':>10}  "
@@ -518,7 +518,7 @@ print("-" * 56)
 \begin{lstlisting}[firstnumber=41]
 for k in range(5):
     print(
-        f"  {k+1}★    {p_multi[k]:>14.4f}  {p_ovr_raw[k]:>10.4f}  "
+        f"  {k+1}    {p_multi[k]:>14.4f}  {p_ovr_raw[k]:>10.4f}  "
         f"{p_ovr_norm[k]:>16.4f}"
     )
 print("-" * 56)
@@ -536,15 +536,15 @@ Each estimator is a separate LogisticRegression for 'class k vs rest'
 
 Review preview (200 chars):
 A friend suggested this.. and we met up here with 2 other friends on Christ...
-True star:    2★
+True star:    2
 
    class     multinomial     OvR raw    OvR normalized
 --------------------------------------------------------
-  1★            0.3570      0.3374            0.3625
-  2★            0.3071      0.2680            0.2880
-  3★            0.1634      0.1543            0.1658
-  4★            0.0806      0.0827            0.0889
-  5★            0.0919      0.0882            0.0948
+  1            0.3570      0.3374            0.3625
+  2            0.3071      0.2680            0.2880
+  3            0.1634      0.1543            0.1658
+  4            0.0806      0.0827            0.0889
+  5            0.0919      0.0882            0.0948
 --------------------------------------------------------
   sum            1.0000      0.9307            1.0000
 \end{bookoutputbox}
@@ -733,8 +733,8 @@ model = LogisticRegression(
 \begin{lstlisting}
 import seaborn as sns
 sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
-            xticklabels=[f"{i+1}★" for i in range(5)],
-            yticklabels=[f"{i+1}★" for i in range(5)])
+            xticklabels=[f"{i+1}" for i in range(5)],
+            yticklabels=[f"{i+1}" for i in range(5)])
 plt.xlabel("Predicted"); plt.ylabel("True")
 \end{lstlisting}
 
@@ -792,7 +792,7 @@ K=5에서 baseline \(\approx\) 1.609. 학습 도중 loss가 이 값 근처에서
 
 \section{오류 실험 (선택)}
 
-같은 5클래스 데이터에서 회귀 모델(\ref{ch:02}장 방식)과 분류 모델(이 장)이 4★를 3★로 예측하는 비율과 4★를 1★로 예측하는 비율의 비를 각각 계산해보세요. 회귀가 더 큰 실수를 더 강하게 회피하는지 확인할 수 있습니다.
+같은 5클래스 데이터에서 회귀 모델(\ref{ch:02}장 방식)과 분류 모델(이 장)이 4를 3로 예측하는 비율과 4를 1로 예측하는 비율의 비를 각각 계산해보세요. 회귀가 더 큰 실수를 더 강하게 회피하는지 확인할 수 있습니다.
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -809,12 +809,12 @@ for name, pred in [("회귀 후 round/clip", pred_reg), ("분류", pred_clf)]:
     n_4to3 = ((pred == 2) & mask4).sum()
     n_4to1 = ((pred == 0) & mask4).sum()
     print(
-        f"{name}: 4★$\to$3★ {n_4to3}건, 4★$\to$1★ "
+        f"{name}: 4$\to$3 {n_4to3}건, 4$\to$1 "
         f"{n_4to1}건"
     )
 \end{lstlisting}
 
-힌트: 회귀는 큰 실수일수록 손실이 제곱으로 커지므로 4★을 1★로 예측하는 큰 실수가 더 드물어야 합니다. 분류는 둘을 동등하게 처벌하므로 그런 경향이 약할 수 있습니다.
+힌트: 회귀는 큰 실수일수록 손실이 제곱으로 커지므로 4을 1로 예측하는 큰 실수가 더 드물어야 합니다. 분류는 둘을 동등하게 처벌하므로 그런 경향이 약할 수 있습니다.
 
 
 

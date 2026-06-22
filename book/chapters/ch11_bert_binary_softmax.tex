@@ -64,7 +64,7 @@
 
 \section{변화추적표}
 
-\begin{booktable}{변화추적표}{tab:ch11-01}
+\begin{booktable}{11장 변화추적표}{tab:ch11-01}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lllllll@{}}
 \toprule
@@ -75,20 +75,20 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 4 & \inlinecode{LogisticRegression()} (multinomial 자동) & \inlinecode{TfidfVectorizer()} & Yelp 이진화 (\ref{ch:03}장과 동일) & (2차원) & softmax & \inlinecode{CrossEntropyLoss} \\
 9 & DistilBERT 파인튜닝 & \inlinecode{AutoTokenizer.from\_pretrained(...)} & Yelp (별점 1-5) & \inlinecode{Linear(H,\ 1)} & 없음 & \inlinecode{MSELoss} \\
 10 & DistilBERT 파인튜닝 & 같음 & Yelp 이진화 & \inlinecode{Linear(H,\ 1)} & sigmoid & \inlinecode{BCEWithLogitsLoss} \\
-\textbf{11 ← 여기} & DistilBERT 파인튜닝 & 같음 & Yelp 이진화 (\ref{ch:10}장과 동일) & \textbf{\inlinecode{Linear(H,\ 2)}} & \textbf{softmax} & \textbf{\inlinecode{CrossEntropyLoss}} \\
+\textbf{11 \(\leftarrow\) 여기} & DistilBERT 파인튜닝 & 같음 & Yelp 이진화 (\ref{ch:10}장과 동일) & \textbf{\inlinecode{Linear(H,\ 2)}} & \textbf{softmax} & \textbf{\inlinecode{CrossEntropyLoss}} \\
 12 (다음) & DistilBERT 파인튜닝 & 같음 & Yelp 5클래스 & \inlinecode{Linear(H,\ 5)} & softmax & \inlinecode{CrossEntropyLoss} \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
-전체 20장 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
+전체 장 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
 
 
 
 \section{변경점: \ref{ch:10}장 대비}
 
-\begin{booktable}{변경점 요약}{tab:ch11-02}
+\begin{booktable}{11장 변경점 요약}{tab:ch11-02}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -96,7 +96,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 \midrule
 
 \inlinecode{num\_labels} & 1 & \textbf{2} \\
-\inlinecode{problem\_type} & \inlinecode{"multi\_label\_classification"} & \textbf{\inlinecode{"single\_label\_classification"}} ← BERT 표준 분류 \\
+\inlinecode{problem\_type} & \inlinecode{"multi\_label\_classification"} & \textbf{\inlinecode{"single\_label\_classification"}} \(\leftarrow\) BERT 표준 분류 \\
 Activation & sigmoid & \textbf{softmax} \\
 Loss & \inlinecode{BCEWithLogitsLoss} & \textbf{\inlinecode{CrossEntropyLoss}} \\
 라벨 형식 & float \texttt{{[}0.0{]}} / \texttt{{[}1.0{]}} (multi-hot 1차원) & \textbf{int \inlinecode{0} / \inlinecode{1}} (스칼라 인덱스) \\
@@ -108,7 +108,7 @@ Loss & \inlinecode{BCEWithLogitsLoss} & \textbf{\inlinecode{CrossEntropyLoss}} \
 \end{booktable}
 
 \begin{quote}
-\textbf{정확히 하나의 축만 바뀝니다} --- 이 장에서 변하는 건 \emph{Loss 축} (BCE → CE)이고, 그에 따라가는 부수적 변화(num\_labels, activation, 라벨 형식)는 모두 \emph{같은 축의 일관된 표현 변경} 입니다. 데이터·모델·학습 hyperparams는 \ref{ch:10}장과 \emph{완전히 동일} 하게 유지해야 마지막 비교가 의미가 있습니다.
+\textbf{정확히 하나의 축만 바뀝니다} --- 이 장에서 변하는 건 \emph{Loss 축} (BCE \(\to\) CE)이고, 그에 따라가는 부수적 변화(num\_labels, activation, 라벨 형식)는 모두 \emph{같은 축의 일관된 표현 변경} 입니다. 데이터·모델·학습 hyperparams는 \ref{ch:10}장과 \emph{완전히 동일} 하게 유지해야 마지막 비교가 의미가 있습니다.
 \end{quote}
 
 \subsection{두 방식의 동등성}
@@ -117,7 +117,7 @@ Loss & \inlinecode{BCEWithLogitsLoss} & \textbf{\inlinecode{CrossEntropyLoss}} \
 
 방식 B의 확률: \(\hat p_B = \mathrm{softmax}(z_0, z_1)[1] = \dfrac{e^{z_1}}{e^{z_0} + e^{z_1}} = \dfrac{1}{1 + e^{-(z_1 - z_0)}} = \sigma(z_1 - z_0)\).
 
-→ \textbf{\(z_A \equiv z_1 - z_0\)} 으로 두면 두 방식이 수학적으로 같은 함수입니다. 학습된 가중치는 다른 경로로 수렴하지만, \emph{최종 확률} 은 거의 같아야 합니다 (\ref{ch:04}장에서 sklearn으로 봤던 그 동등성).
+\(\to\) \textbf{\(z_A \equiv z_1 - z_0\)} 으로 두면 두 방식이 수학적으로 같은 함수입니다. 학습된 가중치는 다른 경로로 수렴하지만, \emph{최종 확률} 은 거의 같아야 합니다 (\ref{ch:04}장에서 sklearn으로 봤던 그 동등성).
 
 
 
@@ -134,11 +134,11 @@ L = -\frac{1}{N}\sum_{i=1}^{N}\log \hat p_{i, y_i} \quad\text{where}\quad \hat p
 
 \textbf{숫자로 감 잡기 (binary, K=2)} --- 정답이 클래스 1, logits를 \((z_0, z_1)\) 로 두면:
 
-\begin{booktable}{손실 노트}{tab:ch11-03}
+\begin{booktable}{11장 손실 노트 표}{tab:ch11-03}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
-logits \((z_0, z_1)\) & softmax → \((p_0, p_1)\) & 정답=1일 때 손실 \(-\log p_1\) \\
+logits \((z_0, z_1)\) & softmax \(\to\) \((p_0, p_1)\) & 정답=1일 때 손실 \(-\log p_1\) \\
 \midrule
 
 \((0, 0)\) & \((0.5, 0.5)\) & 0.693 \\
@@ -193,19 +193,29 @@ from sklearn.metrics import (
     classification_report, roc_auc_score,
 \end{lstlisting}
 
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
+\noindent\emph{앞뒤 블록은 모두 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
-\Needspace{5\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=17]
 )
 
+import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run(
+        "apt-get -qq -y install fonts-nanum",
+        shell=True,
+    )
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
 plt.rcParams["axes.unicode_minus"] = False
+
 \end{lstlisting}
 
 \noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=21]
+\begin{lstlisting}[firstnumber=30]
 print(f"PyTorch:        {torch.__version__}")
 print(f"CUDA available: {torch.cuda.is_available()}")
 if torch.cuda.is_available():
@@ -224,6 +234,14 @@ else:
 \inlinecode{numpy, pandas, matplotlib, PyTorch, datasets} 같은 주요 패키지를 불러옵니다.
 \end{codeRead}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+PyTorch:        2.11.0+cu128
+CUDA available: True
+GPU:             Tesla T4
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
 
 
 \textbf{baseline VRAM}:
@@ -241,16 +259,18 @@ else:
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Wed Jun 17 21:34:39 2026
+Sun Jun 21 22:55:24 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 41C P8 11W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 44C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
+
+
 \section{데이터 준비}
 
-같은 seed, 같은 5,000/1,000 샘플, 같은 별점 3 제외 + 4-5 → 1, 1-2 → 0 룰. \textbf{마지막 비교가 의미를 가지려면 데이터가 동일해야 합니다.}
+같은 seed, 같은 5,000/1,000 샘플, 같은 별점 3 제외 + 4-5 \(\to\) 1, 1-2 \(\to\) 0 룰. \textbf{마지막 비교가 의미를 가지려면 데이터가 동일해야 합니다.}
 
 
 
@@ -258,7 +278,7 @@ N/A 41C P8 11W / 70W | 3MiB / 15360MiB | 0% Default
 \begin{lstlisting}
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
 
-ds = load_dataset("yelp_review_full")
+ds = load_dataset("Yelp/yelp_review_full")
 train_full = ds["train"].shuffle(seed=42).select(range(5000))
 eval_full  = ds["test"].shuffle(seed=42).select(range(1000))
 
@@ -287,11 +307,21 @@ print(
 )
 \end{lstlisting}
 
-\textbf{\ref{ch:10}장과의 한 줄 차이}: \texttt{out{[}“labels”{]}\ =\ {[}{[}float(b){]}\ for\ b\ in\ batch{[}“binary”{]}{]}} → \texttt{out{[}“labels”{]}\ =\ {[}int(b)\ for\ b\ in\ batch{[}“binary”{]}{]}}. 라벨이 \emph{길이 1짜리 float 리스트} 가 아니라 \emph{int 스칼라} 입니다.
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+train (after excluding 3-star): 4040
+eval  (after excluding 3-star): 804
+train positive rate: 49.4%
+\end{bookoutputbox}
+\par\vspace{0.9em}
 
 
 
-\Needspace{10\baselineskip}
+\textbf{\ref{ch:10}장과의 한 줄 차이}: \texttt{out{[}“labels”{]}\ =\ {[}{[}float(b){]}\ for\ b\ in\ batch{[}“binary”{]}{]}} \(\to\) \texttt{out{[}“labels”{]}\ =\ {[}int(b)\ for\ b\ in\ batch{[}“binary”{]}{]}}. 라벨이 \emph{길이 1짜리 float 리스트} 가 아니라 \emph{int 스칼라} 입니다.
+
+
+
+\Needspace{11\baselineskip}
 \begin{lstlisting}
 def tokenize_fn(batch):
     out = tokenizer(
@@ -302,27 +332,34 @@ def tokenize_fn(batch):
     out["labels"] = [int(b) for b in batch["binary"]]
     return out
 
+train_tok = train_bin.map(tokenize_fn, batched=True).remove_columns(["text", "label", "binary"])
+eval_tok  = eval_bin.map(tokenize_fn,  batched=True).remove_columns(["text", "label", "binary"])
+
 \end{lstlisting}
 
-\noindent\emph{앞뒤 블록은 모두 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=10]
-train_tok = train_bin.map(
-    tokenize_fn,
-    batched=True).remove_columns(["text", "label", "binary"],
-)
-eval_tok  = eval_bin.map(
-    tokenize_fn,
-    batched=True).remove_columns(["text", "label", "binary"],
-)
-
+\Needspace{7\baselineskip}
+\begin{lstlisting}[firstnumber=13]
 print(train_tok)
 print(
     f"\nFirst sample label: "
     f"{train_tok[0]['labels']}  (int scalar)"
 )
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+Dataset({
+    features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'],
+    num_rows: 4040
+})
+
+First sample label: 1  (int scalar)
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \section{모델 로드}
 
@@ -344,6 +381,7 @@ def param_summary(m):
     total     = sum(p.numel() for p in m.parameters())
     trainable = sum(p.numel() for p in m.parameters() if p.requires_grad)
     return total, trainable
+
 \end{lstlisting}
 
 \noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
@@ -367,11 +405,29 @@ print(
 print(f"id2label:             {model.config.id2label}")
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+Key                     | Status     | 
+------------------------+------------+-
+pre_classifier.weight   | MISSING    | 
+pre_classifier.bias     | MISSING    | 
+classifier.weight       | MISSING    | 
+classifier.bias         | MISSING    | 
+
+- MISSING: those params were newly initialized because missing from the che...
+Parameters:              66,955,010  (67.0 M)
+Trainable parameters:    66,955,010  (100.0%)
+Classifier:           Linear(in_features=768, out_features=2, bias=True)
+problem_type:         single_label_classification
+id2label:             {0: 'negative', 1: 'positive'}
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
 
 
 \textbf{파라미터 수 비교 --- 방식 A vs 방식 B}
 
-\begin{booktable}{모델 로드}{tab:ch11-04}
+\begin{booktable}{11장 모델 로드 표}{tab:ch11-04}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -379,15 +435,15 @@ print(f"id2label:             {model.config.id2label}")
 \midrule
 
 DistilBERT body & 66,362,880 & 66,362,880 \\
-pre\_classifier (\inlinecode{Linear(768→768)}) & 590,592 & 590,592 \\
-classifier (\inlinecode{Linear(768→K)}) & \textbf{769} (=768+1) & \textbf{1,538} (=768·2+2) \\
+pre\_classifier (\texttt{Linear(768\$\textbackslash{}to\$768)}) & 590,592 & 590,592 \\
+classifier (\texttt{Linear(768\$\textbackslash{}to\$K)}) & \textbf{769} (=768+1) & \textbf{1,538} (=768·2+2) \\
 합계 & 66,954,241 & 66,955,010 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
-방식 B의 분류 헤드 파라미터가 정확히 \emph{2배} 입니다. 차이는 \textbf{769개} --- 헤드 포함 약 67M 중 0.001\%. 이 미세한 자유도 차이가 두 방식의 \emph{최종 확률} 을 거의 같게, \emph{학습된 가중치} 는 미묘하게 다르게 만듭니다.
+방식 B의 분류 헤드 파라미터가 정확히 \emph{2배} 입니다. 차이는 \textbf{769개} --- 전체 67M 중 0.001\%. 이 미세한 자유도 차이가 두 방식의 \emph{최종 확률} 을 거의 같게, \emph{학습된 가중치} 는 미묘하게 다르게 만듭니다.
 
 
 
@@ -398,12 +454,14 @@ classifier (\inlinecode{Linear(768→K)}) & \textbf{769} (=768+1) & \textbf{1,53
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Wed Jun 17 21:35:05 2026
+Sun Jun 21 22:55:52 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 42C P8 14W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 45C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \section{학습}
 
@@ -467,7 +525,7 @@ training_args = TrainingArguments(
 
 \noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
 
-\Needspace{10\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=15]
 trainer = Trainer(
     model=model,
@@ -477,18 +535,26 @@ trainer = Trainer(
     processing_class=tokenizer,
     compute_metrics=compute_metrics,
 )
-\end{lstlisting}
 
-\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 학습 설정을 만들고 학습 루프를 실행하는 단계로 넘어갑니다.}
-
-\Needspace{7\baselineskip}
-\begin{lstlisting}[firstnumber=24]
 train_result = trainer.train()
 print(
     f"\nTraining done — mean train loss: "
     f"{train_result.training_loss:.4f}"
 )
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+Epoch  Train...  Valid...  Accuracy  Preci...  Recall    F1        Auc
+-----  --------  --------  --------  --------  --------  --------  --------
+1      0.236501  0.249757  0.899254  0.883598  0.900270  0.891856  0.968274
+2      0.157596  0.277606  0.902985  0.894879  0.894879  0.894879  0.969149
+
+Training done -- mean train loss: 0.2545
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \Needspace{5\baselineskip}
 \begin{lstlisting}
@@ -497,12 +563,14 @@ print(
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Wed Jun 17 21:35:37 2026
+Sun Jun 21 22:56:24 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 59C P0 58W / 70W | 1579MiB / 15360MiB | 78% Default
+N/A 61C P0 66W / 70W | 1579MiB / 15360MiB | 63% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \section{평가}
 
@@ -519,20 +587,27 @@ for k, v in eval_metrics.items():
         print(f"  {k:>20}: {v:.4f}")
 \end{lstlisting}
 
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{eval\_metrics = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{for k, v in eval\_metrics....}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{4행}의 \inlinecode{if k.startswith("eval\_")...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\end{codeRead}
+
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 Train...  Valid...  Epoch  Accuracy  Preci...  Recall    F1        Auc
 --------  --------  -----  --------  --------  --------  --------  --------
-0.161377  0.271645  2      0.910448  0.900804  0.905660  0.903226  0.967126
+0.157596  0.277606  2      0.902985  0.894879  0.894879  0.894879  0.969149
 BERT method B evaluation:
-             eval_loss: 0.2716
-         eval_accuracy: 0.9104
-        eval_precision: 0.9008
-           eval_recall: 0.9057
-               eval_f1: 0.9032
-              eval_auc: 0.9671
+             eval_loss: 0.2776
+         eval_accuracy: 0.9030
+        eval_precision: 0.8949
+           eval_recall: 0.8949
+               eval_f1: 0.8949
+              eval_auc: 0.9691
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 preds_output = trainer.predict(eval_tok)
@@ -544,6 +619,7 @@ probs_full = exp / exp.sum(axis=1, keepdims=True)
 probs = probs_full[:, 1]
 
 logits = logits2[:, 1] - logits2[:, 0]      # (B,)
+
 \end{lstlisting}
 
 \noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 모델 출력을 확률이나 예측값으로 바꾸는 단계로 넘어갑니다.}
@@ -580,6 +656,27 @@ print(pd.DataFrame({
 }).to_string(index=False))
 \end{lstlisting}
 
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{preds\_output = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{2행}의 \inlinecode{logits2 = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{labels = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{exp = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{probs\_full = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{7행}의 \inlinecode{probs = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\end{codeRead}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+logits2 (raw)  shape: (804, 2)
+logit z = z1-z0 range: [-4.97, 5.08]
+Prob range:            [0.0069, 0.9938]
+Positive prediction rate (prob >= 0.5): 46.1%
+
+First 5 samples:
+ label    z0    z1  z=z1-z0  prob_B  pred
+     1 -2.07  2.05     4.12  0.9841     1
+     0  1.50 -1.59    -3.09  0.0436     0
+     1 -2.50  2.36     4.86  0.9923     1
+     1 -2.10  2.06     4.16  0.9846     1
+     1 -2.49  2.41     4.90  0.9926     1
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
 
 
 \subsection{\texorpdfstring{확률 분포}{확률 분포}}
@@ -602,9 +699,9 @@ sns.kdeplot(
     palette=PAL, clip=(0, 1), ax=ax,
 )
 ax.axvline(0.5, color="black", lw=1.2, ls="--", alpha=0.7)
-ax.set_title("Method B — Probability Distribution by Actual Label")
-ax.set_xlabel("Predicted probability  P(y=1) = softmax(logits)[1]")
-ax.set_ylabel("Density")
+ax.set_title("방식 B — 실제 라벨별 확률 분포")
+ax.set_xlabel("예측 확률  P(y=1) = softmax(logits)[1]")
+ax.set_ylabel("밀도")
 plt.tight_layout()
 \end{lstlisting}
 
@@ -615,16 +712,12 @@ plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-<Figure size 900x500 with 1 Axes>
-\end{bookoutputbox}
-\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{방식 B의 softmax 확률 분포}{fig:ch11-probability-kde}
+\centering
 \includegraphics[width=0.88\linewidth]{assets/figures/ch11_probability_kde.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch11-probability-kde}는 방식 B가 2차원 softmax를 쓰더라도 최종적으로 우리가 보는 값은 “positive 클래스 확률” 하나로 요약될 수 있음을 보여줍니다. 정답 0과 정답 1의 분포가 양끝으로 갈라질수록 모델이 확신을 갖고 있고, 0.5 근처에서 두 분포가 겹치는 영역은 방식 A와 마찬가지로 판단이 어려운 샘플입니다.
+\textbf{그림 읽기} --- 그림~\ref{fig:ch11-probability-kde}에서 다음 내용을 확인합니다: 방식 B의 softmax 확률 분포. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
 
 
 
@@ -643,24 +736,19 @@ sns.kdeplot(
     palette=PAL, ax=ax,
 )
 ax.axvline(0.0, color="black", lw=1.2, ls="--", alpha=0.7)
-ax.set_title("Method B — Logit Distribution  (z = z1 - z0)")
-ax.set_xlabel("Logit  z = z1 - z0")
-ax.set_ylabel("Density")
+ax.set_title("방식 B — logit 분포  (z = z1 - z0)")
+ax.set_xlabel("logit  z = z1 - z0")
+ax.set_ylabel("밀도")
 plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-<Figure size 900x500 with 1 Axes>
-\end{bookoutputbox}
-\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{방식 B를 1차원 logit 차이로 환산한 분포}{fig:ch11-logit-kde}
+\centering
 \includegraphics[width=0.88\linewidth]{assets/figures/ch11_logit_kde.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch11-logit-kde}는 2차원 softmax logit을 \(z_1-z_0\) 하나로 접어 방식 A의 logit과 같은 좌표에서 본 결과입니다. 이 그림이 \ref{ch:10}장의 logit 분포와 비슷하면 두 방식의 동등성이 시각적으로도 확인됩니다.
-
+\textbf{그림 읽기} --- 그림~\ref{fig:ch11-logit-kde}에서 다음 내용을 확인합니다: 방식 B를 1차원 logit 차이로 환산한 분포. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
 
 
 
@@ -681,20 +769,22 @@ print(classification_report(
 \begin{bookoutputbox}
 precision    recall  f1-score   support
 
-    negative     0.9188    0.9145    0.9167       433
-    positive     0.9008    0.9057    0.9032       371
+    negative     0.9099    0.9099    0.9099       433
+    positive     0.8949    0.8949    0.8949       371
 
-    accuracy                         0.9104       804
-   macro avg     0.9098    0.9101    0.9099       804
-weighted avg     0.9105    0.9104    0.9105       804
+    accuracy                         0.9030       804
+   macro avg     0.9024    0.9024    0.9024       804
+weighted avg     0.9030    0.9030    0.9030       804
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \section{\texorpdfstring{방식 A/B 비교}{방식 A/B 비교}}
 
 이전 장(\ref{ch:10}장)의 결과 파일에 의존하지 않도록, 같은 데이터·같은 hyperparams·같은 seed로 방식 A를 \emph{바로 여기서} 한 번 더 학습합니다. 변하는 것은 \textbf{모델 셋업과 라벨 형식뿐} (\ref{ch:10}장에서 본 그대로):
 
-\begin{booktable}{방식 A/B 비교}{tab:ch11-05}
+\begin{booktable}{11장 방식 A/B 비교 표}{tab:ch11-05}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -751,6 +841,9 @@ Method A first sample label: [1.0]  (length-1 float vector)
 Method B first sample label: 1    (int scalar)
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 model_A = AutoModelForSequenceClassification.from_pretrained(
@@ -773,7 +866,7 @@ def compute_metrics_A(eval_pred):
 
 \noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
-\Needspace{10\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=17]
         zero_division=0,
     )
@@ -783,12 +876,6 @@ def compute_metrics_A(eval_pred):
         "recall":    float(r),
         "f1":        float(f1),
         "auc":       float(roc_auc_score(lbl, p_hat)),
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{9\baselineskip}
-\begin{lstlisting}[firstnumber=25]
     }
 
 print(f"Method A classifier:    {model_A.classifier}")
@@ -797,6 +884,23 @@ print(
     f"{model_A.config.problem_type}"
 )
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+Key                     | Status     | 
+------------------------+------------+-
+pre_classifier.weight   | MISSING    | 
+pre_classifier.bias     | MISSING    | 
+classifier.weight       | MISSING    | 
+classifier.bias         | MISSING    | 
+
+- MISSING: those params were newly initialized because missing from the che...
+Method A classifier:    Linear(in_features=768, out_features=1, bias=True)
+Method A problem_type:  multi_label_classification
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -818,7 +922,7 @@ training_args_A = TrainingArguments(
 
 \noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
 
-\Needspace{10\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=15]
 trainer_A = Trainer(
     model=model_A,
@@ -828,18 +932,26 @@ trainer_A = Trainer(
     processing_class=tokenizer,
     compute_metrics=compute_metrics_A,
 )
-\end{lstlisting}
 
-\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 학습 설정을 만들고 학습 루프를 실행하는 단계로 넘어갑니다.}
-
-\Needspace{7\baselineskip}
-\begin{lstlisting}[firstnumber=24]
 train_result_A = trainer_A.train()
 print(
     f"\nMethod A training done — train loss: "
     f"{train_result_A.training_loss:.4f}"
 )
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+Epoch  Train...  Valid...  Accuracy  Preci...  Recall    F1        Auc
+-----  --------  --------  --------  --------  --------  --------  --------
+1      0.245630  0.248752  0.906716  0.893617  0.905660  0.899598  0.968371
+2      0.162265  0.281090  0.905473  0.904110  0.889488  0.896739  0.966261
+
+Method A training done -- train loss: 0.2588
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -871,6 +983,8 @@ Method A evaluation:
               eval_auc: 0.9663
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \subsection{평가지표 비교}
 
@@ -912,14 +1026,16 @@ print(cmp.round(4).to_string(index=False))
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 metric  method A (sigmoid+BCE)  method B (softmax+CE)  |A-B|
-     loss                  0.2811                 0.2716 0.0094
- accuracy                  0.9055                 0.9104 0.0050
-precision                  0.9041                 0.9008 0.0033
-   recall                  0.8895                 0.9057 0.0162
-       f1                  0.8967                 0.9032 0.0065
-      auc                  0.9663                 0.9671 0.0009
+     loss                  0.2811                 0.2776 0.0035
+ accuracy                  0.9055                 0.9030 0.0025
+precision                  0.9041                 0.8949 0.0092
+   recall                  0.8895                 0.8949 0.0054
+       f1                  0.8967                 0.8949 0.0019
+      auc                  0.9663                 0.9691 0.0029
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \subsection{확률 산점도}
 
@@ -943,26 +1059,21 @@ sns.scatterplot(
     palette={0: "#5B8DEF", 1: "#F47272"}, alpha=0.55, s=35, ax=ax,
 )
 ax.plot([0, 1], [0, 1], color="black", lw=1.3, ls="--", alpha=0.7,
-        label="y = x (perfect equivalence)")
+        label="y = x (완전 일치)")
 ax.set_xlim(-0.02, 1.02); ax.set_ylim(-0.02, 1.02)
-ax.set_xlabel("Method A — P(y=1) = sigmoid(z_A)")
-ax.set_ylabel("Method B — P(y=1) = softmax(z_0, z_1)[1]")
+ax.set_xlabel("방식 A — P(y=1) = sigmoid(z_A)")
+ax.set_ylabel("방식 B — P(y=1) = softmax(z_0, z_1)[1]")
 \end{lstlisting}
 
 \noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
-\Needspace{6\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=17]
-ax.set_title("Method A vs Method B — per-sample probability agreement")
+ax.set_title("방식 A vs 방식 B — 샘플별 확률 일치도")
 ax.legend(loc="upper left")
 plt.tight_layout()
 plt.show()
-\end{lstlisting}
 
-\noindent\emph{앞 블록은 숫자 결과를 그림으로 확인하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{9\baselineskip}
-\begin{lstlisting}[firstnumber=22]
 corr = float(np.corrcoef(probs_A, probs)[0, 1])
 mae  = float(np.abs(probs_A - probs).mean())
 print(
@@ -972,12 +1083,19 @@ print(
 print(f"Mean abs diff |A-B|: {mae:.4f}")
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+Pearson corr:        0.9914  (1.0 = perfect equivalence)
+Mean abs diff |A-B|: 0.0215
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
 \begin{bookfigurelabel}[H]{방식 A와 방식 B의 샘플별 확률 일치도}{fig:ch11-probability-scatter}
+\centering
 \includegraphics[width=0.72\linewidth]{assets/figures/ch11_probability_scatter.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch11-probability-scatter}는 방식 A와 방식 B가 같은 샘플에 부여한 positive 확률을 일대일로 비교합니다. 점들이 대각선 가까이에 모일수록 두 head 표현이 실제 예측에서도 거의 같은 결정을 내린다는 뜻입니다.
-
+\textbf{그림 읽기} --- 그림~\ref{fig:ch11-probability-scatter}에서 다음 내용을 확인합니다: 방식 A와 방식 B의 샘플별 확률 일치도. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
 
 
 
@@ -988,9 +1106,9 @@ print(f"Mean abs diff |A-B|: {mae:.4f}")
 \item
   \textbf{상관계수가 0.99 이상}, \textbf{평균 절대 차가 0.05 이하} 면 두 방식이 사실상 같은 함수를 학습했다고 봐도 됩니다.
 \item
-  만약 점들이 \emph{체계적으로} 직선 한쪽으로 치우친다면 → 한 방식이 다른 방식보다 일관되게 더 자신 있게 / 더 보수적으로 예측하고 있다는 뜻. seed를 여러 개 시도해 평균내면 보통 사라집니다.
+  만약 점들이 \emph{체계적으로} 직선 한쪽으로 치우친다면 \(\to\) 한 방식이 다른 방식보다 일관되게 더 자신 있게 / 더 보수적으로 예측하고 있다는 뜻. seed를 여러 개 시도해 평균내면 보통 사라집니다.
 \item
-  점들이 직선 \emph{주변에 무작위로} 흩어져 있으면 → 단순 학습 경로 차이. 학습량을 늘리거나 더 큰 데이터에서 학습하면 줄어듭니다.
+  점들이 직선 \emph{주변에 무작위로} 흩어져 있으면 \(\to\) 단순 학습 경로 차이. 학습량을 늘리거나 더 큰 데이터에서 학습하면 줄어듭니다.
 \end{itemize}
 
 
@@ -1026,12 +1144,15 @@ print(f"  both wrong:             {both_wrong:.1%}")
 Agreement rate (A vs B predictions): 98.3%
 
 Prediction quadrants:
-  both correct:           89.9%
-  only A correct (B wrong): 0.6%
-  only B correct (A wrong): 1.1%
-  both wrong:             8.3%
+  both correct:           89.6%
+  only A correct (B wrong): 1.0%
+  only B correct (A wrong): 0.7%
+  both wrong:             8.7%
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \textbf{여기까지 보고 결론} --- 식으로 본 동등성 (\(\sigma(z) = \mathrm{softmax}(z_0, z_1)[1]\) when \(z = z_1 - z_0\))이 BERT에서도 그대로 성립합니다. 차이가 있어 봐야 random init / dropout 같은 \emph{학습 경로 차이} 정도. 두 방식은 \textbf{수식이 다른 같은 모델}, 라이브러리·코드 컨벤션이 강요하는 표현 차이일 뿐입니다.
 
 \begin{quote}
@@ -1042,7 +1163,7 @@ Prediction quadrants:
 
 \section{이 장에 등장한 라이브러리·함수}
 
-\begin{booktable}{새로 등장한 라이브러리}{tab:ch11-06}
+\begin{booktable}{11장 새로 등장한 라이브러리}{tab:ch11-06}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -1099,14 +1220,14 @@ model = AutoModelForSequenceClassification.from_pretrained(
 
 \begin{faqBox}{Q2. (이론) \ref{ch:04}장의 sklearn 동등성 시연(\inlinecode{predict\_proba} 일치)과 \ref{ch:11}장의 BERT 동등성 시연(scatter plot) 의 차이는?}
 
-\begin{booktable}{FAQ}{tab:ch11-07}
+\begin{booktable}{11장 FAQ 표}{tab:ch11-07}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
 & \ref{ch:04}장 (sklearn) & \ref{ch:11}장 (BERT) \\
 \midrule
 
-두 모델이 \emph{같은 가중치} 를 학습? & \textbf{사실상 그렇다} --- 작은 모델이라 두 방식이 같은 최적해로 수렴 & 아니다 --- 헤드 포함 약 67M 파라미터 중 일부가 random init 차이로 다른 곳에 정착 \\
+두 모델이 \emph{같은 가중치} 를 학습? & \textbf{사실상 그렇다} --- 작은 모델이라 두 방식이 같은 최적해로 수렴 & 아니다 --- 67M 파라미터 중 일부가 random init 차이로 다른 곳에 정착 \\
 \inlinecode{predict\_proba} 가 정확히 같은가? & \textbf{거의 일치} (소수점 4-5자리까지) & \emph{근사적으로} 일치 (Pearson 0.99+, MAE 0.01-0.05) \\
 차이의 출처 & sklearn 옵티마이저 수렴 정밀도 & random init + dropout + GPU 비결정성 \\
 \bottomrule
@@ -1122,20 +1243,19 @@ model = AutoModelForSequenceClassification.from_pretrained(
 
 써도 됩니다. 단, \inlinecode{compute\_metrics} 가 받는 \inlinecode{logits} 는 \emph{numpy 배열} 이라 \inlinecode{torch.from\_numpy} 로 한 번 감싸야 합니다.
 
-\Needspace{7\baselineskip}
+\Needspace{5\baselineskip}
 \begin{lstlisting}
 import torch
-probs_full = torch.softmax(
-    torch.from_numpy(logits),
-    dim=-1).numpy(,
-)
+probs_full = torch.softmax(torch.from_numpy(logits), dim=-1).numpy()
 \end{lstlisting}
 
 이 장에선 \emph{softmax가 어떻게 동작하는지} 노출하기 위해 \inlinecode{np.exp\ /\ sum} 으로 직접 짰습니다 --- \inlinecode{max} 빼서 안정화하는 부분이 곧 PyTorch 내부 구현과 동일한 트릭입니다.
 
 \end{faqBox}
 
-\begin{faqBox}{Q4. (이론) 방식 A와 방식 B가 sklearn 안에서는 사실상 같은 모델이라고 했는데 --- 그러면 sklearn에서도 두 모델의 학습 결과가 BERT처럼 다른가요?}
+\begin{faqBox}{Q4. (이론) 방식 A·B 가 sklearn 안에선 사실상 같은 모델이라고 했는데, 그러면 BERT 에서도 두 학습 결과가 같아야 하지 않나요?}
+
+sklearn 의 binary \inlinecode{LogisticRegression()} 은 modern 기본 동작이 \emph{softmax+CE} 든 \emph{sigmoid+BCE} 든 동일한 형태로 학습 (\ref{ch:04}장 FAQ Q4 --- \inlinecode{coef\_.shape=(1,\ V)} 로 collapse). 즉 sklearn 에선 두 방식이 거의 \emph{수치적 등가}. BERT 에선 그렇지 않은 이유는 다음입니다.
 
 sklearn에서는 두 \emph{방식} 의 차이가 BERT보다 훨씬 작습니다. 이유는:
 
@@ -1143,7 +1263,7 @@ sklearn에서는 두 \emph{방식} 의 차이가 BERT보다 훨씬 작습니다.
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
 \item
-  \textbf{모델 크기}: sklearn LogReg는 \textasciitilde10K 파라미터. BERT는 헤드 포함 약 67M. 작은 모델이 큰 모델보다 \emph{유일한 최적해} 로 수렴하기 쉽습니다.
+  \textbf{모델 크기}: sklearn LogReg는 \textasciitilde10K 파라미터. BERT는 67M. 작은 모델이 큰 모델보다 \emph{유일한 최적해} 로 수렴하기 쉽습니다.
 \item
   \textbf{무작위성 원천}: sklearn LogReg는 \inlinecode{liblinear}/\inlinecode{lbfgs} 같은 결정론적 옵티마이저 기본. BERT는 SGD 기반 + GPU + dropout 으로 \emph{원천적으로} 비결정적.
 \item
@@ -1234,7 +1354,7 @@ def tokenize_wrong(batch):
 \item
   Yelp 별점 1-5 를 그대로 5클래스 분류로 (\ref{ch:05}장의 sklearn 버전을 BERT로)
 \item
-  \inlinecode{num\_labels=5}, \inlinecode{problem\_type="single\_label\_classification"} (\ref{ch:11}장과 같은 표준 셋업, K만 2 → 5)
+  \inlinecode{num\_labels=5}, \inlinecode{problem\_type="single\_label\_classification"} (\ref{ch:11}장과 같은 표준 셋업, K만 2 \(\to\) 5)
 \item
   Activation은 그대로 softmax, Loss는 그대로 \inlinecode{CrossEntropyLoss}
 \item
@@ -1242,6 +1362,6 @@ def tokenize_wrong(batch):
 \end{itemize}
 
 \begin{quote}
-\textbf{Phase 1 흐름 정리 (\ref{ch:07}장 - \ref{ch:14}장)}: BERT (영어) 위에서 Regression(9) → Binary 방식 A(10) → Binary 방식 B(11) → Multi-class(12) → Multi-label(13) → Auxiliary(14). 한 장에 한 축씩만 변합니다.
+\textbf{Phase 1 흐름 정리 (\ref{ch:07}장 - \ref{ch:14}장)}: BERT (영어) 위에서 Regression(9) \(\to\) Binary 방식 A(10) \(\to\) Binary 방식 B(11) \(\to\) Multi-class(12) \(\to\) Multi-label(13) \(\to\) Auxiliary(14). 한 장에 한 축씩만 변합니다.
 \end{quote}
 \end{previewBox}

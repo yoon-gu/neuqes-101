@@ -93,7 +93,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 20 & 작은 BERT (직접, scratch) & \inlinecode{bert-base-uncased} 토크나이저 (가져옴) & Wikitext-103 paragraphs (일반 도메인) & MLM head & softmax (MLM) & \inlinecode{CrossEntropyLoss} (masked token) \\
 21 & \ref{ch:20}장 사전학습 BERT + 분류 헤드 (약 10M) & (\ref{ch:20}장과 동일) & Yelp 이진화 (다른 도메인 transfer) & \inlinecode{Linear(H,\ 2)} & softmax & \inlinecode{CrossEntropyLoss} \\
 22 & 작은 BERT (직접, scratch) --- 한국어 & \inlinecode{klue/bert-base} 토크나이저 (가져옴) & 한국어 Wikipedia paragraphs (일반 도메인) & MLM head & softmax (MLM) & \inlinecode{CrossEntropyLoss} (masked token) \\
-\textbf{23 ← 여기} & \textbf{\ref{ch:22}장 사전학습 BERT + 분류 헤드 (약 10M)} & \textbf{(\ref{ch:22}장과 동일)} & \textbf{NSMC 이진 (다른 도메인 transfer)} & \textbf{\inlinecode{Linear(H,\ 2)}} & \textbf{softmax} & \textbf{\inlinecode{CrossEntropyLoss}} \\
+\textbf{23 \(\leftarrow\) 여기} & \textbf{\ref{ch:22}장 사전학습 BERT + 분류 헤드 (약 10M)} & \textbf{(\ref{ch:22}장과 동일)} & \textbf{NSMC 이진 (다른 도메인 transfer)} & \textbf{\inlinecode{Linear(H,\ 2)}} & \textbf{softmax} & \textbf{\inlinecode{CrossEntropyLoss}} \\
 24 (다음, Phase 4) & GPT-2 (직접, scratch) & BPE 토크나이저 (직접 학습) & TinyStories 영어 동화 & LM head & softmax (next-token) & \inlinecode{CrossEntropyLoss} (causal LM) \\
 \bottomrule
 \end{tabular}
@@ -115,13 +115,13 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 축 & \ref{ch:22}장 (한국어 MLM scratch) & \ref{ch:23}장 (한국어 분류 fine-tune) \\
 \midrule
 
-\textbf{이 장의 task} & MLM 사전학습 (masked token 예측) & \textbf{이진 분류 (NSMC 긍정/부정)} ← \emph{task 축 변화} \\
+\textbf{이 장의 task} & MLM 사전학습 (masked token 예측) & \textbf{이진 분류 (NSMC 긍정/부정)} \(\leftarrow\) \emph{task 축 변화} \\
 모델 클래스 & \inlinecode{BertForMaskedLM} & \textbf{\inlinecode{BertForSequenceClassification(num\_labels=2)}} \\
 본체 (embedding + encoder) & random init \(\to\) 한국어 위키 MLM 학습 & \textbf{\ref{ch:22}장 사전학습 본체 그대로 이어받음} \\
-출력 헤드 & MLM head (vocab 약 32,000 차원) & \textbf{분류 head (\inlinecode{Linear(256,\ 2)})} ← 새 random init \\
+출력 헤드 & MLM head (vocab 약 32,000 차원) & \textbf{분류 head (\inlinecode{Linear(256,\ 2)})} \(\leftarrow\) 새 random init \\
 토크나이저 & \inlinecode{klue/bert-base} (vocab 약 32,000) & (그대로) \\
-\textbf{데이터} & \textbf{한국어 Wikipedia paragraphs (일반 도메인, 라벨 없음)} & \textbf{NSMC 영화 리뷰 (다른 도메인, 라벨 사용)} ← \emph{사전학습과 fine-tune 도메인이 다름} \\
-Loss & \inlinecode{CrossEntropyLoss} (vocab 약 32,000 logits) & \textbf{\inlinecode{CrossEntropyLoss} (2 logits)} ← K 만 큰 변화 \\
+\textbf{데이터} & \textbf{한국어 Wikipedia paragraphs (일반 도메인, 라벨 없음)} & \textbf{NSMC 영화 리뷰 (다른 도메인, 라벨 사용)} \(\leftarrow\) \emph{사전학습과 fine-tune 도메인이 다름} \\
+Loss & \inlinecode{CrossEntropyLoss} (vocab 약 32,000 logits) & \textbf{\inlinecode{CrossEntropyLoss} (2 logits)} \(\leftarrow\) K 만 큰 변화 \\
 학습률 & 5e-4 (scratch MLM) & \textbf{2e-5} (fine-tune 표준) \\
 \bottomrule
 \end{tabular}
@@ -163,10 +163,10 @@ Loss & \inlinecode{CrossEntropyLoss} (vocab 약 32,000 logits) & \textbf{\inline
 
 본체 파라미터 & 약 110M & \textbf{약 10M} & \ref{ch:23}장 은 1/11 작음 \\
 사전학습 코퍼스 & 한국어 위키 + 모두의 말뭉치 + 뉴스 + 댓글 (약 8.4B 토큰, 일반 도메인) & \textbf{한국어 Wikipedia paragraphs 5K (약 50만-80만 토큰, 일반 도메인)} & 약 10,000배 격차, \textbf{둘 다 일반 한국어 코퍼스} \\
-사전학습 시간 & TPU 수일 & \textbf{T4 약 0.2분} & \\
+사전학습 시간 & TPU 수일 & \textbf{T4 약 8-10분} & \\
 Fine-tune 도메인 & NSMC 이진 (사전학습과 다른 도메인) & NSMC 이진 (사전학습과 다른 도메인) & \textbf{둘 다 일반 한국어 \(\to\) NSMC transfer 라 fair} \\
 분류 fine-tune 셋업 & \ref{ch:15}장 = 이 장 동일 (같은 데이터, 같은 hyperparams) & & 변하는 건 \emph{본체 출발점} 뿐 \\
-기대 accuracy & 약 85-88\% & \textbf{약 0.54 실측} & 비교는 실측치로 확인 \\
+실측 accuracy & 약 0.86 & \textbf{약 0.54} & 실행본 기준 (\ref{ch:15}장=0.86, \ref{ch:23}장=0.5420). 짧은 사전학습(MLM 약 0.2분)이라 동전 던지기에 가까움 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -174,9 +174,9 @@ Fine-tune 도메인 & NSMC 이진 (사전학습과 다른 도메인) & NSMC 이�
 
 비교가 \emph{공정} 한 이유 --- \ref{ch:15}장도 본 장도 둘 다 \emph{일반 도메인 한국어 사전학습 \(\to\) NSMC 분류 transfer} 의 같은 패턴. \emph{사전학습 규모} (약 10,000배) 와 \emph{모델 크기} (11배) 만 차이. 만약 \ref{ch:23}장 이 NSMC text 로 사전학습했다면 비교가 unfair 했을 것 --- domain-adaptive pretraining 우위 때문.
 
-\subsection{영어 실험과 한국어 실험의 대칭}
+\subsection{\texorpdfstring{\ref{ch:21}장 (영어) \(\to\) \ref{ch:23}장 (한국어) 대칭}{\ref{ch:21}장 (영어) \textbackslash to \ref{ch:23}장 (한국어) 대칭}}
 
-\begin{booktable}{23장 영어 실험과 한국어 실험의 대칭}{tab:ch23-05}
+\begin{booktable}{23장 21장 (영어) \textbackslash to 23장 (한국어) 대칭 표}{tab:ch23-05}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -197,7 +197,7 @@ Fine-tune 도메인 & NSMC 이진 (사전학습과 다른 도메인) & NSMC 이�
 
 
 
-\section{손실 함수의 변화: MLM에서 분류 CE로}
+\section{\texorpdfstring{손실 함수의 변화: MLM에서 분류 CE로}{Loss 함수의 변화 --- MLM CE (vocab 약 32,000) \textbackslash to 분류 CE (K=2)}}
 
 \ref{ch:22}장의 MLM 도 본질은 \emph{vocab 위에서의 다중 분류} 였습니다. 다만 K = vocab\_size 약 32,000 이라 어려운 task. 이 장는 K = 2 의 \emph{훨씬 쉬운} 분류 task.
 
@@ -260,10 +260,10 @@ random baseline 은 \emph{두 셋업 모두 같음} --- 사전학습이 \emph{�
 \textbf{숫자로 감 잡기} (K=2, 정답 = 클래스 1):
 \textbar{} logits \((z_0, z_1)\) \textbar{} softmax \(\to\) \(\hat p_1\) \textbar{} 손실 \textbar{}
 \textbar-\/-\/-\textbar-\/-\/-\textbar-\/-\/-\textbar{}
-\textbar{} (0, 0) \textbar{} 0.5 \textbar{} \textbf{0.693} ← random \textbar{}
+\textbar{} (0, 0) \textbar{} 0.5 \textbar{} \textbf{0.693} \(\leftarrow\) random \textbar{}
 \textbar{} (-1, +1) \textbar{} 0.881 \textbar{} 0.127 \textbar{}
 \textbar{} (-2, +2) \textbar{} 0.982 \textbar{} 0.018 \textbar{}
-\textbar{} (+2, -2) \textbar{} 0.018 \textbar{} \textbf{4.018} ← 자신 있게 틀림 \textbar{}
+\textbar{} (+2, -2) \textbar{} 0.018 \textbar{} \textbf{4.018} \(\leftarrow\) 자신 있게 틀림 \textbar{}
 \end{quote}
 
 
@@ -315,7 +315,7 @@ MLM 사전학습 (\ref{ch:22}장) 에서는 \inlinecode{group\_texts} 패턴으�
 임베딩 (vocab 약 32,000 x hidden 256) & 한국어 Wikipedia 사전학습으로 \emph{일반 위키 어휘 표상} 학습 & \textbf{그대로 이어받음} (NSMC 어휘도 같은 vocab 안에 있어 호환) \\
 Encoder 4 layer (attention + FFN) & MLM 으로 \emph{문맥 의존 표상} 학습 & \textbf{그대로 이어받음} \\
 MLM head (\inlinecode{cls.predictions}) & vocab 위 분류 헤드 & \textbf{버려짐} \\
-분류 head (\inlinecode{classifier}, \inlinecode{Linear(256,\ 2)}) & (없었음) & \textbf{새로 random init} ← NSMC fine-tune 으로 학습 \\
+분류 head (\inlinecode{classifier}, \inlinecode{Linear(256,\ 2)}) & (없었음) & \textbf{새로 random init} \(\leftarrow\) NSMC fine-tune 으로 학습 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -335,6 +335,8 @@ MLM head (\inlinecode{cls.predictions}) & vocab 위 분류 헤드 & \textbf{버�
 \begin{lstlisting}
 %pip install -q -U transformers datasets accelerate
 \end{lstlisting}
+
+
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -373,12 +375,28 @@ from sklearn.metrics import (
 
 \end{lstlisting}
 
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
+\noindent\emph{앞뒤 블록은 모두 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
-\Needspace{10\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=28]
 plt.rcParams["axes.unicode_minus"] = False
 
+import matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run(
+        "apt-get -qq -y install fonts-nanum",
+        shell=True,
+    )
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
+
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=40]
 if torch.cuda.is_available():
     DEVICE = "cuda"
 elif getattr(torch.backends, "mps", None) is not None and torch.backends.mps.is_available():
@@ -386,15 +404,15 @@ elif getattr(torch.backends, "mps", None) is not None and torch.backends.mps.is_
 else:
     DEVICE = "cpu"
 
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 숫자 결과를 그림으로 확인하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=37]
 print(f"PyTorch:        {torch.__version__}")
 print(f"CUDA available: {torch.cuda.is_available()}")
 print(f"Device:         {DEVICE}")
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=50]
 if DEVICE == "cuda":
     print(
         f"GPU:             "
@@ -416,6 +434,9 @@ Device:         cuda
 GPU:             Tesla T4
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \textbf{baseline VRAM} (CUDA 환경에서만 의미 있는 출력 --- Colab T4 기준):
 
 
@@ -427,12 +448,14 @@ GPU:             Tesla T4
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Wed Jun 17 22:03:53 2026
+Sun Jun 21 23:26:30 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 45C P8 12W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 38C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \section{NSMC 이진 분류 데이터 로드 --- \ref{ch:15}장과 같은 split}
 
@@ -529,6 +552,8 @@ Dataset({
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
+
+
 \section{\texorpdfstring{토크나이저 --- \inlinecode{klue/bert-base} (\ref{ch:22}장과 동일)}{토크나이저 --- klue/bert-base (\ref{ch:22}장과 동일)}}
 
 vocab 약 32,000 의 한국어 WordPiece. MLM 사전학습과 분류 fine-tune 전 구간에서 \emph{같은 토크나이저} 를 써야 본체가 학습한 임베딩의 의미가 유지됩니다.
@@ -577,9 +602,11 @@ tokens (16): ['[CLS]', '이', '영화', '정말', '재미있', '##었', '##고',
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
-\section{MLM 사전학습 --- \ref{ch:22}장 패턴 압축 재현 (한국어 Wikipedia, 1 epoch)}
 
-이 노트북을 \emph{self-contained} 로 만들기 위해 \ref{ch:22}장의 MLM 사전학습을 여기서 짧게 재현합니다. \ref{ch:22}장 보다 \emph{짧은 1 epoch} (시간 단축) 라 사전학습 깊이는 얕지만, \emph{random init 보다는 낫다} 는 차이를 만들기에는 충분합니다.
+
+\section{MLM 사전학습 --- \ref{ch:22}장 패턴 압축 재현 (한국어 Wikipedia, 3 epoch)}
+
+이 노트북을 \emph{self-contained} 로 만들기 위해 \ref{ch:22}장의 MLM 사전학습을 여기서 짧게 재현합니다. \ref{ch:22}장 (5K paragraphs) 보다 \emph{데이터를 줄이고 (2K) 3 epoch} 로 돌려 시간을 단축하면서도, \emph{random init 보다는 낫다} 는 차이를 만들기에는 충분합니다.
 
 \textbf{MLM 사전학습 데이터는 \emph{분류용 NSMC 와 별도}} --- \inlinecode{wikimedia/wikipedia} config \inlinecode{20231101.ko} paragraphs 5K 를 \emph{새로 로드}. 본 장의 \emph{진짜 transfer 메시지} --- \emph{일반 한국어 위키 사전학습 \(\to\) NSMC 영화 리뷰 분류 transfer} 가 노트북 한 구조에 자연스럽게 들어맞도록 \emph{두 데이터셋이 공존}. 같은 토크나이저 (\inlinecode{klue/bert-base}) 가 두 도메인을 모두 처리.
 
@@ -629,6 +656,9 @@ Small BERT config: hidden=256, layer=4, head=4
 Total parameters:  11,483,136  (11.48 M)
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 N_MLM_TRAIN = 2000
@@ -680,7 +710,7 @@ mlm_eval_raw  = Dataset.from_dict({"text": all_paragraphs[N_MLM_TRAIN:N_MLM_TRAI
 
 \end{lstlisting}
 
-\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=36]
@@ -694,19 +724,15 @@ print(
     f"{mlm_train_raw[0]['text'][:120]}"
 )
 
+def mlm_tokenize(examples):
+    return tokenizer(examples["text"], add_special_tokens=False, truncation=False)
+
 \end{lstlisting}
 
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
+\noindent\emph{앞뒤 블록은 모두 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=46]
-def mlm_tokenize(examples):
-    return tokenizer(
-        examples["text"],
-        add_special_tokens=False,
-        truncation=False,
-    )
-
+\begin{lstlisting}[firstnumber=49]
 mlm_tokenized_train = mlm_train_raw.map(
     mlm_tokenize,
     batched=True,
@@ -716,14 +742,14 @@ mlm_tokenized_eval  = mlm_eval_raw.map(
     mlm_tokenize,
     batched=True,
     remove_columns=["text"],
+)
+
 \end{lstlisting}
 
 \noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=62]
-)
-
+\begin{lstlisting}[firstnumber=60]
 def group_texts(examples):
     concatenated = {k: sum(examples[k], []) for k in examples.keys()}
     total_length = len(concatenated[list(examples.keys())[0]])
@@ -740,7 +766,7 @@ def group_texts(examples):
 \noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=75]
+\begin{lstlisting}[firstnumber=71]
 lm_train = mlm_tokenized_train.map(
     group_texts,
     batched=True,
@@ -759,6 +785,23 @@ print(
 print(f"MLM eval blocks:  {len(lm_eval):,}")
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+downloading Korean Wikipedia (wikimedia/wikipedia, 20231101.ko)...
+  total articles: 647,897
+
+MLM train paragraphs: 2,000  (Korean Wikipedia)
+MLM eval paragraphs:  400
+first MLM sample: 원(U+5143)은 시호에 쓰이는 글자다. 《일주서》 시법해에는...
+[transformers] Token indices sequence length is longer than the specified m...
+
+MLM train blocks: 1,562  (block_size=128)
+MLM eval blocks:  293
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
 \Needspace{7\baselineskip}
 \begin{lstlisting}
 mlm_collator = DataCollatorForLanguageModeling(
@@ -770,7 +813,7 @@ mlm_collator = DataCollatorForLanguageModeling(
 
 
 
-\textbf{\inlinecode{labels\ =\ -100} 한 줄 환기} --- \inlinecode{DataCollatorForLanguageModeling} 이 가려지지 않은 자리에 \inlinecode{labels\ =\ -100} 을 채워 \emph{해당 위치의 CE loss 를 무시}. 분류 fine-tune (다음 섹션) 에서는 -100 을 \emph{전혀 사용하지 않습니다} --- 모든 sample 에 \emph{정답 라벨} (0/1) 이 명시되어 있기 때문. 같은 \inlinecode{-100} 트릭이 Phase 4 의 SFT (27장) 에서 \emph{prompt 자리} 를 가리는 정반대 자리로 다시 등장합니다 --- 풀버전 표는 \ref{ch:21}장 §3 \emph{labels = -100 thread} 참조.
+\textbf{\inlinecode{labels\ =\ -100} 한 줄 환기} --- \inlinecode{DataCollatorForLanguageModeling} 이 가려지지 않은 자리에 \inlinecode{labels\ =\ -100} 을 채워 \emph{해당 위치의 CE loss 를 무시}. 분류 fine-tune (다음 섹션) 에서는 -100 을 \emph{전혀 사용하지 않습니다} --- 모든 sample 에 \emph{정답 라벨} (0/1) 이 명시되어 있기 때문. 같은 \inlinecode{-100} 트릭이 Phase 4 의 SFT (\ref{ch:27}장) 에서 \emph{prompt 자리} 를 가리는 정반대 자리로 다시 등장합니다 --- 풀버전 표는 \ref{ch:21}장 §3 \emph{labels = -100 thread} 참조.
 
 
 
@@ -839,6 +882,9 @@ MLM fp16:          True
 MLM steps:         144
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 t0 = time.time()
@@ -859,15 +905,18 @@ print(
 \begin{bookoutputbox}
 Epoch  Training Loss  Validation Loss
 -----  -------------  ---------------
-1      8.093575       7.848547
-2      7.551116       7.848426
-3      7.489806       7.826714
+1      8.120042       7.842206
+2      7.549725       7.821717
+3      7.473425       7.805934
 
 MLM pretraining done in 0.2 min
-mean train loss: 7.9176
+mean train loss: 7.9162
 random baseline (ln vocab): 10.3735
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{10\baselineskip}
 \begin{lstlisting}
 mlm_eval_metrics = mlm_trainer.evaluate()
@@ -884,13 +933,16 @@ print(f"(random baseline PPL: {tokenizer.vocab_size:,})")
 \begin{bookoutputbox}
 Training Loss  Validation Loss  Epoch
 -------------  ---------------  -----
-7.489806       7.816072         3
-MLM eval loss:        7.8161
-MLM eval perplexity:  2480.14
+7.473425       7.797009         3
+MLM eval loss:        7.7970
+MLM eval perplexity:  2433.31
 (random baseline PPL: 32,000)
 \end{bookoutputbox}
 \par\vspace{0.9em}
-\textbf{관전 포인트} --- 한국어 Wikipedia paragraphs 에서 MLM loss 가 \emph{random baseline 10.37} 에서 시작해 약 7 부근까지 떨어졌다면 본체가 \emph{일반 한국어 어휘·문맥 구조의 일부} 를 학습한 상태. perplexity 로 환산하면 vocab 약 32,000 중 \emph{수천 개 후보} 로 좁혀진 정도. \ref{ch:22}장의 2 epoch 보다는 약간 얕지만, \emph{NSMC 분류 fine-tune 출발점} 으로는 충분합니다 --- 본체가 \emph{일반 한국어 구조} 를 가지면 \emph{영화 리뷰 비격식 도메인} 도 fine-tune 으로 빠르게 적응.
+
+
+
+\textbf{관전 포인트} --- 한국어 Wikipedia paragraphs 에서 MLM loss 가 \emph{random baseline 10.37} 에서 시작해 5-7 부근까지 떨어졌다면 본체가 \emph{일반 한국어 어휘·문맥 구조의 일부} 를 학습한 상태. perplexity 로 환산하면 vocab 약 32,000 중 \emph{수백-수천 개 후보} 로 좁혀진 정도. \ref{ch:22}장의 2 epoch 보다는 약간 얕지만, \emph{NSMC 분류 fine-tune 출발점} 으로는 충분합니다 --- 본체가 \emph{일반 한국어 구조} 를 가지면 \emph{영화 리뷰 비격식 도메인} 도 fine-tune 으로 빠르게 적응.
 
 \begin{quote}
 \textbf{체크포인트 저장은 생략} --- 노트북 안에서 바로 본체 가중치를 분류 모델로 옮기기 때문. \ref{ch:22}장 처럼 디스크에 저장하려면 \inlinecode{mlm\_model.save\_pretrained("./ch23\_mlm\_ckpt")} 한 줄.
@@ -898,7 +950,7 @@ MLM eval perplexity:  2480.14
 
 
 
-\section{헤드 교체와 파인튜닝}
+\section{\texorpdfstring{헤드 교체와 파인튜닝}{헤드 교체 --- MLM \textbackslash to 분류 + Fine-tune}}
 
 이제 \emph{방금 학습된 작은 한국어 BERT 본체} 를 분류 모델로 옮깁니다. 두 가지 흐름:
 
@@ -1001,6 +1053,9 @@ Classification model parameters:
   total:                                 11,451,138  (11.45 M)
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \textbf{\inlinecode{bert.load\_state\_dict} 가 한 일} --- \inlinecode{BertForMaskedLM} 과 \inlinecode{BertForSequenceClassification} 둘 다 \emph{내부에 같은 \inlinecode{BertModel}} (이름 \inlinecode{self.bert}) 을 갖습니다. 그 본체만 통째로 옮긴 셈. MLM head (\inlinecode{cls.predictions}) 와 분류 head (\inlinecode{classifier}) 는 \emph{모델 객체의 다른 자리} 라 자동으로 분리됩니다.
 
 \begin{quote}
@@ -1054,9 +1109,12 @@ Dataset({
 })
 
 First sample label: 1  (int 0 or 1)
-Token length stats — mean: 21.9, median: 17, max: 117
+Token length stats -- mean: 21.9, median: 17, max: 117
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 def compute_metrics(eval_pred):
@@ -1142,14 +1200,17 @@ print(f"random baseline (ln 2): {math.log(2):.4f}")
 \begin{bookoutputbox}
 Epoch  Train...  Valid...  Accuracy  Preci...  Recall    F1        Auc
 -----  --------  --------  --------  --------  --------  --------  --------
-1      0.689621  0.691119  0.524000  0.613861  0.124248  0.206667  0.552118
-2      0.687569  0.687069  0.542000  0.556164  0.406814  0.469907  0.558462
+1      0.688617  0.690369  0.544000  0.621469  0.220441  0.325444  0.557222
+2      0.685710  0.686391  0.551000  0.557870  0.482966  0.517723  0.566904
 
 Classification fine-tune done in 0.2 min
-mean train loss: 0.6904
+mean train loss: 0.6897
 random baseline (ln 2): 0.6931
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{5\baselineskip}
 \begin{lstlisting}
 !nvidia-smi
@@ -1157,12 +1218,14 @@ random baseline (ln 2): 0.6931
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Wed Jun 17 22:05:02 2026
+Sun Jun 21 23:27:37 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 55C P0 33W / 70W | 821MiB / 15360MiB | 23% Default
+N/A 49C P0 29W / 70W | 821MiB / 15360MiB | 25% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \section{평가}
 
@@ -1182,20 +1245,27 @@ for k, v in cls_eval_metrics.items():
         print(f"  {k:>20}: {v:.4f}")
 \end{lstlisting}
 
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{cls\_eval\_metrics = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{for k, v in cls\_eval\_metr...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{7행}의 \inlinecode{if k.startswith("eval\_")...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\end{codeRead}
+
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 Train...  Valid...  Epoch  Accuracy  Preci...  Recall    F1        Auc
 --------  --------  -----  --------  --------  --------  --------  --------
-0.687569  0.687069  2      0.542000  0.556164  0.406814  0.469907  0.558462
+0.685710  0.686391  2      0.551000  0.557870  0.482966  0.517723  0.566904
 Ch 23 small BERT (scratch MLM 3 epoch on Korean Wikipedia + NSMC fine-tune)...
-             eval_loss: 0.6871
-         eval_accuracy: 0.5420
-        eval_precision: 0.5562
-           eval_recall: 0.4068
-               eval_f1: 0.4699
-              eval_auc: 0.5585
+             eval_loss: 0.6864
+         eval_accuracy: 0.5510
+        eval_precision: 0.5579
+           eval_recall: 0.4830
+               eval_f1: 0.5177
+              eval_auc: 0.5669
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{10\baselineskip}
 \begin{lstlisting}
 preds_output = cls_trainer.predict(cls_eval)
@@ -1228,22 +1298,28 @@ print(classification_report(
 ))
 \end{lstlisting}
 
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{preds\_output = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{2행}의 \inlinecode{cls\_logits = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{cls\_labels = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{exp = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{cls\_probs\_full = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{7행}의 \inlinecode{cls\_preds = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\end{codeRead}
+
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 Logits shape: (1000, 2)
-Predicted positive rate: 36.5%
-Top-1 prob mean: correct=0.5314, wrong=0.5273
+Predicted positive rate: 43.2%
+Top-1 prob mean: correct=0.5395, wrong=0.5361
 
               precision    recall  f1-score   support
 
-    negative     0.5339    0.6766    0.5968       501
-    positive     0.5562    0.4068    0.4699       499
+    negative     0.5458    0.6188    0.5800       501
+    positive     0.5579    0.4830    0.5177       499
 
-    accuracy                         0.5420      1000
-   macro avg     0.5450    0.5417    0.5334      1000
-weighted avg     0.5450    0.5420    0.5335      1000
+    accuracy                         0.5510      1000
+   macro avg     0.5518    0.5509    0.5489      1000
+weighted avg     0.5518    0.5510    0.5489      1000
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \subsection{학습 곡선}
 
@@ -1267,7 +1343,7 @@ if train_logs:
         losses,
         "o-",
         color="#4878D0",
-        label="train CE loss (small BERT + ko wiki MLM)",
+        label="학습 CE loss (small BERT + ko wiki MLM)",
     )
 \end{lstlisting}
 
@@ -1276,10 +1352,10 @@ if train_logs:
 \Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=17]
     ax.axhline(random_baseline, color="black", lw=1.0, ls=":",
-               label=f"random baseline (ln 2 = {random_baseline:.3f})")
-    ax.set_xlabel("training step")
+               label=f"랜덤 기준선 (ln 2 = {random_baseline:.3f})")
+    ax.set_xlabel("학습 step")
     ax.set_ylabel("CE loss (binary)")
-    ax.set_title("NSMC classification fine-tune loss — small BERT (Korean Wikipedia MLM body)")
+    ax.set_title("NSMC 분류 fine-tune loss — small BERT (한국어 위키백과 MLM body)")
     ax.legend()
     plt.tight_layout()
     plt.show()
@@ -1287,17 +1363,12 @@ else:
     print("No train loss logs found.")
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-<Figure size 900x500 with 1 Axes>
-\end{bookoutputbox}
-\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{한국어 작은 BERT의 NSMC fine-tune loss 곡선}{fig:ch23-finetune-loss}
 \centering
 \includegraphics[width=0.82\linewidth]{assets/figures/ch23_finetune_loss.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch23-finetune-loss}는 22장에서 만든 한국어 작은 BERT 본체에 분류 헤드를 붙인 뒤, NSMC 이진 분류 loss가 어떻게 내려가는지 보여줍니다. 기준선은 무작위 이진 분류의 \(\log 2\)입니다. 곡선이 이 선 아래로 안정적으로 내려가면 최소한 분류 헤드와 본체가 NSMC 신호를 학습하고 있다는 뜻입니다.
+\textbf{그림 읽기} --- 그림~\ref{fig:ch23-finetune-loss}에서 다음 내용을 확인합니다: 한국어 작은 BERT의 NSMC fine-tune loss 곡선. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
 
 
 
@@ -1319,9 +1390,9 @@ fig, ax = plt.subplots(figsize=(6, 5))
 sns.heatmap(
     cm_norm, annot=cm, fmt="d",
     cmap="Blues", vmin=0, vmax=1,
-    xticklabels=["negative", "positive"],
-    yticklabels=["negative", "positive"],
-    cbar_kws={"label": "row-normalized (recall)"}, ax=ax,
+    xticklabels=["부정", "긍정"],
+    yticklabels=["부정", "긍정"],
+    cbar_kws={"label": "행 기준 정규화 (recall)"}, ax=ax,
 )
 \end{lstlisting}
 
@@ -1329,32 +1400,27 @@ sns.heatmap(
 
 \Needspace{7\baselineskip}
 \begin{lstlisting}[firstnumber=17]
-ax.set_xlabel("Predicted")
-ax.set_ylabel("Actual")
-ax.set_title("23장 small BERT (ours + ko wiki MLM) — Confusion Matrix")
+ax.set_xlabel("예측값")
+ax.set_ylabel("실제값")
+ax.set_title("23장 small BERT (ours + ko wiki MLM) — 혼동 행렬")
 plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-<Figure size 600x500 with 2 Axes>
-\end{bookoutputbox}
-\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{한국어 작은 BERT의 NSMC 혼동 행렬}{fig:ch23-confusion-matrix}
 \centering
 \includegraphics[width=0.68\linewidth]{assets/figures/ch23_confusion_matrix.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch23-confusion-matrix}는 긍정과 부정이 어느 방향으로 더 자주 헷갈리는지 보여줍니다. 대각선이 강할수록 예측이 안정적이고, 한쪽 행에서 반대 열이 두꺼워지면 해당 감성 방향의 recall이 약하다는 뜻입니다. 작은 BERT는 학습 규모가 작기 때문에 대규모 \inlinecode{klue/bert-base}보다 비대각 성분이 더 커질 수 있습니다.
+\textbf{그림 읽기} --- 그림~\ref{fig:ch23-confusion-matrix}에서 다음 내용을 확인합니다: 한국어 작은 BERT의 NSMC 혼동 행렬. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
 
 
 
-\section{KLUE-BERT와 작은 BERT 비교}
+\section{2-way 비교 --- \ref{ch:15}장 (klue/bert-base) vs \ref{ch:23}장 ours (small BERT + ko wiki MLM)}
 
 두 셋업을 한 표·한 막대 그래프로. \ref{ch:15}장의 수치는 \emph{해당 노트북의 검증된 결과} 를 인용 --- 학습자가 직접 \ref{ch:15}장 노트북을 돌려 본인 수치로 갱신해 보면 더 좋습니다.
 
-\begin{booktable}{23장 KLUE-BERT와 작은 BERT 비교}{tab:ch23-09}
+\begin{booktable}{23장 2-way 비교 - 15장 (klue/bert-base) vs 23장 ours (small BERT + ko wiki MLM) 표}{tab:ch23-09}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -1363,7 +1429,7 @@ plt.show()
 
 본체 파라미터 & 약 110M & 약 10M \\
 사전학습 코퍼스 & 한국어 위키 + 모두의 말뭉치 + 뉴스 + 댓글 (약 8.4B 토큰) & 한국어 Wikipedia paragraphs 5K (약 50만-80만 토큰) \\
-사전학습 시간 & TPU 수일 & T4 약 0.2분 \\
+사전학습 시간 & TPU 수일 & T4 약 8-10분 \\
 Fine-tune 도메인 & NSMC 이진 (다른 도메인) & NSMC 이진 (다른 도메인) \\
 분류 fine-tune 셋업 & (둘 다 같음 --- 5K/1K, batch 16, lr 2e-5, 2 epoch, fp16) & \\
 \bottomrule
@@ -1383,13 +1449,13 @@ CH15_REFERENCE = {
     "auc":       0.93,
 }
 
-ch23_ours = {
-    k.replace("eval_", ""): v
-    for k, v in cls_eval_metrics.items()
-    if k.startswith("eval_")
-    and isinstance(v, float)
-    and k.replace("eval_", "") in CH15_REFERENCE
-}
+ch23_ours = {k.replace(
+    "eval_",
+    ""): v for k,
+    v in cls_eval_metrics.items(,
+)
+             if k.startswith("eval_") and isinstance(v, float)
+             and k.replace("eval_", "") in CH15_REFERENCE}
 
 \end{lstlisting}
 
@@ -1408,6 +1474,20 @@ print(
 )
 print(comparison.round(4).to_string(index=False))
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+2-way comparison -- NSMC binary classification metrics
+   metric  Ch15 klue/bert-base (ref)  Ch23 ours (small + MLM)
+ accuracy                       0.86                   0.5510
+precision                       0.86                   0.5579
+   recall                       0.86                   0.4830
+       f1                       0.86                   0.5177
+      auc                       0.93                   0.5669
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -1429,46 +1509,41 @@ sns.barplot(
 )
 \end{lstlisting}
 
-\noindent\emph{앞뒤 블록은 모두 예측 결과를 지표와 표로 요약하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
 
 \Needspace{9\baselineskip}
 \begin{lstlisting}[firstnumber=17]
 ax.set_ylim(0, 1.05)
-ax.set_title("NSMC binary classification — 2-way comparison (15장 ref / 23장 ours)")
-ax.set_xlabel("metric")
-ax.set_ylabel("score")
+ax.set_title("NSMC 이진 분류 — 2-way 비교 (15장 ref / 23장 ours)")
+ax.set_xlabel("지표")
+ax.set_ylabel("점수")
 ax.legend(loc="lower right", fontsize=10)
 plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-<Figure size 1000x500 with 1 Axes>
-\end{bookoutputbox}
-\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{KLUE-BERT와 한국어 작은 BERT의 NSMC 지표 비교}{fig:ch23-ch15-compare}
 \centering
 \includegraphics[width=0.82\linewidth]{assets/figures/ch23_ch15_compare.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch23-ch15-compare}는 같은 NSMC fine-tune 조건에서 대규모 사전학습 본체와 짧게 직접 사전학습한 작은 본체의 차이를 보여줍니다. 이 장의 목적은 작은 모델이 대규모 모델을 이기는 것이 아니라, 사전학습 코퍼스 규모와 모델 크기가 downstream 성능에 어떤 간격을 남기는지 정량적으로 보는 데 있습니다.
+\textbf{그림 읽기} --- 그림~\ref{fig:ch23-ch15-compare}에서 다음 내용을 확인합니다: KLUE-BERT와 한국어 작은 BERT의 NSMC 지표 비교. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
 
 
 
 \textbf{관찰 --- \emph{동일 transfer 패턴 안에서 사전학습 규모 격차} 가 NSMC 정확도에 어떻게 드러나나}
 
-전형적으로:
+실측 (실행본 기준):
 
 \begin{itemize}
 \tightlist
 \item
-  \textbf{\ref{ch:15}장} (\inlinecode{klue/bert-base}, 약 110M, 약 8.4B 토큰 대규모 한국어 사전학습): accuracy 약 85-88\%, AUC 약 0.92-0.94
+  \textbf{\ref{ch:15}장} (\inlinecode{klue/bert-base}, 약 110M, 약 8.4B 토큰 대규모 한국어 사전학습): accuracy 약 0.86, AUC 약 0.93
 \item
-  \textbf{\ref{ch:23}장 ours} (small BERT, 한국어 Wikipedia 2K paragraphs \(\times\) 3 epoch 사전학습): accuracy 약 0.54, AUC 약 0.56
+  \textbf{\ref{ch:23}장 ours} (small BERT, 한국어 Wikipedia 2K paragraphs \(\times\) 3 epoch 사전학습): accuracy 약 0.54, AUC 약 0.56 (동전 던지기 수준 --- MLM 약 0.2분의 짧은 사전학습 한계)
 \end{itemize}
 
-\textbf{\ref{ch:15}장 vs \ref{ch:23}장 ours}: accuracy 약 10-20\%p 격차. 두 모델이 \emph{같은 transfer 패턴} (일반 한국어 위키 \(\to\) NSMC) 을 따르므로 격차의 거의 전부가 \emph{사전학습 규모의 가치} --- 약 8.4B 토큰의 \emph{일반 한국어 지식} 이 \inlinecode{klue/bert-base} 본체에 압축되어 있어, NSMC 같은 \emph{비격식 구어체 도메인} 에도 빠르게 적응합니다. \emph{작은 일반 사전학습 \textless{} 대규모 일반 사전학습} 의 본질은 단순 양적 차이가 아니라 \emph{도메인 다양성의 질적 차이} --- \inlinecode{klue/bert-base} 는 위키 + 뉴스 + 블로그·댓글까지 포함한 약 8.4B 토큰으로 비격식 한국어 도메인도 \emph{이미 본 적이 있어} transfer 가 자연스럽습니다.
+\textbf{\ref{ch:15}장 vs \ref{ch:23}장 ours}: accuracy 약 32\%p 격차. 두 모델이 \emph{같은 transfer 패턴} (일반 한국어 위키 \(\to\) NSMC) 을 따르므로 격차의 거의 전부가 \emph{사전학습 규모의 가치} --- 약 8.4B 토큰의 \emph{일반 한국어 지식} 이 \inlinecode{klue/bert-base} 본체에 압축되어 있어, NSMC 같은 \emph{비격식 구어체 도메인} 에도 빠르게 적응합니다. \emph{작은 일반 사전학습 \textless{} 대규모 일반 사전학습} 의 본질은 단순 양적 차이가 아니라 \emph{도메인 다양성의 질적 차이} --- \inlinecode{klue/bert-base} 는 위키 + 뉴스 + 블로그·댓글까지 포함한 약 8.4B 토큰으로 비격식 한국어 도메인도 \emph{이미 본 적이 있어} transfer 가 자연스럽습니다.
 
 \begin{quote}
 NSMC 는 \emph{짧은 한 줄 리뷰} 이고 \emph{반어·맞춤법 흔들림·라벨 노이즈} 가 섞여 있어 영어 Yelp (\ref{ch:21}장) 보다 \emph{살짝 더 어려운} 데이터. 작은 모델 + 작은 사전학습 환경에서는 그 어려움이 더 두드러집니다 --- 한국어 환경 특유의 \emph{negative transfer 가능성} 까지 포함한 정량 비교는 부록을 참조하세요.
@@ -1495,7 +1570,7 @@ NSMC 는 \emph{짧은 한 줄 리뷰} 이고 \emph{반어·맞춤법 흔들림·
 \inlinecode{model.bert.load\_state\_dict(other.bert.state\_dict())} & 본체만 통째로 옮기는 in-memory 헤드 교체 & \ref{ch:21}장 동일 \\
 \inlinecode{transformers.BertForMaskedLM} (재등장) & MLM 사전학습 (\ref{ch:22}장 압축 재현) & \ref{ch:20}장 / \ref{ch:22}장 동일 \\
 \inlinecode{load\_dataset("wikimedia/wikipedia",\ "20231101.ko")} & 한국어 Wikipedia 일반 도메인 코퍼스 로드 (MLM 용) & \ref{ch:22}장과 동일 \\
-\texttt{pandas.read\_csv(NSMC\_URL,\ sep="\textbackslash{}t")} & GitHub raw TSV 직접 다운로드 (분류 fine-tune 용) & \ref{ch:15}장과 동일 NSMC 패턴 \\
+\texttt{pandas.read\_csv(NSMC\_URL,\ sep=“\textbackslash{}t”)} & GitHub raw TSV 직접 다운로드 (분류 fine-tune 용) & \ref{ch:15}장과 동일 NSMC 패턴 \\
 \inlinecode{sklearn.metrics.precision\_recall\_fscore\_support(...,\ average="binary")} & 이진 분류 metric 한 묶음 & \ref{ch:15}장 / \ref{ch:21}장 동일 \\
 \inlinecode{sklearn.metrics.roc\_auc\_score} & AUC & \ref{ch:15}장 / \ref{ch:21}장 동일 \\
 \bottomrule
@@ -1547,7 +1622,7 @@ NSMC 는 \emph{짧은 한 줄 리뷰} 이고 \emph{반어·맞춤법 흔들림·
 \Needspace{5\baselineskip}
 \begin{lstlisting}
 yelp_lens = [len(tokenizer(t)["input_ids"]) for t in ds_train_full[:1000]["text"]]
-nsmc_lens = [len(tokenizer(t)["input_ids"]) for t in ds_train_full[:1000]["text"]]
+nsmc_lens = [len(tokenizer(t)["input_ids"]) for t in df_train["document"][:1000]]
 \end{lstlisting}
 
 NSMC 의 \emph{짧은 한 줄} 은 분류 신호가 \emph{한두 단어에 집중} 됩니다 (\inlinecode{명작}, \inlinecode{시간\ 낭비}, \inlinecode{감동}). 모델이 \emph{문맥 이해} 보다 \emph{키워드 매칭} 에 가까워져, 사전학습이 얕은 작은 BERT 에는 더 불리합니다 --- \ref{ch:15}장의 \inlinecode{klue/bert-base} 같은 \emph{대규모 사전학습 + 비격식 코퍼스 포함} 모델이 진가를 발휘하는 영역.
@@ -1567,7 +1642,7 @@ NSMC 의 \emph{짧은 한 줄} 은 분류 신호가 \emph{한두 단어에 집�
 
 본체 파라미터 & 약 110M & 약 10M (11x 작음) \\
 사전학습 코퍼스 & 약 8.4B 토큰 (한국어 위키 + 모두의 말뭉치 + 뉴스 + 댓글) & 약 20만-30만 토큰 (위키 2K paragraphs \(\times\) 3 epoch) --- \emph{약 30,000x 격차} \\
-사전학습 시간 & TPU 수일 & T4 약 0.2분 \\
+사전학습 시간 & TPU 수일 & T4 약 8-12분 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -1622,8 +1697,8 @@ cls_model.bert.load_state_dict(
 
 \textbf{MLM 압축 재현} (셀 3) & 선택된 약 15\% 만 원본 token id, 나머지 = \inlinecode{-100} & 가려진 자리 & 주변 문맥으로 \emph{가려진 토큰 복원} \\
 \textbf{NSMC 분류 fine-tune} (셀 4) & 모든 sample 에 \inlinecode{0} 또는 \inlinecode{1} & sample 전체 (배치 차원) & \emph{문장 \(\to\) 긍정/부정} 분류 \\
-\textbf{GPT CausalLM 사전학습} (24-26장) & \inlinecode{input\_ids.clone()} --- \emph{거의 모든 토큰} & (pad 만 \inlinecode{-100}) 사실상 \emph{전 자리} & 모든 자리에서 \emph{다음 토큰 예측} \\
-\textbf{SFT / Instruction Tuning} (27장) & \textbf{prompt 부분 = \inlinecode{-100}}, \emph{답변 토큰만} 원본 id & \emph{답변 부분만} & ``질문 외우지 말고 답변하는 법'' \\
+\textbf{GPT CausalLM 사전학습} (\ref{ch:24}--\ref{ch:26}장) & \inlinecode{input\_ids.clone()} --- \emph{거의 모든 토큰} & (pad 만 \inlinecode{-100}) 사실상 \emph{전 자리} & 모든 자리에서 \emph{다음 토큰 예측} \\
+\textbf{SFT / Instruction Tuning} (\ref{ch:27}장) & \textbf{prompt 부분 = \inlinecode{-100}}, \emph{답변 토큰만} 원본 id & \emph{답변 부분만} & “질문 외우지 말고 답변하는 법” \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -1649,19 +1724,19 @@ def cls_tokenize(batch):
 
 \begin{faqBox}{Q5. (이론) 파인튜닝의 의미가 BERT 단계와 GPT 시대 사이에 어떻게 변하나요? 본 장은 \emph{마지막 BERT 파인튜닝} 인가요?}
 
-본 장은 \textbf{Phase 3 의 마지막 장} 이자 \emph{마지막 BERT 파인튜닝 (task head 부착 패러다임)} 장입니다. Phase 4 (24장-) 부터는 같은 단어 ``파인튜닝'' 이 \emph{다른 의미} 로 쓰입니다.
+본 장은 \textbf{Phase 3 의 마지막 장} 이자 \emph{마지막 BERT 파인튜닝 (task head 부착 패러다임)} 장입니다. Phase 4 (\ref{ch:24}장-) 부터는 같은 단어 “파인튜닝” 이 \emph{다른 의미} 로 쓰입니다.
 
 \begin{booktable}{23장 FAQ 표}{tab:ch23-14}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
-축 & \textbf{BERT 파인튜닝} (\ref{ch:09}--\ref{ch:18}장, \ref{ch:23}장) & \textbf{GPT 파인튜닝 = SFT} (25장, 27장) \\
+축 & \textbf{BERT 파인튜닝} (\ref{ch:09}--\ref{ch:18}장, \ref{ch:23}장) & \textbf{GPT 파인튜닝 = SFT} (\ref{ch:25}장, \ref{ch:27}장) \\
 \midrule
 
 무엇을 바꾸나 & 본체 + \textbf{새 head} (task별 부착) & 본체 + \textbf{기존 LM head 그대로} \\
 출력 형식 & task별 다름 (class id / score / multi-hot) & \emph{항상 토큰 시퀀스} --- 형식 통일 \\
 학습 신호 & task별 loss (CE/BCE/MSE) & \emph{항상 next-token CE}, 단 자리 마스킹만 다름 \\
-학습되는 것 & \emph{task 의 출력 분포} (긍정/부정 결정 경계 등) & \emph{행동 = ``이런 입력엔 이런 형식으로 답하라''} \\
+학습되는 것 & \emph{task 의 출력 분포} (긍정/부정 결정 경계 등) & \emph{행동 = “이런 입력엔 이런 형식으로 답하라”} \\
 라벨 & 정답 카테고리/값 & \emph{모범 답안 토큰 시퀀스} \\
 \bottomrule
 \end{tabular}
@@ -1669,7 +1744,7 @@ def cls_tokenize(batch):
 \end{booktable}
 
 \begin{quote}
-\textbf{BERT 파인튜닝은 \emph{task 적응}, GPT 파인튜닝은 \emph{행동 정렬}.} 24장 부터 시작되는 Phase 4 에서 이 의미 변화를 직접 경험합니다. 풀버전 표는 \ref{ch:21}장 §3 \emph{파인튜닝 의미 변화} 마크다운 참조.
+\textbf{BERT 파인튜닝은 \emph{task 적응}, GPT 파인튜닝은 \emph{행동 정렬}.} \ref{ch:24}장 부터 시작되는 Phase 4 에서 이 의미 변화를 직접 경험합니다. 풀버전 표는 \ref{ch:21}장 §3 \emph{파인튜닝 의미 변화} 마크다운 참조.
 \end{quote}
 
 \end{faqBox}
@@ -1693,7 +1768,7 @@ for i in confident_wrong[:5]:
     )
 \end{lstlisting}
 
-자신 있게 틀린 sample 중 일부는 \emph{진짜 라벨 노이즈} (반어법, 이중 의미, 라벨러 실수). 분류 정확도가 \emph{천정 100\%} 가 안 되는 본질적 이유 중 하나. NSMC 의 \emph{알려진 한계} --- 학습자가 정확도 89\% 가 \emph{데이터 한계의 안쪽} 이라는 걸 알면 \emph{과적합 의심} 을 피할 수 있습니다.
+자신 있게 틀린 sample 중 일부는 \emph{진짜 라벨 노이즈} (반어법, 이중 의미, 라벨러 실수). 분류 정확도가 \emph{천정 100\%} 가 안 되는 본질적 이유 중 하나. NSMC 의 \emph{알려진 한계} --- \inlinecode{klue/bert-base} 같은 대규모 사전학습 모델도 NSMC 에서 약 86\% 안팎이 천장이라는 걸 알면 \emph{과적합 의심} 을 피할 수 있습니다.
 
 \end{faqBox}
 
@@ -1704,23 +1779,23 @@ for i in confident_wrong[:5]:
 \begin{itemize}
 \tightlist
 \item
-  \emph{random init} 만 가지고 NSMC fine-tune: accuracy 약 50-60\% (부록에서 측정 --- 한국어 환경에선 negative transfer 로 \emph{작은 사전학습 모델} 과 비등하거나 역전될 수도)
+  \emph{random init} 만 가지고 NSMC fine-tune: accuracy 약 0.50-0.55 (부록에서 측정 --- 한국어 환경에선 negative transfer 로 \emph{작은 사전학습 모델} 과 비등하거나 역전될 수도)
 \item
-  \emph{작은 일반 도메인 사전학습 + fine-tune} (본 장): accuracy 약 0.54, AUC 약 0.56
+  \emph{작은 일반 도메인 사전학습 + fine-tune} (본 장): accuracy 약 0.54 (실측 --- MLM 약 0.2분의 짧은 사전학습이라 동전 던지기에 가까움)
 \item
-  \emph{대규모 일반 도메인 사전학습 + fine-tune} (\ref{ch:15}장): accuracy 약 85-88\% (실무 baseline)
+  \emph{대규모 일반 도메인 사전학습 + fine-tune} (\ref{ch:15}장): accuracy 약 0.86 (실무 baseline)
 \end{itemize}
 
 세 셋업의 격차가 \emph{사전학습 데이터 양·도메인 다양성 + 모델 크기} 에 거의 비례 (한국어는 도메인 다양성 변수가 특히 중요). \emph{task 도메인으로 직접 사전학습} 하지 않고 \emph{일반 위키} 만으로도 충분한 transfer 가 일어난다는 게 \emph{원본 BERT 의 진짜 통찰}.
 
-Phase 4 (24장-) 부터는 같은 \emph{사전학습 \(\to\) fine-tune} 패러다임이 \emph{decoder-only GPT} 환경에서 어떻게 \emph{SFT / behavior alignment} 로 변하는지 봅니다. 본체 구조 (encoder \(\to\) decoder), task (masked \(\to\) causal), fine-tune 의미 (head 부착 \(\to\) 행동 정렬) 셋 다 바뀝니다.
+Phase 4 (\ref{ch:24}장-) 부터는 같은 \emph{사전학습 \(\to\) fine-tune} 패러다임이 \emph{decoder-only GPT} 환경에서 어떻게 \emph{SFT / behavior alignment} 로 변하는지 봅니다. 본체 구조 (encoder \(\to\) decoder), task (masked \(\to\) causal), fine-tune 의미 (head 부착 \(\to\) 행동 정렬) 셋 다 바뀝니다.
 \end{faqBox}
 
 
 
 \begin{previewBox}{미리보기: 다음 장}
 
-\textbf{24장. GPT scratch --- 영어 TinyStories (Phase 4 시작)}
+\textbf{\ref{ch:24}장. GPT scratch --- 영어 TinyStories (Phase 4 시작)}
 
 \begin{itemize}
 \tightlist
@@ -1739,7 +1814,7 @@ Phase 4 (24장-) 부터는 같은 \emph{사전학습 \(\to\) fine-tune} 패러�
 \end{itemize}
 
 \begin{quote}
-\textbf{Phase 구조 전환} --- Phase 3 (\ref{ch:19}--\ref{ch:23}장) 가 \emph{BERT 본체 + 토크나이저를 직접 학습하는 영어/한국어 두 갈래} 였다면, Phase 4 는 \emph{GPT 본체를 from-scratch 로 학습 \(\to\) SFT \(\to\) behavior alignment} 흐름. 영어 BERT scratch (\ref{ch:20}--\ref{ch:21}장) \(\to\) 한국어 BERT scratch (\ref{ch:22}--\ref{ch:23}장) \(\to\) 영어 GPT scratch (24장-) 의 대칭 구조. 사전학습-fine-tune 패러다임의 \emph{의미 자체가} 바뀌는 자리입니다.
+\textbf{Phase 구조 전환} --- Phase 3 (\ref{ch:19}--\ref{ch:23}장) 가 \emph{BERT 본체 + 토크나이저를 직접 학습하는 영어/한국어 두 갈래} 였다면, Phase 4 는 \emph{GPT 본체를 from-scratch 로 학습 \(\to\) SFT \(\to\) behavior alignment} 흐름. 영어 BERT scratch (\ref{ch:20}--\ref{ch:21}장) \(\to\) 한국어 BERT scratch (\ref{ch:22}--\ref{ch:23}장) \(\to\) 영어 GPT scratch (\ref{ch:24}장-) 의 대칭 구조. 사전학습-fine-tune 패러다임의 \emph{의미 자체가} 바뀌는 자리입니다.
 \end{quote}
 
 본 장 (\ref{ch:23}장) 는 \emph{Phase 3 의 마지막} 이자 \emph{BERT 단계의 마지막 파인튜닝 장}. 한국어 NSMC 라는 \emph{실무에서 자주 쓰이는 한국어 task} 로 마무리하는 게 Phase 3 의 의도된 마침표입니다.

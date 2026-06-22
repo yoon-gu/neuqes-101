@@ -122,9 +122,9 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Loss \\
 \midrule
 
 23 & 작은 BERT (한국어, scratch) + 분류 head & \inlinecode{klue/bert-base} (가져옴) & NSMC 이진 & \inlinecode{Linear(H,\ 2)} & \inlinecode{CrossEntropyLoss} \\
-24 & 작은 GPT2 (약 3.72M, scratch) & BPE (직접 학습, 영어, vocab 2,048) & 영어 TinyStories 30K stories & \inlinecode{Linear(H,\ V)} (LM head, weight tied) & \inlinecode{CrossEntropyLoss} (next-token) \\
+24 & 작은 GPT2 (약 3M, scratch) & BPE (직접 학습, 영어, vocab 2,048) & 영어 TinyStories 30K stories & \inlinecode{Linear(H,\ V)} (LM head, weight tied) & \inlinecode{CrossEntropyLoss} (next-token) \\
 25 & \inlinecode{gpt2} (124M, OpenAI WebText 사전학습) & BPE (gpt2 그대로, vocab 50,257) & 영어 TinyStories (\ref{ch:24}장과 동일) & \inlinecode{Linear(H,\ V)} (LM head 그대로) & \inlinecode{CrossEntropyLoss} (next-token) - continual pretraining \\
-\textbf{26 (현재)} & \textbf{작은 GPT2 (4.22M, scratch)} & \textbf{BBPE (직접 학습, 한국어, vocab 약 4,000)} & \textbf{한국어 TinyStories 30K stories} & \textbf{\inlinecode{Linear(H,\ V)} (LM head, weight tied)} & \textbf{\inlinecode{CrossEntropyLoss} (next-token)} \\
+\textbf{26 \(\leftarrow\) 여기} & \textbf{작은 GPT2 (약 3M, scratch)} & \textbf{BBPE (직접 학습, 한국어, vocab 약 4,000)} & \textbf{한국어 TinyStories 30K stories} & \textbf{\inlinecode{Linear(H,\ V)} (LM head, weight tied)} & \textbf{\inlinecode{CrossEntropyLoss} (next-token)} \\
 27 (다음) & KoGPT2 (\inlinecode{skt/kogpt2-base-v2}, 125M, 대규모 한국어 사전학습) & KoGPT2 BBPE (그대로) & 한국어 TinyStories (\ref{ch:26}장과 동일) & \inlinecode{Linear(H,\ V)} (LM head 그대로) & \inlinecode{CrossEntropyLoss} (next-token) - continual pretraining \\
 \bottomrule
 \end{tabular}
@@ -135,19 +135,19 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Loss \\
 
 \begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
-\section{\texorpdfstring{Phase 4 의 영어·한국어 대칭 --- \ref{ch:24}장 \(\leftrightarrow\) \ref{ch:26}장}{Phase 4 의 영어·한국어 대칭 --- 24장과 26장}}
+\section{\texorpdfstring{Phase 4 의 영어·한국어 대칭 --- \ref{ch:24}장 \(\leftrightarrow\) \ref{ch:26}장}{Phase 4 의 영어·한국어 대칭 --- \ref{ch:24}장 \textbackslash leftrightarrow \ref{ch:26}장}}
 
-Phase 4 는 영어 (\ref{ch:24}--\ref{ch:25}장) 와 한국어 (26-27장) 가 \emph{같은 학습 단계} 를 \emph{언어만 바꿔} 반복하는 구조입니다. \ref{ch:20}장(영어 BERT)\(\to\)\ref{ch:22}장(한국어 BERT) 의 \emph{언어 축 변화} 가 GPT 에서 그대로 반복됩니다.
+Phase 4 는 영어 (\ref{ch:24}--\ref{ch:25}장) 와 한국어 (\ref{ch:26}--\ref{ch:27}장) 가 \emph{같은 학습 단계} 를 \emph{언어만 바꿔} 반복하는 구조입니다. \ref{ch:20}장(영어 BERT)\(\to\)\ref{ch:22}장(한국어 BERT) 의 \emph{언어 축 변화} 가 GPT 에서 그대로 반복됩니다.
 
-\begin{booktable}{26장 Phase 4 의 영어·한국어 대칭 - 24장과 26장}{tab:ch26-02}
+\begin{booktable}{26장 Phase 4 의 영어·한국어 대칭 - 24장 \textbackslash leftrightarrow 26장 표}{tab:ch26-02}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
 학습 단계 & 영어 & \textbf{한국어} \\
 \midrule
 
-\textbf{단계 1: Pretraining} (random init \(\to\) scratch 사전학습) & \ref{ch:24}장 (작은 GPT, 영어 TinyStories) & \textbf{\ref{ch:26}장 (현재, 작은 GPT, 한국어 TinyStories)} \\
-\textbf{단계 2: Continual pretraining} (사전학습 본체 + 새 데이터) & \ref{ch:25}장 (\inlinecode{gpt2} 124M + 영어 TinyStories) & 27장 (KoGPT2 125M + 한국어 TinyStories) \\
+\textbf{단계 1: Pretraining} (random init \(\to\) scratch 사전학습) & \ref{ch:24}장 (작은 GPT, 영어 TinyStories) & \textbf{\ref{ch:26}장 \(\leftarrow\) 여기 (작은 GPT, 한국어 TinyStories)} \\
+\textbf{단계 2: Continual pretraining} (사전학습 본체 + 새 데이터) & \ref{ch:25}장 (\inlinecode{gpt2} 124M + 영어 TinyStories) & \ref{ch:27}장 (KoGPT2 125M + 한국어 TinyStories) \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -168,15 +168,15 @@ Phase 4 는 영어 (\ref{ch:24}--\ref{ch:25}장) 와 한국어 (26-27장) 가 \e
 축 & \ref{ch:24}장 (영어 GPT scratch) & \ref{ch:26}장 (한국어 GPT scratch) \\
 \midrule
 
-\textbf{언어} & 영어 & \textbf{한국어} --- \emph{유일한 변화} \\
+\textbf{언어} & 영어 & \textbf{한국어} \(\leftarrow\) \emph{유일한 변화} \\
 토크나이저 학습 코퍼스 & 영어 TinyStories & \textbf{한국어 TinyStories} \\
 토크나이저 알고리즘 & byte-level BPE (vocab 2,048) & \textbf{byte-level BPE (BBPE, vocab 약 4,000)} - 한글은 byte 단위라 어휘를 약간 키움 \\
 데이터 & \inlinecode{roneneldan/TinyStories} (영어 동화) & \textbf{\inlinecode{g0ster/TinyStories-Korean}} (한국어 번역 동화) \\
-본체 구조 & \inlinecode{GPT2Config(n\_layer=4,\ n\_head=4,\ n\_embd=256)} 약 3.72M & 같은 구조, vocab 4,000으로 \textbf{4.22M} \\
+본체 구조 & \inlinecode{GPT2Config(n\_layer=4,\ n\_head=4,\ n\_embd=256)} 약 3M & (그대로) \\
 모델 클래스 & \inlinecode{GPT2LMHeadModel(config)} random init & (그대로) \\
 Collator & \inlinecode{DataCollatorForLanguageModeling(mlm=False)} & (그대로) \\
 Loss & \inlinecode{CrossEntropyLoss} (next-token, vocab 2,048 logits) & \textbf{\inlinecode{CrossEntropyLoss}} (next-token, vocab 약 4,000 logits) \\
-학습률 & 5e-4 (scratch) & (그대로) \\
+학습률 & 3e-4 (scratch) & \textbf{5e-4} \(\leftarrow\) 한국어 vocab 에 맞춘 미세 조정 \\
 산출물 & 영어 동화 풍 generation & \textbf{한국어 동화 풍 generation} \\
 \bottomrule
 \end{tabular}
@@ -184,12 +184,12 @@ Loss & \inlinecode{CrossEntropyLoss} (next-token, vocab 2,048 logits) & \textbf{
 \end{booktable}
 
 \begin{quote}
-\textbf{변경점 한 가지 원칙} --- Phase 4 안에서 \emph{언어 축} 만 변합니다. 본체 구조도 학습 셋업도 \ref{ch:24}장과 동일. \emph{같은 코드를 한국어 토크나이저 + 한국어 데이터로 돌렸을 때 같은 결 (말이 되는 한국어 동화) 이 나오는가} 가 본 장의 검증 포인트.
+\textbf{핵심 변경은 \emph{언어 축}} --- Phase 4 안에서 토크나이저 학습 코퍼스와 데이터가 한국어로 바뀝니다. 본체 구조는 \ref{ch:24}장과 동일하고, 학습률만 한국어 vocab 에 맞춰 \texttt{3e-4\ \$\textbackslash{}to\$\ 5e-4} 로 미세 조정했습니다. \emph{같은 코드를 한국어 토크나이저 + 한국어 데이터로 돌렸을 때 같은 결 (말이 되는 한국어 동화) 이 나오는가} 가 본 장의 검증 포인트.
 \end{quote}
 
 \subsection{\texorpdfstring{왜 한국어는 토크나이저를 \emph{직접} 학습하나 --- \ref{ch:25}장의 결론 잇기}{왜 한국어는 토크나이저를 직접 학습하나 --- \ref{ch:25}장의 결론 잇기}}
 
-\ref{ch:25}장에서 \inlinecode{gpt2} (영어 WebText) 의 BPE 를 \emph{그대로} 가져와 continual pretraining 했습니다. 영어는 그게 자연스럽습니다. gpt2 BPE 가 영어 어휘를 잘 커버하기 때문입니다. 하지만 \emph{영어 gpt2 BPE 로 한국어를 토큰화하면 한글이 byte 단위로 잘게 쪼개져 토큰 수가 폭증} 합니다. 이는 \ref{ch:19}장과 \ref{ch:25}장에서 확인한 cross-language 결론입니다. 그래서 한국어는 \emph{한국어 코퍼스 위에 새 토크나이저를 학습} 하는 것이 정공법입니다. 이것이 \ref{ch:26}장이 다시 \emph{scratch} 인 이유입니다. \emph{토크나이저는 본체와 운명공동체} 원칙이 한국어에서 직접 학습을 강제합니다.
+\ref{ch:25}장에서 \inlinecode{gpt2} (영어 WebText) 의 BPE 를 \emph{그대로} 가져와 continual pretraining 했습니다. 영어는 그게 자연스럽습니다 --- gpt2 BPE 가 영어 어휘를 잘 커버하니까요. 하지만 \emph{영어 gpt2 BPE 로 한국어를 토큰화하면 한글이 byte 단위로 잘게 쪼개져 토큰 수가 폭증} 합니다 (\ref{ch:25}장 Q4 / \ref{ch:19}장 §5-4 의 cross-language 결론). 그래서 한국어는 \emph{한국어 코퍼스 위에 새 토크나이저를 학습} 하는 게 정공법 --- 그게 \ref{ch:26}장 가 다시 \emph{scratch} 인 이유. \emph{토크나이저는 본체와 운명공동체} 원칙이 한국어에서 직접 학습을 강제합니다.
 
 
 
@@ -204,16 +204,16 @@ Loss & \inlinecode{CrossEntropyLoss} (next-token, vocab 2,048 logits) & \textbf{
 단계 & 정확 용어 & 의미 & 학습 신호 (\inlinecode{labels}) & 영어 & 한국어 \\
 \midrule
 
-1 & \textbf{Pretraining} (사전학습) & random init 본체부터 일반 코퍼스로 학습 & 거의 모든 토큰 (pad 만 \inlinecode{-100}) & \ref{ch:24}장 & \textbf{\ref{ch:26}장 (현재)} \\
-2 & \textbf{Continual pretraining} (계속 사전학습) & 사전학습된 본체 + 새 데이터 + 같은 task & 거의 모든 토큰 (단계 1 과 동일) & \ref{ch:25}장 & 27장 \\
-3 & \textbf{SFT} (Supervised Fine-Tuning) & instruction-response 쌍으로 행동 정렬 & \textbf{답변 토큰만} (\texttt{labels{[}:prompt\_len{]}\ =\ -100}) & - & 28장 \\
-4 & \textbf{Alignment} (DPO / GRPO) & preference / verifier reward 로 선호 정렬 & (RL 내부) & - & 30--31장 \\
+1 & \textbf{Pretraining} (사전학습) & random init 본체부터 일반 코퍼스로 학습 & 거의 모든 토큰 (pad 만 \inlinecode{-100}) & \ref{ch:24}장 & \textbf{\ref{ch:26}장 \(\leftarrow\) 여기} \\
+2 & \textbf{Continual pretraining} (계속 사전학습) & 사전학습된 본체 + 새 데이터 + 같은 task & 거의 모든 토큰 (단계 1 과 동일) & \ref{ch:25}장 & \ref{ch:27}장 \\
+3 & \textbf{SFT} (Supervised Fine-Tuning) & instruction-response 쌍으로 행동 정렬 & \textbf{답변 토큰만} (\texttt{labels{[}:prompt\_len{]}\ =\ -100}) & - & \ref{ch:28}장 \\
+4 & \textbf{Alignment} (DPO / GRPO) & preference / verifier reward 로 선호 정렬 & (RL 내부) & - & \ref{ch:30}--\ref{ch:31}장 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
-\textbf{영어·한국어 대칭} --- 단계 1·2 가 영어 (\ref{ch:24}·\ref{ch:25}장) \(\leftrightarrow\) 한국어 (26·27장) 로 짝지어집니다.
+\textbf{영어·한국어 대칭} --- 단계 1·2 가 영어 (\ref{ch:24}·\ref{ch:25}장) \(\leftrightarrow\) 한국어 (\ref{ch:26}·\ref{ch:27}장) 로 짝지어집니다.
 
 \begin{booktable}{26장 Phase 4 학습 4단계 표 - 26장 = 단계 1 (한국어 pretraining) 표}{tab:ch26-05}
 \begin{adjustbox}{max width=\textwidth}
@@ -223,14 +223,14 @@ Loss & \inlinecode{CrossEntropyLoss} (next-token, vocab 2,048 logits) & \textbf{
 \midrule
 
 영어 & \ref{ch:24}장 (작은 GPT scratch) & \ref{ch:25}장 (\inlinecode{gpt2} 124M) \\
-\textbf{한국어} & \textbf{\ref{ch:26}장 (현재, 작은 GPT scratch)} & 27장 (KoGPT2 125M) \\
+\textbf{한국어} & \textbf{\ref{ch:26}장 (작은 GPT scratch) \(\leftarrow\) 여기} & \ref{ch:27}장 (KoGPT2 125M) \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
 \begin{quote}
-세 단계 모두 \emph{모델 클래스 그대로} (\inlinecode{AutoModelForCausalLM}), \emph{출력 형식 그대로} (토큰 시퀀스), \emph{학습 신호 종류 그대로} (next-token CE). 다른 점은 \emph{데이터 형식} 과 \emph{\inlinecode{labels\ =\ -100} 자리} 뿐. 본 장 (단계 1) 는 \emph{pad 만 \inlinecode{-100}} --- 거의 모든 자리가 학습 신호. 28장 (SFT) 의 \emph{prompt 만 \inlinecode{-100}} 이 정반대 자리 (클라이맥스).
+세 단계 모두 \emph{모델 클래스 그대로} (\inlinecode{AutoModelForCausalLM}), \emph{출력 형식 그대로} (토큰 시퀀스), \emph{학습 신호 종류 그대로} (next-token CE). 다른 점은 \emph{데이터 형식} 과 \emph{\inlinecode{labels\ =\ -100} 자리} 뿐. 본 장 (단계 1) 는 \emph{pad 만 \inlinecode{-100}} --- 거의 모든 자리가 학습 신호. \ref{ch:28}장 (SFT) 의 \emph{prompt 만 \inlinecode{-100}} 이 정반대 자리 (클라이맥스).
 \end{quote}
 
 
@@ -249,21 +249,21 @@ Loss & \inlinecode{CrossEntropyLoss} (next-token, vocab 2,048 logits) & \textbf{
 MLM 사전학습 & \ref{ch:20}장 (영어), \ref{ch:22}장 (한국어) & 선택된 약 15\% 만 원본 token id, 나머지 \inlinecode{-100} & \emph{가려진 자리만} \\
 GPT CausalLM 사전학습 (영어) & \ref{ch:24}장 & \inlinecode{input\_ids.clone()} - pad 만 \inlinecode{-100} & 거의 \emph{전 자리} \\
 \textbf{GPT CausalLM 사전학습 (한국어)} & \textbf{\ref{ch:26}장 (본 장)} & \textbf{\inlinecode{input\_ids.clone()} - pad 만 \inlinecode{-100}} & \textbf{거의 \emph{전 자리}} \\
-SFT / Instruction Tuning & 28장 (한국어 SFT) & \textbf{prompt 부분 \inlinecode{-100}}, 답변 토큰만 원본 id & \emph{답변 부분만} \\
+SFT / Instruction Tuning & \ref{ch:28}장 (한국어 SFT) & \textbf{prompt 부분 \inlinecode{-100}}, 답변 토큰만 원본 id & \emph{답변 부분만} \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
 \begin{quote}
-같은 \inlinecode{-100} 트릭, \emph{적용 자리만 정반대}. 한국어 CausalLM 사전학습도 \emph{거의 모든 자리} 가 학습 신호 (MLM 대비 약 5-6배 효율). 본 장에서는 \inlinecode{DataCollatorForLanguageModeling(mlm=False)} 이 자동으로 \inlinecode{labels\ =\ input\_ids.clone()} 을 만듭니다 --- 뒤 collator 출력 셀에서 한국어 토큰으로 직접 확인합니다. 28장 (한국어 SFT) 의 \emph{왜 모델이 instruction 을 따라가게 되는가} 는 \emph{한 줄 \texttt{labels{[}:prompt\_len{]}\ =\ -100}} 으로 설명되는데, 그 토대가 \emph{이 장의 collator 출력} 입니다.
+같은 \inlinecode{-100} 트릭, \emph{적용 자리만 정반대}. 한국어 CausalLM 사전학습도 \emph{거의 모든 자리} 가 학습 신호 (MLM 대비 약 5-6배 효율). 본 장에서는 \inlinecode{DataCollatorForLanguageModeling(mlm=False)} 이 자동으로 \inlinecode{labels\ =\ input\_ids.clone()} 을 만듭니다 --- 뒤 collator 출력 셀에서 한국어 토큰으로 직접 확인합니다. \ref{ch:28}장 (한국어 SFT) 의 \emph{왜 모델이 instruction 을 따라가게 되는가} 는 \emph{한 줄 \texttt{labels{[}:prompt\_len{]}\ =\ -100}} 으로 설명되는데, 그 토대가 \emph{이 장의 collator 출력} 입니다.
 \end{quote}
 
 
 
 \section{\texorpdfstring{Loss --- \inlinecode{CrossEntropyLoss} (next-token), \ref{ch:24}장과 동일}{Loss --- CrossEntropyLoss (next-token), \ref{ch:24}장과 동일}}
 
-이 장은 \emph{언어만 바뀌고} loss 함수는 \ref{ch:24}장과 동일한 next-token CrossEntropyLoss. 다만 vocab 크기가 달라 random baseline \inlinecode{ln\ V} 가 미세하게 이동합니다.
+이 장는 \emph{언어만 바뀌고} loss 함수는 \ref{ch:24}장과 동일한 next-token CrossEntropyLoss. 다만 vocab 크기가 달라 random baseline \inlinecode{ln\ V} 가 미세하게 이동합니다.
 
 \subsection{수식 (\ref{ch:24}장과 동일)}
 
@@ -311,10 +311,9 @@ BBPE (\ref{ch:26}장, 한국어) & 약 4,000 & \textbf{약 8.29} & 약 4,000 \\
 모델 상태 & 정답 토큰 확률 & \(-\log p\) \\
 \midrule
 
-균등 추측 (random init 직후) & \(1/4000 = 2.5 \times 10^{-4}\) & \textbf{약 8.29} --- random baseline \\
-약하게 학습 (정답 확률 0.02) & \(0.02\) & 3.91 \\
-본 장 실측 (1500 step) & 약 \(0.011\) - \(0.020\) & \textbf{train\_loss 4.55 / logged loss 3.89} \\
-더 학습된 작은 GPT (참고 목표) & \(0.05\) - \(0.15\) & 1.9 - 3.0 \\
+균등 추측 (random init 직후) & \(1/4000 = 2.5 \times 10^{-4}\) & \textbf{약 8.29} \(\leftarrow\) random baseline \\
+약하게 학습 (정답 확률 0.01-0.02) & \(0.01\) - \(0.02\) & \textbf{3.9 - 4.6} \(\leftarrow\) 1500 step (1분) 도달 영역 (번역체) \\
+잘 학습된 작은 GPT (정답 확률 0.05-0.15) & \(0.05\) - \(0.15\) & \(1.9\) - \(3.0\) (더 길게 학습 시) \\
 큰 사전학습 GPT (정답 확률 0.3+) & \(0.3\) & 1.20 \\
 \bottomrule
 \end{tabular}
@@ -328,11 +327,11 @@ BBPE (\ref{ch:26}장, 한국어) & 약 4,000 & \textbf{약 8.29} & 약 4,000 \\
 \item
   학습 첫 step loss 가 약 8.3 부근이면 random init 직후 \emph{균등 추측} 상태. 첫 100 step 안에 빠르게 떨어지면 vocab + 모델 정상.
 \item
-  본 장의 1500 step 실측은 요약 \inlinecode{train\_loss=4.5487}, 마지막 logged loss 약 3.89입니다. 한국어 번역 데이터와 더 큰 vocab 때문에 \ref{ch:24}장보다 높게 머무는 것이 정상입니다.
+  1분 (1500 step) 학습으로 누적 평균 \inlinecode{train\_loss} 가 \emph{약 4.5} 까지 내려갑니다. 번역체 한국어라 영어 장 (약 3.8) 보다 다소 높지만, \emph{vocab 후보를 좁히는} 단계로 진입한 수준 --- \ref{ch:24}장 (영어) 와 같은 결. 더 길게 학습하면 약 2.5-3.0 까지 내려갑니다.
 \end{itemize}
 
 \begin{quote}
-\ref{ch:24}장의 \(\ln(2048) \approx 7.62\) 와 같은 직관입니다. \emph{vocab 차원} 만 약간 커진 것 (약 4,000) --- random baseline과 학습 종료 loss의 절대값을 해석할 때 반드시 함께 봐야 합니다.
+\ref{ch:24}장의 \texttt{ln(2048)\ \$\textbackslash{}approx\$\ 7.62} 와 같은 직관. \emph{vocab 차원} 만 약간 커진 것 (약 4,000) --- 학습 동역학에는 영향 없고, \emph{학습 종료 loss 의 절대값} 을 영어 장와 비교할 때만 미세 보정.
 \end{quote}
 
 
@@ -377,7 +376,7 @@ byte-level BPE 의 핵심: \emph{가장 작은 단위가 byte (256개)} 라 \emp
 GPT 계열은 특수 토큰을 \emph{최소화} --- \texttt{\textless{}\textbar{}endoftext\textbar{}\textgreater{}} 하나로 bos = eos = pad 겸용. 마침 한국어 TinyStories 데이터도 story 경계를 \texttt{\textless{}\textbar{}endoftext\textbar{}\textgreater{}} 로 표시하고 있어 컨벤션이 자연스럽게 일치합니다.
 
 \begin{quote}
-\ref{ch:19}장의 “토크나이저는 모델과 운명공동체” 원칙이 본 장에서도 유효 --- vocab 약 4,000 의 BBPE 를 직접 학습한 뒤, \emph{같은 vocab 으로 GPT 본체를 random init} 합니다. 27장에서는 \emph{반대로} KoGPT2 의 사전학습된 BBPE + 본체를 그대로 가져와 continual pretraining --- 토크나이저 + 모델이 \emph{함께} 변하는 게 26-27장의 핵심 비교 (\ref{ch:24}--\ref{ch:25}장의 한국어 짝).
+\ref{ch:19}장의 “토크나이저는 모델과 운명공동체” 원칙이 본 장에서도 유효 --- vocab 약 4,000 의 BBPE 를 직접 학습한 뒤, \emph{같은 vocab 으로 GPT 본체를 random init} 합니다. \ref{ch:27}장에서는 \emph{반대로} KoGPT2 의 사전학습된 BBPE + 본체를 그대로 가져와 continual pretraining --- 토크나이저 + 모델이 \emph{함께} 변하는 게 \ref{ch:26}--\ref{ch:27}장의 핵심 비교 (\ref{ch:24}--\ref{ch:25}장의 한국어 짝).
 \end{quote}
 
 
@@ -445,7 +444,35 @@ random.seed(SEED)
 
 USE_FP16 = (device.type == "cuda")
 print(f"use fp16   : {USE_FP16}")
+
 \end{lstlisting}
+
+\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 필요한 라이브러리와 기본 설정을 준비하는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=40]
+import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run(
+        "apt-get -qq -y install fonts-nanum",
+        shell=True,
+    )
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
+plt.rcParams["axes.unicode_minus"] = False
+\end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+device     : cuda  (Tesla T4)
+VRAM total : 14.56 GiB
+torch      : 2.11.0+cu128
+use fp16   : True
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \section{한국어 TinyStories 데이터 로드 + story 복원}
 
@@ -546,6 +573,27 @@ print("\n=== sample story ===")
 print(raw_train[0]["text"][:400])
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+rebuilt stories: train=30,000, val=500  (19.1s)
+train: Dataset({
+    features: ['text'],
+    num_rows: 30000
+})
+val  : Dataset({
+    features: ['text'],
+    num_rows: 500
+})
+
+story length (chars): mean=468, median=420, max=2754
+
+=== sample story ===
+한때 벤이라는 이름의 어린 소년이 있었어요. 벤은 주변 세계를 탐험하는 것을...
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
 \section{BBPE 토크나이저 직접 학습 (한국어)}
 
 \inlinecode{tokenizers.BPE} + ByteLevel pre-tokenizer 로 vocab 약 4,000 의 byte-level BPE 를 \emph{한국어 코퍼스에서 직접} 학습합니다. \ref{ch:24}장의 영어 BPE 와 \emph{같은 절차} --- 다른 점은 \emph{학습 코퍼스} (영어 \(\to\) 한국어) 와 \emph{vocab 크기} (2,048 \(\to\) 약 4,000, 한글 byte 표현을 위해 약간 키움) 뿐.
@@ -637,9 +685,25 @@ print(
 \inlinecode{tokenizers, transformers} 같은 주요 패키지를 불러옵니다.
 \end{codeRead}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+BBPE training done: 9.9s, vocab=4000
+
+=== encode/decode demo (Korean) ===
+input      : 옛날 옛날에 작은 토끼가 숲으로 갔어요.
+ids        : [645, 2132, 455, 2358, 1115, 452, 894, 14]
+n_tokens   : 8
+decode     : 옛날 옛날에 작은 토끼가 숲으로 갔어요.
+vocab_size : 4000
+eos_token  : <|endoftext|>  id=0
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
 \subsection{같은 한국어 문장: 영어 BPE (gpt2) vs 한국어 BBPE (본 장)}
 
-\inlinecode{gpt2} 의 영어 BPE 로 한국어를 토큰화하면 한글이 \emph{byte 단위로 잘게 쪼개져} 토큰 수가 폭증합니다. 우리가 한국어 코퍼스 위에 직접 학습한 BBPE 와 \emph{같은 문장} 을 비교해 봅니다. \ref{ch:19}장과 \ref{ch:25}장에서 다룬 cross-language 결론을 한국어 generation 장에서 실측하는 절입니다.
+\inlinecode{gpt2} 의 영어 BPE 로 한국어를 토큰화하면 한글이 \emph{byte 단위로 잘게 쪼개져} 토큰 수가 폭증합니다. 우리가 한국어 코퍼스 위에 직접 학습한 BBPE 와 \emph{같은 문장} 을 비교해 봅니다 (\ref{ch:25}장 Q4 / \ref{ch:19}장 §5-4 의 cross-language 결론을 한국어 generation 장에서 실측).
 
 
 
@@ -694,6 +758,22 @@ print(
     "tokens)."
 )
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+Korean tokenization: English gpt2 BPE vs our Korean BBPE
+======================================================================
+             sentence  gpt2_BPE_tokens  ours_BBPE_tokens  ratio_gpt2/ours
+옛날 옛날에 작은 토끼가 살았어요. 43 6 7.17
+큰 개가 공원에서 신나게 뛰어놀았어요. 51 8 6.38
+작은 소녀가 엄마에게 꽃을 주었어요. 45 7 6.43
+
+=> gpt2 BPE splits Korean into many byte fragments (more tokens).
+   Our Korean BBPE keeps meaningful units (fewer tokens).
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \textbf{관전 포인트} --- \inlinecode{옛날\ 옛날에} 처럼 한국어 코퍼스에 \emph{자주 등장} 하는 표현은 우리 BBPE 가 \emph{적은 토큰} 으로 압축합니다. 영어 gpt2 BPE 는 같은 문장을 \emph{2-4배 많은 byte 조각} 으로 쪼갭니다 --- UNK 는 없지만 \emph{의미 단위} 가 사라져, 그 위에서 학습하면 한국어 정보를 압축할 자리가 부족합니다. \emph{왜 한국어는 토크나이저를 직접 학습하는가} 의 실측 답.
 
@@ -820,6 +900,19 @@ print("\nfirst chunk decode (first 200 chars):")
 print(tokenizer.decode(lm_train[0]["input_ids"])[:200])
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+train chunks: 45,845  (block_size=128)
+val   chunks: 750
+approx. train tokens: 5.87 M
+
+first chunk decode (first 200 chars):
+한때 벤이라는 이름의 어린 소년이 있었어요. 벤은 주변 세계를 탐험하는 것을...
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
 \subsection{\texorpdfstring{Collator 가 만드는 \inlinecode{labels} 확인 (한국어) - \emph{거의 모든 자리} 가 학습 신호}{Collator 가 만드는 labels 확인 (한국어) - 거의 모든 자리 가 학습 신호}}
 
 \inlinecode{DataCollatorForLanguageModeling(mlm=False)} 가 \emph{내부적으로} \inlinecode{labels\ =\ input\_ids.clone()} 을 만들어 \inlinecode{-100} 자리는 \emph{없거나 pad 토큰 자리만} 임을 한국어 데이터로 직접 확인합니다. \ref{ch:20}·\ref{ch:22}장의 MLM collator 가 약 85\% 를 \inlinecode{-100} 으로 채웠던 것과 \emph{정확히 반대} --- \ref{ch:24}장 (영어) 에서 본 결과의 한국어 재확인.
@@ -896,8 +989,29 @@ print(
 )
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+input_ids shape: (2, 128)
+labels shape   : (2, 128)
+
+=== 'labels = -100' thread - CausalLM vs MLM comparison (Korean) ===
+total positions      : 256
+  ignored (-100)     :     1  ( 0.39%)
+  train signal       :   255  (99.61%)
+
+[MLM (Ch 20/22)]     approx. 85% = -100, 15% = train signal
+[CausalLM (this ch)] 0.39% = -100, 99.61% = train signal <- almost every po...
+
+=> a single step's token-learning efficiency: GPT pretrain is approx. 5-6x...
+
+(input_ids == labels) positions: 255/256  - clone as-is
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
 \begin{quote}
-\textbf{\inlinecode{-100} thread 환기 (한국어)} - 언어가 한국어로 바뀌어도 collator 동작은 동일. CausalLM 은 \emph{거의 모든 자리} 학습. 28장 (한국어 SFT) 에서는 \emph{prompt 자리만 -100} - 같은 트릭의 정반대 자리. 그 한 줄 코드가 \emph{모델이 한국어 instruction 을 따라가게 만드는 핵심} 이고, 본 장의 collator 셋업이 그 토대입니다.
+\textbf{\inlinecode{-100} thread 환기 (한국어)} - 언어가 한국어로 바뀌어도 collator 동작은 동일. CausalLM 은 \emph{거의 모든 자리} 학습. \ref{ch:28}장 (한국어 SFT) 에서는 \emph{prompt 자리만 -100} - 같은 트릭의 정반대 자리. 그 한 줄 코드가 \emph{모델이 한국어 instruction 을 따라가게 만드는 핵심} 이고, 본 장의 collator 셋업이 그 토대입니다.
 \end{quote}
 
 
@@ -909,7 +1023,7 @@ print(
 \begin{itemize}
 \tightlist
 \item
-  \inlinecode{n\_layer=4,\ n\_head=4,\ n\_embd=256} \(\to\) 실측 4.22M params (vocab 4,000 영향)
+  \inlinecode{n\_layer=4,\ n\_head=4,\ n\_embd=256} \(\to\) 약 3M params (\ref{ch:24}장과 동일)
 \item
   \inlinecode{n\_positions\ =\ BLOCK\_SIZE\ =\ 128}
 \item
@@ -983,6 +1097,8 @@ model: GPT2LMHeadModel
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
+
+
 \section{\texorpdfstring{학습 \emph{전} generation - 비교 기준선 (random init baseline)}{학습 전 generation - 비교 기준선 (random init baseline)}}
 
 \ref{ch:24}장의 \emph{사전학습 전 generation} 과 같은 역할. random init 모델은 \emph{어느 토큰이든 거의 균등한 확률} 로 뽑으니, 생성 텍스트가 \emph{한국어와 거리가 먼 byte 조각 / 의미 없는 음절 나열} 이 나옵니다.
@@ -1045,6 +1161,28 @@ for p in PROMPTS:
     print(f"\nprompt: {p}")
     print(text)
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+======================================================================
+UNTRAINED model - generation from random initial weights
+======================================================================
+
+prompt: 옛날 옛날에
+옛날 옛날에 도와줄게 미소지으며 플러피 친절하고 있었거든요 농? 시작한?? 올...
+
+prompt: 작은 소녀가
+작은 소녀가산 즐거워 사라가 엄마는 과일을 기쁨었다 ? 샘을상 놀라운 물속에서...
+
+prompt: 큰 개가
+큰 개가으로합니다??화합니다 싶은 개 샘을 올려 낮? 만들어 조는 날이 방법 만...
+
+prompt: 어느 날,
+어느 날, 고양이는 퍼즐?리를 안아주 의사았을?? 완벽한고마워 ? 플러피고마워...
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \textbf{관전 포인트} - 학습 전 출력은 \emph{무작위 음절·byte 조각 나열} (의미 없는 한국어 토큰들). 학습 후 출력과 \emph{나란히 비교} 하면 사전학습이 본체에 \emph{next-token 분포} 를 새긴 증거를 직접 보게 됩니다. \ref{ch:24}장 (영어) 에서 random init 출력이 영어와 거리 멀었던 것과 같은 현상의 한국어판.
 
@@ -1177,14 +1315,27 @@ if torch.cuda.is_available():
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
+[transformers] `loss_type=None` was set in the config but it is unrecognize...
+Step  Training Loss  Validation Loss
+----  -------------  ---------------
+150   6.099236       5.745915
+300   5.041654       4.868237
+450   4.596394       4.463939
+600   4.358889       4.229672
+750   4.192318       4.064077
+900   4.076734       3.951416
+1050  3.997099       3.871891
+1200  3.952390       3.828786
+1350  3.926925       3.807920
+1500  3.892811       3.804397
+
 === training summary ===
-elapsed       : 0.90 min
-global_step   : 1500
-train_loss    : 4.5487
-random baseline (ln vocab): 8.2940
-final peak    : 66 MiB
+elapsed       : 0.91 min
+...
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -1208,9 +1359,9 @@ if eval_pts:
     ax1.plot([s for s, _ in eval_pts], [l for _, l in eval_pts], "s-",
              color="tab:red", label="eval")
 ax1.axhline(math.log(tokenizer.vocab_size), ls=":", color="gray",
-            label=f"uniform baseline = ln({tokenizer.vocab_size}) approx. {math.log(tokenizer.vocab_size):.2f}")
+            label=f"무작위 추측 기준선 = ln({tokenizer.vocab_size}) approx. {math.log(tokenizer.vocab_size):.2f}")
 ax1.set_xlabel("step"); ax1.set_ylabel("cross-entropy loss")
-ax1.set_title("Korean TinyGPT-2 on TinyStories-Korean - loss")
+ax1.set_title("한국어 TinyGPT-2 (TinyStories-Korean) - loss")
 ax1.grid(True, alpha=0.3); ax1.legend()
 
 \end{lstlisting}
@@ -1221,12 +1372,12 @@ ax1.grid(True, alpha=0.3); ax1.legend()
 \begin{lstlisting}[firstnumber=20]
 if vram_cb.steps:
     ax2.plot(vram_cb.steps, vram_cb.peak_MiB, "o-", color="tab:green",
-             label="peak VRAM (per log window)")
+             label="최대 VRAM (로그 구간별)")
     ax2.set_title(f"VRAM trace  (bs=32, fp16, n_pos={BLOCK_SIZE})")
 else:
-    ax2.text(0.5, 0.5, "VRAM trace available on CUDA only",
+    ax2.text(0.5, 0.5, "VRAM 추적은 CUDA 에서만 가능",
              ha="center", va="center", transform=ax2.transAxes)
-    ax2.set_title("VRAM trace - CUDA only")
+    ax2.set_title("VRAM 추적 - CUDA 전용")
 ax2.set_xlabel("step"); ax2.set_ylabel("VRAM (MiB)")
 ax2.grid(True, alpha=0.3); ax2.legend()
 
@@ -1234,26 +1385,21 @@ plt.tight_layout(); plt.show()
 \end{lstlisting}
 
 \begin{bookfigurelabel}[H]{한국어 작은 GPT의 TinyStories-Korean 학습 손실과 VRAM 추적}{fig:ch26-loss-vram-trace}
+\centering
 \includegraphics[width=0.88\linewidth]{assets/figures/ch26_loss_vram_trace.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch26-loss-vram-trace}의 왼쪽 패널은 한국어 BBPE vocab 기준의 random baseline \inlinecode{ln(4000)} 근처에서 시작해 next-token loss가 빠르게 낮아지는 흐름을 보여줍니다. 오른쪽 패널은 \ref{ch:24}장과 같은 4-layer 구조가 vocab 4,000 설정에서 실측 4.22M params로 커져도 T4 VRAM 범위 안에서 안정적으로 학습되는지 확인하는 지표입니다.
-
-\begin{bookfigurelabel}[H]{Scratch Causal LM의 영어/한국어 학습 손실 비교}{fig:ch26-ch24-loss-compare}
-\includegraphics[width=0.72\linewidth]{assets/figures/ch26_ch24_loss_compare.png}
-\end{bookfigurelabel}
-
-\textbf{그림 읽기} --- 그림~\ref{fig:ch26-ch24-loss-compare}는 \ref{ch:24}장과 \ref{ch:26}장의 대칭 관계를 loss 관점에서 압축합니다. 한국어는 vocab 크기가 약 4,000으로 커져 random baseline이 조금 높지만, 학습 후 손실은 요약 \inlinecode{train\_loss=4.5487}, 마지막 logged loss 약 3.89 수준에 머뭅니다. 이 비교는 한국어 scratch 학습도 random baseline에서 빠르게 내려오지만, 영어 \ref{ch:24}장과 같은 2점대 수렴을 기대하면 안 된다는 점을 보여줍니다.
+\textbf{그림 읽기} --- 그림~\ref{fig:ch26-loss-vram-trace}에서 다음 내용을 확인합니다: 한국어 작은 GPT의 TinyStories-Korean 학습 손실과 VRAM 추적. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
 
 
 
-\textbf{관전 포인트} - 학습 첫 step loss 는 약 8.3 (random baseline \inlinecode{ln(4000)}) 부근에서 시작해 \emph{수백 step 안에 약 4-5} 로 빠르게 떨어집니다. 이번 실행본에서는 1500 step 요약 \inlinecode{train\_loss=4.5487}, 마지막 logged loss 약 3.89로 마무리됐습니다. 따라서 한국어 scratch 장의 정상 기준은 2점대가 아니라 \emph{4점대 초중반에서 계속 낮아지는 흐름} 입니다.
+\textbf{관전 포인트} - 학습 첫 step loss 가 약 8.3 (random baseline \inlinecode{ln(4000)}) 부근에서 시작해 \emph{수백 step 안에 약 5} 로 빠르게 떨어지고, 1500 step 끝에 누적 평균 \inlinecode{train\_loss} 가 \emph{약 4.5} 까지 내려가면 정상. 한국어는 번역체 데이터라 영어 장 (\ref{ch:24}장, 약 3.8) 보다 도달 loss 가 다소 높지만, \emph{수백 step 안에 random baseline 에서 빠르게 떨어지는 수렴 곡선} 자체는 동일합니다 --- \emph{언어가 달라도 작은 GPT + 30K stories 의 학습 동역학은 비슷하다}.
 
 
 
 \section{\texorpdfstring{학습 \emph{후} generation + before/after 비교}{학습 후 generation + before/after 비교}}
 
-같은 \inlinecode{PROMPTS\ /\ GEN\_KWARGS} 로 학습 후 모델에서 다시 생성하고, 앞에서 저장한 학습 전 결과와 나란히 비교합니다. \textbf{이 장의 합격 기준}: 학습 후 텍스트가 \emph{전} 보다 명확히 \emph{한국어 문장 (동화 풍)} 에 가까워졌는가 --- \ref{ch:24}장 (영어) 의 \emph{사전·사후 비교} 의 한국어판.
+같은 \inlinecode{PROMPTS\ /\ GEN\_KWARGS} 로 학습 후 모델에서 다시 생성하고, §5 의 학습 전 결과와 나란히 비교합니다. \textbf{이 장의 합격 기준}: 학습 후 텍스트가 \emph{전} 보다 명확히 \emph{한국어 문장 (동화 풍)} 에 가까워졌는가 --- \ref{ch:24}장 (영어) 의 \emph{사전·사후 비교} 의 한국어판.
 
 
 
@@ -1272,6 +1418,28 @@ for p in PROMPTS:
     print(text)
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+======================================================================
+TRAINED model - generation after Trainer.train()
+======================================================================
+
+prompt: 옛날 옛날에
+옛날 옛날에 잭이라는 작은 소녀가 있었습니다. 그녀는 가장 좋아하는 책도 있었...
+
+prompt: 작은 소녀가
+작은 소녀가 공원에 갔어요. 그녀는 땅에 있는 작은 집에서 살고 있었지요. 그녀...
+
+prompt: 큰 개가
+큰 개가 자신의 친구를 보여주었다. 그는 그 개는 기분이 좋았어요. 개는 새 말...
+
+prompt: 어느 날,
+어느 날, 팀이라는 소년이 땅에 앉아 있는 것을 봤어요. 그는 "안녕?" 팀은 말했...
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 print("=" * 78)
@@ -1286,6 +1454,30 @@ for p, before, after in zip(PROMPTS, before_outputs, after_outputs):
     print(f"BEFORE  : {before[len(p):].strip()[:280]}")
     print(f"AFTER   : {after[len(p):].strip()[:280]}")
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+==============================================================================
+BEFORE (random init) vs AFTER (trained on TinyStories-Korean 30K)
+==============================================================================
+
+PROMPT  : 옛날 옛날에
+------------------------------------------------------------------------------
+BEFORE : 도와줄게 미소지으며 플러피 친절하고 있었거든요 농? 시작한?? 올려...
+AFTER : 잭이라는 작은 소녀가 있었습니다. 그녀는 가장 좋아하는 책도 있었어요...
+
+PROMPT  : 작은 소녀가
+------------------------------------------------------------------------------
+BEFORE : 산 즐거워 사라가 엄마는 과일을 기쁨었다 ? 샘을상 놀라운 물속에서...
+AFTER : 공원에 갔어요. 그녀는 땅에 있는 작은 집에서 살고 있었지요. 그녀는...
+
+PROMPT  : 큰 개가
+------------------------------------------------------------------------------
+...
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \textbf{해석 가이드 - 사전학습이 만든 차이}
 
@@ -1327,12 +1519,34 @@ for c in configs:
     print()
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+======================================================================
+[T=0.3, top_k=20  (conservative)]
+옛날 옛날에 작은 토끼가 있었어요. 그 새는 매우 좋아했지요. 어느 날, 새는 큰...
+
+======================================================================
+[T=0.8, top_k=50  (balanced)]
+옛날 옛날에 작은 토끼가 있었어요. 그 새는 매우 좋아했지요. 어느 날, 새는 큰...
+
+======================================================================
+[T=1.0, top_p=0.9 (nucleus)]
+옛날 옛날에 작은 토끼가 있었어요. 그 친구들은 뛰는 것을 매우 좋아했죠. 그들...
+
+======================================================================
+[T=1.2, top_k=100 (diverse)]
+옛날 옛날에 작은 토끼가 있었어요. 그 친구들은 하늘을 올려다보았고, 나무를...
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
 \textbf{관전 포인트}
 
 \begin{itemize}
 \tightlist
 \item
-  \inlinecode{temperature} ↑ \(\to\) logits 분포 \emph{평탄화} \(\to\) 다양성 ↑, 일관성 ↓
+  \inlinecode{temperature} ↑ \(\to\) logits 분포 \emph{평탄화} \(\to\) 다양성 ↑, 일관성 \(\downarrow\)
 \item
   \inlinecode{top\_k=20} \(\to\) 매 step 후보를 \emph{상위 20 개} 로만 한정 \(\to\) 안전하지만 반복적
 \item
@@ -1363,7 +1577,7 @@ for c in configs:
 
 \section{(선택) Reference 비교 - KoGPT2 의 같은 prompt generation}
 
-\emph{학습이 충분히 잘 된} 기준점으로 \inlinecode{skt/kogpt2-base-v2} (125M, 대규모 한국어 사전학습) 에 같은 한국어 prompt 를 넣어 \emph{우리 작은 GPT (4.22M, 한국어 TinyStories 30K)} 와 격차를 봅니다. \textbf{27장 이 KoGPT2 본격 장} 이므로 여기서는 \emph{간단히 한 번만} --- T4 시간을 아끼려면 이 셀은 건너뛰어도 됩니다.
+\emph{학습이 충분히 잘 된} 기준점으로 \inlinecode{skt/kogpt2-base-v2} (125M, 대규모 한국어 사전학습) 에 같은 한국어 prompt 를 넣어 \emph{우리 작은 GPT (약 3M, 한국어 TinyStories 30K)} 와 격차를 봅니다. \textbf{\ref{ch:27}장 이 KoGPT2 본격 장} 이므로 여기서는 \emph{간단히 한 번만} --- T4 시간을 아끼려면 이 셀은 건너뛰어도 됩니다.
 
 
 
@@ -1432,18 +1646,42 @@ else:
     )
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+loading reference KoGPT2 (skt/kogpt2-base-v2, 125M)...
+Key                                     | Status     |  | 
+----------------------------------------+------------+--+-
+
+  #params : 125.2 M
+
+======================================================================
+REFERENCE KoGPT2 (125M) - generation on same Korean prompts
+======================================================================
+
+prompt: 옛날 옛날에
+?????_?ng??_?ng??n?n?n?n?n?n?n?n?n?n?n?n?n?n?n?n?n?n?n?n?n?n?n?
+
+prompt: 작은 소녀가
+?????i???i,_______
+
+...
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
 \textbf{해석 가이드 - 규모가 만든 격차}
 
 \begin{itemize}
 \tightlist
 \item
-  \textbf{OURS (4.22M, 한국어 TinyStories 30K)}: \emph{동화 풍 단순 한국어} - 어휘는 동화 도메인에 강하지만 \emph{복잡한 문장 구조 / 추상적 어휘} 는 약함.
+  \textbf{OURS (약 3M, 한국어 TinyStories 30K)}: \emph{동화 풍 단순 한국어} - 어휘는 동화 도메인에 강하지만 \emph{복잡한 문장 구조 / 추상적 어휘} 는 약함.
 \item
   \textbf{REF (KoGPT2 125M, 대규모 한국어 코퍼스)}: \emph{다양한 도메인 어휘 + 자연스러운 문장 흐름}. 학습 데이터의 규모·다양성이 generation 다양성으로 직결.
 \end{itemize}
 
 \begin{quote}
-27장 이 이 격차를 \emph{데이터 축을 통제하고} 다룹니다 - KoGPT2 (125M) 의 사전학습 \emph{위에} 같은 한국어 TinyStories 로 \textbf{continual pretraining}. \emph{대규모 한국어 사전학습 모델을 작은 도메인 데이터로 적응} 시킬 때의 generation 품질이, 우리 from-scratch 작은 GPT 와 어떻게 다른지 직접 비교 (\ref{ch:24}장\(\to\)25 의 한국어 짝).
+\ref{ch:27}장 이 이 격차를 \emph{데이터 축을 통제하고} 다룹니다 - KoGPT2 (125M) 의 사전학습 \emph{위에} 같은 한국어 TinyStories 로 \textbf{continual pretraining}. \emph{대규모 한국어 사전학습 모델을 작은 도메인 데이터로 적응} 시킬 때의 generation 품질이, 우리 from-scratch 작은 GPT 와 어떻게 다른지 직접 비교 (\ref{ch:24}장\(\to\)25 의 한국어 짝).
 \end{quote}
 
 
@@ -1480,9 +1718,9 @@ else:
 \item
   영어 gpt2 BPE 로 한국어를 토큰화하면 토큰 수가 폭증합니다 (셀 비교 표). \emph{byte-level} 이라 UNK 는 없는데, 왜 그래도 \emph{직접 학습한 BBPE} 가 한국어 학습에 유리할까요? (의미 단위 보존 vs byte 조각 분해 관점)
 \item
-  random baseline 이 \ref{ch:24}장 (vocab 2,048) 의 \(\ln(2048) \approx 7.62\) 에서 \ref{ch:26}장 (vocab 약 4,000) 의 \(\ln(4000) \approx 8.29\) 로 바뀝니다. 이 차이가 \emph{학습 동역학} 에 의미 있는 영향을 주나요? \emph{학습 종료 loss 의 절대값} 을 영어 장과 비교할 때는요?
+  random baseline 이 \ref{ch:24}장 (vocab 2,048) 의 \texttt{ln(2048)\ \$\textbackslash{}approx\$\ 7.62} 에서 \ref{ch:26}장 (vocab 약 4,000) 의 \texttt{ln(4000)\ \$\textbackslash{}approx\$\ 8.29} 로 바뀝니다. 이 차이가 \emph{학습 동역학} 에 의미 있는 영향을 주나요? \emph{학습 종료 loss 의 절대값} 을 영어 장와 비교할 때는요?
 \item
-  본 장의 collator 가 만드는 \inlinecode{labels} 는 \emph{거의 모든 자리} 가 학습 신호입니다. 28장 (한국어 SFT) 에서는 \texttt{labels{[}:prompt\_len{]}\ =\ -100} 한 줄로 \emph{prompt 부분만 제외} 합니다. \emph{왜 이 한 줄이 모델이 한국어 instruction 을 따라가게 만드는지} 설명해 보세요.
+  본 장의 collator 가 만드는 \inlinecode{labels} 는 \emph{거의 모든 자리} 가 학습 신호입니다. \ref{ch:28}장 (한국어 SFT) 에서는 \texttt{labels{[}:prompt\_len{]}\ =\ -100} 한 줄로 \emph{prompt 부분만 제외} 합니다. \emph{왜 이 한 줄이 모델이 한국어 instruction 을 따라가게 만드는지} 설명해 보세요.
 \item
   같은 본체 구조·loss·trainer 로 영어 (\ref{ch:24}장) 와 한국어 (\ref{ch:26}장) 를 학습했습니다. 학습 곡선·generation 품질이 두 언어에서 비슷하게 나온다면, \emph{언어 자체의 난도 차이} 와 \emph{데이터 규모·번역체 차이} 중 무엇이 generation 품질에 더 큰 영향을 줄까요?
 \end{enumerate}
@@ -1539,21 +1777,21 @@ model = GPT2LMHeadModel(config)
 
 \end{faqBox}
 
-\begin{faqBox}{Q3. (실무) 다음 장 (27장 KoGPT2 continual pretraining) 와의 관계는?}
+\begin{faqBox}{Q3. (실무) 다음 장 (\ref{ch:27}장 KoGPT2 continual pretraining) 와의 관계는?}
 
-27장 = \emph{대규모 한국어 사전학습 모델 KoGPT2 (\inlinecode{skt/kogpt2-base-v2}, 125M) 를 같은 한국어 TinyStories 로} \textbf{continual pretraining}. 본 장의 \emph{작은 from-scratch 모델} 과 \emph{완전 반대 출발점} --- \ref{ch:24}장\(\to\)25 (영어) 의 한국어 짝:
+\ref{ch:27}장 = \emph{대규모 한국어 사전학습 모델 KoGPT2 (\inlinecode{skt/kogpt2-base-v2}, 125M) 를 같은 한국어 TinyStories 로} \textbf{continual pretraining}. 본 장의 \emph{작은 from-scratch 모델} 과 \emph{완전 반대 출발점} --- \ref{ch:24}장\(\to\)25 (영어) 의 한국어 짝:
 
 \begin{booktable}{26장 FAQ 표}{tab:ch26-12}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
-축 & \ref{ch:26}장 (본 장) & 27장 (다음) \\
+축 & \ref{ch:26}장 (본 장) & \ref{ch:27}장 (다음) \\
 \midrule
 
-모델 크기 & 4.22M params & \textbf{약 125M (약 30배)} \\
+모델 크기 & 약 3M params & \textbf{약 125M (40배)} \\
 사전학습 & from scratch (random init) & \textbf{대규모 한국어 코퍼스 사전학습} \\
 토크나이저 & 직접 학습 BBPE vocab 약 4,000 & \textbf{KoGPT2 BBPE (그대로)} \\
-한국어 TinyStories 학습 & 사전학습 그 자체 (1500 steps) & \textbf{continual pretraining} (약 3,000 steps) \\
+한국어 TinyStories 학습 & 사전학습 그 자체 (1500 steps) & \textbf{continual pretraining} (수백 steps) \\
 Generation 품질 & 동화 풍 단순 한국어 & \textbf{자연스러운 동화 + 일반 도메인 폭} \\
 \bottomrule
 \end{tabular}
@@ -1568,7 +1806,7 @@ Generation 품질 & 동화 풍 단순 한국어 & \textbf{자연스러운 동화
 
 \textbf{거의 안 씁니다 --- pad 자리만}. \ref{ch:24}장 (영어) 와 동일하게, 본 장 collator 출력은 \emph{거의 모든 자리} 가 학습 신호 (\inlinecode{labels\ =\ input\_ids.clone()}). \inlinecode{group\_texts} 로 chunk 길이가 모두 같으면 pad 도 없어 \inlinecode{-100} 이 0개일 수 있습니다.
 
-같은 트릭이 \textbf{28장 (한국어 SFT)} 에서 \emph{결정적 한 줄} 로 부활합니다:
+같은 트릭이 \textbf{\ref{ch:28}장 (한국어 SFT)} 에서 \emph{결정적 한 줄} 로 부활합니다:
 
 \Needspace{9\baselineskip}
 \begin{lstlisting}
@@ -1581,7 +1819,7 @@ prompt_len = len(tokenizer(prompt)["input_ids"])
 labels[:prompt_len] = [-100] * prompt_len
 \end{lstlisting}
 
-이 한 줄로 모델은 \emph{prompt 를 외우지 않고 response 만 학습} \(\to\) \emph{주어진 instruction 에 response 를 생성} 하게 됩니다. 본 장의 collator 출력 (거의 모든 자리 = 학습 신호) 을 손에 익혀 두면 28장의 그 한 줄이 단번에 이해됩니다.
+이 한 줄로 모델은 \emph{prompt 를 외우지 않고 response 만 학습} \(\to\) \emph{주어진 instruction 에 response 를 생성} 하게 됩니다. 본 장의 collator 출력 (거의 모든 자리 = 학습 신호) 을 손에 익혀 두면 \ref{ch:28}장의 그 한 줄이 단번에 이해됩니다.
 
 \end{faqBox}
 
@@ -1612,7 +1850,7 @@ print(f"n_stories: {len(raw_train):,}")
 \end{enumerate}
 
 \begin{quote}
-\emph{번역체 데이터} 라 영어판보다 다소 어색한 건 \emph{정상} --- 본 장의 목표는 \emph{완벽한 한국어 생성} 이 아니라 \emph{학습 전·후의 질적 도약} 을 한국어로 확인하는 것. 자연스러운 한국어 generation 은 27장 (KoGPT2 continual pretraining) 의 영역.
+\emph{번역체 데이터} 라 영어판보다 다소 어색한 건 \emph{정상} --- 본 장의 목표는 \emph{완벽한 한국어 생성} 이 아니라 \emph{학습 전·후의 질적 도약} 을 한국어로 확인하는 것. 자연스러운 한국어 generation 은 \ref{ch:27}장 (KoGPT2 continual pretraining) 의 영역.
 \end{quote}
 
 \end{faqBox}
@@ -1635,7 +1873,7 @@ vocab 크기가 다르므로 \emph{random baseline (\inlinecode{ln\ V}) 이 다�
 
 \end{faqBox}
 
-\begin{faqBox}{Q7. (실무) 학습 첫 step loss 가 \(\ln(4000) \approx 8.29\) 가 아니라 \emph{5.0} 이라면? \emph{15.0} 이라면?}
+\begin{faqBox}{Q7. (실무) 학습 첫 step loss 가 \texttt{ln(4000)\ \$\textbackslash{}approx\$\ 8.29} 가 아니라 \emph{5.0} 이라면? \emph{15.0} 이라면?}
 
 \begin{itemize}
 \tightlist
@@ -1654,7 +1892,7 @@ print(
 \begin{itemize}
 \tightlist
 \item
-  \textbf{15.0 (너무 높음)}: \(\ln(4000) \approx 8.29\) 보다 훨씬 높다면 \emph{vocab 불일치} (모델 config 의 \inlinecode{vocab\_size} 와 토크나이저가 다름) 또는 \emph{입력 id 가 vocab 범위를 벗어남} 을 의심. \inlinecode{config.vocab\_size\ ==\ tokenizer.vocab\_size} 인지 점검하세요. random init 의 자연스러운 시작은 \emph{baseline 근처} 입니다.
+  \textbf{15.0 (너무 높음)}: \texttt{ln(4000)\ \$\textbackslash{}approx\$\ 8.29} 보다 훨씬 높다면 \emph{vocab 불일치} (모델 config 의 \inlinecode{vocab\_size} 와 토크나이저가 다름) 또는 \emph{입력 id 가 vocab 범위를 벗어남} 을 의심. \inlinecode{config.vocab\_size\ ==\ tokenizer.vocab\_size} 인지 점검하세요. random init 의 자연스러운 시작은 \emph{baseline 근처} 입니다.
 \end{itemize}
 \end{faqBox}
 
@@ -1662,7 +1900,7 @@ print(
 
 \begin{previewBox}{미리보기: 다음 장}
 
-\textbf{27장. KoGPT2 Continual Pretraining 으로 한국어 TinyStories 에 적응 --- \emph{\ref{ch:25}장의 한국어판}}
+\textbf{\ref{ch:27}장. KoGPT2 Continual Pretraining 으로 한국어 TinyStories 에 적응 --- \emph{\ref{ch:25}장의 한국어판}}
 
 \begin{itemize}
 \tightlist
@@ -1671,7 +1909,7 @@ print(
 \item
   \textbf{같은 한국어 TinyStories} 데이터 (본 장와 동일) 로 \textbf{continual pretraining} (계속 사전학습 --- \emph{같은 CausalLM task, 새 데이터, head 그대로}. \emph{task adaptation 의미의 fine-tune 이 아니라 단계 2})
 \item
-  \textbf{핵심 비교}: 본 장 (4.22M, from scratch) vs 27장 (125M, continual pretraining) 의 한국어 generation 품질·학습 곡선 격차
+  \textbf{핵심 비교}: 본 장 (약 3M, from scratch) vs \ref{ch:27}장 (125M, continual pretraining) 의 한국어 generation 품질·학습 곡선 격차
 \item
   \emph{trainer 자체는 \ref{ch:26}장과 동일} (\inlinecode{transformers.Trainer} + \inlinecode{DataCollatorForLanguageModeling(mlm=False)}) - \emph{변하는 건 모델 로드 한 줄 + lr (scratch 5e-4 \(\to\) continual pretraining 2e-5)}
 \item
@@ -1679,6 +1917,17 @@ print(
 \end{itemize}
 
 \begin{quote}
-\textbf{변하는 축}: \emph{모델 크기 + 사전학습 여부} (4.22M / scratch \(\to\) 125M / pretrained). 데이터·토크나이저 규약·loss·trainer 는 같음. Phase 4 의 \emph{학습 단계 2 (continual pretraining)} 가 한국어에서 자리 잡는 장. \emph{진짜 행동 정렬 (SFT)} 은 28장에서 본격 등장합니다.
+\textbf{변하는 축}: \emph{모델 크기 + 사전학습 여부} (3M / scratch \(\to\) 125M / pretrained). 데이터·토크나이저 규약·loss·trainer 는 같음. Phase 4 의 \emph{학습 단계 2 (continual pretraining)} 가 한국어에서 자리 잡는 장. \emph{진짜 행동 정렬 (SFT)} 은 \ref{ch:28}장에서 본격 등장합니다.
 \end{quote}
 \end{previewBox}
+
+
+
+\section{보조 시각화}
+
+\begin{bookfigurelabel}[H]{Scratch Causal LM의 영어/한국어 학습 손실 비교}{fig:ch26-ch24-loss-compare}
+\centering
+\includegraphics[width=0.72\linewidth]{assets/figures/ch26_ch24_loss_compare.png}
+\end{bookfigurelabel}
+
+\textbf{그림 읽기} --- 그림~\ref{fig:ch26-ch24-loss-compare}에서 다음 내용을 확인합니다: Scratch Causal LM의 영어/한국어 학습 손실 비교. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.

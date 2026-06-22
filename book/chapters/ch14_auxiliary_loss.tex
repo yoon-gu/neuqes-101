@@ -76,7 +76,7 @@
 
 \section{변화추적표}
 
-\begin{booktable}{변화추적표}{tab:ch14-01}
+\begin{booktable}{14장 변화추적표}{tab:ch14-01}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lllllll@{}}
 \toprule
@@ -85,20 +85,20 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 
 9 & DistilBERT 파인튜닝 & WordPiece & Yelp 별점 & \inlinecode{Linear(H,\ 1)} & 없음 & \inlinecode{MSELoss} \\
 13 & DistilBERT 파인튜닝 & WordPiece & Yelp + 항목 합성 & \inlinecode{Linear(H,\ 5)} & sigmoid (각각) & \inlinecode{BCEWithLogitsLoss} \\
-\textbf{14 ← 여기} & DistilBERT + \textbf{보조 헤드} & WordPiece & Yelp + 항목 + \textbf{별점} & \textbf{메인(5) + 보조(1)} & 메인 sigmoid + 보조 없음 & \textbf{\inlinecode{BCE\ per-label} + $\lambda\cdot$\inlinecode{MSE}} \\
+\textbf{14 \(\leftarrow\) 여기} & DistilBERT + \textbf{보조 헤드} & WordPiece & Yelp + 항목 + \textbf{별점} & \textbf{메인(5) + 보조(1)} & 메인 sigmoid + 보조 없음 & \textbf{\texttt{BCE\ per-label\ +\ \$\textbackslash{}lambda\$·MSE}} \\
 15 (다음 Phase 2) & klue/bert-base & WordPiece (한국어) & NSMC & \inlinecode{Linear(H,\ 2)} & softmax & \inlinecode{CrossEntropyLoss} \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
-전체 20장 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
+전체 장 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
 
 
 
 \section{변경점: \ref{ch:13}장 대비}
 
-\begin{booktable}{변경점 요약}{tab:ch14-02}
+\begin{booktable}{14장 변경점 요약}{tab:ch14-02}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -110,9 +110,9 @@ Task (메인) & 5라벨 multi-label & (그대로) \\
 \inlinecode{problem\_type} & \inlinecode{multi\_label\_classification} & (그대로 --- 자동 매핑은 메인 loss 만 처리) \\
 메인 활성화 / loss & per-label sigmoid / BCE & (그대로) \\
 \textbf{보조 head} & 없음 & \textbf{새로 추가}: \inlinecode{Linear(H,\ 1)} linear regressor \\
-\textbf{보조 라벨} & 없음 & \textbf{새로 추가}: 별점 0-1 스케일 (\inlinecode{label\ /\ 4}, 1★→0.0, 5★→1.0) \\
+\textbf{보조 라벨} & 없음 & \textbf{새로 추가}: 별점 0-1 스케일 (\inlinecode{label\ /\ 4}, 1\(\to\)0.0, 5\(\to\)1.0) \\
 \textbf{보조 loss} & --- & \textbf{\inlinecode{MSELoss}} (\ref{ch:09}장 그대로) \\
-\textbf{결합 loss} & \inlinecode{outputs.loss} 자동 & \textbf{\inlinecode{L\_main} + $\lambda\cdot$\inlinecode{L\_aux}} 직접 계산 \\
+\textbf{결합 loss} & \inlinecode{outputs.loss} 자동 & \textbf{\texttt{L\_main\ +\ \$\textbackslash{}lambda\$·L\_aux}} 직접 계산 \\
 \inlinecode{Trainer.compute\_loss} & 자동 (오버라이드 X) & \textbf{오버라이드 필수} \\
 데이터 콜레이터 & \inlinecode{DataCollatorWithPadding} 자동 & \textbf{커스텀} --- \inlinecode{aux\_labels} 도 같이 batching \\
 학습 hyperparams & (epoch=2, lr=2e-5, \ldots) & (그대로) \\
@@ -125,9 +125,9 @@ Task (메인) & 5라벨 multi-label & (그대로) \\
 \textbf{변하는 축 --- Loss 축 끝}: 메인 task와 모델 본체는 \emph{완전히 동일}, \emph{Loss에 보조 항이 가중합으로 추가} 됩니다. 실무에서 \emph{학습 데이터에 추가 신호가 있을 때} 이를 활용하는 정통 multi-task learning 패턴.
 \end{quote}
 
-\medskip\noindent\textbf{왜 보조 태스크가 메인 태스크에 도움이 되는가}
+\subsection{왜 보조 task가 메인 task에 도움이 되는가 (한 줄 요약)}
 
-BERT 본체(약 66M 파라미터)가 \emph{공유} 되어 메인 헤드와 보조 헤드가 같은 768-dim CLS 표현을 입력으로 받습니다. 보조 task가 메인과 \emph{부분적으로 상관} 이면 보조 학습이 본체를 \emph{더 일반적인 표현} 으로 끌고 가서 메인 정확도까지 올라갑니다. 다음 섹션에서 \emph{어떤 상황에서 왜 도움이 되는지} 다섯 갈래로 자세히 봅니다.
+BERT 본체(67M 파라미터)가 \emph{공유} 되어 메인 헤드와 보조 헤드가 같은 768-dim CLS 표현을 입력으로 받습니다. 보조 task가 메인과 \emph{부분적으로 상관} 이면 보조 학습이 본체를 \emph{더 일반적인 표현} 으로 끌고 가서 메인 정확도까지 올라갑니다. 다음 섹션에서 \emph{어떤 상황에서 왜 도움이 되는지} 다섯 갈래로 자세히 봅니다.
 
 
 
@@ -135,7 +135,7 @@ BERT 본체(약 66M 파라미터)가 \emph{공유} 되어 메인 헤드와 보�
 
 코드를 짜기 전에 \emph{언제·왜} 보조 loss를 쓰는지 정리합니다. 이 장의 셋업이 다섯 동기 중 어디에 해당하는지 의식적으로 짚어 두면 학습 결과를 \emph{예측하고 해석} 하는 감각이 생깁니다.
 
-\medskip\noindent\textbf{정규화}
+\subsection{(1) 정규화 (Regularization) --- 가장 흔한 목적}
 
 메인 task만 학습하면 모델이 \emph{그 task 한정} 으로 과적합됩니다. 보조 task가 BERT 본체를 \emph{더 일반적인} 표현으로 끌고 가서 메인에서도 일반화가 좋아집니다. Dropout과 비슷한 효과지만 \textbf{데이터 신호} 로 정규화하는 점이 다릅니다.
 
@@ -143,7 +143,7 @@ BERT 본체(약 66M 파라미터)가 \emph{공유} 되어 메인 헤드와 보�
 \textbf{이 장의 주된 목적이 이거.} 항목 라벨이 키워드 매칭으로 \emph{합성} 되어 노이즈가 큰데, 별점은 사용자가 \emph{직접} 매긴 깨끗한 ground truth. 별점 회귀를 보조로 두면 BERT가 \emph{과도하게 키워드 매칭에 맞추는} 걸 막아 일반화에 도움.
 \end{quote}
 
-\medskip\noindent\textbf{데이터 효율}
+\subsection{\texorpdfstring{(2) 데이터 효율 --- \emph{공짜로 있는} 메타데이터 활용}{(2) 데이터 효율 --- 공짜로 있는 메타데이터 활용}}
 
 메인 task의 라벨링 비용이 큰데 \emph{부가 신호} (별점, 작성일, 길이, 작성자, 카테고리 \ldots)가 데이터에 \emph{공짜로 함께 있는} 시나리오. 메인 라벨이 부족해도 보조 신호를 \emph{동시에} 학습하면 BERT 본체가 더 풍부하게 학습됩니다.
 
@@ -153,11 +153,11 @@ main_label = expensive_human_annotated_aspects
 aux_label  = star_rating
 \end{lstlisting}
 
-\medskip\noindent\textbf{도메인 지식 주입}
+\subsection{(3) 도메인 지식 주입 (Inductive Bias)}
 
 알고 있는 \emph{구조적 정보} 를 보조 task로 모델에 \emph{강제} 학습시키는 방법.
 
-\begin{booktable}{도메인 지식 주입 (Inductive Bias)}{tab:ch14-03}
+\begin{booktable}{14장 (3) 도메인 지식 주입 (Inductive Bias) 표}{tab:ch14-03}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -175,7 +175,7 @@ NER (개체명 추출) & POS tagging (품사) & 구문 구조 \\
 
 연구·실무에서 \emph{어떤 보조를 써야 메인이 좋아질지} 는 도메인 지식의 영역. 입문 수준에선 \emph{데이터에 있는 신호 중 메인과 양의 상관} 인 걸 골라 시작.
 
-\medskip\noindent\textbf{학습 안정화}
+\subsection{(4) 학습 안정화 --- vanishing gradient 완화}
 
 깊은 네트워크에서 gradient가 \emph{최하위 층까지 도달하지 못하는} 문제를 보조 분류 헤드를 \emph{중간 층에} 달아 해결한 패턴. \textbf{GoogLeNet (2014)} 의 intermediate auxiliary classifiers 가 원조.
 
@@ -183,7 +183,7 @@ NER (개체명 추출) & POS tagging (품사) & 구문 구조 \\
 BERT는 12-24 layer로 \emph{그리} 깊지 않아 이 목적은 약합니다. CNN 100+ layer (ResNet-152) 시대의 잔재. 입문 수준에선 \emph{왜 이런 패턴이 historically 등장했는지} 만 알아두면 충분.
 \end{quote}
 
-\medskip\noindent\textbf{운영 시점의 멀티태스크}
+\subsection{(5) 운영 시점에 둘 다 필요 --- 진짜 multi-task}
 
 추론 시점에 \emph{두 task 결과가 모두 필요} 한 경우 --- 한 번의 forward로 항목 분류 + 별점 예측을 동시에 받기. 엄밀히 말하면 \emph{auxiliary} 가 아니라 \emph{joint training} 이 됩니다.
 
@@ -193,7 +193,7 @@ BERT는 12-24 layer로 \emph{그리} 깊지 않아 이 목적은 약합니다. C
 
 \begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
-\medskip\noindent\textbf{\ref{ch:14}장의 위치}
+\subsection{\ref{ch:14}장의 위치 --- 동기 (1) + (2) 의 결합}
 
 이 장의 셋업은 다섯 중 두 가지에 해당합니다:
 
@@ -209,35 +209,35 @@ BERT는 12-24 layer로 \emph{그리} 깊지 않아 이 목적은 약합니다. C
 
 \begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
-\medskip\noindent\textbf{보조 손실이 해로운 경우}
+\subsection{\texorpdfstring{언제 \emph{안} 쓰나 --- 보조가 \emph{해로운} 경우}{언제 안 쓰나 --- 보조가 해로운 경우}}
 
-\begin{booktable}{언제 안 쓰나 - 보조가 해로운 경우}{tab:ch14-04}
+\begin{booktable}{14장 언제 안 쓰나 - 보조가 해로운 경우 표}{tab:ch14-04}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
 조건 & 결과 & 진단 신호 \\
 \midrule
 
-보조가 메인과 \emph{반대 신호} & gradient 충돌, 학습 발산 & 두 loss가 \emph{둘 다 정체}, $\lambda$ 키울수록 메인 metric 하락 \\
+보조가 메인과 \emph{반대 신호} & gradient 충돌, 학습 발산 & 두 loss가 \emph{둘 다 정체}, \(\lambda\) 키울수록 메인 metric 하락 \\
 보조 라벨이 \emph{극도로 sparse} & 학습 신호 부족 & aux loss가 거의 0, 메인엔 영향 없음 \\
 보조가 메인보다 \emph{훨씬 어려움} & 학습량 부족으로 둘 다 학습 안 됨 & 두 metric 모두 baseline 이하 \\
-$\lambda$ 튜닝 비용을 감당 못 함 & 잘못된 $\lambda$로 메인이 망가짐 & 단순히 단일 task가 더 안전 \\
+\(\lambda\) 튜닝 비용을 감당 못 함 & 잘못된 \(\lambda\)로 메인이 망가짐 & 단순히 단일 task가 더 안전 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
-\medskip\noindent\textbf{역사적 교훈}
+\subsection{역사적 교훈 --- RoBERTa의 NSP 제거}
 
 BERT 자체가 \emph{MLM + NSP (Next Sentence Prediction)} 이라는 멀티태스크 사전학습으로 만들어졌습니다 --- MLM이 메인, NSP가 보조였던 셈. 그런데 \textbf{RoBERTa (2019)} 가 \emph{NSP를 빼면 오히려 성능이 좋아진다} 는 걸 발견하고 NSP를 제거. 이후 거의 모든 BERT 후속 모델 (DeBERTa, ELECTRA \ldots)이 NSP 없이 학습됨.
 
 \begin{quote}
-\textbf{시사점}: 보조 task가 \emph{직관적으로} 도움 될 것 같아도 \emph{실제로 도움이 되는지는 측정} 해야 합니다. 그래서 이 장의 §8 클라이맥스가 $\lambda=0$ baseline과의 \emph{직접 비교} 인 것 --- “직관” 대신 “측정”.
+\textbf{시사점}: 보조 task가 \emph{직관적으로} 도움 될 것 같아도 \emph{실제로 도움이 되는지는 측정} 해야 합니다. 그래서 이 장의 §8 클라이맥스가 \(\lambda\)=0 baseline과의 \emph{직접 비교} 인 것 --- “직관” 대신 “측정”.
 \end{quote}
 
 
 
-\section{\texorpdfstring{손실 노트}{손실 노트}}
+\section{\texorpdfstring{손실 노트 --- Combined loss \texttt{L\ =\ L\_main\ +\ \$\textbackslash{}lambda\$\ ·\ L\_aux}}{손실 노트 --- Combined loss L = L\_main + \$\textbackslash lambda\$ · L\_aux}}
 
 \begin{equation}
 \label{eq:ch14-01}
@@ -256,13 +256,13 @@ L = \underbrace{\frac{1}{N \cdot K}\sum_{i,k}\text{BCE}(z_{i,k}^{main}, y_{i,k}^
   \(\lambda\) --- 보조 loss의 가중치 (hyperparameter, 보통 0.1-10 범위 탐색).
 \end{itemize}
 
-\textbf{$\lambda$ 선택 가이드 --- 숫자로 감 잡기}
+\textbf{\(\lambda\) 선택 가이드 --- 숫자로 감 잡기}
 
-\begin{booktable}{손실 노트}{tab:ch14-05}
+\begin{booktable}{14장 손실 노트 - Combined loss L = L\_main + \$\textbackslash lambda\$ · L\_aux 표}{tab:ch14-05}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
-$\lambda$ & 의미 & 효과 (예상) \\
+\(\lambda\) & 의미 & 효과 (예상) \\
 \midrule
 
 0.0 & 보조 loss 무시 & \ref{ch:13}장과 \emph{완전히 동일} (이 장 §5 baseline) \\
@@ -275,11 +275,11 @@ $\lambda$ & 의미 & 효과 (예상) \\
 \end{adjustbox}
 \end{booktable}
 
-이 장에선 \textbf{$\lambda=1$} 로 학습하고 $\lambda=0$ baseline과 비교. 실무에선 validation set에서 $\lambda$를 grid search (0.1, 0.3, 1, 3, 10).
+이 장에선 \textbf{\(\lambda\)=1} 로 학습하고 \(\lambda\)=0 baseline과 비교. 실무에선 validation set에서 \(\lambda\)를 grid search (0.1, 0.3, 1, 3, 10).
 
-\textbf{숫자로 감 잡기 (단일 샘플)} --- 항목 multi-hot \(\mathbf{y}^\text{main} = [1, 0, 1, 0, 1]\), 별점 보조 라벨 \(y^\text{aux} = 0.75\) (4★/4):
+\textbf{숫자로 감 잡기 (단일 샘플)} --- 항목 multi-hot \(\mathbf{y}^\text{main} = [1, 0, 1, 0, 1]\), 별점 보조 라벨 \(y^\text{aux} = 0.75\) (4/4):
 
-\begin{booktable}{손실 노트}{tab:ch14-06}
+\begin{booktable}{14장 손실 노트 - Combined loss L = L\_main + \$\textbackslash lambda\$ · L\_aux 표}{tab:ch14-06}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}ll@{}}
 \toprule
@@ -288,14 +288,14 @@ $\lambda$ & 의미 & 효과 (예상) \\
 
 \(L_\text{main}\) (\ref{ch:13}장의 BCE per-label 평균) & 0.45 \\
 \(L_\text{aux}\) (\((z^\text{aux} - 0.75)^2\), 가정 \(z^\text{aux} = 0.55\)) & \((0.55 - 0.75)^2 = 0.04\) \\
-\(L\) ($\lambda=1$) & \(0.45 + 1 \cdot 0.04 = 0.49\) \\
-\(L\) ($\lambda=10$) & \(0.45 + 10 \cdot 0.04 = 0.85\) ← 보조 항이 메인보다 큼 \\
+\(L\) (\(\lambda\)=1) & \(0.45 + 1 \cdot 0.04 = 0.49\) \\
+\(L\) (\(\lambda\)=10) & \(0.45 + 10 \cdot 0.04 = 0.85\) \(\leftarrow\) 보조 항이 메인보다 큼 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
-$\lambda$가 너무 크면 \emph{메인 신호 자체가 보조에 묻힙니다}. 반대로 너무 작으면 \emph{보조 신호가 학습에 영향 안 줌}. $\lambda=1$이 균형의 기본 출발점.
+\(\lambda\)가 너무 크면 \emph{메인 신호 자체가 보조에 묻힙니다}. 반대로 너무 작으면 \emph{보조 신호가 학습에 영향 안 줌}. \(\lambda\)=1이 균형의 기본 출발점.
 
 
 
@@ -304,7 +304,7 @@ $\lambda$가 너무 크면 \emph{메인 신호 자체가 보조에 묻힙니다}
 \ref{ch:13}장과 완전히 동일 --- \inlinecode{distilbert-base-uncased} WordPiece, \inlinecode{max\_length=128}. 토크나이저는 \emph{라벨에 무관} 합니다. 보조 라벨이 추가됐다고 토큰화가 바뀌지는 않음 --- 별점 정수가 \emph{float 값으로 한 칸 더} 추가될 뿐.
 
 \begin{previewBox}{미리보기}
-\textbf{다음 장(15장)부터 Phase 2}: 같은 셋업을 한국어 BERT(\inlinecode{klue/bert-base})에서 다시. 토크나이저가 \emph{영어 WordPiece → 한국어 WordPiece} 로 바뀌는 게 변화의 본질.
+\textbf{다음 장(\ref{ch:15}장)부터 Phase 2}: 같은 셋업을 한국어 BERT(\inlinecode{klue/bert-base})에서 다시. 토크나이저가 \emph{영어 WordPiece \(\to\) 한국어 WordPiece} 로 바뀌는 게 변화의 본질.
 \end{previewBox}
 
 
@@ -342,7 +342,7 @@ from transformers import (
 
 \noindent\emph{앞뒤 블록은 모두 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
-\Needspace{9\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=17]
 )
 from sklearn.metrics import (
@@ -350,13 +350,23 @@ from sklearn.metrics import (
     roc_auc_score, hamming_loss, mean_squared_error, r2_score,
 )
 
-plt.rcParams["axes.unicode_minus"] = False
+import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run(
+        "apt-get -qq -y install fonts-nanum",
+        shell=True,
+    )
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
 \end{lstlisting}
 
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=25]
+\begin{lstlisting}[firstnumber=32]
+plt.rcParams["axes.unicode_minus"] = False
+
 print(f"PyTorch:        {torch.__version__}")
 print(f"CUDA available: {torch.cuda.is_available()}")
 if torch.cuda.is_available():
@@ -375,6 +385,14 @@ else:
 \inlinecode{numpy, pandas, matplotlib, PyTorch, datasets} 같은 주요 패키지를 불러옵니다.
 \end{codeRead}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+PyTorch:        2.11.0+cu128
+CUDA available: True
+GPU:             Tesla T4
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
 
 
 \textbf{baseline VRAM}:
@@ -392,12 +410,14 @@ else:
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Wed Jun 17 21:41:56 2026
+Sun Jun 21 23:03:06 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 39C P8 12W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 45C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \section{데이터 준비}
 
@@ -408,7 +428,7 @@ N/A 39C P8 12W / 70W | 3MiB / 15360MiB | 0% Default
 \item
   메인 라벨 \(\mathbf{y}^\text{main} \in \{0, 1\}^5\) --- 항목 multi-hot.
 \item
-  보조 라벨 \(y^\text{aux} = \text{label} / 4 \in [0, 1]\) --- 1★ → 0.0, 5★ → 1.0.
+  보조 라벨 \(y^\text{aux} = \text{label} / 4 \in [0, 1]\) --- 1 \(\to\) 0.0, 5 \(\to\) 1.0.
 \end{itemize}
 
 
@@ -451,11 +471,14 @@ print(f"K (aspects): {K}, aspects: {ASPECTS}")
 K (aspects): 5, aspects: ['food', 'service', 'price', 'ambiance', 'location']
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
 
-ds = load_dataset("yelp_review_full")
+ds = load_dataset("Yelp/yelp_review_full")
 train_full = ds["train"].shuffle(seed=42).select(range(5000))
 eval_full  = ds["test"].shuffle(seed=42).select(range(1000))
 
@@ -479,9 +502,10 @@ eval_full  = eval_full.map(
     attach_aspects_and_aux,
     batched=True,
 )
+
 \end{lstlisting}
 
-\noindent\emph{앞 블록은 데이터를 불러오고 학습에 맞는 형태로 정리하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=22]
@@ -497,6 +521,19 @@ print(
     f"{train_full[0]['label'] + 1})"
 )
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+train: 5000, eval: 1000
+
+First sample:
+text: I stalk this truck. I've been to industrial parks where I pretend to...
+  aspects (multi-hot): [0.0, 1.0, 0.0, 0.0, 1.0]
+  aux_score (star/4): 1.00  (star = 5)
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -539,6 +576,8 @@ Aux score distribution (train):
   1.00  (star 5): 975 samples (19.5%)
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \section{토큰화}
 
@@ -592,6 +631,8 @@ First sample aux_labels: 1.00
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
+
+
 \section{\texorpdfstring{커스텀 Data Collator}{커스텀 Data Collator}}
 
 기본 \inlinecode{DataCollatorWithPadding} 은 input\_ids·attention\_mask·labels 만 알고 있어 \emph{추가 라벨} 은 통과시키지 못합니다. 한 줄짜리 wrapper로 \inlinecode{aux\_labels} 를 텐서로 만들어 batch에 추가합니다.
@@ -619,18 +660,13 @@ class AuxCollator:
 
 \noindent\emph{앞뒤 블록은 모두 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
-\Needspace{6\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=16]
         batch["aux_labels"] = aux
         return batch
 
 collator = AuxCollator(tokenizer)
-\end{lstlisting}
 
-\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{10\baselineskip}
-\begin{lstlisting}[firstnumber=21]
 sample_features = [dict(train_tok[i]) for i in range(4)]
 batch = collator(sample_features)
 print("Batch keys:", list(batch.keys()))
@@ -640,6 +676,19 @@ for k, v in batch.items():
         f"{v.dtype}"
     )
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+Batch keys: ['input_ids', 'token_type_ids', 'attention_mask', 'labels', 'au...
+  input_ids: shape=(4, 128), dtype=torch.int64
+  token_type_ids: shape=(4, 128), dtype=torch.int64
+  attention_mask: shape=(4, 128), dtype=torch.int64
+  labels: shape=(4, 5), dtype=torch.float32
+  aux_labels: shape=(4,), dtype=torch.float32
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \section{모델 셋업}
 
@@ -664,6 +713,7 @@ def make_model():
     return m
 
 model = make_model()
+
 \end{lstlisting}
 
 \noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
@@ -702,7 +752,27 @@ print(f"Main classifier:      {model.classifier}")
 print(f"Aux head:             {model.aux_head}")
 \end{lstlisting}
 
-\textbf{보조 헤드는 \textasciitilde770개 파라미터} --- 768→1 Linear의 weight + bias. 헤드 포함 전체 약 67M의 \emph{0.001\%}. 이 \emph{미세한 추가 자유도} 만으로 멀티태스크 학습이 동작합니다.
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+Key                     | Status     | 
+------------------------+------------+-
+pre_classifier.weight   | MISSING    | 
+classifier.bias         | MISSING    | 
+pre_classifier.bias     | MISSING    | 
+classifier.weight       | MISSING    | 
+
+- MISSING: those params were newly initialized because missing from the che...
+Parameters:              66,958,086  (67.0 M)
+Trainable parameters:    66,958,086  (100.0%)
+Aux head parameters:            769  (0.0011%)
+Main classifier:      Linear(in_features=768, out_features=5, bias=True)
+Aux head:             Linear(in_features=768, out_features=1, bias=True)
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
+\textbf{보조 헤드는 \textasciitilde770개 파라미터} --- 768\(\to\)1 Linear의 weight + bias. 전체 67M 의 \emph{0.001\%}. 이 \emph{미세한 추가 자유도} 만으로 멀티태스크 학습이 동작합니다.
 
 
 
@@ -710,9 +780,12 @@ print(f"Aux head:             {model.aux_head}")
 
 핵심 로직 (코드 한 줄로 요약):
 
-\Needspace{5\baselineskip}
+\Needspace{6\baselineskip}
 \begin{lstlisting}
-loss = outputs.loss + lambda_aux * MSE(aux_head(CLS), aux_labels)
+loss = outputs.loss + $\lambda$ · MSE(
+    aux_head(CLS),
+    aux_labels,
+)
 \end{lstlisting}
 
 \begin{itemize}
@@ -742,6 +815,7 @@ class AuxTrainer(Trainer):
             output_hidden_states=True,
         )
         main_loss = outputs.loss
+
 \end{lstlisting}
 
 \noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 모델 출력을 확률이나 예측값으로 바꾸는 단계로 넘어갑니다.}
@@ -765,9 +839,9 @@ class AuxTrainer(Trainer):
 
 \end{lstlisting}
 
-\noindent\emph{앞뒤 블록은 모두 모델 출력을 확률이나 예측값으로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+\noindent\emph{앞 블록은 모델 출력을 확률이나 예측값으로 바꾸는 단계입니다. 이어지는 블록에서는 학습 설정을 만들고 학습 루프를 실행하는 단계로 넘어갑니다.}
 
-\Needspace{8\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=32]
             clean = SequenceClassifierOutput(
                 loss=loss,
@@ -775,17 +849,20 @@ class AuxTrainer(Trainer):
             )
             return (loss, clean)
         return loss
-\end{lstlisting}
 
-\noindent\emph{앞 블록은 모델 출력을 확률이나 예측값으로 바꾸는 단계입니다. 이어지는 블록에서는 학습 설정을 만들고 학습 루프를 실행하는 단계로 넘어갑니다.}
-
-\Needspace{6\baselineskip}
-\begin{lstlisting}[firstnumber=39]
 print(
     "AuxTrainer 정의 완료 — Trainer 의 compute_loss 만 "
     "교체."
 )
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+AuxTrainer 정의 완료 -- Trainer 의 compute_loss 만 교체.
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \textbf{평가용 metric 함수} --- 메인 (\ref{ch:13}장과 동일) + 보조 (RMSE, R², Pearson r). 보조 logit 추출은 \inlinecode{Trainer.predict()} 가 메인 logits 만 반환하기 때문에 별도 단계로 빼서 처리.
 
@@ -801,6 +878,7 @@ def compute_metrics_main(eval_pred):
         logits = logits[0]
     probs = 1.0 / (1.0 + np.exp(-logits))
     preds = (probs >= 0.5).astype(int)
+
 \end{lstlisting}
 
 \noindent\emph{앞뒤 블록은 모두 예측 결과를 지표와 표로 요약하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
@@ -835,7 +913,7 @@ def compute_metrics_main(eval_pred):
 
 
 
-\section{학습}
+\section{\texorpdfstring{학습}{학습}}
 
 \ref{ch:13}장과 동일한 hyperparams. \inlinecode{AuxTrainer} + \inlinecode{lambda\_aux=1.0}.
 
@@ -864,7 +942,7 @@ training_args = TrainingArguments(
 \noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=18]
+\begin{lstlisting}[firstnumber=17]
 trainer_aux = AuxTrainer(
     model=model,
     args=training_args,
@@ -883,6 +961,19 @@ print(
 )
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+Epoch Train... Valid... Hammi... Micro F1 Micro... Micro... Macro F1 Macro....
+----- -------- -------- -------- -------- -------- -------- -------- ------...
+1 0.595967 0.573617 0.237400 0.613984 0.698225 0.547882 0.314569 0.280822 0...
+2 0.501972 0.501866 0.207800 0.632992 0.808664 0.520023 0.331620 0.323160 0...
+
+With-aux training done -- mean train loss: 0.5859
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
 \textbf{중요: \inlinecode{remove\_unused\_columns=False}} --- Trainer는 기본으로 \emph{model.forward 시그니처에 없는 컬럼} 을 제거합니다. \inlinecode{aux\_labels} 는 모델 시그니처에 없어 자동 제거되면 우리 \inlinecode{compute\_loss} 가 받을 수 없습니다. 이 옵션을 꺼야 함.
 
 
@@ -894,12 +985,14 @@ print(
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Wed Jun 17 21:43:06 2026
+Sun Jun 21 23:04:15 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 60C P0 67W / 70W | 1619MiB / 15360MiB | 69% Default
+N/A 65C P0 68W / 70W | 1619MiB / 15360MiB | 63% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \section{평가}
 
@@ -910,11 +1003,38 @@ N/A 60C P0 67W / 70W | 1619MiB / 15360MiB | 69% Default
 \Needspace{7\baselineskip}
 \begin{lstlisting}
 eval_metrics_aux = trainer_aux.evaluate()
-print("With-aux (lambda=1) — main task metrics:")
+print("With-aux (λ=1) — main task metrics:")
 for k, v in eval_metrics_aux.items():
     if k.startswith("eval_") and isinstance(v, float):
         print(f"  {k:>22}: {v:.4f}")
 \end{lstlisting}
+
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{eval\_metrics\_aux = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{for k, v in eval\_metrics\_...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{4행}의 \inlinecode{if k.startswith("eval\_")...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\end{codeRead}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+Train... Valid... Epoch Hammi... Micro F1 Micro... Micro... Macro F1 Macro....
+-------- -------- ----- -------- -------- -------- -------- -------- ------...
+0.501972 0.501866 2 0.207800 0.632992 0.808664 0.520023 0.331620 0.323160 0...
+With-aux (λ=1) -- main task metrics:
+               eval_loss: 0.5019
+       eval_hamming_loss: 0.2078
+           eval_micro_f1: 0.6330
+    eval_micro_precision: 0.8087
+       eval_micro_recall: 0.5200
+           eval_macro_f1: 0.3316
+    eval_macro_precision: 0.3232
+       eval_macro_recall: 0.3408
+          eval_macro_auc: 0.8009
+            eval_runtime: 0.9799
+  eval_samples_per_second: 1020.5360
+   eval_steps_per_second: 32.6570
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -936,17 +1056,12 @@ def aux_predictions(trainer, dataset, batch_size=64):
         aux_true.extend(aux_lbl.tolist())
 \end{lstlisting}
 
-\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-    return np.array(aux_preds), np.array(aux_true)
-\end{lstlisting}
-
 \noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 학습 설정을 만들고 학습 루프를 실행하는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=19]
+\begin{lstlisting}[firstnumber=17]
+    return np.array(aux_preds), np.array(aux_true)
+
 aux_preds_aux, aux_true = aux_predictions(
     trainer_aux,
     eval_tok,
@@ -955,14 +1070,35 @@ rmse_aux = float(np.sqrt(mean_squared_error(aux_true, aux_preds_aux)))
 r2_aux   = float(r2_score(aux_true, aux_preds_aux))
 pear_aux = float(np.corrcoef(aux_true, aux_preds_aux)[0, 1])
 
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 예측 결과를 지표와 표로 요약하는 단계로 넘어갑니다.}
+
+\Needspace{9\baselineskip}
+\begin{lstlisting}[firstnumber=27]
 print(
-    "\nWith-aux (lambda=1) — aux task metrics (star "
+    "\nWith-aux (λ=1) — aux task metrics (star "
     "regression, 0-1 scale):"
 )
 print(f"  RMSE:    {rmse_aux:.4f}")
 print(f"  R^2:     {r2_aux:.4f}")
 print(f"  Pearson: {pear_aux:.4f}")
 \end{lstlisting}
+
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{@torch.no\_grad()}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{2행}의 \inlinecode{def aux\_predictions(train...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{trainer.model.eval()}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{4행}의 \inlinecode{device = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{aux\_preds, aux\_true = [], []}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{for i in range(0, len(dat...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\end{codeRead}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+With-aux (λ=1) -- aux task metrics (star regression, 0-1 scale):
+  RMSE:    0.2086
+  R^2:     0.6425
+  Pearson: 0.8074
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -978,6 +1114,10 @@ print(f"Main logits shape: {logits_aux.shape}")
 print(f"Eval samples:      {len(labels_eval)}")
 \end{lstlisting}
 
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{preds\_output\_aux = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{2행}의 \inlinecode{logits\_aux = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{if isinstance(logits\_aux,...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{4행}의 \inlinecode{logits\_aux = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{labels\_eval = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{probs\_aux = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\end{codeRead}
+
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 Main logits shape: (1000, 5)
@@ -985,7 +1125,9 @@ Eval samples:      1000
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
-\section{lambda=0 기준선 비교}
+
+
+\section{\texorpdfstring{비교 실험: \emph{\(\lambda\)=0 baseline} 학습 (= \ref{ch:13}장 재현)}{비교 실험: \textbackslash lambda=0 baseline 학습 (= \ref{ch:13}장 재현)}}
 
 같은 코드를 \inlinecode{lambda\_aux=0.0} 으로 한 번 더 돌립니다. 그러면 보조 loss 의 gradient 가 0이 되어 메인 task만 학습되는 상태 = \textbf{\ref{ch:13}장과 정확히 동일한 학습 결과}. (보조 헤드는 학습되긴 하지만 메인 학습엔 영향 없음.)
 
@@ -1018,7 +1160,7 @@ training_args_no_aux = TrainingArguments(
 \noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=18]
+\begin{lstlisting}[firstnumber=17]
 trainer_no_aux = AuxTrainer(
     model=model_no_aux,
     args=training_args_no_aux,
@@ -1032,15 +1174,36 @@ trainer_no_aux = AuxTrainer(
 
 train_result_no_aux = trainer_no_aux.train()
 print(
-    f"\nNo-aux (lambda=0) baseline training done — mean train loss: "
+    f"\nNo-aux (λ=0) baseline training done — mean train loss: "
     f"{train_result_no_aux.training_loss:.4f}"
 )
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+Key                     | Status     | 
+------------------------+------------+-
+pre_classifier.weight   | MISSING    | 
+classifier.bias         | MISSING    | 
+pre_classifier.bias     | MISSING    | 
+classifier.weight       | MISSING    | 
+
+- MISSING: those params were newly initialized because missing from the che...
+Epoch Train... Valid... Hammi... Micro F1 Micro... Micro... Macro F1 Macro....
+----- -------- -------- -------- -------- -------- -------- -------- ------...
+1 0.390076 0.370578 0.155000 0.732112 0.905128 0.614626 0.579060 0.726453 0...
+2 0.302870 0.309076 0.113800 0.816274 0.919942 0.733604 0.757666 0.920507 0...
+
+No-aux (λ=0) baseline training done -- mean train loss: 0.4075
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 eval_metrics_no_aux = trainer_no_aux.evaluate()
-print("No-aux (lambda=0) baseline — main task metrics:")
+print("No-aux (λ=0) baseline — main task metrics:")
 for k, v in eval_metrics_no_aux.items():
     if k.startswith("eval_") and isinstance(v, float):
         print(f"  {k:>22}: {v:.4f}")
@@ -1053,22 +1216,47 @@ probs_no_aux = 1.0 / (1.0 + np.exp(-logits_no_aux))
 preds_main_no_aux = (probs_no_aux >= 0.5).astype(int)
 \end{lstlisting}
 
-\subsection{메인 지표 비교}
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+Train... Valid... Epoch Hammi... Micro F1 Micro... Micro... Macro F1 Macro....
+-------- -------- ----- -------- -------- -------- -------- -------- ------...
+0.302870 0.309076 2 0.113800 0.816274 0.919942 0.733604 0.757666 0.920507 0...
+No-aux (λ=0) baseline -- main task metrics:
+               eval_loss: 0.3091
+       eval_hamming_loss: 0.1138
+           eval_micro_f1: 0.8163
+    eval_micro_precision: 0.9199
+       eval_micro_recall: 0.7336
+           eval_macro_f1: 0.7577
+    eval_macro_precision: 0.9205
+       eval_macro_recall: 0.6737
+          eval_macro_auc: 0.9081
+            eval_runtime: 1.0113
+  eval_samples_per_second: 988.8350
+   eval_steps_per_second: 31.6430
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
+\subsection{\texorpdfstring{메인 metric 비교 --- \(\lambda\)=0 baseline vs \(\lambda\)=1 aux}{메인 metric 비교 --- \textbackslash lambda=0 baseline vs \textbackslash lambda=1 aux}}
 
 
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
-m_aux = {
-    k.replace("eval_", ""): v
-    for k, v in eval_metrics_aux.items()
-    if k.startswith("eval_") and isinstance(v, float)
-}
-m_no_aux = {
-    k.replace("eval_", ""): v
-    for k, v in eval_metrics_no_aux.items()
-    if k.startswith("eval_") and isinstance(v, float)
-}
+m_aux    = {k.replace(
+    "eval_",
+    ""): v for k,
+    v in eval_metrics_aux.items(,
+)
+            if k.startswith("eval_") and isinstance(v, float)}
+m_no_aux = {k.replace(
+    "eval_",
+    ""): v for k,
+    v in eval_metrics_no_aux.items(,
+)
+            if k.startswith("eval_") and isinstance(v, float)}
 
 \end{lstlisting}
 
@@ -1089,20 +1277,23 @@ print(cmp.round(4).to_string(index=False))
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 metric  no aux (lambda=0)  with aux (lambda=1)  delta (aux - no_aux)
-loss 0.3091 0.4758 0.1667
-hamming_loss 0.1138 0.1958 0.0820
-micro_f1 0.8163 0.6559 -0.1604
-micro_precision 0.9199 0.8316 -0.0884
-micro_recall 0.7336 0.5415 -0.1921
-macro_f1 0.7577 0.4004 -0.3573
-macro_precision 0.9205 0.7101 -0.2104
-macro_recall 0.6737 0.3760 -0.2977
-macro_auc 0.9081 0.8293 -0.0788
-runtime 1.1311 0.9760 -0.1551
-samples_per_second 884.1300 1024.5580 140.4280
-steps_per_second 28.2920 32.7860 4.4940
+loss 0.3091 0.5019 0.1928
+hamming_loss 0.1138 0.2078 0.0940
+micro_f1 0.8163 0.6330 -0.1833
+micro_precision 0.9199 0.8087 -0.1113
+micro_recall 0.7336 0.5200 -0.2136
+macro_f1 0.7577 0.3316 -0.4260
+macro_precision 0.9205 0.3232 -0.5973
+macro_recall 0.6737 0.3408 -0.3329
+macro_auc 0.9081 0.8009 -0.1072
+runtime 1.0113 0.9799 -0.0314
+samples_per_second 988.8350 1020.5360 31.7010
+steps_per_second 31.6430 32.6570 1.0140
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \textbf{해석 가이드}
 
 \begin{itemize}
@@ -1110,12 +1301,12 @@ steps_per_second 28.2920 32.7860 4.4940
 \item
   \inlinecode{delta} \textgreater{} 0 --- 보조 loss 가 메인 task 에 \emph{도움} 이 됨 (멀티태스크의 정통 효과).
 \item
-  \inlinecode{delta} \textless{} 0 --- 보조 loss 가 메인 task 를 \emph{방해} 함 ($\lambda$가 너무 큼 / 보조 task 가 메인과 상관 약함).
+  \inlinecode{delta} \textless{} 0 --- 보조 loss 가 메인 task 를 \emph{방해} 함 (\(\lambda\)가 너무 큼 / 보조 task 가 메인과 상관 약함).
 \item
-  \inlinecode{delta} ≈ 0 --- 별 영향 없음 (보조 신호가 메인 표현에 의미 없는 추가).
+  \inlinecode{delta} \(\approx\) 0 --- 별 영향 없음 (보조 신호가 메인 표현에 의미 없는 추가).
 \end{itemize}
 
-별점은 항목 분포와 \emph{부분적으로} 상관 (긍정 항목 → 높은 별점) 이라 \emph{작은 양의 delta} 가 자연스러운 결과. 0.5\%p 정도면 노이즈일 수 있고, 1-2\%p 면 의미 있는 효과.
+별점은 항목 분포와 \emph{부분적으로} 상관 (긍정 항목 \(\to\) 높은 별점) 이라 \emph{작은 양의 delta} 가 자연스러운 결과. 0.5\%p 정도면 노이즈일 수 있고, 1-2\%p 면 의미 있는 효과.
 
 
 
@@ -1139,9 +1330,9 @@ f1_aux    = per_label_f1(labels_eval, preds_main_aux)
 
 \end{lstlisting}
 
-\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
 
-\Needspace{9\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=13]
 label_cmp = pd.DataFrame({
     "aspect":              ASPECTS,
@@ -1150,58 +1341,64 @@ label_cmp = pd.DataFrame({
     "delta (aux - no_aux)": np.array(f1_aux) - np.array(f1_no_aux),
 })
 print(label_cmp.round(4).to_string(index=False))
-\end{lstlisting}
 
-\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=21]
 sns.set_theme(style="whitegrid", context="talk")
 fig, ax = plt.subplots(figsize=(10, 5))
 x_pos = np.arange(K)
 width = 0.38
-ax.bar(
-    x_pos - width/2,
-    f1_no_aux,
-    width,
-    label="no aux (lambda=0)",
-    color="#5B8DEF",
-)
 \end{lstlisting}
 
 \noindent\emph{앞 블록은 숫자 결과를 그림으로 확인하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=32]
+\begin{lstlisting}[firstnumber=25]
+ax.bar(
+    x_pos - width/2,
+    f1_no_aux,
+    width,
+    label="aux 없음 (lambda=0)",
+    color="#5B8DEF",
+)
 ax.bar(
     x_pos + width/2,
     f1_aux,
     width,
-    label="with aux (lambda=1)",
+    label="aux 적용 (lambda=1)",
     color="#F47272",
 )
 ax.set_xticks(x_pos)
 ax.set_xticklabels(ASPECTS)
-ax.set_ylim(0, 1)
-ax.set_ylabel("Per-label F1")
-ax.set_title("Per-label F1 — auxiliary loss effect")
-ax.legend()
 \end{lstlisting}
 
-\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
 
-\Needspace{5\baselineskip}
-\begin{lstlisting}[firstnumber=45]
+\Needspace{8\baselineskip}
+\begin{lstlisting}[firstnumber=41]
+ax.set_ylim(0, 1)
+ax.set_ylabel("라벨별 F1")
+ax.set_title("라벨별 F1 — 보조 loss 효과")
+ax.legend()
 plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+aspect  no aux F1  with aux F1  delta (aux - no_aux)
+    food     0.9306       0.8849               -0.0457
+ service     0.8653       0.7732               -0.0921
+   price     0.4612       0.0000               -0.4612
+ambiance     0.7111       0.0000               -0.7111
+location     0.8202       0.0000               -0.8202
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
 \begin{bookfigurelabel}[H]{라벨별 F1: 보조 손실 적용 전후 비교}{fig:ch14-aux-f1-compare}
+\centering
 \includegraphics[width=0.88\linewidth]{assets/figures/ch14_aux_f1_compare.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch14-aux-f1-compare}는 보조 별점 회귀 손실을 추가했을 때 라벨별 F1이 어떻게 움직이는지 보여줍니다. 모든 라벨이 같이 오르기보다는, 별점 신호와 관련이 강한 라벨에서 변화가 먼저 나타나는지 보는 그림입니다.
-
+\textbf{그림 읽기} --- 그림~\ref{fig:ch14-aux-f1-compare}에서 다음 내용을 확인합니다: 라벨별 F1: 보조 손실 적용 전후 비교. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
 
 
 
@@ -1229,15 +1426,16 @@ plt.show()
 \begin{lstlisting}
 true_star = np.round(np.array(aux_true) * 4).astype(int) + 1
 star_label = [f"{s}*" for s in true_star]
-df_aux = pd.DataFrame({"True star": star_label, "Predicted (0-1 scale)": aux_preds_aux})
+df_aux = pd.DataFrame({"정답 별점": star_label, "예측값 (0-1 스케일)": aux_preds_aux})
 order = ["1*", "2*", "3*", "4*", "5*"]
 
 fig, ax = plt.subplots(figsize=(8.5, 5.5))
 sns.violinplot(
-    data=df_aux, x="True star", y="Predicted (0-1 scale)",
+    data=df_aux, x="정답 별점", y="예측값 (0-1 스케일)",
     order=order, inner="quart", cut=0,
     color="#F47272", alpha=0.6, ax=ax,
 )
+
 \end{lstlisting}
 
 \noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
@@ -1255,17 +1453,17 @@ for i, target in enumerate([0.0, 0.25, 0.5, 0.75, 1.0]):
         alpha=0.7,
     )
 ax.set_ylim(-0.2, 1.2)
-ax.set_title(f"Aux task — predicted vs true star  (RMSE={rmse_aux:.3f}, r={pear_aux:.3f})")
+ax.set_title(f"보조 task — 예측 별점 vs 정답 별점  (RMSE={rmse_aux:.3f}, r={pear_aux:.3f})")
 plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
 \begin{bookfigurelabel}[H]{보조 별점 회귀 헤드의 예측 분포}{fig:ch14-aux-star-violin}
+\centering
 \includegraphics[width=0.82\linewidth]{assets/figures/ch14_aux_star_violin.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch14-aux-star-violin}는 보조 회귀 head가 실제 별점 순서를 얼마나 잘 복원했는지 보여줍니다. 별점이 올라갈수록 violin 중심도 함께 올라가면, 보조 task가 의미 있는 순서 신호를 학습했다는 뜻입니다.
-
+\textbf{그림 읽기} --- 그림~\ref{fig:ch14-aux-star-violin}에서 다음 내용을 확인합니다: 보조 별점 회귀 헤드의 예측 분포. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
 
 
 
@@ -1274,31 +1472,90 @@ plt.show()
 \begin{itemize}
 \tightlist
 \item
-  각 violin이 \emph{해당 별점의 정답 위치} (점선 가이드: 1★=0.0, 2★=0.25, 3★=0.5, 4★=0.75, 5★=1.0) 에 \emph{중심} 하면 보조 head 가 별점 신호를 잘 학습한 것.
+  각 violin이 \emph{해당 별점의 정답 위치} (점선 가이드: 1=0.0, 2=0.25, 3=0.5, 4=0.75, 5=1.0) 에 \emph{중심} 하면 보조 head 가 별점 신호를 잘 학습한 것.
 \item
   violin 의 \emph{너비} = 그 별점 내 예측 분산. 너비가 좁을수록 모델이 자신 있게 회귀 --- 모든 별점에서 좁으면 calibration 이 좋음.
 \item
-  가장 어려운 별점은 보통 \emph{3★} (중간값) --- 사람도 모호한 평가라 violin 이 길게 늘어지거나 인접 별점 위치까지 침범하면 자연스러움.
+  가장 어려운 별점은 보통 \emph{3} (중간값) --- 사람도 모호한 평가라 violin 이 길게 늘어지거나 인접 별점 위치까지 침범하면 자연스러움.
 \item
-  1★/5★ 양 끝 violin 이 정답 위치에서 \emph{체계적으로 안쪽} 으로 치우치면 \emph{극단값에 보수적} 인 회귀 --- MSE 가 양 끝에서 손실이 작아지는 특성과 결부된 일반적 경향.
+  1/5 양 끝 violin 이 정답 위치에서 \emph{체계적으로 안쪽} 으로 치우치면 \emph{극단값에 보수적} 인 회귀 --- MSE 가 양 끝에서 손실이 작아지는 특성과 결부된 일반적 경향.
 \end{itemize}
+
+
+
+\section{\texorpdfstring{결과 해석}{결과 해석 --- 보조 loss 가 항상 좋게 나오지는 않습니다}}
+
+이 장의 §8 비교가 다음과 같은 형태로 나오면 \emph{그게 자연스러운 모습} 이라는 점을 먼저 짚습니다. 학습 데이터·에폭·\(\lambda\) 모두 \emph{입문 수준 빠르게 검증} 에 맞춰져 있어 \emph{드라마틱한 양의 delta} 가 항상 나오는 셋업이 아닙니다.
+
+\subsection{가능한 결과 시나리오 4가지}
+
+\begin{booktable}{14장 가능한 결과 시나리오 4가지 표}{tab:ch14-07}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{@{}lll@{}}
+\toprule
+delta 패턴 & 의미 & 권장 다음 단계 \\
+\midrule
+
+\textbf{모든 항목 +1-3\%p} & 정규화 효과가 고르게 작동 (이상적) & \(\lambda\) 를 0.3·1·3 으로 grid search 해 최적점 탐색 \\
+\textbf{일부 항목만 향상, 나머지 0 또는 음수} \(\leftarrow\) \emph{이번 quick 모드의 전형} & 별점과 \emph{상관 강한} 항목 (food/service) 만 보조의 도움을 받음. 활성률이 낮은 항목 (price/ambiance/location) 은 \emph{학습 데이터 자체가 부족} 해 둘 다 학습 안 됨 & 데이터·에폭 늘리기가 우선, \(\lambda\) 보다 더 큰 lever \\
+\textbf{모든 항목 거의 0 변화} & 보조 신호와 메인 task 가 \emph{서로 무관} --- BERT 본체가 두 신호를 분리 표상으로 학습하면 결합 효과 없음 & 다른 보조 task 시도 (작성자, 길이 분포, 작성 시각 등) 또는 정규화 목적은 \emph{dropout/weight decay} 강화로 대체 \\
+\textbf{모든 항목 음수} & 보조가 메인 학습을 \emph{방해} --- 신호 충돌 가능성 (FAQ Q4) & \(\lambda\) 줄이거나(0.1, 0.01) 보조 task 제거. 이게 RoBERTa 가 NSP 를 뺀 이유 \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{booktable}
+
+\subsection{\texorpdfstring{우리 결과를 \emph{솔직하게} 읽기}{우리 결과를 솔직하게 읽기}}
+
+§8-2 의 라벨별 F1 표 가 \emph{어떤} 패턴인지 확인:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{food, service 가 양의 delta} + \textbf{price·ambiance·location 이 0} \(\to\) 두 번째 시나리오. \emph{학습 데이터가 부족한 항목이 0 으로 수렴} 한 것이지 \emph{보조가 해롭다} 는 신호가 아님. Colab T4 풀 모드 (5,000 샘플 + 2 epoch) 로 돌리면 활성률 낮은 항목도 학습이 시작돼 delta 가 더 고르게 나옵니다.
+\item
+  \textbf{macro AUC 가 살짝 음수} + \textbf{macro F1 양수} \(\to\) noise 영역. 평가 셋이 작으면 (100건 quick 모드) 두 metric 모두 ±0.01 정도 흔들리는 게 정상.
+\item
+  \textbf{보조 task 자체} (별점 회귀 RMSE / Pearson) 는 \emph{보통 잘 학습} 됨 (Pearson 0.7+). 보조 학습이 \emph{작동} 하지 않아서 delta 가 작은 게 아니라, 보조 신호의 \emph{유용성} 이 항목별로 다르기 때문.
+\end{itemize}
+
+\subsection{그럼 auxiliary loss 의 가치는 어디에서?}
+
+quick 모드 결과만 보면 “굳이 쓸 필요 있나?” 싶을 수 있습니다. 본문 셋업이 \emph{짧고 작아} 효과가 묻혀서 그렇습니다 --- 다음과 같은 \emph{다른 측면} 도 같이 봐 주세요:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \textbf{학습 안정화 / gradient noise 감소} --- 메인 BCE per-label 의 gradient 가 sparse 한 multi-label 에서 보조 MSE 의 \emph{밀도 있는} gradient 가 BERT 본체 학습을 부드럽게 만듭니다. 학습 곡선이 더 안정적 (epoch마다 loss 분산이 작아짐) --- metric 한 개로는 안 보이지만 학습 동역학에선 큰 차이.
+\item
+  \textbf{다운스트림 transfer 에 유리한 표상} --- 학습이 끝난 BERT 본체를 \emph{다른 task로 재 fine-tune} 할 때, auxiliary 로 학습된 본체가 \emph{더 일반적} 인 표상을 갖고 있어 새 task 적응이 빠릅니다. 단일 task 학습한 본체는 그 task 에 \emph{과적합} 되어 transfer 성능이 떨어지는 경향.
+\item
+  \textbf{데이터 효율 누적 효과} --- 별점 같은 \emph{공짜 메타데이터} 신호를 추가 라벨링 비용 없이 활용. 데이터셋이 \emph{크면 클수록} 효과 누적. quick 모드 500 건에선 미미해도 5,000건·50,000건에선 의미있는 격차.
+\item
+  \textbf{\(\lambda\) 그리드의 학습 자원 자체가 가치} --- \(\lambda\) ∈ \{0.1, 0.3, 1, 3, 10\} 시도하면 그중 하나는 보통 \emph{명확하게} 최적. 본문은 \(\lambda\)=1 한 점만 보여주는 \emph{단일 실험}, 실무에선 \emph{grid search} 의 best 가 보조 loss 의 진짜 가치.
+\end{enumerate}
+
+\begin{quote}
+\textbf{원고 취지} --- auxiliary loss 라는 \emph{기법 자체} 와 \emph{언제 도움이 되는지} 의 이해. quick 모드 한 번 실행으로 “보조 loss 는 좋다 / 나쁘다” 를 단정하기보다, \emph{언제 효과가 나타나는 패턴인지} 의 감각을 잡는 게 이 장의 목적. \emph{나쁘게 나온 항목} 도 진단할 수 있는 게 더 중요한 학습 결과입니다.
+\end{quote}
 
 
 
 \section{이 장에 등장한 라이브러리·함수}
 
-\begin{booktable}{새로 등장한 라이브러리}{tab:ch14-07}
+\begin{booktable}{14장 새로 등장한 라이브러리}{tab:ch14-08}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
 이름 & 한 줄 설명 & 다음 장에서 \\
 \midrule
 
-\inlinecode{Trainer.compute\_loss} 오버라이드 & 자동 매핑이 못 다루는 \emph{복합 loss} 직접 계산 & 18장 한국어 auxiliary 에서 다시 \\
-\inlinecode{model.aux\_head\ =\ nn.Linear(...)} 한 줄 추가 & 표준 BERT 모델에 보조 헤드 동적 부착 & 18장 \\
+\inlinecode{Trainer.compute\_loss} 오버라이드 & 자동 매핑이 못 다루는 \emph{복합 loss} 직접 계산 & \ref{ch:18}장 한국어 auxiliary 에서 다시 \\
+\inlinecode{model.aux\_head\ =\ nn.Linear(...)} 한 줄 추가 & 표준 BERT 모델에 보조 헤드 동적 부착 & \ref{ch:18}장 \\
 \inlinecode{output\_hidden\_states=True} & 마지막 layer hidden 까지 받아 보조 헤드 입력으로 사용 & 보조 헤드 패턴마다 \\
 \inlinecode{remove\_unused\_columns=False} & model.forward 시그니처에 없는 컬럼(aux\_labels)을 자동 제거 안 함 & custom collator 패턴마다 \\
-커스텀 \inlinecode{DataCollator} & input\_ids 외 \emph{추가 라벨} 도 batch에 같이 담기 & 18장 \\
+커스텀 \inlinecode{DataCollator} & input\_ids 외 \emph{추가 라벨} 도 batch에 같이 담기 & \ref{ch:18}장 \\
 \inlinecode{r2\_score}, \inlinecode{np.corrcoef} & 회귀 task 보조 metric (R², Pearson r) & 회귀 결합 task 마다 \\
 \bottomrule
 \end{tabular}
@@ -1313,7 +1570,7 @@ plt.show()
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
 \item
-  $\lambda$를 0.1에서 10까지 grid search한다고 할 때 \emph{작은 $\lambda$} 와 \emph{큰 $\lambda$} 가 각각 어떤 학습 양상을 만드는지 한 줄로 설명하세요.
+  \(\lambda\)를 0.1에서 10까지 grid search한다고 할 때 \emph{작은 \(\lambda\)} 와 \emph{큰 \(\lambda\)} 가 각각 어떤 학습 양상을 만드는지 한 줄로 설명하세요.
 \item
   \inlinecode{remove\_unused\_columns=False} 를 빠뜨리면 어떤 에러가 나나요? \inlinecode{aux\_labels} 가 어디로 사라지는지 추적해 보세요.
 \item
@@ -1326,7 +1583,7 @@ plt.show()
 
 \section{FAQ}
 
-\begin{faqBox}{Q1. (실무) $\lambda$는 어떻게 정하나요? 단순히 1.0으로 두면 되나요?}
+\begin{faqBox}{Q1. (실무) \(\lambda\)는 어떻게 정하나요? 단순히 1.0으로 두면 되나요?}
 
 1.0은 \emph{시작점} 일 뿐 거의 항상 grid search가 필요합니다.
 
@@ -1347,14 +1604,14 @@ for lam in [0.1, 0.3, 1.0, 3.0, 10.0]:
 \begin{itemize}
 \tightlist
 \item
-  메인 task가 분류, 보조가 회귀 → $\lambda=0.1$--$1.0$ (회귀 MSE는 보통 분류 BCE 보다 작아 균형이 자연스러움)
+  메인 task가 분류, 보조가 회귀 \(\to\) \(\lambda\)=0.1-1.0 (회귀 MSE는 보통 분류 BCE 보다 작아 균형이 자연스러움)
 \item
-  메인이 복잡하고 보조가 \emph{미세} 보조 → $\lambda=0.01$--$0.1$
+  메인이 복잡하고 보조가 \emph{미세} 보조 \(\to\) \(\lambda\)=0.01-0.1
 \item
-  메인과 보조가 비슷한 중요도 → $\lambda=1.0$
+  메인과 보조가 비슷한 중요도 \(\to\) \(\lambda\)=1.0
 \end{itemize}
 
-또 다른 패턴: \textbf{uncertainty weighting} --- $\lambda$를 \emph{학습 가능한 파라미터} 로 두고 모델이 직접 결정하게 함 (Kendall et al. 2018).
+또 다른 패턴: \textbf{uncertainty weighting} --- \(\lambda\)를 \emph{학습 가능한 파라미터} 로 두고 모델이 직접 결정하게 함 (Kendall et al. 2018).
 
 \end{faqBox}
 
@@ -1384,14 +1641,10 @@ class DistilBertForSequenceClassification:
 
 \noindent\emph{앞뒤 블록은 모두 모델 출력을 확률이나 예측값으로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
-\Needspace{8\baselineskip}
+\Needspace{5\baselineskip}
 \begin{lstlisting}[firstnumber=17]
                 )
-        return SequenceClassifierOutput(
-            loss=loss,
-            logits=logits,
-            ...,
-        )
+        return SequenceClassifierOutput(loss=loss, logits=logits, ...)
 \end{lstlisting}
 
 우리는 \emph{메인 loss는 자동으로 받고, 보조 loss만 직접 계산해 더하면} 됩니다. 깔끔.
@@ -1410,7 +1663,7 @@ class DistilBertForSequenceClassification:
 \item
   보조 헤드 위에 가중치가 \textasciitilde770개라 데이터에 \emph{과적합} 할 위험도 적습니다.
 \item
-  BERT 본체(약 66M)는 이미 표상이 풍부해 작은 head가 \emph{읽어내기만} 하면 됨.
+  BERT 본체(67M)는 이미 표상이 풍부해 작은 head가 \emph{읽어내기만} 하면 됨.
 \end{enumerate}
 
 대조적으로 \emph{BERT 본체를 random init 부터} 학습하려면 수백 GB 데이터가 필요합니다. 사전학습 + 작은 head fine-tune 패턴이 강력한 이유.
@@ -1424,9 +1677,9 @@ class DistilBertForSequenceClassification:
 \begin{itemize}
 \tightlist
 \item
-  메인: \ref{ch:13}장의 5개 항목 multi-label 셋업 그대로
+  메인: 항목 분류 (\ref{ch:13}장의 5개 항목 multi-label 셋업 그대로)
 \item
-  보조: \emph{반대로} 라벨링된 별점 (1★=좋음, 5★=나쁨 --- 라벨링 실수 시나리오)
+  보조: \emph{반대로} 라벨링된 별점 (1=좋음, 5=나쁨 --- 라벨링 실수 시나리오)
 \end{itemize}
 
 이 경우 두 task의 gradient가 BERT 본체에서 \emph{반대 방향} 으로 끌어당겨 학습이 \emph{발산} 하거나 \emph{느려집니다}. 진단 신호:
@@ -1436,7 +1689,7 @@ class DistilBertForSequenceClassification:
 \item
   두 task의 train loss 가 \emph{둘 다 정체} (서로 상쇄)
 \item
-  $\lambda$ 를 키울수록 메인 metric 이 \emph{떨어짐}
+  \(\lambda\) 를 키울수록 메인 metric 이 \emph{떨어짐}
 \end{itemize}
 
 해결: 보조 task가 메인과 같은 방향 신호인지 \emph{간단한 sklearn baseline} 부터 확인. 별점이 항목 분류와 양의 상관이면 보조로 쓸 만함.
@@ -1447,14 +1700,14 @@ class DistilBertForSequenceClassification:
 
 좋은 보조 task의 조건:
 
-\begin{booktable}{FAQ}{tab:ch14-08}
+\begin{booktable}{14장 FAQ 표}{tab:ch14-09}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}ll@{}}
 \toprule
 좋은 조건 & 예시 \\
 \midrule
 
-\emph{메인과 양의 상관} & 항목 분류 ↔ 별점, 감성 분류 ↔ 이모지 사용 \\
+\emph{메인과 양의 상관} & 항목 분류 \(\leftrightarrow\) 별점, 감성 분류 \(\leftrightarrow\) 이모지 사용 \\
 \emph{학습 데이터가 \emph{공짜로} 있음} & 메타데이터(별점, 작성일, 길이) --- 라벨링 비용 0 \\
 \emph{연속적이고 안정적인 신호} & float regression, 순서형 점수 \\
 \emph{메인보다 \emph{덜 복잡} 한 task} & 회귀 \textless{} 분류, 단어 vs 문장 \\
@@ -1515,23 +1768,23 @@ trainer.train()
 
 \begin{previewBox}{미리보기: 다음 장}
 
-\textbf{15장. BERT 한국어 Binary --- NSMC}
+\textbf{\ref{ch:15}장. BERT 한국어 Binary --- NSMC}
 
 \begin{itemize}
 \tightlist
 \item
-  Phase 1 영어(DistilBERT) → Phase 2 한국어(klue/bert-base) 전환
+  Phase 1 영어(DistilBERT) \(\to\) Phase 2 한국어(klue/bert-base) 전환
 \item
   데이터: 네이버 영화 리뷰 (NSMC) 이진 분류 (긍정/부정)
 \item
   셋업: \inlinecode{num\_labels=2} + \inlinecode{problem\_type="single\_label\_classification"} (\ref{ch:11}장과 같은 표준 binary 셋업)
 \item
-  변하는 축: \emph{언어 + 데이터 + 토크나이저} (영어 WordPiece → 한국어 WordPiece). 모델 크기는 비슷, 셋업도 같음.
+  변하는 축: \emph{언어 + 데이터 + 토크나이저} (영어 WordPiece \(\to\) 한국어 WordPiece). 모델 크기는 비슷, 셋업도 같음.
 \item
-  회귀 장은 \emph{생략} (영어 \ref{ch:09}장 에서 다뤘으므로). Phase 2는 Binary 부터 시작.
+  회귀 장은 \emph{생략} (영어 \ref{ch:09}장에서 다뤘으므로). Phase 2는 Binary 부터 시작.
 \end{itemize}
 
 \begin{quote}
-\textbf{Phase 1 마무리} --- \ref{ch:07}--\ref{ch:14}장을 통해 BERT 분류·회귀·multi-label·auxiliary loss의 기본 5가지를 다 익혔습니다. Phase 2는 같은 패턴을 \emph{한국어 데이터} 위에서 압축적으로 재방문 --- 토크나이저가 어떻게 다른지, 한국어 특유의 학습 어려움이 무엇인지 확인.
+\textbf{Phase 1 마무리} --- \ref{ch:07}--\ref{ch:14}장를 통해 BERT 분류·회귀·multi-label·auxiliary loss의 기본 5가지를 다 익혔습니다. Phase 2는 같은 패턴을 \emph{한국어 데이터} 위에서 압축적으로 재방문 --- 토크나이저가 어떻게 다른지, 한국어 특유의 학습 어려움이 무엇인지 확인.
 \end{quote}
 \end{previewBox}

@@ -6,7 +6,7 @@
 
 \markboth{한국어 BERT 이진 분류 (Korean Binary Classification)}{한국어 BERT 이진 분류 (Korean Binary Classification)}
 
-\chaptermeta{15_ko_binary/15_ko_binary.ipynb}{https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/15_ko_binary/15_ko_binary.ipynb}{11장의 softmax 이진 분류 셋업을 NSMC와 klue/bert-base로 재현}
+\chaptermeta{15_ko_binary/15_ko_binary.ipynb}{https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/15_ko_binary/15_ko_binary.ipynb}{Ch 11의 softmax 이진 분류 셋업을 NSMC와 klue/bert-base로 재현}
 
 
 
@@ -71,14 +71,14 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 
 10 & DistilBERT & WordPiece (영어) & Yelp 이진화 & \inlinecode{Linear(H,\ 1)} & sigmoid & \inlinecode{BCEWithLogitsLoss} \\
 11 & DistilBERT & WordPiece (영어) & Yelp 이진화 & \inlinecode{Linear(H,\ 2)} & softmax & \inlinecode{CrossEntropyLoss} \\
-\textbf{15 ← 여기 (Phase 2 시작)} & \textbf{\inlinecode{klue/bert-base}} & \textbf{WordPiece (한국어)} & \textbf{NSMC (네이버 영화 리뷰)} & \inlinecode{Linear(H,\ 2)} & softmax & \inlinecode{CrossEntropyLoss} \\
+\textbf{15 \(\leftarrow\) 여기 (Phase 2 시작)} & \textbf{\inlinecode{klue/bert-base}} & \textbf{WordPiece (한국어)} & \textbf{NSMC (네이버 영화 리뷰)} & \inlinecode{Linear(H,\ 2)} & softmax & \inlinecode{CrossEntropyLoss} \\
 16 (다음) & klue/bert-base & WordPiece (한국어) & KLUE-YNAT (뉴스 7분류) & \inlinecode{Linear(H,\ 7)} & softmax & \inlinecode{CrossEntropyLoss} \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
-전체 20장 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
+전체 장 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
 
 
 
@@ -92,7 +92,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 \midrule
 
 \textbf{언어} & 영어 & \textbf{한국어} \\
-모델 본체 & \inlinecode{distilbert-base-uncased} (66M) & \textbf{\inlinecode{klue/bert-base}} (110M, BERT-base full size) \\
+모델 본체 & \inlinecode{distilbert-base-uncased} (약 66M) & \textbf{\inlinecode{klue/bert-base}} (110M, BERT-base full size) \\
 토크나이저 & 영어 WordPiece (vocab 30K) & \textbf{한국어 WordPiece} (vocab 32K) \\
 데이터 & Yelp 이진화 (5K샘플 / max\_len 128) & \textbf{NSMC} 5K샘플 / max\_len 128 \\
 \inlinecode{num\_labels} & 2 & 2 (그대로) \\
@@ -147,7 +147,7 @@ L = -\frac{1}{N}\sum_{i=1}^{N}\log \hat p_{i, y_i} \quad\text{where}\quad \hat p
 토크나이저 & 결과 토큰 & 토큰 수 \\
 \midrule
 
-\inlinecode{distilbert-base-uncased} (영어) & \texttt{{[}\textquotesingle{}이\textquotesingle{},\ \textquotesingle{}영\textquotesingle{},\ \textquotesingle{}\#\#화\textquotesingle{},\ \textquotesingle{}정\textquotesingle{},\ \textquotesingle{}\#\#말\textquotesingle{},\ \textquotesingle{}재\textquotesingle{},\ \textquotesingle{}\#\#미\textquotesingle{},\ \textquotesingle{}\#\#있\textquotesingle{},\ \textquotesingle{}\#\#었\textquotesingle{},\ \textquotesingle{}\#\#어\textquotesingle{},\ \textquotesingle{}\#\#요\textquotesingle{}{]}} 같이 \emph{글자 단위} 로 산산조각 (또는 {[}UNK{]} 가득) & 11+ \\
+\inlinecode{distilbert-base-uncased} (영어) & \texttt{{[}\textquotesingle{}U+110B\textquotesingle{},\ \textquotesingle{}\#\#U+1175\textquotesingle{},\ \textquotesingle{}U+110B\textquotesingle{},\ \textquotesingle{}\#\#U+1167\textquotesingle{},\ \textquotesingle{}\#\#U+11BC\textquotesingle{},\ \textquotesingle{}\#\#U+1112\textquotesingle{},\ \textquotesingle{}\#\#U+116A\textquotesingle{},\ \textquotesingle{}U+110C\textquotesingle{},\ \textquotesingle{}\#\#U+1165\textquotesingle{},\ \textquotesingle{}\#\#U+11BC\textquotesingle{},\ \textquotesingle{}\#\#U+1106\textquotesingle{},\ \textquotesingle{}\#\#U+1161\textquotesingle{},\ \textquotesingle{}\#\#U+11AF\textquotesingle{},\ \textquotesingle{}{[}UNK{]}\textquotesingle{}{]}} 같이 \emph{자모(초·중·종성) 단위} 로 산산조각 (또는 {[}UNK{]} 가득) & 14 \\
 \inlinecode{klue/bert-base} (한국어) & \texttt{{[}\textquotesingle{}이\textquotesingle{},\ \textquotesingle{}영화\textquotesingle{},\ \textquotesingle{}정말\textquotesingle{},\ \textquotesingle{}재미있\textquotesingle{},\ \textquotesingle{}\#\#었\textquotesingle{},\ \textquotesingle{}\#\#어요\textquotesingle{}{]}} --- \emph{의미 있는 어휘} 단위 & 6 \\
 \bottomrule
 \end{tabular}
@@ -165,7 +165,7 @@ L = -\frac{1}{N}\sum_{i=1}^{N}\log \hat p_{i, y_i} \quad\text{where}\quad \hat p
 \item
   vocab 32,000 (영어 30K 와 비슷한 규모)
 \item
-  \emph{어절 단위} 가 아니라 \emph{형태소-비슷한} 서브워드 단위. 예: “재미있었어요” → “재미있” + “\#\#었” + “\#\#어요” (어간 + 어미)
+  \emph{어절 단위} 가 아니라 \emph{형태소-비슷한} 서브워드 단위. 예: “재미있었어요” \(\to\) “재미있” + “\#\#었” + “\#\#어요” (어간 + 어미)
 \item
   영어처럼 \inlinecode{\#\#} prefix 가 \emph{이전 토큰에 이어지는 부분} 을 표시
 \item
@@ -174,7 +174,7 @@ L = -\frac{1}{N}\sum_{i=1}^{N}\log \hat p_{i, y_i} \quad\text{where}\quad \hat p
 
 \subsection{\texorpdfstring{Phase 2 의 토크나이저는 \emph{이 장부터 끝까지} \inlinecode{klue/bert-base} 고정}{Phase 2 의 토크나이저는 이 장부터 끝까지 klue/bert-base 고정}}
 
-\ref{ch:16}장, 17, 18장도 같은 토크나이저. 변하는 건 \emph{데이터·task} 만. 영어 → 한국어 전환은 \emph{이 장에서 한 번} 일어나고, 이후엔 한국어 셋업이 표준.
+\ref{ch:16}장, 17, 18 도 같은 토크나이저. 변하는 건 \emph{데이터·task} 만. 영어 \(\to\) 한국어 전환은 \emph{이 장에서 한 번} 일어나고, 이후엔 한국어 셋업이 표준.
 
 
 
@@ -209,7 +209,7 @@ from transformers import (
 from sklearn.metrics import (
 \end{lstlisting}
 
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 예측 결과를 지표와 표로 요약하는 단계로 넘어갑니다.}
+\noindent\emph{앞뒤 블록은 모두 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=17]
@@ -217,8 +217,23 @@ from sklearn.metrics import (
     classification_report, roc_auc_score,
 )
 
+import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run(
+        "apt-get -qq -y install fonts-nanum",
+        shell=True,
+    )
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
 plt.rcParams["axes.unicode_minus"] = False
 
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=32]
 print(f"PyTorch:        {torch.__version__}")
 print(f"CUDA available: {torch.cuda.is_available()}")
 if torch.cuda.is_available():
@@ -229,12 +244,6 @@ if torch.cuda.is_available():
 else:
     print(
         "Warning: CPU runtime — training will be very "
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}[firstnumber=33]
         "slow. Switch to T4 recommended."
     )
 \end{lstlisting}
@@ -250,6 +259,9 @@ CUDA available: True
 GPU:             Tesla T4
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \textbf{baseline VRAM}:
 
 
@@ -265,12 +277,14 @@ GPU:             Tesla T4
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Wed Jun 17 21:44:50 2026
+Sun Jun 21 23:06:09 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 32C P8 11W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 36C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \section{토크나이저 비교}
 
@@ -347,6 +361,9 @@ klue/bert-base vocab size:        32,000
 distilbert-base-uncased vocab:    30,522
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \textbf{관찰}
 
 \begin{itemize}
@@ -377,27 +394,21 @@ TRAIN_URL = "https://raw.githubusercontent.com/e9t/nsmc/master/ratings_train.txt
 TEST_URL  = "https://raw.githubusercontent.com/e9t/nsmc/master/ratings_test.txt"
 
 print("downloading NSMC train/test from GitHub...")
-df_train_full = pd.read_csv(
-    TRAIN_URL,
-    sep="\t").dropna(subset=["document"],
-)
-df_test_full  = pd.read_csv(
-    TEST_URL,
-    sep="\t").dropna(subset=["document"],
-)
+df_train_full = pd.read_csv(TRAIN_URL, sep="\t").dropna(subset=["document"])
+df_test_full  = pd.read_csv(TEST_URL,  sep="\t").dropna(subset=["document"])
 print(f"  train: {len(df_train_full):,} rows")
 print(f"  test:  {len(df_test_full):,} rows")
 print(
     f"  label distribution (train): "
+    f"{df_train_full['label'].value_counts().to_dict()}"
+)
+print(f"\nfirst 3 rows of train:")
 \end{lstlisting}
 
 \noindent\emph{앞 블록은 데이터를 불러오고 학습에 맞는 형태로 정리하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
-\Needspace{10\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-    f"{df_train_full['label'].value_counts().to_dict()}"
-)
-print(f"\nfirst 3 rows of train:")
+\Needspace{7\baselineskip}
+\begin{lstlisting}[firstnumber=14]
 for _, row in df_train_full.head(3).iterrows():
     print(
         f"  label={row['label']}  text="
@@ -405,24 +416,28 @@ for _, row in df_train_full.head(3).iterrows():
     )
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+downloading NSMC train/test from GitHub...
+  train: 149,995 rows
+  test:  49,997 rows
+  label distribution (train): {0: 75170, 1: 74825}
+
+first 3 rows of train:
+  label=0  text=아 더빙.. 진짜 짜증나네요 목소리
+  label=1  text=흠...포스터보고 초딩영화줄....오버연기조차 가볍지 않구나
+  label=0  text=너무재밓었다그래서보는것을추천한다
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 SEED = 42
-df_train = df_train_full.sample(
-    n=5000,
-    random_state=SEED).reset_index(drop=True,
-)
-df_eval  = df_test_full.sample(
-    n=1000,
-    random_state=SEED).reset_index(drop=True,
-)
+df_train = df_train_full.sample(n=5000, random_state=SEED).reset_index(drop=True)
+df_eval  = df_test_full.sample(n=1000,  random_state=SEED).reset_index(drop=True)
 
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=11]
 print(f"sampled train: {len(df_train)}")
 print(f"sampled eval:  {len(df_eval)}")
 print(
@@ -434,24 +449,40 @@ print(
     f"{df_eval['label'].mean():.1%}"
 )
 
-train_ds = Dataset.from_pandas(df_train[["document", "label"]])
-eval_ds  = Dataset.from_pandas(df_eval[["document", "label"]])
-
 \end{lstlisting}
 
 \noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
-\Needspace{6\baselineskip}
-\begin{lstlisting}[firstnumber=25]
+\Needspace{9\baselineskip}
+\begin{lstlisting}[firstnumber=16]
+train_ds = Dataset.from_pandas(df_train[["document", "label"]])
+eval_ds  = Dataset.from_pandas(df_eval[["document", "label"]])
+
 train_ds = train_ds.rename_column("document", "text")
 eval_ds  = eval_ds.rename_column("document", "text")
 print()
 print(train_ds)
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+sampled train: 5000
+sampled eval:  1000
+train positive rate: 49.2%
+eval  positive rate: 49.9%
+
+Dataset({
+    features: ['text', 'label'],
+    num_rows: 5000
+})
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
 \section{토큰화 --- \ref{ch:11}장 패턴 그대로, 토크나이저만 한국어로}
 
-\ref{ch:11}장과 \emph{한 줄 차이} --- 토크나이저 인스턴스가 영어 → 한국어. 라벨 형식 \inlinecode{int(b)} 도 그대로.
+\ref{ch:11}장과 \emph{한 줄 차이} --- 토크나이저 인스턴스가 영어 \(\to\) 한국어. 라벨 형식 \inlinecode{int(b)} 도 그대로.
 
 
 
@@ -468,33 +499,21 @@ def tokenize_fn(batch):
     out["labels"] = [int(l) for l in batch["label"]]
     return out
 
+train_tok = train_ds.map(tokenize_fn, batched=True).remove_columns(["text", "label"])
+eval_tok  = eval_ds.map(tokenize_fn,  batched=True).remove_columns(["text", "label"])
+
 \end{lstlisting}
 
-\noindent\emph{앞뒤 블록은 모두 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=12]
-train_tok = train_ds.map(
-    tokenize_fn,
-    batched=True).remove_columns(["text", "label"],
-)
-eval_tok  = eval_ds.map(
-    tokenize_fn,
-    batched=True).remove_columns(["text", "label"],
-)
-
+\begin{lstlisting}[firstnumber=15]
 print(train_tok)
 print(
     f"\nFirst sample label: "
     f"{train_tok[0]['labels']}  (int scalar 0=neg / 1=pos)"
 )
 
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{7\baselineskip}
-\begin{lstlisting}[firstnumber=27]
 lens = [len(s) for s in train_tok["input_ids"]]
 print(
     f"\nToken length stats — mean: {np.mean(lens):.1f}, median: {np.median(lens):.0f}, max: "
@@ -503,12 +522,27 @@ print(
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{tokenizer = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{def tokenize\_fn(batch):}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{4--8행}의 \inlinecode{out = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{9행}의 \inlinecode{out["labels"] = [int(l) f...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{10행}의 \inlinecode{return out}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{12--15행}의 \inlinecode{train\_tok = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\textbf{1행}의 \inlinecode{tokenizer = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{def tokenize\_fn(batch):}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{4--8행}의 \inlinecode{out = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{9행}의 \inlinecode{out["labels"] = [int(l) f...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{10행}의 \inlinecode{return out}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{12행}의 \inlinecode{train\_tok = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+Dataset({
+    features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'],
+    num_rows: 5000
+})
+
+First sample label: 1  (int scalar 0=neg / 1=pos)
+
+Token length stats -- mean: 21.9, median: 17, max: 117
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \section{\texorpdfstring{모델 로드}{모델 로드}}
 
-\ref{ch:11}장 에서 \inlinecode{distilbert-base-uncased} 였던 자리만 \inlinecode{klue/bert-base} 로 교체. 분류 헤드 \inlinecode{Linear(H,\ 2)} + \inlinecode{single\_label\_classification} 셋업은 동일.
+\ref{ch:11}장에서 \inlinecode{distilbert-base-uncased} 였던 자리만 \inlinecode{klue/bert-base} 로 교체. 분류 헤드 \inlinecode{Linear(H,\ 2)} + \inlinecode{single\_label\_classification} 셋업은 동일.
 
 
 
@@ -576,6 +610,9 @@ hidden size H:        768
 vocab size V:         32,000
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \textbf{파라미터 수 비교 --- \ref{ch:11}장 vs \ref{ch:15}장}
 
 \begin{booktable}{15장 모델 로드 표}{tab:ch15-04}
@@ -587,7 +624,7 @@ vocab size V:         32,000
 
 Layer 수 & 6 & 12 (BERT-base full) \\
 Hidden size H & 768 & 768 \\
-총 파라미터 & 헤드 포함 약 67M & \textbf{110M} \\
+총 파라미터 & 약 67M (헤드 포함) & \textbf{110M} \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -604,12 +641,14 @@ Hidden size H & 768 & 768 \\
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Wed Jun 17 21:45:11 2026
+Sun Jun 21 23:06:29 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 33C P8 12W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 36C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \section{학습}
 
@@ -692,12 +731,15 @@ print(
 \begin{bookoutputbox}
 Epoch  Train...  Valid...  Accuracy  Preci...  Recall    F1        Auc
 -----  --------  --------  --------  --------  --------  --------  --------
-1      0.373789  0.344967  0.860000  0.859719  0.859719  0.859719  0.924856
-2      0.213966  0.399458  0.864000  0.877339  0.845691  0.861224  0.924764
+1      0.386037  0.344485  0.848000  0.840864  0.857715  0.849206  0.928992
+2      0.209452  0.386233  0.873000  0.879592  0.863727  0.871587  0.929092
 
-Training done — mean train loss: 0.3008
+Training done -- mean train loss: 0.2997
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{5\baselineskip}
 \begin{lstlisting}
 !nvidia-smi
@@ -705,16 +747,18 @@ Training done — mean train loss: 0.3008
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Wed Jun 17 21:46:00 2026
+Sun Jun 21 23:07:18 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 54C P0 32W / 70W | 2627MiB / 15360MiB | 79% Default
+N/A 59C P0 66W / 70W | 2627MiB / 15360MiB | 85% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
+
+
 \section{평가}
 
-\ref{ch:11}장의 평가 패턴 그대로 --- 2차원 logit 에서 softmax → 클래스 1 확률 추출, 1차원 logit z = z\_1 - z\_0 도 같이 만들어 시각화 호환.
+\ref{ch:11}장의 평가 패턴 그대로 --- 2차원 logit 에서 softmax \(\to\) 클래스 1 확률 추출, 1차원 logit z = z\_1 - z\_0 도 같이 만들어 시각화 호환.
 
 
 
@@ -727,20 +771,27 @@ for k, v in eval_metrics.items():
         print(f"  {k:>20}: {v:.4f}")
 \end{lstlisting}
 
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{eval\_metrics = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{for k, v in eval\_metrics....}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{4행}의 \inlinecode{if k.startswith("eval\_")...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\end{codeRead}
+
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 Train...  Valid...  Epoch  Accuracy  Preci...  Recall    F1        Auc
 --------  --------  -----  --------  --------  --------  --------  --------
-0.213966  0.399458  2      0.864000  0.877339  0.845691  0.861224  0.924764
-klue/bert-base NSMC binary — evaluation:
-             eval_loss: 0.3995
-         eval_accuracy: 0.8640
-        eval_precision: 0.8773
-           eval_recall: 0.8457
-               eval_f1: 0.8612
-              eval_auc: 0.9248
+0.209452  0.386233  2      0.873000  0.879592  0.863727  0.871587  0.929092
+klue/bert-base NSMC binary -- evaluation:
+             eval_loss: 0.3862
+         eval_accuracy: 0.8730
+        eval_precision: 0.8796
+           eval_recall: 0.8637
+               eval_f1: 0.8716
+              eval_auc: 0.9291
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{10\baselineskip}
 \begin{lstlisting}
 preds_output = trainer.predict(eval_tok)
@@ -773,14 +824,21 @@ print(
 )
 \end{lstlisting}
 
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{preds\_output = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{2행}의 \inlinecode{logits2 = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{labels = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{exp = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{probs\_full = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{7행}의 \inlinecode{probs = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\end{codeRead}
+
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 logits2 (raw)  shape: (1000, 2)
-logit z = z1-z0 range: [-5.83, 5.09]
-prob range:           [0.0029, 0.9939]
-positive prediction rate (prob >= 0.5): 48.1%
+logit z = z1-z0 range: [-5.53, 5.28]
+prob range:           [0.0039, 0.9949]
+positive prediction rate (prob >= 0.5): 49.0%
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{7\baselineskip}
 \begin{lstlisting}
 print(classification_report(
@@ -794,14 +852,16 @@ print(classification_report(
 \begin{bookoutputbox}
 precision    recall  f1-score   support
 
-    negative     0.8516    0.8822    0.8667       501
-    positive     0.8773    0.8457    0.8612       499
+    negative     0.8667    0.8822    0.8744       501
+    positive     0.8796    0.8637    0.8716       499
 
-    accuracy                         0.8640      1000
-   macro avg     0.8645    0.8640    0.8639      1000
-weighted avg     0.8645    0.8640    0.8640      1000
+    accuracy                         0.8730      1000
+   macro avg     0.8731    0.8730    0.8730      1000
+weighted avg     0.8731    0.8730    0.8730      1000
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \subsection{확률 공간 KDE (\ref{ch:11}장과 동일 패턴)}
 
@@ -820,23 +880,19 @@ sns.kdeplot(
     palette=PAL, clip=(0, 1), ax=ax,
 )
 ax.axvline(0.5, color="black", lw=1.2, ls="--", alpha=0.7)
-ax.set_title("klue/bert-base NSMC — Probability Distribution by Actual Label")
-ax.set_xlabel("Predicted probability  P(positive)")
-ax.set_ylabel("Density")
+ax.set_title("klue/bert-base NSMC — 실제 라벨별 확률 분포")
+ax.set_xlabel("예측 확률  P(positive)")
+ax.set_ylabel("밀도")
 plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-<Figure size 900x500 with 1 Axes>
-\end{bookoutputbox}
-\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{NSMC 이진 분류의 positive 확률 분포}{fig:ch15-probability-kde}
+\centering
 \includegraphics[width=0.88\linewidth]{assets/figures/ch15_probability_kde.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch15-probability-kde}는 한국어 이진 분류에서도 softmax 확률을 \ref{ch:11}장과 같은 방식으로 해석할 수 있음을 보여줍니다. 음성 리뷰는 0 근처, 양성 리뷰는 1 근처로 분리될수록 모델이 감성 신호를 안정적으로 잡은 것입니다.
+\textbf{그림 읽기} --- 그림~\ref{fig:ch15-probability-kde}에서 다음 내용을 확인합니다: NSMC 이진 분류의 positive 확률 분포. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
 
 
 
@@ -853,23 +909,19 @@ sns.kdeplot(
     palette=PAL, ax=ax,
 )
 ax.axvline(0.0, color="black", lw=1.2, ls="--", alpha=0.7)
-ax.set_title("klue/bert-base NSMC — Logit Distribution  (z = z1 - z0)")
-ax.set_xlabel("Logit  z = z1 - z0")
-ax.set_ylabel("Density")
+ax.set_title("klue/bert-base NSMC — logit 분포  (z = z1 - z0)")
+ax.set_xlabel("logit  z = z1 - z0")
+ax.set_ylabel("밀도")
 plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-<Figure size 900x500 with 1 Axes>
-\end{bookoutputbox}
-\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{NSMC 이진 분류의 logit 차이 분포}{fig:ch15-logit-kde}
+\centering
 \includegraphics[width=0.88\linewidth]{assets/figures/ch15_logit_kde.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch15-logit-kde}는 \(z_1-z_0\) logit 차이를 기준으로 음성/양성 샘플이 어느 쪽에 놓이는지 보여줍니다. 기준선 0을 중심으로 두 분포가 갈라지면 softmax 확률 공간에서 본 분리가 logit 공간에서도 일관되다는 뜻입니다.
+\textbf{그림 읽기} --- 그림~\ref{fig:ch15-logit-kde}에서 다음 내용을 확인합니다: NSMC 이진 분류의 logit 차이 분포. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
 
 
 
@@ -902,7 +954,7 @@ idx_uncertain  = int(np.argmin(np.abs(probs - 0.5)))
 samples = [
     ("most confident positive", idx_top_pos),
     ("most confident negative", idx_top_neg),
-    ("most uncertain (prob ~= 0.5)", idx_uncertain),
+    ("most uncertain (prob ~ 0.5)", idx_uncertain),
 ]
 
 \end{lstlisting}
@@ -924,7 +976,7 @@ for label_str, idx in samples:
     print(f"logit z:     {logits[idx]:+.2f}")
     pred_label = int(probs[idx] >= 0.5)
     pred_str = "positive" if pred_label == 1 else "negative"
-    match = "yes" if pred_label == labels[idx] else "no"
+    match = "OK" if pred_label == labels[idx] else "X"
     print(
         f"prediction:  {pred_label} ({pred_str})    match: "
 \end{lstlisting}
@@ -938,6 +990,30 @@ for label_str, idx in samples:
     print()
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+==============================================================================
+sample #580  (most confident positive)
+==============================================================================
+text: 아 최고.. 지금 수능 끝나고 보고 있어요ㅠㅠ 현실적인 30대의 사랑이야기~
+true label:  1  (positive)
+prob(pos):   0.9949
+logit z:     +5.28
+prediction:  1 (positive)    match: OK
+
+==============================================================================
+sample #834  (most confident negative)
+==============================================================================
+text:        진자 재미없어..ㅋㅋ 액션은 볼만한데 CG안습
+true label:  0  (negative)
+prob(pos):   0.0039
+logit z:     -5.53
+...
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
 \textbf{관찰 포인트}
 
 \begin{itemize}
@@ -945,7 +1021,7 @@ for label_str, idx in samples:
 \item
   \emph{가장 자신있는} 샘플들은 보통 \emph{명확한 감성 표현} 이 들어 있음 (\inlinecode{"인생\ 영화"}, \inlinecode{"시간\ 아까움"} 같은). 모델이 그런 시그널 단어 + 문맥을 잘 잡았다는 신호.
 \item
-  \emph{망설이는 샘플 (\(p \approx 0.5\))} 은 \emph{모호하거나 짧거나 반어} 인 경우. NSMC 에는 \inlinecode{"음..."}, \inlinecode{"글쎄요"} 같은 한 두 글자 리뷰도 있어 모델 입장에선 정보 부족.
+  \emph{망설이는 샘플 (prob \(\approx\) 0.5)} 은 \emph{모호하거나 짧거나 반어} 인 경우. NSMC 에는 \inlinecode{"음..."}, \inlinecode{"글쎄요"} 같은 한 두 글자 리뷰도 있어 모델 입장에선 정보 부족.
 \item
   자신 있는 \emph{오답} (틀렸는데 prob 가 0.9+) 이면 \emph{반어법} (\inlinecode{"이게\ 영화냐\ ㅎㅎ"} 형태) 이거나 라벨 노이즈. NSMC 에 라벨 오류가 \textasciitilde3-5\% 있다고 알려져 있음.
 \end{itemize}
@@ -961,10 +1037,10 @@ for label_str, idx in samples:
 이름 & 한 줄 설명 & 다음 장에서 \\
 \midrule
 
-\inlinecode{AutoTokenizer.from\_pretrained("klue/bert-base")} & 한국어 BERT-base 토크나이저 (vocab 32K) & 16-18장 모두 같은 토크나이저 \\
-\inlinecode{AutoModelForSequenceClassification.from\_pretrained("klue/bert-base",\ ...)} & 한국어 BERT-base + 분류 헤드 & 16-18장 모델 본체 \\
+\inlinecode{AutoTokenizer.from\_pretrained("klue/bert-base")} & 한국어 BERT-base 토크나이저 (vocab 32K) & \ref{ch:16}--\ref{ch:18}장 모두 같은 토크나이저 \\
+\inlinecode{AutoModelForSequenceClassification.from\_pretrained("klue/bert-base",\ ...)} & 한국어 BERT-base + 분류 헤드 & \ref{ch:16}--\ref{ch:18}장 모델 본체 \\
 \texttt{pandas.read\_csv(URL,\ sep=“\textbackslash{}t”)} & GitHub raw TSV 직접 다운로드 & NSMC 외에도 자주 쓰는 패턴 \\
-\inlinecode{Dataset.from\_pandas(df)} & pandas DataFrame → datasets.Dataset 변환 & 외부 데이터를 transformers 파이프라인에 연결 \\
+\inlinecode{Dataset.from\_pandas(df)} & pandas DataFrame \(\to\) datasets.Dataset 변환 & 외부 데이터를 transformers 파이프라인에 연결 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -982,9 +1058,9 @@ for label_str, idx in samples:
 \item
   NSMC 가 영어 Yelp 와 비교해 \emph{왜 더 어려운} 데이터인지 두 가지만 들어보세요.
 \item
-  \inlinecode{klue/bert-base} 의 파라미터 수가 110M, DistilBERT 가 헤드 포함 약 67M 인데 정확도 차이가 \emph{극적이지 않은} 이유는?
+  \inlinecode{klue/bert-base} 의 파라미터 수가 110M, DistilBERT 가 67M 인데 정확도 차이가 \emph{극적이지 않은} 이유는?
 \item
-  \ref{ch:11}장 과 \ref{ch:15}장 사이에 \emph{셋업 코드 자체} 가 거의 똑같은데도 장를 분리한 이유는?
+  \ref{ch:11}장과 \ref{ch:15}장 사이에 \emph{셋업 코드 자체} 가 거의 똑같은데도 장를 분리한 이유는?
 \end{enumerate}
 
 
@@ -1044,9 +1120,9 @@ BERT 의 트랜스포머 인코더는 \emph{언어 가정} 을 거의 안 합니
 \Needspace{6\baselineskip}
 \begin{lstlisting}
 영어 BERT 와 한국어 BERT 의 차이:
-  - 토크나이저 vocab → 32K (한국어) / 30K (영어)
-  - 사전학습 corpus → 한국어 위키+뉴스 / 영어 위키+책
-  - 모델 weight → 두 corpus 에 맞춰 업데이트 (구조는 동일)
+  - 토크나이저 vocab $\to$ 32K (한국어) / 30K (영어)
+  - 사전학습 corpus $\to$ 한국어 위키+뉴스 / 영어 위키+책
+  - 모델 weight $\to$ 두 corpus 에 맞춰 업데이트 (구조는 동일)
 \end{lstlisting}
 
 같은 아키텍처가 \emph{어떤 텍스트로 학습됐는가} 만 다릅니다. 그래서 다국어 BERT (\inlinecode{xlm-roberta-base}) 는 \emph{하나의 모델} 로 100+ 언어를 처리 --- 토크나이저 vocab 만 다국어로 통합.
@@ -1136,7 +1212,7 @@ model_wrong = AutoModelForSequenceClassification.from_pretrained(
 \item
   같은 \inlinecode{klue/bert-base}, 같은 토크나이저, 같은 학습 hyperparams
 \item
-  변하는 축: \emph{task 차원} (binary K=2 → multi-class K=7)
+  변하는 축: \emph{task 차원} (binary K=2 \(\to\) multi-class K=7)
 \item
   데이터: KLUE-YNAT (뉴스 헤드라인 7분류 --- 정치/경제/사회/문화/세계/IT/스포츠)
 \item
@@ -1144,6 +1220,6 @@ model_wrong = AutoModelForSequenceClassification.from_pretrained(
 \end{itemize}
 
 \begin{quote}
-\textbf{Phase 2 흐름}: Binary (\ref{ch:15}장) → Multi-class (\ref{ch:16}장) → Multi-label (17장) → Auxiliary (18장). 토크나이저·모델·hyperparams 가 \emph{Phase 2 안에서는 고정} 이고, \emph{task 만} 바뀝니다.
+\textbf{Phase 2 흐름}: Binary (\ref{ch:15}장) \(\to\) Multi-class (\ref{ch:16}장) \(\to\) Multi-label (\ref{ch:17}장) \(\to\) Auxiliary (\ref{ch:18}장). 토크나이저·모델·hyperparams 가 \emph{Phase 2 안에서는 고정} 이고, \emph{task 만} 바뀝니다.
 \end{quote}
 \end{previewBox}

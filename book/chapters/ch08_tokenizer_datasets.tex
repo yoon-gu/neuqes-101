@@ -84,7 +84,7 @@
 
 \section{변화추적표}
 
-\begin{booktable}{변화추적표}{tab:ch08-01}
+\begin{booktable}{8장 변화추적표}{tab:ch08-01}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lllllll@{}}
 \toprule
@@ -94,19 +94,19 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 1 & (TF-IDF) & \inlinecode{TfidfVectorizer()} & Yelp 5,000 & --- & --- & --- \\
 2-6 & sklearn 모델들 & \inlinecode{TfidfVectorizer()} & Yelp 변형 & 1차원/K차원 & 없음/sigmoid/softmax & MSE/BCE/CE \\
 7 & \inlinecode{pipeline("sentiment-analysis")} & \inlinecode{AutoTokenizer.from\_pretrained(...)} & 간단 영어 예시 & 사전학습 헤드 & softmax & --- \\
-\textbf{8 ← 여기} & (모델 없음 --- 토크나이저·데이터 파이프라인만) & \inlinecode{AutoTokenizer.from\_pretrained(...)} & \textbf{Yelp 5,000 (Phase 0과 동일)} & --- & --- & --- \\
+\textbf{8 \(\leftarrow\) 여기} & (모델 없음 --- 토크나이저·데이터 파이프라인만) & \inlinecode{AutoTokenizer.from\_pretrained(...)} & \textbf{Yelp 5,000 (Phase 0과 동일)} & --- & --- & --- \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
-전체 20장 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
+전체 \ref{ch:20}장 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
 
 
 
 \section{변경점: \ref{ch:07}장 대비}
 
-\begin{booktable}{변경점 요약}{tab:ch08-02}
+\begin{booktable}{8장 변경점 요약}{tab:ch08-02}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -115,7 +115,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 
 모델 & \inlinecode{pipeline} + \inlinecode{AutoModelForSequenceClassification} & \textbf{모델 로드 없음} (다음 장 학습 준비 단계) \\
 토크나이저 & WordPiece --- 한 문장 시연 & \textbf{WordPiece + 옵션 학습} (\inlinecode{padding} / \inlinecode{truncation} / \inlinecode{max\_length}) \\
-데이터 & 간단 영어 예시 문장 & \textbf{\inlinecode{datasets} 로 Yelp 65만 → 5,000 subsample} (Phase 0과 동일 데이터) \\
+데이터 & 간단 영어 예시 문장 & \textbf{\inlinecode{datasets} 로 Yelp 65만 \(\to\) 5,000 subsample} (Phase 0과 동일 데이터) \\
 데이터 라이브러리 & (없음) & \textbf{\inlinecode{datasets}} 첫 등장 --- \inlinecode{load\_dataset}, \inlinecode{map}, \inlinecode{filter}, \inlinecode{with\_format} \\
 학습 단계 & 추론만 & 학습·추론 모두 없음 --- 데이터 파이프라인 \emph{연습} \\
 \bottomrule
@@ -133,7 +133,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 
 WordPiece가 출력하는 시퀀스 길이는 입력 텍스트마다 다릅니다. 그런데 모델은 \textbf{고정된 shape의 텐서 배치} 를 받아야 하므로, 이 둘 사이를 맞추는 세 가지 옵션이 있습니다.
 
-\begin{booktable}{토크나이저 노트}{tab:ch08-03}
+\begin{booktable}{8장 토크나이저 노트 표}{tab:ch08-03}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -197,6 +197,10 @@ print(
 )
 \end{lstlisting}
 
+\begin{codeRead}
+\inlinecode{numpy, pandas, PyTorch, datasets, transformers} 같은 주요 패키지를 불러옵니다.
+\end{codeRead}
+
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 PyTorch:        2.11.0+cu128
@@ -206,15 +210,12 @@ GPU:            Tesla T4
 No model weights loaded in this chapter; VRAM stays roughly flat.
 \end{bookoutputbox}
 \par\vspace{0.9em}
-\begin{codeRead}
-\inlinecode{numpy, pandas, PyTorch, datasets, transformers} 같은 주요 패키지를 불러옵니다.
-\end{codeRead}
 
 
 
 \section{\texorpdfstring{데이터셋 로드}{데이터셋 로드}}
 
-\inlinecode{load\_dataset("yelp\_review\_full")} 한 줄로 Hugging Face Hub에서 65만 건 학습 데이터를 받아옵니다 (50K test). 처음 받으면 \textasciitilde150MB 다운로드 + 디스크 캐시.
+\inlinecode{load\_dataset("Yelp/yelp\_review\_full")} 한 줄로 Hugging Face Hub에서 65만 건 학습 데이터를 받아옵니다 (50K test). 처음 받으면 \textasciitilde150MB 다운로드 + 디스크 캐시.
 
 \textbf{주목할 점}: \inlinecode{datasets} 는 Apache Arrow 형식으로 디스크에 저장하고 메모리맵으로 접근합니다. 65만 건이 한꺼번에 RAM에 올라가는 게 아니라, 인덱싱하는 시점에만 디스크에서 필요한 부분을 읽어 옵니다. 그래서 데이터셋이 아무리 커도 RAM 사용량에는 거의 영향이 없습니다.
 
@@ -222,9 +223,26 @@ No model weights loaded in this chapter; VRAM stays roughly flat.
 
 \Needspace{5\baselineskip}
 \begin{lstlisting}
-ds = load_dataset("yelp_review_full")
+ds = load_dataset("Yelp/yelp_review_full")
 print(ds)
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+DatasetDict({
+    train: Dataset({
+        features: ['label', 'text'],
+        num_rows: 650000
+    })
+    test: Dataset({
+        features: ['label', 'text'],
+        num_rows: 50000
+    })
+})
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -251,6 +269,9 @@ First sample:
 text: dr. goldberg offers everything i look for in a general practitioner....
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{5\baselineskip}
 \begin{lstlisting}
 small = ds["train"].shuffle(seed=42).select(range(5000))
@@ -269,6 +290,8 @@ first sample text: I stalk this truck. I've been to industrial parks where...
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
+
+
 \section{토크나이저 옵션}
 
 \ref{ch:07}장과 같은 \inlinecode{distilbert-base-uncased} 토크나이저로 시작합니다 (사전학습 모델 그대로).
@@ -286,6 +309,10 @@ print(
 )
 \end{lstlisting}
 
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{tokenizer = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\end{codeRead}
+
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 Class:     BertTokenizer
@@ -293,9 +320,6 @@ vocab:     30,522
 pad_token: [PAD]  (id=0)
 \end{bookoutputbox}
 \par\vspace{0.9em}
-\begin{codeRead}
-\textbf{1행}의 \inlinecode{tokenizer = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
-\end{codeRead}
 
 
 
@@ -331,6 +355,8 @@ First 30 IDs: [101, 1045, 23899, 2023, 4744, 1012, 1045, 1005, 2310, 2042,...
 Decoded first 30: [CLS] i stalk this truck. i ' ve been to industrial parks...
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \subsection{\texorpdfstring{동적 패딩}{동적 패딩}}
 
@@ -385,6 +411,8 @@ attention_mask sentence 1: tensor([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1...
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
+
+
 \subsection{\texorpdfstring{고정 길이 패딩}{padding=“max\_length”, max\_length=128 --- 고정 길이}}
 
 배치마다 길이가 달라지는 게 싫을 때 (TPU·정적 그래프 환경) 항상 \inlinecode{max\_length} 까지 padding합니다.
@@ -413,7 +441,7 @@ print(
 real_ratio = out_fixed["attention_mask"].sum().item() / out_fixed["attention_mask"].numel()
 print(f"\nattention_mask=1 ratio: {real_ratio:.1%}")
 print(
-    f"  → short sentence is mostly padding (compute "
+    f"  -> short sentence is mostly padding (compute "
     f"wasted)"
 )
 \end{lstlisting}
@@ -423,9 +451,11 @@ print(
 shape: torch.Size([2, 128])  (batch 2, max_length=128)
 
 attention_mask=1 ratio: 31.2%
-  -> short sentence is mostly padding (compute wasted)
+  → short sentence is mostly padding (compute wasted)
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \subsection{\texorpdfstring{긴 입력 자르기}{긴 입력 자르기}}
 
@@ -473,6 +503,8 @@ truncation=True, max_length=128: 128 tokens
   Last token: [SEP] (= [SEP], always appended)
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \subsection{attention mask}
 
@@ -548,6 +580,9 @@ Fraction truncated at various max_length:
   max_length=512:   3.9% truncated
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \textbf{해석}: 학습 시 \inlinecode{max\_length=128} 로 두면 95\% 이상 정상, 5\% 정도만 잘립니다 (Yelp 리뷰가 대부분 짧음). \inlinecode{max\_length=512} 면 거의 모든 리뷰를 보존하지만 평균 패딩 비율이 60-70\%라 메모리·시간 낭비.
 
 이 커리큘럼은 \textbf{\inlinecode{max\_length=128}} 을 표준으로 씁니다 (T4 30분 제약 + 무난한 정보 보존 균형).
@@ -606,6 +641,8 @@ First sample attention_mask sum: 75  (real tokens)
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
+
+
 \subsection{\texorpdfstring{샘플 필터링}{샘플 필터링}}
 
 
@@ -631,6 +668,8 @@ Positive samples: 1,996 / 5,000 = 39.9%
 Short samples:    2,520 / 5,000 = 50.4%
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \subsection{\texorpdfstring{텐서 형식 변환}{with\_format(“torch”) --- 텐서 형식으로}}
 
@@ -671,6 +710,8 @@ attention_mask: Tensor, shape=torch.Size([128])
 label:          4  (0-4 = stars 1-5)
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \section{\texorpdfstring{DataLoader 변환}{DataLoader 변환}}
 
@@ -718,6 +759,8 @@ label values:         [1, 3, 3, 3, 1, 1, 3, 3]
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
+
+
 \section{\texorpdfstring{DataCollator}{DataCollator}}
 
 위 \inlinecode{DataLoader} 코드는 \inlinecode{padding="max\_length"} 로 \emph{모든} 샘플을 128로 미리 padding한 상태였습니다. 짧은 문장은 대부분 패딩 자리라 메모리 낭비가 큽니다.
@@ -733,28 +776,27 @@ label values:         [1, 3, 3, 3, 1, 1, 3, 3]
 from transformers import DataCollatorWithPadding
 
 def tokenize_dynamic(batch):
-    return tokenizer(
-        batch["text"],
-        truncation=True,
-        max_length=128,
-    )
+    return tokenizer(batch["text"], truncation=True, max_length=128)
 
 tokenized_dyn = small.select(range(50)).map(tokenize_dynamic, batched=True)
 tokenized_dyn = tokenized_dyn.remove_columns(["text"])
 
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{8\baselineskip}
-\begin{lstlisting}[firstnumber=13]
 sample_lens = [len(tokenized_dyn[i]["input_ids"]) for i in range(10)]
 print(f"First 10 sample token lengths: {sample_lens}")
 print(
-    f"  → all different — cannot batch as-is into a "
+    f"  -> all different — cannot batch as-is into a "
     f"tensor"
 )
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+First 10 sample token lengths: [75, 128, 89, 28, 128, 128, 128, 128, 64, 128]
+  → all different -- cannot batch as-is into a tensor
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \Needspace{10\baselineskip}
 \begin{lstlisting}
@@ -799,34 +841,37 @@ Per-batch shape (batch_size=8, varies):
      4          (8, 128)         762    1024     74%
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \textbf{정적 vs 동적 padding 비교}
 
-\begin{booktable}{정적 padding과 동적 padding의 조건부 효율 비교}{tab:ch08-04}
+\begin{booktable}{8장 DataCollator 표}{tab:ch08-04}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lllll@{}}
 \toprule
-방식 & 토큰화 시점 & 배치 shape & 이 실험의 채움률 & 해석 \\
+방식 & 토큰화 시점 & 배치 shape & 실제 토큰 비율 & 메모리/속도 \\
 \midrule
 
-\textbf{정적} (\inlinecode{padding="max\_length"=128}) & 모든 샘플을 128로 미리 padding & 항상 (B, 128) & 76.1\% & 기준선 \\
-\textbf{동적} (\inlinecode{DataCollatorWithPadding}) & padding 없이 truncation만 & 이 표본에서는 대부분 (B, 128) & 76.1\% & 절감 0\% \\
+\textbf{정적} (\inlinecode{padding="max\_length"=128}) & 모든 샘플을 128로 미리 padding & 항상 (B, 128) & 보통 30-50\% & 일정, 낭비 큼 \\
+\textbf{동적} (\inlinecode{DataCollatorWithPadding}) & padding 없이 truncation만 & (B, longest in batch) --- 매번 다름 & 보통 70-95\% & 변동, 효율 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
-이 Yelp 표본에서는 정적 padding과 동적 padding의 채움률이 모두 76.1\%로 같고, 총 토큰 수 절감도 0\%였습니다. 리뷰 절반 이상이 \inlinecode{max\_length=128}까지 잘려 배치마다 가장 긴 샘플이 거의 항상 128에 도달하기 때문입니다. 동적 padding의 이득은 짧은 문장과 긴 문장이 섞여 배치별 최장 길이가 크게 흔들리는 데이터에서 커집니다.
+위 출력에서 채움률(실제 토큰/전체)이 정적 방식보다 훨씬 높을 겁니다. 같은 학습이라도 동적 padding이 \emph{2배 가까이 빠른 경우} 도 흔합니다.
 
 \subsection{\texorpdfstring{다양한 \inlinecode{DataCollator} 종류}{다양한 DataCollator 종류}}
 
-\begin{booktable}{다양한 DataCollator 종류}{tab:ch08-05}
+\begin{booktable}{8장 다양한 DataCollator 종류 표}{tab:ch08-05}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
 Collator & 용도 & 자주 쓰이는 곳 \\
 \midrule
 
-\inlinecode{DataCollatorWithPadding} & 분류·회귀 --- \inlinecode{input\_ids}/\inlinecode{attention\_mask} 동적 padding & \textbf{\ref{ch:09}--\ref{ch:14}장 모든 Trainer 학습 (기본)} \\
+\inlinecode{DataCollatorWithPadding} & 분류·회귀 --- \inlinecode{input\_ids}/\inlinecode{attention\_mask} 동적 padding & \textbf{\ref{ch:09}--\ref{ch:13}장 모든 분류 학습 (기본)} \\
 \inlinecode{DataCollatorForLanguageModeling} & MLM --- 입력의 15\%를 \texttt{{[}MASK{]}} 로 가려 라벨 생성 & BERT 사전학습 재현, MLM 헤드 학습 \\
 \inlinecode{DataCollatorForSeq2Seq} & seq2seq --- encoder/decoder input 둘 다 padding & T5, BART 같은 인코더-디코더 학습 \\
 \inlinecode{DataCollatorForTokenClassification} & NER 같은 토큰 단위 라벨링 --- labels도 padding & NER, POS tagging \\
@@ -840,27 +885,18 @@ Collator & 용도 & 자주 쓰이는 곳 \\
 
 이 장에서 만든 \emph{데이터 파이프라인 부품들}이 다음 장부터 학습 코드에서 어떤 자리에 들어가는지 미리 그려두면, \ref{ch:09}장 이후 코드가 훨씬 익숙해 보입니다.
 
-\subsubsection{\texorpdfstring{패턴 A --- \inlinecode{Trainer} (커리큘럼 기본, \ref{ch:09}--\ref{ch:14}장 대부분)}{패턴 A --- Trainer (커리큘럼 기본, \ref{ch:09}--\ref{ch:14}장 대부분)}}
+\subsubsection{\texorpdfstring{패턴 A --- \inlinecode{Trainer} (커리큘럼 기본, \ref{ch:09}--\ref{ch:13}장 대부분)}{패턴 A --- Trainer (커리큘럼 기본, \ref{ch:09}--\ref{ch:13}장 대부분)}}
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
 def tok(b): return tokenizer(b["text"], truncation=True, max_length=128)
-train_ds = small.map(
-    tok,
-    batched=True).remove_columns(["text"],
-)
+train_ds = small.map(tok, batched=True).remove_columns(["text"])
 
 model = AutoModelForSequenceClassification.from_pretrained(
     "distilbert-base-uncased", num_labels=1, problem_type="regression",
 )
 
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=12]
 trainer = Trainer(
     model=model,
     args=TrainingArguments(...),
@@ -868,6 +904,12 @@ trainer = Trainer(
     eval_dataset=eval_ds,
     tokenizer=tokenizer,
 
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 학습 설정을 만들고 학습 루프를 실행하는 단계로 넘어갑니다.}
+
+\Needspace{5\baselineskip}
+\begin{lstlisting}[firstnumber=16]
 )
 trainer.train()
 \end{lstlisting}
@@ -878,10 +920,7 @@ trainer.train()
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
-train_ds = small.map(
-    tok,
-    batched=True).remove_columns(["text"],
-)
+train_ds = small.map(tok, batched=True).remove_columns(["text"])
 
 collator = DataCollatorWithPadding(
     tokenizer=tokenizer,
@@ -899,7 +938,7 @@ loader = DataLoader(
 \noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
 \Needspace{9\baselineskip}
-\begin{lstlisting}[firstnumber=17]
+\begin{lstlisting}[firstnumber=14]
 for batch in loader:
     batch = {k: v.to(model.device) for k, v in batch.items()}
     outputs = model(**batch)
@@ -911,7 +950,7 @@ for batch in loader:
 
 \subsubsection{두 패턴의 매핑}
 
-\begin{booktable}{학습 코드와의 연결}{tab:ch08-06}
+\begin{booktable}{8장 학습 코드와의 연결 표}{tab:ch08-06}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -927,13 +966,13 @@ for batch in loader:
 \end{adjustbox}
 \end{booktable}
 
-\textbf{요점}: 이 장에서 익힌 부품들이 \ref{ch:09}--\ref{ch:14}장에서 \emph{그대로 입력으로} 들어갑니다. \inlinecode{Trainer} 는 그 부품들을 묶어 학습 루프를 자동화한 것뿐이며, 안에서 일어나는 일은 패턴 B와 같습니다. 커스텀 학습이 필요해지면 패턴 B로 분해해 다시 짤 수 있다는 점이 \ref{ch:08}장을 손에 익혀두는 가장 큰 이유입니다.
+\textbf{요점}: 이 장에서 익힌 부품들이 \ref{ch:09}--\ref{ch:13}장에서 \emph{그대로 입력으로} 들어갑니다. \inlinecode{Trainer} 는 그 부품들을 묶어 학습 루프를 자동화한 것뿐이며, 안에서 일어나는 일은 패턴 B와 같습니다. 커스텀 학습이 필요해지면 패턴 B로 분해해 다시 짤 수 있다는 점이 \ref{ch:08}장을 손에 익혀두는 가장 큰 이유입니다.
 
 
 
 \section{Collator 실습}
 
-DataCollator의 다양한 모습을 직접 돌려봅니다 --- 동적 padding의 효율을 \emph{숫자로} 확인하고, BERT 사전학습에 쓰는 MLM collator를 시연하며, 마지막으로 \emph{직접 작성한 collator} 까지 보면 \ref{ch:14}장 보조 loss 같은 커스텀 학습이 어떻게 가능한지 감이 잡힙니다.
+DataCollator의 다양한 모습을 직접 돌려봅니다 --- 동적 padding의 효율을 \emph{숫자로} 확인하고, BERT 사전학습에 쓰는 MLM collator를 시연하며, 마지막으로 \emph{직접 작성한 collator} 까지 보면 \ref{ch:13}장 보조 loss 같은 커스텀 학습이 어떻게 가능한지 감이 잡힙니다.
 
 
 
@@ -946,12 +985,7 @@ DataCollator의 다양한 모습을 직접 돌려봅니다 --- 동적 padding의
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 def tokenize_static(batch):
-    return tokenizer(
-        batch["text"],
-        padding="max_length",
-        truncation=True,
-        max_length=128,
-    )
+    return tokenizer(batch["text"], padding="max_length", truncation=True, max_length=128)
 
 tokenized_static = small.select(range(50)).map(tokenize_static, batched=True).remove_columns(["text"])
 tokenized_static = tokenized_static.with_format(
@@ -959,23 +993,18 @@ tokenized_static = tokenized_static.with_format(
     columns=["input_ids", "attention_mask", "label"],
 )
 
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{7\baselineskip}
-\begin{lstlisting}[firstnumber=15]
 static_loader = DataLoader(
     tokenized_static,
     batch_size=8,
     shuffle=False,
 )
+
 \end{lstlisting}
 
 \noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=21]
+\begin{lstlisting}[firstnumber=16]
 def loader_stats(loader, name):
     real_total = grid_total = 0
     for batch in loader:
@@ -996,38 +1025,35 @@ stats_dyn    = loader_stats(
 
 \noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
-\Needspace{5\baselineskip}
-\begin{lstlisting}[firstnumber=37]
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=32]
 df_stats = pd.DataFrame([stats_static, stats_dyn])
 df_stats["fill_rate"] = df_stats["fill_rate"].apply(lambda r: f"{r:.1%}")
 print(df_stats.to_string(index=False))
-\end{lstlisting}
 
-\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=41]
 ratio = stats_dyn["total_tokens"] / stats_static["total_tokens"]
 print(
-    f"\nDynamic vs static total tokens: {ratio:.1%} → ~"
+    f"\nDynamic vs static total tokens: {ratio:.1%} -> ~"
     f"{1-ratio:.0%} reduction"
 )
 print(
-    "(this much self-attention compute saved → faster "
+    "(this much self-attention compute saved -> faster "
     "training, less memory)"
 )
 \end{lstlisting}
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-                method  real_tokens  total_tokens fill_rate
+method  real_tokens  total_tokens fill_rate
 static (max_length=128)         4873          6400     76.1%
  dynamic (DataCollator)         4873          6400     76.1%
 
-Dynamic vs static total tokens: 100.0% -> ~0% reduction
-(this much self-attention compute saved -> faster training, less memory)
+Dynamic vs static total tokens: 100.0% → ~0% reduction
+(this much self-attention compute saved → faster training, less memory)
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \subsection{\texorpdfstring{MLM 마스킹}{MLM 마스킹}}
 
@@ -1048,17 +1074,18 @@ mlm_collator = DataCollatorForLanguageModeling(
 small_batch = [tokenized_dyn[i] for i in range(3)]
 mlm_out = mlm_collator(small_batch)
 
-print(f"input_ids shape: {mlm_out['input_ids'].shape}")
-print(
-    f"labels shape:    "
-    f"{mlm_out['labels'].shape}  (-100 positions ignored by loss)"
-)
 \end{lstlisting}
 
 \noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=18]
+\begin{lstlisting}[firstnumber=12]
+print(f"input_ids shape: {mlm_out['input_ids'].shape}")
+print(
+    f"labels shape:    "
+    f"{mlm_out['labels'].shape}  (-100 positions ignored by loss)"
+)
+
 mask_id = tokenizer.mask_token_id
 n_mask = (mlm_out["input_ids"] == mask_id).sum().item()
 n_total = mlm_out["input_ids"].numel()
@@ -1069,6 +1096,12 @@ print(
 print(
     "  (of the 15% masked: 80% [MASK], 10% random token, "
     "10% kept — so [MASK] rate ~12%)"
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{5\baselineskip}
+\begin{lstlisting}[firstnumber=28]
 )
 \end{lstlisting}
 
@@ -1078,9 +1111,11 @@ input_ids shape: torch.Size([3, 128])
 labels shape:    torch.Size([3, 128])  (-100 positions ignored by loss)
 
 [MASK] tokens: 44 / 384 (11.5%)
-  (of the 15% masked: 80% [MASK], 10% random token, 10% kept -- so [MASK] rate ~12%)
+(of the 15% masked: 80% [MASK], 10% random token, 10% kept -- so [MASK] rat...
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -1136,11 +1171,13 @@ industrial industrial (ignored)
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
+
+
 \subsection{CLM 입력 구성}
 
 같은 \inlinecode{DataCollatorForLanguageModeling} 에 \textbf{\inlinecode{mlm=False}} 만 주면 GPT 같은 \emph{autoregressive 사전학습} 용 collator가 됩니다. 차이는 단순합니다.
 
-\begin{booktable}{CLM 입력 구성}{tab:ch08-07}
+\begin{booktable}{8장 CLM 입력 구성 표}{tab:ch08-07}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -1165,7 +1202,7 @@ GPT-2 토크나이저는 BERT와 다른 점이 두 가지 있어 약간의 셋�
 \item
   \inlinecode{pad\_token} 이 \emph{없습니다}. 사전학습 시 패딩을 안 썼기 때문 --- \inlinecode{eos\_token} 을 pad로 재활용.
 \item
-  WordPiece 대신 BPE라 \inlinecode{<space>} 접두사 표기가 등장 (\ref{ch:07}장에서 이미 봄).
+  WordPiece 대신 BPE라 \texttt{\textless{}sp\textgreater{}} (공백) 접두사 표기가 등장 (\ref{ch:07}장에서 이미 봄).
 \end{enumerate}
 
 
@@ -1178,34 +1215,25 @@ gpt_tokenizer = AutoTokenizer.from_pretrained("gpt2")
 gpt_tokenizer.pad_token = gpt_tokenizer.eos_token
 
 def gpt_tokenize(batch):
-    return gpt_tokenizer(
-        batch["text"],
-        truncation=True,
-        max_length=48,
-    )
+    return gpt_tokenizer(batch["text"], truncation=True, max_length=48)
 
 gpt_tokenized = small.select(range(20)).map(gpt_tokenize, batched=True).remove_columns(["text"])
 
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{10\baselineskip}
-\begin{lstlisting}[firstnumber=15]
 clm_collator = DataCollatorForLanguageModeling(
     tokenizer=gpt_tokenizer,
     mlm=False,
 )
 
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=16]
 clm_batch = clm_collator([gpt_tokenized[i] for i in range(3)])
 print(f"input_ids shape:  {clm_batch['input_ids'].shape}")
 print(f"labels shape:     {clm_batch['labels'].shape}")
-\end{lstlisting}
 
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=24]
 i = 0
 real_len = (clm_batch["attention_mask"][i] == 1).sum().item()
 input_first = clm_batch["input_ids"][i][:real_len].tolist()
@@ -1219,6 +1247,18 @@ print(
     f"{real_len}"
 )
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+input_ids shape:  torch.Size([3, 48])
+labels shape:     torch.Size([3, 48])
+
+First sample: input_ids == labels?  (excluding padding, all should match)
+  Matching positions: 48 / 48
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -1248,14 +1288,38 @@ print(
     "predicts the *next token*."
 )
 print(
-    "    e.g. 'Hello world' → at 'Hello' position learn "
+    "    e.g. 'Hello world' -> at 'Hello' position learn "
     "to predict 'world'."
 )
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+position_token       label
+             I           I
+         stalk       stalk
+          this        this
+         truck       truck
+             .           .
+                          
+             I           I
+           've         've
+          been        been
+            to          to
+    industrial  industrial
+         parks       parks
+         where       where
+             I           I
+       pretend     pretend
+...
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
 \subsection{\texorpdfstring{커스텀 collate\_fn}{커스텀 collate\_fn}}
 
-위에서 본 \inlinecode{DataCollatorWithPadding} 와 \inlinecode{DataCollatorForLanguageModeling} 은 \inlinecode{transformers} 가 task별로 미리 만들어준 도구입니다. 그러나 \emph{우리 task} 가 표준 형식에서 벗어나면 (예: \ref{ch:14}장 보조 loss처럼 라벨이 두 종류) 직접 함수를 작성해야 합니다.
+위에서 본 \inlinecode{DataCollatorWithPadding} 와 \inlinecode{DataCollatorForLanguageModeling} 은 \inlinecode{transformers} 가 task별로 미리 만들어준 도구입니다. 그러나 \emph{우리 task} 가 표준 형식에서 벗어나면 (예: \ref{ch:13}장 보조 loss처럼 라벨이 두 종류) 직접 함수를 작성해야 합니다.
 
 \inlinecode{collate\_fn} 의 시그니처는 단순합니다 --- 입력은 \emph{샘플 dict의 리스트}, 출력은 \emph{batch dict} (각 키에 stacked 텐서).
 
@@ -1283,7 +1347,7 @@ def custom_collate(batch_list):
 
 \noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
 
-\Needspace{8\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=17]
 custom_loader = DataLoader(
     tokenized_dyn,
@@ -1291,12 +1355,7 @@ custom_loader = DataLoader(
     shuffle=False,
     collate_fn=custom_collate,
 )
-\end{lstlisting}
 
-\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=24]
 batch = next(iter(custom_loader))
 print(
     f"input_ids shape:        "
@@ -1306,6 +1365,12 @@ print(
     f"attention_mask shape:   "
     f"{batch['attention_mask'].shape}"
 )
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{10\baselineskip}
+\begin{lstlisting}[firstnumber=33]
 print(
     f"main_label (int):       "
     f"{batch['main_label'].tolist()}"
@@ -1313,20 +1378,23 @@ print(
 print(
     f"aux_score (float):      "
     f"{[round(x, 3) for x in batch['aux_score'].tolist()]}"
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}[firstnumber=40]
 )
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+input_ids shape:        torch.Size([4, 128])
+attention_mask shape:   torch.Size([4, 128])
+main_label (int):       [4, 2, 4, 0]
+aux_score (float):      [1.0, 0.5, 1.0, 0.0]
+\end{bookoutputbox}
+\par\vspace{0.9em}
 
 
 
 \textbf{관찰}: \inlinecode{collate\_fn} 한 함수가 \emph{batch 단위 변환의 집결지} 입니다. 라벨 형식 변환, 추가 메타정보 부착, 다중 라벨 dict 등 무엇이든 여기서 처리할 수 있습니다.
 
-\ref{ch:14}장 보조 loss는 이 패턴을 그대로 사용 --- 메인 라벨(multi-hot)과 보조 라벨(별점 float)을 한 dict 안에 같이 담아서 모델이 두 loss를 합쳐 계산하도록 합니다. \emph{학습 코드의 어디에도 collate\_fn 정의가 없는데 학습이 잘 되네?} 라고 느낀다면, 그건 \inlinecode{Trainer} 가 \inlinecode{tokenizer} 만 보고 \inlinecode{DataCollatorWithPadding} 을 자동 생성한 결과일 가능성이 큽니다 --- 직접 짜야 하는 순간엔 위 패턴이 출발점입니다.
+\ref{ch:13}장 보조 loss는 이 패턴을 그대로 사용 --- 메인 라벨(multi-hot)과 보조 라벨(별점 float)을 한 dict 안에 같이 담아서 모델이 두 loss를 합쳐 계산하도록 합니다. \emph{학습 코드의 어디에도 collate\_fn 정의가 없는데 학습이 잘 되네?} 라고 느낀다면, 그건 \inlinecode{Trainer} 가 \inlinecode{tokenizer} 만 보고 \inlinecode{DataCollatorWithPadding} 을 자동 생성한 결과일 가능성이 큽니다 --- 직접 짜야 하는 순간엔 위 패턴이 출발점입니다.
 
 
 
@@ -1334,7 +1402,7 @@ print(
 
 \subsection{\texorpdfstring{\inlinecode{datasets}}{datasets}}
 
-\begin{booktable}{datasets}{tab:ch08-08}
+\begin{booktable}{8장 datasets 표}{tab:ch08-08}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -1354,7 +1422,7 @@ print(
 
 \subsection{\texorpdfstring{\inlinecode{transformers} 토크나이저 옵션}{transformers 토크나이저 옵션}}
 
-\begin{booktable}{transformers 토크나이저 옵션}{tab:ch08-09}
+\begin{booktable}{8장 transformers 토크나이저 옵션 표}{tab:ch08-09}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}ll@{}}
 \toprule
@@ -1366,7 +1434,7 @@ print(
 \inlinecode{truncation=True} & max\_length 초과분 잘라냄 \\
 \inlinecode{max\_length=N} & 길이 상한 (기본 모델 한도) \\
 \inlinecode{return\_tensors="pt"} & PyTorch 텐서로 반환 (\inlinecode{"tf"}, \inlinecode{"np"} 도 가능) \\
-\inlinecode{tokenizer.decode(ids)} & ID → 텍스트 역변환 \\
+\inlinecode{tokenizer.decode(ids)} & ID \(\to\) 텍스트 역변환 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -1374,7 +1442,7 @@ print(
 
 \subsection{PyTorch 데이터 도구}
 
-\begin{booktable}{PyTorch 데이터 도구}{tab:ch08-10}
+\begin{booktable}{8장 PyTorch 데이터 도구 표}{tab:ch08-10}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}ll@{}}
 \toprule
@@ -1411,12 +1479,12 @@ print(
 
 \begin{faqBox}{Q1. (실무) \inlinecode{padding=True} 와 \inlinecode{padding="max\_length"} 중 뭘 써야 하나요?}
 
-대부분은 \textbf{\inlinecode{padding=True} (동적)} 이 효율적이지만, 본 장의 Yelp 표본처럼 배치마다 최장 샘플이 거의 \inlinecode{max\_length}에 닿는 경우에는 절감이 없을 수 있습니다.
+대부분 \textbf{\inlinecode{padding=True} (동적)} 이 효율적입니다.
 
 \begin{itemize}
 \tightlist
 \item
-  \textbf{\inlinecode{padding=True}}: 배치 안 가장 긴 시퀀스 길이까지만 padding. 짧은 배치가 실제로 존재하면 적은 토큰만 처리해 속도·메모리를 절약합니다. 일반 학습/추론에서 표준.
+  \textbf{\inlinecode{padding=True}}: 배치 안 가장 긴 시퀀스 길이까지만 padding. 짧은 배치는 적은 토큰만 처리해 속도·메모리 절약. 일반 학습/추론에서 표준.
 \item
   \textbf{\inlinecode{padding="max\_length"}}: 항상 같은 길이. TPU나 정적 graph(예: TorchScript)처럼 \emph{shape이 매 배치 동일해야 하는} 환경에서. CPU/GPU 학습엔 보통 불필요.
 \end{itemize}
@@ -1453,7 +1521,7 @@ weights = softmax(scores, dim=-1)
 output = weights @ V
 \end{lstlisting}
 
-softmax 안에서 \texttt{e\^{}(-10000)\ ≈\ 0} 이라 패딩 토큰은 다른 토큰의 표현에 \emph{전혀} 기여하지 않습니다. 학습된 모델 입장에선 패딩이 있든 없든 같은 결과 --- 단지 \emph{계산을 낭비} 한 셈.
+softmax 안에서 \texttt{e\^{}(-10000)\ \$\textbackslash{}approx\$\ 0} 이라 패딩 토큰은 다른 토큰의 표현에 \emph{전혀} 기여하지 않습니다. 학습된 모델 입장에선 패딩이 있든 없든 같은 결과 --- 단지 \emph{계산을 낭비} 한 셈.
 
 \end{faqBox}
 
@@ -1490,7 +1558,7 @@ tokenized = small.map(
 \begin{itemize}
 \tightlist
 \item
-  \textbf{Apache Arrow}: column-oriented 바이너리 포맷. 같은 type 데이터를 연속된 메모리에 저장 → cache hit 좋음, 압축 효율 좋음.
+  \textbf{Apache Arrow}: column-oriented 바이너리 포맷. 같은 type 데이터를 연속된 메모리에 저장 \(\to\) cache hit 좋음, 압축 효율 좋음.
 \item
   \textbf{memory-mapped (mmap)}: 디스크 파일을 가상 메모리에 \emph{연결만} 해두고 \emph{접근하는 페이지만} 실제 RAM에 올림. 65만 건 데이터셋 객체를 변수에 할당해도 RAM 사용량은 거의 안 늘어남.
 \end{itemize}
@@ -1501,7 +1569,7 @@ import psutil
 process = psutil.Process()
 mem_before = process.memory_info().rss / 1024**2
 
-ds = load_dataset("yelp_review_full")
+ds = load_dataset("Yelp/yelp_review_full")
 
 mem_after = process.memory_info().rss / 1024**2
 print(

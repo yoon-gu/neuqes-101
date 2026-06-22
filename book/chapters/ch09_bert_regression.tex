@@ -80,7 +80,7 @@
 
 \section{변화추적표}
 
-\begin{booktable}{변화추적표}{tab:ch09-01}
+\begin{booktable}{9장 변화추적표}{tab:ch09-01}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lllllll@{}}
 \toprule
@@ -89,19 +89,19 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 
 2 & \inlinecode{LinearRegression()} & \inlinecode{TfidfVectorizer()} & Yelp (별점 1-5) & (1차원) & 없음 & \inlinecode{MSELoss} \\
 7-8 & DistilBERT (추론·데이터 파이프라인) & \inlinecode{AutoTokenizer.from\_pretrained(...)} & Yelp / 영어 예시 & 사전학습 헤드 & softmax & --- \\
-\textbf{9 ← 여기} & \textbf{DistilBERT 파인튜닝} & \inlinecode{AutoTokenizer.from\_pretrained(...)} & Yelp (별점 1-5, \ref{ch:02}장과 동일) & \textbf{\inlinecode{Linear(H,\ 1)}} & 없음 & \textbf{\inlinecode{MSELoss}} \\
+\textbf{9 \(\leftarrow\) 여기} & \textbf{DistilBERT 파인튜닝} & \inlinecode{AutoTokenizer.from\_pretrained(...)} & Yelp (별점 1-5, \ref{ch:02}장과 동일) & \textbf{\inlinecode{Linear(H,\ 1)}} & 없음 & \textbf{\inlinecode{MSELoss}} \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
-전체 20장 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
+전체 장 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
 
 
 
 \section{변경점: \ref{ch:08}장 대비}
 
-\begin{booktable}{변경점 요약}{tab:ch09-02}
+\begin{booktable}{9장 변경점 요약}{tab:ch09-02}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -146,7 +146,7 @@ L = \frac{1}{N} \sum_{i=1}^{N} (y_i - \hat y_i)^2
 
 다른 점은 \emph{어떻게 이 \(L\)을 최소화하느냐} 입니다.
 
-\begin{booktable}{손실 노트}{tab:ch09-03}
+\begin{booktable}{9장 손실 노트 표}{tab:ch09-03}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -156,7 +156,7 @@ L = \frac{1}{N} \sum_{i=1}^{N} (y_i - \hat y_i)^2
 최소화 방법 & 정규방정식 \(w = (X^\top X)^{-1} X^\top y\) --- 한 번에 닫힌 해 & Adam optimizer --- gradient descent step을 수천 번 \\
 학습 시간 & 1초 미만 & T4에서 5-8분 \\
 결정성 & 입력이 같으면 가중치가 정확히 같음 & random seed·batch 순서에 따라 매번 미세 차이 \\
-왜 BERT를 쓰나 & 단어 독립 가정의 한계 (\inlinecode{"not\ bad"} ≠ \inlinecode{"bad"} 구분 불가) & 문맥을 attention으로 학습해 더 정확한 회귀 \\
+왜 BERT를 쓰나 & 단어 독립 가정의 한계 (\inlinecode{"not\ bad"} \(\ne\) \inlinecode{"bad"} 구분 불가) & 문맥을 attention으로 학습해 더 정확한 회귀 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -204,13 +204,29 @@ from transformers import (
 )
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=16]
+import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run(
+        "apt-get -qq -y install fonts-nanum",
+        shell=True,
+    )
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
 plt.rcParams["axes.unicode_minus"] = False
+
 \end{lstlisting}
 
 \noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=18]
+\begin{lstlisting}[firstnumber=27]
 print(f"PyTorch:        {torch.__version__}")
 print(f"CUDA available: {torch.cuda.is_available()}")
 if torch.cuda.is_available():
@@ -229,6 +245,14 @@ else:
 \inlinecode{numpy, pandas, matplotlib, PyTorch, datasets} 같은 주요 패키지를 불러옵니다.
 \end{codeRead}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+PyTorch:        2.11.0+cu128
+CUDA available: True
+GPU:             Tesla T4
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
 
 
 \textbf{baseline VRAM} --- 모델 로드 전:
@@ -246,12 +270,14 @@ else:
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Wed Jun 17 21:30:31 2026
+Sun Jun 21 22:51:03 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 39C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 36C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \section{데이터 준비}
 
@@ -265,7 +291,7 @@ N/A 39C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
 \begin{lstlisting}
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
 
-ds = load_dataset("yelp_review_full")
+ds = load_dataset("Yelp/yelp_review_full")
 
 train_ds = ds["train"].shuffle(seed=42).select(range(4000))
 eval_ds  = ds["test"].shuffle(seed=42).select(range(1000))
@@ -277,22 +303,17 @@ def tokenize_fn(batch):
         max_length=128,
     )
 
-    out["labels"] = [float(lbl) + 1.0 for lbl in batch["label"]]
-    return out
 \end{lstlisting}
 
 \noindent\emph{앞 블록은 데이터를 불러오고 학습에 맞는 형태로 정리하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=18]
-train_tok = train_ds.map(
-    tokenize_fn,
-    batched=True).remove_columns(["text", "label"],
-)
-eval_tok  = eval_ds.map(
-    tokenize_fn,
-    batched=True).remove_columns(["text", "label"],
-)
+\begin{lstlisting}[firstnumber=15]
+    out["labels"] = [float(lbl) + 1.0 for lbl in batch["label"]]
+    return out
+
+train_tok = train_ds.map(tokenize_fn, batched=True).remove_columns(["text", "label"])
+eval_tok  = eval_ds.map(tokenize_fn,  batched=True).remove_columns(["text", "label"])
 
 print(train_tok)
 print(
@@ -300,6 +321,19 @@ print(
     f"{train_tok[0]['labels']}  (float)"
 )
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+Dataset({
+    features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'],
+    num_rows: 4000
+})
+
+First sample label: 5.0  (float)
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \section{\texorpdfstring{모델 로드}{모델 로드}}
 
@@ -326,10 +360,10 @@ print(f"problem_type:  {model.config.problem_type}")
 \begin{bookoutputbox}
 Key                     | Status     | 
 ------------------------+------------+-
-classifier.weight       | MISSING    | 
-pre_classifier.weight   | MISSING    | 
-pre_classifier.bias     | MISSING    | 
 classifier.bias         | MISSING    | 
+pre_classifier.bias     | MISSING    | 
+pre_classifier.weight   | MISSING    | 
+classifier.weight       | MISSING    | 
 
 - MISSING: those params were newly initialized because missing from the che...
 Parameters:    66,954,241
@@ -337,6 +371,9 @@ Classifier:    Linear(in_features=768, out_features=1, bias=True)
 problem_type:  regression
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \textbf{경고 메시지를 보셨을 겁니다} --- \inlinecode{Some\ weights\ of\ DistilBertForSequenceClassification\ were\ not\ initialized\ ...}. 분류 헤드(\inlinecode{Linear(768,\ 1)})가 새로 만들어지면서 \emph{랜덤 초기화} 됐다는 알림입니다. 이 부분이 학습으로 채워지고, BERT 본체는 사전학습 가중치를 미세 조정합니다 (transfer learning의 본 모습).
 
 \subsection{학습 파라미터}
@@ -381,9 +418,11 @@ Total parameters:        66,954,241  (67.0 M)
 Trainable parameters:    66,954,241  (67.0 M, 100.0%)
 Frozen parameters:                0  (0.0 M, 0.0%)
 
-Default — all layers are trainable
+Default -- all layers are trainable
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \subsection{BERT 본체 동결}
 
@@ -413,7 +452,7 @@ print(
 
 \noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
-\Needspace{10\baselineskip}
+\Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=17]
     f"{fr/t:.1%})  ← BERT body"
 )
@@ -423,12 +462,6 @@ print(
 )
 print(
     f"Tradeoff: BERT body cannot adapt to the task — "
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 필요한 라이브러리와 기본 설정을 준비하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=25]
     f"usually train the body too if data is sufficient."
 )
 print(
@@ -436,12 +469,42 @@ print(
     f"training — del demo_model frees memory.)"
 )
 
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 필요한 라이브러리와 기본 설정을 준비하는 단계로 넘어갑니다.}
+
+\Needspace{7\baselineskip}
+\begin{lstlisting}[firstnumber=32]
 import gc
 del demo_model
 gc.collect()
 if torch.cuda.is_available():
     torch.cuda.empty_cache()
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+Key                     | Status     | 
+------------------------+------------+-
+classifier.bias         | MISSING    | 
+pre_classifier.bias     | MISSING    | 
+pre_classifier.weight   | MISSING    | 
+classifier.weight       | MISSING    | 
+
+- MISSING: those params were newly initialized because missing from the che...
+After freezing BERT body:
+  Total:          66,954,241
+  Trainable:         591,361  (0.9%)  ← classification head only
+  Frozen:         66,362,880  (99.1%)  ← BERT body
+
+Only 591,361 classification head parameters update -- fast, low memory.
+Tradeoff: BERT body cannot adapt to the task -- usually train the body too...
+
+(This demo model is not used for the actual training -- del demo_model free...
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \textbf{언제 동결을 쓰나}
 
@@ -466,13 +529,16 @@ if torch.cuda.is_available():
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Wed Jun 17 21:31:10 2026
+Sun Jun 21 22:51:27 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 41C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 37C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
-모델 가중치(헤드 포함 약 67M 파라미터, fp32 약 255 MB)가 GPU에 올라간 상태입니다. 학습이 시작되면 \emph{옵티마이저 모멘텀(2배) + gradient(1배)} 가 추가되어 VRAM이 더 늘어납니다.
+
+
+
+모델 가중치(약 67M 파라미터, fp32 약 255 MB)가 GPU에 올라간 상태입니다. 학습이 시작되면 \emph{옵티마이저 모멘텀(2배) + gradient(1배)} 가 추가되어 VRAM이 더 늘어납니다.
 
 
 
@@ -515,6 +581,9 @@ print(
 Total training steps: 500
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{10\baselineskip}
 \begin{lstlisting}
 def compute_metrics(eval_pred):
@@ -552,12 +621,15 @@ print(
 \begin{bookoutputbox}
 Epoch  Training...  Validati...  Mse       Mae       R2
 -----  -----------  -----------  --------  --------  --------
-1      0.768790     0.703477     0.703477  0.668927  0.638973
-2      0.553886     0.646681     0.646681  0.611532  0.668121
+1      0.782634     0.660149     0.660149  0.639380  0.661209
+2      0.576040     0.653909     0.653909  0.617953  0.664411
 
-Training done — mean train loss: 1.0480
+Training done -- mean train loss: 1.1182
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 학습이 진행되는 동안 step별 loss와 에폭별 평가 metric이 출력됩니다. \textbf{핵심 관찰}:
 
 \begin{itemize}
@@ -591,21 +663,24 @@ Training done — mean train loss: 1.0480
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Wed Jun 17 21:31:42 2026
+Sun Jun 21 22:51:58 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 62C P0 72W / 70W | 1573MiB / 15360MiB | 71% Default
+N/A 53C P0 64W / 70W | 1573MiB / 15360MiB | 77% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 학습 후 VRAM 상태입니다. 학습 \emph{중} 에는 옵티마이저 모멘텀과 gradient가 추가되어 더 큰 VRAM을 잠시 쓰지만, 학습이 끝나면 일부가 해제됩니다 (단, PyTorch 캐시 할당자가 다음 사용을 위해 일부 메모리를 보유).
 
 \textbf{학습 시 VRAM 구성 (fp16 기준)}:
 
-\begin{booktable}{Trainer 설정}{tab:ch09-04}
+\begin{booktable}{9장 Trainer 설정 표}{tab:ch09-04}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}ll@{}}
 \toprule
-구성 요소 & 크기 (DistilBERT 본체 약 66M, 헤드 포함 약 67M 기준) \\
+구성 요소 & 크기 (DistilBERT 67M 기준) \\
 \midrule
 
 모델 가중치 (fp16) & \textasciitilde128 MB \\
@@ -638,18 +713,25 @@ for k, v in bert_metrics.items():
         print(f"  {k:>20}: {v:.4f}")
 \end{lstlisting}
 
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{bert\_metrics = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{for k, v in bert\_metrics....}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{4행}의 \inlinecode{if k.startswith("eval\_")...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\end{codeRead}
+
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 Training...  Validati...  Epoch  Mse       Mae       R2
 -----------  -----------  -----  --------  --------  --------
-0.553886     0.646681     2      0.646681  0.611532  0.668121
+0.576040     0.653909     2      0.653909  0.617953  0.664411
 BERT evaluation:
-             eval_loss: 0.6467
-              eval_mse: 0.6467
-              eval_mae: 0.6115
-               eval_r2: 0.6681
+             eval_loss: 0.6539
+              eval_mse: 0.6539
+              eval_mae: 0.6180
+               eval_r2: 0.6644
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -666,6 +748,7 @@ X_ev = tfidf.transform(eval_texts)
 
 linreg = LinearRegression().fit(X_tr, train_labels)
 sk_pred = linreg.predict(X_ev)
+
 \end{lstlisting}
 
 \noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
@@ -684,6 +767,21 @@ print(
 print(f"  r2:  {r2_score(eval_labels, sk_pred):.4f}")
 \end{lstlisting}
 
+\begin{codeRead}
+\inlinecode{scikit-learn} 같은 주요 패키지를 불러옵니다. \textbf{4행}의 \inlinecode{train\_texts = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{train\_labels = ...}에서는 비교 실험에 사용할 작은 배열을 만듭니다. \textbf{6행}의 \inlinecode{eval\_texts = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{7행}의 \inlinecode{eval\_labels = ...}에서는 비교 실험에 사용할 작은 배열을 만듭니다.
+\end{codeRead}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+sklearn LinearRegression evaluation:
+  mse: 1.5597
+  mae: 1.0086
+  r2:  0.1996
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 rows = [
@@ -699,14 +797,21 @@ rows = [
 pd.DataFrame(rows).round(4)
 \end{lstlisting}
 
+\begin{codeRead}
+\textbf{1--10행}의 \inlinecode{rows = ...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{11행}의 \inlinecode{pd.DataFrame(...)}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\end{codeRead}
+
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 model           mse     mae     r2
 -  --------------  ------  ------  ------
 0  sklearn Lin...  1.5597  1.0086  0.1996
-1  DistilBERT...   0.6467  0.6115  0.6681
+1  DistilBERT...   0.6539  0.6180  0.6644
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \textbf{해석 가이드} (실제 숫자는 random seed에 따라 조금씩 다릅니다):
 
 \begin{itemize}
@@ -716,7 +821,7 @@ model           mse     mae     r2
 \item
   BERT의 R²가 더 높다면 평균 예측이 데이터 분산을 더 잘 설명합니다.
 \item
-  차이가 크지 않다면? Yelp 별점은 단어 빈도(긍정 단어 vs 부정 단어)만으로도 꽤 잡히는 task라 그런 경우가 있습니다. \emph{문맥 활용 효과} 가 크게 드러나는 task는 \ref{ch:14}장 auxiliary나 15장 한국어 NSMC 쪽이 더 명확할 수 있습니다.
+  차이가 크지 않다면? Yelp 별점은 단어 빈도(긍정 단어 vs 부정 단어)만으로도 꽤 잡히는 task라 그런 경우가 있습니다. \emph{문맥 활용 효과} 가 크게 드러나는 task는 \ref{ch:14}장 auxiliary나 \ref{ch:15}장 한국어 NSMC 쪽이 더 명확할 수 있습니다.
 \end{itemize}
 
 
@@ -734,10 +839,11 @@ df_compare = pd.DataFrame({
 df_compare["Residual"] = df_compare["Predicted"] - df_compare["Actual star"]
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-\end{lstlisting}
-\par\vspace{0.9em}
+\begin{codeRead}
+\textbf{1행}의 \inlinecode{preds\_output = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{2행}의 \inlinecode{bert\_pred = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{4--8행}의 \inlinecode{df\_compare = ...}에서는 결과를 표로 보기 좋게 정리합니다. \textbf{9행}의 \inlinecode{df\_compare["Residual"] =...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\end{codeRead}
+
+
 
 \subsection{예측 분포}
 
@@ -760,10 +866,10 @@ for i, x_val in enumerate([1, 2, 3, 4, 5]):
         linewidth=1,
         alpha=0.7,
     )
-ax.set_title("Predicted star distribution per actual class")
+ax.set_title("정답 별점별 예측 별점 분포")
 ax.legend(loc="upper left")
 plt.tight_layout()
-\end{bookoutputbox}
+\end{lstlisting}
 
 \noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
@@ -772,17 +878,12 @@ plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-<Figure size 1100x500 with 1 Axes>
-\end{bookoutputbox}
-\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{정답 별점별 BERT와 sklearn 회귀 예측 분포}{fig:ch09-predicted-violin}
+\centering
 \includegraphics[width=0.92\linewidth]{assets/figures/ch09_predicted_violin.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch09-predicted-violin}은 같은 정답 별점 안에서 BERT와 sklearn 회귀 모델의 예측값이 얼마나 좁게 모이는지 비교합니다. 분포가 실제 별점 위치에 가깝고 폭이 좁을수록, 그 모델이 해당 별점 구간을 안정적으로 예측한다는 뜻입니다.
-
+\textbf{그림 읽기} --- 그림~\ref{fig:ch09-predicted-violin}에서 다음 내용을 확인합니다: 정답 별점별 BERT와 sklearn 회귀 예측 분포. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
 
 
 
@@ -802,9 +903,9 @@ plt.show()
 
 
 
-\subsection{잔차 분포}
+\subsection{시각 2 --- 잔차(Residual = Predicted - Actual) 분포 per actual class}
 
-\inlinecode{Predicted - Actual} 을 y축에 두고 0 기준선을 긋습니다. 잔차가 0 근처에 좁게 모일수록 정확하고, 양/음 한 쪽으로 치우치면 \emph{bias} 가 있다는 뜻.
+\inlinecode{Predicted\ -\ Actual} 을 y축에 두고 0 기준선을 긋습니다. 잔차가 0 근처에 좁게 모일수록 정확하고, 양/음 한 쪽으로 치우치면 \emph{bias} 가 있다는 뜻.
 
 
 
@@ -822,8 +923,8 @@ ax.axhline(
     linewidth=1,
     alpha=0.7,
 )
-ax.set_title("Residual = Predicted - Actual, per actual class")
-ax.set_ylabel("Residual (predicted - actual)")
+ax.set_title("잔차 = 예측 - 실제, 정답 별점별 분포")
+ax.set_ylabel("잔차 (예측 - 실제)")
 ax.legend(loc="upper left")
 plt.tight_layout()
 \end{lstlisting}
@@ -835,17 +936,12 @@ plt.tight_layout()
 plt.show()
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-<Figure size 1100x500 with 1 Axes>
-\end{bookoutputbox}
-\par\vspace{0.9em}
 \begin{bookfigurelabel}[H]{정답 별점별 잔차 분포 비교}{fig:ch09-residual-violin}
+\centering
 \includegraphics[width=0.92\linewidth]{assets/figures/ch09_residual_violin.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch09-residual-violin}은 예측값에서 정답을 뺀 잔차를 별점별로 나눠 보여줍니다. 중심이 0에 가까울수록 편향이 작고, 폭이 좁을수록 같은 별점 안에서 오차가 안정적입니다.
-
+\textbf{그림 읽기} --- 그림~\ref{fig:ch09-residual-violin}에서 다음 내용을 확인합니다: 정답 별점별 잔차 분포 비교. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
 
 
 
@@ -858,7 +954,7 @@ plt.show()
 \item
   잔차의 \emph{폭} 이 그 class에서의 일반적 오차 크기. BERT가 sklearn보다 좁다면 더 정확.
 \item
-  두 끝 class(1점, 5점)에서 잔차 중심이 \emph{반대 방향} (1점은 \(+\), 5점은 \(-\))으로 치우치는 패턴이 자주 보입니다 --- 위에서 본 \emph{regression to the mean} 의 잔차 시각화 형태.
+  두 끝 class(1점, 5점)에서 잔차 중심이 \emph{반대 방향} (1점은 +, 5점은 -)으로 치우치는 패턴이 자주 보입니다 --- 위에서 본 \emph{regression to the mean} 의 잔차 시각화 형태.
 \item
   0 기준선에서 멀리 늘어진 꼬리는 큰 오차를 내는 outlier 샘플들. 어느 모델이 꼬리가 더 두꺼운지 비교.
 \end{itemize}
@@ -871,7 +967,7 @@ plt.show()
 
 직접 다 돌리진 않고 \emph{어떤 인자를 바꾸면 무슨 일이 일어나는지} 짚습니다.
 
-\begin{booktable}{변형: 학습 실패 요인}{tab:ch09-05}
+\begin{booktable}{9장 변형: 학습 실패 요인 표}{tab:ch09-05}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}ll@{}}
 \toprule
@@ -898,7 +994,7 @@ plt.show()
 
 \subsection{\texorpdfstring{transformers 학습 도구}{transformers 학습 도구}}
 
-\begin{booktable}{transformers 학습 도구}{tab:ch09-06}
+\begin{booktable}{9장 transformers 학습 도구 표}{tab:ch09-06}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -933,7 +1029,7 @@ plt.show()
 \item
   gradient clipping (기본 1.0)
 \item
-  learning rate scheduler (기본 linear warmup → linear decay)
+  learning rate scheduler (기본 linear warmup \(\to\) linear decay)
 \end{itemize}
 
 \subsection{\texorpdfstring{compute\_metrics}{compute\_metrics 함수 시그니처}}

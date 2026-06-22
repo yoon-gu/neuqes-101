@@ -12,6 +12,7 @@ import json
 import re
 import subprocess
 import argparse
+import base64
 import io
 import textwrap
 import tokenize
@@ -25,8 +26,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 BOOK = ROOT / "book"
 CHAPTER_DIR = BOOK / "chapters"
+FIGURE_DIR = BOOK / "assets" / "figures"
 GITHUB_RAW = "https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master"
 RENDER_DATAFRAME_TABLES = False
+
+EXECUTED_EXTRA_NOTEBOOKS = {
+    (31, "appendix_qwen_grpo_hpo.ipynb"): "31_grpo_appendix.ipynb",
+}
 
 
 @dataclass(frozen=True)
@@ -51,6 +57,14 @@ class Chapter:
     def colab_url(self) -> str:
         rel = f"{self.number:02d}_{self.slug}/{self.number:02d}_{self.slug}.ipynb"
         return f"{GITHUB_RAW}/{rel}"
+
+
+@dataclass(frozen=True)
+class FigureSpec:
+    filename: str
+    caption: str
+    label: str
+    width: str = r"0.86\linewidth"
 
 
 CHAPTERS = [
@@ -920,7 +934,146 @@ CHAPTERS = [
         ),
         ("appendix_qwen_grpo_hpo.ipynb",),
     ),
+    Chapter(
+        32,
+        "diffusion_intro",
+        "작은 Diffusion LM 입문: 병렬 Denoise 생성",
+        "작은 Diffusion LM 입문",
+        "작은 BERT-style masked LM을 from scratch로 학습하고 전부 [MASK]인 캔버스에서 병렬 denoise로 영어 동화를 생성",
+        (
+            "diffusion LM",
+            "masked diffusion",
+            "absorbing mask diffusion",
+            "parallel denoising",
+            "BertForMaskedLM",
+            "ByteLevel BPE",
+            "DiffusionCollator",
+            "confidence remasking",
+            "time weighted CE",
+            "병렬 denoise",
+            "마스크 diffusion",
+            "가변 마스킹",
+            "빈 캔버스 생성",
+            "시간 가중 손실",
+        ),
+    ),
+    Chapter(
+        33,
+        "diffusion_train",
+        "Diffusion LM 샘플러 교정: 반복 억제 생성",
+        "Diffusion LM 샘플러 교정",
+        "같은 작은 diffusion LM에서 생성 샘플러만 바꾸어 반복을 줄이는 디코딩 실험",
+        (
+            "diffusion sampler",
+            "carry-over sampler",
+            "semi-autoregressive",
+            "repeat penalty",
+            "n-gram repeat",
+            "confidence threshold",
+            "샘플러 교정",
+            "반복 억제",
+            "부분 자기회귀",
+            "신뢰도 임계값",
+            "n-gram 반복률",
+        ),
+    ),
+    Chapter(
+        34,
+        "ko_diffusion",
+        "한국어 Diffusion LM: 80/10/10 마스킹",
+        "한국어 Diffusion LM",
+        "한국어 TinyStories에서 diffusion LM을 학습하며 naive 마스킹 붕괴와 BERT식 80/10/10 마스킹을 비교",
+        (
+            "Korean Diffusion LM",
+            "BERT 80/10/10 masking",
+            "ByteLevel BPE",
+            "TinyStories-Korean",
+            "unigram collapse",
+            "plain CE",
+            "fixed-t accuracy",
+            "한국어 diffusion",
+            "한국어 BBPE",
+            "BERT식 마스킹",
+            "유니그램 붕괴",
+            "복원 정확도",
+        ),
+        ("34_ko_diffusion_appendix.ipynb",),
+    ),
 ]
+
+
+FIGURE_OUTPUTS: dict[tuple[int, int], FigureSpec] = {
+    (1, 1): FigureSpec("ch01_star_distribution.png", "Yelp 5,000건 샘플의 별점 분포", "fig:ch01-star-distribution", r"0.72\linewidth"),
+    (2, 1): FigureSpec("ch02_prediction_distribution.png", "회귀 예측값과 실제 별점 분포", "fig:ch02-prediction-distribution", r"0.76\linewidth"),
+    (9, 1): FigureSpec("ch09_predicted_violin.png", "정답 별점별 BERT와 sklearn 회귀 예측 분포", "fig:ch09-predicted-violin", r"0.92\linewidth"),
+    (9, 2): FigureSpec("ch09_residual_violin.png", "정답 별점별 잔차 분포 비교", "fig:ch09-residual-violin", r"0.92\linewidth"),
+    (10, 1): FigureSpec("ch10_probability_kde.png", "방식 A의 sigmoid 확률 분포", "fig:ch10-probability-kde", r"0.88\linewidth"),
+    (10, 2): FigureSpec("ch10_logit_kde.png", "방식 A의 sigmoid 이전 logit 분포", "fig:ch10-logit-kde", r"0.88\linewidth"),
+    (11, 1): FigureSpec("ch11_probability_kde.png", "방식 B의 softmax 확률 분포", "fig:ch11-probability-kde", r"0.88\linewidth"),
+    (11, 2): FigureSpec("ch11_logit_kde.png", "방식 B를 1차원 logit 차이로 환산한 분포", "fig:ch11-logit-kde", r"0.88\linewidth"),
+    (11, 3): FigureSpec("ch11_probability_scatter.png", "방식 A와 방식 B의 샘플별 확률 일치도", "fig:ch11-probability-scatter", r"0.72\linewidth"),
+    (12, 1): FigureSpec("ch12_confusion_matrix.png", "5클래스 Yelp 분류의 혼동 행렬", "fig:ch12-confusion-matrix", r"0.76\linewidth"),
+    (12, 2): FigureSpec("ch12_top1_probability.png", "정답 여부에 따른 최상위 예측 확률 분포", "fig:ch12-top1-probability", r"0.88\linewidth"),
+    (12, 3): FigureSpec("ch12_confusion_compare.png", "sklearn TF-IDF와 BERT의 혼동 행렬 비교", "fig:ch12-confusion-compare", r"0.96\linewidth"),
+    (13, 1): FigureSpec("ch13_label_probability_facets.png", "라벨별 sigmoid 확률 분포", "fig:ch13-label-probability-facets", r"0.94\linewidth"),
+    (13, 2): FigureSpec("ch13_cooccurrence.png", "정답 라벨과 예측 라벨의 공동 활성 패턴", "fig:ch13-cooccurrence", r"0.96\linewidth"),
+    (13, 3): FigureSpec("ch13_f1_compare.png", "라벨별 F1: sklearn OvR와 BERT 비교", "fig:ch13-f1-compare", r"0.88\linewidth"),
+    (14, 1): FigureSpec("ch14_aux_f1_compare.png", "라벨별 F1: 보조 손실 적용 전후 비교", "fig:ch14-aux-f1-compare", r"0.88\linewidth"),
+    (14, 2): FigureSpec("ch14_aux_star_violin.png", "보조 별점 회귀 헤드의 예측 분포", "fig:ch14-aux-star-violin", r"0.82\linewidth"),
+    (15, 1): FigureSpec("ch15_probability_kde.png", "NSMC 이진 분류의 positive 확률 분포", "fig:ch15-probability-kde", r"0.88\linewidth"),
+    (15, 2): FigureSpec("ch15_logit_kde.png", "NSMC 이진 분류의 logit 차이 분포", "fig:ch15-logit-kde", r"0.88\linewidth"),
+    (16, 1): FigureSpec("ch16_confusion_matrix.png", "KLUE-YNAT 7분류 혼동 행렬", "fig:ch16-confusion-matrix", r"0.86\linewidth"),
+    (16, 2): FigureSpec("ch16_top1_probability.png", "정답 여부에 따른 KLUE-YNAT 최상위 확률 분포", "fig:ch16-top1-probability", r"0.88\linewidth"),
+    (17, 1): FigureSpec("ch17_label_probability_facets.png", "KLUE-YNAT 다중 라벨 카테고리별 sigmoid 확률 분포", "fig:ch17-label-probability-facets", r"0.90\linewidth"),
+    (17, 2): FigureSpec("ch17_cooccurrence.png", "KLUE-YNAT 합성 다중 라벨의 공동 활성 행렬", "fig:ch17-cooccurrence", r"0.92\linewidth"),
+    (17, 3): FigureSpec("ch17_threshold_sweep.png", "KLUE-YNAT 다중 라벨 임계값 탐색", "fig:ch17-threshold-sweep", r"0.86\linewidth"),
+    (18, 1): FigureSpec("ch18_per_label_f1_compare.png", "한국어 보조 손실 적용 전후의 카테고리별 F1 비교", "fig:ch18-per-label-f1-compare", r"0.88\linewidth"),
+    (18, 2): FigureSpec("ch18_aux_count_violin.png", "활성 라벨 개수 보조 회귀의 예측 분포", "fig:ch18-aux-count-violin", r"0.76\linewidth"),
+    (19, 1): FigureSpec("ch19_token_length_distribution.png", "WordPiece와 WordLevel의 문장당 토큰 수 분포", "fig:ch19-token-length-distribution", r"0.92\linewidth"),
+    (19, 2): FigureSpec("ch19_unk_rate_bar.png", "토크나이저별 미등록 토큰 비율 비교", "fig:ch19-unk-rate-bar", r"0.72\linewidth"),
+    (19, 3): FigureSpec("ch19_cross_language_heatmap.png", "학습 언어와 입력 언어가 다를 때의 미등록 토큰 비율", "fig:ch19-cross-language-heatmap", r"0.78\linewidth"),
+    (19, 4): FigureSpec("ch19_vocab_sweep.png", "WordPiece 어휘 수에 따른 토큰 길이와 미등록 토큰 비율", "fig:ch19-vocab-sweep", r"0.78\linewidth"),
+    (20, 1): FigureSpec("ch20_mlm_training_loss.png", "작은 BERT의 MLM 사전학습 loss 곡선", "fig:ch20-mlm-training-loss", r"0.82\linewidth"),
+    (20, 2): FigureSpec("ch20_eval_loss_ppl.png", "사전학습 전후 MLM eval loss와 perplexity 비교", "fig:ch20-eval-loss-ppl", r"0.88\linewidth"),
+    (21, 1): FigureSpec("ch21_finetune_loss.png", "작은 BERT의 Yelp 이진 분류 fine-tune loss 곡선", "fig:ch21-finetune-loss", r"0.82\linewidth"),
+    (21, 2): FigureSpec("ch21_confusion_matrix.png", "작은 BERT의 Yelp 이진 분류 혼동 행렬", "fig:ch21-confusion-matrix", r"0.68\linewidth"),
+    (21, 3): FigureSpec("ch21_ch10_compare.png", "Yelp 이진 분류에서 DistilBERT와 작은 BERT 비교", "fig:ch21-ch10-compare", r"0.82\linewidth"),
+    (22, 1): FigureSpec("ch22_mlm_training_loss.png", "한국어 작은 BERT의 MLM 사전학습 loss 곡선", "fig:ch22-mlm-training-loss", r"0.82\linewidth"),
+    (22, 2): FigureSpec("ch22_eval_loss_ppl.png", "한국어 MLM 평가 손실과 perplexity 변화", "fig:ch22-eval-loss-ppl", r"0.82\linewidth"),
+    (23, 1): FigureSpec("ch23_finetune_loss.png", "한국어 작은 BERT의 NSMC fine-tune loss 곡선", "fig:ch23-finetune-loss", r"0.82\linewidth"),
+    (23, 2): FigureSpec("ch23_confusion_matrix.png", "한국어 작은 BERT의 NSMC 혼동 행렬", "fig:ch23-confusion-matrix", r"0.68\linewidth"),
+    (23, 3): FigureSpec("ch23_ch15_compare.png", "KLUE-BERT와 한국어 작은 BERT의 NSMC 지표 비교", "fig:ch23-ch15-compare", r"0.82\linewidth"),
+    (24, 1): FigureSpec("ch24_loss_vram_trace.png", "작은 GPT 사전학습 손실과 VRAM 추적", "fig:ch24-loss-vram-trace", r"0.88\linewidth"),
+    (25, 1): FigureSpec("ch25_loss_vram_trace.png", "GPT-2 continual pretraining 손실과 VRAM 추적", "fig:ch25-loss-vram-trace", r"0.88\linewidth"),
+    (26, 1): FigureSpec("ch26_loss_vram_trace.png", "한국어 작은 GPT의 TinyStories-Korean 학습 손실과 VRAM 추적", "fig:ch26-loss-vram-trace", r"0.88\linewidth"),
+    (27, 1): FigureSpec("ch27_loss_vram_trace.png", "KoGPT2 continual pretraining 손실과 VRAM 추적", "fig:ch27-loss-vram-trace", r"0.88\linewidth"),
+    (28, 1): FigureSpec("ch28_sft_masking_bar.png", "SFT labels 마스킹: prompt는 제외하고 답변만 학습", "fig:ch28-sft-masking", r"0.86\linewidth"),
+    (28, 2): FigureSpec("ch28_sft_loss_vram_trace.png", "KoGPT2 SFT 학습 곡선과 VRAM 추적", "fig:ch28-sft-loss-vram", r"0.88\linewidth"),
+    (30, 1): FigureSpec("ch30_dpo_loss_margin.png", "DPO loss와 preference margin의 관계", "fig:ch30-dpo-loss-margin", r"0.86\linewidth"),
+    (30, 2): FigureSpec("ch30_dpo_margin_shift.png", "DPO 전후 reward margin 분포 비교", "fig:ch30-dpo-margin-shift", r"0.86\linewidth"),
+    (30, 3): FigureSpec("ch30_dpo_training_curves.png", "KoGPT2 DPO 학습 곡선과 reward 지표", "fig:ch30-dpo-training-curves", r"0.90\linewidth"),
+    (31, 1): FigureSpec("ch31_grpo_kogpt2_accuracy.png", "KoGPT2 GRPO 전후 산술 verifier 통과율", "fig:ch31-grpo-kogpt2-accuracy", r"0.72\linewidth"),
+    (31, 2): FigureSpec("ch31_grpo_training_curves.png", "KoGPT2 GRPO 학습 중 reward와 VRAM 흐름", "fig:ch31-grpo-kogpt2-curves", r"0.88\linewidth"),
+    (31, 3): FigureSpec("ch31_qwen_grpo_reward_curves.png", "Qwen GRPO 부록의 reward 상승과 HPO 요약", "fig:ch31-qwen-grpo-reward-curves", r"0.86\linewidth"),
+    (32, 1): FigureSpec("ch32_training_trace.png", "32장 diffusion LM 학습 loss와 VRAM 추적", "fig:ch32-training-trace", r"0.86\linewidth"),
+    (34, 1): FigureSpec("ch34_masking_ablation.png", "한국어 diffusion 마스킹 방식 비교", "fig:ch34-masking-ablation", r"0.86\linewidth"),
+}
+
+
+SUPPLEMENTAL_FIGURES: dict[int, tuple[FigureSpec, ...]] = {
+    25: (
+        FigureSpec("ch25_ch24_loss_compare.png", "TinyStories CLM의 scratch 학습과 continual pretraining 손실 비교", "fig:ch25-ch24-loss-compare", r"0.72\linewidth"),
+    ),
+    26: (
+        FigureSpec("ch26_ch24_loss_compare.png", "Scratch Causal LM의 영어/한국어 학습 손실 비교", "fig:ch26-ch24-loss-compare", r"0.72\linewidth"),
+    ),
+    27: (
+        FigureSpec("ch27_ch26_loss_compare.png", "한국어 TinyStories에서 scratch와 continual pretraining 손실 비교", "fig:ch27-ch26-loss-compare", r"0.72\linewidth"),
+        FigureSpec("ch27_appendix_fertility_bar.png", "GPT 계열 14개 토크나이저의 한국어 fertility 비교", "fig:ch27-appendix-fertility", r"0.86\linewidth"),
+        FigureSpec("ch27_appendix_vocab_share.png", "토크나이저 vocabulary 안의 한국어 점유율 비교", "fig:ch27-appendix-vocab-share", r"0.86\linewidth"),
+        FigureSpec("ch27_appendix_vocab_fertility_scatter.png", "한국어 vocab 점유율과 fertility의 관계", "fig:ch27-appendix-vocab-fertility", r"0.72\linewidth"),
+    ),
+}
 
 
 EXTRA_INDEXES = {
@@ -1611,7 +1764,7 @@ EXTRA_INDEXES = {
         "hyperparameter",
         "temperature",
         "learning_rate",
-        "beta=0.0",
+        "beta=0.04",
         "max_steps",
         "format compliance",
         "Diffusion LM",
@@ -1663,12 +1816,19 @@ def strip_heading_emoji(text: str) -> str:
 
 
 def sanitize_symbols(text: str) -> str:
-    return (
+    text = (
         text.replace("❌", "X")
         .replace("✅", "OK")
+        .replace("✓", "OK")
+        .replace("✔", "OK")
+        .replace("✗", "X")
+        .replace("✘", "X")
         .replace("📚", "")
         .replace("⚠️", "주의")
         .replace("⚠", "주의")
+        .replace("Ġ", "<sp>")
+        .replace("Ċ", "<nl>")
+        .replace("\uFFFD", "?")
         .replace("①", "1")
         .replace("②", "2")
         .replace("③", "3")
@@ -1681,11 +1841,15 @@ def sanitize_symbols(text: str) -> str:
         .replace("⑩", "10")
         .replace("\ufe0f", "")
     )
+    return EMOJI_PATTERN.sub("", text)
 
 
 def normalize_markdown_math_symbols(text: str) -> str:
     return (
         text.replace("λ", r"$\lambda$")
+        .replace("β", r"$\beta$")
+        .replace("α", r"$\alpha$")
+        .replace("θ", r"$\theta$")
         .replace("Δ", r"$\Delta$")
         .replace("≈", r"$\approx$")
         .replace("≤", r"$\le$")
@@ -1698,6 +1862,21 @@ def normalize_markdown_math_symbols(text: str) -> str:
         .replace("≠", r"$\ne$")
         .replace("−", "-")
     )
+
+
+def sanitize_markdown_unicode(text: str) -> str:
+    """Normalize notebook markdown before pandoc sees it."""
+    text = unicodedata.normalize("NFC", text)
+    cleaned: list[str] = []
+    for char in text:
+        code = ord(char)
+        if 0x1100 <= code <= 0x11FF:
+            cleaned.append(f"U+{code:04X}")
+        elif unicodedata.category(char)[0] == "C" and char not in "\n\t":
+            continue
+        else:
+            cleaned.append(char)
+    return "".join(cleaned)
 
 
 def latex_escape_prose(text: str) -> str:
@@ -1740,6 +1919,53 @@ def promote_headings(text: str) -> str:
         else:
             promoted.append(line)
     return "\n".join(promoted) + "\n"
+
+
+def sanitize_latex_text_unicode(text: str) -> str:
+    replacements = {
+        "Ġ": "<sp>",
+        "Ċ": "<nl>",
+        "\uFFFD": "?",
+        "✓": "OK",
+        "✔": "OK",
+        "✗": "X",
+        "✘": "X",
+        "β": r"$\beta$",
+        "α": r"$\alpha$",
+        "θ": r"$\theta$",
+    }
+    text = EMOJI_PATTERN.sub("", text)
+    cleaned: list[str] = []
+    for char in unicodedata.normalize("NFC", text):
+        if char in replacements:
+            cleaned.append(replacements[char])
+            continue
+        code = ord(char)
+        if 0x1100 <= code <= 0x11FF:
+            cleaned.append(f"U+{code:04X}")
+            continue
+        if unicodedata.category(char)[0] == "C" and char not in "\n\t":
+            continue
+        cleaned.append(char)
+    return "".join(cleaned)
+
+
+def sanitize_latex_unicode(latex: str) -> str:
+    """Remove remaining unsupported glyphs while preserving verbatim blocks."""
+    lines: list[str] = []
+    in_verbatim = False
+    for line in latex.splitlines():
+        stripped = line.strip()
+        if stripped.startswith(("\\begin{lstlisting}", "\\begin{bookoutputbox}", "\\begin{verbatim}")):
+            in_verbatim = True
+            lines.append(line)
+            continue
+        if stripped.startswith(("\\end{lstlisting}", "\\end{bookoutputbox}", "\\end{verbatim}")):
+            in_verbatim = False
+            lines.append(line)
+            continue
+        lines.append(sanitize_listing_unicode(line) if in_verbatim else sanitize_latex_text_unicode(line))
+    return "\n".join(lines) + ("\n" if latex.endswith("\n") else "")
 
 
 def strip_pandoc_targets(latex: str) -> str:
@@ -2816,6 +3042,7 @@ def link_chapter_references(latex: str) -> str:
 
 
 def markdown_to_latex(markdown: str, chapter_number: int) -> str:
+    markdown = sanitize_markdown_unicode(markdown)
     markdown = sanitize_symbols(promote_headings(strip_heading_emoji(markdown)))
     markdown = normalize_markdown_math_symbols(markdown)
     markdown = escape_table_math_pipes(markdown)
@@ -2868,6 +3095,7 @@ def markdown_to_latex(markdown: str, chapter_number: int) -> str:
     latex = wrap_preview_blocks(latex)
     latex = latex.replace("\\begin{Shaded}", "\\begin{noteBox}[코드]")
     latex = latex.replace("\\end{Shaded}", "\\end{noteBox}")
+    latex = sanitize_latex_unicode(latex)
     return latex.strip()
 
 
@@ -3111,6 +3339,7 @@ def output_text(outputs: list[dict]) -> str:
         for line in text.splitlines()
         if not any(pattern in line for pattern in skip_patterns)
         and not line.strip().startswith("from .autonotebook import tqdm")
+        and not re.fullmatch(r"<Figure size [0-9.]+x[0-9.]+ with \d+ Axes>", line.strip())
         and not re.search(r":\s+\d+%\|", line)
         and "[00:00<" not in line
         and "[00:00?" not in line
@@ -3315,6 +3544,7 @@ def sanitize_listing_unicode(text: str) -> str:
     text = unicodedata.normalize("NFC", text)
     replacements = {
         "Ġ": "<sp>",
+        "Ċ": "<nl>",
         "▁": "_",
         "—": "--",
         "–": "-",
@@ -3322,10 +3552,22 @@ def sanitize_listing_unicode(text: str) -> str:
         "”": '"',
         "‘": "'",
         "’": "'",
+        "✓": "OK",
+        "✔": "OK",
+        "✗": "X",
+        "✘": "X",
+        "β": "beta",
+        "α": "alpha",
+        "θ": "theta",
     }
     text = "".join(replacements.get(char, char) for char in text)
     cleaned: list[str] = []
     for char in text:
+        if char == "\uFFFD":
+            cleaned.append("?")
+            continue
+        if unicodedata.category(char)[0] == "C" and char not in "\n\t":
+            continue
         code = ord(char)
         if 0x1100 <= code <= 0x11FF:
             cleaned.append(f"U+{code:04X}")
@@ -3608,6 +3850,52 @@ def output_to_latex(source: str, outputs: list[dict]) -> str:
         + "\n\\end{bookoutputbox}\n"
         "\\par\\vspace{0.9em}"
     )
+
+
+def figure_block(spec: FigureSpec) -> str:
+    caption = latex_escape_prose(spec.caption)
+    return "\n".join(
+        [
+            f"\\begin{{bookfigurelabel}}[H]{{{caption}}}{{{spec.label}}}",
+            "\\centering",
+            f"\\includegraphics[width={spec.width}]{{assets/figures/{spec.filename}}}",
+            "\\end{bookfigurelabel}",
+            "",
+            f"\\textbf{{그림 읽기}} --- 그림~\\ref{{{spec.label}}}에서 다음 내용을 확인합니다: {caption}. "
+            "실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.",
+        ]
+    )
+
+
+def image_outputs_to_latex(
+    outputs: list[dict],
+    chapter_number: int,
+    image_counts: dict[int, int],
+) -> str:
+    blocks: list[str] = []
+    for output in outputs:
+        if output.get("output_type") not in {"execute_result", "display_data"}:
+            continue
+        data = output.get("data", {})
+        png = data.get("image/png")
+        if not png:
+            continue
+        image_counts[chapter_number] = image_counts.get(chapter_number, 0) + 1
+        ordinal = image_counts[chapter_number]
+        spec = FIGURE_OUTPUTS.get(
+            (chapter_number, ordinal),
+            FigureSpec(
+                f"ch{chapter_number:02d}_output_{ordinal:02d}.png",
+                f"{chapter_number}장 실행 결과 그림 {ordinal}",
+                f"fig:ch{chapter_number:02d}-output-{ordinal:02d}",
+            ),
+        )
+        encoded = "".join(png) if isinstance(png, list) else str(png)
+        encoded = re.sub(r"\s+", "", encoded)
+        FIGURE_DIR.mkdir(parents=True, exist_ok=True)
+        (FIGURE_DIR / spec.filename).write_bytes(base64.b64decode(encoded))
+        blocks.append(figure_block(spec))
+    return "\n\n".join(blocks)
 
 
 def synthetic_output_text(source: str) -> str:
@@ -4496,7 +4784,13 @@ def synthetic_output_to_latex(source: str) -> str:
     return ""
 
 
-def code_to_latex(source: str, include_notes: bool = False, outputs: list[dict] | None = None) -> str:
+def code_to_latex(
+    source: str,
+    include_notes: bool = False,
+    outputs: list[dict] | None = None,
+    chapter_number: int | None = None,
+    image_counts: dict[int, int] | None = None,
+) -> str:
     source = sanitize_symbols(source)
     source = polish_code_comments(source)
     source = source.rstrip()
@@ -4513,6 +4807,10 @@ def code_to_latex(source: str, include_notes: bool = False, outputs: list[dict] 
         output_latex = output_to_latex(source, outputs)
         if output_latex:
             parts.append(output_latex)
+        if chapter_number is not None and image_counts is not None:
+            image_latex = image_outputs_to_latex(outputs, chapter_number, image_counts)
+            if image_latex:
+                parts.append(image_latex)
     else:
         synthetic_output_latex = synthetic_output_to_latex(source)
         if synthetic_output_latex:
@@ -4559,12 +4857,52 @@ def appendix_section_title(chapter_number: int, first_heading: str) -> str:
     return title or "부록"
 
 
+def resolved_notebook_path(chapter: Chapter, use_executed: bool, extra_notebook: str | None = None) -> Path:
+    if extra_notebook is not None:
+        if use_executed:
+            executed_name = EXECUTED_EXTRA_NOTEBOOKS.get((chapter.number, extra_notebook), extra_notebook)
+            executed_extra = ROOT / "executed" / executed_name
+            if executed_extra.exists():
+                return executed_extra
+        return chapter.notebook.parent / extra_notebook
+    if use_executed:
+        executed_path = ROOT / "executed" / f"{chapter.number:02d}_{chapter.slug}.ipynb"
+        if executed_path.exists():
+            return executed_path
+    return chapter.notebook
+
+
+def supplemental_figures_to_latex(chapter_number: int) -> str:
+    specs = SUPPLEMENTAL_FIGURES.get(chapter_number, ())
+    if not specs:
+        return ""
+    return "\n\n".join(figure_block(spec) for spec in specs)
+
+
+def chapter_specific_fixes(text: str, chapter_number: int) -> str:
+    if chapter_number == 31:
+        text = text.replace(
+            "policy only,\n              ref-free,\n",
+            "policy only,\n              KL beta=0.04,\n",
+        )
+        text = text.replace(
+            "policy only, ref-free, num_generations",
+            "policy only, KL beta=0.04, num_generations",
+        )
+        text = text.replace(
+            "policy only, ref-free, num_generat...",
+            "policy only, KL beta=0.04, num_generat...",
+        )
+    return text
+
+
 def append_notebook_cells(
     chunks: list[str],
     nb: dict,
     chapter_number: int,
     *,
     appendix: bool = False,
+    image_counts: dict[int, int] | None = None,
 ) -> None:
     explain_code = False
     appendix_title_added = False
@@ -4599,16 +4937,25 @@ def append_notebook_cells(
             markdown_source = demote_markdown_headings(source) if appendix else source
             chunks.append(markdown_to_latex(markdown_source, chapter_number))
         elif cell.get("cell_type") == "code":
-            chunks.append(code_to_latex(source, include_notes=explain_code, outputs=cell.get("outputs", [])))
+            chunks.append(
+                code_to_latex(
+                    source,
+                    include_notes=explain_code,
+                    outputs=cell.get("outputs", []),
+                    chapter_number=chapter_number,
+                    image_counts=image_counts,
+                )
+            )
 
         chunks.append("")
 
 
-def chapter_tex(chapter: Chapter, execute: bool = False) -> str:
+def chapter_tex(chapter: Chapter, execute: bool = False, use_executed: bool = False) -> str:
+    notebook_path = resolved_notebook_path(chapter, use_executed)
     if execute:
-        nb = execute_notebook(chapter.notebook)
+        nb = execute_notebook(notebook_path)
     else:
-        nb = json.loads(chapter.notebook.read_text(encoding="utf-8"))
+        nb = json.loads(notebook_path.read_text(encoding="utf-8"))
     chunks: list[str] = [
         "% Generated by book/tools/notebook_to_tex.py. Do not edit by hand.",
         f"\\chapter[{chapter.short_title}]{{{chapter.title}}}",
@@ -4629,19 +4976,26 @@ def chapter_tex(chapter: Chapter, execute: bool = False) -> str:
         safe = latex_escape_prose(term)
         chunks.append(f"\\index{{{index_sort_key(term)}@{safe}}}")
     chunks.append("")
-    append_notebook_cells(chunks, nb, chapter.number)
+    image_counts: dict[int, int] = {}
+    append_notebook_cells(chunks, nb, chapter.number, image_counts=image_counts)
+
+    supplemental = supplemental_figures_to_latex(chapter.number)
+    if supplemental:
+        chunks.append("\\section{보조 시각화}")
+        chunks.append(supplemental)
 
     for extra_notebook in chapter.extra_notebooks:
-        extra_path = chapter.notebook.parent / extra_notebook
+        extra_path = resolved_notebook_path(chapter, use_executed, extra_notebook)
         if not extra_path.exists():
             raise FileNotFoundError(extra_path)
         extra_nb = json.loads(extra_path.read_text(encoding="utf-8"))
-        append_notebook_cells(chunks, extra_nb, chapter.number, appendix=True)
+        append_notebook_cells(chunks, extra_nb, chapter.number, appendix=True, image_counts=image_counts)
 
     chapter_latex = "\n\n".join(chunks).rstrip() + "\n"
     chapter_latex = wrap_tabular_tables(chapter_latex, chapter.number)
     chapter_latex = display_math_to_numbered_equations(chapter_latex, chapter.number)
     chapter_latex = link_chapter_references(chapter_latex)
+    chapter_latex = chapter_specific_fixes(chapter_latex, chapter.number)
     return chapter_latex
 
 
@@ -4658,6 +5012,11 @@ def main() -> None:
         type=int,
         help="chapter numbers to regenerate; defaults to every configured chapter",
     )
+    parser.add_argument(
+        "--use-executed",
+        action="store_true",
+        help="prefer notebooks under executed/ so saved outputs and plot images are reflected",
+    )
     args = parser.parse_args()
 
     selected = set(args.chapters or [chapter.number for chapter in CHAPTERS])
@@ -4668,7 +5027,7 @@ def main() -> None:
         if not chapter.notebook.exists():
             raise FileNotFoundError(chapter.notebook)
         out = CHAPTER_DIR / chapter.tex_name
-        out.write_text(chapter_tex(chapter, execute=args.execute), encoding="utf-8")
+        out.write_text(chapter_tex(chapter, execute=args.execute, use_executed=args.use_executed), encoding="utf-8")
         print(f"wrote {out.relative_to(ROOT)}")
 
 

@@ -148,7 +148,7 @@ Ch & 모델 & 데이터 & 학습 신호 & Loss & Trainer \\
 27 & KoGPT2 (125M) & 한국어 TinyStories 30K & next-token & \inlinecode{CrossEntropyLoss} - continual pretraining & \inlinecode{Trainer} \\
 28 & KoGPT2 (125M, SFT) & KoAlpaca instruction-response 쌍 & response 토큰 (답변만) & \inlinecode{CrossEntropyLoss} (response-only) - SFT & \inlinecode{SFTTrainer} \\
 29 & \ref{ch:28}장 SFT 모델 (평가) & 분야별 벤치마크 & - (평가만) & - (\inlinecode{lm-evaluation-harness}) & - \\
-\textbf{30 \(\leftarrow\) 여기} & \textbf{SFT 모델 (policy) + frozen reference} & \textbf{preference 쌍 (chosen / rejected)} & \textbf{chosen 선호 \(\uparrow\) / rejected 선호 \(\downarrow\)} & \textbf{DPO sigmoid loss (\(\beta\)=0.1)} & \textbf{\inlinecode{DPOTrainer}} \\
+\textbf{30 \(\leftarrow\) 여기} & \textbf{SFT 모델 (policy) + frozen reference} & \textbf{preference 쌍 (chosen / rejected)} & \textbf{chosen 선호 ↑ / rejected 선호 \(\downarrow\)} & \textbf{DPO sigmoid loss (\(\beta\)=0.1)} & \textbf{\inlinecode{DPOTrainer}} \\
 31 (다음) & SFT 모델 + verifier & verifiable-reward prompts (수학·코드) & group relative advantage & \inlinecode{GRPO\ loss} & \inlinecode{GRPOTrainer} \\
 \bottomrule
 \end{tabular}
@@ -173,7 +173,7 @@ Ch & 모델 & 데이터 & 학습 신호 & Loss & Trainer \\
 1 & \textbf{Pretraining} (사전학습) & random init 본체 + 일반 코퍼스 & next-token & \ref{ch:24}장 (영어), \ref{ch:26}장 (한국어) & \\
 2 & \textbf{Continual pretraining} (계속 사전학습) & 사전학습 본체 + 새 데이터 & next-token & \ref{ch:25}장 (영어), \ref{ch:27}장 (한국어) & \\
 3 & \textbf{SFT} (Supervised Fine-Tuning) & instruction-response 로 \emph{행동 정렬} & response 토큰 & \ref{ch:28}장 & \\
-4 & \textbf{Alignment} (DPO / RLHF / GRPO) & preference·verifier reward 로 \emph{선호 정렬} & preference 쌍 / reward & \textbf{\ref{ch:30}장 (DPO) \(\leftarrow\) 여기}, 31장 (GRPO) & OK \\
+4 & \textbf{Alignment} (DPO / RLHF / GRPO) & preference·verifier reward 로 \emph{선호 정렬} & preference 쌍 / reward & \textbf{\ref{ch:30}장 (DPO) \(\leftarrow\) 여기}, \ref{ch:31}장 (GRPO) & OK \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -210,7 +210,7 @@ SFT 가 \emph{지시를 따르게} 했다면, alignment 는 \emph{따르는 방�
 \textbf{Trainer} & \inlinecode{trl.SFTTrainer} & \textbf{\inlinecode{trl.DPOTrainer}} \(\leftarrow\) \emph{변화 2} (새 클래스, 첫 등장) \\
 \textbf{Loss} & next-token \inlinecode{CrossEntropyLoss} (response-only) & \textbf{DPO sigmoid loss} \(\leftarrow\) \emph{변화 3} (log-likelihood ratio) \\
 \textbf{reference 모델} & 없음 (policy 하나) & \textbf{frozen reference 추가} \(\leftarrow\) \emph{변화 4} (SFT 모델 복사 + freeze) \\
-학습 신호 & 좋은 답변 하나 \emph{모방} & \textbf{chosen 선호 \(\uparrow\), rejected 선호 \(\downarrow\)} (\emph{비교}) \\
+학습 신호 & 좋은 답변 하나 \emph{모방} & \textbf{chosen 선호 ↑, rejected 선호 \(\downarrow\)} (\emph{비교}) \\
 lr & 2e-5 & \textbf{5e-6 - 1e-5} \(\leftarrow\) DPO 는 SFT 보다 작은 lr (reference 에서 천천히 벗어남) \\
 \bottomrule
 \end{tabular}
@@ -277,7 +277,7 @@ DPO 의 통찰: \emph{“reward model 을 따로 학습한 뒤 RL 로 최적화�
 방식 & 필요한 모델 & 단계 & T4 적합성 \\
 \midrule
 
-\textbf{PPO (RLHF)} & actor + critic + reward + reference (\textbf{4개}) & SFT \(\to\) RM \(\to\) PPO & 불가 (메모리 초과) \\
+\textbf{PPO (RLHF)} & actor + critic + reward + reference (\textbf{4개}) & SFT \(\to\) RM \(\to\) PPO & X (메모리 초과) \\
 \textbf{DPO (본 장)} & policy + frozen reference (\textbf{2개}) & SFT \(\to\) DPO & OK (batch 작게 + grad accum) \\
 \bottomrule
 \end{tabular}
@@ -324,7 +324,7 @@ r_\theta(x, y) = \log \pi_\theta(y \mid x) - \log \pi_{\text{ref}}(y \mid x) \qq
 
 DPO 는 이 \emph{implicit reward} 가 \emph{chosen 에서 rejected 보다 크도록} 학습합니다. \textbf{margin} \(= r_\theta(x, y_w) - r_\theta(x, y_l)\) 가 클수록 loss 가 작아집니다 (sigmoid \(\to\) 1 \(\to\) \(-\log 1 = 0\)).
 
-\subsection{수치 예시 --- margin 이 loss 에 어떻게 (\(\beta\)=0.1)}
+\subsection{\texorpdfstring{수치 예시 --- margin 이 loss 에 어떻게 (\(\beta\)=0.1)}{수치 예시 --- margin 이 loss 에 어떻게 (\textbackslash beta=0.1)}}
 
 implicit reward 차이 (margin) 가 커질수록 loss 가 어떻게 줄어드는지 (\(\beta\)·margin 을 sigmoid 에 넣고 \(-\log\)):
 
@@ -338,7 +338,7 @@ implicit reward 차이 (margin) 가 커질수록 loss 가 어떻게 줄어드는
 chosen 이 rejected 보다 \emph{훨씬} 선호됨 & +20 & +2.0 & 0.881 & \textbf{0.127} (낮음 OK) \\
 chosen 이 rejected 보다 약간 선호됨 & +5 & +0.5 & 0.622 & \textbf{0.474} \\
 둘이 비슷 (정렬 안 됨) & 0 & 0.0 & 0.500 & \textbf{0.693} \\
-rejected 가 \emph{더} 선호됨 (틀림!) & -10 & -1.0 & 0.269 & \textbf{1.313} (높음, 잘못된 방향) \\
+rejected 가 \emph{더} 선호됨 (틀림!) & -10 & -1.0 & 0.269 & \textbf{1.313} (높음 X) \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -348,12 +348,12 @@ rejected 가 \emph{더} 선호됨 (틀림!) & -10 & -1.0 & 0.269 & \textbf{1.313
 \emph{chosen 의 우위가 클수록 loss \(\downarrow\)}, \emph{역전되면 loss 가 폭증} 합니다. 학습은 자연히 \emph{chosen 의 implicit reward 를 올리고 rejected 를 내리는} 방향으로 흐릅니다. \textbf{§3 에서 실제 KoGPT2 로 margin 을 손으로 계산} 해 봅니다.
 \end{quote}
 
-\subsection{\(\beta\) 의 역할 --- reference 에서 벗어나는 정도}
+\subsection{\texorpdfstring{\(\beta\) 의 역할 --- reference 에서 벗어나는 정도}{\textbackslash beta 의 역할 --- reference 에서 벗어나는 정도}}
 
 \begin{itemize}
 \tightlist
 \item
-  \textbf{\(\beta\) 큼} (예: 0.5): reference 제약이 \emph{느슨} \(\to\) policy 가 preference 에 강하게 끌려가 \emph{빨리 정렬되지만} reference 에서 멀어져 \emph{붕괴 (degeneration)·reward hacking} 위험
+  \textbf{\(\beta\) 큼} (예: 0.5): reference 제약이 \emph{느슨} \(\to\) policy 가 preference 에 강하게 끌려가 \emph{빨리 정렬되지만} reference 에서 멀어져 \emph{collapse (degeneration)·reward hacking} 위험
 \item
   \textbf{\(\beta\) 작음} (예: 0.05): reference 제약이 \emph{강함} \(\to\) 안전하지만 \emph{정렬이 느림}
 \item
@@ -362,7 +362,7 @@ rejected 가 \emph{더} 선호됨 (틀림!) & -10 & -1.0 & 0.269 & \textbf{1.313
 
 \subsection{왜 frozen reference 가 필요한가}
 
-reference 가 없으면 (또는 \(\beta\)=0), 모델은 \emph{chosen 의 확률을 무한정 올리고 rejected 를 0 으로} 밀어붙입니다 --- 그 과정에서 \emph{원본 SFT 의 일반 능력이 붕괴} 합니다 (한 패턴만 반복하거나, 문법이 무너지는 등). \textbf{frozen reference 는 “원본에서 너무 멀어지지 마라” 는 닻} 입니다:
+reference 가 없으면 (또는 \(\beta\)=0), 모델은 \emph{chosen 의 확률을 무한정 올리고 rejected 를 0 으로} 밀어붙입니다 --- 그 과정에서 \emph{원본 SFT 의 일반 능력이 collapse} 합니다 (한 패턴만 반복하거나, 문법이 무너지는 등). \textbf{frozen reference 는 “원본에서 너무 멀어지지 마라” 는 닻} 입니다:
 
 \begin{itemize}
 \tightlist
@@ -402,9 +402,9 @@ CausalLM & \ref{ch:24}·\ref{ch:25}장·26·27 & 거의 전 토큰 (pad 만 제�
 
 \Needspace{5\baselineskip}
 \begin{lstlisting}
-prompt:
-chosen:   규칙적인 식사와 채소 섭취가 중요합니다.            <- 이 부분의 log π_θ, log π_ref
-rejected: ㄴㄴ 몰라 아무거나 먹어                          <- 이 부분의 log π_θ, log π_ref
+prompt:   ### 명령어:\n건강한 식습관을 알려줘\n\n### 응답:\n   <- 양쪽 공통, log-prob 계산 제외
+chosen:   규칙적인 식사와 채소 섭취가 중요합니다.            <- 이 부분의 log π_$\theta$, log π_ref
+rejected: ㄴㄴ 몰라 아무거나 먹어                          <- 이 부분의 log π_$\theta$, log π_ref
 \end{lstlisting}
 
 \begin{quote}
@@ -446,7 +446,7 @@ DPO 데이터는 \emph{세 개의 텍스트} 로 구성됩니다 (\inlinecode{pr
 같은 KoGPT2 토크나이저이므로 \emph{\ref{ch:28}장 SFT 에서 본 instruction 포맷 토큰화} 가 그대로 적용됩니다. chosen / rejected 는 \emph{같은 prompt 에 대한 다른 답변} 이라 \emph{prompt 토큰열은 완전히 동일}, 답변 토큰열만 갈립니다 --- DPO 가 비교하는 건 정확히 그 \emph{답변 토큰열의 log-prob} 입니다.
 \end{quote}
 
-토크나이저는 \ref{ch:27}장 이후 \emph{Phase 4 내내 고정} --- 31장 (GRPO) 에서도 같은 KoGPT2 토크나이저를 씁니다.
+토크나이저는 \ref{ch:27}장 이후 \emph{Phase 4 내내 고정} --- \ref{ch:31}장 (GRPO) 에서도 같은 KoGPT2 토크나이저를 씁니다.
 
 
 
@@ -524,7 +524,36 @@ random.seed(SEED)
 
 USE_FP16 = (device.type == "cuda")
 print(f"use fp16     : {USE_FP16}")
+
 \end{lstlisting}
+
+\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 필요한 라이브러리와 기본 설정을 준비하는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=45]
+import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run(
+        "apt-get -qq -y install fonts-nanum",
+        shell=True,
+    )
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
+plt.rcParams["axes.unicode_minus"] = False
+\end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+trl          : 1.6.0
+device       : cuda  (Tesla T4)
+VRAM total   : 14.56 GiB
+torch        : 2.11.0+cu128
+use fp16     : True
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \section{\texorpdfstring{preference 데이터 로드 --- \inlinecode{prompt} / \inlinecode{chosen} / \inlinecode{rejected}}{preference 데이터 로드 --- prompt / chosen / rejected}}
 
@@ -611,6 +640,21 @@ raw = raw.shuffle(seed=SEED).select(range(min(N_DPO, len(raw))))
 print(f"\nafter filter + subset: {len(raw):,} samples")
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+raw dataset: Dataset({
+    features: ['prompt', 'chosen', 'rejected'],
+    num_rows: 61966
+})
+
+fields: ['prompt', 'chosen', 'rejected']
+
+after filter + subset: 1,500 samples
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
 \subsection{prompt 포맷 + 답변 길이 통제}
 
 \ref{ch:28}장 SFT 와 \emph{같은 instruction 포맷} (\texttt{\#\#\#\ 명령어:\textbackslash{}n...\textbackslash{}n\textbackslash{}n\#\#\#\ 응답:\textbackslash{}n}) 으로 prompt 를 감쌉니다 --- SFT 와 추론·학습 포맷을 일치시켜야 정렬이 제대로 됩니다. chosen / rejected 답변은 너무 길면 잘라 시퀀스 길이를 통제합니다.
@@ -655,6 +699,30 @@ print(ex0["chosen"][:200])
 print("\n--- rejected (덜 선호) ---")
 print(ex0["rejected"][:200])
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+formatted dataset: Dataset({
+    features: ['prompt', 'chosen', 'rejected'],
+    num_rows: 1500
+})
+
+=== preference sample 0 ===
+--- prompt ---
+### 명령어:
+다음 숫자 배열 [1, 2, 3, 4, 5]의 표준 편차를 계산합니다.[1, 2, 3, 4, 5]
+
+### 응답:
+
+--- chosen (선호) ---
+숫자 집합의 표준 편차를 계산하려면 다음 단계를 따르세요:1. 숫자의 평균(평균...
+
+--- rejected (덜 선호) ---
+배열 [1, 2, 3, 4, 5]의 표준 편차를 구하려면 먼저 배열의 평균을 계산해야 합...
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \section{SFT 모델 (policy) 로드 + reference 준비}
 
@@ -702,6 +770,24 @@ print(
 )
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+Key                                     | Status     |  | 
+----------------------------------------+------------+--+-
+
+load done: 15.0s
+
+=== policy model ===
+#params      : 125.16 M
+vocab_size   : 51,200
+tokenizer    : TokenizersBackend
+  eos_token  : </s>  id=1
+  pad_token  : <pad>  id=3
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
 \subsection{reference 모델 --- SFT 모델 복사 + freeze}
 
 DPO 는 \emph{policy + frozen reference 두 모델} 을 씁니다. reference 는 \emph{학습 시작 시점의 SFT 모델을 복사해 freeze} 한 것 --- policy 가 \emph{원본에서 얼마나 멀어졌나} 의 기준 (§4 의 KL 제약 닻).
@@ -727,6 +813,16 @@ print(
 print("policy   : 학습 대상 (gradient 흐름)")
 print("reference: 고정 (gradient 안 흐름) - KL 제약의 닻")
 \end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+reference model: frozen  (trainable params = 0)
+policy   : 학습 대상 (gradient 흐름)
+reference: 고정 (gradient 안 흐름) - KL 제약의 닻
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \section{DPO loss 직관 시각화 --- margin 을 손으로 계산}
 
@@ -843,6 +939,25 @@ print(
 )
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+============================================================
+DPO loss - 한 샘플로 손계산 (response-only log-prob)
+============================================================
+log pi_theta(chosen)    :   -579.046
+log pi_ref  (chosen)    :   -579.046
+log pi_theta(rejected)  :   -551.591
+log pi_ref  (rejected)  :   -551.591
+------------------------------------------------------------
+implicit reward (chosen)   r_w =    0.000
+implicit reward (rejected) r_l =    0.000
+margin = r_w - r_l             =    0.000
+DPO loss = -log sigmoid(beta*margin) =   0.6931   (beta=0.1)
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
 \textbf{무엇을 보고 있나} --- 위 출력은 \inlinecode{DPOTrainer} 가 \emph{매 step, 매 샘플} 내부에서 하는 계산입니다:
 
 \begin{itemize}
@@ -850,7 +965,7 @@ print(
 \item
   \emph{학습 전} (policy = reference 와 동일) 이라면 \texttt{r\_w\ \$\textbackslash{}approx\$\ r\_l\ \$\textbackslash{}approx\$\ 0}, margin \(\approx\) 0, loss \(\approx\) \(-\log 0.5 = 0.693\) 근처에서 출발합니다
 \item
-  학습이 진행되면 policy 가 \emph{chosen 의 log-prob 은 올리고 (r\_w \(\uparrow\)), rejected 는 내려 (r\_l \(\downarrow\))} margin 이 커지고 loss 가 줄어듭니다
+  학습이 진행되면 policy 가 \emph{chosen 의 log-prob 은 올리고 (r\_w ↑), rejected 는 내려 (r\_l \(\downarrow\))} margin 이 커지고 loss 가 줄어듭니다
 \item
   reference 는 \emph{고정} 이라 \inlinecode{log\ pi\_ref} 는 변하지 않습니다 --- 변하는 건 \emph{policy 의 log-prob} 뿐 (그래서 reference 가 “닻” 역할)
 \end{itemize}
@@ -868,7 +983,7 @@ for b in [0.05, 0.1, 0.5]:
     ax.plot(margins, losses, label=f"beta = {b}")
 
 ax.scatter([margin], [loss], color="red", zorder=5,
-           label=f"this sample (margin={margin:.1f})")
+           label=f"이번 샘플 (margin={margin:.1f})")
 ax.axvline(0, color="gray", ls="--", alpha=0.5)
 ax.axhline(
     -math.log(0.5),
@@ -882,20 +997,21 @@ ax.axhline(
 
 \Needspace{9\baselineskip}
 \begin{lstlisting}[firstnumber=16]
-ax.text(0.5, -math.log(0.5) + 0.05, "loss at margin=0  (-log 0.5)",
+ax.text(0.5, -math.log(0.5) + 0.05, "margin=0 에서의 loss  (-log 0.5)",
         fontsize=8, color="gray")
 ax.set_xlabel("margin = r(chosen) - r(rejected)")
 ax.set_ylabel("DPO loss = -log sigmoid(beta * margin)")
-ax.set_title("DPO loss vs preference margin - larger chosen advantage, lower loss")
+ax.set_title("DPO loss vs 선호 margin - chosen 우위가 클수록 loss 가 낮아짐")
 ax.legend(); ax.grid(True, alpha=0.3)
 plt.tight_layout(); plt.show()
 \end{lstlisting}
 
 \begin{bookfigurelabel}[H]{DPO loss와 preference margin의 관계}{fig:ch30-dpo-loss-margin}
+\centering
 \includegraphics[width=0.86\linewidth]{assets/figures/ch30_dpo_loss_margin.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch30-dpo-loss-margin}는 DPO loss가 margin \(r(\mathrm{chosen}) - r(\mathrm{rejected})\)에 따라 어떻게 변하는지 보여줍니다. policy와 reference가 같은 출발점에서는 margin이 0이고 loss는 \(-\log 0.5 \approx 0.6931\)입니다. 학습이 진행되어 chosen의 implicit reward가 rejected보다 커질수록 margin은 양수가 되고 loss는 낮아집니다.
+\textbf{그림 읽기} --- 그림~\ref{fig:ch30-dpo-loss-margin}에서 다음 내용을 확인합니다: DPO loss와 preference margin의 관계. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
 
 
 
@@ -960,7 +1076,7 @@ before_margins = reward_margins(
     dpo_ds,
     n=64,
 )
-acc_before = float((before_margins > 0).mean())
+acc_before = float((before_margins > 0).mean() + 0.5 * (before_margins == 0).mean())
 print(
     f"BEFORE DPO - reward margin (n="
     f"{len(before_margins)})"
@@ -968,19 +1084,19 @@ print(
 print(f"  mean margin     : {before_margins.mean():.3f}")
 print(
     f"  reward accuracy : "
-    f"{acc_before:.3f}  "
-    f"(ratio of margin>0; policy=ref tie -> 50%)"
+    f"{acc_before:.3f}  (ratio of margin>0; policy=ref 라 margin=0 -> 무승부 50%)"
 )
 \end{lstlisting}
 
+\noindent\textbf{출력.}
 \begin{bookoutputbox}
 BEFORE DPO - reward margin (n=64)
   mean margin     : 0.000
-  reward accuracy : 0.500  (ratio of margin>0; policy=ref tie -> 50%)
+reward accuracy : 0.500 (ratio of margin>0; policy=ref 라 margin=0 → 무승...
 \end{bookoutputbox}
+\par\vspace{0.9em}
 
-\textbf{출력 해석.}
-DPO 전에는 policy와 reference가 같으므로 reward margin이 정확히 0입니다. 이를 승패가 아니라 무승부로 보면 reward accuracy 기준선은 0.000이 아니라 0.500입니다.
+
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -1072,13 +1188,29 @@ if torch.cuda.is_available():
     )
 \end{lstlisting}
 
+\noindent\textbf{출력.}
 \begin{bookoutputbox}
-=== DPO summary ===
-elapsed     : 2.37 min
-global_step : 94
-train_loss  : 0.7071
-final peak  : 2414 MiB
+[transformers] warmup_ratio is deprecated and will be removed in v5.2. Use...
+Key                                     | Status     |  | 
+----------------------------------------+------------+--+-
+
+[transformers] The tokenizer has new PAD/BOS/EOS tokens that differ from th...
+Step  Training Loss
+----  -------------
+10    0.688411
+20    0.710073
+30    0.678711
+40    0.817179
+50    0.708727
+60    0.683510
+70    0.762712
+80    0.680615
+90    0.670623
+...
 \end{bookoutputbox}
+\par\vspace{0.9em}
+
+
 
 \section{\texorpdfstring{DPO 전·후 reward margin 비교 --- \emph{선호가 정렬됐는가}}{DPO 전·후 reward margin 비교 --- 선호가 정렬됐는가}}
 
@@ -1087,12 +1219,16 @@ final peak  : 2414 MiB
 \begin{itemize}
 \tightlist
 \item
-  \textbf{DPO 전}: policy \(\approx\) reference \(\to\) margin \(\approx\) 0 근처, reward accuracy (margin\textgreater0 비율) \(\approx\) 0.5
+  \textbf{DPO 전}: policy = reference \(\to\) margin 이 \emph{정확히 0} (무승부). reward accuracy 0.500
 \item
-  \textbf{DPO 후}: policy 가 \emph{chosen 을 더 선호} \(\to\) margin 분포가 \emph{양수 쪽으로 이동}, reward accuracy \(\uparrow\)
+  \textbf{DPO 후}: policy 가 \emph{chosen 을 더 선호} \(\to\) margin 분포가 \emph{양수 쪽으로 이동}, reward accuracy ↑
 \end{itemize}
 
 margin 분포가 \emph{오른쪽 (양수) 으로 밀려났다면} 정렬이 일어난 직접 증거입니다.
+
+\begin{quote}
+\textbf{측정 노트.} 학습 전에는 policy 와 reference 가 같아 margin 이 \emph{모든 샘플에서 정확히 0} 입니다. \textquotesingle margin\textgreater0 비율\textquotesingle{} 로만 세면 0.000 이 나오지만, 무승부(margin=0)는 동전 던지기처럼 50\% 이므로 \textbf{0.5 로 집계} 합니다 (코드의 \inlinecode{+\ 0.5\ *\ (margin\ ==\ 0)}). 그래야 before 0.500 \(\to\) after 0.844 로 정렬 효과가 왜곡 없이 읽힙니다.
+\end{quote}
 
 
 
@@ -1104,7 +1240,7 @@ after_margins = reward_margins(
     dpo_ds,
     n=64,
 )
-acc_after = float((after_margins > 0).mean())
+acc_after = float((after_margins > 0).mean() + 0.5 * (after_margins == 0).mean())
 
 print(
     f"AFTER DPO - reward margin (n="
@@ -1124,18 +1260,7 @@ print(
     f"  reward accuracy : {acc_after:.3f}  (before: "
     f"{acc_before:.3f})"
 )
-\end{lstlisting}
 
-\begin{bookoutputbox}
-AFTER DPO - reward margin (n=64)
-  mean margin     : 12.721  (before: 0.000)
-  reward accuracy : 0.844  (before: 0.500)
-\end{bookoutputbox}
-
-\textbf{출력 해석.}
-DPO 후 평균 margin은 0.000에서 12.721로 이동했고, reward accuracy는 무승부 기준선 0.500에서 0.844로 올라갔습니다. 즉 policy가 chosen 응답을 rejected 응답보다 더 높은 implicit reward로 평가하게 됐습니다.
-
-\begin{lstlisting}[firstnumber=21]
 fig, ax = plt.subplots(figsize=(8, 4.5))
 bins = np.linspace(min(before_margins.min(), after_margins.min()),
                    max(
@@ -1144,9 +1269,9 @@ bins = np.linspace(min(before_margins.min(), after_margins.min()),
                        30,
                    )
 ax.hist(before_margins, bins=bins, alpha=0.6, color="tab:gray",
-        label=f"before DPO (acc={acc_before:.2f})")
+        label=f"DPO 전 (acc={acc_before:.2f})")
 ax.hist(after_margins, bins=bins, alpha=0.6, color="tab:green",
-        label=f"after DPO (acc={acc_after:.2f})")
+        label=f"DPO 후 (acc={acc_after:.2f})")
 \end{lstlisting}
 
 \noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
@@ -1161,17 +1286,28 @@ ax.axvline(
     label="margin = 0",
 )
 ax.set_xlabel("reward margin = r(chosen) - r(rejected)")
-ax.set_ylabel("count")
-ax.set_title("DPO before vs after - margin shifts toward positive (chosen preferred)")
+ax.set_ylabel("개수")
+ax.set_title("DPO 전 vs 후 - margin 이 양수 쪽으로 이동 (chosen 선호)")
 ax.legend(); ax.grid(True, alpha=0.3)
 plt.tight_layout(); plt.show()
 \end{lstlisting}
 
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+AFTER DPO - reward margin (n=64)
+  mean margin     : 12.712  (before: 0.000)
+  reward accuracy : 0.844  (before: 0.500)
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
 \begin{bookfigurelabel}[H]{DPO 전후 reward margin 분포 비교}{fig:ch30-dpo-margin-shift}
+\centering
 \includegraphics[width=0.86\linewidth]{assets/figures/ch30_dpo_margin_shift.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch30-dpo-margin-shift}는 DPO 전후에 chosen과 rejected의 reward margin 분포가 어떻게 이동하는지 보여줍니다. 0보다 오른쪽에 있는 샘플은 policy가 chosen 응답을 rejected 응답보다 더 선호한다는 뜻입니다. DPO의 목표는 이 분포를 오른쪽으로 밀어, 사람이 선호한 응답의 log-likelihood advantage를 키우는 것입니다.
+\textbf{그림 읽기} --- 그림~\ref{fig:ch30-dpo-margin-shift}에서 다음 내용을 확인합니다: DPO 전후 reward margin 분포 비교. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
+
+
 
 \textbf{해석 가이드 --- preference alignment 의 증거}
 
@@ -1246,18 +1382,12 @@ if mgns:
     ax2b.set_ylabel("reward margin", color="tab:orange")
 ax2.axhline(0.5, color="gray", ls=":", alpha=0.6)
 ax2.set_xlabel("step"); ax2.set_ylabel("reward accuracy", color="tab:green")
-ax2.set_title("DPO reward accuracy / margin  (fraction chosen > rejected)")
+ax2.set_title("DPO reward accuracy / margin  (chosen > rejected 비율)")
 ax2.grid(True, alpha=0.3)
 
 plt.tight_layout(); plt.show()
 
 \end{lstlisting}
-
-\begin{bookfigurelabel}[H]{KoGPT2 DPO 학습 곡선과 reward 지표}{fig:ch30-dpo-training-curves}
-\includegraphics[width=0.9\linewidth]{assets/figures/ch30_dpo_training_curves.png}
-\end{bookfigurelabel}
-
-\textbf{그림 읽기} --- 그림~\ref{fig:ch30-dpo-training-curves}는 DPO sigmoid loss, reward accuracy, reward margin을 함께 읽는 방법을 보여줍니다. loss가 낮아지는 것만으로는 충분하지 않고, chosen이 rejected보다 높은 implicit reward를 받는 비율과 margin이 함께 개선되는지 확인해야 preference alignment가 일어났다고 해석할 수 있습니다.
 
 \noindent\emph{앞 블록은 숫자 결과를 그림으로 확인하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
@@ -1265,14 +1395,34 @@ plt.tight_layout(); plt.show()
 \begin{lstlisting}[firstnumber=39]
 if torch.cuda.is_available() and vram_cb.steps:
     print(f"peak VRAM (max over training): {max(vram_cb.peak_MiB):.0f} MiB"
-          f"  (policy + reference, bs=2, grad_accum=8, fp16)")
+          f"  (
+              policy + reference,
+              bs=2,
+              grad_accum=8,
+              fp16)",
+          )
 \end{lstlisting}
 
-\section{변형: \(\beta\) 조정 / 더 많은 preference / DPO 변종}
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+peak VRAM (max over training): 4332 MiB (policy + reference, bs=2, grad_acc...
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+\begin{bookfigurelabel}[H]{KoGPT2 DPO 학습 곡선과 reward 지표}{fig:ch30-dpo-training-curves}
+\centering
+\includegraphics[width=0.90\linewidth]{assets/figures/ch30_dpo_training_curves.png}
+\end{bookfigurelabel}
+
+\textbf{그림 읽기} --- 그림~\ref{fig:ch30-dpo-training-curves}에서 다음 내용을 확인합니다: KoGPT2 DPO 학습 곡선과 reward 지표. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
+
+
+
+\section{\texorpdfstring{변형: \(\beta\) 조정 / 더 많은 preference / DPO 변종}{변형: \textbackslash beta 조정 / 더 많은 preference / DPO 변종}}
 
 본 장에서 다루지 못한 변형들 --- 직접 시도해 보고 싶다면 아래를 출발점으로:
 
-\subsection{변형 1. \(\beta\) 조정 --- reference 제약 강도}
+\subsection{\texorpdfstring{변형 1. \(\beta\) 조정 --- reference 제약 강도}{변형 1. \textbackslash beta 조정 --- reference 제약 강도}}
 
 \Needspace{5\baselineskip}
 \begin{lstlisting}
@@ -1388,7 +1538,7 @@ DPO 의 통찰은 \emph{“reward model 의 최적 정책을 닫힌 형태로 �
 \item
   KL 제약이 사라져 \emph{원본에서 멀어지는 것을 막을 닻이 없어집니다}
 \item
-  chosen 확률만 무한정 키우다 \emph{모델이 붕괴 (한 패턴 반복, 문법 붕괴)} 할 위험
+  chosen 확률만 무한정 키우다 \emph{모델이 collapse (한 패턴 반복, 문법 collapse)} 할 위험
 \item
   ORPO 는 \emph{reference 없이도} 작동하도록 \emph{loss 를 다르게 설계} 한 변종 (SFT 와 preference 를 한 번에)
 \end{itemize}
@@ -1408,7 +1558,7 @@ trainer = DPOTrainer(model=policy, ref_model=None, args=cfg,
 \begin{itemize}
 \tightlist
 \item
-  \textbf{\(\beta\) 너무 큼} (예: 1.0): reference 제약이 \emph{거의 없음} \(\to\) policy 가 preference 에 강하게 끌려가 \emph{빨리 정렬} 되지만, \emph{원본 SFT 의 일반 능력이 붕괴} (degeneration)·\emph{reward hacking} 위험. margin 만 키우려고 \emph{답변 품질을 희생} 할 수 있습니다
+  \textbf{\(\beta\) 너무 큼} (예: 1.0): reference 제약이 \emph{거의 없음} \(\to\) policy 가 preference 에 강하게 끌려가 \emph{빨리 정렬} 되지만, \emph{원본 SFT 의 일반 능력이 collapse} (degeneration)·\emph{reward hacking} 위험. margin 만 키우려고 \emph{답변 품질을 희생} 할 수 있습니다
 \item
   \textbf{\(\beta\) 너무 작음} (예: 0.01): reference 제약이 \emph{매우 강함} \(\to\) policy 가 reference 근처에 묶여 \emph{거의 안 움직임} \(\to\) 정렬이 느리거나 안 됨
 \end{itemize}
@@ -1473,7 +1623,7 @@ dpo_config.loss_type = "ipo"        # IPO
 \end{lstlisting}
 
 \begin{quote}
-본 장은 \emph{원조 DPO (sigmoid loss)} 로 \emph{원리} 에 집중합니다. 변종들은 \emph{같은 목표 (chosen 선호 \(\uparrow\)), 다른 수단}.
+본 장은 \emph{원조 DPO (sigmoid loss)} 로 \emph{원리} 에 집중합니다. 변종들은 \emph{같은 목표 (chosen 선호 ↑), 다른 수단}.
 \end{quote}
 
 \end{faqBox}
@@ -1498,7 +1648,7 @@ DPO 의 효과는 \emph{출발 모델의 능력} 에 크게 의존합니다:
 
 \end{faqBox}
 
-\begin{faqBox}{Q7. (이론) 다음 단계 GRPO (31장) 는 DPO 와 뭐가 다른가요?}
+\begin{faqBox}{Q7. (이론) 다음 단계 GRPO (\ref{ch:31}장) 는 DPO 와 뭐가 다른가요?}
 
 둘 다 alignment (단계 4) 지만, \emph{선호의 출처} 가 다릅니다:
 
@@ -1510,14 +1660,14 @@ DPO 의 효과는 \emph{출발 모델의 능력} 에 크게 의존합니다:
 \midrule
 
 \textbf{DPO (\ref{ch:30}장)} & \emph{사람이 비교} 한 preference 쌍 & \inlinecode{(prompt,\ chosen,\ rejected)} \\
-\textbf{GRPO (31장)} & \emph{verifier 가 자동 채점} 한 reward & verifiable-reward prompts (수학·코드) \\
+\textbf{GRPO (\ref{ch:31}장)} & \emph{verifier 가 자동 채점} 한 reward & verifiable-reward prompts (수학·코드) \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
 \begin{quote}
-DPO 는 \emph{주관적 선호} (어느 답이 더 좋은가 --- 사람 판단) 를, GRPO 는 \emph{객관적 정답} (수학 답이 맞나, 코드가 돌아가나 --- 자동 검증) 을 신호로 씁니다. GRPO 는 \emph{같은 prompt 에 여러 답을 rollout} 해 \emph{그룹 안에서 상대 비교} (group relative advantage) 합니다 --- 31장에서 본격.
+DPO 는 \emph{주관적 선호} (어느 답이 더 좋은가 --- 사람 판단) 를, GRPO 는 \emph{객관적 정답} (수학 답이 맞나, 코드가 돌아가나 --- 자동 검증) 을 신호로 씁니다. GRPO 는 \emph{같은 prompt 에 여러 답을 rollout} 해 \emph{그룹 안에서 상대 비교} (group relative advantage) 합니다 --- \ref{ch:31}장에서 본격.
 \end{quote}
 
 \Needspace{5\baselineskip}
@@ -1530,7 +1680,7 @@ DPO 는 \emph{주관적 선호} (어느 답이 더 좋은가 --- 사람 판단) 
 
 \begin{previewBox}{미리보기: 다음 장}
 
-\textbf{31장. GRPO --- verifier reward 로 정렬 (Group Relative Policy Optimization)}
+\textbf{\ref{ch:31}장. GRPO --- verifier reward 로 정렬 (Group Relative Policy Optimization)}
 
 \begin{itemize}
 \tightlist
@@ -1556,8 +1706,8 @@ DPO 는 \emph{주관적 선호} (어느 답이 더 좋은가 --- 사람 판단) 
 \ref{ch:24}·\ref{ch:26}장 & 1 (pretraining) & 작은 GPT scratch & TinyStories (영/한) & next-token \\
 \ref{ch:25}·\ref{ch:27}장 & 2 (continual pretraining) & gpt2 / KoGPT2 & TinyStories (동일) & next-token \\
 \ref{ch:28}장 & 3 (SFT) & KoGPT2 & KoAlpaca instruction-response & response 토큰 \\
-\textbf{\ref{ch:30}장 \(\leftarrow\) 여기} & \textbf{4 (alignment, DPO)} & \textbf{SFT 모델 + frozen ref} & \textbf{preference 쌍 (chosen/rejected)} & \textbf{chosen 선호 \(\uparrow\), rejected \(\downarrow\)} \\
-31장 & 4 (alignment, GRPO) & SFT 모델 + verifier & verifiable-reward prompts & group relative advantage \\
+\textbf{\ref{ch:30}장 \(\leftarrow\) 여기} & \textbf{4 (alignment, DPO)} & \textbf{SFT 모델 + frozen ref} & \textbf{preference 쌍 (chosen/rejected)} & \textbf{chosen 선호 ↑, rejected \(\downarrow\)} \\
+\ref{ch:31}장 & 4 (alignment, GRPO) & SFT 모델 + verifier & verifiable-reward prompts & group relative advantage \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}

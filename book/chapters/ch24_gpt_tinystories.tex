@@ -138,11 +138,11 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Loss \\
 
 \begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
-\section{\texorpdfstring{Phase 전환 --- Encoder (BERT) \(\to\) Decoder (GPT) 패러다임}{Phase 전환 --- Encoder (BERT) to Decoder (GPT) 패러다임}}
+\section{\texorpdfstring{Phase 전환 --- Encoder (BERT) \(\to\) Decoder (GPT) 패러다임}{Phase 전환 --- Encoder (BERT) \textbackslash to Decoder (GPT) 패러다임}}
 
-\ref{ch:07}--\ref{ch:23}장의 BERT 장들이 \emph{encoder + masked token 예측 + task head 부착 fine-tune} 패러다임이라면, Phase 4 (\ref{ch:24}--\ref{ch:31}장) 는 \emph{decoder + next-token 예측 + LM head 그대로 + SFT(behavior alignment)} 패러다임입니다. 본 장이 그 출발점입니다.
+\ref{ch:07}--\ref{ch:23}장의 BERT 장들이 \emph{encoder + masked token 예측 + task head 부착 fine-tune} 패러다임이라면, Phase 4 (\ref{ch:24}--\ref{ch:31}장) 는 \emph{decoder + next-token 예측 + LM head 그대로 + SFT(behavior alignment)} 패러다임입니다. 본 장이 그 출발점.
 
-\begin{booktable}{24장 Phase 전환 - Encoder (BERT) to Decoder (GPT) 패러다임 표}{tab:ch24-02}
+\begin{booktable}{24장 Phase 전환 - Encoder (BERT) \textbackslash to Decoder (GPT) 패러다임 표}{tab:ch24-02}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -166,7 +166,7 @@ Downstream 적응 & head 교체 + 본체 fine-tune (\emph{task 적응}) & \textb
 
 
 
-\section{\texorpdfstring{Phase 3 \(\to\) Phase 4 다리 --- \emph{왜 갑자기 decoder 인가, 그리고 생성형 AI 의 등장}}{Phase 3 to Phase 4 다리 --- 왜 갑자기 decoder 인가, 그리고 생성형 AI 의 등장}}
+\section{\texorpdfstring{Phase 3 \(\to\) Phase 4 다리 --- \emph{왜 갑자기 decoder 인가, 그리고 생성형 AI 의 등장}}{Phase 3 \textbackslash to Phase 4 다리 --- 왜 갑자기 decoder 인가, 그리고 생성형 AI 의 등장}}
 
 \ref{ch:23}장 (한국어 BERT 분류) 에서 \ref{ch:24}장 (GPT) 로 넘어오면 \emph{왜 갑자기 encoder 를 버리고 decoder 로 가지?} 라는 의문이 듭니다. 그 사이를 잇는 큰 그림을 한 화면에 정리합니다.
 
@@ -204,11 +204,11 @@ generation 을 하려면 둘 중 하나가 필요합니다:
 \item
   \textbf{causal masking} --- 미래를 가려 \emph{좌\(\to\)오 순차 생성} 을 가능케 함 \(\to\) \textbf{decoder (GPT), 본 장부터}
 \item
-  \textbf{반복 denoise} --- 양방향을 유지한 채 \emph{마스킹 비율을 일반화} 해 병렬 생성 \(\to\) \textbf{diffusion LM (후속 선택 주제)}
+  \textbf{반복 denoise} --- 양방향을 유지한 채 \emph{마스킹 비율을 일반화} 해 병렬 생성 \(\to\) \textbf{diffusion LM (Phase 5, 32장)}
 \end{itemize}
 
 \begin{quote}
-즉 BERT 의 양방향성은 \emph{이해} 엔 강점, \emph{순차 생성} 엔 약점입니다. 이 한 가지 차이가 decoder-only GPT와 diffusion LM이라는 두 생성 계열을 가릅니다. 본 원고에서는 먼저 GPT 계열을 끝까지 정리합니다.
+즉 BERT 의 양방향성은 \emph{이해} 엔 강점, \emph{순차 생성} 엔 약점입니다. 이 한 가지 차이가 Phase 4 (decoder) 와 Phase 5 (diffusion) 두 갈래를 가릅니다.
 \end{quote}
 
 \subsection{attention 의 진화}
@@ -241,7 +241,7 @@ cross-attention & decoder 가 encoder 출력을 참조 & seq2seq (T5/BART) \\
 2018 & BERT (encoder) / GPT-1 (decoder) & \emph{이해} 와 \emph{생성} 두 갈래 분기 \\
 2019 & GPT-2 & 큰 decoder 의 generation 품질 --- 본 장의 reference 모델 \\
 2020 & GPT-3 & \textbf{in-context learning} (예시만 줘도 task 수행, fine-tune 없이) \\
-2022 & InstructGPT / ChatGPT & \textbf{SFT + RLHF} 로 \emph{지시를 따르는} 정렬 (\ref{ch:28}장, \ref{ch:30}장, \ref{ch:31}장의 주제) \\
+2022 & InstructGPT / ChatGPT & \textbf{SFT + RLHF} 로 \emph{지시를 따르는} 정렬 (\ref{ch:28}·\ref{ch:30}장·31 의 주제) \\
 2023+ & GPT-4 / LLaMA / Mistral / KoGPT 등 & decoder-only LLM 의 시대 \\
 \bottomrule
 \end{tabular}
@@ -318,8 +318,8 @@ L_{\text{CLM}} = -\frac{1}{n-1} \sum_{i=1}^{n-1} \log P(x_{i+1} \mid x_1, \dots,
 \midrule
 
 균등 추측 (random init 직후) & \(1/2048 \approx 4.88 \times 10^{-4}\) & \textbf{7.62} \(\leftarrow\) random baseline \\
-약하게 학습 (정답 확률 0.02) & \(0.02\) & 3.91 \\
-잘 학습된 작은 GPT (정답 확률 0.05-0.15) & \(0.05\) - \(0.15\) & \textbf{1.9 - 3.0} \(\leftarrow\) 이 장 목표 영역 \\
+약하게 학습 (정답 확률 0.02) & \(0.02\) & \textbf{3.91} \(\leftarrow\) 1500 step (1분) 도달 영역 \\
+잘 학습된 작은 GPT (정답 확률 0.05-0.15) & \(0.05\) - \(0.15\) & \(1.9\) - \(3.0\) (더 길게 학습 시) \\
 큰 사전학습 GPT (정답 확률 0.3+) & \(0.3\) & 1.20 \\
 완벽 (정답 확률 1.0) & \(1.0\) & 0.00 \\
 \bottomrule
@@ -334,7 +334,7 @@ L_{\text{CLM}} = -\frac{1}{n-1} \sum_{i=1}^{n-1} \log P(x_{i+1} \mid x_1, \dots,
 \item
   학습 첫 step loss 가 약 7.6 부근이면 random init 직후 \emph{균등 추측} 상태. 첫 100 step 안에 빠르게 떨어지면 vocab + 모델 정상.
 \item
-  목표는 \emph{vocab 후보를 좁히는} 단계 (약 2-3). TinyStories 의 단순한 어휘·문법 덕분에 3M 짜리 작은 모델로도 도달 가능.
+  1분 (1500 step) 학습으로 누적 평균 \inlinecode{train\_loss} 가 \emph{약 3.8} 까지 내려갑니다. \emph{vocab 후보를 좁히는} 단계로 충분히 진입한 수준 - TinyStories 의 단순한 어휘·문법 덕분에 3M 짜리 작은 모델로도 도달 가능합니다. 더 길게 학습하면 약 2-3 까지 더 내려갑니다.
 \end{itemize}
 
 \subsection{Perplexity}
@@ -349,8 +349,8 @@ CLM loss & PPL & 해석 \\
 \midrule
 
 7.62 & 2,048 & 균등 (전체 vocab) \\
-4.0 & 55 & 약 50 개 후보 \\
-2.5 & 12 & 약 12 개 후보 \(\leftarrow\) 본 장 목표 \\
+4.0 & 55 & 약 50 개 후보 \(\leftarrow\) 1500 step (1분) 도달 영역 \\
+2.5 & 12 & 약 12 개 후보 (더 길게 학습 시) \\
 1.0 & 2.7 & 거의 결정적 \\
 \bottomrule
 \end{tabular}
@@ -358,7 +358,7 @@ CLM loss & PPL & 해석 \\
 \end{booktable}
 
 \begin{quote}
-MLM 의 \(\ln(30522) \approx 10.33\) random baseline 과 같은 직관입니다. \emph{vocab 차원} 만 작아진 것 (2,048) 입니다.
+MLM 의 \texttt{ln(30522)\ \$\textbackslash{}approx\$\ 10.33} random baseline 과 같은 직관. \emph{vocab 차원} 만 작아진 것 (2,048).
 \end{quote}
 
 
@@ -504,6 +504,8 @@ GPT-2 는 특수 토큰을 \emph{최소화} 합니다 - \texttt{\textless{}\text
 %pip install -q -U transformers tokenizers datasets accelerate
 \end{lstlisting}
 
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 import warnings
@@ -556,6 +558,23 @@ random.seed(SEED)
 
 USE_FP16 = (device.type == "cuda")
 print(f"use fp16   : {USE_FP16}")
+
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 필요한 라이브러리와 기본 설정을 준비하는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=40]
+import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run(
+        "apt-get -qq -y install fonts-nanum",
+        shell=True,
+    )
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
+plt.rcParams["axes.unicode_minus"] = False
 \end{lstlisting}
 
 \noindent\textbf{출력.}
@@ -566,6 +585,8 @@ torch      : 2.11.0+cu128
 use fp16   : True
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \section{TinyStories 데이터 로드}
 
@@ -621,6 +642,8 @@ Lily went to her mom and said, "Mom, I found this needle. Can you share it...
 To
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
 
 \section{BPE 토크나이저 직접 학습}
 
@@ -718,7 +741,7 @@ print(
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-BPE training done: 10.6s, vocab=2048
+BPE training done: 10.3s, vocab=2048
 
 === encode/decode demo ===
 input      : Once upon a time, a little rabbit went to the forest.
@@ -729,6 +752,9 @@ vocab_size : 2048
 eos_token  : <|endoftext|>  id=0
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \textbf{관전 포인트} --- \inlinecode{Once\ upon\ a\ time} 같이 TinyStories 에 \emph{자주 등장} 하는 표현은 \emph{적은 수의 토큰} 으로 압축, \inlinecode{rabbit} 처럼 덜 등장한 단어는 \emph{여러 byte 조각} 으로 분할되는 경향. vocab 2,048 은 작은 모델에 맞춘 \emph{최소한의 크기} 입니다.
 
 
@@ -867,6 +893,8 @@ One day, a little girl named Lily found a needle in her room. She knew it w...
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
+
+
 \subsection{\texorpdfstring{Collator 가 만드는 \inlinecode{labels} 확인 - \emph{거의 모든 자리} 가 학습 신호}{Collator 가 만드는 labels 확인 - 거의 모든 자리 가 학습 신호}}
 
 \inlinecode{DataCollatorForLanguageModeling(mlm=False)} 가 \emph{내부적으로} \inlinecode{labels\ =\ input\_ids.clone()} 을 만들어 \inlinecode{-100} 자리는 \emph{없거나 pad 토큰 자리만} 임을 직접 확인합니다. \ref{ch:20}·\ref{ch:22}장의 MLM collator 가 약 85\% 를 \inlinecode{-100} 으로 채웠던 것과 \emph{정확히 반대}.
@@ -961,6 +989,9 @@ total positions      : 256
 (input_ids == labels) positions: 255/256  - clone as-is
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \begin{quote}
 \textbf{\inlinecode{-100} thread 환기} - MLM 은 \emph{마스킹된 자리만} 학습, CausalLM 은 \emph{거의 모든 자리} 학습. 같은 PyTorch \inlinecode{CrossEntropyLoss(ignore\_index=-100)} 트릭이 \emph{적용 자리만 정반대}. \ref{ch:28}장 (SFT) 에서는 \emph{prompt 자리만 -100} - 같은 트릭의 세 번째 적용. 그 한 줄 코드가 \emph{모델이 instruction 을 따라가게 만드는 핵심} 입니다.
 \end{quote}
@@ -1060,6 +1091,8 @@ model: GPT2LMHeadModel
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
+
+
 \section{\texorpdfstring{학습 \emph{전} generation - 비교 기준선 (random init baseline)}{학습 전 generation - 비교 기준선 (random init baseline)}}
 
 \ref{ch:20}·\ref{ch:22}장의 \emph{사전학습 전 {[}MASK{]} top-5 후보} 와 같은 역할. random init 모델은 통계적으로 \emph{어느 토큰이든 거의 균등한 확률} 로 뽑으니, 생성 텍스트가 \emph{영어와 거리가 먼 byte 조각 / 의미 없는 짧은 단어 나열} 이 나옵니다.
@@ -1138,6 +1171,9 @@ The little girlakak everyush Sarahgged:un't different different# gl keepner...
 A big dog cle music hisftere learnedpe fam pullve bat batinin paper paper t...
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \textbf{관전 포인트} - 학습 전 출력은 \emph{무작위 토큰 나열} (반복되는 짧은 byte 조각, 의미 없는 단어들). \ref{ch:20}·\ref{ch:22}장의 \emph{학습 전 {[}MASK{]} top-5} 가 \emph{the / a / of / , / .} 같은 통계적 빈도 토큰이었던 것과 같은 현상의 \emph{generation 판} 입니다. 학습 후 출력과 \emph{나란히 비교} 하면 사전학습이 본체에 \emph{next-token 분포} 를 새긴 증거를 직접 보게 됩니다.
 
 
@@ -1288,6 +1324,9 @@ elapsed       : 0.87 min
 ...
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 # loss curve + VRAM trace
@@ -1310,9 +1349,9 @@ if eval_pts:
     ax1.plot([s for s, _ in eval_pts], [l for _, l in eval_pts], "s-",
              color="tab:red", label="eval")
 ax1.axhline(math.log(tokenizer.vocab_size), ls=":", color="gray",
-            label=f"uniform baseline = ln({tokenizer.vocab_size}) approx. {math.log(tokenizer.vocab_size):.2f}")
+            label=f"무작위 추측 기준선 = ln({tokenizer.vocab_size}) approx. {math.log(tokenizer.vocab_size):.2f}")
 ax1.set_xlabel("step"); ax1.set_ylabel("cross-entropy loss")
-ax1.set_title("TinyGPT-2 on TinyStories - loss")
+ax1.set_title("TinyStories 로 학습한 TinyGPT-2 - loss")
 ax1.grid(True, alpha=0.3); ax1.legend()
 
 \end{lstlisting}
@@ -1323,24 +1362,28 @@ ax1.grid(True, alpha=0.3); ax1.legend()
 \begin{lstlisting}[firstnumber=20]
 if vram_cb.steps:
     ax2.plot(vram_cb.steps, vram_cb.peak_MiB, "o-", color="tab:green",
-             label="peak VRAM (per log window)")
+             label="최대 VRAM (로그 구간별)")
     ax2.set_title(f"VRAM trace  (bs=32, fp16, n_pos={BLOCK_SIZE})")
 else:
-    ax2.text(0.5, 0.5, "VRAM trace available on CUDA only",
+    ax2.text(0.5, 0.5, "VRAM 추적은 CUDA 에서만 가능",
              ha="center", va="center", transform=ax2.transAxes)
-    ax2.set_title("VRAM trace - CUDA only")
+    ax2.set_title("VRAM 추적 - CUDA 전용")
 ax2.set_xlabel("step"); ax2.set_ylabel("VRAM (MiB)")
 ax2.grid(True, alpha=0.3); ax2.legend()
 
 plt.tight_layout(); plt.show()
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-<Figure size 1300x400 with 2 Axes>
-\end{bookoutputbox}
-\par\vspace{0.9em}
-\textbf{관전 포인트} - 학습 첫 step loss 가 약 7.6 (random baseline \inlinecode{ln(2048)}) 부근에서 시작해 \emph{수백 step 안에 약 4-5} 로 빠르게 떨어지고, 1500 step 끝에 \emph{train\_loss 약 3.8} 부근이면 정상. perplexity 로 환산하면 vocab 2,048 중 \emph{약 12-20 개 후보} 로 좁힌 상태 - 다음 토큰을 \emph{어느 정도 결정적} 으로 뽑는 수준.
+\begin{bookfigurelabel}[H]{작은 GPT 사전학습 손실과 VRAM 추적}{fig:ch24-loss-vram-trace}
+\centering
+\includegraphics[width=0.88\linewidth]{assets/figures/ch24_loss_vram_trace.png}
+\end{bookfigurelabel}
+
+\textbf{그림 읽기} --- 그림~\ref{fig:ch24-loss-vram-trace}에서 다음 내용을 확인합니다: 작은 GPT 사전학습 손실과 VRAM 추적. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
+
+
+
+\textbf{관전 포인트} - 학습 첫 step loss 가 약 7.6 (random baseline \inlinecode{ln(2048)}) 부근에서 시작해 \emph{수백 step 안에 약 4-5} 로 빠르게 떨어지고, 1500 step 끝에 누적 평균 \inlinecode{train\_loss} 가 \emph{약 3.8} 까지 내려가면 정상 (\inlinecode{train\_loss} 는 학습 내내 본 step 들의 누적 평균이라 마지막 step 의 순간 loss 보다 다소 높게 보입니다). perplexity 로 환산하면 vocab 2,048 중 \emph{수십 개 후보} 로 좁힌 상태 - 다음 토큰을 \emph{어느 정도 결정적} 으로 뽑는 수준.
 
 
 
@@ -1387,6 +1430,9 @@ A big dog, but they could go in the park. They ran away and the truck. The...
 "It's okay, it is not very curious. He is not
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 print("=" * 78)
@@ -1423,6 +1469,9 @@ AFTER : had been a wonderful time. It was so happy to see the park. She tha...
 ...
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \textbf{해석 가이드 - 사전학습이 만든 차이}
 
 \begin{itemize}
@@ -1515,12 +1564,15 @@ Once upon a time, if you don't know what your country's government is doing...
 
 In the last few months, I've traveled to dozens of countries around the wor...
 
-My new book — the Making of a Better World Order:
+My new book -- the Making of a Better World Order:
 
 [prompt] The little girl
 ...
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 print("=" * 78)
@@ -1553,11 +1605,14 @@ REF : if you don't know what your country's government is doing, you can fi...
 
 In the last few months, I've traveled to dozens of countries around the wor...
 
-My new book — the Making of a Better World Orde
+My new book -- the Making of a Better World Orde
 
 ...
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \textbf{해석 가이드 - 데이터·파라미터 규모가 만든 격차}
 
 \begin{itemize}
@@ -1625,12 +1680,15 @@ Once upon a time, a little rabbit who liked to read water to play the squir...
 ...
 \end{bookoutputbox}
 \par\vspace{0.9em}
+
+
+
 \textbf{관전 포인트}
 
 \begin{itemize}
 \tightlist
 \item
-  \inlinecode{temperature} 증가 \(\to\) logits 분포 \emph{평탄화} \(\to\) 다양성 증가, 일관성 감소
+  \inlinecode{temperature} ↑ \(\to\) logits 분포 \emph{평탄화} \(\to\) 다양성 ↑, 일관성 \(\downarrow\)
 \item
   \inlinecode{top\_k=20} \(\to\) 매 step 후보를 \emph{상위 20 개} 로만 한정 \(\to\) 안전하지만 반복적
 \item
@@ -1675,7 +1733,7 @@ Once upon a time, a little rabbit who liked to read water to play the squir...
 \item
   \inlinecode{tie\_word\_embeddings=True} (weight tying) 가 \inlinecode{Linear(H,\ V)} 의 파라미터를 어떻게 절약하나요? vocab 2,048 / hidden 256 일 때 절약되는 파라미터 수를 직접 계산해 보세요.
 \item
-  학습 첫 step loss 가 \(\ln(2048) \approx 7.62\) 가 아니라 \emph{5.0} 이라면 무엇을 의심해야 하나요? \emph{15.0} 이라면?
+  학습 첫 step loss 가 \texttt{ln(2048)\ \$\textbackslash{}approx\$\ 7.62} 가 아니라 \emph{5.0} 이라면 무엇을 의심해야 하나요? \emph{15.0} 이라면?
 \item
   \ref{ch:28}장 (SFT) 에서는 \texttt{labels{[}:prompt\_len{]}\ =\ -100} 한 줄로 \emph{prompt 부분만 학습 신호에서 제외} 합니다. 이 장의 collator 출력 (거의 모든 자리가 학습 신호) 과 비교해 \emph{왜 이 한 줄이 모델이 instruction 을 따라가게 만드는지} 설명해 보세요.
 \end{enumerate}
@@ -1766,9 +1824,9 @@ model.lm_head.weight = model.transformer.wte.weight
 \begin{itemize}
 \tightlist
 \item
-  \textbf{파라미터 절약}: \(\texttt{vocab\_size} \times \texttt{hidden\_size}\) 만큼입니다. 본 장에서는 \(2{,}048 \times 256 = 524{,}288\), 즉 약 0.5M params 입니다. 전체 3M 모델의 약 17\%라 작은 모델에서는 비중이 큽니다.
+  \textbf{파라미터 절약}: \texttt{vocab\_size\ \$\textbackslash{}times\$\ hidden\_size} 만큼 (본 장: 2,048 \(\times\) 256 = 524,288 = 약 0.5M params). 전체 3M 모델의 약 17\% - 작은 모델에선 비중이 큼.
 \item
-  \textbf{학습 안정}: input 과 output 이 \emph{같은 임베딩 공간} 을 공유 \(\to\) 일관성이 높아집니다.
+  \textbf{학습 안정}: input 과 output 이 \emph{같은 임베딩 공간} 을 공유 \(\to\) 일관성 ↑.
 \end{itemize}
 
 GPT-2 의 기본값. 우리 모델도 자동으로 적용됩니다 (\inlinecode{config.tie\_word\_embeddings=True}).
@@ -1842,16 +1900,16 @@ labels[:prompt_len] = [-100] * prompt_len
 
 모델 크기 & 약 3M params & \textbf{약 124M (40배)} \\
 사전학습 & from scratch (random init) & \textbf{OpenAI WebText 약 40GB 사전학습} \\
-TinyStories 학습 & 사전학습 그 자체 (1500 steps) & \textbf{continual pretraining} (약 3,000 step 규모) \\
+TinyStories 학습 & 사전학습 그 자체 (1500 steps) & \textbf{continual pretraining} (1 epoch, 약 3,200 steps) \\
 토크나이저 & 직접 학습 BPE vocab 2,048 & \textbf{gpt2 BPE vocab 50,257 (그대로)} \\
 Generation 품질 & grammatical 한 동화 풍 영어 & \textbf{자연스러운 동화 + 일반 도메인 폭} \\
-학습 시간 & 약 1분 (사전학습) & \textbf{약 19분} (continual pretraining)  \\
+학습 시간 & 약 1분 (사전학습) & \textbf{약 19분} (124M 본체 continual pretraining) \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
-\textbf{핵심 메시지}: \emph{대규모 일반 사전학습된 본체} + \emph{작은 도메인 continual pretraining} 이 \emph{작은 from-scratch 모델} 보다 \emph{빠르게, 그리고 좋게} 도달합니다. \emph{왜 실무는 보통 from-scratch 가 아니라 사전학습 모델을 가져와 새 데이터로 계속 학습하거나 SFT 하는가} 의 답. (단계 3 SFT 는 \ref{ch:28}장에서 본격.)
+\textbf{핵심 메시지}: \emph{대규모 일반 사전학습된 본체} + \emph{작은 도메인 continual pretraining} 이 \emph{작은 from-scratch 모델} 보다 \emph{낮은 loss 에서 출발해 더 좋게} 도달합니다 (학습 시간은 124M 본체라 오히려 더 깁니다). \emph{왜 실무는 보통 from-scratch 가 아니라 사전학습 모델을 가져와 새 데이터로 계속 학습하거나 SFT 하는가} 의 답. (단계 3 SFT 는 \ref{ch:28}장에서 본격.)
 \end{faqBox}
 
 
@@ -1867,7 +1925,7 @@ Generation 품질 & grammatical 한 동화 풍 영어 & \textbf{자연스러운 
 \item
   \textbf{같은 TinyStories 30K} 데이터 (본 장와 동일) 로 \textbf{continual pretraining} (계속 사전학습 / continual learning --- \emph{같은 CausalLM task, 새 데이터, head 그대로}. \emph{task adaptation 의미의 fine-tune 이 아니라 단계 2})
 \item
-  \textbf{핵심 비교}: 본 장 (3M, from scratch, T4 약 1분) vs \ref{ch:25}장 (124M, continual pretraining, T4 약 19분) 의 generation 품질·학습 곡선 격차
+  \textbf{핵심 비교}: 본 장 (3M, from scratch, 약 1분) vs \ref{ch:25}장 (124M, continual pretraining, 약 19분) 의 generation 품질·학습 곡선 격차
 \item
   \emph{trainer 자체는 \ref{ch:24}장과 동일} (\inlinecode{transformers.Trainer} + \inlinecode{DataCollatorForLanguageModeling(mlm=False)}) --- \emph{변하는 건 모델 로드 한 줄 + lr (scratch 5e-4 \(\to\) continual pretraining 2e-5)}
 \item
