@@ -299,6 +299,4 @@ Ch 26 의 *작은 from-scratch 모델* (약 3M, 한국어 TinyStories 1500 step)
 
 ## 이 장의 구성
 
-- [27-1. 실습](27-ko_gpt2_continual_pretrain-practice.md)
-- [27-2. 변형 — 더 많은 epoch / 다른 도메인 / catastrophic forgetting 시연](27-ko_gpt2_continual_pretrain-variation.md)
-- [27-3. 정리와 FAQ](27-ko_gpt2_continual_pretrain-wrapup.md)
+[[SubPages]]

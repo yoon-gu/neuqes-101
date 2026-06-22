@@ -9,13 +9,14 @@
 **▶ 실행 결과**
 
 ```text
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 100.5 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 48.4 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.2/389.2 kB 38.4 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸━━━━━ 42.3/48.9 MB 223.5 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 185.7 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 185.7 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 17.0 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 92.1 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 40.4 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.2/389.2 kB 30.9 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 0.0/48.9 MB ? eta -:--:--
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━╺━━━━━━━━━━━━━ 32.2/48.9 MB 169.9 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 88.9 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 88.9 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 21.6 MB/s eta 0:00:00
 ```
 
 ```python
@@ -57,6 +58,15 @@ random.seed(SEED)
 # fp16 은 CUDA 에서만 (MPS 는 미지원, CPU 는 의미 없음)
 USE_FP16 = (device.type == "cuda")
 print(f"use fp16   : {USE_FP16}")
+
+# matplotlib 한글 폰트 (Colab — NanumGothic). plot 의 한국어가 □ 로 깨지지 않게.
+import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run("apt-get -qq -y install fonts-nanum", shell=True)
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
+plt.rcParams["axes.unicode_minus"] = False
 ```
 
 **▶ 실행 결과**
@@ -67,8 +77,6 @@ VRAM total : 14.56 GiB
 torch      : 2.11.0+cu128
 use fp16   : True
 ```
-
-한국어 TinyStories 데이터셋은 한 줄씩 흩어진 형태라 `<|endoftext|>` 마커를 기준으로 다시 이어 붙여 story 단위로 복원합니다. Ch 26 과 똑같은 30,000 story 를 streaming 으로 읽어 와 학습/검증 셋을 만듭니다. 영어판 Ch 25 가 영어 TinyStories 를 쓴 자리를, 여기서는 한국어 TinyStories 로 그대로 대칭시키는 부분입니다.
 
 ```python
 from datasets import load_dataset, Dataset
@@ -116,7 +124,7 @@ print(raw_train[0]["text"][:400])
 **▶ 실행 결과**
 
 ```text
-rebuilt stories: train=30,000, val=500  (25.7s)
+rebuilt stories: train=30,000, val=500  (22.7s)
 train: Dataset({
     features: ['text'],
     num_rows: 30000
@@ -129,12 +137,6 @@ val  : Dataset({
 === sample story (same as Ch 26) ===
 한때 벤이라는 이름의 어린 소년이 있었어요. 벤은 주변 세계를 탐험하는 것을 좋아했답니다. 그는 가게에 전시되어 있던 아름다운 꽃병들 같은 멋진 것들을 많이 봤어요. 어느 날, 벤은 가게를 거닐다가 정말 특별한 꽃병을 발견했죠. 벤은 그 꽃병을 보고 …(뒤 240자 생략)
 ```
-
-**결과 해석**
-
-train 30,000 / val 500 story 를 약 26초 만에 복원했고, 첫 story 가 Ch 26 과 동일한 동화 문장으로 시작합니다. 같은 데이터 위에서 scratch(Ch 26)와 continual(Ch 27)을 비교할 토대가 갖춰졌습니다.
-
-여기서는 SKT 가 공개한 기성 KoGPT2 본체와 토크나이저를 불러옵니다. `AutoTokenizer` 가 영어 GPT2 로 잘못 fallback 하는 문제를 피하려고 `PreTrainedTokenizerFast` 로 special token 을 직접 지정해 로드합니다. Ch 26 의 3M scratch 모델과 비교해 파라미터/vocab 규모가 얼마나 커졌는지 함께 출력합니다.
 
 ```python
 from transformers import PreTrainedTokenizerFast, AutoModelForCausalLM
@@ -178,7 +180,7 @@ transformer.h.{0...11}.attn.masked_bias | UNEXPECTED |  |
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
-load done: 10.9s
+load done: 10.0s
 
 === model ===
 #params           : 125.16 M  (Ch 26 was approx. 3M; Ch 27 is approx. 42x larger)
@@ -194,12 +196,6 @@ model: GPT2LMHeadModel
   - body : GPT2Model  (Decoder, causal attention)
   - head : Linear(in=768, out=51200)
 ```
-
-**결과 해석**
-
-본체가 125.16M 파라미터로 Ch 26(약 3M) 대비 42배, vocab 도 51,200 으로 13배 큽니다. 본체와 lm_head 가 weight tying 으로 묶여 있어, scratch 가 아닌 이미 한국어를 학습한 무게 위에서 계속 학습한다는 점이 출발선의 차이입니다.
-
-토큰화한 story 끝마다 EOS 를 붙여 경계를 표시한 뒤, 모든 토큰을 이어 붙여 `BLOCK_SIZE=128` 단위로 잘라 고정 길이 학습 청크를 만듭니다. CausalLM 표준 전처리로, Ch 25/26 과 동일한 group_texts 방식입니다.
 
 ```python
 BLOCK_SIZE = 128   # Ch 26 과 동일
@@ -251,12 +247,6 @@ approx. train tokens: 6.21 M
 first chunk decode (first 200 chars):
 한때 벤이라는 이름의 어린 소년이 있었어요. 벤은 주변 세계를 탐험하는 것을 좋아했답니다. 그는 가게에 전시되어 있던 아름다운 꽃병들 같은 멋진 것들을 많이 봤어요. 어느 날, 벤은 가게를 거닐다가 정말 특별한 꽃병을 발견했죠. 벤은 그 꽃병을 보고 …(뒤 60자 생략)
 ```
-
-**결과 해석**
-
-30,000 story 가 128 토큰 청크 48,513 개(약 6.21M 토큰)로 정리됐습니다. 첫 청크를 디코딩하면 원문 story 가 그대로 복원되어 전처리가 손상 없이 동작했음을 알 수 있습니다.
-
-학습 전 KoGPT2 가 같은 prompt 에 어떻게 반응하는지 먼저 찍어 둡니다. 학습 후 출력과 나란히 놓고 continual pretraining 의 효과를 보기 위한 기준선입니다. KoGPT2 는 이미 한국어 일반 코퍼스로 사전학습됐으므로, 동화체가 아닌 일반 도메인 풍 문장이 나오는 점을 눈여겨봅니다.
 
 ```python
 PROMPTS = [
@@ -314,12 +304,6 @@ BEFORE continual pretraining - KoGPT2 pretrained on Korean corpus, as-is
 우리는 하나님의 말씀을 통해서 하나님의 능력을 충분히 깨닫습니다.
 그 능력은 하나님의 말씀을 통해서 우리에게 전달되기도 하고, 또 하나
 ```
-
-**결과 해석**
-
-학습 전 출력은 동화와 무관한 일반 도메인 문장(구어체, 종교적 서술 등)으로 흘러갑니다. KoGPT2 가 한국어 자체는 유창하게 다루지만 TinyStories 동화체에는 아직 적응하지 않았음을 보여 줍니다.
-
-이제 continual pretraining 을 실제로 수행합니다. 핵심은 `learning_rate=2e-5` 로, Ch 26 scratch 의 5e-4 보다 훨씬 작은 값입니다. 이미 학습된 표상을 덮어쓰지 않고 살살 적응시키기 위함이며, 이것이 scratch 와 continual 을 가르는 거의 유일한 큰 차이입니다. VRAMCallback 으로 T4 메모리 사용량도 함께 추적합니다.
 
 ```python
 from transformers import (DataCollatorForLanguageModeling, Trainer,
@@ -399,18 +383,12 @@ if torch.cuda.is_available():
 [transformers] `loss_type=None` was set in the config but it is unrecognized. Using the default loss: `ForCausalLMLoss`.
 <IPython.core.display.HTML object>
 === continual pretraining summary ===
-elapsed       : 17.08 min
+elapsed       : 17.11 min
 global_step   : 3033
 train_loss    : 2.4862
 vocab ln (random baseline): 10.8435  (we start MUCH lower than this)
 final peak    : 1455 MiB
 ```
-
-**결과 해석**
-
-T4 에서 약 17분 만에 1 epoch(3,033 step)이 끝났고 train_loss 2.49 로 수렴했습니다. 무작위 baseline ln(51,200)≈10.84 보다 훨씬 낮은 곳에서 출발한다는 점이 scratch 와 다른 점이고, peak VRAM 도 약 1,455 MiB 로 16GB T4 에 여유 있게 들어갑니다.
-
-학습 곡선과 VRAM 추이를 함께 그려 수렴 양상과 메모리 안정성을 한눈에 봅니다.
 
 ```python
 # loss curve + VRAM trace
@@ -427,20 +405,20 @@ if eval_pts:
     ax1.plot([s for s, _ in eval_pts], [l for _, l in eval_pts], "s-",
              color="tab:red", label="eval")
 ax1.axhline(math.log(tokenizer.vocab_size), ls=":", color="gray",
-            label=f"uniform baseline = ln({tokenizer.vocab_size}) approx. {math.log(tokenizer.vocab_size):.2f}")
+            label=f"무작위 추측 기준선 = ln({tokenizer.vocab_size}) approx. {math.log(tokenizer.vocab_size):.2f}")
 ax1.set_xlabel("step"); ax1.set_ylabel("cross-entropy loss")
-ax1.set_title("KoGPT2 continual pretraining on TinyStories-Korean - loss")
+ax1.set_title("KoGPT2 이어서 사전학습 (TinyStories-Korean) - loss")
 ax1.grid(True, alpha=0.3); ax1.legend()
 
 # VRAM (CUDA 만)
 if vram_cb.steps:
     ax2.plot(vram_cb.steps, vram_cb.peak_MiB, "o-", color="tab:green",
-             label="peak VRAM (per log window)")
+             label="최대 VRAM (로그 구간별)")
     ax2.set_title(f"VRAM trace  (bs=4, grad_accum=4, fp16, n_pos={BLOCK_SIZE})")
 else:
-    ax2.text(0.5, 0.5, "VRAM trace available on CUDA only",
+    ax2.text(0.5, 0.5, "VRAM 추적은 CUDA 에서만 가능",
              ha="center", va="center", transform=ax2.transAxes)
-    ax2.set_title("VRAM trace - CUDA only")
+    ax2.set_title("VRAM 추적 - CUDA 전용")
 ax2.set_xlabel("step"); ax2.set_ylabel("VRAM (MiB)")
 ax2.grid(True, alpha=0.3); ax2.legend()
 
@@ -450,12 +428,6 @@ plt.tight_layout(); plt.show()
 **▶ 실행 결과**
 
 ![output](../assets/27-ko_gpt2_continual_pretrain-out1.png)
-
-**결과 해석**
-
-train/eval loss 모두 uniform baseline 보다 한참 아래에서 매끄럽게 내려가고, peak VRAM 도 학습 내내 평탄하게 유지됩니다. 작은 lr 로도 손실이 안정적으로 감소해 continual pretraining 이 정상 진행됐음을 보여 줍니다.
-
-학습이 끝난 같은 모델에 동일한 prompt 를 다시 넣어 봅니다. 학습 전 출력과 비교하면 동화체로 얼마나 적응했는지 직접 확인할 수 있습니다.
 
 ```python
 torch.manual_seed(SEED)
@@ -484,12 +456,6 @@ AFTER continual pretraining - KoGPT2 + TinyStories-Korean 30K
 [prompt] 큰 개가
 큰 개가 친구들에게 말했죠, "걱정 마, 작은 개야. 우리는 너를 돕고 싶어, 작은 개야." 그들은 공을 되찾으려고 해요. 그들은 계속 시도해요. 그들은 공을 잡으려고 해요. 하지만 공이 너무 커서 쉽지 않아요. 그들은 미끄러져 넘어지고 말죠.
 ```
-
-**결과 해석**
-
-세 prompt 모두 "릴리", "작은 소녀", "공원" 같은 동화 어휘와 부드러운 종결어미("했어요", "했지요")로 이어지는 TinyStories 풍 문장을 생성합니다. 같은 본체가 30,000 동화만으로 도메인을 확실히 갈아탔음을 보여 줍니다.
-
-학습 전후를 prompt 별로 나란히 출력해 변화를 직접 대비합니다.
 
 ```python
 # Ch 27 within-model BEFORE vs AFTER comparison
@@ -533,12 +499,6 @@ BEFORE  : 되어버린 것입니다.
 그 능력은 하나님의 말씀을 통해서 우리에게 전달되기도 하고, 또 하나
 AFTER   : 친구들에게 말했죠, "걱정 마, 작은 개야. 우리는 너를 돕고 싶어, 작은 개야." 그들은 공을 되찾으려고 해요. 그들은 계속 시도해요. 그들은 공을 잡으려고 해요. 하지만 공이 너무 커서 쉽지 않아요. 그들은 미끄러져 넘어지고 말죠.
 ```
-
-**결과 해석**
-
-같은 prompt 에서 BEFORE 는 일반 도메인(구어체/종교적 서술), AFTER 는 일관된 동화체로 갈립니다. 본체와 토크나이저는 그대로 두고 데이터만 바꿔 도메인을 옮기는 continual pretraining 의 효과가 한 모델 안에서 선명하게 드러납니다.
-
-마지막으로 Ch 26 의 3M scratch 모델 출력까지 끌어와 세 결과를 한 표로 비교합니다.
 
 ```python
 # Ch 26 의 TRAINED model generation 결과 인용
@@ -603,7 +563,3 @@ Ch 27 BEFORE    : 되어버린 것입니다.
 그 능력은 하나님의 말씀을 통해서 우리에게 전달되기도 하고, 또 하나
 Ch 27 AFTER     : 친구들에게 말했죠, "걱정 마, 작은 개야. 우리는 너를 돕고 싶어, 작은 개야." 그들은 공을 되찾으려고 해요. 그들은 계속 시도해요. 그들은 공을 잡으려고 해요. 하지만 공이 너무 커서 쉽지 않아요. 그들은 미끄러져 넘어지고 말죠.
 ```
-
-**결과 해석**
-
-Ch 26 scratch 와 Ch 27 AFTER 는 둘 다 자연스러운 동화체를 내지만, 125M 본체에서 출발한 Ch 27 쪽이 더 길고 일관된 서사를 이어 갑니다. 사전학습된 표상을 살린 continual pretraining 이 적은 학습으로도 풍부한 결과를 낸다는 점을 보여 줍니다.
