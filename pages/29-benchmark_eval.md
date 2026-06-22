@@ -276,5 +276,4 @@ $$\log P(c \mid \text{prompt}) = \sum_{i=1}^{k} \log P(t_i \mid \text{prompt}, t
 
 ## 이 장의 구성
 
-- [29-1. 실습](29-benchmark_eval-practice.md)
-- [29-2. 정리와 FAQ](29-benchmark_eval-wrapup.md)
+[[SubPages]]

@@ -111,7 +111,7 @@
   * [28-2. 변형: 더 많은 데이터 / 다른 response_template / LoRA](pages/28-sft-variation.md)
   * [28-3. 정리와 FAQ](pages/28-sft-wrapup.md)
 * [29. 분야별 벤치마크 평가 (Benchmark Evaluation)](pages/29-benchmark_eval.md)
-  * [29-1. 실습: 벤치마크로 모델 평가](pages/29-benchmark_eval-practice.md)
+  * [29-1. 실습](pages/29-benchmark_eval-practice.md)
   * [29-2. 정리와 FAQ](pages/29-benchmark_eval-wrapup.md)
 * [30. DPO: 사람 선호로 정렬 (Preference Alignment)](pages/30-dpo.md)
   * [30-1. 실습](pages/30-dpo-practice.md)
