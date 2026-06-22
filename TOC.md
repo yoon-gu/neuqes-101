@@ -125,7 +125,7 @@
   * [32-1. 실습](pages/32-diffusion_intro-practice.md)
   * [32-2. 변형: denoise step 수 비교 (속도 - 품질 trade-off)](pages/32-diffusion_intro-variation.md)
   * [32-3. 정리와 FAQ](pages/32-diffusion_intro-wrapup.md)
-* [33. 작은 diffusion LM으로 영어 동화 끝까지 생성하기](pages/33-diffusion_train.md)
+* [33. Diffusion LM 샘플러 교정: 반복 억제 생성](pages/33-diffusion_train.md)
   * [33-1. 실습](pages/33-diffusion_train-practice.md)
   * [33-2. 해부: 모델이 정말 조건부를 배웠나 (눈대중 말고 숫자로)](pages/33-diffusion_train-anatomy.md)
   * [33-3. 변형: 샘플러만 바꿔보기](pages/33-diffusion_train-variation.md)

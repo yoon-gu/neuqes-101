@@ -25,7 +25,7 @@
 
 ### "모델이 좋아야 샘플러가 산다"
 
-여기서 한 가지를 분명히 해 둘 필요가 있습니다. 반복 억제 샘플러가 **collapse한 모델**(삽질 코너에서 vocab·step을 되돌려 망가뜨린 ablation)을 살려내는 건 **아닙니다.** 그렇게 유니그램만 외운 모델에 이 샘플러를 붙였다면 반복은 줄었겠지만 여전히 의미 없는 문장만 나왔을 것입니다. 유니그램 marginal만 학습한 모델에는 애초에 뽑아낼 조건부 구조가 없기 때문입니다.
+여기서 한 가지를 분명히 해 둘 필요가 있습니다. 반복 억제 샘플러가 **붕괴한 모델**(삽질 코너에서 vocab·step을 되돌려 망가뜨린 ablation)을 살려내는 건 **아닙니다.** 그렇게 유니그램만 외운 모델에 이 샘플러를 붙였다면 반복은 줄었겠지만 여전히 의미 없는 문장만 나왔을 것입니다. 유니그램 marginal만 학습한 모델에는 애초에 뽑아낼 조건부 구조가 없기 때문입니다.
 
 이번 장에서 반복 억제가 효과를 본 건 **모델이 먼저 제대로 학습됐기 때문**입니다. 고정-t(0.15) top-1 accuracy가 0.262에서 0.717로 오른, 조건부 구조를 실제로 익힌 모델 위에서만 샘플러의 미세 조정이 빛을 봅니다. 샘플러는 좋은 모델의 잠재력을 끌어낼 뿐, 없는 능력을 만들어 내지는 못합니다.
 
@@ -39,13 +39,13 @@
 정답은 한 점이 아니라 "얼마나 안전하게 vs 얼마나 다채롭게"의 저울질입니다. 작은 모델일수록 안전한 쪽으로 살짝 기울여 두는 편이 읽을 만한 결과를 줍니다.
 
 ```python
-print("=== sampler sweep (same trained model, conditional 'Once upon a time') ===")
+print("=== 샘플러 sweep (같은 학습 모델, 조건부 'Once upon a time') ===")
 pid = tokenizer("Once upon a time", add_special_tokens=False)["input_ids"]
 configs = [
-    ("A) baseline temp0.7/topk40 (no repeat suppression)", dict(temperature=0.7, top_k=40, top_p=1.0, rep_penalty=1.0, no_immediate_repeat=False)),
-    ("B) rep1.3 + no-immediate-repeat + topp0.92",         dict(temperature=0.8, top_p=0.92, rep_penalty=1.3, no_immediate_repeat=True)),
-    ("C) rep1.2 + temp0.9 + topp0.95",                     dict(temperature=0.9, top_p=0.95, rep_penalty=1.2, no_immediate_repeat=True)),
-    ("D) B + block16 (denser)",                            dict(temperature=0.8, top_p=0.92, rep_penalty=1.3, no_immediate_repeat=True, block=16)),
+    ("A) 기존 temp0.7/topk40 (반복억제 없음)", dict(temperature=0.7, top_k=40, top_p=1.0, rep_penalty=1.0, no_immediate_repeat=False)),
+    ("B) rep1.3 + 인접금지 + topp0.92",        dict(temperature=0.8, top_p=0.92, rep_penalty=1.3, no_immediate_repeat=True)),
+    ("C) rep1.2 + temp0.9 + topp0.95",         dict(temperature=0.9, top_p=0.95, rep_penalty=1.2, no_immediate_repeat=True)),
+    ("D) B + block16 (더 촘촘)",                dict(temperature=0.8, top_p=0.92, rep_penalty=1.3, no_immediate_repeat=True, block=16)),
 ]
 torch.manual_seed(SEED)
 for name, kw in configs:
@@ -57,25 +57,25 @@ for name, kw in configs:
 **▶ 실행 결과**
 
 ```text
-=== sampler sweep (same trained model, conditional 'Once upon a time') ===
+=== 샘플러 sweep (같은 학습 모델, 조건부 'Once upon a time') ===
 
------ A) baseline temp0.7/topk40 (no repeat suppression) -----
-[0]  Once upon a time, there was a little girl named Lily. She loved to play with her toy friends. One day, Lily's mom came to play with her toys. She saw a big ball and wanted to play with it.
+----- A) 기존 temp0.7/topk40 (반복억제 없음) -----
+[0]  Once upon a time, there was a little girl named Lily. She loved to play with her toy friends. One day, Lily's mom came to play with her …(뒤 53자 생략)
 
 Lily's mom asked her to help her mom. She asked her mom if she could play with her toy ball. Lily said, "Yes, you can play with my ball with it."
 
 Lily and her mom said,
-[1]  Once upon a time, there was a little girl named Lily. She loved to play with her toys and her friends. One day, she went to the park with her friends. She wanted to play with her and toys because she wanted to play with it.
+[1]  Once upon a time, there was a little girl named Lily. She loved to play with her toys and her friends. One day, she went to the park wi …(뒤 88자 생략)
 
 Suddenly, Lily's friend came outside and saw a big dog playing in the park. It was a big, red red ball, and they were playing in the p
 
------ B) rep1.3 + no-immediate-repeat + topp0.92 -----
-[0]  Once upon a time, there was a little girl named Lily. She loved to play with her friends and explore in her backyard. One day, she went outside to the park when she saw a big ball! It looked so pretty that it wanted to catch it. 
+----- B) rep1.3 + 인접금지 + topp0.92 -----
+[0]  Once upon a time, there was a little girl named Lily. She loved to play with her friends and explore in her backyard. One day, she went …(뒤 94자 생략)
 
 Lily picked up and tried to grab it inside. But then, she found a rock on the ground and started to run away. 
 
 The boy said, "I
-[1]  Once upon a time, there was a little girl named Lily. She loved to play outside and play with her toys. One day, she went to the park and saw a big slide. It looked so pretty fun. Lily laughed and said, "Look at my car! 
+[1]  Once upon a time, there was a little girl named Lily. She loved to play outside and play with her toys. One day, she went to the park a …(뒤 85자 생략)
 
 "Lily's go home me!"
 Her mom replied, "I'm sorry, sweet mommy. I don't want it again soon." 
@@ -83,20 +83,20 @@ Her mom replied, "I'm sorry, sweet mommy. I don't want it again soon."
 The man smiled and said, "Yes, I love you. 
 
 ----- C) rep1.2 + temp0.9 + topp0.95 -----
-[0]  Once upon a time, there was a little girl named Lily. She loved to play with her toys and leaves together. One day, she decided to go outside and play outside. 
+[0]  Once upon a time, there was a little girl named Lily. She loved to play with her toys and leaves together. One day, she decided to go o …(뒤 25자 생략)
 
-Suddenly, she saw a big red rock on the ground. She picked it up and held it tightly. Lily was sad and cried and said, "It's so cool! I won't hurt you!" Her mom replied, "Yes, let's go or explore."
-[1]  Once upon a time, there was a little girl named Lily. She loved to play with her toys and make pretty blankets. One day, she went to the park and saw a big dog who was playing in the grass. 
+Suddenly, she saw a big red rock on the ground. She picked it up and held it tightly. Lily was sad and cried and said, "It's so cool! I won' …(뒤 57자 생략)
+[1]  Once upon a time, there was a little girl named Lily. She loved to play with her toys and make pretty blankets. One day, she went to th …(뒤 55자 생략)
 
 Later that day, Lily's mom heard her said, "I'm sorry, but you can't have some food." Her mom replied, "Don't worry, but I'll touch it." 
 
 Lily felt sad too, but then,
 
------ D) B + block16 (denser) -----
-[0]  Once upon a time, there was a little girl named Lily. She loved to play with her toys. One day, she was playing in the park and said that it would be a lot of fun things! 
+----- D) B + block16 (더 촘촘) -----
+[0]  Once upon a time, there was a little girl named Lily. She loved to play with her toys. One day, she was playing in the park and said th …(뒤 36자 생략)
 
-Lily's mom came and replied, "Don't worry, Lily. I'm sorry, but you can change your clothes." Her mom replied, "I don't want to do it again!" But then, they saw a big red ball. It had an
-[1]  Once upon a time, there was a little girl Lily. She loved to play with her toys and pretty blankets on her shoes. One day, she went to the park when she saw a big box! It looked so beautiful that it had ever seen before. 
+Lily's mom came and replied, "Don't worry, Lily. I'm sorry, but you can change your clothes." Her mom replied, "I don't want to do it again! …(뒤 46자 생략)
+[1]  Once upon a time, there was a little girl Lily. She loved to play with her toys and pretty blankets on her shoes. One day, she went to …(뒤 86자 생략)
 
 Lily's mom said, "I don't know what to do it!" Her mom replied, "Of course if I have some new things for you." 
 
