@@ -180,6 +180,4 @@ Multi-label 의 핵심 질문: *어떤 카테고리 쌍이 같이 등장하는�
 
 ## 이 장의 구성
 
-- [17-1. 실습](17-ko_multilabel-practice.md)
-- [17-2. 변형 — 합성 샘플 직접 읽기 + threshold 옮겨보기](17-ko_multilabel-variation.md)
-- [17-3. 정리와 FAQ](17-ko_multilabel-wrapup.md)
+[[SubPages]]

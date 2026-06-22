@@ -60,33 +60,33 @@ sample #0  (both categories correct)
 text: 새 현대미술 양식 꽃피운 故강국진 개인전 [SEP] 음성군 충북 혁신도시 본성고 2023년 개교 위해 올인
 
   category   true      prob   pred(>=0.5)  match
-  IT/Science      0    0.0818             0    O
-    Economy      0    0.0519             0    O
-    Society      1    0.6870             1    O
-  Life&Culture      1    0.9546             1    O
-      World      0    0.0375             0    O
-     Sports      0    0.0753             0    O
-   Politics      0    0.0730             0    O
+  IT/Science      0    0.0778             0    O
+    Economy      0    0.0643             0    O
+    Society      1    0.6206             1    O
+  Life&Culture      1    0.9396             1    O
+      World      0    0.0311             0    O
+     Sports      0    0.1226             0    O
+   Politics      0    0.0603             0    O
 
   true:      ['Society', 'Life&Culture']
   predicted: ['Society', 'Life&Culture']
 
 ================================================================================
-sample #5  (partially correct (1 of 2))
+sample #21  (partially correct (1 of 2))
 ================================================================================
-text: 모스크바국제도서전에 한국관 설치…내년에는 주빈국 [SEP] 김천시 내년 예산안 1조1천200억원…올해보다 8.1% 증액
+text: 흑인 미술가의 녹슨 구리거울은 무엇을 비추나 [SEP] 한국형 원격교육 구축 발언하는 유은혜 부총리
 
   category   true      prob   pred(>=0.5)  match
-  IT/Science      0    0.0163             0    O
-    Economy      1    0.2604             0    X
-    Society      0    0.6569             1    X
-  Life&Culture      0    0.4924             0    O
-      World      1    0.5634             1    O
-     Sports      0    0.0226             0    O
-   Politics      0    0.0266             0    O
+  IT/Science      0    0.0906             0    O
+    Economy      0    0.0205             0    O
+    Society      0    0.4847             0    O
+  Life&Culture      1    0.4115             0    X
+      World      0    0.1434             0    O
+     Sports      0    0.0180             0    O
+   Politics      1    0.7287             1    O
 
-  true:      ['Economy', 'World']
-  predicted: ['Society', 'World']
+  true:      ['Life&Culture', 'Politics']
+  predicted: ['Politics']
 
 ================================================================================
 sample #743  (confidently wrong activation)
@@ -104,11 +104,9 @@ text: 넥센 이사회의장으로 허민 영입…현안 해결에 노력 [SEP]
 - **`partially correct`** — 한 주제만 잡고 다른 하나는 놓침. 두 헤드라인 중 *한쪽 신호가 약했거나* 두 카테고리가 서로 헷갈리는 경우.
 - **`confidently wrong`** — 정답이 0 인데 높은 확률로 활성. 결합된 두 헤드라인의 단어가 *제3의 카테고리* 신호와 겹친 경우 (예: 경제+세계 헤드라인이 '정치' 신호처럼 보임).
 
-결정 임계값을 0.1 부터 0.9 까지 옮겨가며 micro F1 과 macro F1 이 어떻게 변하는지 훑어봅니다. 같은 확률값이라도 임계값을 어디에 두느냐에 따라 precision-recall 균형이 달라지므로, 기본 0.5 가 최적인지 곡선으로 확인합니다. micro 와 macro 각각의 최적 임계값과 그때의 F1 을 함께 출력합니다.
-
 ```python
 # threshold 를 옮기면 micro/macro F1 이 어떻게 변하나
-sns.set_theme(style="whitegrid", context="talk")
+sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
 
 thresholds = np.arange(0.1, 0.91, 0.05)
 micro_f1s, macro_f1s = [], []
@@ -126,10 +124,10 @@ fig, ax = plt.subplots(figsize=(9, 5))
 ax.plot(thresholds, micro_f1s, "o-", label="micro F1", color="#5B8DEF")
 ax.plot(thresholds, macro_f1s, "s-", label="macro F1", color="#F47272")
 ax.axvline(0.5, color="black", lw=1.0, ls="--", alpha=0.5)
-ax.text(0.5, ax.get_ylim()[0], "  default 0.5", va="bottom", fontsize=10, alpha=0.6)
-ax.set_xlabel("decision threshold")
+ax.text(0.5, ax.get_ylim()[0], "  기본값 0.5", va="bottom", fontsize=10, alpha=0.6)
+ax.set_xlabel("결정 임계값")
 ax.set_ylabel("F1")
-ax.set_title("Threshold sweep — micro vs macro F1")
+ax.set_title("임계값 스윕 — micro vs macro F1")
 ax.legend()
 plt.tight_layout()
 plt.show()
@@ -145,9 +143,9 @@ print(f"F1 at default 0.5:        micro={micro_f1s[list(np.round(thresholds,2)).
 ![output](../assets/17-ko_multilabel-out3.png)
 
 ```text
-best micro F1 threshold: 0.35  (F1=0.8628)
-best macro F1 threshold: 0.45  (F1=0.8566)
-F1 at default 0.5:        micro=0.8538, macro=0.8520
+best micro F1 threshold: 0.40  (F1=0.8542)
+best macro F1 threshold: 0.55  (F1=0.8508)
+F1 at default 0.5:        micro=0.8500, macro=0.8487
 ```
 
 **해석** — threshold 0.5 가 *항상* 최적은 아닙니다. 활성률이 낮은 카테고리가 있으면 *낮은 threshold* 가 recall 을 끌어올려 F1 이 더 좋아질 수 있습니다. 운영 단계에선 validation set 에서 *카테고리별로* 최적 threshold 를 찾아 저장해 두고 추론 시 적용 (FAQ Q1).
