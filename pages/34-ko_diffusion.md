@@ -13,7 +13,7 @@
 | 챕터 | 언어 | 토크나이저 | 마스킹 방식 | 결과 |
 |---|---|---|---|---|
 | Ch 33 (성공) | 영어 (TinyStories) | ByteLevel BPE, vocab 2048 | 100% `[MASK]` | train_loss 낮고 생성 coherent, top-1 acc 0.717 |
-| **Ch 34 (해결)** | **한국어 (TinyStories-Korean)** | **ByteLevel BPE, vocab 4000** | **80/10/10 (`[MASK]` / 랜덤 / 원본)** | **순진한 이식은 train_loss 7.06 · acc 0.081로 collapse → 80/10/10으로 train_loss 4.13 · acc 0.652 회복, 생성 coherent** |
+| **Ch 34 (해결)** | **한국어 (TinyStories-Korean)** | **ByteLevel BPE, vocab 4000** | **80/10/10 (`[MASK]` / 랜덤 / 원본)** | **순진한 이식은 train_loss 7.06 · acc 0.081로 붕괴 → 80/10/10으로 train_loss 4.13 · acc 0.652 회복, 생성 coherent** |
 
 Ch 33과 Ch 34의 모델 본체(`BertForMaskedLM`, hidden 256/4L/4H, ~4.29M)와 샘플러(carry-over semi-AR, block 32 + 반복억제)는 같습니다. 바뀐 것은 학습 언어와, 그 변화가 드러낸 마스킹 방식 하나입니다. 영어에서 100% `[MASK]`로도 버티던 레시피가 한국어에서 무너지고, 마스킹 대상의 일부를 랜덤 토큰과 원본으로 섞는 80/10/10을 적용하자 손실의 벽 7.0을 완전히 돌파합니다.
 
@@ -109,6 +109,4 @@ AR은 모든 위치를 매 step 감독하고 좌에서 우로 순차적으로 �
 
 ## 이 장의 구성
 
-- [34-1. 실습 — 직접 학습하고 생성해 보기](34-ko_diffusion-practice.md)
-- [34-2. 해부 — 80/10/10이 왜 결정적인가](34-ko_diffusion-anatomy.md)
-- [34-3. 정리와 FAQ](34-ko_diffusion-wrapup.md)
+[[SubPages]]
