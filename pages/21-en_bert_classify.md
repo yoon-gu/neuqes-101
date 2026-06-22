@@ -130,7 +130,7 @@ Ch 20 과 *완전히 동일* — `AutoTokenizer.from_pretrained("bert-base-uncas
 본 챕터의 두 데이터셋이 *같은 토크나이저* 를 공유하지만 *어휘 분포* 는 꽤 다릅니다.
 
 - **Wikitext-103 (MLM 사전학습)**: 일반 위키 어휘 — 지명·인명·과학·역사 용어 (`capital`, `theorem`, `dynasty`, `proton` ...) 가 풍부. 격식 있는 문장 구조.
-- **Yelp polarity (분류 fine-tune)**: Yelp 리뷰(식당·업체) 어휘 — 감성 형용사·구어체 (`amazing`, `terrible`, `loved`, `awful` ...) 가 풍부. 비격식 구어체.
+- **Yelp polarity (분류 fine-tune)**: 영화 리뷰 어휘 — 감성 형용사·구어체 (`amazing`, `terrible`, `loved`, `awful` ...) 가 풍부. 비격식 구어체.
 
 같은 `bert-base-uncased` vocab (Wiki + BookCorpus 학습) 이 두 도메인을 *모두* 합리적으로 커버 — *위키 본문* 의 격식 어휘는 본 챕터 사전학습이 직접 본 분포, *Yelp 감성 어휘* 는 fine-tune 단계에서 본체가 적응. *토크나이저는 운명공동체* 라 vocab 미스매치가 없습니다.
 
@@ -287,5 +287,4 @@ GPT 시대 (Phase 4 Ch 24 이후) 부터는 같은 단어가 *살짝 다른 의�
 
 ## 이 장의 구성
 
-- [21-1. 실습](21-en_bert_classify-practice.md)
-- [21-2. 정리와 FAQ](21-en_bert_classify-wrapup.md)
+[[SubPages]]

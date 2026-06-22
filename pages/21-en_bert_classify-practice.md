@@ -9,13 +9,13 @@
 **▶ 실행 결과**
 
 ```text
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 106.4 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 46.2 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.2/389.2 kB 26.7 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╺━━━━━━ 40.8/48.9 MB 273.1 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 176.6 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 176.6 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 17.6 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 114.2 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 36.9 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.2/389.2 kB 38.2 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 0.0/48.9 MB ? eta -:--:--
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 164.3 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 164.3 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 17.3 MB/s eta 0:00:00
 ```
 
 ```python
@@ -47,6 +47,14 @@ from sklearn.metrics import (
 )
 
 plt.rcParams["axes.unicode_minus"] = False
+
+# matplotlib 한글 폰트 (Colab — NanumGothic). plot 의 한국어가 □ 로 깨지지 않게.
+import matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run("apt-get -qq -y install fonts-nanum", shell=True)
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
 
 # device 자동감지 — Colab(T4) 은 CUDA, 로컬 Mac 은 MPS, 그 외 CPU
 if torch.cuda.is_available():
@@ -81,7 +89,7 @@ GPU:             Tesla T4
 **▶ 실행 결과**
 
 ```text
-Wed Jun 17 21:58:55 2026       
+Mon Jun 22 12:16:39 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -90,7 +98,7 @@ Wed Jun 17 21:58:55 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   36C    P8             10W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   34C    P8              9W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -102,8 +110,6 @@ Wed Jun 17 21:58:55 2026
 |  No running processes found                                                             |
 +-----------------------------------------------------------------------------------------+
 ```
-
-분류 데이터셋인 Yelp polarity 를 불러와 Ch 10 과 같은 seed·크기로 학습 5,000개·검증 1,000개를 추립니다. 두 split 의 양성 비율과 첫 샘플을 출력해 데이터가 한쪽으로 치우치지 않았는지, 텍스트가 어떻게 생겼는지 미리 확인합니다.
 
 ```python
 SEED = 42
@@ -150,8 +156,6 @@ first train sample:
   text:  Decent size, decent selection, decent staff.\n\nI guess that can wholly sum this place up, it's decent.  As with many other stores …(뒤 72자 생략)
 ```
 
-기성 `bert-base-uncased` 토크나이저를 불러와 vocab 크기와 최대 길이를 확인합니다. 예시 문장 하나를 토큰화해 어떤 subword 로 쪼개지는지 보여주는데, `unforgettable` 이 `un / ##for / ##get / ##table` 처럼 조각으로 나뉘는 WordPiece 동작을 눈여겨보면 됩니다.
-
 ```python
 TOKENIZER_NAME = "bert-base-uncased"
 tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_NAME)
@@ -178,8 +182,6 @@ model_max_length: 512
 sample: 'The food was unforgettable and the service was excellent.'
 tokens (15): ['[CLS]', 'the', 'food', 'was', 'un', '##for', '##get', '##table', 'and', 'the', 'service', 'was', 'excellent', '.', '[SEP]']
 ```
-
-Ch 20 과 같은 작은 BERT 구조(hidden 256, layer 4, head 4)를 `BertConfig` 로 정의하고, 이를 무작위 초기화된 `BertForMaskedLM` 으로 만듭니다. 사전학습된 가중치를 쓰지 않고 밑바닥에서 시작하는 것이 이 장의 핵심이라, 총 파라미터 수를 출력해 약 11M 규모임을 확인합니다.
 
 ```python
 # Ch 20 과 같은 작은 BERT 설정
@@ -212,8 +214,6 @@ print(f"Total parameters:  {total:,}  ({total/1e6:.2f} M)")
 Small BERT config: hidden=256, layer=4, head=4
 Total parameters:  11,103,290  (11.10 M)
 ```
-
-MLM 사전학습용 코퍼스로 분류 데이터와는 별개인 일반 도메인 Wikitext-103 을 불러와, 너무 짧거나 긴 줄을 걸러 단락을 추립니다. 이어 토큰화한 뒤 `group_texts` 로 여러 단락을 이어 붙여 128 토큰 블록으로 잘라내는데, 이렇게 고정 길이 블록을 만들어야 MLM 학습에서 패딩 낭비 없이 토큰을 채워 쓸 수 있습니다.
 
 ```python
 # MLM 사전학습용 일반 도메인 코퍼스: Wikitext-103 (분류용 Yelp 와 별도)
@@ -278,8 +278,6 @@ MLM train blocks: 2,100  (block_size=128)
 MLM eval blocks:  428
 ```
 
-MLM 학습 시 배치마다 토큰의 15% 를 골라 가리는 일을 자동으로 해 주는 `DataCollatorForLanguageModeling` 을 만듭니다. `mlm_probability=0.15` 가 BERT 원논문이 쓴 마스킹 비율로, 이 collator 가 정답 라벨도 함께 생성해 줍니다.
-
 ```python
 mlm_collator = DataCollatorForLanguageModeling(
     tokenizer=tokenizer,
@@ -287,8 +285,6 @@ mlm_collator = DataCollatorForLanguageModeling(
     mlm_probability=0.15,
 )
 ```
-
-collator 가 실제로 무슨 일을 하는지 짧은 문장 하나에 한 번 돌려 토큰별 결과를 표로 펼쳐 봅니다. 어떤 자리가 `[MASK]` 로 바뀌고, 어떤 자리는 선택되고도 원본이 유지되거나 다른 토큰으로 바뀌는지, 그리고 라벨이 `-100`(loss 무시)인지 원본 id 인지를 한눈에 대조할 수 있습니다.
 
 ```python
 # 짧은 예시 문장 하나에 collator 한 번 돌려서 어떤 자리가 어떻게 바뀌는지 직접 봅니다.
@@ -357,8 +353,6 @@ print(demo_df.to_string(index=False))
   17    [SEP]          [SEP]      -100             —
 ```
 
-이번에는 64개 블록(약 8천 토큰) 규모의 큰 배치에 collator 를 돌려, 선택 15% 와 그 안의 80-10-10 분배가 통계적으로 맞는지 직접 세어 봅니다. 표본이 작아 약간 흔들리겠지만, 출력된 비율이 이론치 근처로 모이는지 확인하는 것이 목적입니다.
-
 ```python
 # 큰 batch (block 64개 = 약 8000 토큰) 에서 80/10/10 비율이 실제로 맞는지 통계로 확인.
 torch.manual_seed(0)
@@ -385,7 +379,7 @@ print(f"  └─ replaced with [MASK]:   {n_mask:>7,}  ({100 * n_mask / n_select
 print(f"  └─ replaced with random:   {n_random:>7,}  ({100 * n_random / n_selected:5.2f}% of selected)")
 print(f"  └─ kept as original:       {n_kept:>7,}  ({100 * n_kept / n_selected:5.2f}% of selected)")
 print()
-print("Theory: select 15%, split 80-10-10 into [MASK]-random-kept. Small sample wobbles a bit but ratios match.")
+print("이론치: 선택 15% / 그 중 80-10-10 으로 [MASK]-random-kept. 표본이 작아 약간 흔들리지만 비율 일치.")
 ```
 
 **▶ 실행 결과**
@@ -397,10 +391,8 @@ Selected for loss (target 15%):      1,217  (14.86%)
   └─ replaced with random:       121  ( 9.94% of selected)
   └─ kept as original:           135  (11.09% of selected)
 
-Theory: select 15%, split 80-10-10 into [MASK]-random-kept. Small sample wobbles a bit but ratios match.
+이론치: 선택 15% / 그 중 80-10-10 으로 [MASK]-random-kept. 표본이 작아 약간 흔들리지만 비율 일치.
 ```
-
-MLM 사전학습용 `TrainingArguments` 와 `Trainer` 를 구성합니다. T4 에서 fp16 을 켜고 배치 32·3 epoch 로 맞추며, 마지막에 총 학습 step 수를 미리 출력해 한 epoch 당 몇 step 이 도는지 가늠합니다.
 
 ```python
 USE_FP16 = (DEVICE == "cuda")
@@ -449,8 +441,6 @@ MLM fp16:       True
 MLM steps:      195
 ```
 
-이제 MLM 사전학습을 실제로 돌리고 걸린 시간과 평균 train loss 를 출력합니다. 같이 찍는 무작위 기준선(`ln vocab`)과 비교하면, 짧은 학습으로 모델이 언어 패턴을 얼마나 익혔는지 가늠할 수 있습니다.
-
 ```python
 t0 = time.time()
 mlm_result = mlm_trainer.train()
@@ -465,15 +455,9 @@ print(f"random baseline (ln vocab): {math.log(tokenizer.vocab_size):.4f}")
 ```text
 <IPython.core.display.HTML object>
 MLM pretraining done in 0.3 min
-mean train loss: 7.5983
+mean train loss: 7.6027
 random baseline (ln vocab): 10.3262
 ```
-
-**결과 해석**
-
-train loss 7.60 은 무작위 추측 기준선 10.33 보다 분명히 낮아, 단 0.3 분의 짧은 사전학습으로도 모델이 언어 패턴을 일부 익혔음을 보여줍니다. 다만 기준선과의 격차가 크지 않아 학습 강도가 약했음도 함께 드러납니다.
-
-검증 셋으로 MLM 성능을 재서 eval loss 와 이를 지수화한 perplexity 를 출력합니다. perplexity 는 다음 토큰 후보를 평균 몇 개 규모로 좁혔는지를 뜻하므로, 무작위 기준선(vocab 크기)과 비교해 사전학습 효과를 직관적으로 읽을 수 있습니다.
 
 ```python
 mlm_eval_metrics = mlm_trainer.evaluate()
@@ -488,16 +472,10 @@ print(f"(random baseline PPL: {tokenizer.vocab_size:,})")
 ```text
 <IPython.core.display.HTML object>
 <IPython.core.display.HTML object>
-MLM eval loss:        7.2001
-MLM eval perplexity:  1339.60
+MLM eval loss:        7.2124
+MLM eval perplexity:  1356.19
 (random baseline PPL: 30,522)
 ```
-
-**결과 해석**
-
-검증 perplexity 1339.60 은 무작위 기준선 30,522 의 약 1/23 수준으로, 다음 토큰 후보를 3 만 개에서 천여 개 규모로 좁힌 셈입니다. 그래도 절대값이 여전히 높아, 짧은 사전학습으로 얻은 표현이 제한적임을 보여줍니다.
-
-MLM 으로 학습한 본체를 분류 모델로 옮겨 심는 핵심 단계입니다. 같은 구조에 `num_labels=2` 와 `problem_type` 만 더한 분류용 모델을 만든 뒤, MLM 모델의 embeddings·encoder 가중치를 `load_state_dict` 로 복사합니다. 분류용 pooler 만 missing key 로 남는 것을 출력으로 확인하고, 본체와 분류 헤드의 파라미터 비중도 함께 비교합니다.
 
 ```python
 # 분류용 config: 같은 본체 구조 + num_labels=2 + problem_type
@@ -519,9 +497,9 @@ cls_model = BertForSequenceClassification(cls_config)
 
 # MLM 본체 (embeddings + encoder) 를 분류 모델로 *복사* — pooler 까지 같이
 missing, unexpected = cls_model.bert.load_state_dict(mlm_model.bert.state_dict(), strict=False)
-print(f"Body weights copied")
-print(f"  missing keys (classification-only): {len(missing)}  e.g. {missing[:3] if missing else []}")
-print(f"  unexpected keys (MLM-only surplus): {len(unexpected)}  e.g. {unexpected[:3] if unexpected else []}")
+print(f"본체 가중치 복사 완료")
+print(f"  missing keys (분류 측에만 있는 부분): {len(missing)}  e.g. {missing[:3] if missing else []}")
+print(f"  unexpected keys (MLM 측 잉여):       {len(unexpected)}  e.g. {unexpected[:3] if unexpected else []}")
 
 # 파라미터 수 비교
 total_cls = sum(p.numel() for p in cls_model.parameters())
@@ -536,17 +514,15 @@ print(f"  total:                                 {total_cls:>10,}  ({total_cls/1
 **▶ 실행 결과**
 
 ```text
-Body weights copied
-  missing keys (classification-only): 2  e.g. ['pooler.dense.weight', 'pooler.dense.bias']
-  unexpected keys (MLM-only surplus): 0  e.g. []
+본체 가중치 복사 완료
+  missing keys (분류 측에만 있는 부분): 2  e.g. ['pooler.dense.weight', 'pooler.dense.bias']
+  unexpected keys (MLM 측 잉여):       0  e.g. []
 
 Classification model parameters:
   body (embeddings + encoder + pooler): 11,072,256  (100.0%)
   classifier head Linear(256, 2):              514  (0.0%)
   total:                                 11,072,770  (11.07 M)
 ```
-
-Yelp 텍스트를 분류용으로 토큰화합니다. MLM 때의 블록 묶기와 달리 문장 단위로 `[CLS]`/`[SEP]` 를 붙이고 `max_length=128` 로 자르며, 정수 라벨을 `labels` 컬럼으로 함께 넣어 `Trainer` 가 바로 학습할 수 있는 형태로 정리합니다.
 
 ```python
 # 분류용 토큰화 — 문장 단위, [CLS]/[SEP] 부착, max_length=128
@@ -577,8 +553,6 @@ Dataset({
 First sample label: 1  (int 0 or 1)
 ```
 
-검증 단계에서 쓸 평가 함수를 정의합니다. logits 에 안정 softmax 를 적용해 클래스 확률을 구한 뒤 accuracy·precision·recall·f1 과, 클래스 1 확률을 입력으로 한 AUC 까지 한 번에 계산해 돌려줍니다.
-
 ```python
 def compute_metrics(eval_pred):
     logits, labels = eval_pred
@@ -597,8 +571,6 @@ def compute_metrics(eval_pred):
         "auc":       float(roc_auc_score(labels, probs_pos)),
     }
 ```
-
-Ch 10 과 똑같은 하이퍼파라미터로 분류 fine-tune 을 돌립니다. 변수는 오직 본체 출발점(기성 DistilBERT 가 아니라 직접 사전학습한 작은 BERT)뿐이라, 학습 시간과 평균 train loss 를 무작위 기준선(`ln 2`)과 비교해 출발점 차이가 어떻게 드러나는지 살핍니다.
 
 ```python
 # Ch 10 과 같은 hyperparams — 변하는 건 *본체 출발점* 뿐
@@ -638,13 +610,9 @@ print(f"random baseline (ln 2): {math.log(2):.4f}")
 ```text
 <IPython.core.display.HTML object>
 Classification fine-tune done in 0.3 min
-mean train loss: 0.6829
+mean train loss: 0.6860
 random baseline (ln 2): 0.6931
 ```
-
-**결과 해석**
-
-train loss 0.6829 가 무작위 기준선 0.6931 을 살짝만 밑돌아, 사전학습이 약했던 본체로 시작한 탓에 분류 학습이 거의 출발선 근처에 머무는 모습입니다.
 
 ```python
 !nvidia-smi
@@ -653,7 +621,7 @@ train loss 0.6829 가 무작위 기준선 0.6931 을 살짝만 밑돌아, 사전
 **▶ 실행 결과**
 
 ```text
-Wed Jun 17 22:00:17 2026       
+Mon Jun 22 12:17:59 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -662,7 +630,7 @@ Wed Jun 17 22:00:17 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   53C    P0             42W /   70W |     797MiB /  15360MiB |     29%      Default |
+| N/A   48C    P0             34W /   70W |     797MiB /  15360MiB |     14%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -671,11 +639,9 @@ Wed Jun 17 22:00:17 2026
 |  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
 |        ID   ID                                                               Usage      |
 |=========================================================================================|
-|    0   N/A  N/A           13366      C   /usr/bin/python3                        794MiB |
+|    0   N/A  N/A            1329      C   /usr/bin/python3                        794MiB |
 +-----------------------------------------------------------------------------------------+
 ```
-
-검증 셋으로 분류 성능을 측정해 accuracy·f1·auc 등 지표를 출력합니다. 앞서 정의한 `compute_metrics` 가 호출되며, 이 값들이 직접 사전학습한 작은 BERT 의 실제 분류 실력을 보여줍니다.
 
 ```python
 cls_eval_metrics = cls_trainer.evaluate()
@@ -691,19 +657,13 @@ for k, v in cls_eval_metrics.items():
 <IPython.core.display.HTML object>
 <IPython.core.display.HTML object>
 Ch 21 small BERT (scratch MLM 3 epoch + classification fine-tune) — eval:
-             eval_loss: 0.6590
-         eval_accuracy: 0.6490
-        eval_precision: 0.6338
-           eval_recall: 0.6508
-               eval_f1: 0.6422
-              eval_auc: 0.7079
+             eval_loss: 0.6680
+         eval_accuracy: 0.6260
+        eval_precision: 0.5948
+           eval_recall: 0.7128
+               eval_f1: 0.6485
+              eval_auc: 0.6821
 ```
-
-**결과 해석**
-
-정확도 0.649, F1 0.642, AUC 0.708 로 50% 무작위 추측보다는 확실히 낫지만, 본격적인 분류기로 보기엔 부족합니다. 짧게 사전학습한 작은 BERT 의 표현력 한계가 그대로 성능 천장으로 나타난 결과입니다.
-
-검증 셋 전체에 대한 예측을 받아 더 자세히 들여다봅니다. 예측 양성 비율로 모델이 한쪽으로 쏠리는지 보고, 맞힌 예측과 틀린 예측의 평균 확신도를 비교해 분류 경계가 얼마나 또렷한지 가늠하며, 클래스별 `classification_report` 까지 출력합니다.
 
 ```python
 preds_output = cls_trainer.predict(cls_eval)
@@ -732,24 +692,18 @@ print(classification_report(
 ```text
 <IPython.core.display.HTML object>
 Logits shape: (1000, 2)
-Predicted positive rate: 49.7%
-Top-1 prob mean: correct=0.5529, wrong=0.5385
+Predicted positive rate: 58.0%
+Top-1 prob mean: correct=0.5463, wrong=0.5355
 
               precision    recall  f1-score   support
 
-    negative     0.6640    0.6473    0.6555       516
-    positive     0.6338    0.6508    0.6422       484
+    negative     0.6690    0.5446    0.6004       516
+    positive     0.5948    0.7128    0.6485       484
 
-    accuracy                         0.6490      1000
-   macro avg     0.6489    0.6491    0.6489      1000
-weighted avg     0.6494    0.6490    0.6491      1000
+    accuracy                         0.6260      1000
+   macro avg     0.6319    0.6287    0.6245      1000
+weighted avg     0.6331    0.6260    0.6237      1000
 ```
-
-**결과 해석**
-
-예측 양성 비율 49.7% 와 두 클래스가 거의 대칭인 precision/recall 은 모델이 한쪽으로 쏠리지 않고 고르게 틀리고 있음을 보여줍니다. 맞힌 예측의 평균 확신도(0.553)와 틀린 예측의 확신도(0.539)가 거의 같다는 점은 분류 경계가 아직 흐릿함을 뜻합니다.
-
-학습 로그에서 step 별 train loss 를 뽑아 곡선으로 그립니다. 무작위 기준선(`ln 2`)을 점선으로 함께 표시해, 손실이 기준선 아래로 얼마나 가파르게 내려가는지를 눈으로 확인하기 위함입니다.
 
 ```python
 log_history = cls_trainer.state.log_history
@@ -759,14 +713,14 @@ if train_logs:
     steps, losses = zip(*train_logs)
     random_baseline = math.log(2)
 
-    sns.set_theme(style="whitegrid", context="talk")
+    sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
     fig, ax = plt.subplots(figsize=(9, 5))
-    ax.plot(steps, losses, "o-", color="#4878D0", label="train CE loss (small BERT)")
+    ax.plot(steps, losses, "o-", color="#4878D0", label="학습 CE loss (small BERT)")
     ax.axhline(random_baseline, color="black", lw=1.0, ls=":",
-               label=f"random baseline (ln 2 = {random_baseline:.3f})")
-    ax.set_xlabel("training step")
+               label=f"랜덤 기준선 (ln 2 = {random_baseline:.3f})")
+    ax.set_xlabel("학습 step")
     ax.set_ylabel("CE loss (binary)")
-    ax.set_title("Yelp classification fine-tune loss — small BERT (Wikitext-103 MLM body)")
+    ax.set_title("Yelp 분류 fine-tune loss — small BERT (Wikitext-103 MLM body)")
     ax.legend()
     plt.tight_layout()
     plt.show()
@@ -778,14 +732,8 @@ else:
 
 ![output](../assets/21-en_bert_classify-out1.png)
 
-**결과 해석**
-
-train CE loss 곡선이 ln 2 기준선 바로 아래에서 천천히 내려가, 학습이 진행되긴 하지만 폭이 매우 좁습니다. 사전학습이 충분했다면 이 곡선이 훨씬 가파르게 떨어졌을 자리입니다.
-
-검증 예측으로 혼동 행렬을 만들어 히트맵으로 그립니다. 행 기준으로 정규화해 클래스별 recall 을 색으로 보여주므로, 어느 클래스를 더 잘 맞히는지 또는 오분류가 양쪽에 고르게 퍼지는지를 한눈에 읽을 수 있습니다.
-
 ```python
-sns.set_theme(style="white", context="talk")
+sns.set_theme(style="white", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
 cm = confusion_matrix(cls_labels, cls_preds, labels=[0, 1])
 cm_norm = cm / cm.sum(axis=1, keepdims=True)
 
@@ -793,13 +741,13 @@ fig, ax = plt.subplots(figsize=(6, 5))
 sns.heatmap(
     cm_norm, annot=cm, fmt="d",
     cmap="Blues", vmin=0, vmax=1,
-    xticklabels=["negative", "positive"],
-    yticklabels=["negative", "positive"],
-    cbar_kws={"label": "row-normalized (recall)"}, ax=ax,
+    xticklabels=["부정", "긍정"],
+    yticklabels=["부정", "긍정"],
+    cbar_kws={"label": "행 기준 정규화 (recall)"}, ax=ax,
 )
-ax.set_xlabel("Predicted")
-ax.set_ylabel("Actual")
-ax.set_title("Ch 21 small BERT — Confusion Matrix")
+ax.set_xlabel("예측값")
+ax.set_ylabel("실제값")
+ax.set_title("Ch 21 small BERT — 혼동 행렬")
 plt.tight_layout()
 plt.show()
 ```
@@ -808,21 +756,15 @@ plt.show()
 
 ![output](../assets/21-en_bert_classify-out2.png)
 
-**결과 해석**
-
-대각선(정답)이 두 클래스 모두 0.65 안팎이고 오분류도 양쪽에 고르게 퍼져, 특정 클래스만 못 맞히는 편향 없이 전반적으로 절반 가까이 틀리는 모습입니다.
-
-기성 사전학습 DistilBERT 로 같은 데이터를 분류한 Ch 10 의 전형적 수치를 기준으로 두고, 이번 장 작은 BERT 의 지표와 나란히 비교합니다. metric 별 차이(delta)를 표로 출력해, 사전학습의 양과 질이 분류 성능 격차로 얼마나 환산되는지 수치로 확인합니다.
-
 ```python
-# Ch 10 reference 수치 — Yelp/yelp_review_full 별점 이진화 5K/1K + DistilBERT fine-tune 2 epoch 의 실측 결과
+# Ch 10 reference 수치 — yelp_polarity 5K/1K + DistilBERT fine-tune 2 epoch 의 *전형적* 결과
 # (실측치는 학습자가 Ch 10 노트북을 돌려 본인 값으로 갱신 권장)
 CH10_REFERENCE = {
-    "accuracy":  0.9030,
-    "precision": 0.8970,
-    "recall":    0.8922,
-    "f1":        0.8946,
-    "auc":       0.9685,
+    "accuracy":  0.93,
+    "precision": 0.93,
+    "recall":    0.93,
+    "f1":        0.93,
+    "auc":       0.98,
 }
 
 ch21_metrics = {k.replace("eval_", ""): v for k, v in cls_eval_metrics.items()
@@ -844,22 +786,16 @@ print(comparison.round(4).to_string(index=False))
 ```text
 Ch10 vs Ch21 — classification metrics
    metric  Ch10 DistilBERT (ref)  Ch21 small BERT  delta (Ch21 - Ch10)
- accuracy                 0.9030           0.6490              -0.2540
-precision                 0.8970           0.6338              -0.2632
-   recall                 0.8922           0.6508              -0.2414
-       f1                 0.8946           0.6422              -0.2524
-      auc                 0.9685           0.7079              -0.2606
+ accuracy                   0.93           0.6260              -0.3040
+precision                   0.93           0.5948              -0.3352
+   recall                   0.93           0.7128              -0.2172
+       f1                   0.93           0.6485              -0.2815
+      auc                   0.98           0.6821              -0.2979
 ```
-
-**결과 해석**
-
-모든 지표에서 Ch 10 의 기성 사전학습 DistilBERT 가 0.24 - 0.26 포인트 앞섭니다. 대규모 코퍼스로 오래 사전학습한 본체와, 위키 2 천 단락으로 잠깐 사전학습한 작은 본체의 차이가 분류 성능 격차로 그대로 환산된 결과입니다.
-
-같은 비교를 막대그래프로 그려 두 모델의 지표 차이를 한눈에 보여 줍니다. metric 마다 두 막대의 높이 차가 일정한지 살피면, 사전학습 출발점이 모든 지표에 고르게 영향을 준다는 점을 시각적으로 확인할 수 있습니다.
 
 ```python
 # bar chart 로 한눈에 보기
-sns.set_theme(style="whitegrid", context="talk")
+sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
 plot_df = comparison.melt(
     id_vars=["metric"],
     value_vars=["Ch10 DistilBERT (ref)", "Ch21 small BERT"],
@@ -873,9 +809,9 @@ sns.barplot(
     ax=ax,
 )
 ax.set_ylim(0, 1.05)
-ax.set_title("Yelp binary classification — Ch10 vs Ch21")
-ax.set_xlabel("metric")
-ax.set_ylabel("score")
+ax.set_title("Yelp 이진 분류 — Ch10 vs Ch21")
+ax.set_xlabel("지표")
+ax.set_ylabel("점수")
 ax.legend(loc="lower right", fontsize=11)
 plt.tight_layout()
 plt.show()
@@ -884,7 +820,3 @@ plt.show()
 **▶ 실행 결과**
 
 ![output](../assets/21-en_bert_classify-out3.png)
-
-**결과 해석**
-
-막대 높이 차이가 모든 지표에서 일정하게 벌어져, 사전학습의 양과 질이 곧 다운스트림 분류 성능으로 이어진다는 점을 한눈에 보여줍니다. 작은 BERT 도 무작위 수준은 넘었지만, 사전학습이 분류의 출발점을 결정한다는 메시지가 분명히 드러납니다.

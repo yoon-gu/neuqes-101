@@ -81,7 +81,7 @@
   * [20-2. 변형: 학습 step 더 늘리거나 block_size 변경](pages/20-en_bert_pretrain-variation.md)
   * [20-3. 정리와 FAQ](pages/20-en_bert_pretrain-wrapup.md)
 * [21. 작은 BERT 이진 분류 (English Yelp Fine-tuning)](pages/21-en_bert_classify.md)
-  * [21-1. 실습: 사전학습 BERT로 Yelp 분류](pages/21-en_bert_classify-practice.md)
+  * [21-1. 실습](pages/21-en_bert_classify-practice.md)
   * [21-2. 정리와 FAQ](pages/21-en_bert_classify-wrapup.md)
 * [22. 작은 BERT 사전학습 (Korean MLM Pretraining)](pages/22-ko_bert_pretrain.md)
   * [22-1. 실습: 한국어 작은 BERT MLM 사전학습](pages/22-ko_bert_pretrain-practice.md)
