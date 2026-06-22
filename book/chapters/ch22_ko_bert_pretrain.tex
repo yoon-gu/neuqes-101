@@ -350,10 +350,10 @@ GPU:             Tesla T4
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 23:23:57 2026
+Mon Jun 22 12:19:24 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 39C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 45C P8 11W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -986,9 +986,9 @@ print(f"loss positions:        {n_loss_pos:>4} / {total_tokens}  "
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 batch shape: input_ids=(2, 128), labels=(2, 128)
-masked tokens (call 1):   31 / 256  (12.11%)
+masked tokens (call 1):   35 / 256  (13.67%)
 masked tokens (call 2):   26 / 256  (10.16%)
-loss positions:          36 / 256  (14.06%)  (labels != -100)
+loss positions:          45 / 256  (17.58%)  (labels != -100)
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1368,20 +1368,20 @@ for sent in test_sentences:
 \begin{bookoutputbox}
 Training Loss  Validation Loss  Epoch
 -------------  ---------------  -----
-No log         10.441866        0
+No log         10.425517        0
 ==============================================================================
 BEFORE pretraining  (random init body)
 ==============================================================================
-  eval_loss       : 10.4419   (random baseline ln V = 10.3735)
-  eval_perplexity : 34,265     (random baseline V    = 32,000)
+  eval_loss       : 10.4255   (random baseline ln V = 10.3735)
+  eval_perplexity : 33,709     (random baseline V    = 32,000)
 input: 대한민국의 수도는 [MASK]이다.
-  top-5 before pretraining: ['침체기', '##로나', '도드라', '##쿤', '안정세']
+  top-5 before pretraining: ['##희정', '해석', '찬성', '전한', 'par']
 
 input: 태양계에는 행성이 [MASK] 개 있다.
-  top-5 before pretraining: ['나와서', '이구', '소풍', '하나하나', '책정']
+  top-5 before pretraining: ['이씨', '저지른', '1958', '몰입', '끄집어내']
 
 input: 이 영화 정말 [MASK].
-  top-5 before pretraining: ['써도', '압수', 'EV', '새콤', '만반']
+top-5 before pretraining: ['계약서', '서귀', '스페인어', '드세요', 'William']
 ...
 \end{bookoutputbox}
 \par\vspace{0.9em}
@@ -1411,11 +1411,11 @@ print(
 \begin{bookoutputbox}
 Epoch  Training Loss  Validation Loss
 -----  -------------  ---------------
-1      7.639146       7.667417
-2      7.386172       7.537118
+1      7.636452       7.672749
+2      7.385564       7.539130
 
 Korean MLM pretraining done in 0.3 min
-mean train loss: 7.7968
+mean train loss: 7.7967
 random baseline loss (uniform over vocab): 10.3735
 \end{bookoutputbox}
 \par\vspace{0.9em}
@@ -1429,10 +1429,10 @@ random baseline loss (uniform over vocab): 10.3735
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 23:25:01 2026
+Mon Jun 22 12:20:24 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 51C P0 40W / 70W | 3449MiB / 15360MiB | 57% Default
+N/A 59C P0 41W / 70W | 3449MiB / 15360MiB | 54% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1464,8 +1464,19 @@ if train_logs:
     steps, losses = zip(*train_logs)
     random_baseline = math.log(tokenizer.vocab_size)
 
-    sns.set_theme(style="whitegrid", context="talk")
+    sns.set_theme(
+        style="whitegrid",
+        context="talk",
+        font="NanumGothic",
+        rc={"axes.unicode_minus": False},
+    )
     fig, ax = plt.subplots(figsize=(9, 5))
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=15]
     ax.plot(
         steps,
         losses,
@@ -1473,12 +1484,6 @@ if train_logs:
         color="#4878D0",
         label="학습 MLM loss",
     )
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=17]
     ax.axhline(random_baseline, color="black", lw=1.0, ls=":",
                label=f"랜덤 기준선 (ln V = {random_baseline:.2f})")
     ax.set_xlabel("학습 step")
@@ -1486,6 +1491,12 @@ if train_logs:
     ax.set_title("MLM 학습 loss — 한국어 위키백과 위에서 처음부터 학습한 small BERT")
     ax.legend()
     plt.tight_layout()
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{5\baselineskip}
+\begin{lstlisting}[firstnumber=29]
     plt.show()
 else:
     print("No train loss logs found.")
@@ -1534,14 +1545,14 @@ print(
 \begin{bookoutputbox}
 Training Loss  Validation Loss  Epoch
 -------------  ---------------  -----
-7.386172       7.513282         2
+7.385564       7.513839         2
 === eval (held-out Korean Wikipedia paragraphs) ===
-               eval_loss: 7.5133
+               eval_loss: 7.5138
 
-  MLM loss:               7.5133
-  perplexity (exp loss):  1832.22
+  MLM loss:               7.5138
+  perplexity (exp loss):  1833.24
   random baseline PPL:    32,000  (uniform over vocab)
-  -> model narrowed vocab to approx. 1832 candidates per masked position
+  -> model narrowed vocab to approx. 1833 candidates per masked position
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1596,19 +1607,19 @@ for sent in test_sentences:
 \begin{bookoutputbox}
 Training Loss  Validation Loss  Epoch
 -------------  ---------------  -----
-7.386172       7.517107         2
+7.385564       7.524879         2
 ==============================================================================
 AFTER pretraining  (2 epoch MLM)
 ==============================================================================
-  eval_loss       : 7.5171   (before: 10.4419)
-  eval_perplexity : 1,839.24        (before: 34,265)
-  -> narrowed vocab to approx. 1839 candidates per masked position
+  eval_loss       : 7.5249   (before: 10.4255)
+  eval_perplexity : 1,853.59        (before: 33,709)
+  -> narrowed vocab to approx. 1854 candidates per masked position
 
 input: 대한민국의 수도는 [MASK]이다.
-  top-5 after pretraining: ['.', '##의', ',', '##는', '##을']
+  top-5 after pretraining: ['.', '##의', ',', '##에', '##는']
 
 input: 태양계에는 행성이 [MASK] 개 있다.
-  top-5 after pretraining: ['.', ',', '##의', '##에', '##다']
+  top-5 after pretraining: ['.', '##의', '##다', '##에', ',']
 
 ...
 \end{bookoutputbox}
@@ -1638,8 +1649,8 @@ print(metric_compare.round(4).to_string(index=False))
 \begin{bookoutputbox}
 Before vs After -- eval metrics
          metric  before (random)  after (2 epoch)  random baseline
-      eval_loss          10.4419           7.5171          10.3735
-eval_perplexity       34264.5277        1839.2378       32000.0000
+      eval_loss          10.4255           7.5249          10.3735
+eval_perplexity       33708.8968        1853.5880       32000.0000
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1647,7 +1658,12 @@ eval_perplexity       34264.5277        1839.2378       32000.0000
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
-sns.set_theme(style="whitegrid", context="talk")
+sns.set_theme(
+    style="whitegrid",
+    context="talk",
+    font="NanumGothic",
+    rc={"axes.unicode_minus": False},
+)
 fig, axes = plt.subplots(1, 2, figsize=(12, 5))
 
 loss_values = [pre_eval_loss, post_eval_loss]
@@ -1658,17 +1674,17 @@ axes[0].bar(
     color=["#999999", "#EE854A"],
 )
 axes[0].axhline(random_baseline_loss, color="black", lw=1.0, ls=":",
-                label=f"랜덤 기준선 ln V = {random_baseline_loss:.2f}")
-axes[0].set_ylabel("eval_loss")
-axes[0].set_title("MLM eval_loss")
-axes[0].legend(loc="upper right", fontsize=10)
-
 \end{lstlisting}
 
 \noindent\emph{앞 블록은 숫자 결과를 그림으로 확인하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=17]
+                label=f"랜덤 기준선 ln V = {random_baseline_loss:.2f}")
+axes[0].set_ylabel("eval_loss")
+axes[0].set_title("MLM eval_loss")
+axes[0].legend(loc="upper right", fontsize=10)
+
 ppl_values = [pre_eval_ppl, post_eval_ppl]
 axes[1].bar(
     loss_labels,
@@ -1680,6 +1696,12 @@ axes[1].axhline(tokenizer.vocab_size, color="black", lw=1.0, ls=":",
                 label=f"랜덤 기준선 V = {tokenizer.vocab_size:,}")
 axes[1].set_ylabel("perplexity (log scale)")
 axes[1].set_title("MLM perplexity")
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
+
+\Needspace{6\baselineskip}
+\begin{lstlisting}[firstnumber=33]
 axes[1].legend(loc="upper right", fontsize=10)
 
 plt.tight_layout()
@@ -1840,18 +1862,18 @@ for _, row in top5_compare.iterrows():
 Before (random) vs Ours (small BERT, ko wiki 5K) vs Reference (klue/bert-ba...
 ===========================================================================...
 input: 대한민국의 수도는 [MASK]이다.
-  before (random)            : 침체기, ##로나, 도드라, ##쿤, 안정세
-  ours  (small, 5K para)     : ., ##의, ,, ##는, ##을
+  before (random)            : ##희정, 해석, 찬성, 전한, par
+  ours  (small, 5K para)     : ., ##의, ,, ##에, ##는
   ref   (klue/bert-base)     : 서울, 광화문, 평양, 부산, 인천
 
 input: 태양계에는 행성이 [MASK] 개 있다.
-  before (random)            : 나와서, 이구, 소풍, 하나하나, 책정
-  ours  (small, 5K para)     : ., ,, ##의, ##에, ##다
+  before (random)            : 이씨, 저지른, 1958, 몰입, 끄집어내
+  ours  (small, 5K para)     : ., ##의, ##다, ##에, ,
   ref   (klue/bert-base)     : 여러, 몇, 두, 세, 다섯
 
 input: 이 영화 정말 [MASK].
-  before (random)            : 써도, 압수, EV, 새콤, 만반
-  ours  (small, 5K para)     : ., ##의, ,, (, ##년
+  before (random)            : 계약서, 서귀, 스페인어, 드세요, William
+  ours  (small, 5K para)     : ., ##의, ,, ), ##다
   ref   (klue/bert-base)     : 좋아, [UNK], ., 좋아해, 좋아한다
 ...
 \end{bookoutputbox}

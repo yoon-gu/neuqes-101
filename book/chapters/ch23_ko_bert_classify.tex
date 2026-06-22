@@ -448,10 +448,10 @@ GPU:             Tesla T4
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 23:26:30 2026
+Mon Jun 22 12:21:55 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 38C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 34C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -905,12 +905,12 @@ print(
 \begin{bookoutputbox}
 Epoch  Training Loss  Validation Loss
 -----  -------------  ---------------
-1      8.120042       7.842206
-2      7.549725       7.821717
-3      7.473425       7.805934
+1      8.097981       7.847884
+2      7.552901       7.831939
+3      7.486276       7.821452
 
 MLM pretraining done in 0.2 min
-mean train loss: 7.9162
+mean train loss: 7.9198
 random baseline (ln vocab): 10.3735
 \end{bookoutputbox}
 \par\vspace{0.9em}
@@ -933,9 +933,9 @@ print(f"(random baseline PPL: {tokenizer.vocab_size:,})")
 \begin{bookoutputbox}
 Training Loss  Validation Loss  Epoch
 -------------  ---------------  -----
-7.473425       7.797009         3
-MLM eval loss:        7.7970
-MLM eval perplexity:  2433.31
+7.486276       7.809189         3
+MLM eval loss:        7.8092
+MLM eval perplexity:  2463.13
 (random baseline PPL: 32,000)
 \end{bookoutputbox}
 \par\vspace{0.9em}
@@ -1200,11 +1200,11 @@ print(f"random baseline (ln 2): {math.log(2):.4f}")
 \begin{bookoutputbox}
 Epoch  Train...  Valid...  Accuracy  Preci...  Recall    F1        Auc
 -----  --------  --------  --------  --------  --------  --------  --------
-1      0.688617  0.690369  0.544000  0.621469  0.220441  0.325444  0.557222
-2      0.685710  0.686391  0.551000  0.557870  0.482966  0.517723  0.566904
+1      0.689309  0.691875  0.513000  0.578947  0.088176  0.153043  0.546284
+2      0.689321  0.688512  0.548000  0.561358  0.430862  0.487528  0.554538
 
 Classification fine-tune done in 0.2 min
-mean train loss: 0.6897
+mean train loss: 0.6911
 random baseline (ln 2): 0.6931
 \end{bookoutputbox}
 \par\vspace{0.9em}
@@ -1218,10 +1218,10 @@ random baseline (ln 2): 0.6931
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Sun Jun 21 23:27:37 2026
+Mon Jun 22 12:22:57 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 49C P0 29W / 70W | 821MiB / 15360MiB | 25% Default
+N/A 46C P0 40W / 70W | 821MiB / 15360MiB | 23% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1253,14 +1253,14 @@ for k, v in cls_eval_metrics.items():
 \begin{bookoutputbox}
 Train...  Valid...  Epoch  Accuracy  Preci...  Recall    F1        Auc
 --------  --------  -----  --------  --------  --------  --------  --------
-0.685710  0.686391  2      0.551000  0.557870  0.482966  0.517723  0.566904
+0.689321  0.688512  2      0.548000  0.561358  0.430862  0.487528  0.554538
 Ch 23 small BERT (scratch MLM 3 epoch on Korean Wikipedia + NSMC fine-tune)...
-             eval_loss: 0.6864
-         eval_accuracy: 0.5510
-        eval_precision: 0.5579
-           eval_recall: 0.4830
-               eval_f1: 0.5177
-              eval_auc: 0.5669
+             eval_loss: 0.6885
+         eval_accuracy: 0.5480
+        eval_precision: 0.5614
+           eval_recall: 0.4309
+               eval_f1: 0.4875
+              eval_auc: 0.5545
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1305,17 +1305,17 @@ print(classification_report(
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 Logits shape: (1000, 2)
-Predicted positive rate: 43.2%
-Top-1 prob mean: correct=0.5395, wrong=0.5361
+Predicted positive rate: 38.3%
+Top-1 prob mean: correct=0.5245, wrong=0.5226
 
               precision    recall  f1-score   support
 
-    negative     0.5458    0.6188    0.5800       501
-    positive     0.5579    0.4830    0.5177       499
+    negative     0.5397    0.6647    0.5957       501
+    positive     0.5614    0.4309    0.4875       499
 
-    accuracy                         0.5510      1000
-   macro avg     0.5518    0.5509    0.5489      1000
-weighted avg     0.5518    0.5510    0.5489      1000
+    accuracy                         0.5480      1000
+   macro avg     0.5505    0.5478    0.5416      1000
+weighted avg     0.5505    0.5480    0.5417      1000
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1336,8 +1336,19 @@ if train_logs:
     steps, losses = zip(*train_logs)
     random_baseline = math.log(2)
 
-    sns.set_theme(style="whitegrid", context="talk")
+    sns.set_theme(
+        style="whitegrid",
+        context="talk",
+        font="NanumGothic",
+        rc={"axes.unicode_minus": False},
+    )
     fig, ax = plt.subplots(figsize=(9, 5))
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=15]
     ax.plot(
         steps,
         losses,
@@ -1345,12 +1356,6 @@ if train_logs:
         color="#4878D0",
         label="학습 CE loss (small BERT + ko wiki MLM)",
     )
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=17]
     ax.axhline(random_baseline, color="black", lw=1.0, ls=":",
                label=f"랜덤 기준선 (ln 2 = {random_baseline:.3f})")
     ax.set_xlabel("학습 step")
@@ -1358,6 +1363,12 @@ if train_logs:
     ax.set_title("NSMC 분류 fine-tune loss — small BERT (한국어 위키백과 MLM body)")
     ax.legend()
     plt.tight_layout()
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{5\baselineskip}
+\begin{lstlisting}[firstnumber=29]
     plt.show()
 else:
     print("No train loss logs found.")
@@ -1378,7 +1389,12 @@ else:
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
-sns.set_theme(style="white", context="talk")
+sns.set_theme(
+    style="white",
+    context="talk",
+    font="NanumGothic",
+    rc={"axes.unicode_minus": False},
+)
 cm = confusion_matrix(
     cls_labels,
     cls_preds,
@@ -1386,6 +1402,12 @@ cm = confusion_matrix(
 )
 cm_norm = cm / cm.sum(axis=1, keepdims=True)
 
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=14]
 fig, ax = plt.subplots(figsize=(6, 5))
 sns.heatmap(
     cm_norm, annot=cm, fmt="d",
@@ -1394,12 +1416,6 @@ sns.heatmap(
     yticklabels=["부정", "긍정"],
     cbar_kws={"label": "행 기준 정규화 (recall)"}, ax=ax,
 )
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
-
-\Needspace{7\baselineskip}
-\begin{lstlisting}[firstnumber=17]
 ax.set_xlabel("예측값")
 ax.set_ylabel("실제값")
 ax.set_title("23장 small BERT (ours + ko wiki MLM) — 혼동 행렬")
@@ -1479,11 +1495,11 @@ print(comparison.round(4).to_string(index=False))
 \begin{bookoutputbox}
 2-way comparison -- NSMC binary classification metrics
    metric  Ch15 klue/bert-base (ref)  Ch23 ours (small + MLM)
- accuracy                       0.86                   0.5510
-precision                       0.86                   0.5579
-   recall                       0.86                   0.4830
-       f1                       0.86                   0.5177
-      auc                       0.93                   0.5669
+ accuracy                       0.86                   0.5480
+precision                       0.86                   0.5614
+   recall                       0.86                   0.4309
+       f1                       0.86                   0.4875
+      auc                       0.93                   0.5545
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1491,13 +1507,24 @@ precision                       0.86                   0.5579
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
-sns.set_theme(style="whitegrid", context="talk")
+sns.set_theme(
+    style="whitegrid",
+    context="talk",
+    font="NanumGothic",
+    rc={"axes.unicode_minus": False},
+)
 plot_df = comparison.melt(
     id_vars=["metric"],
     value_vars=["15장 klue/bert-base (ref)", "23장 ours (small + MLM)"],
     var_name="model", value_name="score",
 )
 
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 예측 결과를 지표와 표로 요약하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=13]
 fig, ax = plt.subplots(figsize=(10, 5))
 sns.barplot(
     data=plot_df, x="metric", y="score", hue="model",
@@ -1507,12 +1534,6 @@ sns.barplot(
     },
     ax=ax,
 )
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
-
-\Needspace{9\baselineskip}
-\begin{lstlisting}[firstnumber=17]
 ax.set_ylim(0, 1.05)
 ax.set_title("NSMC 이진 분류 — 2-way 비교 (15장 ref / 23장 ours)")
 ax.set_xlabel("지표")
