@@ -25,7 +25,7 @@
 | 6 | `OneVsRestClassifier(LogisticRegression())` | `TfidfVectorizer()` | Yelp + 항목 합성 | (5차원) | per-label sigmoid | per-label `BCEWithLogitsLoss` |
 | **7 ← 여기** | `pipeline("sentiment-analysis")` | `AutoTokenizer.from_pretrained(...)` | 간단 영어 예시 | **사전학습 헤드** | softmax | — (추론만) |
 
-전체 챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
+전체 20챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
 
 ## 변경점 (Diff from Ch 6)
 
@@ -77,7 +77,7 @@ T4의 총 VRAM은 **약 15.36 GB** (= 15,360 MiB). 모델·옵티마이저·acti
 
 - 처음엔 ~3-200 MiB 정도. CUDA 컨텍스트가 잡혀 있는 만큼만.
 - 모델을 GPU에 올릴 때마다 `used` 가 증가합니다.
-- `Volatile GPU-Util` 은 *현재* GPU가 일하는 비율 — 학습 중에는 90-100% 가까이.
+- `Volatile GPU-Util` 은 *현재* GPU가 일하는 비율 — 학습 중에는 90~100% 가까이.
 
 **Python으로도 확인 가능** (셀 내부에서 변수로 받고 싶을 때):
 
@@ -132,7 +132,7 @@ WordPiece와 BPE는 둘 다 *서브워드 알고리즘* 이지만 학습·표기
 
 - BERT는 BookCorpus + Wikipedia로 학습됐고, 영어 중심 어휘.
 - GPT-2는 더 다양한 웹 텍스트(Reddit 등)로 학습됐고 BPE라 어휘가 더 풍부.
-- 한국어 BERT(`klue/bert-base`, Ch 15)는 한국어 코퍼스로 다시 학습돼 한국어 어휘를 보유 — 같은 문장 `"안녕"` 도 영어 BERT면 `[UNK]` 또는 글자 단위로 쪼개지지만 한국어 BERT엔 한 토큰으로 들어갑니다.
+- 한국어 BERT(`klue/bert-base`, Ch 14)는 한국어 코퍼스로 다시 학습돼 한국어 어휘를 보유 — 같은 문장 `"안녕"` 도 영어 BERT면 `[UNK]` 또는 글자 단위로 쪼개지지만 한국어 BERT엔 한 토큰으로 들어갑니다.
 
 **실무 함의**: 모델을 갈아 끼울 때 토크나이저도 *반드시 짝* 으로 바꿔야 합니다. `AutoTokenizer.from_pretrained(model_name)` 의 model_name 이 모델 자체와 일치해야 하는 이유 — 학습 때 본 어휘와 추론 때 입력 어휘가 같아야 모델이 의미를 이해합니다.
 
@@ -177,7 +177,4 @@ print(model.config.to_dict())  # dict 형태 (JSON 직렬화 가능)
 
 ## 이 장의 구성
 
-- [07-1. 실습: 일단 돌려봅시다](07-bert_pipeline-practice.md)
-- [07-2. 해부: pipeline 안에서는 뭐가 일어났을까?](07-bert_pipeline-anatomy.md)
-- [07-3. 변형: pipeline 없이 직접 해보기](07-bert_pipeline-variation.md)
-- [07-4. 정리와 FAQ](07-bert_pipeline-wrapup.md)
+[[SubPages]]

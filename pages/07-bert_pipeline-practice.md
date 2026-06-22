@@ -53,8 +53,6 @@ Wed Jun 17 21:13:25 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
-DistilBERT·BERT·GPT-2 세 모델의 토크나이저만 받아 한자리에 모읍니다. 가중치는 건드리지 않고 토크나이저 파일만 받으므로 가볍고 빠릅니다. 각 토크나이저의 어휘 크기와 실제 클래스 이름을 표로 출력해 모델마다 어떻게 다른지 비교할 수 있게 합니다.
-
 ```python
 # 토크나이저 3종 로드 (모델 가중치는 안 받고 토크나이저 파일만 ~수백 KB)
 tokenizer_specs = {
@@ -78,12 +76,6 @@ for name, tok in tokenizer_specs.items():
              bert-base-cased      28,996                     BertTokenizer
                         gpt2      50,257                     GPT2Tokenizer
 ```
-
-**결과 해석**
-
-DistilBERT·BERT는 어휘가 3만 안팎인데 GPT-2는 5만으로 더 큽니다. 어휘가 클수록 단어를 통째로 담을 여지가 커지는 대신 임베딩 테이블도 그만큼 무거워집니다.
-
-이번엔 같은 문장 두 개를 세 토크나이저로 각각 쪼개 토큰 개수와 토큰 목록을 나란히 출력합니다. 어휘 크기만 비교하던 것에서 한 발 더 나아가, 실제로 단어가 어떻게 subword로 분해되는지 눈으로 확인하려는 셀입니다.
 
 ```python
 sample_sentences = [
@@ -112,12 +104,6 @@ Input: 'Tokenization is fascinating.'
                bert-base-cased  (6 tokens) ['To', '##ken', '##ization', 'is', 'fascinating', '.']
                           gpt2  (5 tokens) ['Token', 'ization', 'Ġis', 'Ġfascinating', '.']
 ```
-
-**결과 해석**
-
-같은 문장도 토크나이저마다 다르게 쪼갭니다. uncased DistilBERT는 소문자로 낮춰 'hugging'을 통째로 두지만, cased BERT는 대소문자를 살리느라 'Hu'+'##gging'으로 나누고, GPT-2는 단어 앞 공백을 'Ġ'로 표시합니다. 어휘에 없는 단어를 subword로 분해하는 방식이 모델마다 갈린다는 걸 보여줍니다.
-
-이번엔 세 토크나이저가 문장 앞뒤에 끼워 넣는 특수 토큰을 비교합니다. 각 토크나이저의 `[CLS]`·`[SEP]`·`[PAD]`·`[UNK]` 자리에 어떤 토큰이 들어가는지 표로 출력하고, `special_tokens_map` 전체도 함께 찍어봅니다. BERT 계열과 GPT-2가 특수 토큰을 다루는 방식이 어떻게 갈리는지 눈여겨보세요.
 
 ```python
 # 특수 토큰: 모델마다 어떤 token을 [CLS]/[SEP]/[PAD]/[UNK] 자리에 두는지
@@ -149,8 +135,6 @@ distilbert-base-uncased.special_tokens_map = {'unk_token': '[UNK]', 'sep_token':
 bert-base-cased.special_tokens_map = {'unk_token': '[UNK]', 'sep_token': '[SEP]', 'pad_token': '[PAD]', 'cls_token': '[CLS]', 'mask_token': '[MASK]'}
 gpt2.special_tokens_map = {'bos_token': '<|endoftext|>', 'eos_token': '<|endoftext|>', 'unk_token': '<|endoftext|>'}
 ```
-
-이번엔 모델의 `config` 를 펼쳐 핵심 설정값을 한눈에 정리합니다. 파라미터 수와 fp32 기준 예상 크기부터 `hidden_size`·`vocab_size`·`num_labels`·`problem_type` 까지 출력해, 이 모델이 어떤 구조이고 어떤 task로 파인튜닝됐는지 읽어냅니다. `num_labels=2` 와 `id2label` 이 감성 분류용 헤드를 가리킨다는 점을 눈여겨보세요.
 
 ```python
 cfg = model.config
@@ -279,7 +263,7 @@ $$\text{모델 가중치 크기} \approx \text{파라미터 수} \times \text{dt
 
 **학습이 되면 메모리는 더 커집니다** — Adam 옵티마이저는 모델당 *추가로 2배* (1차·2차 모멘텀)를 더 들고, gradient도 *모델 크기만큼* 한 벌 — 즉 학습 중엔 **fp32 기준 파라미터 × 4배 정도** 의 VRAM이 필요합니다. Ch 9에서 다시 다룹니다.
 
-**참고**: 처음 실행 시 모델 다운로드(약 250MB)에 30초-1분 정도 걸립니다. 두 번째부터는 캐시되어 즉시 실행.
+**참고**: 처음 실행 시 모델 다운로드(약 250MB)에 30초~1분 정도 걸립니다. 두 번째부터는 캐시되어 즉시 실행.
 
 여러 문장도 한 번에:
 
@@ -301,10 +285,6 @@ for r in results:
 {'label': 'NEGATIVE', 'score': 0.9820851683616638}
 ```
 
-**결과 해석**
-
-긍정·부정이 뚜렷한 앞 두 문장은 0.999로 확신하지만, "okay, nothing special"은 부정으로 기울되 0.98로 상대적으로 덜 확신합니다. score가 문장의 감정 강도를 그대로 반영합니다.
-
 ### 다른 task도 같은 패턴
 
 `pipeline` 의 첫 인자만 바꾸면 다른 NLP 작업을 즉시 할 수 있습니다.
@@ -318,10 +298,8 @@ generator("Hugging Face is", max_length=30, num_return_sequences=1)
 **▶ 실행 결과**
 
 ```text
-[{'generated_text': "Hugging Face is the only new movie ever made about the murder of a girl in India. The film follows an innocent girl, Ja …(593 more chars omitted)
+[{'generated_text': "Hugging Face is the only new movie ever made about the murder of a girl in India. The film follows an innocent girl, Ja …(뒤 593자 생략)
 ```
-
-이번엔 `fill-mask` task로 문장 속 `[MASK]` 자리에 들어갈 단어를 BERT가 예측하게 합니다. GPT-2가 이어 쓰기를 했다면, BERT는 앞뒤 문맥을 모두 보고 빈칸을 채우는 방식이라는 점이 대비됩니다. 후보 단어와 각 확률(score)이 함께 출력되니 모델이 무엇을 떠올렸는지 살펴보세요.
 
 ```python
 # 마스크 채우기 (BERT)
