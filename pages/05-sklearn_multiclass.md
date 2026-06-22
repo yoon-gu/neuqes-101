@@ -21,7 +21,7 @@
 | 4 | `LogisticRegression()` (multinomial 자동) | `TfidfVectorizer()` | Yelp 이진화 (Ch 3과 동일) | (2차원) | softmax | `CrossEntropyLoss` |
 | **5 ← 여기** | `LogisticRegression()` (multinomial 자동) | `TfidfVectorizer()` | Yelp 5클래스 (별점 0-4) | **(5차원)** | softmax | `CrossEntropyLoss` |
 
-전체 챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
+전체 20챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
 
 ## 변경점 (Diff from Ch 4)
 
@@ -58,7 +58,4 @@ $$L = -\frac{1}{N}\sum_{i=1}^{N} \log \hat p_{i,\, y_i}$$
 
 ## 이 장의 구성
 
-- [05-1. 실습: 5클래스 분류](05-sklearn_multiclass-practice.md)
-- [05-2. 해부: 평가 지표 한꺼번에 보기](05-sklearn_multiclass-anatomy.md)
-- [05-3. 변형: multinomial vs OvR](05-sklearn_multiclass-variation.md)
-- [05-4. 정리와 FAQ](05-sklearn_multiclass-wrapup.md)
+[[SubPages]]

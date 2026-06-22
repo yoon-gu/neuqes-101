@@ -103,11 +103,11 @@ pred_reg = np.clip(np.round(model_reg.predict(X_test)), 0, 4).astype(int)
 # 분류 모델 (이번 챕터)
 pred_clf = y_pred
 
-for name, pred in [("regression+round/clip", pred_reg), ("classification", pred_clf)]:
+for name, pred in [("회귀 후 round/clip", pred_reg), ("분류", pred_clf)]:
     mask4 = (y_test == 3)   # 라벨 3 = 4★
     n_4to3 = ((pred == 2) & mask4).sum()  # 4★ → 3★ 오답
     n_4to1 = ((pred == 0) & mask4).sum()  # 4★ → 1★ 오답
-    print(f"{name}: 4-star->3-star {n_4to3}, 4-star->1-star {n_4to1}")
+    print(f"{name}: 4★→3★ {n_4to3}건, 4★→1★ {n_4to1}건")
 ```
 
 힌트: 회귀는 큰 실수일수록 손실이 제곱으로 커지므로 4★을 1★로 예측하는 큰 실수가 더 드물어야 합니다. 분류는 둘을 동등하게 처벌하므로 그런 경향이 약할 수 있습니다.
