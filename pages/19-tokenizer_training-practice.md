@@ -9,14 +9,12 @@
 **▶ 실행 결과**
 
 ```text
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 95.9 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 0.0/555.1 kB ? eta -:--:--
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 34.4 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━╸━━━━━━━━━━━━━━━━━━━ 25.0/48.9 MB 192.2 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 79.6 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 79.6 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 79.6 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 13.2 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 85.7 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 48.3 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 0.0/48.9 MB ? eta -:--:--
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╺━━━━━━━━ 38.3/48.9 MB 171.9 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 128.0 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 17.0 MB/s eta 0:00:00
 ```
 
 ```python
@@ -43,6 +41,13 @@ from tokenizers.processors import TemplateProcessing
 from tokenizers.decoders import WordPiece as WordPieceDecoder
 from transformers import PreTrainedTokenizerFast
 
+# matplotlib 한글 폰트 (Colab — NanumGothic). plot 의 한국어가 □ 로 깨지지 않게.
+import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run("apt-get -qq -y install fonts-nanum", shell=True)
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
 plt.rcParams["axes.unicode_minus"] = False
 
 print(f"PyTorch:        {torch.__version__}")
@@ -60,8 +65,6 @@ PyTorch:        2.11.0+cu128
 CUDA available: True
 GPU:             Tesla T4
 ```
-
-영어 토크나이저를 학습할 코퍼스로 Yelp 리뷰 5,000문장을 불러옵니다. 토큰화 비교에 앞서 문장당 글자 수의 평균·중앙값·최댓값을 미리 재두어, 뒤에서 나올 영어-한국어 토큰 수 차이의 출발점을 확인합니다.
 
 ```python
 SEED = 42
@@ -86,10 +89,6 @@ first sample (truncated):
 char length stats:
   mean: 735, median: 548, max: 5038
 ```
-
-**결과 해석**
-
-영어 Yelp 리뷰는 문장당 평균 735자로 길어, 뒤에서 학습할 영어 토크나이저가 한국어보다 훨씬 많은 토큰을 만들어낼 토대가 됩니다.
 
 ```python
 TRAIN_URL = "https://raw.githubusercontent.com/e9t/nsmc/master/ratings_train.txt"
@@ -120,12 +119,6 @@ first sample:
 char length stats:
   mean: 34, median: 26, max: 143
 ```
-
-**결과 해석**
-
-한국어 NSMC 리뷰는 평균 34자로 영어의 1/20 수준이라, 같은 vocab 크기로 학습해도 문장당 토큰 수가 훨씬 적게 나오는 출발점이 됩니다.
-
-토크나이저를 반복해서 학습할 수 있도록 두 개의 빌더 함수를 정의합니다. `build_wordpiece`는 정규화·pre-tokenizer·`##` subword 규칙을 갖춘 WordPiece 토크나이저를, `build_wordlevel`은 공백으로 끊은 어절을 통째로 다루는 WordLevel 토크나이저를 같은 코퍼스로 학습해 돌려줍니다. 두 알고리즘에 같은 특수 토큰과 vocab 크기(8000)를 쓰는 점을 눈여겨보세요.
 
 ```python
 SPECIAL_TOKENS = ["[PAD]", "[UNK]", "[CLS]", "[SEP]", "[MASK]"]
@@ -183,8 +176,6 @@ print("helper builders ready: build_wordpiece(), build_wordlevel()")
 helper builders ready: build_wordpiece(), build_wordlevel()
 ```
 
-앞서 만든 빌더로 영어·한국어 × WordPiece·WordLevel 조합의 토크나이저 4개를 실제로 학습합니다. 각 학습에 걸린 시간을 함께 재서, 토크나이저 학습이 모델 학습과 달리 얼마나 가벼운 작업인지 확인합니다.
-
 ```python
 # 4개 토크나이저 학습 (vocab_size=8000)
 t0 = time.time()
@@ -213,19 +204,13 @@ print(f"\ntotal time: {t_en_wp + t_ko_wp + t_en_wl + t_ko_wl:.2f}s")
 **▶ 실행 결과**
 
 ```text
-[1/4] en WordPiece  trained in 2.48s  vocab=8000
-[2/4] ko WordPiece  trained in 0.59s  vocab=8000
-[3/4] en WordLevel  trained in 0.48s  vocab=8000
-[4/4] ko WordLevel  trained in 0.09s  vocab=8000
+[1/4] en WordPiece  trained in 1.44s  vocab=8000
+[2/4] ko WordPiece  trained in 0.51s  vocab=8000
+[3/4] en WordLevel  trained in 0.51s  vocab=8000
+[4/4] ko WordLevel  trained in 0.08s  vocab=8000
 
-total time: 3.64s
+total time: 2.53s
 ```
-
-**결과 해석**
-
-5,000문장으로 4개 토크나이저를 모두 합쳐 3.64초 만에 학습했는데, 토크나이저 학습은 모델 학습과 달리 GPU 없이도 순식간에 끝나는 가벼운 통계 작업임을 보여줍니다.
-
-학습된 vocab 안에 실제로 어떤 토큰이 담겼는지 들여다봅니다. 특수 토큰이 맨 앞 id에 자리 잡았는지, 그리고 `##`로 시작하는 subword 토큰이 vocab에서 차지하는 비율을 토크나이저별로 출력해 알고리즘·언어 차이를 비교합니다.
 
 ```python
 def vocab_peek(tok, name, n=15):
@@ -269,12 +254,6 @@ vocab_peek(tok_ko_wl, "ko WordLevel")
   subword (##) tokens  : 0  (0.0% of vocab)
 ```
 
-**결과 해석**
-
-vocab 맨 앞 5개는 항상 우리가 지정한 특수 토큰이고, 한국어 WordPiece의 `##` subword 비율(41.9%)이 영어(21.7%)의 두 배에 가까운 점은 교착어인 한국어가 조사·어미를 더 잘게 쪼개 표현하기 때문입니다. WordLevel은 단어를 통째로 다루므로 `##` 토큰이 0개이고, vocab에 `영화`, `정말` 같은 NSMC 코퍼스 특유의 빈출 어절이 그대로 올라옵니다.
-
-학습에 쓰지 않은 평가용 문장 1,000건을 따로 떼어, 토크나이저가 문장을 몇 개 토큰으로 쪼개는지 측정합니다. 토크나이저별 평균·중앙값·95퍼센타일 토큰 수를 표로 정리해 알고리즘과 언어가 시퀀스 길이에 미치는 영향을 비교합니다.
-
 ```python
 N_EVAL = 1000
 eval_en = list(load_dataset("fancyzhx/yelp_polarity", split=f"train[{N_EN}:{N_EN + N_EVAL}]")["text"])
@@ -308,34 +287,28 @@ print(stats.to_string(index=False))
    tokenizer  mean_tokens  median_tokens  p95_tokens
 en WordPiece      176.571          139.0      469.05
 en WordLevel      159.220          126.5      426.10
-ko WordPiece       19.805           15.0       57.05
+ko WordPiece       19.804           15.0       57.05
 ko WordLevel        9.106            7.0       27.00
 ```
 
-**결과 해석**
-
-WordLevel은 단어 하나를 1토큰으로 묶어 WordPiece보다 문장당 토큰 수가 항상 적지만, 이 짧은 길이는 다음에 볼 UNK 비율을 희생한 결과입니다. 한국어 토큰 수가 영어의 1/10 수준인 것은 앞서 본 문장 길이 차이가 그대로 반영된 모습입니다.
-
-방금 잰 문장당 토큰 수를 분포 곡선(KDE)으로 그립니다. 영어와 한국어를 좌우 패널로 나누고 각 패널에 WordPiece·WordLevel을 겹쳐, 표의 평균값만으로는 보이지 않던 분포 전체의 치우침을 한눈에 비교합니다.
-
 ```python
-sns.set_theme(style="whitegrid", context="talk")
+sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
 fig, axes = plt.subplots(1, 2, figsize=(14, 5), sharey=True)
 
 # 영어
 sns.kdeplot(len_en_wp, ax=axes[0], color="tab:blue", fill=True, alpha=0.4, label="WordPiece")
 sns.kdeplot(len_en_wl, ax=axes[0], color="tab:orange", fill=True, alpha=0.4, label="WordLevel")
-axes[0].set_title("English (Yelp) — tokens per sentence")
-axes[0].set_xlabel("tokens per sentence")
-axes[0].set_ylabel("density")
+axes[0].set_title("영어 (Yelp) — 문장당 토큰 수")
+axes[0].set_xlabel("문장당 토큰 수")
+axes[0].set_ylabel("밀도")
 axes[0].legend()
 axes[0].set_xlim(0, 400)
 
 # 한국어
 sns.kdeplot(len_ko_wp, ax=axes[1], color="tab:blue", fill=True, alpha=0.4, label="WordPiece")
 sns.kdeplot(len_ko_wl, ax=axes[1], color="tab:orange", fill=True, alpha=0.4, label="WordLevel")
-axes[1].set_title("Korean (NSMC) — tokens per sentence")
-axes[1].set_xlabel("tokens per sentence")
+axes[1].set_title("한국어 (NSMC) — 문장당 토큰 수")
+axes[1].set_xlabel("문장당 토큰 수")
 axes[1].legend()
 axes[1].set_xlim(0, 80)
 
@@ -346,12 +319,6 @@ plt.show()
 **▶ 실행 결과**
 
 ![output](../assets/19-tokenizer_training-out1.png)
-
-**결과 해석**
-
-분포 곡선으로 보면 두 언어 모두 WordPiece가 WordLevel보다 오른쪽으로 치우쳐 토큰을 더 잘게 쪼개고, 한국어는 영어보다 분포 전체가 훨씬 왼쪽(짧은 길이)에 몰려 있습니다.
-
-토큰 길이 다음으로 살펴볼 지표는 UNK 비율입니다. 평가 문장을 토큰화했을 때 전체 토큰 중 `[UNK]`가 차지하는 비율을 토크나이저별로 계산해, 단어를 통째로 다루는 WordLevel이 처음 보는 어절을 얼마나 놓치는지 수치로 드러냅니다.
 
 ```python
 def unk_rate(tok, texts):
@@ -387,22 +354,16 @@ ko WordPiece   0.08%
 ko WordLevel  43.74%
 ```
 
-**결과 해석**
-
-subword로 쪼개는 WordPiece는 모르는 단어도 글자 단위로 내려가 `[UNK]`를 거의 만들지 않지만, 단어를 통째로만 다루는 WordLevel은 처음 보는 어절을 곧장 `[UNK]`로 떨어뜨립니다. 교착어인 한국어 WordLevel의 UNK가 43.74%까지 치솟는 것은 같은 어근에 조사·어미가 바뀐 어절이 모두 별개 단어로 취급되어 vocab으로 감당하기 어렵기 때문입니다.
-
-방금 계산한 UNK 비율을 막대그래프로 그려 토크나이저 4개를 나란히 비교합니다. 각 막대 위에 정확한 퍼센트 값을 적어, 한국어 WordLevel만 유독 높이 솟는 모습을 시각적으로 강조합니다.
-
 ```python
-sns.set_theme(style="whitegrid", context="talk")
+sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
 fig, ax = plt.subplots(figsize=(9, 5))
 colors = ["#4878D0", "#EE854A", "#4878D0", "#EE854A"]
 bars = ax.bar(unk_summary["tokenizer"], unk_summary["unk_rate"] * 100, color=colors)
 for bar, rate in zip(bars, unk_summary["unk_rate"]):
     ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.1,
             f"{rate:.2%}", ha="center", va="bottom", fontsize=11)
-ax.set_ylabel("UNK rate (%)")
-ax.set_title("Unknown token rate — same eval corpus, vocab=8000")
+ax.set_ylabel("UNK 비율 (%)")
+ax.set_title("미등록 토큰 비율 — 동일 eval 코퍼스, vocab=8000")
 ax.tick_params(axis="x", rotation=15)
 plt.tight_layout()
 plt.show()
@@ -411,8 +372,6 @@ plt.show()
 **▶ 실행 결과**
 
 ![output](../assets/19-tokenizer_training-out2.png)
-
-지금까지 따로따로 본 vocab 크기·토큰 길이·UNK 비율을 언어 × 알고리즘 2×2 표 하나로 모읍니다. 네 토크나이저의 핵심 지표를 한 화면에서 비교해, 알고리즘과 언어가 각 지표에 어떻게 작용했는지 정리합니다.
 
 ```python
 summary_2x2 = pd.DataFrame({
@@ -446,8 +405,6 @@ language algorithm  vocab_size  mean_tokens_per_sent  p95_tokens_per_sent  unk_r
   Korean WordPiece        8000                 19.80                57.05          0.08
   Korean WordLevel        8000                  9.11                27.00         43.74
 ```
-
-토크나이저를 학습한 언어와 입력 문장의 언어가 어긋날 때 어떤 일이 벌어지는지 교차 실험을 합니다. 영어·한국어 예시 문장을 4개 토크나이저에 모두 통과시켜 토큰 수와 UNK 비율을 표로 모으고, 같은 언어(`same`)와 다른 언어(`cross`) 조합을 구분해 둡니다.
 
 ```python
 # 4 토크나이저를 dict 로 묶어 cross-language 분석에 사용
@@ -490,19 +447,13 @@ print(cross_df.to_string(index=False))
 input_lang    tokenizer tokenizer_train_lang  n_tokens  n_unk  unk_pct   match
         EN en_WordPiece                   EN        13      0      0.0  ✅ same
         EN en_WordLevel                   EN        11      0      0.0  ✅ same
-        EN ko_WordPiece                   KO        39      0      0.0 ❌ cross
+        EN ko_WordPiece                   KO        40      0      0.0 ❌ cross
         EN ko_WordLevel                   KO        11      7     63.6 ❌ cross
         KO en_WordPiece                   EN         8      5     62.5 ❌ cross
         KO en_WordLevel                   EN         6      5     83.3 ❌ cross
         KO ko_WordPiece                   KO        14      0      0.0  ✅ same
         KO ko_WordLevel                   KO         6      4     66.7  ✅ same
 ```
-
-**결과 해석**
-
-토크나이저는 학습한 언어의 코퍼스에만 최적화되어, 영어 문장을 한국어 토크나이저에 넣거나 그 반대로 넣으면 UNK가 급증하거나 글자 단위로 산산조각 납니다. 다만 한국어 ko_WordLevel은 자기 언어 입력에도 UNK 66.7%가 나오는데, 이는 cross-language 문제가 아니라 WordLevel 알고리즘 자체가 처음 보는 어절에 취약한 한계를 드러냅니다.
-
-숫자만으로는 와닿지 않는 교차 적용 결과를 실제 토큰 시퀀스로 확인합니다. 같은 입력을 토크나이저별로 어떻게 쪼개는지 앞 12개 토큰을 출력해, 한글이 통째로 `[UNK]`가 되거나 영어가 글자 단위로 산산조각 나는 모습을 눈으로 봅니다.
 
 ```python
 # 같은 입력을 토크나이저 별로 실제로 어떻게 쪼개는지 (첫 12 토큰)
@@ -524,7 +475,7 @@ for lang, text in cross_examples:
 [input (EN)]  The food was absolutely delicious and the service was great.
      en_WordPiece       ( 13 tokens, UNK  0): ['[CLS]', 'the', 'food', 'was', 'absolutely', 'delicious', 'and', 'the', 'service', 'was', 'great', '.']
      en_WordLevel       ( 11 tokens, UNK  0): ['The', 'food', 'was', 'absolutely', 'delicious', 'and', 'the', 'service', 'was', 'great', '.']
-  ❌ ko_WordPiece       ( 39 tokens, UNK  0): ['[CLS]', 'Th', '##e', 'f', '##oo', '##d', 'w', '##a', '##s', 'a', '##bs', '##o']
+  ❌ ko_WordPiece       ( 40 tokens, UNK  0): ['[CLS]', 'Th', '##e', 'f', '##oo', '##d', 'w', '##a', '##s', 'a', '##b', '##s']
   ❌ ko_WordLevel       ( 11 tokens, UNK  7): ['The', '[UNK]', '[UNK]', '[UNK]', '[UNK]', 'and', 'the', '[UNK]', '[UNK]', '[UNK]', '.']
 
 [input (KO)]  음식이 정말 맛있었고 서비스도 훌륭했습니다.
@@ -534,30 +485,22 @@ for lang, text in cross_examples:
      ko_WordLevel       (  6 tokens, UNK  4): ['[UNK]', '정말', '[UNK]', '[UNK]', '[UNK]', '.']
 ```
 
-**결과 해석**
-
-같은 문장이 토크나이저마다 전혀 다르게 쪼개지는 모습이 한눈에 보입니다. 한국어를 영어 WordPiece에 넣으면 vocab에 한글 글자가 없어 통째로 `[UNK]`가 되고, 한국어 WordPiece는 `음 / ##식이`, `맛 / ##있어` 처럼 어근과 조사·어미를 `##` 경계로 갈라 의미 단위를 살려냅니다.
-
-교차 적용의 UNK 비율을 히트맵으로 한 장에 모읍니다. 가로축은 토크나이저(알고리즘 × 학습 언어), 세로축은 입력 언어로 두어, 학습 언어와 입력 언어가 일치할 때만 UNK가 낮아지는 대각선 패턴을 색으로 드러냅니다.
-
 ```python
 # 시각화: UNK 비율 4×2 매트릭스 (가로 토크나이저, 세로 입력 언어)
 fig, ax = plt.subplots(figsize=(8.5, 3.6))
 pivot = cross_df.pivot(index="input_lang", columns="tokenizer", values="unk_pct")
 pivot = pivot[list(tokenizers.keys())]   # 열 순서 유지
 sns.heatmap(pivot, annot=True, fmt=".1f", cmap="Reds", vmin=0, vmax=100,
-            cbar_kws={"label": "UNK rate (%)"}, ax=ax)
-ax.set_title("Cross-language UNK rate — tokenizer trained on (EN|KO) × input (EN|KO)")
-ax.set_xlabel("tokenizer (algorithm × training language)")
-ax.set_ylabel("input language")
+            cbar_kws={"label": "UNK 비율 (%)"}, ax=ax)
+ax.set_title("교차 언어 UNK 비율 — 학습 토크나이저 (EN|KO) × 입력 언어 (EN|KO)")
+ax.set_xlabel("토크나이저 (알고리즘 × 학습 언어)")
+ax.set_ylabel("입력 언어")
 plt.tight_layout(); plt.show()
 ```
 
 **▶ 실행 결과**
 
 ![output](../assets/19-tokenizer_training-out3.png)
-
-학습한 토크나이저는 한 번 만들고 끝이 아니라 파일로 저장해 재사용합니다. 4개 토크나이저를 각각 json 파일로 직렬화하고, 저장된 파일 목록과 크기를 출력해 vocab과 규칙이 어떤 규모로 담기는지 확인합니다.
 
 ```python
 import os
@@ -582,10 +525,8 @@ saved 4 tokenizer files:
   ./tokenizers_ch19/en_wordlevel.json  (172.5 KB)
   ./tokenizers_ch19/en_wordpiece.json  (170.3 KB)
   ./tokenizers_ch19/ko_wordlevel.json  (205.9 KB)
-  ./tokenizers_ch19/ko_wordpiece.json  (251.5 KB)
+  ./tokenizers_ch19/ko_wordpiece.json  (251.6 KB)
 ```
-
-저장한 json이 토크나이저를 온전히 담았는지 검증합니다. `Tokenizer.from_file()`로 다시 불러온 뒤 같은 문장을 토큰화해, 원본과 로드본의 토큰 시퀀스가 정확히 일치하는지 비교합니다.
 
 ```python
 # 2) Tokenizer.from_file() 로 다시 로드
@@ -604,12 +545,6 @@ original tokens : ['[CLS]', 'the', 'food', 'was', 'unf', '##orge', '##tt', '##ab
 loaded tokens   : ['[CLS]', 'the', 'food', 'was', 'unf', '##orge', '##tt', '##able', 'and', 'the', 'service', 'was', 'excellent', '.', '[SEP]']
 match           : True
 ```
-
-**결과 해석**
-
-`match: True`는 json 한 파일에 vocab과 merge 규칙, 특수 토큰까지 모두 직렬화되어, 다시 로드해도 토큰화 결과가 완벽히 재현됨을 확인해 줍니다.
-
-마지막으로 직접 학습한 토크나이저를 `PreTrainedTokenizerFast`로 감싸 Hugging Face 표준 인터페이스로 바꿉니다. 이렇게 하면 Ch 7 이후 써온 `padding`·`truncation`·`return_tensors` 옵션과 `decode`를 그대로 쓸 수 있어, 사전학습 토크나이저와 동일하게 동작하는지 확인합니다.
 
 ```python
 # 3) PreTrainedTokenizerFast 로 wrap — HF 표준 인터페이스로 변환
@@ -641,10 +576,6 @@ pad_token_id    : 0
 cls_token_id    : 2
 
 input_ids shape : torch.Size([1, 15])
-input_ids       : [2, 107, 218, 128, 4814, 5350, 3762, 300, 115, 107, 312, 128, 956, 18, 3]
+input_ids       : [2, 107, 218, 128, 4814, 5350, 3763, 300, 115, 107, 312, 128, 956, 18, 3]
 decoded         : [CLS] the food was unforgettable and the service was excellent. [SEP]
 ```
-
-**결과 해석**
-
-직접 학습한 토크나이저를 `PreTrainedTokenizerFast`로 감싸면 Ch 7 이후 써온 `hf_en_wp(...)` 호출 방식과 `padding`, `truncation` 옵션을 그대로 쓸 수 있고, `decode` 결과가 `##` 조각까지 합쳐 원문을 복원해 사전학습 토크나이저와 동일한 인터페이스로 동작함을 보여줍니다.

@@ -189,7 +189,4 @@ eval 코퍼스 (별도 sample 1,000 문장) 에 4 토크나이저를 적용해 *
 
 ## 이 장의 구성
 
-- [19-1. 실습](19-tokenizer_training-practice.md)
-- [19-2. 해부 — 같은 문장을 4 토크나이저로 비교](19-tokenizer_training-anatomy.md)
-- [19-3. 변형 — vocab 크기 sweep](19-tokenizer_training-variation.md)
-- [19-4. 정리와 FAQ](19-tokenizer_training-wrapup.md)
+[[SubPages]]

@@ -25,31 +25,25 @@ print(df_sweep.to_string(index=False))
        1000          1000      209.815      557.35           0.0
        4000          4000      161.980      436.85           0.0
        8000          8000      152.510      412.30           0.0
-      16000         16000      148.095      398.30           0.0
+      16000         16000      148.100      398.30           0.0
 ```
 
-**결과 해석**
-
-vocab을 1K에서 16K로 16배 키우는 동안 문장당 평균 토큰 수는 209.8에서 148.1로 줄지만, 1K에서 4K로 갈 때 가장 크게 떨어지고 8K 이후로는 거의 평평해져 수확 체감이 뚜렷합니다. UNK는 영어 WordPiece 특성상 어느 vocab에서도 0%를 유지합니다.
-
-sweep 결과를 그래프로 그려 추세를 한눈에 봅니다. 왼쪽 축에 평균 토큰 수, 오른쪽 축에 UNK 비율을 함께 그리고 가로축은 로그 스케일로 두어, vocab을 키울수록 토큰 수가 줄다가 평평해지는 수확 체감 곡선을 드러냅니다.
-
 ```python
-sns.set_theme(style="whitegrid", context="talk")
+sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
 fig, ax1 = plt.subplots(figsize=(9, 5))
 
-ax1.plot(df_sweep["vocab_size"], df_sweep["mean_tokens"], "o-", color="tab:blue", label="mean tokens / sent")
+ax1.plot(df_sweep["vocab_size"], df_sweep["mean_tokens"], "o-", color="tab:blue", label="문장당 평균 토큰 수")
 ax1.set_xlabel("vocab_size")
-ax1.set_ylabel("mean tokens per sentence", color="tab:blue")
+ax1.set_ylabel("문장당 평균 토큰 수", color="tab:blue")
 ax1.tick_params(axis="y", labelcolor="tab:blue")
 ax1.set_xscale("log")
 
 ax2 = ax1.twinx()
-ax2.plot(df_sweep["vocab_size"], df_sweep["unk_rate_pct"], "s--", color="tab:red", label="UNK rate (%)")
-ax2.set_ylabel("UNK rate (%)", color="tab:red")
+ax2.plot(df_sweep["vocab_size"], df_sweep["unk_rate_pct"], "s--", color="tab:red", label="UNK 비율 (%)")
+ax2.set_ylabel("UNK 비율 (%)", color="tab:red")
 ax2.tick_params(axis="y", labelcolor="tab:red")
 
-ax1.set_title("en WordPiece — vocab size sweep")
+ax1.set_title("en WordPiece — vocab 크기 스윕")
 plt.tight_layout()
 plt.show()
 ```
