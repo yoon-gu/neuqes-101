@@ -121,7 +121,7 @@
   * [31-1. 실습](pages/31-grpo-practice.md)
   * [31-2. 변형: group size / format reward / 코드 verifier / 다른 task](pages/31-grpo-variation.md)
   * [31-3. 정리와 FAQ](pages/31-grpo-wrapup.md)
-* [32. 작은 mask-diffusion LM 직접 만들기 — 가변 마스킹과 병렬 denoise](pages/32-diffusion_intro.md)
+* [32. 작은 Diffusion LM 입문: 병렬 Denoise 생성](pages/32-diffusion_intro.md)
   * [32-1. 실습](pages/32-diffusion_intro-practice.md)
   * [32-2. 변형: denoise step 수 비교 (속도 - 품질 trade-off)](pages/32-diffusion_intro-variation.md)
   * [32-3. 정리와 FAQ](pages/32-diffusion_intro-wrapup.md)

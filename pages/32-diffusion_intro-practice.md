@@ -9,13 +9,14 @@
 **▶ 실행 결과**
 
 ```text
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 118.2 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 48.3 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.2/389.2 kB 39.2 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━╺━━━━━━━━━━━ 34.4/48.9 MB 261.0 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 148.9 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 148.9 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 16.8 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 104.2 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 47.1 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.2/389.2 kB 39.4 MB/s eta 0:00:00
+   ━━━━━━╺━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 7.5/48.9 MB 226.8 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸━━━━━ 42.8/48.9 MB 172.2 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 160.7 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 160.7 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 17.5 MB/s eta 0:00:00
 ```
 
 ```python
@@ -59,6 +60,15 @@ random.seed(SEED)
 # fp16 은 CUDA 에서만 (MPS 는 미지원, CPU 는 의미 없음)
 USE_FP16 = (device.type == "cuda")
 print(f"use fp16   : {USE_FP16}")
+
+# matplotlib 한글 폰트 (Colab — NanumGothic). plot 의 한국어가 □ 로 깨지지 않게.
+import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run("apt-get -qq -y install fonts-nanum", shell=True)
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
+plt.rcParams["axes.unicode_minus"] = False
 ```
 
 **▶ 실행 결과**
@@ -455,9 +465,9 @@ if torch.cuda.is_available():
 ```text
 <IPython.core.display.HTML object>
 === training summary ===
-elapsed       : 18.92 min
+elapsed       : 18.36 min
 global_step   : 30000
-train_loss    : 3.7148
+train_loss    : 3.6868
 random baseline (ln vocab): 7.6246
 final peak    : 61 MiB
 ```
@@ -478,7 +488,7 @@ if eval_pts:
 ax1.axhline(math.log(tokenizer.vocab_size), ls=":", color="gray",
             label=f"uniform baseline = ln({tokenizer.vocab_size}) approx. {math.log(tokenizer.vocab_size):.2f}")
 ax1.set_xlabel("step"); ax1.set_ylabel("diffusion denoising loss (1/t reweighted)")
-ax1.set_title("Small mask-diffusion LM on TinyStories - loss")
+ax1.set_title("작은 mask-diffusion LM on TinyStories - loss")
 ax1.grid(True, alpha=0.3); ax1.legend()
 
 if vram_cb.steps:
@@ -486,9 +496,9 @@ if vram_cb.steps:
              label="peak VRAM (per log window)")
     ax2.set_title(f"VRAM trace  (bs=32, fp16, L={BLOCK_SIZE})")
 else:
-    ax2.text(0.5, 0.5, "VRAM trace available on CUDA only",
+    ax2.text(0.5, 0.5, "VRAM trace 는 CUDA 에서만 제공",
              ha="center", va="center", transform=ax2.transAxes)
-    ax2.set_title("VRAM trace - CUDA only")
+    ax2.set_title("VRAM trace - CUDA 에서만")
 ax2.set_xlabel("step"); ax2.set_ylabel("VRAM (MiB)")
 ax2.grid(True, alpha=0.3); ax2.legend()
 
@@ -516,19 +526,17 @@ for i in range(3):
 TRAINED model - parallel denoise from all-[MASK]
 ======================================================================
 
-[sample 0]  Ben are twins. They run to the park. They run to slide and run. They want to reach the park. They see the big slide. They see the noise. They
+[sample 0]  and go in their house. Sam are scared. They want to play Tim and Mia. They want to climb it.
 
-They and Ben are happy. They are happy.
+"See, Sam, Sam, Sam!" Tom says.
 
-[sample 1] 
-"OK, Ben. We will play the balloon," Ben says.
+"Oh you!" Tom and Sam
+[sample 1]  him angry. He did not like the boy. He did not listen. He. He was scared and angry. He did not care.
 
-"We can play the park!" Ben says..
+The boy was very sad. He. He wanted to help the boy. He did not
 
-They run to the park. They. They seek in the park. They
-They
-[sample 2] . They understand. They are happy. They
-TheyThey see the park again. They They see the dog. They are not happy in the park. They hug their mom. They back to the park. They are very happy. They
+[sample 2] . They are good other and hug. They
+They are happy. They. They smile. They hug each other. They hug each other. They are friends.. They They are best friends. They are happy. They hug. Mom
 ```
 
 ```python
@@ -564,19 +572,18 @@ step  0/11  ([MASK] remaining: 37)
   ____ ____ ____ ____ ____ ____ ____ ____ ____ . ____ ____ ____ ____ Ġand ____ ____ ____ ____ ____ ____ ____ ____ . ____ ____ ____ ____ ____ …(뒤 55자 생략)
 
 step  3/11  ([MASK] remaining: 27)
-  Ġand ____ ____ ____ ____ ____ ____ ____ ____ . ĠThey ____ Ġto ____ Ġand ____ ____ ____ ____ ____ ____ ____ ____ . Ċ Ċ They ____ ____ Ġto Ġ …(뒤 45자 생략)
+  Ċ They Ġand ____ ____ ____ ____ ____ ____ . ĠThey Ġlikes Ġto ____ Ġand ____ ____ ____ ____ ____ ____ ____ ____ . ĠThey ____ ____ ____ ____ …(뒤 53자 생략)
 
 step  6/11  ([MASK] remaining: 17)
-  Ġand ____ . . ĠThey ____ ____ Ġthe ____ . ĠThey ____ Ġto ____ Ġand ____ . . ĠThey ____ ____ ____ ____ . Ċ Ċ They ____ Ġback Ġto Ġthe Ġand …(뒤 37자 생략)
+  Ċ They Ġand ____ . ĠThey ____ ____ ____ . ĠThey Ġlikes Ġto Ġplay Ġand Ġplay . . ĠThey ____ ____ ____ ____ . ĠThey ____ ____ ____ ____ . __ …(뒤 43자 생략)
 
 step  9/11  ([MASK] remaining:  7)
-  Ġand ____ . . ĠThey Ġrun Ġto Ġthe Ġpark . ĠThey ____ Ġto ____ Ġand Ġrun . . ĠThey ____ ____ Ġand Ġfun . Ċ Ċ They Ġgo Ġback Ġto Ġthe Ġand _ …(뒤 36자 생략)
+  Ċ They Ġand Ġsmile . ĠThey ____ ____ ____ . ĠThey Ġlikes Ġto Ġplay Ġand Ġplay . . ĠThey ____ ____ Ġand Ġball . ĠThey Ġrun Ġafter Ġthe Ġbal …(뒤 54자 생략)
 
 step 11/11  ([MASK] remaining:  0)
-  Ġand Ġrun . . ĠThey Ġrun Ġto Ġthe Ġpark . ĠThey Ġwant Ġto Ġswing Ġand Ġrun . . ĠThey Ġhave Ġfun Ġand Ġfun . Ċ Ċ They Ġgo Ġback Ġto Ġthe Ġa …(뒤 43자 생략)
+  Ċ They Ġand Ġsmile . ĠThey Ġplay Ġtogether Ġit . ĠThey Ġlikes Ġto Ġplay Ġand Ġplay . . ĠThey Ġmake Ġball Ġand Ġball . ĠThey Ġrun Ġafter Ġt …(뒤 62자 생략)
 
 ==============================================================================
-FINAL:  and run.. They run to the park. They want to swing and run.. They have fun and fun.
-
-They go back to the and slide. They say they are to stop
+FINAL: 
+They and smile. They play together it. They likes to play and play.. They make ball and ball. They run after the ball. Spot and hug. They are good friends. They
 ```

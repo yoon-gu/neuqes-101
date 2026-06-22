@@ -20,9 +20,10 @@ for i in range(3):
 prompt (fixed): Once upon a time
 ======================================================================
 
-[sample 0]  Once upon a time, there was a little girl named Lily. She loved to play outside and her moms. Lily. One day, Lily's to play with …(뒤 57자 생략)
-[sample 1]  Once upon a time, there was a little girl named Lilyie. She loved to wear her her favorite dress. One day, she went to the park …(뒤 83자 생략)
-[sample 2]  Once upon a time, there was a little girl named Lily. She loved to share her toys and play with her friends. One day, she went t …(뒤 87자 생략)
+[sample 0]  Once upon a time, there was a little girl named Lily. She loved to play with her with her toys. One day, she went to to play wit …(뒤 74자 생략)
+[sample 1]  Once upon a time, there a a little girl named Lily. She loved to play with her toys every toys. One day, Lily went her park to p …(뒤 65자 생략)
+
+[sample 2]  Once upon a time, there was a little girl named Lily. She was very happy and loved to play with her friends. One day, Lily's fri …(뒤 81자 생략)
 ```
 
 **관전 포인트** - 앞 토큰들이 고정된 채 뒤가 채워집니다. 단, diffusion 은 *양방향* 이라 GPT 와 달리 *prompt 앞이나 중간에 빈칸* 을 두고 채우게 할 수도 있습니다 (infilling) — autoregressive 가 구조적으로 못 하는 일.
@@ -42,23 +43,24 @@ for steps in [1, 4, 16, 32]:
 **▶ 실행 결과**
 
 ```text
-[steps= 1] ." very there "
- her She to Once. said the with." and day his
+[steps= 1] ." very to "
+ her She to
+. said the with." big day his
  mom
 s! and. said a The with " on
- a, his happy very, thes to a the They He in in and it
+ a, his happy very, thes to I the They He in in and it
 
-[steps= 4] , ball!"
+[steps= 4]  and asked,. They ran to the park. Maybe the other people was gone.
 
 
-They played away. But the bird laughed and ran away.
+The end and. It was not friendly..
+Finally, the, said, the child said, the bird!" The person and Sam
+[steps=16]  and go in their house. Sam are scared. They want to play Tim and Mia. They want to climb it.
 
-The bird and. The bird to the end of the bird, the mud, the dog coming to the ground. The bird and Ben
+"See, Sam, Sam, Sam!" Tom says.
 
-[steps=16]  Ben are twins. They run to the park. They run to slide and run. They want to reach the park. They see the big slide. They see the noise. They
-
-They and Ben are happy. They are happy.
-[steps=32]  friends. They like to play hide and swing. They like Lily and friends. They like to go to the park. They like to play in the par …(뒤 67자 생략)
+"Oh you!" Tom and Sam
+[steps=32]  and eat each other. They are very happy. They are happy and happy. Lily and Ben are friends and friends. They like to the park. …(뒤 67자 생략)
 ```
 
 **관전 포인트**

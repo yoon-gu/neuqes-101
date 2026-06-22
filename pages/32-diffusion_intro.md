@@ -273,6 +273,4 @@ BERT/GPT 챕터들과 같은 `Trainer` 패턴이지만, *loss 를 직접 정의*
 
 ## 이 장의 구성
 
-- [32-1. 실습](32-diffusion_intro-practice.md)
-- [32-2. 변형: denoise step 수 비교 (속도 - 품질 trade-off)](32-diffusion_intro-variation.md)
-- [32-3. 정리와 FAQ](32-diffusion_intro-wrapup.md)
+[[SubPages]]
