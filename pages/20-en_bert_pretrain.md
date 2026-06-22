@@ -263,6 +263,4 @@ collator 가 매 batch 마다 *무작위로 15% 토큰을 [MASK]* 로 바꾸고,
 
 ## 이 장의 구성
 
-- [20-1. 실습](20-en_bert_pretrain-practice.md)
-- [20-2. 변형 — 학습 step 더 늘리거나 block_size 변경](20-en_bert_pretrain-variation.md)
-- [20-3. 정리와 FAQ](20-en_bert_pretrain-wrapup.md)
+[[SubPages]]
