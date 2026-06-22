@@ -152,5 +152,4 @@ K=7 에선 *어느 한 클래스에 압도적 자신* 있는 경우 vs *2-3 후�
 
 ## 이 장의 구성
 
-- [16-1. 실습](16-ko_multiclass-practice.md)
-- [16-2. 정리와 FAQ](16-ko_multiclass-wrapup.md)
+[[SubPages]]
