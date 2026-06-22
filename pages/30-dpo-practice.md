@@ -9,15 +9,16 @@
 **▶ 실행 결과**
 
 ```text
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 825.1/825.1 kB 50.9 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 11.1/11.2 MB 200.3 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 101.7 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 45.4 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.2/389.2 kB 36.3 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━╺━━━━━━━━━━━━━━━━━━━━━━ 21.2/48.9 MB 203.7 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 135.1 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 135.1 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 15.6 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 825.1/825.1 kB 27.6 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━╸━━━━━━━━━━━━━━━━ 6.6/11.2 MB 199.2 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 113.5 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 50.6 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.2/389.2 kB 39.4 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━╸━━━━━━━━━━━━━━━━━━━━━━━ 20.7/48.9 MB 219.7 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 148.1 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 148.1 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 148.1 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 16.2 MB/s eta 0:00:00
 ```
 
 ```python
@@ -64,6 +65,15 @@ random.seed(SEED)
 # fp16 은 CUDA 에서만 (MPS 는 미지원, CPU 는 의미 없음)
 USE_FP16 = (device.type == "cuda")
 print(f"use fp16     : {USE_FP16}")
+
+# matplotlib 한글 폰트 (Colab — NanumGothic). plot 의 한국어가 □ 로 깨지지 않게.
+import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run("apt-get -qq -y install fonts-nanum", shell=True)
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
+plt.rcParams["axes.unicode_minus"] = False
 ```
 
 **▶ 실행 결과**
@@ -138,9 +148,9 @@ print("\n=== preference sample 0 ===")
 ex0 = dpo_ds[0]
 print("--- prompt ---")
 print(ex0["prompt"])
-print("--- chosen (preferred) ---")
+print("--- chosen (선호) ---")
 print(ex0["chosen"][:200])
-print("\n--- rejected (less preferred) ---")
+print("\n--- rejected (덜 선호) ---")
 print(ex0["rejected"][:200])
 ```
 
@@ -159,10 +169,10 @@ formatted dataset: Dataset({
 
 ### 응답:
 
---- chosen (preferred) ---
+--- chosen (선호) ---
 숫자 집합의 표준 편차를 계산하려면 다음 단계를 따르세요:1. 숫자의 평균(평균)을 계산합니다.2. 각 숫자에서 평균을 뺀 다음 결과를 제곱합니다.3. 제곱 차이의 평균을 계산합니다.4. 제곱 차이의 평균의 제곱근을 구합니다.주어진 숫자 [1, 2, …(뒤 60자 생략)
 
---- rejected (less preferred) ---
+--- rejected (덜 선호) ---
 배열 [1, 2, 3, 4, 5]의 표준 편차를 구하려면 먼저 배열의 평균을 계산해야 합니다. 이렇게 하려면 배열의 모든 숫자를 합산하고 배열의 총 숫자 수로 나눕니다. 이 경우 (1+2+3+4+5)/5 = 16입니다. 따라서 배열의 평균은 16입니다 …(뒤 60자 생략)
 ```
 
@@ -204,7 +214,7 @@ transformer.h.{0...11}.attn.masked_bias | UNEXPECTED |  |
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
-load done: 10.9s
+load done: 15.0s
 
 === policy model ===
 #params      : 125.16 M
@@ -224,16 +234,16 @@ for p in ref_model.parameters():
 
 n_trainable_ref = sum(p.requires_grad for p in ref_model.parameters())
 print(f"reference model: frozen  (trainable params = {n_trainable_ref})")
-print("policy   : trainable (gradient flows)")
-print("reference: frozen (no gradient) - the anchor for the KL constraint")
+print("policy   : 학습 대상 (gradient 흐름)")
+print("reference: 고정 (gradient 안 흐름) - KL 제약의 닻")
 ```
 
 **▶ 실행 결과**
 
 ```text
 reference model: frozen  (trainable params = 0)
-policy   : trainable (gradient flows)
-reference: frozen (no gradient) - the anchor for the KL constraint
+policy   : 학습 대상 (gradient 흐름)
+reference: 고정 (gradient 안 흐름) - KL 제약의 닻
 ```
 
 ```python
@@ -273,7 +283,7 @@ margin = r_w - r_l
 loss = -math.log(1.0 / (1.0 + math.exp(-BETA * margin)))   # -log sigmoid(beta*margin)
 
 print("=" * 60)
-print("DPO loss - manual calculation on one sample (response-only log-prob)")
+print("DPO loss - 한 샘플로 손계산 (response-only log-prob)")
 print("=" * 60)
 print(f"log pi_theta(chosen)    : {pi_w:10.3f}")
 print(f"log pi_ref  (chosen)    : {ref_w:10.3f}")
@@ -290,7 +300,7 @@ print(f"DPO loss = -log sigmoid(beta*margin) = {loss:8.4f}   (beta={BETA})")
 
 ```text
 ============================================================
-DPO loss - manual calculation on one sample (response-only log-prob)
+DPO loss - 한 샘플로 손계산 (response-only log-prob)
 ============================================================
 log pi_theta(chosen)    :   -579.046
 log pi_ref  (chosen)    :   -579.046
@@ -313,14 +323,14 @@ for b in [0.05, 0.1, 0.5]:
 
 # 이번 샘플의 (margin, loss) 위치
 ax.scatter([margin], [loss], color="red", zorder=5,
-           label=f"this sample (margin={margin:.1f})")
+           label=f"이번 샘플 (margin={margin:.1f})")
 ax.axvline(0, color="gray", ls="--", alpha=0.5)
 ax.axhline(-math.log(0.5), color="gray", ls=":", alpha=0.5)
-ax.text(0.5, -math.log(0.5) + 0.05, "loss at margin=0  (-log 0.5)",
+ax.text(0.5, -math.log(0.5) + 0.05, "margin=0 에서의 loss  (-log 0.5)",
         fontsize=8, color="gray")
 ax.set_xlabel("margin = r(chosen) - r(rejected)")
 ax.set_ylabel("DPO loss = -log sigmoid(beta * margin)")
-ax.set_title("DPO loss vs preference margin - larger chosen advantage, lower loss")
+ax.set_title("DPO loss vs 선호 margin - chosen 우위가 클수록 loss 가 낮아짐")
 ax.legend(); ax.grid(True, alpha=0.3)
 plt.tight_layout(); plt.show()
 ```
@@ -351,7 +361,7 @@ before_margins = reward_margins(policy, ref_model, dpo_ds, n=64)
 acc_before = float((before_margins > 0).mean() + 0.5 * (before_margins == 0).mean())  # 무승부(margin=0)=0.5
 print(f"BEFORE DPO - reward margin (n={len(before_margins)})")
 print(f"  mean margin     : {before_margins.mean():.3f}")
-print(f"  reward accuracy : {acc_before:.3f}  (ratio of margin>0; policy=ref so margin=0 -> tie 50%)")
+print(f"  reward accuracy : {acc_before:.3f}  (ratio of margin>0; policy=ref 라 margin=0 → 무승부 50%)")
 ```
 
 **▶ 실행 결과**
@@ -359,7 +369,7 @@ print(f"  reward accuracy : {acc_before:.3f}  (ratio of margin>0; policy=ref so 
 ```text
 BEFORE DPO - reward margin (n=64)
   mean margin     : 0.000
-  reward accuracy : 0.500  (ratio of margin>0; policy=ref so margin=0 -> tie 50%)
+  reward accuracy : 0.500  (ratio of margin>0; policy=ref 라 margin=0 → 무승부 50%)
 ```
 
 ```python
@@ -439,9 +449,9 @@ Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
 <IPython.core.display.HTML object>
 === DPO summary ===
-elapsed     : 2.37 min
+elapsed     : 2.39 min
 global_step : 94
-train_loss  : 0.7071
+train_loss  : 0.7070
 final peak  : 2414 MiB
 ```
 
@@ -458,13 +468,13 @@ fig, ax = plt.subplots(figsize=(8, 4.5))
 bins = np.linspace(min(before_margins.min(), after_margins.min()),
                    max(before_margins.max(), after_margins.max()), 30)
 ax.hist(before_margins, bins=bins, alpha=0.6, color="tab:gray",
-        label=f"before DPO (acc={acc_before:.2f})")
+        label=f"DPO 전 (acc={acc_before:.2f})")
 ax.hist(after_margins, bins=bins, alpha=0.6, color="tab:green",
-        label=f"after DPO (acc={acc_after:.2f})")
+        label=f"DPO 후 (acc={acc_after:.2f})")
 ax.axvline(0, color="red", ls="--", alpha=0.7, label="margin = 0")
 ax.set_xlabel("reward margin = r(chosen) - r(rejected)")
-ax.set_ylabel("count")
-ax.set_title("DPO before vs after - margin shifts toward positive (chosen preferred)")
+ax.set_ylabel("개수")
+ax.set_title("DPO 전 vs 후 - margin 이 양수 쪽으로 이동 (chosen 선호)")
 ax.legend(); ax.grid(True, alpha=0.3)
 plt.tight_layout(); plt.show()
 ```
@@ -473,7 +483,7 @@ plt.tight_layout(); plt.show()
 
 ```text
 AFTER DPO - reward margin (n=64)
-  mean margin     : 12.721  (before: 0.000)
+  mean margin     : 12.712  (before: 0.000)
   reward accuracy : 0.844  (before: 0.500)
 ```
 
@@ -506,7 +516,7 @@ if mgns:
     ax2b.set_ylabel("reward margin", color="tab:orange")
 ax2.axhline(0.5, color="gray", ls=":", alpha=0.6)
 ax2.set_xlabel("step"); ax2.set_ylabel("reward accuracy", color="tab:green")
-ax2.set_title("DPO reward accuracy / margin  (fraction chosen > rejected)")
+ax2.set_title("DPO reward accuracy / margin  (chosen > rejected 비율)")
 ax2.grid(True, alpha=0.3)
 
 plt.tight_layout(); plt.show()
