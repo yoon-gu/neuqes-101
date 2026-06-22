@@ -55,7 +55,7 @@
   * [13-1. 실습](pages/13-bert_multilabel-practice.md)
   * [13-2. 정리와 FAQ](pages/13-bert_multilabel-wrapup.md)
 * [14. 보조 손실과 멀티태스크 학습 (Auxiliary Loss)](pages/14-auxiliary_loss.md)
-  * [14-1. 실습: 보조 손실 결합 학습](pages/14-auxiliary_loss-practice.md)
+  * [14-1. 실습](pages/14-auxiliary_loss-practice.md)
   * [14-2. 정리와 FAQ](pages/14-auxiliary_loss-wrapup.md)
 * [15. 한국어 BERT 이진 분류 (Korean Binary Classification)](pages/15-ko_binary.md)
   * [15-1. 실습: klue/bert-base 한국어 이진 분류](pages/15-ko_binary-practice.md)

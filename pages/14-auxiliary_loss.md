@@ -277,5 +277,4 @@ quick 모드 결과만 보면 "굳이 쓸 필요 있나?" 싶을 수 있습니�
 
 ## 이 장의 구성
 
-- [14-1. 실습](14-auxiliary_loss-practice.md)
-- [14-2. 정리와 FAQ](14-auxiliary_loss-wrapup.md)
+[[SubPages]]
