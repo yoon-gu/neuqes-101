@@ -273,6 +273,4 @@ Ch 24 의 *작은 from-scratch 모델* (3M, TinyStories 1500 step) 의 generatio
 
 ## 이 장의 구성
 
-- [25-1. 실습](25-gpt2_continual_pretrain-practice.md)
-- [25-2. 변형 — 더 많은 epoch / 다른 도메인 / catastrophic forgetting 시연](25-gpt2_continual_pretrain-variation.md)
-- [25-3. 정리와 FAQ](25-gpt2_continual_pretrain-wrapup.md)
+[[SubPages]]
