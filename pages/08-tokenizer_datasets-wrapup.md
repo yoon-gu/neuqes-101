@@ -101,7 +101,7 @@ mem_before = process.memory_info().rss / 1024**2
 ds = load_dataset("Yelp/yelp_review_full")  # 65만 건
 
 mem_after = process.memory_info().rss / 1024**2
-print(f"Memory increase: {mem_after - mem_before:.1f} MB  (tens of MB)")
+print(f"메모리 증가: {mem_after - mem_before:.1f} MB  (수십 MB 정도)")
 ```
 
 대조적으로 pandas로 같은 데이터를 읽으면 GB 단위 메모리가 필요합니다.
@@ -132,7 +132,7 @@ text = "Hugging Face is amazing!"
 out1 = tokenizer(text)
 out2 = tokenizer(text, add_special_tokens=False)
 
-print(f"default:                 {len(out1['input_ids'])}, {tokenizer.decode(out1['input_ids'])}")
+print(f"기본:                    {len(out1['input_ids'])}, {tokenizer.decode(out1['input_ids'])}")
 print(f"add_special_tokens=False: {len(out2['input_ids'])}, {tokenizer.decode(out2['input_ids'])}")
 ```
 

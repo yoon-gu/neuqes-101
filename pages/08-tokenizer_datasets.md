@@ -20,7 +20,7 @@
 | 7 | `pipeline("sentiment-analysis")` | `AutoTokenizer.from_pretrained(...)` | 간단 영어 예시 | 사전학습 헤드 | softmax | — |
 | **8 ← 여기** | (모델 없음 — 토크나이저·데이터 파이프라인만) | `AutoTokenizer.from_pretrained(...)` | **Yelp 5,000 (Phase 0과 동일)** | — | — | — |
 
-전체 챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
+전체 20챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
 
 ## 변경점 (Diff from Ch 7)
 
@@ -137,21 +137,20 @@ PyTorch `DataLoader` 는 dataset을 받아 *배치 + shuffle* 을 자동 처리�
 
 | Collator | 용도 | 자주 쓰이는 곳 |
 |---|---|---|
-| `DataCollatorWithPadding` | 분류·회귀 — `input_ids`/`attention_mask` 동적 padding | **Ch 9-14 모든 Trainer 학습 (기본)** |
+| `DataCollatorWithPadding` | 분류·회귀 — `input_ids`/`attention_mask` 동적 padding | **Ch 9-13 모든 분류 학습 (기본)** |
 | `DataCollatorForLanguageModeling` | MLM — 입력의 15%를 `[MASK]` 로 가려 라벨 생성 | BERT 사전학습 재현, MLM 헤드 학습 |
 | `DataCollatorForSeq2Seq` | seq2seq — encoder/decoder input 둘 다 padding | T5, BART 같은 인코더-디코더 학습 |
 | `DataCollatorForTokenClassification` | NER 같은 토큰 단위 라벨링 — labels도 padding | NER, POS tagging |
 | `default_data_collator` | 단순 stacking — padding 없이 길이 같은 샘플들에 | 이미 padding 끝낸 데이터 |
 
-### 향후 학습 코드 관점 — Ch 9-14에서 실제로 어떻게 쓰이나
+### 향후 학습 코드 관점 — Ch 9-13에서 실제로 어떻게 쓰이나
 
 이번 챕터에서 만든 *데이터 파이프라인 부품들*이 다음 챕터부터 학습 코드에서 어떤 자리에 들어가는지 미리 그려두면, Ch 9 이후 코드가 훨씬 익숙해 보입니다.
 
-#### 패턴 A — `Trainer` (커리큘럼 기본, Ch 9-14 대부분)
+#### 패턴 A — `Trainer` (커리큘럼 기본, Ch 9-13 대부분)
 
 ```python
-# Ch 9 회귀, Ch 10 binary(sigmoid), Ch 11 binary(softmax),
-# Ch 12 multi-class, Ch 13 multi-label
+# Ch 9 회귀, Ch 10 binary, Ch 11 multi-class, Ch 12 multi-label
 # 모두 같은 골격. 바뀌는 건 num_labels / problem_type / 데이터뿐.
 
 # 토크나이저 + 데이터셋 (이번 Ch 8에서 한 작업)
@@ -182,7 +181,7 @@ trainer.train()
 #### 패턴 B — 직접 학습 루프 (커스텀이 필요할 때)
 
 ```python
-# Ch 14 auxiliary loss 처럼 Trainer 자동 매핑이 안 맞을 때, 또는
+# Ch 13 auxiliary loss 처럼 Trainer 자동 매핑이 안 맞을 때, 또는
 # 디버깅·연구용 커스텀 학습 코드를 짜야 할 때.
 
 train_ds = small.map(tok, batched=True).remove_columns(["text"])
@@ -209,9 +208,8 @@ for batch in loader:
 | `DataCollatorWithPadding(...)` | (Trainer가 자동 생성) | `DataLoader(collate_fn=...)` |
 | `with_format("torch")` | (Trainer가 처리) | `DataLoader` 가 텐서 변환 |
 
-**요점**: 이번 챕터에서 익힌 부품들이 Ch 9-14에서 *그대로 입력으로* 들어갑니다. `Trainer` 는 그 부품들을 묶어 학습 루프를 자동화한 것뿐이며, 안에서 일어나는 일은 패턴 B와 같습니다. 커스텀 학습이 필요해지면 패턴 B로 분해해 다시 짤 수 있다는 점이 Ch 8을 손에 익혀두는 가장 큰 이유입니다.
+**요점**: 이번 챕터에서 익힌 부품들이 Ch 9-13에서 *그대로 입력으로* 들어갑니다. `Trainer` 는 그 부품들을 묶어 학습 루프를 자동화한 것뿐이며, 안에서 일어나는 일은 패턴 B와 같습니다. 커스텀 학습이 필요해지면 패턴 B로 분해해 다시 짤 수 있다는 점이 Ch 8을 손에 익혀두는 가장 큰 이유입니다.
 
 ## 이 장의 구성
 
-- [08-1. Collator 추가 실습](08-tokenizer_datasets-practice.md)
-- [08-2. 정리와 FAQ](08-tokenizer_datasets-wrapup.md)
+[[SubPages]]

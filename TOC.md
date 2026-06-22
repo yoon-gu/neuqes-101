@@ -36,7 +36,7 @@
   * [07-3. 변형: pipeline 없이 직접 해보기](pages/07-bert_pipeline-variation.md)
   * [07-4. 정리와 FAQ](pages/07-bert_pipeline-wrapup.md)
 * [08. 토크나이저와 데이터셋 (Tokenizer & Datasets)](pages/08-tokenizer_datasets.md)
-  * [08-1. Collator 추가 실습](pages/08-tokenizer_datasets-practice.md)
+  * [08-1. 실습: Collator 추가](pages/08-tokenizer_datasets-practice.md)
   * [08-2. 정리와 FAQ](pages/08-tokenizer_datasets-wrapup.md)
 * [09. BERT 회귀 분석 (Regression & Trainer)](pages/09-bert_regression.md)
   * [09-1. 실습: DistilBERT로 별점 회귀 파인튜닝](pages/09-bert_regression-practice.md)
