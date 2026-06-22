@@ -58,7 +58,7 @@
   * [14-1. 실습](pages/14-auxiliary_loss-practice.md)
   * [14-2. 정리와 FAQ](pages/14-auxiliary_loss-wrapup.md)
 * [15. 한국어 BERT 이진 분류 (Korean Binary Classification)](pages/15-ko_binary.md)
-  * [15-1. 실습: klue/bert-base 한국어 이진 분류](pages/15-ko_binary-practice.md)
+  * [15-1. 실습](pages/15-ko_binary-practice.md)
   * [15-2. 정리와 FAQ](pages/15-ko_binary-wrapup.md)
 * [16. 한국어 BERT 다중 클래스 분류 (Korean Multi-class Classification)](pages/16-ko_multiclass.md)
   * [16-1. 실습: 한국어 뉴스 7분류](pages/16-ko_multiclass-practice.md)

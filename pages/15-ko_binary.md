@@ -150,5 +150,4 @@ Ch 11 의 평가 패턴 그대로 — 2차원 logit 에서 softmax → 클래스
 
 ## 이 장의 구성
 
-- [15-1. 실습](15-ko_binary-practice.md)
-- [15-2. 정리와 FAQ](15-ko_binary-wrapup.md)
+[[SubPages]]

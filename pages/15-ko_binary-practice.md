@@ -27,6 +27,13 @@ from sklearn.metrics import (
     classification_report, roc_auc_score,
 )
 
+# matplotlib 한글 폰트 (Colab — NanumGothic). plot 의 한국어가 □ 로 깨지지 않게.
+import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run("apt-get -qq -y install fonts-nanum", shell=True)
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
 plt.rcParams["axes.unicode_minus"] = False
 
 print(f"PyTorch:        {torch.__version__}")
@@ -52,7 +59,7 @@ GPU:             Tesla T4
 **▶ 실행 결과**
 
 ```text
-Wed Jun 17 21:44:50 2026       
+Mon Jun 22 03:56:11 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -61,7 +68,7 @@ Wed Jun 17 21:44:50 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   32C    P8             11W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   44C    P8             13W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -73,8 +80,6 @@ Wed Jun 17 21:44:50 2026
 |  No running processes found                                                             |
 +-----------------------------------------------------------------------------------------+
 ```
-
-같은 한국어 문장을 한국어로 학습한 `klue/bert-base`와 영어 위주의 `distilbert-base-uncased`로 각각 토큰화해 결과를 나란히 비교합니다. 토큰 개수와 끊기는 단위를 보면 어느 토크나이저가 한국어를 의미 단위에 가깝게 쪼개는지 한눈에 드러납니다. 마지막에는 두 토크나이저의 단어 사전 크기도 함께 출력합니다.
 
 ```python
 tokenizer_ko = AutoTokenizer.from_pretrained("klue/bert-base")
@@ -117,12 +122,6 @@ klue/bert-base vocab size:        32,000
 distilbert-base-uncased vocab:    30,522
 ```
 
-**결과 해석**
-
-한국어로 학습된 `klue/bert-base`는 "재미있" + "##었" + "##어요"처럼 의미 단위에 가깝게 6-8개 토큰으로 끊지만, 영어 위주의 `distilbert-en`은 한글 음절을 자모 단위로 분해해 같은 문장을 14-26개 토큰으로 파편화하고 `[UNK]`까지 흘립니다. 한국어에서는 그 언어로 학습된 토크나이저를 쓰는 것이 토큰 효율과 표현력 모두에서 결정적임을 보여 줍니다.
-
-실습에 쓸 NSMC(네이버 영화 리뷰) 데이터를 GitHub에서 직접 내려받아 train/test로 읽어 들입니다. 본문이 비어 있는 행은 미리 제거하고, 전체 행 수와 라벨 분포, 첫 3개 샘플을 출력해 데이터의 모양과 균형을 확인합니다.
-
 ```python
 TRAIN_URL = "https://raw.githubusercontent.com/e9t/nsmc/master/ratings_train.txt"
 TEST_URL  = "https://raw.githubusercontent.com/e9t/nsmc/master/ratings_test.txt"
@@ -151,12 +150,6 @@ first 3 rows of train:
   label=1  text=흠...포스터보고 초딩영화줄....오버연기조차 가볍지 않구나
   label=0  text=너무재밓었다그래서보는것을추천한다
 ```
-
-**결과 해석**
-
-NSMC는 부정(0) 75,170건과 긍정(1) 74,825건으로 거의 1:1로 균형 잡힌 영화 리뷰 데이터라, 정확도 지표를 그대로 신뢰할 수 있습니다.
-
-T4에서 30분 안에 끝나도록 전체 데이터에서 train 5,000건과 eval 1,000건만 고정 시드로 뽑아 냅니다. 이어서 `datasets.Dataset` 형태로 바꾸고, 본문 컬럼 이름을 `transformers`가 기대하는 `text`로 통일합니다. 샘플 후에도 양성 비율이 거의 50%로 유지되는지 확인하는 것이 핵심입니다.
 
 ```python
 # 5K train / 1K eval 로 subsample (T4 30분 룰)
@@ -194,8 +187,6 @@ Dataset({
 })
 ```
 
-앞서 로드한 한국어 토크나이저로 모든 리뷰를 토큰 ID로 변환하고, 라벨을 정수형으로 정리해 모델 입력 형태를 갖춥니다. `max_length=128`로 잘라 길이를 제한하며, 변환이 끝난 뒤 토큰 길이의 평균·중앙값·최댓값을 찍어 자를 만큼 긴 리뷰가 있는지 살펴봅니다.
-
 ```python
 tokenizer = tokenizer_ko   # klue/bert-base (위에서 로드)
 
@@ -227,12 +218,6 @@ First sample label: 1  (int scalar 0=neg / 1=pos)
 Token length stats — mean: 21.9, median: 17, max: 117
 ```
 
-**결과 해석**
-
-토큰 길이가 평균 21.9개, 중앙값 17개로 짧고 최대도 117개라 `max_length=128`에서 사실상 잘리는 리뷰가 거의 없어, 영화평이라는 짧은 텍스트 특성과 설정이 잘 맞습니다.
-
-`klue/bert-base`에 2차원 분류 헤드를 얹어 이진 분류 모델을 만듭니다. `problem_type="single_label_classification"`을 지정하면 `Trainer`가 자동으로 `CrossEntropyLoss`를 쓰며, `id2label`/`label2id`로 0과 1에 negative/positive 이름을 붙입니다. 출력에서 분류 헤드(classifier)가 새로 초기화되었다는 메시지와 파라미터 수, 은닉 차원·사전 크기를 확인합니다.
-
 ```python
 model = AutoModelForSequenceClassification.from_pretrained(
     "klue/bert-base",
@@ -262,15 +247,15 @@ print(f"vocab size V:         {model.config.vocab_size:,}")
 [transformers] BertForSequenceClassification LOAD REPORT from: klue/bert-base
 Key                                        | Status     | 
 -------------------------------------------+------------+-
-cls.predictions.transform.dense.weight     | UNEXPECTED | 
 cls.predictions.transform.dense.bias       | UNEXPECTED | 
-cls.seq_relationship.bias                  | UNEXPECTED | 
-cls.predictions.transform.LayerNorm.bias   | UNEXPECTED | 
 cls.predictions.bias                       | UNEXPECTED | 
-cls.seq_relationship.weight                | UNEXPECTED | 
+cls.predictions.transform.dense.weight     | UNEXPECTED | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED | 
 cls.predictions.transform.LayerNorm.weight | UNEXPECTED | 
-classifier.weight                          | MISSING    | 
+cls.seq_relationship.weight                | UNEXPECTED | 
+cls.seq_relationship.bias                  | UNEXPECTED | 
 classifier.bias                            | MISSING    | 
+classifier.weight                          | MISSING    | 
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
@@ -290,7 +275,7 @@ vocab size V:         32,000
 **▶ 실행 결과**
 
 ```text
-Wed Jun 17 21:45:11 2026       
+Mon Jun 22 03:56:30 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -299,7 +284,7 @@ Wed Jun 17 21:45:11 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   33C    P8             12W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   43C    P8             13W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -311,8 +296,6 @@ Wed Jun 17 21:45:11 2026
 |  No running processes found                                                             |
 +-----------------------------------------------------------------------------------------+
 ```
-
-평가 때 호출될 지표 계산 함수를 정의합니다. 모델이 내놓는 2차원 로짓을 softmax로 확률로 바꾼 뒤, 클래스 1 확률과 argmax 예측을 구해 정확도·정밀도·재현율·F1과 AUC까지 한 번에 반환합니다. AUC는 확률값을, 나머지 지표는 예측 라벨을 쓴다는 점을 눈여겨보세요.
 
 ```python
 def compute_metrics(eval_pred):
@@ -332,8 +315,6 @@ def compute_metrics(eval_pred):
         "auc":       float(roc_auc_score(labels, probs)),
     }
 ```
-
-학습 설정을 `TrainingArguments`에 모아 담고 `Trainer`를 구성한 뒤 실제 학습을 돌립니다. T4 제약에 맞춰 2 에폭·배치 16·`fp16=True`로 잡고, 매 에폭마다 평가하도록 설정합니다. 학습이 끝나면 평균 train loss를 출력해 수렴 여부를 가늠합니다.
 
 ```python
 training_args = TrainingArguments(
@@ -367,12 +348,8 @@ print(f"\nTraining done — mean train loss: {train_result.training_loss:.4f}")
 
 ```text
 <IPython.core.display.HTML object>
-Training done — mean train loss: 0.3008
+Training done — mean train loss: 0.2939
 ```
-
-**결과 해석**
-
-2 에폭 학습 후 평균 train loss가 0.30까지 내려가, 한국어 데이터에서도 BERT 이진 분류가 안정적으로 수렴함을 보여 줍니다.
 
 ```python
 !nvidia-smi
@@ -381,7 +358,7 @@ Training done — mean train loss: 0.3008
 **▶ 실행 결과**
 
 ```text
-Wed Jun 17 21:46:00 2026       
+Mon Jun 22 03:57:18 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -390,7 +367,7 @@ Wed Jun 17 21:46:00 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   54C    P0             32W /   70W |    2627MiB /  15360MiB |     79%      Default |
+| N/A   62C    P0             61W /   70W |    2627MiB /  15360MiB |     55%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -399,11 +376,9 @@ Wed Jun 17 21:46:00 2026
 |  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
 |        ID   ID                                                               Usage      |
 |=========================================================================================|
-|    0   N/A  N/A            8636      C   /usr/bin/python3                       2624MiB |
+|    0   N/A  N/A             661      C   /usr/bin/python3                       2624MiB |
 +-----------------------------------------------------------------------------------------+
 ```
-
-학습이 끝난 모델을 평가 데이터에 적용해 앞서 정의한 지표들을 한 번에 측정합니다. `eval_`로 시작하는 항목만 골라 출력하므로, 한국어 데이터에서의 정확도·F1·AUC를 곧바로 확인할 수 있습니다.
 
 ```python
 eval_metrics = trainer.evaluate()
@@ -419,19 +394,13 @@ for k, v in eval_metrics.items():
 <IPython.core.display.HTML object>
 <IPython.core.display.HTML object>
 klue/bert-base NSMC binary — evaluation:
-             eval_loss: 0.3995
+             eval_loss: 0.3887
          eval_accuracy: 0.8640
         eval_precision: 0.8773
            eval_recall: 0.8457
                eval_f1: 0.8612
-              eval_auc: 0.9248
+              eval_auc: 0.9292
 ```
-
-**결과 해석**
-
-5,000건만 학습했는데도 정확도 0.864, F1 0.861, AUC 0.925로, 영어 DistilBERT 챕터에 견줄 만한 성능을 한국어에서도 그대로 재현합니다. precision 0.877과 recall 0.846이 균형 있게 높아 한쪽으로 치우치지 않은 분류기임을 알 수 있습니다.
-
-평가셋 전체에 대해 예측을 다시 받아, 2차원 로짓을 softmax 확률로 바꾸고 `z = z1 - z0`로 단일 로짓을 만들어 둡니다. 이렇게 정리한 확률과 로짓의 분포 범위, 그리고 양성 예측 비율을 출력해 모델이 얼마나 확신을 갖고 양극단으로 판단하는지 살펴봅니다.
 
 ```python
 preds_output = trainer.predict(eval_tok)
@@ -454,16 +423,10 @@ print(f"positive prediction rate (prob >= 0.5): {(probs >= 0.5).mean():.1%}")
 ```text
 <IPython.core.display.HTML object>
 logits2 (raw)  shape: (1000, 2)
-logit z = z1-z0 range: [-5.83, 5.09]
-prob range:           [0.0029, 0.9939]
+logit z = z1-z0 range: [-5.71, 5.19]
+prob range:           [0.0033, 0.9944]
 positive prediction rate (prob >= 0.5): 48.1%
 ```
-
-**결과 해석**
-
-확률이 0.003부터 0.994까지 양극단으로 넓게 퍼지고 logit z도 -5.83-+5.09 범위를 채워, 모델이 어중간하게 0.5 근처에 머무르지 않고 확신을 갖고 판단함을 보여 줍니다. 양성 예측 비율 48.1%는 실제 양성 비율 49.9%와 가까워 임계값 0.5가 적절합니다.
-
-negative와 positive 두 클래스 각각의 정밀도·재현율·F1을 표로 정리해 출력합니다. 전체 정확도뿐 아니라 클래스별 성능을 따로 보면, 모델이 어느 한쪽 감성으로 치우치지 않았는지 확인할 수 있습니다.
 
 ```python
 # 분류 리포트
@@ -487,14 +450,8 @@ print(classification_report(
 weighted avg     0.8645    0.8640    0.8640      1000
 ```
 
-**결과 해석**
-
-부정과 긍정 두 클래스의 F1이 0.867과 0.861로 거의 같아, 어느 한쪽 감성에 편향되지 않고 양쪽을 고르게 잘 맞춥니다.
-
-실제 라벨별로 예측 확률의 분포를 밀도 곡선으로 그립니다. 부정·긍정 두 그룹의 봉우리가 임계선 0.5를 기준으로 얼마나 깔끔하게 갈라지는지, 그리고 0.5 부근에서 두 분포가 겹치는 경계 사례가 얼마나 되는지 시각적으로 확인합니다.
-
 ```python
-sns.set_theme(style="whitegrid", context="talk")
+sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
 PAL = {0: "#5B8DEF", 1: "#F47272"}
 df_eval = pd.DataFrame({"prob": probs, "logit": logits, "label": labels})
 
@@ -505,9 +462,9 @@ sns.kdeplot(
     palette=PAL, clip=(0, 1), ax=ax,
 )
 ax.axvline(0.5, color="black", lw=1.2, ls="--", alpha=0.7)
-ax.set_title("klue/bert-base NSMC — Probability Distribution by Actual Label")
-ax.set_xlabel("Predicted probability  P(positive)")
-ax.set_ylabel("Density")
+ax.set_title("klue/bert-base NSMC — 실제 라벨별 확률 분포")
+ax.set_xlabel("예측 확률  P(positive)")
+ax.set_ylabel("밀도")
 plt.tight_layout()
 plt.show()
 ```
@@ -515,12 +472,6 @@ plt.show()
 **▶ 실행 결과**
 
 ![output](../assets/15-ko_binary-out1.png)
-
-**결과 해석**
-
-실제 부정 리뷰는 확률 0 근처에, 긍정 리뷰는 1 근처에 봉우리가 쏠려 두 분포가 임계선 0.5를 기준으로 깔끔하게 갈라집니다. 0.5 부근에 겹치는 꼬리가 곧 모델이 망설이는 소수의 경계 사례입니다.
-
-이번에는 확률 대신 `z = z1 - z0` 로짓을 가로축에 두고 같은 분포를 그립니다. sigmoid로 0-1 구간에 눌러 담기 전의 원본 신호가 0을 경계로 두 클래스를 어떻게 가르는지, 확률 그림을 양옆으로 펼친 모습으로 비교해 봅니다.
 
 ```python
 fig, ax = plt.subplots(figsize=(9, 5))
@@ -530,9 +481,9 @@ sns.kdeplot(
     palette=PAL, ax=ax,
 )
 ax.axvline(0.0, color="black", lw=1.2, ls="--", alpha=0.7)
-ax.set_title("klue/bert-base NSMC — Logit Distribution  (z = z1 − z0)")
-ax.set_xlabel("Logit  z = z1 − z0")
-ax.set_ylabel("Density")
+ax.set_title("klue/bert-base NSMC — logit 분포  (z = z1 − z0)")
+ax.set_xlabel("logit  z = z1 − z0")
+ax.set_ylabel("밀도")
 plt.tight_layout()
 plt.show()
 ```
@@ -540,12 +491,6 @@ plt.show()
 **▶ 실행 결과**
 
 ![output](../assets/15-ko_binary-out2.png)
-
-**결과 해석**
-
-logit z = z1 - z0로 펼친 분포는 확률 그림을 양옆으로 늘여 놓은 모습으로, 0을 기준으로 음수 쪽에 부정, 양수 쪽에 긍정이 분리됩니다. sigmoid가 z를 0-1 확률로 눌러 담기 전의 원본 신호가 이미 두 클래스를 잘 가르고 있음을 보여 줍니다.
-
-예측 확률을 기준으로 가장 자신 있게 긍정으로 본 리뷰, 가장 자신 있게 부정으로 본 리뷰, 그리고 0.5에 가장 가까워 가장 망설인 리뷰를 한 건씩 뽑아 실제 문장과 함께 보여 줍니다. 확신의 정도가 문장의 감성 명료도와 어떻게 이어지는지 직접 눈으로 확인하기 위한 단계입니다.
 
 ```python
 # 가장 자신있게 positive (probs 최대), 가장 자신있게 negative (probs 최소),
@@ -586,29 +531,25 @@ sample #580  (most confident positive)
 ==============================================================================
 text:        아 최고.. 지금 수능 끝나고 보고 있어요ㅠㅠ 현실적인 30대의 사랑이야기~
 true label:  1  (positive)
-prob(pos):   0.9939
-logit z:     +5.09
+prob(pos):   0.9944
+logit z:     +5.19
 prediction:  1 (positive)    match: ✓
 
 ==============================================================================
-sample #368  (most confident negative)
+sample #169  (most confident negative)
 ==============================================================================
-text:        장난하는것도 아니고...정말 별로다..예전의 주온을 전혀 못 따라가는 졸작
+text:        한마디로노잼 재미없음
 true label:  0  (negative)
-prob(pos):   0.0029
-logit z:     -5.83
+prob(pos):   0.0033
+logit z:     -5.71
 prediction:  0 (negative)    match: ✓
 
 ==============================================================================
-sample #970  (most uncertain (prob ≈ 0.5))
+sample #978  (most uncertain (prob ≈ 0.5))
 ==============================================================================
-text:        이게 30년전 영화라니 최곱니다
-true label:  1  (positive)
-prob(pos):   0.5027
-logit z:     +0.01
-prediction:  1 (positive)    match: ✓
+text:        영화보다가 진짜 기도드릴뻔했다. '제발 끝나게해주세요'라고..
+true label:  0  (negative)
+prob(pos):   0.5040
+logit z:     +0.02
+prediction:  1 (positive)    match: ✗
 ```
-
-**결과 해석**
-
-확신이 높은 두 사례("최고", "졸작")는 감성어가 또렷해 확률이 0.99와 0.003으로 양극단을 찍는 반면, 가장 망설인 "이게 30년전 영화라니 최곱니다"는 칭찬과 의외성이 뒤섞여 확률이 0.5027로 경계에 걸칩니다. 모델의 자신감이 곧 문장의 감성 명료도를 반영함을 잘 보여 줍니다.
