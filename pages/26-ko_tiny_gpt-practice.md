@@ -9,13 +9,14 @@
 **▶ 실행 결과**
 
 ```text
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 127.0 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 49.9 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.2/389.2 kB 42.6 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 0.0/48.9 MB ? eta -:--:--
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 149.2 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 149.2 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 17.1 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 11.1/11.2 MB 174.1 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 97.4 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 42.8 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.2/389.2 kB 34.4 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━╺━━━━━━━━━━━━━━━━ 28.6/48.9 MB 168.7 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 196.9 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 196.9 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 18.0 MB/s eta 0:00:00
 ```
 
 ```python
@@ -57,6 +58,15 @@ random.seed(SEED)
 # fp16 은 CUDA 에서만 (MPS 는 미지원, CPU 는 의미 없음)
 USE_FP16 = (device.type == "cuda")
 print(f"use fp16   : {USE_FP16}")
+
+# matplotlib 한글 폰트 (Colab — NanumGothic). plot 의 한국어가 □ 로 깨지지 않게.
+import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run("apt-get -qq -y install fonts-nanum", shell=True)
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
+plt.rcParams["axes.unicode_minus"] = False
 ```
 
 **▶ 실행 결과**
@@ -67,8 +77,6 @@ VRAM total : 14.56 GiB
 torch      : 2.11.0+cu128
 use fp16   : True
 ```
-
-TinyStories-Korean 데이터셋은 한 줄에 한 문장씩, story 경계는 `<|endoftext|>` 마커로 표시되어 있습니다. 아래 함수는 스트리밍으로 줄을 읽어 마커를 만날 때마다 누적한 줄을 하나의 story로 이어 붙입니다. 한국어 동화 30,000편을 복원해 학습 코퍼스를 만듭니다.
 
 ```python
 from datasets import load_dataset
@@ -123,7 +131,7 @@ print(raw_train[0]["text"][:400])
 **▶ 실행 결과**
 
 ```text
-rebuilt stories: train=30,000, val=500  (28.7s)
+rebuilt stories: train=30,000, val=500  (19.1s)
 train: Dataset({
     features: ['text'],
     num_rows: 30000
@@ -138,12 +146,6 @@ story length (chars): mean=468, median=420, max=2754
 === sample story ===
 한때 벤이라는 이름의 어린 소년이 있었어요. 벤은 주변 세계를 탐험하는 것을 좋아했답니다. 그는 가게에 전시되어 있던 아름다운 꽃병들 같은 멋진 것들을 많이 봤어요. 어느 날, 벤은 가게를 거닐다가 정말 특별한 꽃병을 발견했죠. 벤은 그 꽃병을 보고 …(뒤 240자 생략)
 ```
-
-**결과 해석**
-
-train 30,000편, validation 500편의 story가 약 29초 만에 복원되었습니다. story 평균 길이는 468자(중앙값 420자)로, 한 편이 짧은 동화 분량이라 작은 GPT로도 충분히 패턴을 학습할 수 있습니다.
-
-이제 이 한국어 코퍼스로 토크나이저를 직접 학습합니다. 영어 gpt2처럼 byte 단위에서 시작하는 BBPE(byte-level BPE)를 쓰되, 한국어는 한 글자가 여러 byte라 vocab을 4000으로 약간 키웁니다. `<|endoftext|>`를 유일한 special token으로 두어 bos/eos/pad를 모두 겸하게 합니다.
 
 ```python
 from tokenizers import Tokenizer
@@ -192,7 +194,7 @@ print(f"eos_token  : {tokenizer.eos_token}  id={tokenizer.eos_token_id}")
 **▶ 실행 결과**
 
 ```text
-BBPE training done: 9.2s, vocab=4000
+BBPE training done: 9.9s, vocab=4000
 
 === encode/decode demo (Korean) ===
 input      : 옛날 옛날에 작은 토끼가 숲으로 갔어요.
@@ -202,12 +204,6 @@ decode     : 옛날 옛날에 작은 토끼가 숲으로 갔어요.
 vocab_size : 4000
 eos_token  : <|endoftext|>  id=0
 ```
-
-**결과 해석**
-
-BBPE 학습이 9초 만에 끝나 vocab 4000을 확보했습니다. "옛날 옛날에 작은 토끼가 숲으로 갔어요."가 8개 토큰으로 쪼개지고 decode 시 원문이 그대로 복원되어, 우리 토크나이저가 한국어를 의미 단위에 가깝게 다룬다는 것을 확인할 수 있습니다.
-
-같은 한국어 문장을 영어 gpt2의 BPE 토크나이저와 우리 BBPE로 각각 토큰화해 개수를 비교합니다. gpt2는 한국어 학습 데이터를 보지 못했으므로 한글을 byte 조각으로 잘게 쪼갭니다. 두 토크나이저의 토큰 수 비율을 보면 한국어 전용 토크나이저의 효율 이득이 드러납니다.
 
 ```python
 from transformers import AutoTokenizer
@@ -253,12 +249,6 @@ Korean tokenization: English gpt2 BPE vs our Korean BBPE
 => gpt2 BPE splits Korean into many byte fragments (more tokens).
    Our Korean BBPE keeps meaningful units (fewer tokens).
 ```
-
-**결과 해석**
-
-영어 gpt2 BPE는 같은 한국어 문장을 우리 BBPE보다 6-7배 많은 토큰으로 쪼갭니다. 한국어 코퍼스로 직접 학습한 토크나이저가 문맥 길이를 절약하고 학습을 효율화한다는 점이 분명히 드러납니다.
-
-다음으로 학습용 입력을 만듭니다. 각 story를 토큰화한 뒤 끝에 EOS를 붙여 경계를 표시하고, 모든 토큰을 한 줄로 이어붙여 `BLOCK_SIZE=128` 단위로 잘라 고정 길이 chunk로 만듭니다. CausalLM 사전학습의 표준 전처리입니다.
 
 ```python
 BLOCK_SIZE = 128
@@ -313,12 +303,6 @@ first chunk decode (first 200 chars):
 한때 벤이라는 이름의 어린 소년이 있었어요. 벤은 주변 세계를 탐험하는 것을 좋아했답니다. 그는 가게에 전시되어 있던 아름다운 꽃병들 같은 멋진 것들을 많이 봤어요. 어느 날, 벤은 가게를 거닐다가 정말 특별한 꽃병을 발견했죠. 벤은 그 꽃병을 보고 …(뒤 60자 생략)
 ```
 
-**결과 해석**
-
-30,000편을 이어붙여 128 토큰 chunk 45,845개(약 5.87M 토큰)가 만들어졌습니다. 첫 chunk를 decode하면 원본 story가 그대로 이어져, 손실 없이 chunk로 재배열되었음을 확인할 수 있습니다.
-
-CausalLM이 한 step에서 얼마나 많은 토큰을 학습 신호로 쓰는지 직접 확인합니다. `DataCollatorForLanguageModeling(mlm=False)`은 labels를 input_ids와 동일하게 복제하므로, MLM처럼 대부분을 `-100`으로 가리지 않습니다. `-100` 자리와 학습 신호 자리의 비율을 세어 MLM(Ch 20/22)과 대비합니다.
-
 ```python
 from transformers import DataCollatorForLanguageModeling
 
@@ -367,12 +351,6 @@ total positions      : 256
 (input_ids == labels) positions: 255/256  - clone as-is
 ```
 
-**결과 해석**
-
-전체 256개 자리 중 99.61%가 학습 신호이고 `-100`은 단 1개(0.39%)뿐입니다. 15%만 가리는 MLM과 비교하면 같은 step에서 토큰당 학습 효율이 5-6배 높아, GPT 사전학습이 데이터를 훨씬 빽빽하게 활용함을 보여줍니다.
-
-이제 모델을 정의합니다. `n_embd=256`, `n_layer=4`, `n_head=4`의 작은 GPT-2를 한국어 vocab 4000에 맞춰 scratch부터 만듭니다. 사전학습 가중치 없이 무작위 초기화 상태이며, 학습 전후 generation을 비교하기 위해 미리 GPU로 올려둡니다.
-
 ```python
 from transformers import GPT2Config, GPT2LMHeadModel
 
@@ -410,12 +388,6 @@ model: GPT2LMHeadModel
   - body : GPT2Model  (Decoder, causal attention)
   - head : Linear(in=256, out=4000)
 ```
-
-**결과 해석**
-
-파라미터는 약 4.22M(fp32 기준 16MiB)으로 매우 가볍습니다. weight tying이 켜져 입력 임베딩(wte)과 출력 head가 가중치를 공유하며, body는 causal attention의 Decoder임을 확인할 수 있습니다.
-
-학습 전 무작위 가중치 상태에서 먼저 generation을 돌려봅니다. 같은 한국어 prompt 4개에 대해 학습 후 출력과 나란히 비교할 기준선을 만듭니다. 재현성을 위해 학습 전후 동일한 seed를 사용합니다.
 
 ```python
 PROMPTS = [
@@ -469,12 +441,6 @@ prompt: 큰 개가
 prompt: 어느 날,
 어느 날, 고양이는 퍼즐�리를 안아주 의사았을�� 완벽한고마워 � 플러피고마워 싸 안아주 거실 영리 페 그녀의 아이스크림 접�� 레 의자에으며치를 돕이건 자신을갔습니다 할머니 구 아이스크림계프는 엄마님은 레 거실 악 거실 파란 기뻤습니다 운� 친구들에 …(뒤 40자 생략)
 ```
-
-**결과 해석**
-
-학습 전 출력은 한국어 단어 조각이 무작위로 나열되어 문장이 전혀 성립하지 않고, 깨진 글자(�)도 섞여 있습니다. 무작위 초기화 모델은 토큰을 거의 균등하게 뽑는다는 것을 눈으로 확인할 수 있습니다.
-
-이제 본격적으로 사전학습을 돌립니다. T4 30분 룰 안에서 `max_steps=1500`, `batch_size=32`, cosine 스케줄에 fp16으로 학습합니다. scratch 사전학습 표준인 lr 5e-4와 Adam beta2 0.95를 쓰며, VRAM 추이를 콜백으로 기록합니다.
 
 ```python
 from transformers import (DataCollatorForLanguageModeling, Trainer,
@@ -553,18 +519,12 @@ if torch.cuda.is_available():
 [transformers] `loss_type=None` was set in the config but it is unrecognized. Using the default loss: `ForCausalLMLoss`.
 <IPython.core.display.HTML object>
 === training summary ===
-elapsed       : 0.90 min
+elapsed       : 0.91 min
 global_step   : 1500
 train_loss    : 4.5487
 random baseline (ln vocab): 8.2940
 final peak    : 66 MiB
 ```
-
-**결과 해석**
-
-1500 step이 단 0.9분 만에 끝났고 train loss가 4.55까지 떨어졌습니다. 무작위 baseline인 ln(4000)=8.29의 절반 수준이며, peak VRAM이 66MiB에 불과해 T4 16GB에서 한참 여유가 있습니다.
-
-학습이 어떻게 진행됐는지 loss curve와 VRAM 추이를 함께 그립니다. train/eval loss가 uniform baseline 아래로 얼마나 빠르게 내려가는지, 그리고 작은 모델이라 VRAM이 얼마나 낮게 유지되는지 봅니다.
 
 ```python
 # loss curve + VRAM trace
@@ -581,20 +541,20 @@ if eval_pts:
     ax1.plot([s for s, _ in eval_pts], [l for _, l in eval_pts], "s-",
              color="tab:red", label="eval")
 ax1.axhline(math.log(tokenizer.vocab_size), ls=":", color="gray",
-            label=f"uniform baseline = ln({tokenizer.vocab_size}) approx. {math.log(tokenizer.vocab_size):.2f}")
+            label=f"무작위 추측 기준선 = ln({tokenizer.vocab_size}) approx. {math.log(tokenizer.vocab_size):.2f}")
 ax1.set_xlabel("step"); ax1.set_ylabel("cross-entropy loss")
-ax1.set_title("Korean TinyGPT-2 on TinyStories-Korean - loss")
+ax1.set_title("한국어 TinyGPT-2 (TinyStories-Korean) - loss")
 ax1.grid(True, alpha=0.3); ax1.legend()
 
 # VRAM (CUDA 만)
 if vram_cb.steps:
     ax2.plot(vram_cb.steps, vram_cb.peak_MiB, "o-", color="tab:green",
-             label="peak VRAM (per log window)")
+             label="최대 VRAM (로그 구간별)")
     ax2.set_title(f"VRAM trace  (bs=32, fp16, n_pos={BLOCK_SIZE})")
 else:
-    ax2.text(0.5, 0.5, "VRAM trace available on CUDA only",
+    ax2.text(0.5, 0.5, "VRAM 추적은 CUDA 에서만 가능",
              ha="center", va="center", transform=ax2.transAxes)
-    ax2.set_title("VRAM trace - CUDA only")
+    ax2.set_title("VRAM 추적 - CUDA 전용")
 ax2.set_xlabel("step"); ax2.set_ylabel("VRAM (MiB)")
 ax2.grid(True, alpha=0.3); ax2.legend()
 
@@ -604,12 +564,6 @@ plt.tight_layout(); plt.show()
 **▶ 실행 결과**
 
 ![output](../assets/26-ko_tiny_gpt-out1.png)
-
-**결과 해석**
-
-train과 eval loss가 uniform baseline(약 8.29) 아래로 빠르게 내려가 4-4.5 부근에 안착하고, eval이 train과 거의 붙어 있어 과적합 징후가 없습니다. VRAM은 학습 내내 100MiB 미만으로 평평하게 유지됩니다.
-
-학습 후 같은 prompt 4개로 다시 generation을 돌려 학습 전과 비교합니다. 본체가 한국어 next-token 분포를 익혔다면 이번에는 문법에 맞는 동화체 문장이 나와야 합니다.
 
 ```python
 torch.manual_seed(SEED)
@@ -640,12 +594,6 @@ prompt: 큰 개가
 prompt: 어느 날,
 어느 날, 팀이라는 소년이 땅에 앉아 있는 것을 봤어요. 그는 "안녕?" 팀은 말했죠. "응, 팀아. 같이 놀자." 팀은 매우 기뻐했어요. 팀은 동의했어요. 잠시 후, 팀은 팀에게서 그들은 공으로 놀았어요. 팀은 "안녕, 팀, 나는 네 자동차를 찾을래?"라고 말했죠. 팀은 말했어요
 ```
-
-**결과 해석**
-
-학습 후에는 "옛날 옛날에 잭이라는 작은 소녀가 있었습니다."처럼 문법에 맞는 동화체 문장이 나오고 따옴표 대화까지 형식이 잡힙니다. 단 0.9분 학습으로도 한국어 표면 구조를 익혔으며, 같은 인물·대상을 반복하는 등 사실 일관성은 작은 모델·짧은 학습의 한계를 그대로 보여줍니다.
-
-학습 전후를 한 화면에 나란히 놓고 prompt 부분을 제외한 생성분만 비교합니다. 사전학습이 본체에 새긴 next-token 분포의 효과를 가장 직접적으로 보여주는 셀입니다.
 
 ```python
 # before / after 나란히 - 사전학습이 본체에 새긴 next-token 분포의 직접적 증거
@@ -686,12 +634,6 @@ PROMPT  : 어느 날,
 BEFORE  : 고양이는 퍼즐�리를 안아주 의사았을�� 완벽한고마워 � 플러피고마워 싸 안아주 거실 영리 페 그녀의 아이스크림 접�� 레 의자에으며치를 돕이건 자신을갔습니다 할머니 구 아이스크림계프는 엄마님은 레 거실 악 거실 파란 기뻤습니다 운� …(뒤 44자 생략)
 AFTER   : 팀이라는 소년이 땅에 앉아 있는 것을 봤어요. 그는 "안녕?" 팀은 말했죠. "응, 팀아. 같이 놀자." 팀은 매우 기뻐했어요. 팀은 동의했어요. 잠시 후, 팀은 팀에게서 그들은 공으로 놀았어요. 팀은 "안녕, 팀, 나는 네 자동차를 …(뒤 21자 생략)
 ```
-
-**결과 해석**
-
-네 prompt 모두 BEFORE는 깨진 글자 섞인 단어 나열이지만 AFTER는 일관된 동화 문장으로 바뀝니다. 단 1500 step 사전학습만으로 본체가 한국어 문장 구조를 새겼다는 것을 한눈에 대비해 보여줍니다.
-
-마지막으로 사전학습이 충분히 된 reference 모델 KoGPT2(skt/kogpt2-base-v2, 125M)를 같은 prompt에 돌려봅니다. 우리 모델은 자체 BBPE 토크나이저를 쓰지만 KoGPT2는 자신의 토크나이저로 generation해야 하므로 `gen_tokenizer`를 따로 넘깁니다. 시간이 부족하면 `RUN_KOGPT2_REF=False`로 건너뛸 수 있습니다.
 
 ```python
 # 선택 셀 - KoGPT2 reference. 시간이 부족하면 RUN_KOGPT2_REF = False 로 두고 건너뜁니다.
@@ -749,7 +691,3 @@ prompt: 큰 개가
 prompt: 어느 날,
 ���,▁Gaurius,▁vand.▁Gould,▁Denol,▁Tamil,▁Anat�nn▁McCamel,▁Zehn,▁Guy.▁Cyb,▁Shitch,▁Pellek,▁Nami,▁Jalifa,
 ```
-
-**결과 해석**
-
-KoGPT2 출력은 우리 generation 헬퍼의 sampling 설정과 토크나이저 특성이 맞물려 깨진 토큰(`▁`, `�`)이 쏟아져 나옵니다. reference 모델을 그대로 쓰는 것이 능사가 아니며 토크나이저·디코딩 설정을 모델에 맞춰야 한다는 점을 보여주는데, 본격적인 KoGPT2 활용은 Ch 27에서 깊이 다룹니다.

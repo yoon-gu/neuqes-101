@@ -245,6 +245,4 @@ Ch 24 와 *완전히 같은* Trainer 패턴 — 모델 클래스·collator·hype
 
 ## 이 장의 구성
 
-- [26-1. 실습](26-ko_tiny_gpt-practice.md)
-- [26-2. 변형 - sampling hyperparam / 더 큰 모델 / 더 많은 stories](26-ko_tiny_gpt-variation.md)
-- [26-3. 정리와 FAQ](26-ko_tiny_gpt-wrapup.md)
+[[SubPages]]
