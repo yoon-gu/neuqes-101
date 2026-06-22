@@ -9,15 +9,16 @@
 **▶ 실행 결과**
 
 ```text
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 825.1/825.1 kB 23.3 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 132.1 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 53.0 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.2/389.2 kB 42.2 MB/s eta 0:00:00
-   ━━━━━━━╺━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 9.0/48.9 MB 270.6 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 179.2 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 179.2 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 179.2 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 16.9 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 825.1/825.1 kB 22.3 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 11.1/11.2 MB 198.4 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 111.5 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 49.5 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.2/389.2 kB 38.0 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━╸━━━━━━━━━━━━━━━━━━━━━━━━ 19.0/48.9 MB 232.1 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 155.5 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 155.5 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 155.5 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 16.1 MB/s eta 0:00:00
 ```
 
 ```python
@@ -62,6 +63,15 @@ random.seed(SEED)
 # fp16 은 CUDA 에서만 (MPS 는 미지원, CPU 는 의미 없음)
 USE_FP16 = (device.type == "cuda")
 print(f"use fp16     : {USE_FP16}")
+
+# matplotlib 한글 폰트 (Colab — NanumGothic). plot 의 한국어가 □ 로 깨지지 않게.
+import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run("apt-get -qq -y install fonts-nanum", shell=True)
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
+plt.rcParams["axes.unicode_minus"] = False
 ```
 
 **▶ 실행 결과**
@@ -73,8 +83,6 @@ VRAM total   : 14.56 GiB
 torch        : 2.11.0+cu128
 use fp16     : True
 ```
-
-KoAlpaca-v1.1a를 불러와 instruction과 output이 모두 채워진 샘플만 남기고, T4 30분 제약에 맞춰 3,000개로 줄입니다. 긴 답변은 평균 길이를 통제하기 위해 600자에서 자릅니다. 데이터가 instruction → output 쌍으로 구성된 점을 확인하는 셀입니다.
 
 ```python
 from datasets import load_dataset
@@ -116,8 +124,6 @@ output     : 양파는 잎이 아닌 식물의 줄기 부분입니다. 고구마
 식물의 부위의 구분에 대해 궁금해하는 분이라면 분명 이 질문에 대한 답을 찾고 있을 것입니다. 양파는 잎이 아닌 줄기 부분입니다. 고구마는 다른 질문과 답변에서 언급된 것과 같이 뿌리 부분입니다. 따라서, 양파는 식물의 줄기 부분이 되고, 고구마는 식물의 뿌리 부분입니다.
 after filter + subset: 3,000 samples
 ```
-
-각 샘플을 prompt와 completion으로 분리합니다. prompt는 `### 명령어:` … `### 응답:` 형태로 감싸고, completion에는 답변만 둡니다. 이렇게 응답 경계를 명시해 두어야 뒤에서 프롬프트만 -100으로 가리고 답변만 학습시킬 수 있습니다.
 
 ```python
 RESPONSE_TEMPLATE = "### 응답:\n"   # 이 뒤부터가 '답변' (학습 대상)
@@ -165,8 +171,6 @@ formatted dataset: Dataset({
 --- completion ---
 나무 내부에 있는 심재는 죽은 세포들로 이루어져 있습니다. 이 부분은 변재와는 달리 생명력이 없기 때문에 균에 저항력이 떨어져 있습니다. 그래서 변재와는 달리 균에 대항하기 어렵습니다. 일단 균이 침입해서 번져나가면, 막을 수 있는 방법이 없어서 썩어 …(뒤 60자 생략)
 ```
-
-KoGPT2 토크나이저와 모델을 불러옵니다. `AutoTokenizer`는 KoGPT2를 영어 GPT2 토크나이저로 잘못 불러오므로, special token을 직접 지정해 `PreTrainedTokenizerFast`로 로드합니다. 한국어가 깨지지 않는지 encode → decode 왕복으로 확인하는 점을 눈여겨보세요.
 
 ```python
 from transformers import PreTrainedTokenizerFast, AutoModelForCausalLM
@@ -220,12 +224,6 @@ tokenizer    : TokenizersBackend
   pad_token  : <pad>  id=3
 ```
 
-**결과 해석**
-
-왕복 검증이 OK로 통과해 한국어 토큰화가 정상이며, 본체는 Ch 27과 같은 125M 파라미터입니다. eos와 bos가 같은 `</s>`(id=1)로 묶여 있어 답변 끝을 EOS로 표시하는 SFT 포맷과 잘 맞습니다.
-
-trl의 SFT collator로 이 장의 핵심인 response-only mask를 직접 재현합니다. prompt와 completion을 각각 토큰화한 뒤 답변 끝에 EOS를 붙이고, `completion_only_loss=True` collator를 적용하면 프롬프트 토큰의 label이 -100으로 바뀝니다. 몇 개의 토큰만 학습 대상으로 남는지를 보세요.
-
 ```python
 # trl 1.x 의 SFT collator. 버전마다 위치가 다를 수 있어 폴백 import.
 try:
@@ -268,10 +266,6 @@ total tokens      : 180
 
 labels learned    : 142 / 180  (prompt masked = 38)
 ```
-
-**결과 해석**
-
-전체 180개 토큰 중 프롬프트 38개는 -100으로 가려지고, 답변 142개만 loss에 기여합니다. 같은 self-supervised LM 트릭이지만 MLM(Ch 21)이 15%만 가리는 것과 정반대로, SFT는 프롬프트 전체를 가리고 답변만 학습합니다.
 
 ```python
 # 토큰별 표 - position | token | input_id | label | learn?
@@ -339,10 +333,6 @@ Per-token labels - prompt is masked (-100), only response is learned
 ... (출력 145줄 생략) ...
 ```
 
-**결과 해석**
-
-`### 명령어:`부터 질문 본문까지의 토큰은 모두 label이 -100으로 찍혀 학습에서 빠지고, `### 응답:` 경계 이후 토큰만 학습 대상으로 남습니다. 프롬프트가 한 토큰 단위로 어떻게 가려지는지 표로 확인할 수 있습니다.
-
 ```python
 # 요약 시각화 - prompt vs response 토큰 수, loss 기여 비율
 n_prompt = len(labels) - n_learn
@@ -350,12 +340,12 @@ n_resp = n_learn
 
 fig, ax = plt.subplots(figsize=(9, 1.8))
 ax.barh([0], [n_prompt], color="lightgray", edgecolor="gray",
-        label=f"prompt (masked, -100): {n_prompt} tokens")
+        label=f"prompt (가림, -100): {n_prompt} tokens")
 ax.barh([0], [n_resp], left=[n_prompt], color="tab:green", edgecolor="darkgreen",
-        label=f"response (learned): {n_resp} tokens")
+        label=f"response (학습됨): {n_resp} tokens")
 ax.set_yticks([])
-ax.set_xlabel("token position")
-ax.set_title("SFT labels: prompt masked (-100), only response contributes to loss")
+ax.set_xlabel("토큰 위치")
+ax.set_title("SFT labels: prompt 은 가리고 (-100), response 만 loss 에 기여")
 ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.4), ncol=2)
 plt.tight_layout(); plt.show()
 ```
@@ -363,12 +353,6 @@ plt.tight_layout(); plt.show()
 **▶ 실행 결과**
 
 ![output](../assets/28-sft-out1.png)
-
-**결과 해석**
-
-회색이 가려진 프롬프트, 초록색이 학습되는 응답입니다. 한 샘플에서 loss에 기여하는 것은 응답 토큰뿐임이 한눈에 드러납니다.
-
-SFT 학습에 앞서 instruction tuning 전 raw KoGPT2가 같은 질문에 어떻게 답하는지 먼저 기록해 둡니다. §5의 BEFORE/AFTER 비교에 쓰입니다. 아직 명령을 따르지 못하고 다음 단어만 이어 붙이는 모습을 확인하는 것이 핵심입니다.
 
 ```python
 from trl import SFTTrainer, SFTConfig
@@ -450,12 +434,6 @@ BEFORE SFT - raw KoGPT2 (no instruction tuning yet)
 미세먼지
 ```
 
-**결과 해석**
-
-학습 전 모델은 질문을 무시하고 SNS 글이나 블로그 후기 같은 사전학습 코퍼스의 문체로 흘러갑니다. "리스트를 뒤집는 방법"을 물어도 이벤트 응모 안내가 나오듯, 명령을 따른다는 개념 자체가 아직 없습니다.
-
-SFTConfig로 학습 설정을 정의하고 `SFTTrainer`로 SFT를 돌립니다. `completion_only_loss=True`가 답변 부분만 loss로 쓰는 핵심 스위치이고, `packing=False`로 샘플 경계를 유지해야 마스킹이 정확합니다. T4 제약에 맞춰 배치 2 + grad accum 8(effective 16), 1 epoch, fp16으로 설정한 점을 보세요.
-
 ```python
 sft_config = SFTConfig(
     output_dir="./out_kogpt2_sft",
@@ -526,15 +504,11 @@ if torch.cuda.is_available():
 [transformers] `loss_type=None` was set in the config but it is unrecognized. Using the default loss: `ForCausalLMLoss`.
 <IPython.core.display.HTML object>
 === SFT summary ===
-elapsed     : 2.38 min
+elapsed     : 2.40 min
 global_step : 188
 train_loss  : 3.7007
 final peak  : 1453 MiB
 ```
-
-**결과 해석**
-
-3,000 샘플 1 epoch SFT가 2.38분 만에 끝나 T4 30분 룰에 넉넉히 들어옵니다. peak VRAM이 약 1.4GB(1453 MiB)에 그쳐, 응답 토큰만 학습하는 작은 모델 SFT가 메모리 측면에서도 가볍다는 것을 보여줍니다.
 
 ```python
 log = trainer.state.log_history
@@ -544,19 +518,19 @@ fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 4))
 
 if train_pts:
     ax1.plot([s for s, _ in train_pts], [l for _, l in train_pts], "-",
-             color="tab:blue", alpha=0.8, label="train (response-only)")
-ax1.set_xlabel("step"); ax1.set_ylabel("cross-entropy loss (response tokens only)")
-ax1.set_title("KoGPT2 SFT on KoAlpaca - loss")
+             color="tab:blue", alpha=0.8, label="train (response 만)")
+ax1.set_xlabel("step"); ax1.set_ylabel("cross-entropy loss (response 토큰만)")
+ax1.set_title("KoGPT2 SFT (KoAlpaca) - loss")
 ax1.grid(True, alpha=0.3); ax1.legend()
 
 if vram_cb.steps:
     ax2.plot(vram_cb.steps, vram_cb.peak_MiB, "o-", color="tab:green",
-             label="peak VRAM (per log window)")
+             label="최대 VRAM (로그 구간별)")
     ax2.set_title("VRAM trace  (bs=2, grad_accum=8, fp16)")
 else:
-    ax2.text(0.5, 0.5, "VRAM trace available on CUDA only",
+    ax2.text(0.5, 0.5, "VRAM 추적은 CUDA 에서만 가능",
              ha="center", va="center", transform=ax2.transAxes)
-    ax2.set_title("VRAM trace - CUDA only")
+    ax2.set_title("VRAM 추적 - CUDA 전용")
 ax2.set_xlabel("step"); ax2.set_ylabel("VRAM (MiB)")
 ax2.grid(True, alpha=0.3); ax2.legend()
 
@@ -566,12 +540,6 @@ plt.tight_layout(); plt.show()
 **▶ 실행 결과**
 
 ![output](../assets/28-sft-out2.png)
-
-**결과 해석**
-
-응답 토큰에 대한 cross-entropy loss가 학습이 진행되며 내려가고, VRAM은 로깅 윈도우마다 안정적으로 유지됩니다. 최종 train_loss 3.7007은 작은 모델 + 1 epoch 기준으로 답변 패턴을 충분히 익힌 수준입니다.
-
-같은 4개 프롬프트로 SFT 후 모델의 응답을 다시 생성해, 학습 전과 비교할 BEFORE/AFTER 짝을 만듭니다. 이제 모델이 질문에 답하는 형태로 바뀌었는지가 관전 포인트입니다.
 
 ```python
 torch.manual_seed(SEED)
@@ -612,10 +580,6 @@ AFTER SFT - KoGPT2 + KoAlpaca instruction tuning
 5. 낮 동안에는 잠을 자지 않는 습관을 가지면 좋습니다. 
 6. 밤에 옷을 입는 것도 권장됩니다.
 ```
-
-**결과 해석**
-
-SFT 후에는 "건강한 식습관"이나 "아침에 일찍 일어나는 팁"에 번호를 매겨 항목별로 답하는 등, 질문에 응답하는 형식이 자리잡았습니다. 사실관계는 작은 모델 한계로 부정확하지만(예: 피보나치 수열을 물에 비유), 명령을 따르려는 행동 자체가 학습되었다는 점이 SFT의 효과입니다.
 
 ```python
 # BEFORE vs AFTER 나란히 비교
@@ -682,7 +646,3 @@ AFTER       : 리스트에 파일 이름을 등록하여 해당 페이지에 접
 INSTRUCTION : 아침에 일찍 일어나는 팁을 알려줘
 ... (출력 21줄 생략) ...
 ```
-
-**결과 해석**
-
-같은 질문에 BEFORE는 무관한 SNS 글체로 벗어나는 반면, AFTER는 질문 주제에 맞춰 답하려 합니다. 모델 본체(head)는 그대로 두고 입력 프롬프트 포맷과 응답만 학습시키는 것만으로 "명령을 따르는" 행동이 생긴다는 것이 instruction tuning의 핵심입니다.

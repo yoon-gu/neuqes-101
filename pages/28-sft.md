@@ -242,6 +242,4 @@ KoGPT2 는 chat template 이 없으니 *직접 포맷* — `### 명령어:\n{ins
 
 ## 이 장의 구성
 
-- [28-1. 실습](28-sft-practice.md)
-- [28-2. 변형 — 더 많은 데이터 / 다른 response_template / LoRA](28-sft-variation.md)
-- [28-3. 정리와 FAQ](28-sft-wrapup.md)
+[[SubPages]]
