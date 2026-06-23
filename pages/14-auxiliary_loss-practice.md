@@ -83,6 +83,8 @@ Mon Jun 22 03:52:59 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+Ch 13과 동일하게 5개 항목(aspect)을 키워드 매칭으로 합성합니다. 각 항목의 대표 단어가 리뷰에 등장하면 해당 항목을 1로 표시하는 방식입니다. 이 multi-hot 라벨이 메인 task의 정답이 됩니다.
+
 ```python
 ASPECT_KEYWORDS = {
     "food": ["food", "meal", "dish", "taste", "delicious", "flavor", "menu",
@@ -116,6 +118,8 @@ print(f"K (aspects): {K}, aspects: {ASPECTS}")
 ```text
 K (aspects): 5, aspects: ['food', 'service', 'price', 'ambiance', 'location']
 ```
+
+데이터를 불러오면서 두 종류의 라벨을 함께 붙입니다. 항목 multi-hot은 메인 task용이고, 별점을 4로 나눈 `aux_score`(1★→0.0, 5★→1.0)는 보조 회귀 task용입니다. 별점은 Yelp 데이터에 이미 들어 있어 추가 라벨링 비용 없이 보조 신호로 쓸 수 있습니다.
 
 ```python
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
@@ -180,6 +184,8 @@ Aux score distribution (train):
   1.00  (star 5): 975 samples (19.5%)
 ```
 
+토큰화하면서 두 라벨을 모두 부착합니다. 메인 라벨은 `labels`(multi-hot 5차원 float), 보조 라벨은 `aux_labels`(float scalar)로 따로 둡니다. 이렇게 컬럼 이름을 나눠 두면 뒤에서 collator가 각각 다르게 처리할 수 있습니다.
+
 ```python
 def tokenize_fn(batch):
     out = tokenizer(batch["text"], truncation=True, max_length=128)
@@ -211,6 +217,8 @@ Dataset({
 First sample labels: [0.0, 1.0, 0.0, 0.0, 1.0]
 First sample aux_labels: 1.00
 ```
+
+기본 `DataCollatorWithPadding`은 `input_ids`·`attention_mask`·`labels`만 다룰 줄 알아 `aux_labels`는 통과시키지 못합니다. 그래서 한 줄짜리 wrapper로 `aux_labels`를 먼저 빼내 텐서로 만들고, 나머지는 표준 padding을 거친 뒤 batch에 다시 합쳐 줍니다.
 
 ```python
 class AuxCollator:
@@ -248,6 +256,8 @@ Batch keys: ['input_ids', 'token_type_ids', 'attention_mask', 'labels', 'aux_lab
   labels: shape=(4, 5), dtype=torch.float32
   aux_labels: shape=(4,), dtype=torch.float32
 ```
+
+Ch 13과 완전히 동일한 multi-label 모델을 로드한 뒤, `m.aux_head = nn.Linear(H, 1)` 한 줄로 보조 회귀 헤드를 모델 객체에 붙입니다. CLS hidden(768차원)을 받아 별점 스칼라 하나를 내보내는 작은 헤드입니다.
 
 ```python
 def make_model():
@@ -308,6 +318,8 @@ Main classifier:      Linear(in_features=768, out_features=5, bias=True)
 Aux head:             Linear(in_features=768, out_features=1, bias=True)
 ```
 
+이 챕터의 핵심입니다. `Trainer`의 `compute_loss`만 오버라이드해 `loss = 메인(BCE) + λ·보조(MSE)`를 직접 계산합니다. 나머지 학습 루프는 `Trainer`가 그대로 처리하므로, 바꾸는 건 loss 계산 한 군데뿐입니다.
+
 ```python
 from transformers.modeling_outputs import SequenceClassifierOutput
 
@@ -316,20 +328,36 @@ class AuxTrainer(Trainer):
     def __init__(self, *args, lambda_aux: float = 1.0, **kwargs):
         super().__init__(*args, **kwargs)
         self.lambda_aux = lambda_aux
+```
 
+**위 코드 읽기** — `lambda_aux`를 생성자 인자로 받아 인스턴스에 저장합니다. 이 값이 보조 loss의 가중치 $\lambda$ 이고, 뒤에서 `lambda_aux=1.0`(보조 ON)과 `lambda_aux=0.0`(baseline)을 같은 클래스로 주입하는 *유일한 차이*가 됩니다.
+
+```python
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
         aux_labels = inputs.pop("aux_labels")
         # output_hidden_states=True 로 BERT 마지막 layer hidden 까지 받기
         outputs = model(**inputs, output_hidden_states=True)
         main_loss = outputs.loss   # BCE per-label (자동 매핑)
+```
 
+**위 코드 읽기** — 먼저 `inputs.pop("aux_labels")`로 보조 라벨을 빼냅니다(이게 남아 있으면 `model.forward`가 모르는 인자라 에러). `output_hidden_states=True`로 forward를 호출하면 마지막 layer hidden까지 받을 수 있고, 메인 loss(`outputs.loss`)는 `problem_type="multi_label_classification"` 자동 매핑이 이미 BCE per-label로 계산해 줍니다.
+
+```python
         # 마지막 layer CLS hidden → aux_head → scalar
         cls = outputs.hidden_states[-1][:, 0, :]   # (B, 768)
         aux_logits = model.aux_head(cls).squeeze(-1)   # (B,)
         aux_loss = F.mse_loss(aux_logits, aux_labels.float())
+```
 
+**위 코드 읽기** — 보조 loss는 우리가 직접 만듭니다. `hidden_states[-1][:, 0, :]`로 마지막 layer의 CLS 위치 표현(768차원)을 뽑아 `aux_head`에 통과시켜 별점 스칼라 예측을 얻고, `aux_labels`와의 `mse_loss`를 계산합니다. 메인 헤드와 보조 헤드가 *같은 CLS 표현*을 공유하는 지점입니다.
+
+```python
         loss = main_loss + self.lambda_aux * aux_loss
+```
 
+**위 코드 읽기** — 결합 지점입니다. `loss = main_loss + λ·aux_loss`. $\lambda$가 0이면 보조 항의 gradient가 사라져 메인만 학습되고($=$ Ch 13 baseline), 크면 보조 task가 학습 방향을 지배합니다.
+
+```python
         if return_outputs:
             # 평가 단계에서 Trainer 가 outputs.hidden_states/attentions 를 prediction 로 모아
             # tuple 로 반환하거나 메모리 폭주를 일으키는 걸 방지 — logits 만 가진 깔끔한
@@ -342,11 +370,15 @@ class AuxTrainer(Trainer):
 print("AuxTrainer 정의 완료 — Trainer 의 compute_loss 만 교체.")
 ```
 
+**위 코드 읽기** — 평가 단계에서 `return_outputs=True`로 호출되면, `hidden_states`까지 들고 있는 무거운 출력 대신 `logits`만 담은 깔끔한 `SequenceClassifierOutput`으로 바꿔 돌려줍니다. 이렇게 해야 `Trainer`가 hidden_states 전체를 prediction으로 쌓아 메모리가 폭주하는 걸 막을 수 있습니다.
+
 **▶ 실행 결과**
 
 ```text
 AuxTrainer 정의 완료 — Trainer 의 compute_loss 만 교체.
 ```
+
+메인 task 평가 함수는 Ch 13과 동일합니다. logit에 sigmoid를 씌워 0.5 임계값으로 multi-hot 예측을 만들고, hamming loss와 micro/macro F1·AUC를 계산합니다.
 
 ```python
 def compute_metrics_main(eval_pred):
@@ -378,6 +410,8 @@ def compute_metrics_main(eval_pred):
         out["macro_auc"] = float("nan")
     return out
 ```
+
+이제 `lambda_aux=1.0`(보조 ON)으로 학습합니다. 하이퍼파라미터는 Ch 13과 같고, 단 하나 `remove_unused_columns=False`가 중요합니다. `aux_labels`는 `model.forward` 시그니처에 없어 기본값(True)이면 자동 제거되고, 그러면 `compute_loss`의 `inputs.pop("aux_labels")`가 KeyError를 냅니다.
 
 ```python
 LAMBDA_AUX = 1.0
@@ -477,6 +511,8 @@ With-aux (λ=1) — main task metrics:
    eval_steps_per_second: 32.6210
 ```
 
+보조 task의 metric은 `Trainer.predict()`가 메인 logits만 돌려주기 때문에 별도 forward로 직접 구합니다. eval 전체에 대해 `aux_head`까지 통과시켜 별점 예측을 모은 뒤 RMSE·R²·Pearson r을 계산합니다.
+
 ```python
 # 보조 metric — eval 전체에 대해 수동 forward (작아서 빠름)
 @torch.no_grad()
@@ -518,6 +554,10 @@ With-aux (λ=1) — aux task metrics (star regression, 0-1 scale):
   Pearson: 0.8084
 ```
 
+**결과 해석**
+
+보조 별점 회귀 자체는 Pearson 0.81로 꽤 잘 학습됐습니다. 즉 보조가 *작동하지 않아서* 메인이 망가진 게 아니라, λ=1에서 보조가 너무 잘·너무 세게 학습되며 공유 본체를 자기 쪽으로 끌어가 메인을 밀어낸 것입니다.
+
 ```python
 # 메인 task per-sample 예측 (다음 비교 단계에서 사용)
 preds_output_aux = trainer_aux.predict(eval_tok)
@@ -539,6 +579,8 @@ print(f"Eval samples:      {len(labels_eval)}")
 Main logits shape: (1000, 5)
 Eval samples:      1000
 ```
+
+클라이맥스입니다. 똑같은 코드를 새 모델에 `lambda_aux=0.0`으로 한 번 더 돌립니다. 보조 loss의 gradient가 0이 되어 메인 task만 학습되므로, 이게 Ch 13과 동일한 baseline이 됩니다. 같은 노트북·같은 환경 안에서 보조 ON/OFF를 self-contained하게 비교하려는 의도입니다.
 
 ```python
 # 새 모델 인스턴스 — λ=0 학습용
@@ -635,6 +677,8 @@ No-aux (λ=0) baseline — main task metrics:
 <IPython.core.display.HTML object>
 ```
 
+두 학습 결과를 나란히 놓고 `delta = with_aux − no_aux`를 계산합니다. delta가 양수면 보조 loss가 메인 task를 도운 것, 음수면 방해한 것입니다.
+
 ```python
 m_aux    = {k.replace("eval_", ""): v for k, v in eval_metrics_aux.items()
             if k.startswith("eval_") and isinstance(v, float)}
@@ -668,6 +712,12 @@ print(cmp.round(4).to_string(index=False))
 samples_per_second           827.1860            1019.4010              192.2150
   steps_per_second            26.4700              32.6210                6.1510
 ```
+
+**결과 해석**
+
+이번 실행에서는 보조 loss가 메인 task를 *심하게* 끌어내렸습니다 — micro-F1 0.8163 → 0.6438 (Δ-0.1725), macro-F1 0.7577 → 0.3414 (Δ-0.4163). λ=1로 두면 회귀 보조 항이 메인 학습을 잠식할 만큼 컸다는 뜻이고, 이 챕터의 진짜 교훈은 "보조가 메인을 돕는다"가 아니라 *"λ를 너무 크게 잡으면 보조가 메인을 망친다"*입니다. λ를 0.1·0.3 등으로 줄여 grid search 해야 하는 이유가 바로 이 결과에 드러납니다.
+
+항목별로 따로 F1을 계산해 보조 loss가 어느 항목에 어떤 영향을 줬는지 막대 그래프로 비교합니다.
 
 ```python
 def per_label_f1(Y_true, Y_pred):
@@ -719,7 +769,13 @@ ambiance     0.7111       0.0235               -0.6876
 location     0.8202       0.0000               -0.8202
 ```
 
+**결과 해석**
+
+모든 항목에서 delta가 음수이고, 특히 활성률이 낮은 price·ambiance·location은 F1이 거의 0으로 무너졌습니다. λ=1의 보조 회귀가 BERT 본체를 별점 신호 쪽으로 강하게 끌어당겨, 학습 신호가 약한 항목의 분류를 사실상 포기하게 만든 것입니다. 보조 task가 잘못된 가중치에서 메인을 어떻게 잠식하는지 라벨 단위로 드러나는 장면입니다.
+
 ![output](../assets/14-auxiliary_loss-out1.png)
+
+보조 task 자체가 얼마나 잘 학습됐는지 실제 별점별 예측 분포를 violin으로 봅니다. 점선 가이드(1★→0.0 … 5★→1.0)에 각 violin이 가까이 모일수록 회귀가 잘 된 것입니다.
 
 ```python
 # True star 별로 예측값 분포를 violin 으로 — 정답이 5개 정수 라벨에서만 나오므로
