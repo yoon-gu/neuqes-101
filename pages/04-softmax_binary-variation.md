@@ -35,3 +35,7 @@ intercept_ max diff: 0.00e+00
 
 True (2, V) two-logit head appears in PyTorch (Ch 10/11 BERT binary).
 ```
+
+**결과 해석**
+
+두 모델 모두 `coef_` 가 `(1, 10000)`, `intercept_` 가 `(1,)` 입니다 — 방식 B를 의도했어도 sklearn이 K=2를 binary form으로 collapse해 1개 logit만 저장했습니다. 두 계수의 최대 차이가 `0.00e+00` 이라 사실상 동일한 모델입니다. 진짜 `(2, V)` 두 logit 헤드는 프레임워크가 collapse하지 않는 PyTorch(Ch 10·11)에서야 등장합니다.

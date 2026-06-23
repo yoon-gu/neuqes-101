@@ -29,6 +29,8 @@ df = ds.to_pandas()
 df["star"] = df["label"] + 1   # 0-4 → 1-5
 ```
 
+두 방식을 같은 조건에서 비교하려면 데이터부터 Ch 3과 완전히 동일해야 합니다. 중립인 별점 3을 빼고 4-5는 긍정(1), 1-2는 부정(0)으로 이진화한 뒤, 같은 시드로 train/test를 나누고 TF-IDF로 벡터화합니다.
+
 ```python
 # Ch 3과 동일한 이진화: 별점 3 제외, 4-5 → 1, 1-2 → 0
 df_bin = df[df["star"] != 3].copy()
@@ -56,6 +58,8 @@ X_train: (3232, 10000), positive rate: 49.4%
 | A (Ch 3 그대로) | `LogisticRegression()` | 1 | sigmoid | BCE |
 | B (이번 챕터) | `LogisticRegression()` (multinomial 자동) | 2 | softmax | CE |
 
+이제 같은 데이터에 두 방식을 나란히 학습시켜 정확도가 일치하는지 봅니다. 코드상으로는 똑같은 `LogisticRegression()` 두 번이지만, 의도는 방식 A(sigmoid+BCE)와 방식 B(softmax+CE)를 각각 대표하게 둔 것입니다.
+
 ```python
 # 방식 A — 1차원 출력 + sigmoid + BCE (sklearn binary 의 표준 학습 형태)
 model_a = LogisticRegression(max_iter=1000)
@@ -82,6 +86,12 @@ Method A (sigmoid + BCE) accuracy: 0.8639
 Method B (softmax + CE)  accuracy: 0.8639
 Diff: 0.0000
 ```
+
+**결과 해석**
+
+두 방식의 정확도가 `0.8639`로 소수점 넷째 자리까지 완전히 같습니다(Diff 0.0000). 출력 차원·활성화·loss가 달라 보여도 K=2에서는 같은 결정을 내린다는 첫 신호입니다.
+
+확률값까지 같은지는 정확도만으로는 알 수 없습니다. `predict_proba` 를 직접 꺼내 두 방식의 P(y=1)을 비교합니다.
 
 ```python
 proba_a = model_a.predict_proba(X_test)   # (N, 2)
@@ -113,3 +123,7 @@ Method B: [0.4477 0.1001 0.1591 0.6653 0.758 ]
 Max diff:  0.0000
 Mean diff: 0.0000
 ```
+
+**결과 해석**
+
+두 방식 모두 `(808, 2)` 형태로 `[P(0), P(1)]` 두 열을 돌려줍니다 — 방식 A의 sigmoid 출력 하나가 두 열로 펼쳐진 것뿐입니다. 첫 5개 P(y=1)이 자릿수까지 똑같고 최대·평균 차이가 모두 0이라, 정확도뿐 아니라 *확률값 자체* 가 일치함을 확인할 수 있습니다.

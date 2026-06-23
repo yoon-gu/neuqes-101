@@ -40,3 +40,7 @@ print(f"\nMax diff: {np.abs(softmax_p1 - sigmoid_diff).max():.2e}  (numerical no
 
 Max diff: 2.22e-16  (numerical noise)
 ```
+
+**결과 해석**
+
+네 쌍의 logit 모두에서 `softmax([z0,z1])_1` 과 `sigmoid(z1-z0)` 이 소수점 여덟 자리까지 똑같습니다. 최대 차이가 `2.22e-16` 로 부동소수점 한계 수준이니, 두 식은 사실상 같은 함수입니다 — softmax+2가 sigmoid+1의 리파라미터화라는 본문 주장이 숫자로 확인됩니다.
