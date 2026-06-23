@@ -153,7 +153,7 @@ coll=DiffMLMCollator(tokenizer)
 
 ### 작은 모델 (256/4L) — 용량 아닌 마스킹이 문제였음
 
-hidden 256·4층의 작은 `BertForMaskedLM`을 씁니다. 해부에서 모델을 3배로 키워도 붕괴가 안 풀렸으니, 여기서 잘 학습된다면 범인은 용량이 아니라 마스킹 방식임이 드러납니다.
+hidden 256·4층의 작은 `BertForMaskedLM`을 씁니다. 해부에서 모델을 3배로 키워도 collapse가 안 풀렸으니, 여기서 잘 학습된다면 범인은 용량이 아니라 마스킹 방식임이 드러납니다.
 
 ```python
 from transformers import BertConfig, BertForMaskedLM
@@ -196,7 +196,7 @@ elapsed 20.20min | step 30000 | train_loss 4.1260 | baseline ln(V) 8.2940
 
 ### carry-over 샘플러로 한국어 생성
 
-전부 `[MASK]`인 시퀀스에서 시작해, 블록 단위로 신뢰도 높은 자리부터 조금씩 확정해 가는 carry-over semi-AR 샘플러입니다. 반복 패널티·인접중복 금지·top-p로 한 토큰만 되뇌는 붕괴를 억제하고, `prompt_ids`를 주면 그 자리를 고정해 조건부 생성을 합니다.
+전부 `[MASK]`인 시퀀스에서 시작해, 블록 단위로 신뢰도 높은 자리부터 조금씩 확정해 가는 carry-over semi-AR 샘플러입니다. 반복 패널티·인접중복 금지·top-p로 한 토큰만 되뇌는 collapse를 억제하고, `prompt_ids`를 주면 그 자리를 고정해 조건부 생성을 합니다.
 
 ```python
 @torch.no_grad()
@@ -294,7 +294,7 @@ for i in range(2):
 
 **결과 해석**
 
-무조건·조건부 모두 인물·배경·대화·서사가 갖춰진 한국어 동화가 나옵니다. `"옛날 옛날에"` 프롬프트를 고정하면 그 도입을 이어 받아 자연스럽게 전개하며, "장난감 장난감" 같은 자잘한 반복은 남지만 유니그램 파편 붕괴와는 거리가 먼 coherent한 생성입니다.
+무조건·조건부 모두 인물·배경·대화·서사가 갖춰진 한국어 동화가 나옵니다. `"옛날 옛날에"` 프롬프트를 고정하면 그 도입을 이어 받아 자연스럽게 전개하며, "장난감 장난감" 같은 자잘한 반복은 남지만 유니그램 파편 collapse와는 거리가 먼 coherent한 생성입니다.
 
 ### 진단 — 고정-t(0.15) acc + infill
 
