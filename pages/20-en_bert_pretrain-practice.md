@@ -106,6 +106,8 @@ Mon Jun 22 04:08:21 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+사전학습이라고 해도 토크나이저까지 처음부터 만들지는 않습니다. 검증된 `bert-base-uncased` 토크나이저를 그대로 빌려 쓰고, 학습하는 것은 *모델 본체* 뿐입니다. 어휘 사전(`vocab_size`)·특수 토큰·마스킹 토큰이 무엇인지 먼저 확인합니다.
+
 ```python
 TOKENIZER_NAME = "bert-base-uncased"
 tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_NAME)
@@ -145,6 +147,8 @@ sample: 'The capital of France is Paris, located on the Seine river.'
 tokens (15): ['[CLS]', 'the', 'capital', 'of', 'france', 'is', 'paris', ',', 'located', 'on', 'the', 'seine', 'river', '.', '[SEP]']
 ids:    [101, 1996, 3007, 1997, 2605, 2003, 3000, 1010, 2284, 2006, 1996, 16470, 2314, 1012, 102]
 ```
+
+사전학습 코퍼스로 Wikitext-103(영어 위키백과 정제본)을 내려받습니다. 전체 180만 줄을 다 쓰면 T4 30분 제약을 넘기므로, 너무 짧은 제목·메타 줄과 너무 긴 목록 줄을 걸러낸 뒤 학습 5,000 / 검증 500 문단만 무작위로 샘플링합니다.
 
 ```python
 SEED = 42
@@ -200,6 +204,8 @@ first sample previews:
   Sample 2:  Paulet was promoted to full lieutenant in 1791 and appointed to HMS Vulcan , though he was moved to HMS Assistance in A
 ```
 
+문단마다 길이가 제각각이므로, 먼저 모든 문단을 토큰 id 로만 변환해 둡니다. 블록 단위로 다시 자를 예정이라 `[CLS]`·`[SEP]` 특수 토큰은 일부러 붙이지 않습니다.
+
 ```python
 BLOCK_SIZE = 128
 
@@ -227,6 +233,8 @@ tokenized_train: Dataset({
 first 30 input_ids of sample 0: [20222, 12131, 10131, 4819, 15272, 1010, 1996, 4410, 3159, 1997, 1996, 2406, 1997, 2655, 4430, 9691, 1998, 1 …(뒤 77자 생략)
 ```
 
+가변 길이 문단들을 고정 길이 블록으로 다시 묶는 단계입니다. Hugging Face `run_mlm.py` 의 표준 `group_texts` 패턴으로, PAD 낭비 없이 모든 토큰을 학습에 쓰는 핵심 전처리입니다.
+
 ```python
 def group_texts(examples):
     '''HF 표준 group_texts — 모든 토큰 스트림을 이어 붙인 뒤 block_size 로 자름.'''
@@ -234,6 +242,11 @@ def group_texts(examples):
     total_length = len(concatenated[list(examples.keys())[0]])
     # block_size 배수로 잘라내기 (마지막 토막은 버림)
     total_length = (total_length // BLOCK_SIZE) * BLOCK_SIZE
+```
+
+**위 코드 읽기** — `concatenated` 에서 한 batch 안의 모든 문단 토큰을 `sum(..., [])` 로 *하나의 긴 스트림*으로 이어 붙입니다. 이어 `total_length` 를 `BLOCK_SIZE` 의 배수로 내림해, 끝에 남는 자투리 토막은 버립니다.
+
+```python
     result = {
         k: [t[i : i + BLOCK_SIZE] for i in range(0, total_length, BLOCK_SIZE)]
         for k, t in concatenated.items()
@@ -241,8 +254,11 @@ def group_texts(examples):
     # labels = input_ids 사본 (collator 가 mask 위치만 골라냄)
     result["labels"] = [ids.copy() for ids in result["input_ids"]]
     return result
+```
 
+**위 코드 읽기** — 긴 스트림을 `BLOCK_SIZE` 칸씩 잘라 블록 리스트로 만듭니다. `labels` 는 아직 `input_ids` 의 단순 복사본일 뿐이고, *어디를 맞힐지*는 다음 단계의 collator 가 매 batch 마다 골라냅니다.
 
+```python
 lm_train = tokenized_train.map(group_texts, batched=True, batch_size=1000)
 lm_eval  = tokenized_eval.map(group_texts, batched=True, batch_size=1000)
 
@@ -274,6 +290,8 @@ eval blocks:  535   (approx. 68,480 tokens)
 sample block 0 first 20 ids: [20222, 12131, 10131, 4819, 15272, 1010, 1996, 4410, 3159, 1997, 1996, 2406, 1997, 2655, 4430, 9691, 1998, 1996, 1000, 23916]
 sample block 0 first 20 tok: ['bali', '##nor', 'buck', '##han', '##nah', ',', 'the', 'crown', 'prince', 'of', 'the', 'country', 'of', 'call' …(뒤 52자 생략)
 ```
+
+이제 학습할 *본체*를 정의합니다. `BertConfig` 로 표준 BERT(hidden 768·12층)보다 훨씬 작은 구조(hidden 256·4층)를 잡고, `BertForMaskedLM(config)` 로 *사전학습 weight 없이* 무작위 초기화 모델을 만듭니다. `from_pretrained` 가 아니라 생성자 호출이라는 점이 이 챕터의 핵심입니다.
 
 ```python
 HIDDEN_SIZE         = 256
@@ -324,6 +342,12 @@ Trainable:              11,103,290
   MLM head:                 96,826  (0.9%)  ← tied with embeddings
 ```
 
+**결과 해석**
+
+전체 약 11.1M 파라미터 중 70.7%가 임베딩(어휘 30,522 × hidden 256)에 몰려 있고, 4층 인코더가 28.5%입니다. MLM head 는 임베딩과 weight 를 공유(tied)하므로 0.9%밖에 차지하지 않습니다.
+
+`DataCollatorForLanguageModeling` 이 MLM 학습의 심장입니다. `mlm=True`·`mlm_probability=0.15` 로 설정하면, 매 batch 마다 토큰의 15%를 자동으로 골라 정답 라벨로 표시하고 입력에서는 가려 줍니다.
+
 ```python
 data_collator = DataCollatorForLanguageModeling(
     tokenizer=tokenizer,
@@ -331,6 +355,8 @@ data_collator = DataCollatorForLanguageModeling(
     mlm_probability=0.15,
 )
 ```
+
+collator 가 실제로 무엇을 바꾸는지 짧은 문장 하나로 눈으로 확인합니다. 선택된 자리는 80% 확률로 `[MASK]`, 10%는 무작위 토큰, 10%는 원래 토큰 그대로 두고, 선택되지 않은 자리는 라벨이 `-100`(loss 제외)이 됩니다.
 
 ```python
 # 짧은 예시 문장 하나에 collator 한 번 돌려서 어떤 자리가 어떻게 바뀌는지 직접 봅니다.
@@ -395,6 +421,10 @@ print(demo_df.to_string(index=False))
   15     [SEP]          [SEP]      -100             —
 ```
 
+**결과 해석**
+
+`##train`·`##ing`·`english` 세 토큰만 `[MASK]` 로 바뀌고 그 자리에만 정답 `label_id` 가 채워졌습니다. 나머지는 모두 `-100` 이라 loss 계산에서 제외됩니다 — 모델은 *가려진 자리만* 맞히도록 학습합니다.
+
 ```python
 # 큰 batch 통계 — 80/10/10 비율이 실제로 맞는지 확인
 torch.manual_seed(0)
@@ -435,6 +465,12 @@ Selected for loss (target 15%):      1,217  (14.86%)
 
 Target: 선택 15% / 그 중 80-10-10 으로 [MASK]-random-kept. 표본 크면 비율 안정.
 ```
+
+**결과 해석**
+
+64개 블록 전체에서 14.86%가 loss 대상으로 선택됐고, 그 중 `[MASK]`·random·kept 비율이 79.0% / 9.9% / 11.1%로 목표 80-10-10에 거의 정확히 맞습니다. 표본이 클수록 비율이 설계값에 수렴합니다.
+
+`Trainer` 설정입니다. T4 에서는 `fp16=True`, scratch 학습이라 fine-tune(2e-5)보다 큰 학습률 5e-4 를 쓰고, 매 epoch 끝에 검증합니다.
 
 ```python
 USE_FP16 = (DEVICE == "cuda")   # T4 는 fp16, MPS/CPU 는 fp32
@@ -484,6 +520,8 @@ fp16:          True
 train blocks:  5,352
 steps / epoch: 167
 ```
+
+학습 전 모델이 얼마나 *못 하는지*를 먼저 기록해 둡니다. `predict_mask` 는 `[MASK]` 자리의 top-5 후보를 뽑는 함수이고, 같은 검증 문장으로 학습 전·후를 비교합니다. 무작위 초기화 상태의 eval loss 는 `ln(vocab) ≈ 10.33` 인 랜덤 기준선 근처여야 정상입니다.
 
 ```python
 # predict_mask 함수 정의 — 학습 전·후 두 번 호출하므로 먼저 정의
@@ -565,6 +603,10 @@ input: I would [MASK] recommend this place.
   top-5 before pretraining: ['ahmed', 'smack', 'stations', '##sam', 'now']
 ```
 
+**결과 해석**
+
+학습 전 eval loss 10.38, perplexity 약 32,319로 랜덤 기준선(10.33 / 30,522)과 사실상 같습니다. top-5 예측도 `broadband`·`##eti`·`smack` 처럼 문맥과 무관한 토큰들로, 아직 영어 구조를 전혀 모르는 상태입니다.
+
 ```python
 t0 = time.time()
 train_result = trainer.train()
@@ -582,6 +624,10 @@ MLM pretraining done in 0.4 min
 mean train loss: 7.4179
 random baseline loss (uniform over vocab): 10.3262
 ```
+
+**결과 해석**
+
+2 epoch 학습이 약 0.4분 만에 끝났고, 평균 train loss 가 7.42로 랜덤 기준선 10.33보다 분명히 내려갔습니다. 방향은 옳지만, 잘 학습된 BERT 수준과는 아직 거리가 먼 *데모 규모* 학습이라는 점을 뒤의 perplexity 에서 다시 확인합니다.
 
 ```python
 !nvidia-smi
@@ -639,6 +685,8 @@ else:
 
 ![output](../assets/20-en_bert_pretrain-out1.png)
 
+held-out 검증 문단으로 perplexity 를 측정합니다. perplexity 는 `exp(loss)` 로, 가려진 자리마다 모델이 *몇 개 후보 사이에서 헷갈리는지*를 뜻합니다 — 낮을수록 좋습니다.
+
 ```python
 eval_metrics = trainer.evaluate()
 eval_loss = eval_metrics["eval_loss"]
@@ -667,6 +715,10 @@ print(f"  -> model narrowed vocab to approx. {eval_ppl:.0f} candidates per maske
   random baseline PPL:    30,522  (uniform over vocab)
   -> model narrowed vocab to approx. 1237 candidates per masked position
 ```
+
+**결과 해석**
+
+eval perplexity 가 약 1,237로, 랜덤 기준선 30,522에서 크게 내려왔습니다. 다만 잘 학습된 BERT 의 단 자릿수~수십 수준과는 여전히 큰 차이로, *짧은 데모 사전학습*의 한계가 그대로 드러나는 수치입니다.
 
 ```python
 # ---- 사전학습 후 eval_loss / perplexity ----
@@ -717,6 +769,10 @@ input: The food at this restaurant was absolutely [MASK].
 input: I would [MASK] recommend this place.
   top-5 after pretraining: ['the', ',', '.', 'and', 'of']
 ```
+
+**결과 해석**
+
+eval perplexity 가 32,319 → 1,246으로 내려왔지만, 네 문장 모두 top-5 예측이 `the`·`,`·`.`·`and`·`of` 라는 *고빈도 토큰*에 똑같이 갇혀 있습니다. 즉 모델은 아직 "영어에서 자주 나오는 토큰" 단계까지만 익혔을 뿐, 문맥에 맞는 단어를 고르지는 못합니다 — 더 나아가려면 더 많은 epoch·데이터가 필요하지만 T4 30분 제약 안에서는 여기까지가 *데모 사전학습*의 정직한 도달점입니다.
 
 ```python
 # 사전·사후 수치 비교 표
@@ -769,6 +825,8 @@ plt.show()
 **▶ 실행 결과**
 
 ![output](../assets/20-en_bert_pretrain-out2.png)
+
+우리 작은 BERT 가 *어디까지 가야 하는지* 기준점을 보기 위해, 잘 학습된 표준 `bert-base-uncased`(약 110M, 33억 토큰 사전학습)를 같은 문장으로 비교합니다.
 
 ```python
 # 표준 bert-base-uncased 로드 — 학습이 충분히 잘 된 경우의 기준점
@@ -882,6 +940,12 @@ input: I would [MASK] recommend this place.
   ours  (small, 5K para) : the, ,, ., and, of
   ref   (bert-base)      : highly, certainly, definitely, strongly, greatly
 ```
+
+**결과 해석**
+
+세 모델의 대비가 선명합니다. random 은 의미 없는 토큰, 우리 작은 BERT 는 고빈도 토큰(`the`·`,`)에 갇혀 있는 반면, 표준 bert-base 는 `paris`·`100`·`delicious`·`highly` 처럼 문맥에 정확히 맞는 단어를 고릅니다. 우리 모델이 "random 보다는 낫지만 잘 학습된 BERT 와는 차원이 다르다"는 점을 한눈에 보여 줍니다.
+
+학습한 모델과 토크나이저를 HF 표준 체크포인트로 저장합니다. Ch 21 에서 이 폴더를 `from_pretrained` 으로 불러와 분류 헤드를 붙여 fine-tune 합니다.
 
 ```python
 SAVE_DIR = "./ch20_small_bert_mlm"
