@@ -34,6 +34,8 @@ sparsity: 99.19%  (fraction of empty cells)
 
 5,000 × 10,000 = 5천만 칸 중 실제로 채워진 건 40만 칸뿐(문서당 평균 약 81개 단어)이라 99.19%가 0입니다. 이렇게 0이 압도적이라 dense 배열로 두면 메모리 낭비가 커서, sklearn 은 0이 아닌 칸만 저장하는 희소 행렬을 씁니다.
 
+학습한 어휘로 임의의 새 문장이 실제로 어떻게 토큰화되는지 확인합니다. `build_analyzer()` 로 벡터라이저 내부의 토큰화 함수를 그대로 꺼내 예시 문장 하나에 적용하고, 결과 토큰 리스트를 출력합니다.
+
 ```python
 sample = "I love using Hugging Face!"
 analyzer = cv.build_analyzer()
