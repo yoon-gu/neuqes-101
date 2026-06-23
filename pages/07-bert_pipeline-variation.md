@@ -9,7 +9,11 @@ model_name = "distilbert-base-uncased-finetuned-sst-2-english"
 
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForSequenceClassification.from_pretrained(model_name)
+```
 
+**위 코드 읽기** — `pipeline` 이 내부에서 알아서 처리하던 토크나이저와 모델을 이제 따로 로드합니다. `AutoTokenizer` 와 `AutoModelForSequenceClassification` 은 모델 이름만 주면 거기에 맞는 클래스(여기선 `BertTokenizer`, `DistilBertForSequenceClassification`)를 자동으로 골라주는 팩토리입니다.
+
+```python
 # GPU가 있으면 모델을 VRAM으로 이동 (직접 로드는 default가 CPU라 명시 필요)
 if torch.cuda.is_available():
     model = model.to("cuda")
@@ -19,6 +23,8 @@ print(f"  tokenizer class: {type(tokenizer).__name__}")
 print(f"  model class:     {type(model).__name__}")
 print(f"  model device:    {next(model.parameters()).device}")
 ```
+
+**위 코드 읽기** — `pipeline` 과 달리 직접 로드한 모델의 기본 위치는 CPU이므로, `.to("cuda")` 로 명시해야 VRAM에 올라갑니다. `next(model.parameters()).device` 로 실제로 어느 장치에 있는지 확인할 수 있습니다.
 
 **▶ 실행 결과**
 
@@ -239,3 +245,7 @@ print(f"manual 4-step:      [{{'label': '{predicted_label}', 'score': {predicted
 pipeline result:    [{'label': 'POSITIVE', 'score': 0.9997085928916931}]
 manual 4-step:      [{'label': 'POSITIVE', 'score': 0.9997}]
 ```
+
+**결과 해석**
+
+손으로 펼친 4단계(토큰화 → forward → softmax → argmax)의 결과가 `pipeline` 한 줄과 라벨·score까지 일치합니다. `pipeline` 은 마법이 아니라 이 단계들을 묶어둔 wrapper일 뿐임이 수치로 확인됩니다.
