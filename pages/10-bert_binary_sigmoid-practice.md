@@ -79,6 +79,8 @@ Mon Jun 22 03:42:33 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+토크나이저를 불러오고 Yelp 리뷰에서 학습 5,000개·평가 1,000개를 뽑습니다. 이어서 별점 3(중립)을 제외하고 4-5는 `1.0`, 1-2는 `0.0` 으로 이진화해 방식 A가 다룰 binary 라벨을 만듭니다.
+
 ```python
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
 
@@ -123,7 +125,11 @@ def tokenize_fn(batch):
     # 라벨을 길이 1짜리 multi-hot 벡터로 — Trainer가 BCEWithLogitsLoss 자동 적용
     out["labels"] = [[float(b)] for b in batch["binary"]]
     return out
+```
 
+**위 코드 읽기** — 방식 A의 핵심은 라벨 형식입니다. `out["labels"]` 에 scalar가 아니라 `[float(b)]` 로 한 번 감싼 *길이 1짜리 float 벡터* 를 넣습니다. 이렇게 두면 batching 시 shape가 `(batch, 1)` 이 되어 `(batch, 1)` logits와 맞아떨어지고, `Trainer` 가 `multi_label_classification` 으로 인식해 `BCEWithLogitsLoss` 를 자동 적용합니다.
+
+```python
 train_tok = train_bin.map(tokenize_fn, batched=True).remove_columns(["text", "label", "binary"])
 eval_tok  = eval_bin.map(tokenize_fn,  batched=True).remove_columns(["text", "label", "binary"])
 
@@ -141,6 +147,8 @@ Dataset({
 
 First sample label: [1.0]  (length-1 float vector)
 ```
+
+방식 A의 모델 셋업입니다. `num_labels=1` 로 출력 헤드를 1차원 logit으로 두고, `problem_type="multi_label_classification"` 으로 지정해 `Trainer` 가 BCE를 자동으로 고르게 합니다. 새로 붙는 분류 헤드는 무작위 초기화되므로 파인튜닝으로 학습됩니다.
 
 ```python
 model = AutoModelForSequenceClassification.from_pretrained(
@@ -215,6 +223,8 @@ Mon Jun 22 03:42:58 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+평가 지표 함수입니다. 모델이 내놓는 건 logit이므로, 여기서 직접 sigmoid를 통과시켜 확률로 바꾼 뒤 0.5 임계값으로 0/1 예측을 만듭니다. accuracy·precision·recall·F1과 함께, 임계값과 무관하게 분리도를 보는 AUC도 계산합니다.
+
 ```python
 def compute_metrics(eval_pred):
     logits, labels = eval_pred
@@ -234,6 +244,8 @@ def compute_metrics(eval_pred):
         "auc":       float(roc_auc_score(labels, probs)),
     }
 ```
+
+학습 설정과 `Trainer` 를 구성해 2 에폭을 돌립니다. T4에서는 `fp16=True` 가 필수이며(bf16 미지원), 골격은 Ch 9 회귀와 동일하고 loss만 BCE로 바뀝니다.
 
 ```python
 training_args = TrainingArguments(
@@ -269,6 +281,10 @@ print(f"\nTraining done — mean train loss: {train_result.training_loss:.4f}")
 <IPython.core.display.HTML object>
 Training done — mean train loss: 0.2617
 ```
+
+**결과 해석**
+
+평균 train loss가 0.26 수준으로 내려와 BCE가 정상적으로 줄어들었음을 보여줍니다. 회귀(MSE)와 달리 loss 값 자체는 확률 오분류의 로그 페널티라 단위가 다릅니다.
 
 ```python
 !nvidia-smi
@@ -322,6 +338,12 @@ BERT method A evaluation:
               eval_auc: 0.9680
 ```
 
+**결과 해석**
+
+평가 정확도 약 89.8%, F1 0.888, AUC 0.968로 방식 A가 binary 분류를 잘 학습했습니다. AUC가 0.97에 가깝다는 건 임계값을 어디에 두든 두 클래스가 확률적으로 잘 분리된다는 뜻입니다. Ch 11에서 학습할 방식 B(softmax+CE)와 비교할 기준선이 됩니다.
+
+`Trainer.predict()` 로 평가셋의 raw logit을 받아 sigmoid로 확률을 만들고, 처음 5개 샘플의 logit·확률·예측을 정답과 나란히 봅니다.
+
 ```python
 # logit → 확률
 preds_output = trainer.predict(eval_tok)
@@ -357,6 +379,10 @@ First 5 samples:
      1   3.87 0.9796     1
      1   4.21 0.9854     1
 ```
+
+**결과 해석**
+
+logit이 약 -4.4 ~ +4.3 범위로 뻗어, sigmoid 통과 후 확률은 0.01 ~ 0.99 양 끝에 압착됩니다. 처음 5개 모두 정답과 예측이 일치하며 확률도 0.03 또는 0.97처럼 자신감 있게 한쪽으로 쏠려 있습니다 — sigmoid가 큰 logit을 0/1로 포화시키는 성질이 그대로 드러납니다.
 
 ```python
 # 메인: 확률 공간 KDE — seaborn으로 부드러운 분포 + 라벨별 hue
