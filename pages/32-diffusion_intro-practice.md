@@ -80,6 +80,8 @@ torch      : 2.11.0+cu128
 use fp16   : True
 ```
 
+`roneneldan/TinyStories` 의 train 처음 10만 개, validation 500 개를 불러옵니다. 첫 story 의 앞부분을 출력해 어휘·문장이 단순한지 눈으로 확인합니다.
+
 ```python
 from datasets import load_dataset
 
@@ -131,7 +133,11 @@ tokenizer = PreTrainedTokenizerFast(tokenizer_object=_tk, pad_token="[PAD]",
                                     unk_token="[UNK]", mask_token="[MASK]")
 print(f"vocab_size : {tokenizer.vocab_size}")
 print(f"[MASK]     : '{tokenizer.mask_token}'  id={tokenizer.mask_token_id}")
+```
 
+**위 코드 읽기** — `BpeTrainer` 의 `special_tokens=["[PAD]", "[UNK]", "[MASK]"]` 가 핵심입니다. 세 특수 토큰을 어휘 맨 앞에 고정 배정하므로 `[MASK]` 가 id 2 에 자리 잡고, 이 `[MASK]` 토큰이 forward(가리기)·reverse(생성) 양쪽의 캔버스가 됩니다.
+
+```python
 # [MASK] 가 섞인 시퀀스 = diffusion 의 노이즈. 일부를 가려본다
 import random as _r; _r.seed(0)
 sample = "Once upon a time, a little rabbit went to the forest."
@@ -143,6 +149,8 @@ print("\noriginal :", sample)
 print("masked   :", tokenizer.decode(md))
 ```
 
+**위 코드 읽기** — 문장 토큰의 약 1/3 (`len(enc)//3`) 을 골라 `tokenizer.mask_token_id` 로 치환합니다. `tokenizer.decode(md)` 결과가 바로 diffusion 의 중간 상태 $x_t$ — `[MASK]` 가 군데군데 섞인 시퀀스입니다.
+
 **▶ 실행 결과**
 
 ```text
@@ -152,6 +160,8 @@ vocab_size : 2048
 original : Once upon a time, a little rabbit went to the forest.
 masked   : [MASK] upon a time[MASK] a[MASK] rabbit went to the forest[MASK]
 ```
+
+전체 코퍼스를 `add_special_tokens=False` 로 토큰화한 뒤 모든 토큰을 이어 붙여 `BLOCK_SIZE=128` 단위로 자릅니다. 학습엔 `input_ids` 만 남기는데, 마스킹은 매 배치 collator 가 새로 하기 때문입니다.
 
 ```python
 BLOCK_SIZE = 128
@@ -233,7 +243,11 @@ class DiffusionCollator:
 
 
 diff_collator = DiffusionCollator(tokenizer)
+```
 
+**위 코드 읽기** — 샘플마다 `t = torch.rand(B) * (1 - eps) + eps` 로 마스킹 비율을 새로 뽑고, `torch.rand(B, L) < t` 로 각 토큰을 독립적으로 확률 $t$ 만큼 가립니다 (LLaDA 의 forward process). `labels[~mask] = -100` 으로 가린 자리만 학습 신호로 남기고, `1/t` 재가중을 위해 비율 `t` 도 함께 반환하는 것이 BERT MLM collator 와 갈리는 지점입니다.
+
+```python
 # collator 출력 확인 - 같은 두 chunk 를 여러 번 돌리면 매번 다른 비율로 가려짐
 print("=== diffusion collator demo (same 2 chunks, masking ratio varies each call) ===")
 for trial in range(3):
@@ -260,6 +274,12 @@ trial 1 | sample 1: t=0.732  ->  masked  98/128 ( 76.6%)
 trial 2 | sample 0: t=0.937  ->  masked 121/128 ( 94.5%)
 trial 2 | sample 1: t=0.046  ->  masked   9/128 (  7.0%)
 ```
+
+**결과 해석**
+
+같은 두 chunk 인데 호출마다 마스킹 비율이 7.0% (`t=0.046`) 부터 94.5% (`t=0.937`) 까지 크게 출렁입니다. 한 chunk 가 step 마다 *다른 난이도* 로 가려지므로 모델이 모든 마스킹 비율의 복원을 골고루 학습합니다.
+
+`BertForMaskedLM` 을 `from_pretrained` 없이 `config` 만으로 random init 합니다. `hidden_size=256`, 레이어 4 개, 작은 vocab 2048 덕분에 약 3.79M 파라미터로 가볍고, bidirectional encoder + MLM head 가 diffusion 의 denoiser 역할을 합니다.
 
 ```python
 from transformers import BertConfig, BertForMaskedLM
@@ -293,6 +313,8 @@ model: BertForMaskedLM
   - body : BertModel  (Encoder, bidirectional attention)
   - head : MLM head -> Linear(in=256, out=2048)
 ```
+
+매 step 마다 `[MASK]` 자리를 한꺼번에 예측하고, top-k 샘플링으로 토큰을 뽑은 뒤 각 자리의 confidence (softmax 최대 확률) 를 잽니다. 선형 스케줄로 *남길 `[MASK]` 수* (`n_remain`) 를 step 마다 줄이되, confidence 가 낮은 자리를 `topk(..., largest=False)` 로 골라 다시 `[MASK]` 로 되돌립니다 — 확신 높은 자리부터 확정되는 low-confidence remasking 입니다. `prompt_ids` 를 주면 그 앞부분을 `fixed` 로 표시해 절대 마스킹하지 않습니다 (조건부 생성).
 
 ```python
 @torch.no_grad()
@@ -350,6 +372,8 @@ def diffusion_generate(active_model, length=64, steps=16, temperature=1.0, top_k
     return (text, traj) if record_trajectory else text
 ```
 
+학습 전 random init 모델로 전부 `[MASK]` 에서 denoise 를 돌려 비교 기준선을 만듭니다. logits 가 무작위라 confidence 순서도 무의미합니다.
+
 ```python
 torch.manual_seed(SEED)
 print("=" * 70)
@@ -372,6 +396,8 @@ UNTRAINED model - parallel denoise from all-[MASK]
 
 [sample 2] aduched mommy smo explainedriesdayelyely gre mommypblem sk goodbye grender mommy�ho birthdayblemblem waitred pictures mommynderar …(뒤 96자 생략)
 ```
+
+`Trainer` 를 상속해 `compute_loss` 만 오버라이드합니다. 가린 자리 CE 를 샘플별로 합산해 `/L` 로 정규화한 뒤 `/t` 로 나눠 평균하므로 `sum/(t·L)` — 이 `1/t` 재가중이 LLaDA / MDLM 의 denoising 목표와 일치하는 핵심입니다. `remove_unused_columns=False` 로 둬야 collator 가 만든 `labels`·`t` 가 보존됩니다.
 
 ```python
 from transformers import Trainer, TrainingArguments, TrainerCallback
@@ -472,6 +498,12 @@ random baseline (ln vocab): 7.6246
 final peak    : 61 MiB
 ```
 
+**결과 해석**
+
+train_loss 3.69 가 random baseline `ln(2048)=7.62` 의 절반 아래로 내려갔으니 가린 자리를 문맥으로 복원하는 능력이 본체에 새겨졌습니다. T4 약 18분, peak VRAM 61 MiB 로 30분 룰 안에 가볍게 들어옵니다.
+
+학습 로그에서 train·eval loss 와 step별 peak VRAM 을 뽑아 나란히 그립니다. 점선은 `ln(vocab)` uniform baseline 으로, loss 가 그 아래로 얼마나 내려갔는지 한눈에 보여줍니다.
+
 ```python
 # loss curve + VRAM trace
 log = trainer.state.log_history
@@ -509,6 +541,10 @@ plt.tight_layout(); plt.show()
 
 ![output](../assets/32-diffusion_intro-out1.png)
 
+**결과 해석**
+
+왼쪽 loss 곡선은 약 7.6 (uniform baseline) 에서 시작해 가파르게 떨어진 뒤 약 3.7 부근에서 안정화되고, train·eval 이 거의 겹쳐 과적합 없이 학습이 진행됐음을 보여줍니다. 오른쪽 VRAM 추이는 학습 내내 수십 MiB 수준에 머물러 T4 메모리에 여유가 큽니다.
+
 ```python
 torch.manual_seed(SEED)
 print("=" * 70)
@@ -518,6 +554,8 @@ for i in range(3):
     text = diffusion_generate(model, length=48, steps=16)
     print(f"\n[sample {i}] {text}")
 ```
+
+학습 후 같은 함수로 다시 생성해 학습 전 결과와 나란히 비교합니다.
 
 **▶ 실행 결과**
 
@@ -538,6 +576,12 @@ The boy was very sad. He. He wanted to help the boy. He did not
 [sample 2] . They are good other and hug. They
 They are happy. They. They smile. They hug each other. They hug each other. They are friends.. They They are best friends. They are happy. They hug. Mom
 ```
+
+**결과 해석**
+
+학습 전 의미 없는 토큰 나열과 달리, 전부 `[MASK]` 에서 출발해도 인물·대화가 있는 영어 문장이 병렬 denoise 로 떠오릅니다. `Sam, Sam, Sam`·`They. They` 처럼 같은 조각이 반복되는데, 이는 모델이 아니라 단순한 샘플러의 한계로 Ch 33 에서 개선합니다.
+
+`record_trajectory=True` 로 각 step 의 시퀀스를 모두 저장한 뒤, 일부 step 을 골라 아직 `[MASK]` 인 자리는 `____` 로 표시해 출력합니다. 마스크가 단어로 채워지는 과정을 step 별로 직접 볼 수 있습니다.
 
 ```python
 # denoise 궤적 - [MASK] 가 단어로 채워지는 과정을 step 별로
@@ -587,3 +631,7 @@ step 11/11  ([MASK] remaining:  0)
 FINAL: 
 They and smile. They play together it. They likes to play and play.. They make ball and ball. They run after the ball. Spot and hug. They are good friends. They
 ```
+
+**결과 해석**
+
+step 0 에서 37개가 `[MASK]` 인데, 채워지는 자리가 왼쪽부터가 아니라 confidence 가 높은 곳부터라 문장 중간·끝 단어가 앞보다 먼저 떠오릅니다. step 이 진행되며 남은 `[MASK]` 수가 37 → 27 → 17 → 7 → 0 으로 줄어, 전체 문장이 동시에 흐릿하게 떠오르다 선명해지는 것이 GPT 의 왼→오 순차 생성과 결정적으로 다른 점입니다.
