@@ -15,18 +15,24 @@ X_tfidf = tfidf.fit_transform(df["text"])
 print(f"shape: {X_tfidf.shape}")
 ```
 
+**위 코드 읽기** `TfidfVectorizer` 의 사용법은 `CountVectorizer` 와 똑같습니다(`fit_transform` 한 번). 결과 행렬의 shape 도 같지만, 칸에 들어가는 값이 단순 횟수가 아니라 위 식의 tf × idf 가중치라는 점만 다릅니다.
+
 **▶ 실행 결과**
 
 ```text
 shape: (5000, 10000)
 ```
 
+한 리뷰(`doc_id=0`)를 골라, 같은 문서를 단순 횟수로 봤을 때와 TF-IDF 로 봤을 때 어떤 단어가 상위로 올라오는지 나란히 비교합니다.
+
 ```python
 doc_id = 0
 review = df["text"].iloc[doc_id]
 print("Review preview (200 chars):")
 print(f"{review[:200]}...\n")
+```
 
+```python
 vocab_tf = tfidf.get_feature_names_out()
 cv_row = np.asarray(X_count[doc_id].todense()).flatten()
 tfidf_row = np.asarray(X_tfidf[doc_id].todense()).flatten()
@@ -38,6 +44,8 @@ print("-" * 35)
 for i in top:
     print(f"{vocab_tf[i]:>15}  {cv_row[i]:>6}  {tfidf_row[i]:>8.4f}")
 ```
+
+**위 코드 읽기** `X_count[doc_id].todense()` 와 `X_tfidf[doc_id].todense()` 로 같은 리뷰의 횟수 벡터와 TF-IDF 벡터를 각각 꺼내고, `argsort(tfidf_row)[::-1][:10]` 으로 **TF-IDF 기준** 상위 10개 단어를 뽑습니다. 그 단어들의 `count` 와 `tfidf` 를 한 줄에 같이 찍어, 두 방식의 순위 차이를 직접 견줍니다.
 
 **▶ 실행 결과**
 

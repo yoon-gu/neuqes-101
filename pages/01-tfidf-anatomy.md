@@ -7,13 +7,19 @@
 ```python
 cv = CountVectorizer(max_features=10000)
 X_count = cv.fit_transform(df["text"])
+```
 
+**위 코드 읽기** `fit_transform` 한 번이 두 일을 동시에 합니다 — `fit` 으로 5,000건 리뷰에서 어휘를 학습하고(`max_features=10000` 으로 빈도 상위 1만 단어만), `transform` 으로 각 리뷰를 그 어휘 길이의 횟수 벡터로 바꿉니다. 결과 `X_count` 는 희소 행렬입니다.
+
+```python
 print(f"shape: {X_count.shape}  (n_docs, vocab_size)")
 print(f"non-zero entries: {X_count.nnz:,}")
 print(f"total cells: {X_count.shape[0] * X_count.shape[1]:,}")
 sparsity = 1 - X_count.nnz / (X_count.shape[0] * X_count.shape[1])
 print(f"sparsity: {sparsity:.2%}  (fraction of empty cells)")
 ```
+
+**위 코드 읽기** `X_count.nnz` 는 0이 아닌 칸 수(실제로 등장한 단어)이고, 이를 전체 칸 수(문서 수 × 어휘 크기)로 나눠 빈 칸의 비율 `sparsity` 를 구합니다.
 
 **▶ 실행 결과**
 
@@ -23,6 +29,10 @@ non-zero entries: 405,803
 total cells: 50,000,000
 sparsity: 99.19%  (fraction of empty cells)
 ```
+
+**결과 해석**
+
+5,000 × 10,000 = 5천만 칸 중 실제로 채워진 건 40만 칸뿐(문서당 평균 약 81개 단어)이라 99.19%가 0입니다. 이렇게 0이 압도적이라 dense 배열로 두면 메모리 낭비가 커서, sklearn 은 0이 아닌 칸만 저장하는 희소 행렬을 씁니다.
 
 ```python
 sample = "I love using Hugging Face!"
@@ -49,13 +59,19 @@ Tokenized: ['love', 'using', 'hugging', 'face']
 vocab = cv.get_feature_names_out()
 print(f"Vocab size: {len(vocab):,}")
 print(f"First 20: {list(vocab[:20])}")
+```
 
+**위 코드 읽기** `get_feature_names_out()` 은 정수 인덱스 ↔ 단어를 잇는 어휘 배열입니다. `vocab[i]` 로 i번째 칼럼이 어떤 단어인지 되짚을 수 있어, 아래에서 빈도 상위 단어의 이름을 찾는 데 씁니다.
+
+```python
 word_counts = np.asarray(X_count.sum(axis=0)).flatten()
 top = np.argsort(word_counts)[::-1][:10]
 print("\nTop 10 most frequent words")
 for i in top:
     print(f"  {vocab[i]:>15}  {word_counts[i]:>6,}")
 ```
+
+**위 코드 읽기** `X_count.sum(axis=0)` 으로 열(단어)별 총 등장 횟수를 구하고, `argsort(...)[::-1][:10]` 으로 그 횟수를 내림차순 정렬해 가장 자주 나온 단어 10개의 인덱스를 뽑습니다.
 
 **▶ 실행 결과**
 
@@ -75,3 +91,7 @@ Top 10 most frequent words
                in   7,593
              that   6,756
 ```
+
+**결과 해석**
+
+가장 자주 등장하는 단어 10개가 전부 `the`·`and`·`to` 같은 기능어입니다. 모든 리뷰에 흔하게 깔려 있어 정작 그 리뷰가 무엇에 대한 내용인지는 거의 알려주지 않습니다 — 단순 횟수만으로는 문서를 구분하기 어렵다는 뜻이고, 바로 다음 절의 TF-IDF 가 이 흔한 단어들의 비중을 깎는 이유입니다.
