@@ -20,6 +20,10 @@ print(classification_report(y_test, y_pred, target_names=[f"{i+1}★" for i in r
 weighted avg       0.50      0.51      0.50      1000
 ```
 
+**결과 해석**
+
+양 끝 클래스(1★·5★)는 F1이 0.6대로 가장 잘 잡히는 반면, 가운데 2★·3★는 0.37·0.38로 가장 어렵습니다. 가운데 별점은 위아래 인접 클래스와 단어 분포가 겹쳐 헷갈리기 쉽다는 ordinal 특성이 per-class 지표에 그대로 드러납니다.
+
 ```python
 cm = confusion_matrix(y_test, y_pred)
 cm_df = pd.DataFrame(

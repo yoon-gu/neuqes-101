@@ -36,14 +36,22 @@ model_ovr.fit(X_train, y_train)
 print(f"OvR estimators count: {len(model_ovr.estimators_)}")
 print(f"Each estimator is a separate LogisticRegression for 'class k vs rest'")
 print(f"  estimator 0 coef_ shape: {model_ovr.estimators_[0].coef_.shape}  (1, V)")
+```
 
+**위 코드 읽기** `OneVsRestClassifier(LogisticRegression(...))` 는 K=5개의 별도 binary LogReg 를 만들어 `model_ovr.estimators_` 리스트에 담습니다. 각 estimator 의 `coef_` 모양이 `(1, V)` 인 것에서 보듯, 하나하나가 "클래스 k vs 나머지"만 푸는 독립 분류기입니다.
+
+```python
 # 5개 binary 모델의 coef를 (5, V)로 쌓아 한 번에 행렬 곱
 ovr_coef = np.vstack([est.coef_[0] for est in model_ovr.estimators_])         # (5, V)
 ovr_intercept = np.array([est.intercept_[0] for est in model_ovr.estimators_]) # (5,)
 
 ovr_logits_all = np.asarray(X_test @ ovr_coef.T) + ovr_intercept
 ovr_sigmoid_all = 1.0 / (1.0 + np.exp(-ovr_logits_all))    # (N, 5) 독립 sigmoid
+```
 
+**위 코드 읽기** 5개 binary 모델의 계수를 `(5, V)` 로 쌓아 한 번에 행렬곱해 logit 을 구한 뒤, softmax 가 아니라 **각 클래스마다 따로 sigmoid** 를 적용합니다. 이 `ovr_sigmoid_all` 이 OvR 의 본래 출력으로, 클래스끼리 분모를 공유하지 않아 행 합이 1이 될 이유가 없습니다.
+
+```python
 # 한 test 샘플을 골라 두 방식의 K=5 출력을 나란히 비교
 sample_idx = 0
 sample_text = X_text_test.iloc[sample_idx]
@@ -64,6 +72,8 @@ for k in range(5):
 print("-" * 56)
 print(f"  sum    {p_multi.sum():>14.4f}  {p_ovr_raw.sum():>10.4f}  {p_ovr_norm.sum():>16.4f}")
 ```
+
+**위 코드 읽기** 한 샘플을 골라 세 열을 나란히 둡니다 — multinomial softmax(`p_multi`), OvR 의 raw sigmoid(`p_ovr_raw`), 그리고 sklearn 이 표시용으로 행 합을 1로 맞춘 `p_ovr_norm`. `p_ovr_raw` 의 합만 1에서 벗어난다는 점이 두 방식의 본질적 차이를 한눈에 보여줍니다.
 
 **▶ 실행 결과**
 
@@ -100,6 +110,8 @@ True star:    2★
 - multi-label은 **OvR의 사고방식을 그대로** 가져갑니다: K개 독립 sigmoid를 별도로 학습하고, **정규화하지 않습니다**. 각 라벨이 독립적으로 0/1을 결정하는 것이 그 모델의 본래 모습.
 - 그래서 OvR을 multi-class에서 미리 만나두는 게 다음 챕터의 다리가 됩니다.
 
+마지막으로 두 방식의 전체 test 정확도를 비교하고, OvR raw 확률의 행 합이 실제로 1을 벗어나는 정도를 분포로 확인합니다. 정확도는 비슷하더라도 출력의 성질(합=1 제약 여부)이 다르다는 점이 핵심입니다.
+
 ```python
 # 전체 test set 정확도 비교
 acc_ovr = accuracy_score(y_test, model_ovr.predict(X_test))
@@ -129,3 +141,7 @@ OvR raw row sum distribution (pre-normalization):
   mean: 0.982
   → 5 independent sigmoids; rows do not sum to exactly 1
 ```
+
+**결과 해석**
+
+정확도는 0.5110 대 0.5070으로 거의 같아 — multi-class 에서는 두 방식의 성능 차이가 미미합니다. 반면 OvR raw 행 합은 0.778~1.387까지 흩어지고 평균도 0.982로 1이 아닌데, 이 "정규화하지 않는" 성질이 한 샘플에 여러 라벨이 붙는 Ch 6 multi-label 로 그대로 이어집니다.
