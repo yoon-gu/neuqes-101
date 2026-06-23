@@ -2,6 +2,8 @@
 
 ## 환경 준비
 
+먼저 노트북 실행에 필요한 핵심 라이브러리를 설치합니다. `transformers`(모델·Trainer), `tokenizers`(BBPE 직접 학습), `datasets`(한국어 TinyStories 로드), `accelerate`(학습 가속) 네 가지입니다.
+
 ```python
 %pip install -q -U transformers tokenizers datasets accelerate
 ```
@@ -18,6 +20,8 @@
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 196.9 MB/s eta 0:00:01
    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 18.0 MB/s eta 0:00:00
 ```
+
+실행 환경(GPU 종류·VRAM)을 자동으로 감지하고, 재현성을 위한 seed 고정과 T4 전용 `fp16` 플래그를 설정합니다. matplotlib 한글 폰트(NanumGothic)도 함께 준비해 뒤에서 그릴 loss 그래프의 한국어 라벨이 깨지지 않도록 합니다.
 
 ```python
 import warnings
@@ -77,6 +81,12 @@ VRAM total : 14.56 GiB
 torch      : 2.11.0+cu128
 use fp16   : True
 ```
+
+**결과 해석**
+
+T4 GPU(VRAM 약 14.56 GiB)가 정상 감지되어 `fp16` 학습이 활성화됐습니다. 이 챕터의 학습·생성은 이 T4 환경을 전제로 합니다.
+
+이제 한국어 TinyStories를 로드합니다. 이 데이터셋은 story 단위가 아니라 줄(line) 단위로 저장돼 있어, `<|endoftext|>` 마커를 만날 때까지 줄을 이어 붙여 한 story로 복원하는 함수를 정의한 뒤 train 30,000 / val 500 story를 만듭니다.
 
 ```python
 from datasets import load_dataset
@@ -147,6 +157,12 @@ story length (chars): mean=468, median=420, max=2754
 한때 벤이라는 이름의 어린 소년이 있었어요. 벤은 주변 세계를 탐험하는 것을 좋아했답니다. 그는 가게에 전시되어 있던 아름다운 꽃병들 같은 멋진 것들을 많이 봤어요. 어느 날, 벤은 가게를 거닐다가 정말 특별한 꽃병을 발견했죠. 벤은 그 꽃병을 보고 …(뒤 240자 생략)
 ```
 
+**결과 해석**
+
+30,000개 story 복원이 약 19초에 끝났고, story 평균 길이는 약 468자(중앙값 420자)로 짧은 동화 규모입니다. 샘플 story가 한 문장씩 자연스럽게 이어지는 것으로 보아 `<|endoftext|>` 기준 복원이 정상 동작했음을 확인할 수 있습니다.
+
+이제 복원한 한국어 코퍼스 위에 byte-level BPE(BBPE) 토크나이저를 직접 학습합니다. vocab은 4,000으로 잡았는데, 한글이 byte 단위로 표현되어 영어(2,048)보다 약간 키운 값입니다. 학습 후 HF 표준 인터페이스(`PreTrainedTokenizerFast`)로 감싸 bos·eos·pad를 모두 `<|endoftext|>`로 통일합니다.
+
 ```python
 from tokenizers import Tokenizer
 from tokenizers.models import BPE
@@ -205,6 +221,12 @@ vocab_size : 4000
 eos_token  : <|endoftext|>  id=0
 ```
 
+**결과 해석**
+
+BBPE 학습이 약 10초 만에 끝나 vocab 4,000을 확보했고, `"옛날 옛날에 작은 토끼가 숲으로 갔어요."`가 단 8개 토큰으로 인코딩됐다가 원문 그대로 복원됩니다. 한국어 코퍼스 위에 학습한 덕분에 자주 등장하는 어절이 의미 단위로 압축됐음을 보여 줍니다.
+
+다음으로 같은 한국어 문장을 영어 `gpt2` BPE와 우리 BBPE로 각각 토큰화해 토큰 수를 비교합니다. 영어 BPE가 한글을 얼마나 잘게 쪼개는지(토큰 수 폭증)를 정량으로 확인하는 cross-language 실측입니다.
+
 ```python
 from transformers import AutoTokenizer
 
@@ -250,6 +272,12 @@ Korean tokenization: English gpt2 BPE vs our Korean BBPE
    Our Korean BBPE keeps meaningful units (fewer tokens).
 ```
 
+**결과 해석**
+
+세 문장 모두에서 영어 gpt2 BPE가 우리 BBPE보다 약 6.4-7.2배 많은 토큰을 만들어 냅니다(예: `"옛날 옛날에 작은 토끼가 살았어요."`가 43 토큰 대 6 토큰). UNK는 없지만 한글이 byte 조각으로 잘게 쪼개져 의미 단위가 사라지는 것 — 한국어를 직접 학습한 토크나이저로 다뤄야 하는 이유의 실측 답입니다.
+
+이어서 HF 표준 CLM 전처리를 합니다. 전체 코퍼스를 토큰화하고, 각 story 끝에 `<|endoftext|>`를 붙인 뒤, `group_texts`로 모든 토큰을 이어붙여 `BLOCK_SIZE=128` 단위로 잘라 고정 길이 chunk를 만듭니다.
+
 ```python
 BLOCK_SIZE = 128
 
@@ -259,7 +287,11 @@ def tokenize_fn(batch):
 # 토큰화 (text 컬럼 제거)
 tok_train = raw_train.map(tokenize_fn, batched=True, remove_columns=["text"], desc="tokenize train")
 tok_val   = raw_val.map(tokenize_fn,   batched=True, remove_columns=["text"], desc="tokenize val")
+```
 
+**위 코드 읽기** — `block_size`를 128로 잡고, `tokenizer`로 각 story 텍스트를 토큰 id 시퀀스로 변환합니다. `remove_columns=["text"]`로 원본 문자열 컬럼은 버려 이후 단계가 토큰 id 위에서만 동작하게 합니다.
+
+```python
 # 각 story 끝에 EOS 부착 (story 경계 표시)
 def add_eos(batch):
     new_ids, new_mask = [], []
@@ -271,7 +303,11 @@ def add_eos(batch):
 
 tok_train = tok_train.map(add_eos, batched=True, desc="add eos train")
 tok_val   = tok_val.map(add_eos,   batched=True, desc="add eos val")
+```
 
+**위 코드 읽기** — 각 story 토큰 끝에 `eos_token_id`(`<|endoftext|>`)를 붙여 story 경계를 표시합니다. 다음 단계에서 모든 토큰을 한 줄로 이어붙일 때, 이 EOS가 한 story가 어디서 끝나는지를 모델에 알려 주는 신호가 됩니다.
+
+```python
 # group_texts - 모든 토큰을 이어붙여 BLOCK_SIZE 단위로 자름
 def group_texts(batch):
     concatenated = {k: sum(batch[k], []) for k in batch.keys()}
@@ -292,6 +328,8 @@ print("\nfirst chunk decode (first 200 chars):")
 print(tokenizer.decode(lm_train[0]["input_ids"])[:200])
 ```
 
+**위 코드 읽기** — `group_texts`는 배치 안의 모든 토큰을 하나의 긴 스트림으로 이어붙인 뒤 `BLOCK_SIZE`로 나누어떨어지는 길이만큼만 남기고 128 토큰짜리 chunk로 자릅니다. 이렇게 만든 각 chunk가 한 학습 sample이 되며, 이것이 HF `run_clm.py`의 표준 CLM 전처리 패턴입니다.
+
 **▶ 실행 결과**
 
 ```text
@@ -302,6 +340,12 @@ approx. train tokens: 5.87 M
 first chunk decode (first 200 chars):
 한때 벤이라는 이름의 어린 소년이 있었어요. 벤은 주변 세계를 탐험하는 것을 좋아했답니다. 그는 가게에 전시되어 있던 아름다운 꽃병들 같은 멋진 것들을 많이 봤어요. 어느 날, 벤은 가게를 거닐다가 정말 특별한 꽃병을 발견했죠. 벤은 그 꽃병을 보고 …(뒤 60자 생략)
 ```
+
+**결과 해석**
+
+30,000 story가 128 토큰짜리 45,845개 chunk(약 5.87M 토큰)로 변환됐습니다. 첫 chunk를 디코딩하면 원본 story가 그대로 복원되어, 토큰화·EOS 부착·chunk 분할 전처리가 의도대로 동작했음을 확인할 수 있습니다.
+
+다음 셀에서는 `DataCollatorForLanguageModeling(mlm=False)`이 만드는 `labels`를 직접 들여다봅니다. MLM(약 85%가 `-100`)과 달리 CausalLM은 거의 모든 자리가 학습 신호임을 한국어 데이터로 확인하는 `-100` thread 셀입니다.
 
 ```python
 from transformers import DataCollatorForLanguageModeling
@@ -351,6 +395,12 @@ total positions      : 256
 (input_ids == labels) positions: 255/256  - clone as-is
 ```
 
+**결과 해석**
+
+256개 자리 중 `-100`은 단 1개(0.39%)뿐이고 99.61%가 학습 신호로, MLM의 약 15%와 정확히 반대입니다. `labels`가 `input_ids`를 거의 그대로 복제한(255/256 일치) 결과로, CausalLM 사전학습이 한 step당 토큰 학습 효율이 MLM보다 약 5-6배 높음을 한국어 데이터로 재확인합니다.
+
+이제 학습할 모델을 정의합니다. `GPT2Config`를 작게(`n_layer=4, n_head=4, n_embd=256`) 잡아 random init하며, vocab만 한국어 BBPE(4,000)에 맞춥니다. Ch 24의 영어 모델과 완전히 같은 본체 구조입니다.
+
 ```python
 from transformers import GPT2Config, GPT2LMHeadModel
 
@@ -388,6 +438,12 @@ model: GPT2LMHeadModel
   - body : GPT2Model  (Decoder, causal attention)
   - head : Linear(in=256, out=4000)
 ```
+
+**결과 해석**
+
+약 4.22M 파라미터의 작은 GPT가 만들어졌고, weight tying이 켜져 LM head(`Linear(256, 4000)`)가 입력 임베딩과 가중치를 공유합니다. body는 causal attention을 쓰는 디코더(`GPT2Model`)로, vocab 차원만 4,000으로 바뀐 것 외에는 Ch 24와 동일한 본체입니다.
+
+이제 학습 *전* generation을 해 비교 기준선을 만듭니다. random init 모델에 한국어 prompt 4개를 넣어 보면, 아직 아무것도 학습하지 않은 본체가 어떤 텍스트를 뱉는지 확인할 수 있습니다. 같은 prompt·sampling 설정을 학습 후에도 그대로 써서 before/after를 나란히 비교합니다.
 
 ```python
 PROMPTS = [
@@ -441,6 +497,12 @@ prompt: 큰 개가
 prompt: 어느 날,
 어느 날, 고양이는 퍼즐�리를 안아주 의사았을�� 완벽한고마워 � 플러피고마워 싸 안아주 거실 영리 페 그녀의 아이스크림 접�� 레 의자에으며치를 돕이건 자신을갔습니다 할머니 구 아이스크림계프는 엄마님은 레 거실 악 거실 파란 기뻤습니다 운� 친구들에 …(뒤 40자 생략)
 ```
+
+**결과 해석**
+
+random init 상태라 네 prompt 모두 의미 없는 음절·byte 조각(`농�`, `보�갔죠티�여` 등)이 뒤죽박죽 나열됩니다. logits가 무작위 초기값이라 next-token 분포가 형성되지 않은 상태로, 학습 후 출력과 비교할 baseline이 됩니다.
+
+이제 `Trainer`로 본격 사전학습을 합니다. Ch 24와 같은 hyperparams(`max_steps=1500`, `batch_size=32`, `fp16`)에 학습률만 한국어 vocab에 맞춰 `5e-4`로 잡았고, VRAM 추적 콜백을 붙여 step별 peak 메모리를 기록합니다.
 
 ```python
 from transformers import (DataCollatorForLanguageModeling, Trainer,
@@ -526,6 +588,12 @@ random baseline (ln vocab): 8.2940
 final peak    : 66 MiB
 ```
 
+**결과 해석**
+
+1500 step 학습이 약 0.91분(1분 미만)에 끝났고, 누적 평균 `train_loss`가 random baseline 8.29에서 4.55까지 내려갔습니다. 번역체 한국어라 영어 챕터(약 3.8)보다 다소 높지만 baseline에서 절반 가까이 떨어진 정상 수렴이며, peak VRAM 66 MiB로 T4에 매우 여유롭습니다.
+
+다음 셀은 학습 로그에서 train/eval loss 추이와 VRAM trace를 뽑아 두 개의 그래프로 그립니다.
+
 ```python
 # loss curve + VRAM trace
 log = trainer.state.log_history
@@ -565,6 +633,12 @@ plt.tight_layout(); plt.show()
 
 ![output](../assets/26-ko_tiny_gpt-out1.png)
 
+**결과 해석**
+
+왼쪽 그래프에서 train·eval loss가 random baseline(점선 `ln(4000)≈8.29`)에서 수백 step 안에 약 5로 급락한 뒤 완만히 4.5 부근으로 수렴합니다. 오른쪽 VRAM trace는 학습 내내 수십 MiB 수준으로 안정적이어서, 작은 GPT + T4 조합이 메모리 측면에서 매우 여유로움을 보여 줍니다.
+
+이제 학습 *후* 모델로 같은 prompt에서 다시 생성합니다. 학습 전과 동일한 seed·`GEN_KWARGS`를 써서, 사전학습이 본체에 무엇을 새겼는지를 공정하게 비교할 수 있게 합니다.
+
 ```python
 torch.manual_seed(SEED)
 model.eval()
@@ -594,6 +668,12 @@ prompt: 큰 개가
 prompt: 어느 날,
 어느 날, 팀이라는 소년이 땅에 앉아 있는 것을 봤어요. 그는 "안녕?" 팀은 말했죠. "응, 팀아. 같이 놀자." 팀은 매우 기뻐했어요. 팀은 동의했어요. 잠시 후, 팀은 팀에게서 그들은 공으로 놀았어요. 팀은 "안녕, 팀, 나는 네 자동차를 찾을래?"라고 말했죠. 팀은 말했어요
 ```
+
+**결과 해석**
+
+학습 후 네 prompt 모두 *주어+서술어* 구조를 갖춘 동화 풍 한국어 문장(소년, 소녀, 엄마, 친구, 공원 등)으로 이어집니다. 같은 인물·맥락을 반복하거나 어색한 부분도 있지만, random init 출력과 비교하면 사전학습이 본체에 next-token 분포를 새겼음이 분명합니다.
+
+다음 셀은 같은 prompt의 학습 전·후 출력을 한 화면에 나란히 출력해 그 도약을 직접 대조합니다.
 
 ```python
 # before / after 나란히 - 사전학습이 본체에 새긴 next-token 분포의 직접적 증거
@@ -634,6 +714,12 @@ PROMPT  : 어느 날,
 BEFORE  : 고양이는 퍼즐�리를 안아주 의사았을�� 완벽한고마워 � 플러피고마워 싸 안아주 거실 영리 페 그녀의 아이스크림 접�� 레 의자에으며치를 돕이건 자신을갔습니다 할머니 구 아이스크림계프는 엄마님은 레 거실 악 거실 파란 기뻤습니다 운� …(뒤 44자 생략)
 AFTER   : 팀이라는 소년이 땅에 앉아 있는 것을 봤어요. 그는 "안녕?" 팀은 말했죠. "응, 팀아. 같이 놀자." 팀은 매우 기뻐했어요. 팀은 동의했어요. 잠시 후, 팀은 팀에게서 그들은 공으로 놀았어요. 팀은 "안녕, 팀, 나는 네 자동차를 …(뒤 21자 생략)
 ```
+
+**결과 해석**
+
+네 prompt 모두 BEFORE의 무의미한 byte 조각 나열이 AFTER에서 말이 되는 한국어 동화 문장으로 바뀌어, 학습 전·후의 질적 도약이 한눈에 드러납니다. 이것이 이 챕터의 합격 기준 — 1500 step의 from-scratch 사전학습만으로도 본체에 한국어 next-token 분포가 새겨졌다는 직접 증거입니다.
+
+마지막 (선택) 셀은 비교 기준점으로 대규모 한국어 사전학습 모델 KoGPT2(125M)에 같은 prompt를 넣어 봅니다. 시간이 부족하면 `RUN_KOGPT2_REF = False`로 두고 건너뛸 수 있습니다.
 
 ```python
 # 선택 셀 - KoGPT2 reference. 시간이 부족하면 RUN_KOGPT2_REF = False 로 두고 건너뜁니다.
@@ -691,3 +777,7 @@ prompt: 큰 개가
 prompt: 어느 날,
 ���,▁Gaurius,▁vand.▁Gould,▁Denol,▁Tamil,▁Anat�nn▁McCamel,▁Zehn,▁Guy.▁Cyb,▁Shitch,▁Pellek,▁Nami,▁Jalifa,
 ```
+
+**결과 해석**
+
+이 실행에서는 KoGPT2 reference 출력이 `▁▁▁` 반복이나 깨진 토큰으로 나와 정상적인 한국어 문장이 나오지 않았습니다. 우리 GEN_KWARGS·prompt 인코딩이 KoGPT2 토크나이저와 잘 맞지 않은 탓으로, KoGPT2의 제대로 된 generation 품질 비교는 이 모델을 본격적으로 다루는 Ch 27에서 확인합니다.
