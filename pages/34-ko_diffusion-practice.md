@@ -36,6 +36,8 @@ device cuda | fp16 True
 
 ### 한국어 TinyStories 복원 (Ch 26과 동일)
 
+`g0ster/TinyStories-Korean`은 여러 이야기가 `<|endoftext|>` 한 줄로 이어 붙은 스트림이라, 그 경계를 만나면 지금까지 모은 줄(`buf`)을 한 story로 묶어 냅니다. 학습 50,000개·검증 500개 story를 복원해 Ch 26과 동일한 데이터·전처리를 맞춥니다.
+
 ```python
 EOT="<|endoftext|>"; N_TRAIN,N_VAL,MAXL=50_000,500,1_500_000
 def rebuild(split,n,maxl):
@@ -67,6 +69,8 @@ stories 50000 500
 
 ### BPE 4000 + initial_alphabet + [MASK]
 
+한국어 코퍼스에 ByteLevel BPE를 직접 학습합니다. `initial_alphabet`에 전체 바이트(256개)를 넣어 어떤 한글이라도 `[UNK]`로 빠지지 않게 하고, `[PAD]`·`[UNK]`·`[MASK]` 특수 토큰을 더해 diffusion 마스킹에 쓸 `[MASK]`를 어휘에 확보합니다.
+
 ```python
 from tokenizers import Tokenizer, models, trainers, pre_tokenizers, decoders
 from transformers import PreTrainedTokenizerFast
@@ -90,6 +94,8 @@ vocab 4000 mask_id 2
 ```
 
 ### 토큰화 + group
+
+각 story를 토큰화한 뒤 전부 이어 붙여 `BLOCK=128` 길이 chunk로 자릅니다. 짧은 이야기와 긴 이야기를 섞어 일정 길이 블록으로 통일하면 배치 모양이 고정돼 학습이 단순해집니다.
 
 ```python
 BLOCK=128
@@ -127,6 +133,11 @@ class DiffMLMCollator:
         no=~sel.any(1)
         if no.any():
             j=torch.randint(0,L,(int(no.sum()),),generator=self.gen); sel[no,j]=True
+```
+
+**위 코드 읽기** — 문장마다 마스킹 비율 `t`를 `eps`~`tmax` 사이에서 무작위로 뽑는 게 diffusion의 핵심입니다(생성 시 1→0으로 내려갈 비율을 학습 때 골고루 경험시킴). 그 비율로 자리를 `sel`로 고른 뒤, 한 자리도 안 뽑힌 문장(`no`)은 적어도 한 자리를 강제로 켭니다.
+
+```python
         labels=ids.clone(); labels[~sel]=-100
         inp=ids.clone()
         r=torch.rand(B,L,generator=self.gen)
@@ -138,7 +149,11 @@ class DiffMLMCollator:
 coll=DiffMLMCollator(tokenizer)
 ```
 
+**위 코드 읽기** — `labels`는 뽑힌 자리(`sel`) 전체에 정답을 두고 나머지는 `-100`으로 무시합니다. 입력(`inp`)에만 80/10/10이 갈립니다: `r<0.8`은 `[MASK]`로, `0.8≤r<0.9`는 특수 토큰을 피한 무작위 토큰(`N_SPECIAL`부터)으로 바꾸고, 나머지 10%는 원본 그대로 둡니다. 원본 유지·무작위 교체 자리도 `labels`에는 정답이 있어 감독 대상이라는 점이 80/10/10의 핵심입니다.
+
 ### 작은 모델 (256/4L) — 용량 아닌 마스킹이 문제였음
+
+hidden 256·4층의 작은 `BertForMaskedLM`을 씁니다. 해부에서 모델을 3배로 키워도 붕괴가 안 풀렸으니, 여기서 잘 학습된다면 범인은 용량이 아니라 마스킹 방식임이 드러납니다.
 
 ```python
 from transformers import BertConfig, BertForMaskedLM
@@ -175,7 +190,13 @@ print(f"elapsed {(time.time()-t0)/60:.2f}min | step {r.global_step} | train_loss
 elapsed 20.20min | step 30000 | train_loss 4.1260 | baseline ln(V) 8.2940
 ```
 
+**결과 해석**
+
+`train_loss` 4.13은 균등 추측 기준선 8.29의 절반 아래이자, 순진한 100% `[MASK]`가 갇혔던 7.06의 벽을 확실히 뚫은 값입니다. 80/10/10만으로 유니그램 attractor를 벗어나 문맥 조건부를 학습했다는 신호입니다.
+
 ### carry-over 샘플러로 한국어 생성
+
+전부 `[MASK]`인 시퀀스에서 시작해, 블록 단위로 신뢰도 높은 자리부터 조금씩 확정해 가는 carry-over semi-AR 샘플러입니다. 반복 패널티·인접중복 금지·top-p로 한 토큰만 되뇌는 붕괴를 억제하고, `prompt_ids`를 주면 그 자리를 고정해 조건부 생성을 합니다.
 
 ```python
 @torch.no_grad()
@@ -271,6 +292,10 @@ for i in range(2):
 [1]  정말 좋은 일이야."옛날 옛적에 팀이라는 어린 소년이 있었어요. 그는 장난감 장난감을 가지고 노는 것을 좋아했지요. 어느 날, 팀은 방에서 놀 수 있는 큰 상자를 발견했어요. 그 상자에는 장난감이 들어있었답니다! 팀은 매우 신이 나서 엄마에게 …(뒤 164자 생략)
 ```
 
+**결과 해석**
+
+무조건·조건부 모두 인물·배경·대화·서사가 갖춰진 한국어 동화가 나옵니다. `"옛날 옛날에"` 프롬프트를 고정하면 그 도입을 이어 받아 자연스럽게 전개하며, "장난감 장난감" 같은 자잘한 반복은 남지만 유니그램 파편 붕괴와는 거리가 먼 coherent한 생성입니다.
+
 ### 진단 — 고정-t(0.15) acc + infill
 
 ```python
@@ -292,3 +317,7 @@ print(f"[diag] fixed-t(0.15) top-1 acc = {fixed_t_acc():.3f}   (naive diffusion 
 ```text
 [diag] fixed-t(0.15) top-1 acc = 0.652   (naive diffusion 0.081)
 ```
+
+**결과 해석**
+
+샘플러를 배제한 고정-$t$ 정확도 0.652는 순진한 diffusion의 0.081을 8배 넘게 끌어올린 값입니다. 모델 자체가 양방향 문맥으로 가린 자리를 복원하는 능력을 제대로 배웠다는, 디코딩과 무관한 직접 증거입니다.
