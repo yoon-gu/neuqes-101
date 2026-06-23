@@ -2,8 +2,8 @@
 
 | 이름 | 한 줄 설명 | 다음 챕터에서 |
 |---|---|---|
-| `sklearn.multiclass.OneVsRestClassifier` | K개 독립 binary 분류기를 묶고 multi-label 모드 자동 감지 | Ch 12 BERT multi-label에서 같은 패러다임을 BERT로 |
-| `sklearn.metrics.hamming_loss` | 라벨별 평균 오답 비율 | Ch 12에서도 평가 지표로 |
+| `sklearn.multiclass.OneVsRestClassifier` | K개 독립 binary 분류기를 묶고 multi-label 모드 자동 감지 | Ch 13 BERT multi-label에서 같은 패러다임을 BERT로 |
+| `sklearn.metrics.hamming_loss` | 라벨별 평균 오답 비율 | Ch 13에서도 평가 지표로 |
 | `sklearn.metrics.f1_score(average="micro" / "macro")` | multi-label F1 집계 방식 | — |
 | `sklearn.metrics.classification_report` | 라벨별 precision/recall/F1 한 번에 | — |
 

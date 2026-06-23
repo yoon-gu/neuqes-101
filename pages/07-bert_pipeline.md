@@ -25,7 +25,7 @@
 | 6 | `OneVsRestClassifier(LogisticRegression())` | `TfidfVectorizer()` | Yelp + 항목 합성 | (5차원) | per-label sigmoid | per-label `BCEWithLogitsLoss` |
 | **7 ← 여기** | `pipeline("sentiment-analysis")` | `AutoTokenizer.from_pretrained(...)` | 간단 영어 예시 | **사전학습 헤드** | softmax | — (추론만) |
 
-전체 20챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
+전체 챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
 
 ## 변경점 (Diff from Ch 6)
 
@@ -132,7 +132,7 @@ WordPiece와 BPE는 둘 다 *서브워드 알고리즘* 이지만 학습·표기
 
 - BERT는 BookCorpus + Wikipedia로 학습됐고, 영어 중심 어휘.
 - GPT-2는 더 다양한 웹 텍스트(Reddit 등)로 학습됐고 BPE라 어휘가 더 풍부.
-- 한국어 BERT(`klue/bert-base`, Ch 14)는 한국어 코퍼스로 다시 학습돼 한국어 어휘를 보유 — 같은 문장 `"안녕"` 도 영어 BERT면 `[UNK]` 또는 글자 단위로 쪼개지지만 한국어 BERT엔 한 토큰으로 들어갑니다.
+- 한국어 BERT(`klue/bert-base`, Ch 15)는 한국어 코퍼스로 다시 학습돼 한국어 어휘를 보유 — 같은 문장 `"안녕"` 도 영어 BERT면 `[UNK]` 또는 글자 단위로 쪼개지지만 한국어 BERT엔 한 토큰으로 들어갑니다.
 
 **실무 함의**: 모델을 갈아 끼울 때 토크나이저도 *반드시 짝* 으로 바꿔야 합니다. `AutoTokenizer.from_pretrained(model_name)` 의 model_name 이 모델 자체와 일치해야 하는 이유 — 학습 때 본 어휘와 추론 때 입력 어휘가 같아야 모델이 의미를 이해합니다.
 

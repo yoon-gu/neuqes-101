@@ -74,7 +74,7 @@ self-contained 노트북: Ch 22 의 MLM 학습을 짧게 재현 → 같은 본�
 | 사전학습 시간 | TPU 수일 | **T4 약 8-10분** | |
 | Fine-tune 도메인 | NSMC 이진 (사전학습과 다른 도메인) | NSMC 이진 (사전학습과 다른 도메인) | **둘 다 일반 한국어 → NSMC transfer 라 fair** |
 | 분류 fine-tune 셋업 | Ch 15 = 이번 챕터 동일 (같은 데이터, 같은 hyperparams) | | 변하는 건 *본체 출발점* 뿐 |
-| 실측 accuracy | 약 0.86 | **약 0.54** | 실행본 기준 (Ch 15=0.86, Ch 23=0.5420). 짧은 사전학습(MLM 약 0.2분)이라 동전 던지기에 가까움 |
+| 실측 accuracy | 약 0.86 | **약 0.54** | 실행본 기준 (Ch 15=0.86, Ch 23=0.5480). 짧은 사전학습(MLM 약 0.2분)이라 동전 던지기에 가까움 |
 
 비교가 *공정* 한 이유 — Ch 15 도 본 챕터도 둘 다 *일반 도메인 한국어 사전학습 → NSMC 분류 transfer* 의 같은 패턴. *사전학습 규모* (약 10,000배) 와 *모델 크기* (11배) 만 차이. 만약 Ch 23 이 NSMC text 로 사전학습했다면 비교가 unfair 했을 것 — domain-adaptive pretraining 우위 때문.
 
@@ -116,7 +116,7 @@ $$L_{\text{cls}} = -\frac{1}{N}\sum_{i=1}^{N} \log \hat p_{i, y_i}$$
 
 | 셋업 | 학습 첫 step loss | 학습 종료 loss (epoch 2) | 메모 |
 |---|---|---|---|
-| 한국어 Wikipedia MLM 사전학습 본체 + 분류 (본 챕터) | 약 0.693 | **약 0.45-0.6** | 본체에 *일반 한국어 어휘·문맥 구조* 가 들어 있어 헤드가 NSMC 분류로 비교적 빠르게 적응 |
+| 한국어 Wikipedia MLM 사전학습 본체 + 분류 (본 챕터) | 약 0.693 | **약 0.69 (실측, random 부근)** | MLM 약 0.2분의 짧은 사전학습이라 본체 표상이 얕아, 종료 loss 가 random baseline 0.693 을 거의 벗어나지 못함 |
 | Ch 15 `klue/bert-base` 사전학습 본체 + 분류 | 약 0.693 | **약 0.25-0.4** | 대규모 일반 한국어 사전학습이 만든 표상의 위력 |
 
 random baseline 은 *두 셋업 모두 같음* — 사전학습이 *학습 속도* 와 *수렴점* 에 영향. 학습 첫 step loss 가 같다고 사전학습이 의미 없는 게 아닙니다. *위키 사전학습 본체* 가 NSMC 도메인에서 *완벽한 성능* 을 내지는 못해도, random 보다 일관되게 빠르고 낮게 수렴 (사전학습 없는 random init 과의 직접 비교는 부록 [`appendix_random_baseline.ipynb`](./appendix_random_baseline.ipynb)).
@@ -231,7 +231,7 @@ vocab 약 32,000 의 한국어 WordPiece. MLM 사전학습과 분류 fine-tune �
 
 실측 (실행본 기준):
 - **Ch 15** (`klue/bert-base`, 약 110M, 약 8.4B 토큰 대규모 한국어 사전학습): accuracy 약 0.86, AUC 약 0.93
-- **Ch 23 ours** (small BERT, 한국어 Wikipedia 2K paragraphs × 3 epoch 사전학습): accuracy 약 0.54, AUC 약 0.56 (동전 던지기 수준 — MLM 약 0.2분의 짧은 사전학습 한계)
+- **Ch 23 ours** (small BERT, 한국어 Wikipedia 2K paragraphs × 3 epoch 사전학습): accuracy 약 0.54, AUC 약 0.55 (동전 던지기 수준 — MLM 약 0.2분의 짧은 사전학습 한계)
 
 **Ch 15 vs Ch 23 ours**: accuracy 약 32%p 격차. 두 모델이 *같은 transfer 패턴* (일반 한국어 위키 → NSMC) 을 따르므로 격차의 거의 전부가 *사전학습 규모의 가치* — 약 8.4B 토큰의 *일반 한국어 지식* 이 `klue/bert-base` 본체에 압축되어 있어, NSMC 같은 *비격식 구어체 도메인* 에도 빠르게 적응합니다. *작은 일반 사전학습 < 대규모 일반 사전학습* 의 본질은 단순 양적 차이가 아니라 *도메인 다양성의 질적 차이* — `klue/bert-base` 는 위키 + 뉴스 + 블로그·댓글까지 포함한 약 8.4B 토큰으로 비격식 한국어 도메인도 *이미 본 적이 있어* transfer 가 자연스럽습니다.
 

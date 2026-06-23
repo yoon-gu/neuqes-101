@@ -30,7 +30,7 @@
 ### Q2. (이론) sigmoid 대신 다른 활성화 함수(tanh, softmax)를 쓰면 어떻게 되나요?
 
 - **tanh**: 출력 범위가 $[-1, 1]$입니다. 라벨을 -1/+1로 매핑하고 hinge loss 등을 쓰면 SVM과 비슷한 모델이 됩니다. 수학적으로는 $\tanh(z) = 2\sigma(2z) - 1$이라 sigmoid의 단순 변환이지만 라벨 컨벤션이 다릅니다.
-- **softmax**: 다중 클래스용 일반화. binary에 softmax를 쓰려면 출력 차원을 2로 늘리고 라벨도 one-hot으로 바꿔야 합니다 → 이게 정확히 Ch 9에서 다룰 "방식 B"입니다 (방식 A=sigmoid 1차원, 방식 B=softmax 2차원이 수학적으로 동등).
+- **softmax**: 다중 클래스용 일반화. binary에 softmax를 쓰려면 출력 차원을 2로 늘리고 라벨도 one-hot으로 바꿔야 합니다 → 이게 정확히 Ch 11에서 다룰 "방식 B"입니다 (방식 A=sigmoid 1차원, 방식 B=softmax 2차원이 수학적으로 동등).
 - **ReLU/identity**: 출력이 [0, 1] 보장이 안 됩니다 — 음수도 1 초과도 가능 → BCE의 $\log$가 정의되지 않습니다.
 
 ### Q3. (실무) 클래스 불균형이 있으면 어떻게 하나요?
@@ -74,7 +74,7 @@ print(f"Youden's J 기준 최적 임계값: {best_thr:.3f}")
 - **recall** (실제 positive 중 잡아낸 비율): **놓치는 비용** 이 클 때. 암 진단, 사기 탐지.
 - **F1** (precision·recall의 조화 평균): 둘 다 중요할 때의 균형 지표. 어느 한 쪽이 0이면 F1도 0.
 
-이 챕터의 Yelp 이진화는 클래스 불균형이 크지 않아(긍정 ≈ 60%) accuracy도 의미 있지만, 실무에선 항상 classification_report 전체를 보는 습관이 안전합니다.
+이 챕터의 Yelp 이진화는 클래스 불균형이 크지 않아(긍정 ≈ 49%, 거의 반반) accuracy도 의미 있지만, 실무에선 항상 classification_report 전체를 보는 습관이 안전합니다.
 
 ### Q6. (실무) sklearn `LogisticRegression`은 정규화(L2)가 기본인데 끄려면?
 

@@ -95,7 +95,7 @@ enc = hf_tok("hello world", return_tensors="pt", padding=True)
 - 이번 챕터에서 *경험한* 토크나이저 학습 위에, *모델 자체* 를 from-scratch 로 사전학습.
 - 모델: 작은 BERT (n_layer=4, hidden=256) — `BertConfig` 로 직접 설계.
 - 토크나이저: 표준 `bert-base-uncased` 의 WordPiece 를 가져옴 (학습 안정성 우선).
-- 데이터: `yelp_polarity` 의 text (라벨 무시) — *MLM* 사전학습.
+- 데이터: Wikitext-103 (일반 도메인 위키) text (라벨 무시) — *MLM* 사전학습.
 - Loss: `CrossEntropyLoss` (마스킹된 위치의 토큰 예측).
 - Ch 21 에서 이 사전학습 모델로 Yelp 이진 분류 → Ch 10 (DistilBERT 사전학습) 과 *직접 비교* — *직접 사전학습한 작은 BERT* 가 *대규모 사전학습된 DistilBERT* 와 얼마나 차이 나는지.
 
