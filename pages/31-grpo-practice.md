@@ -84,6 +84,8 @@ torch        : 2.11.0+cu128
 use fp16     : True
 ```
 
+GRPO 는 verifier 가 자동으로 채점할 수 있는 task 가 필요합니다. 정답이 명확한 산술 문제를 만들어, `prompt` (모델 입력) 와 `answer` (채점용 정답) 를 짝지어 둡니다. prompt 는 Ch 28 SFT 와 동일한 instruction 포맷으로 감싸 학습·추론 포맷을 맞춥니다.
+
 ```python
 from datasets import Dataset
 
@@ -140,6 +142,8 @@ train: 256 samples,  eval: 64 samples
 14
 ```
 
+학습 대상인 policy 모델과 토크나이저를 불러옵니다. KoGPT2 는 `AutoTokenizer` 가 영어 GPT2 토크나이저로 잘못 fallback 되므로 (Ch 27), `PreTrainedTokenizerFast` 로 special token 을 직접 지정해 로드합니다. 단독 실행을 위해 SFT 체크포인트 대신 base 모델에서 시작합니다.
+
 ```python
 from transformers import PreTrainedTokenizerFast, AutoModelForCausalLM
 
@@ -187,6 +191,8 @@ tokenizer    : TokenizersBackend
   pad_token  : <pad>  id=3
 ```
 
+base 모델은 산술을 거의 못 풀어 group 이 전부 오답이 되기 쉽습니다 (std=0 → advantage 0 → 학습 신호 없음). GRPO 가 신호를 얻으려면 모델이 가끔이라도 정답을 내야 하므로, 먼저 정답을 포함한 예제로 짧게 지도학습해 비제로 시작점을 만듭니다.
+
 ```python
 # === SFT 워밍스타트 === GRPO 전에 산술 포맷+정답을 지도학습 (비제로 시작점)
 from transformers import Trainer, TrainingArguments, DataCollatorForLanguageModeling
@@ -217,6 +223,8 @@ print(f"SFT 워밍스타트 완료 ({(time.time()-t0)/60:.1f}min) - policy 가 �
 <IPython.core.display.HTML object>
 SFT 워밍스타트 완료 (1.2min) - policy 가 이제 산술 포맷을 안다
 ```
+
+GRPO 의 핵심은 verifier 입니다. 생성된 답에서 정수를 추출해 정답과 일치하면 1.0, 아니면 0.0 을 주는 이진 보상 함수를 정의합니다. `trl` 의 reward 함수는 `completions` (생성 답 리스트) 와 `answer` (정답 리스트) 를 받아 reward 리스트를 돌려주는 시그니처를 씁니다.
 
 ```python
 def extract_answer(text: str):
@@ -259,6 +267,12 @@ verifier demo - prompt: '3 + 5 = ?', gold answer: 8
 
 rewards (group): [1.0, 0.0, 1.0, 0.0]
 ```
+
+**결과 해석**
+
+정답 8 이 포함된 `'The answer is 8.'` 과 `'8'` 은 1.0, 7 을 낸 답과 모르겠다는 답은 0.0 을 받았습니다. 한 group 안에 정답·오답이 섞여 있어 다음 단계의 group advantage 가 0 이 아닌 학습 신호를 만들 수 있습니다.
+
+GRPO 가 PPO 와 다른 핵심이 여기 있습니다. critic (value model) 없이, 같은 prompt 에서 나온 group 의 reward 평균을 baseline 으로 삼아 advantage 를 계산합니다. 평균보다 높은 답은 확률을 올리고 (advantage>0), 낮은 답은 내립니다 (advantage<0). 손으로 직접 계산해 group 구성에 따라 advantage 가 어떻게 달라지는지 살펴봅니다.
 
 ```python
 def group_advantage(rewards, eps=1e-4):
@@ -314,6 +328,12 @@ advantage for various group compositions:
   rewards=[0, 0, 0, 0] -> advantage=[0. 0. 0. 0.]  (all same -> no learning signal)
 ```
 
+**결과 해석**
+
+reward 가 `[1,0,1,0]` 이면 정답은 +1, 오답은 -1 로 갈립니다. 반면 group 이 전부 정답 `[1,1,1,1]` 이거나 전부 오답 `[0,0,0,0]` 이면 advantage 가 모두 0 — 비교 대상이 없어 학습 신호가 사라집니다. group 안에 정답·오답이 섞여야 GRPO 가 배웁니다.
+
+GRPO 전후를 비교하려면 흔들리지 않는 측정 기준이 필요합니다. sampling 은 실행마다 결과가 달라져 delta 를 읽기 어려우므로, greedy (`do_sample=False`) 로 정확도를 결정적으로 측정하는 함수를 만들고 학습 전 정확도를 먼저 기록합니다.
+
 ```python
 from trl import GRPOTrainer, GRPOConfig
 
@@ -343,6 +363,8 @@ print(f"BEFORE GRPO - arithmetic accuracy (greedy verifier pass rate): {acc_befo
 BEFORE GRPO - arithmetic accuracy (greedy verifier pass rate): 0.875
 ```
 
+앞서 봤듯 group 이 전부 정답이거나 전부 오답이면 advantage 가 0 이라 학습 신호가 없습니다. 그래서 각 prompt 에 여러 답을 생성해 정답률 (pass rate) 을 재고, 너무 쉽지도 어렵지도 않은 중간 난이도 문제만 남겨 group 안에 정답·오답이 섞이도록 (std>0) 데이터셋을 거릅니다.
+
 ```python
 # 각 prompt 에 k 개 답을 생성해 정답률(pass rate)을 측정
 @torch.no_grad()
@@ -366,6 +388,8 @@ print(f"난이도 필터: pool {len(pool)} -> 중간난이도 {len(grpo_ds)}개 
 ```text
 난이도 필터: pool 500 -> 중간난이도 256개 (그룹에 정답·오답 섞임 → advantage std>0)
 ```
+
+이제 GRPO 본 학습입니다. `GRPOConfig` 에서 group 크기 (`num_generations`)·KL 앵커 강도 (`beta`)·작은 learning rate 등 collapse 를 막는 설정을 잡고, `reward_funcs` 에 앞서 만든 verifier 를 넘기면 `GRPOTrainer` 가 rollout → 채점 → group advantage → 정책 갱신을 자동으로 돌립니다.
 
 ```python
 GROUP_SIZE = 8   # num_generations - rollout group size (T4 룰: 작게)
@@ -461,6 +485,10 @@ train_loss  : 5171634.2480
 final peak  : 2886 MiB
 ```
 
+**결과 해석**
+
+32 step, 약 0.5 분 만에 끝났고 peak VRAM 은 2886 MiB 로 T4 에 충분히 들어갑니다. `train_loss` 값 자체는 GRPO 목적함수의 부호·스케일이 분류 loss 와 달라 절대값으로 해석하지 않습니다 — 실제 효과는 다음 셀의 정확도 변화로 확인합니다.
+
 ```python
 acc_after = eval_accuracy(policy, eval_ds, n=64)
 
@@ -489,7 +517,13 @@ BEFORE GRPO - arithmetic accuracy                     : 0.875
 delta                                                 : +0.016
 ```
 
+**결과 해석**
+
+정확도가 0.875 → 0.891 로 +0.016 올랐습니다. 작은 모델·짧은 학습이라 변화 폭은 미미하지만, *verifier reward + group advantage* 만으로 (사람 라벨·critic·reward model 없이) 정렬 방향이 양으로 움직였다는 것이 핵심입니다.
+
 ![output](../assets/31-grpo-out1.png)
+
+학습 로그에서 step 별 group 평균 reward·reward std·loss 를 꺼내 그려, GRPO 가 진행되며 보상이 어떻게 움직였는지와 peak VRAM 을 확인합니다.
 
 ```python
 log = trainer.state.log_history
