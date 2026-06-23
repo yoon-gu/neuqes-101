@@ -104,6 +104,8 @@ text: 넥센 이사회의장으로 허민 영입…현안 해결에 노력 [SEP]
 - **`partially correct`** — 한 주제만 잡고 다른 하나는 놓침. 두 헤드라인 중 *한쪽 신호가 약했거나* 두 카테고리가 서로 헷갈리는 경우.
 - **`confidently wrong`** — 정답이 0 인데 높은 확률로 활성. 결합된 두 헤드라인의 단어가 *제3의 카테고리* 신호와 겹친 경우 (예: 경제+세계 헤드라인이 '정치' 신호처럼 보임).
 
+결정 임계값을 0.1 부터 0.9 까지 움직이며 micro·macro F1 이 어떻게 변하는지 스윕합니다. 0.5 가 항상 최적은 아님을 직접 확인하는 실험입니다.
+
 ```python
 # threshold 를 옮기면 micro/macro F1 이 어떻게 변하나
 sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})

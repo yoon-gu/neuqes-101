@@ -89,6 +89,8 @@ Mon Jun 22 04:00:43 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+KLUE-YNAT 를 내려받아 7개 카테고리 이름을 확인합니다. 출력·플롯이 한글 폰트 문제로 깨지지 않도록 카테고리명을 영문으로 매핑해 두고, `title` 컬럼을 `transformers` 표준인 `text` 로 바꿉니다.
+
 ```python
 ds = load_dataset("klue/klue", "ynat")
 print(f"splits: {list(ds.keys())}")
@@ -119,6 +121,8 @@ first 2 raw samples:
   label=3 (Life&Culture)  text='유튜브 내달 2일까지 크리에이터 지원 공간 운영'
   label=3 (Life&Culture)  text='어버이날 맑다가 흐려져…남부지방 옅은 황사'
 ```
+
+single-label 데이터에서 두 샘플씩 짝지어 multi-label 을 합성합니다. 텍스트는 `[SEP]` 로 잇고, 두 카테고리 위치를 1 로 채운 multi-hot 벡터를 라벨로 만듭니다. seed 를 고정해 train/eval 합성이 재현 가능합니다.
 
 ```python
 SEED = 42
@@ -185,6 +189,8 @@ First synthetic sample:
   active categories: ['Economy', 'Life&Culture']
 ```
 
+합성 데이터가 어떤 분포인지 확인합니다. 카테고리별 활성률과 샘플당 활성 라벨 개수를 집계해, 두 헤드라인 결합이 의도대로 됐는지 점검합니다.
+
 ```python
 # 카테고리별 활성률 + 활성 라벨 개수 분포
 Y_train = np.array(train_full["multi_hot"])
@@ -220,6 +226,12 @@ Active label distribution (train):
   1 labels active: 732 samples (14.6%)
   2 labels active: 4268 samples (85.4%)
 ```
+
+**결과 해석**
+
+샘플당 평균 활성 라벨이 1.85 개로, 두 헤드라인을 뽑을 때 14.6% 는 우연히 같은 카테고리끼리 만나 라벨이 1개로 합쳐졌습니다 (나머지 85.4% 가 2개 활성). 카테고리별 활성률은 22~33% 범위로, KLUE-YNAT 원본 분포를 따라 World·Sports·Politics 가 다소 많지만 극단적 불균형은 아닙니다 — 이 덕분에 뒤에서 micro 와 macro F1 이 비슷하게 나옵니다.
+
+`klue/bert-base` 토크나이저로 결합 헤드라인을 토큰화합니다. 핵심은 마지막 줄 — multi-hot 벡터를 길이 7 의 **float** 리스트로 만들어 `labels` 에 넣는 부분입니다. 이 float 형식이 `BCEWithLogitsLoss` 가 받는 라벨 형태입니다.
 
 ```python
 tokenizer = AutoTokenizer.from_pretrained("klue/bert-base")
@@ -259,6 +271,8 @@ Dataset({
 
 First sample label: [0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0]  (length-7 multi-hot float vector)
 ```
+
+모델을 로드할 때 `num_labels=7` 은 Ch 16 과 그대로지만 `problem_type="multi_label_classification"` 한 줄을 더해 loss 자동 매핑을 BCE per-label 로 전환합니다. 분류 헤드 `Linear(768, 7)` 와 파라미터 수는 Ch 16 과 완전히 동일합니다.
 
 ```python
 model = AutoModelForSequenceClassification.from_pretrained(
@@ -337,6 +351,8 @@ Mon Jun 22 04:01:09 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+multi-label 평가 함수입니다. logit 에 라벨별 sigmoid 를 적용하고 0.5 임계값으로 multi-hot 예측을 만든 뒤, hamming loss 와 micro/macro F1, macro AUC 를 계산합니다. micro 는 라벨을 합산하고 macro 는 라벨별 점수를 평균한다는 점이 핵심입니다.
+
 ```python
 def compute_metrics(eval_pred):
     logits, labels = eval_pred                      # logits: (N, K), labels: (N, K) float
@@ -370,6 +386,8 @@ def compute_metrics(eval_pred):
         out["macro_auc"] = float("nan")
     return out
 ```
+
+Ch 16 과 동일한 hyperparams (learning rate, batch size, epoch, seed) 로 `Trainer` 를 구성해 학습합니다. T4 에서 `fp16=True` 로 약 10분 안에 끝납니다.
 
 ```python
 training_args = TrainingArguments(
@@ -435,6 +453,8 @@ Mon Jun 22 04:01:52 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+학습된 모델을 eval set 으로 평가해 multi-label 지표를 한꺼번에 확인합니다.
+
 ```python
 eval_metrics = trainer.evaluate()
 print("klue/bert-base KLUE-YNAT multi-label — evaluation:")
@@ -462,6 +482,12 @@ klue/bert-base KLUE-YNAT multi-label — evaluation:
   eval_samples_per_second: 1452.5010
    eval_steps_per_second: 46.4800
 ```
+
+**결과 해석**
+
+micro F1 0.8500 과 macro F1 0.8487 이 거의 같습니다 — 카테고리별 활성률이 크게 치우치지 않아 다수·소수 카테고리 사이 격차가 작다는 뜻입니다. macro AUC 0.9623 은 임계값과 무관한 순위 분리력으로, 라벨별 sigmoid 가 양성·음성을 잘 갈라놓고 있음을 보여줍니다. hamming loss 0.0741 은 전체 라벨 위치 중 약 7%만 틀렸다는 의미입니다.
+
+eval set 전체에 대해 예측을 뽑아 카테고리별 sigmoid 확률 범위와 실제·예측 활성률을 비교합니다. 이후 시각화·해부에서 쓸 `probs`, `preds`, `labels` 를 여기서 준비합니다.
 
 ```python
 # logits → per-label sigmoid → multi-hot 예측
@@ -493,6 +519,12 @@ prob ranges per category:
    Politics: [0.0093, 0.9884]  true rate=15.6%, pred rate=17.0%
 ```
 
+**결과 해석**
+
+대부분 카테고리에서 예측 활성률이 실제 활성률과 거의 일치합니다 — 라벨별 sigmoid 가 0.5 임계값 기준으로 잘 보정돼 있다는 신호입니다. 다만 활성률이 가장 높은 Society 는 실제 68.4% 대비 예측 58.7% 로 과소 활성하는 경향이 보이는데, 결합 헤드라인에서 사회 신호가 다른 주제와 섞여 0.5 를 넘기지 못한 경우가 그만큼 있다는 뜻입니다. 모든 카테고리에서 확률이 0.01~0.99 양극단까지 퍼져 있어 모델이 자신 있게 판정하고 있습니다.
+
+카테고리별 precision·recall·F1 을 한 표로 봅니다. 어느 카테고리가 잘 분리되고 어느 카테고리가 헷갈리는지 진단할 수 있습니다.
+
 ```python
 # Per-category classification report
 print(classification_report(
@@ -520,6 +552,12 @@ Life&Culture     0.8261    0.8885    0.8562       278
 weighted avg     0.8683    0.8367    0.8501      1758
  samples avg     0.8820    0.8535    0.8485      1758
 ```
+
+**결과 해석**
+
+카테고리별로 보면 Sports 가 F1 0.9174 로 가장 깨끗하게 분리되고, IT/Science 가 0.7782 로 가장 낮습니다. 활성률이 높은 Society 는 precision 0.9267 로 매우 정확하지만 recall 0.7953 으로 놓치는 양성이 많아 — 위 prob range 에서 본 과소 활성과 일치합니다. 반대로 Life&Culture 와 Politics 는 recall 이 precision 보다 높아 약간 과활성 쪽입니다. 카테고리마다 precision·recall 균형이 다르다는 점이 카테고리별 임계값 조정의 동기가 됩니다.
+
+7개 카테고리 각각의 sigmoid 확률 분포를 정답(label=0/1) 기준으로 facet KDE 로 그립니다. 카테고리마다 두 곡선이 얼마나 깨끗이 갈라지는지가 학습 난이도를 보여줍니다.
 
 ```python
 sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
@@ -553,6 +591,8 @@ plt.show()
 **▶ 실행 결과**
 
 ![output](../assets/17-ko_multilabel-out1.png)
+
+카테고리 쌍이 같이 활성되는 패턴을, 실제 합성 라벨과 모델 예측 양쪽에서 조건부 확률 P(j|i) 히트맵으로 비교합니다. 무작위 결합이라 실제 행렬은 대략 균등해야 합니다.
 
 ```python
 def cooccurrence_matrix(Y):
