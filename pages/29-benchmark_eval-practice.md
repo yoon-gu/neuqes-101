@@ -2,6 +2,8 @@
 
 ## 환경 준비
 
+모델 없이 문자열만으로 *왜 exact match 가 부족한지* 를 즉시 시연합니다. 같은 정답 `24` 를 형식만 다르게 표현한 두 답변을, 완전 일치 채점과 숫자 추출 채점으로 각각 채점해 차이를 봅니다. 생성 평가가 task 마다 정교한 채점기를 요구하는 이유를 손에 잡히게 보여 주는 도입 셀입니다.
+
 ```python
 # 같은 수학 문제의 "정답" 과, 형식만 다른 두 모델 답변
 gold = "24"                       # 채점 기준 정답 (최종 숫자)
@@ -49,6 +51,10 @@ answer_b = '이십사'
    생성 평가는 이래서 task 마다 정교한 채점(숫자 추출/n-gram/LLM judge)이 필요합니다.
 ```
 
+**결과 해석**
+
+두 답변 모두 내용은 정답 `24` 인데도 exact match 는 둘 다 `False` 입니다. 숫자 추출 방식은 `answer_a` (`정답은 24입니다.`) 는 `True` 로 잡지만, 한글로 쓴 `answer_b` (`이십사`) 는 추출 자체가 실패해 `False` — 정답을 *인식하는 규칙* 이 task 마다 달라야 함을 보여 줍니다.
+
 ```python
 %pip install -q -U datasets transformers accelerate
 # lm-eval 은 §5 (표준 도구 소개) 에서만 사용. 설치가 무거우면 이 줄만 주석 처리하세요.
@@ -79,6 +85,8 @@ answer_b = '이십사'
   Building wheel for sqlitedict (setup.py) ... done
   Building wheel for word2number (setup.py) ... done
 ```
+
+평가 디바이스를 자동 감지하고 (CUDA / MPS / CPU), CUDA 일 때만 추론에 fp16 을 켭니다. 마지막으로 `torch`·`numpy`·`random` 시드를 모두 고정해 *같은 코드가 같은 점수* 를 내도록 재현성을 확보합니다 — 평가에서 결정성은 특히 중요합니다.
 
 ```python
 import re
@@ -122,6 +130,8 @@ torch  : 2.11.0+cu128
 fp16   : True
 ```
 
+평가 대상인 `Qwen2.5-0.5B-Instruct` 를 로드합니다. *학습이 아니라 추론* 만 할 것이므로 `model.eval()` 로 평가 모드를 켜고 (dropout 비활성화 등), 파라미터 수·vocab 크기·EOS 토큰을 출력해 어떤 모델을 다루는지 확인합니다.
+
 ```python
 MODEL_NAME = "Qwen/Qwen2.5-0.5B-Instruct"
 
@@ -145,6 +155,8 @@ vocab     : 151643
 eos token : '<|im_end|>'
 ```
 
+이 셀이 MC 평가의 심장입니다. 선택지를 *생성하지 않고*, prompt 뒤에 각 선택지를 이어붙였을 때 그 선택지 토큰들의 log-likelihood 를 forward 한 번으로 계산합니다. 길이가 길어 핵심 단계별로 나눠 읽겠습니다.
+
 ```python
 @torch.no_grad()
 def continuation_logprob(prompt: str, continuation: str):
@@ -154,11 +166,19 @@ def continuation_logprob(prompt: str, continuation: str):
     full_ids = tokenizer(prompt + continuation, return_tensors="pt").input_ids
     # continuation 이 차지하는 토큰 수 (경계는 tokenizer 가 정함)
     cont_len = max(1, full_ids.shape[1] - prompt_ids.shape[1])
+```
 
+**위 코드 읽기** — `prompt` 만 토큰화한 길이와 `prompt + continuation` 을 합쳐 토큰화한 길이의 차이로 `cont_len` (선택지가 차지하는 토큰 수) 을 구합니다. 경계를 글자가 아니라 *토크나이저가 정한 토큰 수* 로 잡는 것이 핵심이며, `@torch.no_grad()` 로 그래디언트 없이 추론만 합니다.
+
+```python
     full_ids = full_ids.to(device)
     logits = model(full_ids).logits[0]                 # (T, V)
     log_probs = torch.log_softmax(logits.float(), dim=-1)  # (T, V)
+```
 
+**위 코드 읽기** — 합친 시퀀스를 모델에 한 번 통과시켜 각 위치의 `logits` (T×V) 를 얻고, `log_softmax` 로 각 위치의 *전체 vocab 에 대한 로그 확률* 로 바꿉니다. 생성 루프 없이 forward 한 번이면 모든 토큰 위치의 확률이 동시에 나오는 것이 log-likelihood 평가가 빠른 이유입니다.
+
+```python
     # 위치 i 의 토큰은 위치 i-1 의 logits 가 예측 -> 한 칸 시프트
     target = full_ids[0, 1:]                            # (T-1,)
     pred_lp = log_probs[:-1]                            # (T-1, V)
@@ -166,8 +186,11 @@ def continuation_logprob(prompt: str, continuation: str):
 
     cont_lp = token_lp[-cont_len:]                     # 마지막 cont_len 개 = continuation
     return cont_lp.sum().item(), cont_lp.mean().item()
+```
 
+**위 코드 읽기** — 자기회귀 모델은 위치 `i-1` 의 logits 가 위치 `i` 의 토큰을 예측하므로 target 과 예측을 한 칸 어긋나게 맞춘 뒤, 실제 정답 토큰 자리의 log-prob 만 골라 뽑습니다 (`token_lp`). 그중 *마지막 `cont_len` 개* 가 선택지에 해당하므로, 그 합 (sum) 과 평균 (mean) 을 함께 반환합니다 — sum 은 `acc`, mean 은 길이 정규화된 `acc_norm` 의 재료입니다.
 
+```python
 def mc_predict(prompt: str, choices: list[str]):
     '''각 선택지의 (sum, mean) log-prob 를 구해 argmax. 두 방식의 예측을 모두 반환.'''
     sums, means = [], []
@@ -176,8 +199,11 @@ def mc_predict(prompt: str, choices: list[str]):
         sums.append(s)
         means.append(m)
     return int(np.argmax(sums)), int(np.argmax(means)), sums, means
+```
 
+**위 코드 읽기** — `mc_predict` 는 같은 prompt 에 대해 모든 선택지의 (sum, mean) log-prob 를 모은 뒤 각각 argmax 해 *가장 그럴듯한 선택지* 를 고릅니다. 생성 없이 "고르기만" 하는 MC 평가의 본질이 이 argmax 두 줄에 담겨 있습니다.
 
+```python
 # 동작 확인 - 정답이 명확한 간단한 한 문항 (4지선다)
 demo_prompt = "1 더하기 1은 "
 demo_choices = ["2입니다.", "3입니다.", "5입니다.", "10입니다."]
@@ -192,6 +218,8 @@ print(f"\npredicted (sum)  : {demo_choices[pred_sum]}")
 print(f"predicted (mean) : {demo_choices[pred_mean]}")
 ```
 
+**위 코드 읽기** — 정답이 자명한 `1 더하기 1은` 문항으로 함수가 제대로 도는지 확인합니다. 네 선택지의 log-prob 를 표로 출력하고, sum·mean 두 방식이 모두 정답 `2입니다.` 를 고르는지 봅니다.
+
 **▶ 실행 결과**
 
 ```text
@@ -204,6 +232,12 @@ choice  logprob_sum  logprob_mean
 predicted (sum)  : 2입니다.
 predicted (mean) : 2입니다.
 ```
+
+**결과 해석**
+
+정답 `2입니다.` 의 log-prob 가 sum (-5.01), mean (-1.670) 모두에서 가장 높아 두 방식 다 정답을 골랐습니다. 오답일수록 (`5입니다.`, `10입니다.`) log-prob 가 더 낮아져, 함수가 *모델의 확신* 을 제대로 수치화함을 확인할 수 있습니다.
+
+KoBEST HellaSwag (한국어 4지선다 상식추론) 의 test split 에서 앞 50문항만 불러옵니다. T4 30분 제약 때문에 subset 만 쓰며, 한 문항의 context·4개 ending·정답 label 구조를 출력해 데이터 형태를 확인합니다.
 
 ```python
 from datasets import load_dataset
@@ -237,6 +271,8 @@ ending_4 : 여자가 답장하지 않자 전 남자친구에게서 전화가 걸
 label   : 3
 ```
 
+각 문항마다 context 를 prompt 로 삼아 4개 ending 의 log-prob 를 비교, argmax 한 선택지가 정답 label 과 같은지 셉니다. sum 방식 (`acc`) 과 mean 방식 (`acc_norm`) 정확도를 함께 내어 *길이 정규화 효과* 를 random baseline (0.25) 과 비교합니다.
+
 ```python
 def eval_hellaswag(dataset):
     '''각 문항에서 context 뒤 4개 ending 의 log-prob 를 비교해 argmax.
@@ -268,6 +304,12 @@ KoBEST HellaSwag  (n=50)
   random baseline (1/4)          : 0.250
 ```
 
+**결과 해석**
+
+`acc` 0.320, `acc_norm` 0.400 으로 둘 다 random (0.250) 을 웃돕니다. 선택지 길이가 제각각인 HellaSwag 답게 *길이 정규화한 mean 방식 (`acc_norm`)* 이 sum 방식보다 8%p 높아, 길이 편향 완화의 효과가 그대로 드러납니다.
+
+KoBEST BoolQ 는 본문·질문을 주고 *예 / 아니오* 를 묻는 2지선다입니다. 같은 MC 코드로, 질문 뒤에 "아니오" / "예" 를 이어붙여 log-prob (mean) 가 높은 쪽을 고릅니다. 선택지 인덱스가 곧 label (0=아니오, 1=예) 이라 random baseline 은 0.5 입니다.
+
 ```python
 N_BOOLQ = 50
 boolq = load_dataset("skt/kobest_v1", "boolq", split="test").select(range(N_BOOLQ))
@@ -297,6 +339,12 @@ KoBEST BoolQ  (n=50)
   random baseline : 0.500  (2지선다)
 ```
 
+**결과 해석**
+
+BoolQ 정확도 0.460 으로 random (0.500) 을 *오히려 살짝 밑돕니다*. 0.5B 라는 작은 모델이 한국어 본문 이해·예/아니오 판단에서 신호를 거의 못 내는 경우로, §7 의 "작은 모델은 벤치마크에서 random 근처" 라는 교훈을 그대로 보여 줍니다.
+
+두 번째 format 인 *생성 + 정답 추출* 을 시연합니다. GSM8K 대신 정답이 명확한 가벼운 산술 subset 으로, 모델이 답을 *실제로 생성* 한 뒤 정규식으로 숫자를 뽑아 채점합니다. 길어서 단계별로 나눠 읽겠습니다.
+
 ```python
 # 가벼운 산술 subset (GSM8K 대신 - 빠르고 정답이 명확해 추출 평가에 적합)
 ARITHMETIC = [
@@ -313,8 +361,11 @@ FEWSHOT = (
     "Q: 사과 3개와 5개를 더하면 몇 개인가요?\nA: 정답은 8입니다.\n\n"
     "Q: 12에서 7을 빼면 얼마인가요?\nA: 정답은 5입니다.\n\n"
 )
+```
 
+**위 코드 읽기** — 채점 대상 산술 문제 6개와 그 정답을 정의하고, `FEWSHOT` 에 *답변 형식* (`정답은 N입니다.`) 을 보여 주는 예시 2개를 미리 문자열로 조립합니다. 이 few-shot 프롬프트가 §4 의 zero-shot 과 대비될 핵심 변수입니다.
 
+```python
 def extract_first_int(text: str):
     '''생성 텍스트에서 첫 정수를 추출 (정답 파싱). 없으면 None.'''
     m = re.findall(r"-?\d+", text)
@@ -332,8 +383,11 @@ def generate_answer(prompt: str, max_new_tokens: int = 24):
     )
     # 새로 생성된 토큰만 디코드
     return tokenizer.decode(out[0, enc.input_ids.shape[1]:], skip_special_tokens=True)
+```
 
+**위 코드 읽기** — `extract_first_int` 는 생성 텍스트에서 *첫 정수* 를 정규식으로 뽑는 채점기로, MC 와 달리 생성 결과를 파싱해야 함을 보여 줍니다. `generate_answer` 는 `do_sample=False` (greedy) 로 결정적으로 생성하고 (평가 재현성), 입력 길이 이후의 *새로 생성된 토큰만* 잘라 디코드합니다.
 
+```python
 def eval_generation(problems, shots: str):
     correct = 0
     rows = []
@@ -352,6 +406,8 @@ print(gen_df.to_string(index=False))
 print(f"\nfew-shot 산술 정확도 : {acc_gen:.3f}  (n={len(ARITHMETIC)})")
 ```
 
+**위 코드 읽기** — `eval_generation` 은 `shots + "Q: ...\nA:"` 로 프롬프트를 만들어 생성 → 추출 → 정답 비교를 반복하고 정확도를 냅니다. 여기서는 `FEWSHOT` 을 넣어 호출하므로 *2-shot* 정확도가 나오며, 문항별 생성 결과·추출값을 표로 함께 보여 줍니다.
+
 **▶ 실행 결과**
 
 ```text
@@ -365,6 +421,12 @@ print(f"\nfew-shot 산술 정확도 : {acc_gen:.3f}  (n={len(ARITHMETIC)})")
 
 few-shot 산술 정확도 : 1.000  (n=6)
 ```
+
+**결과 해석**
+
+6문항 모두 `정답은 N입니다.` 형식으로 생성돼 숫자 추출이 깔끔히 성공, 정확도 1.000 입니다. 예시 2개가 *답변 형식* 을 정렬해 준 덕분으로, 생성 뒤 군더더기 (`\n\n이런 문제들은...`) 가 붙어도 *첫 정수만* 뽑는 추출기가 정답을 안정적으로 잡아냅니다.
+
+같은 산술 task 를 *예시 없이* (zero-shot) 다시 평가해, §3 의 few-shot (2-shot) 정확도와 나란히 비교합니다. 모델 가중치는 전혀 바뀌지 않았는데 프롬프트 속 예시만으로 점수가 달라지는 *in-context learning* 효과를 정량으로 봅니다.
 
 ```python
 # zero-shot (예시 없음) - 형식 유도가 없어 더 어려움
@@ -392,6 +454,12 @@ in-context learning 효과 : +0.667  (few - zero)
 (작은 모델·작은 subset 이라 변동 큼 - 경향만 참고. 큰 모델일수록 효과 뚜렷)
 ```
 
+**결과 해석**
+
+zero-shot 0.333 → few-shot 1.000 으로 +0.667 의 큰 폭 상승입니다. 예시 없이는 모델이 답변 형식을 못 맞춰 추출이 자주 실패한 반면, 예시 2개가 형식을 정렬하자 정확도가 급등 — *지식이 아니라 형식 정렬* 이 점수를 올린다는 in-context learning 의 핵심이 드러납니다 (단, n=6 으로 작아 경향으로만 해석).
+
+표준 도구 `lm-eval` 을 쓰기 전에, 설치 여부부터 `try / except ImportError` 로 확인합니다. 결과를 `HAS_LM_EVAL` 플래그에 담아, 미설치 환경에서도 §2-§4 직접 구현은 그대로 돌아가도록 다음 셀이 이 플래그로 분기합니다.
+
 ```python
 # lm-eval 실행은 선택 - 미설치거나 무거우면 건너뜀 (직접 구현 §2 가 메인)
 try:
@@ -409,6 +477,8 @@ except ImportError:
 ```text
 lm-eval version : 0.4.12
 ```
+
+표준 도구 `lm-eval-harness` 로 *같은 KoBEST BoolQ* 를 평가해, §2 의 직접 구현과 같은 원리 위에 있음을 확인합니다. 이미 로드한 `model`/`tokenizer` 를 `HFLM` 으로 래핑해 중복 로드를 피하고, `simple_evaluate` 한 함수로 프롬프트 포맷·log-likelihood·집계를 자동 처리합니다 (subset `limit=50`).
 
 ```python
 # lm-eval 표준 도구로 한 task 평가 (설치돼 있을 때만)
@@ -447,3 +517,7 @@ WARNING:lm_eval.evaluator:Overwriting default num_fewshot of kobest_boolq from N
   acc_stderr,none: 0.071
   f1,none       : 0.359
 ```
+
+**결과 해석**
+
+`lm-eval` 의 BoolQ `acc` 0.560 은 §2 직접 구현 (0.460) 과 정확히 같지는 않은데, 이는 *프롬프트 포맷·정답 표현이 task yaml 정의를 따르기* 때문입니다 — 점수의 절대값이 아니라 *둘이 같은 log-likelihood 원리* 위에 있다는 점이 핵심입니다. `acc_stderr` (0.071) 와 `f1` 까지 함께 내주는 것이 표준 도구의 표준화·재현성 이점입니다.
