@@ -107,6 +107,8 @@ Mon Jun 22 12:19:24 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+한국어 Wikipedia 정제본(`wikimedia/wikipedia`, `20231101.ko`)을 article 단위로 내려받습니다. 일반 도메인 사전학습 코퍼스로, Ch 23 의 NSMC 영화 리뷰와는 의도적으로 다른 도메인입니다. 전체 article 수가 약 64만 개로 크니 다운로드가 본 챕터에서 가장 오래 걸리는 단계입니다.
+
 ```python
 from datasets import load_dataset
 
@@ -139,6 +141,12 @@ first 3 article previews:
 
 수
 ```
+
+**결과 해석**
+
+전체 약 64만 article 이 로드됐고, 첫 미리보기에서 위키 본문이 *순한국어 + 한자·과학 용어* 가 섞인 일반 도메인 텍스트임이 보입니다 — 사전학습 코퍼스로 적합한 분포입니다.
+
+article 본문을 그대로 쓰지 않고 paragraph(`\n\n` 단위) 로 잘라 학습 5,000 + 평가 500 개를 채웁니다. 너무 짧은 제목·메타나 너무 긴 목록·인용은 길이 필터(50-2000자)로 걸러 NSMC 5K 문장과 비슷한 토큰 양으로 맞추는 것이 목적입니다.
 
 ```python
 SEED = 42
@@ -209,6 +217,10 @@ first sample preview:
  뉴스 애그리게이션(news aggregation)
 ```
 
+**결과 해석**
+
+학습 5,000 / 평가 500 paragraph 가 채워졌고, 평균 약 195자·중앙값 143자로 NSMC 한 줄 리뷰보다 길고 Yelp 보다는 짧은 중간 길이입니다 — 일반 도메인 코퍼스다운 분포입니다.
+
 ```python
 TOKENIZER_NAME = "klue/bert-base"
 tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_NAME)
@@ -248,6 +260,10 @@ Korean sample: '이 영화 정말 재미있어요!'
 tokens (8): ['[CLS]', '이', '영화', '정말', '재미있', '##어요', '!', '[SEP]']
 ids:    [2, 1504, 3771, 3944, 6001, 10283, 5, 3]
 ```
+
+**결과 해석**
+
+`klue/bert-base` 토크나이저(vocab 32,000)가 그대로 로드됐고, 한국어 예시 문장이 `이 / 영화 / 정말 / 재미있 / ##어요` 처럼 어절·형태소 단위로 자연스럽게 8 토큰으로 쪼개집니다 — UNK 없이 의미 단위가 보존됩니다.
 
 ```python
 # 영어 토크나이저 (Ch 20 에서 사용한 것) 도 로드해 비교
@@ -292,6 +308,10 @@ print(cross_df.to_string(index=False))
         별로였어요. 시간 낭비.    klue/bert-base (KO)         7      0      0.0
 ```
 
+**결과 해석**
+
+같은 한국어 문장에서 영어 토크나이저는 토큰 수가 2배 이상 길고 UNK 가 6.7-10.5% 섞이는 반면, 한국어 토크나이저는 토큰 수가 절반 이하이고 UNK 가 0%입니다 — Ch 19 §5-4 의 cross-language 결론이 실측으로 그대로 확인됩니다.
+
 ```python
 # 실제 토큰 리스트도 한 번 보여줍니다 (첫 12 토큰)
 print("=" * 78)
@@ -323,6 +343,12 @@ for sent in ko_sentences:
   klue/bert-base (KO)          (  7 tokens, UNK  0): ['별로', '##였', '##어요', '.', '시간', '낭비', '.']
 ```
 
+**결과 해석**
+
+영어 토크나이저는 한국어를 `ᄋ`, `##ᅵ` 같은 *자모 단위* 로 분해하거나 `[UNK]` 로 떨어뜨려 의미 단위가 사라집니다. 반대로 한국어 토크나이저는 `음식 / ##이 / 맛있 / 서비스` 처럼 어절·형태소로 자연스럽게 쪼개므로, 한국어 데이터엔 한국어 토크나이저가 필수임이 토큰 리스트로 직접 보입니다.
+
+paragraph 전체를 토큰 id 로 변환합니다. 곧바로 블록 단위로 자를 것이라 `[CLS]`/`[SEP]` 가 의미 없어 `add_special_tokens=False`, `truncation=False` 로 둡니다. 이 단계에서는 512 초과 경고가 떠도 무시해도 됩니다 — 다음 셀의 `group_texts` 가 어차피 128 블록으로 잘라내기 때문입니다.
+
 ```python
 BLOCK_SIZE = 128
 
@@ -353,6 +379,10 @@ first 30 input_ids of sample 0: [1478, 12, 244, 13, 1497, 24307, 2170, 8026, 225
 first 30 tokens of sample 0:    ['원', '(', '元', ')', '은', '시호', '##에', '쓰이', '##는', '글자', '##다', '.', '《', '일주', '##서', '》', '시', '##법', '##해', '##에', '##는', '능', '##사', '##변', '##중', '(', '能', '思', '[UNK]', '[UNK]']
 ```
 
+**결과 해석**
+
+토큰화된 데이터셋은 `input_ids` 등만 남고 5,000행 그대로입니다. 맨 앞 경고는 일부 paragraph 가 512 토큰을 넘는다는 안내로, 잘라내기를 다음 단계에 맡기므로 정상입니다. 토큰 리스트에서 한자(`能`, `思`)는 vocab 에 없어 `[UNK]` 로 떨어지지만, 한국어 본문 자체는 의미 단위로 잘 쪼개집니다.
+
 ```python
 def group_texts(examples):
     '''HF 표준 group_texts — 모든 토큰 스트림을 이어 붙인 뒤 block_size 로 자름.'''
@@ -360,6 +390,11 @@ def group_texts(examples):
     total_length = len(concatenated[list(examples.keys())[0]])
     # block_size 배수로 잘라내기 (마지막 토막은 버림)
     total_length = (total_length // BLOCK_SIZE) * BLOCK_SIZE
+```
+
+**위 코드 읽기** — `sum(examples[k], [])` 로 한 batch 안 모든 paragraph 의 토큰을 하나의 긴 스트림으로 이어 붙인 뒤, 그 길이를 `BLOCK_SIZE`(128)의 배수로 내림합니다. 즉 마지막에 남는 128 미만의 토막은 버려집니다.
+
+```python
     result = {
         k: [t[i : i + BLOCK_SIZE] for i in range(0, total_length, BLOCK_SIZE)]
         for k, t in concatenated.items()
@@ -367,6 +402,11 @@ def group_texts(examples):
     # labels = input_ids 사본 (collator 가 mask 위치만 골라냄)
     result["labels"] = [ids.copy() for ids in result["input_ids"]]
     return result
+```
+
+**위 코드 읽기** — 이어 붙인 스트림을 128 토큰씩 끊어 고정 길이 블록으로 만듭니다. `labels` 는 `input_ids` 의 사본일 뿐이고, 실제로 어느 자리를 학습할지(마스킹)는 다음 단계의 collator 가 매 batch 마다 동적으로 결정합니다.
+
+```python
 
 
 lm_train = tokenized_train.map(group_texts, batched=True, batch_size=1000)
@@ -401,6 +441,10 @@ sample block 0 first 20 ids: [1478, 12, 244, 13, 1497, 24307, 2170, 8026, 2259, 
 sample block 0 first 20 tok: ['원', '(', '元', ')', '은', '시호', '##에', '쓰이', '##는', '글자', '##다', '.', '《', '일주', '##서', '》', '시', '##법', '##해', '##에']
 ```
 
+**결과 해석**
+
+5,000 paragraph 가 128 토큰 블록으로 재조립되어 학습 3,924 블록(약 50만 토큰)·평가 429 블록이 만들어졌습니다. 노트북 개요는 약 500-1,500 블록을 예상했지만 실제로는 3,924 블록으로, paragraph 가 예상보다 길어 더 많은 블록이 나왔습니다.
+
 ```python
 HIDDEN_SIZE         = 256
 NUM_HIDDEN_LAYERS   = 4
@@ -419,6 +463,11 @@ config = BertConfig(
 )
 
 model = BertForMaskedLM(config)  # random init — pretrained weight 없음!
+```
+
+**위 코드 읽기** — Ch 20 과 동일한 작은 본체(hidden=256, layer=4, head=4)를 구성하되 `vocab_size` 만 한국어 토크나이저의 32,000 에 맞춥니다. `BertForMaskedLM(config)` 는 사전학습 weight 없이 *random init* 된 모델이라, 이번 챕터의 학습이 그 빈 본체에 무엇을 새기는지를 직접 관찰하게 됩니다.
+
+```python
 
 total = sum(p.numel() for p in model.parameters())
 trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -451,6 +500,12 @@ Trainable:              11,483,136
   encoder (4 layer):     3,159,040  (27.5%)
   MLM head:                 98,304  (0.9%)  (tied with embeddings)
 ```
+
+**결과 해석**
+
+전체 약 11.5M 파라미터 중 임베딩 테이블이 71.6%(약 8.2M)를 차지합니다 — vocab 32,000 × hidden 256 이라 본체보다 어휘 임베딩이 훨씬 큽니다. MLM head 는 임베딩과 weight 를 공유(tied)해 0.9%에 불과합니다.
+
+MLM collator 를 만들고 동작을 확인합니다. 핵심은 마스킹이 *매 batch 마다 새로 무작위* 라는 점입니다 — 같은 입력을 두 번 넣어 마스크 자리가 매번 달라지는지 보고, `labels != -100` 인 자리(loss 가 계산되는 자리)도 함께 셉니다.
 
 ```python
 data_collator = DataCollatorForLanguageModeling(
@@ -488,6 +543,10 @@ masked tokens (call 2):   26 / 256  (10.16%)
 loss positions:          45 / 256  (17.58%)  (labels != -100)
 ```
 
+**결과 해석**
+
+같은 입력인데도 1차 호출(35개)과 2차 호출(26개)의 마스크 개수가 달라, 마스킹이 매번 새로 무작위임이 확인됩니다. 작은 256 토큰 표본이라 비율이 13-17%로 흔들리지만, 큰 표본에서는 목표치 15%로 안정됩니다.
+
 ```python
 # 한국어 예시 문장 한 개에 collator 한 번 적용 — 어떤 자리가 어떻게 바뀌나
 DEMO_SENT_KO = "이 영화는 정말 재미있었고 배우들 연기도 훌륭했습니다."
@@ -515,6 +574,11 @@ for orig_id, new_id, lab, orig_tok, new_tok in zip(demo_ids, masked_ids, labels,
         kind = "kept (10%)"               # 선택됐지만 원본 유지
     else:
         kind = "random (10%)"             # 다른 token 으로 교체
+```
+
+**위 코드 읽기** — 각 자리를 네 부류로 분류합니다. `labels == -100` 이면 학습에서 제외된 자리(`-`)이고, 선택된 자리는 토큰이 `[MASK]` 로 바뀌었는지·다른 토큰(random)으로 바뀌었는지·원본 그대로(kept)인지로 다시 나뉩니다 — BERT 의 80/10/10 규칙을 한 자리씩 눈으로 따라가는 셀입니다.
+
+```python
     rows.append({
         "pos": len(rows),
         "original": orig_tok,
@@ -550,6 +614,10 @@ print(demo_df.to_string(index=False))
   16        .              .      -100             -
   17    [SEP]          [SEP]      -100             -
 ```
+
+**결과 해석**
+
+18 토큰 중 `영화`·`훌륭` 두 자리만 `[MASK]` 로 가려졌고(`label_id` 에 원본 토큰 id 보존), `##는` 한 자리는 선택됐지만 원본 유지(kept)된 케이스입니다. 나머지 자리는 모두 `-100` 으로 loss 에서 제외되어, 모델은 이들을 *문맥* 으로만 활용합니다.
 
 ```python
 # 큰 batch 통계 — 80/10/10 비율이 실제로 맞는지 확인 (한국어 lm_train 사용)
@@ -591,6 +659,10 @@ Selected for loss (target 15%):      1,209  (14.76%)
 
 Target: 선택 15% / 그 중 80-10-10 으로 [MASK]-random-kept. 표본 크면 비율 안정.
 ```
+
+**결과 해석**
+
+8,192 토큰의 큰 표본에서는 선택 비율이 14.76%로 목표 15%에 수렴하고, 그 안에서 79%/9.8%/11.2%로 BERT 의 80/10/10 규칙이 거의 정확히 재현됩니다. collator 가 토큰 id 만 보고 처리하므로 한국어에서도 영어와 동일한 비율이 나옵니다.
 
 ```python
 USE_FP16 = (DEVICE == "cuda")   # T4 는 fp16, MPS/CPU 는 fp32
@@ -640,6 +712,8 @@ fp16:          True
 train blocks:  3,924
 steps / epoch: 122
 ```
+
+`[MASK]` 자리의 top-k 후보를 뽑는 `predict_mask` 함수를 정의하고, 학습 *전* 의 random init 상태로 eval_loss·perplexity 와 네 문장의 top-5 를 측정해 둡니다. 학습 후 *완전히 같은 문장* 으로 다시 측정해 나란히 비교하기 위한 baseline 입니다.
 
 ```python
 # predict_mask 함수 정의 — 학습 전·후 두 번 호출하므로 먼저 정의
@@ -721,6 +795,12 @@ input: 배우 연기가 [MASK] 좋았어요.
   top-5 before pretraining: ['계약서', '서귀', '드세요', '스페인어', 'William']
 ```
 
+**결과 해석**
+
+학습 전 eval_loss 가 10.43 으로 random baseline `ln V`(10.37)에 거의 일치 — 모델이 vocab 32,000 을 사실상 균등 추측하는 상태입니다. top-5 도 `##희정`·`계약서`·`William` 처럼 문맥과 무관한 토큰이 뽑혀, 아직 한국어 언어 구조를 전혀 학습하지 못했음을 보여줍니다.
+
+이제 한국어 MLM 사전학습을 실행합니다. 작은 본체 + 5K paragraph 라 T4 에서 수십 초 안에 끝나며, 평균 train loss 가 random baseline(10.37)에서 얼마나 내려갔는지가 학습이 진행됐다는 첫 신호입니다.
+
 ```python
 t0 = time.time()
 train_result = trainer.train()
@@ -738,6 +818,10 @@ Korean MLM pretraining done in 0.3 min
 mean train loss: 7.7967
 random baseline loss (uniform over vocab): 10.3735
 ```
+
+**결과 해석**
+
+학습이 약 0.3분만에 끝났고 평균 train loss 가 7.80 으로 random baseline 10.37 보다 확실히 내려가, 본체가 한국어 구조의 일부를 학습하기 시작했음을 보여줍니다. 다만 잘 학습된 작은 BERT 목표 영역(2.3-3.0)에는 못 미치는데, 데이터·모델·학습 시간이 작아 자연스러운 결과입니다.
 
 ```python
 !nvidia-smi
@@ -796,6 +880,12 @@ else:
 
 ![output](../assets/22-ko_bert_pretrain-out1.png)
 
+**결과 해석**
+
+학습 step 이 진행되며 MLM loss 가 랜덤 기준선(점선, 약 10.37)에서 빠르게 떨어집니다 — 첫 100 step 안의 급락이 vocab 과 학습이 정상 작동한다는 신호입니다.
+
+eval set 의 perplexity 를 측정합니다. perplexity 는 `exp(eval_loss)` 로, *마스크 자리마다 모델이 몇 개 후보로 좁혔는가* 로 해석할 수 있습니다 (랜덤 기준선은 vocab 전체인 32,000).
+
 ```python
 eval_metrics = trainer.evaluate()
 eval_loss = eval_metrics["eval_loss"]
@@ -824,6 +914,10 @@ print(f"  -> model narrowed vocab to approx. {eval_ppl:.0f} candidates per maske
   random baseline PPL:    32,000  (uniform over vocab)
   -> model narrowed vocab to approx. 1833 candidates per masked position
 ```
+
+**결과 해석**
+
+eval perplexity 가 약 1,833 으로, 랜덤 기준선 32,000 에서 크게 내려왔습니다 — 모델이 각 마스크 자리의 후보를 약 1,800 개 수준으로 좁혔다는 뜻입니다. 작은 toy 셋업이라 큰 BERT(perplexity 수십 수준)에는 못 미치지만 학습 방향은 분명합니다.
 
 ```python
 # ---- 사전학습 후 eval_loss / perplexity ----
@@ -875,6 +969,10 @@ input: 배우 연기가 [MASK] 좋았어요.
   top-5 after pretraining: ['.', '##의', ',', ')', '##다']
 ```
 
+**결과 해석**
+
+학습 후 perplexity 가 약 1,854 로 학습 전 33,709 에서 18배가량 줄었습니다. 다만 top-5 가 `.`·`##의`·`,` 같은 *고빈도 조사·문장부호* 위주라, 정답 토큰(`서울`, `8` 등)을 안정적으로 맞히기에는 데이터·모델 크기가 부족함이 드러납니다 — 학습 전의 무작위 토큰과는 질적으로 다른, 빈도 통계는 학습한 상태입니다.
+
 ```python
 # 사전·사후 수치 비교 표
 metric_compare = pd.DataFrame({
@@ -895,6 +993,10 @@ Before vs After — eval metrics
       eval_loss          10.4255           7.5249          10.3735
 eval_perplexity       33708.8968        1853.5880       32000.0000
 ```
+
+**결과 해석**
+
+eval_loss 가 10.43(랜덤 기준선 수준)에서 7.52 로, perplexity 가 약 33,709 에서 1,854 로 내려간 것이 한 표에 정리됩니다 — 사전학습이 본체에 새긴 변화의 직접적 증거입니다.
 
 ```python
 # 막대 그래프 두 장 (eval_loss / perplexity)
@@ -927,6 +1029,12 @@ plt.show()
 
 ![output](../assets/22-ko_bert_pretrain-out2.png)
 
+**결과 해석**
+
+두 막대 모두 학습 후(주황)가 랜덤 기준선(점선) 아래로 내려가, eval_loss 와 perplexity(로그 스케일) 양쪽에서 학습 효과가 시각적으로 분명합니다.
+
+이번엔 *학습이 충분히 잘 됐을 때의 기준점* 으로 표준 `klue/bert-base`(110M)를 로드합니다. 같은 토크나이저를 쓰므로 모델만 바꿔 같은 문장에 적용하면 우리 작은 BERT 와 직접 비교할 수 있습니다.
+
 ```python
 # 표준 klue/bert-base 로드 — 학습이 충분히 잘 된 경우의 기준점
 from transformers import AutoModelForMaskedLM
@@ -957,6 +1065,12 @@ Notes:
 Our small BERT params: 11.5M
 Reference BERT params: 110.7M  (10x larger)
 ```
+
+**결과 해석**
+
+표준 `klue/bert-base` 는 110.7M 으로 우리 작은 BERT(11.5M)의 약 10배 크기입니다. LOAD REPORT 의 UNEXPECTED 키(`pooler`, `seq_relationship`)는 MLM 에 쓰이지 않는 헤드라 무시해도 됩니다.
+
+앞서 정의한 `predict_mask` 는 전역 `model` 에 고정돼 있어, 참조 모델에는 임의의 MLM 모델을 인자로 받는 `predict_mask_with` 를 따로 정의합니다. 같은 `test_sentences` 4개를 표준 `klue/bert-base` 에 통과시켜 top-5 를 `ref_top5_records` 에 모아 둔 뒤, 110M 참조 모델은 곧장 메모리에서 해제해 T4 VRAM 을 비웁니다. 다음 셀의 3-way 비교 표가 이 기록을 학습 전·후 결과와 나란히 묶습니다.
 
 ```python
 # Reference 모델로 같은 문장의 top-5 측정
@@ -1040,6 +1154,12 @@ input: 배우 연기가 [MASK] 좋았어요.
   ref   (klue/bert-base)     : 너무, 정말, 참, 굉장히, 아주
 ```
 
+**결과 해석**
+
+세 모델의 격차가 정확히 *데이터·모델 크기·학습 시간* 의 격차로 드러납니다. 표준 `klue/bert-base` 는 `대한민국의 수도는 [MASK]` 에 `서울`, `[MASK] 좋았어요` 에 `너무`·`정말` 처럼 정답을 top-5 에 자연스럽게 올리는 반면, 우리 작은 BERT 는 방향은 학습 전보다 나아졌지만 아직 고빈도 조사·부호에 머뭅니다.
+
+학습한 모델과 토크나이저를 *같은 폴더* 에 저장합니다. Ch 23 에서 이 폴더를 `AutoModelForSequenceClassification.from_pretrained(...)` 한 줄로 불러와 분류 헤드를 얹을 것이라, 본체와 토크나이저가 함께 있어야 합니다.
+
 ```python
 SAVE_DIR = "./ch22_small_bert_mlm_ko"
 model.save_pretrained(SAVE_DIR)
@@ -1067,3 +1187,7 @@ Files:
                   tokenizer.json  734.4 KB
            tokenizer_config.json  0.4 KB
 ```
+
+**결과 해석**
+
+`config.json` + `model.safetensors`(약 44MB) + 토크나이저 파일이 HF 표준 레이아웃으로 저장됐습니다 — Ch 23 fine-tune 의 출발 체크포인트입니다.
