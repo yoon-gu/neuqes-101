@@ -79,6 +79,8 @@ Mon Jun 22 03:44:42 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+Ch 10과 동일한 Yelp 데이터를 같은 seed로 불러와 별점 3을 제외하고 이진화합니다. 단 하나 달라지는 곳은 라벨을 `[float(b)]` 벡터가 아니라 `int` 스칼라로 둔다는 점입니다 — 방식 B의 `CrossEntropyLoss`가 정수 인덱스 라벨을 받기 때문입니다.
+
 ```python
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
 
@@ -111,6 +113,8 @@ eval  (after excluding 3-star): 804
 train positive rate: 49.4%
 ```
 
+토큰화하면서 라벨을 데이터셋에 심습니다. 방식 B의 핵심은 `out["labels"]`를 `int` 스칼라로 둔다는 점 — Ch 10(방식 A)이 `[float(b)]` 길이-1 벡터를 넘긴 것과 대비됩니다. 이 한 줄이 `Trainer`가 자동으로 `CrossEntropyLoss`를 고르도록 만드는 데이터 측 신호입니다.
+
 ```python
 def tokenize_fn(batch):
     out = tokenizer(batch["text"], truncation=True, max_length=128)
@@ -135,6 +139,8 @@ Dataset({
 First sample label: 1  (int scalar)
 ```
 
+방식 B의 모델 셋업입니다. `num_labels=2`로 출력 헤드를 2차원으로 두고, `problem_type="single_label_classification"`을 명시해 `Trainer`가 `CrossEntropyLoss`를 쓰도록 합니다 — BERT 분류의 표준 셋업입니다.
+
 ```python
 model = AutoModelForSequenceClassification.from_pretrained(
     "distilbert-base-uncased",
@@ -143,7 +149,11 @@ model = AutoModelForSequenceClassification.from_pretrained(
     id2label={0: "negative", 1: "positive"},
     label2id={"negative": 0, "positive": 1},
 )
+```
 
+**위 코드 읽기** — `num_labels=2`라 분류 헤드가 `Linear(768→2)`로 잡혀 logit이 `(B, 2)` 형태로 나옵니다 (방식 A는 `Linear(768→1)`). `problem_type="single_label_classification"`이 softmax + `CrossEntropyLoss` 경로를 고르는 스위치이고, `id2label` / `label2id`는 추론 시 사람이 읽는 라벨 이름을 config에 등록해 둡니다.
+
+```python
 def param_summary(m):
     total     = sum(p.numel() for p in m.parameters())
     trainable = sum(p.numel() for p in m.parameters() if p.requires_grad)
@@ -212,6 +222,8 @@ Mon Jun 22 03:45:15 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+평가 지표 함수입니다. 방식 B는 logit이 `(B, 2)`라, 안정 softmax(최댓값을 빼고 정규화)로 두 클래스 확률을 구한 뒤 클래스 1의 확률만 뽑아 AUC에, `argmax`로 0/1 예측을 떨어뜨려 accuracy·F1에 씁니다.
+
 ```python
 def compute_metrics(eval_pred):
     logits, labels = eval_pred
@@ -230,6 +242,8 @@ def compute_metrics(eval_pred):
         "auc":       float(roc_auc_score(labels, probs)),
     }
 ```
+
+Ch 10과 *완전히 동일한* hyperparams(lr=2e-5, batch 16, 2 epoch, seed=42, fp16)로 `Trainer`를 구성해 학습합니다. 마지막 비교가 의미를 가지려면 데이터·모델 본체·학습 설정이 모두 같고 loss 종류와 출력 shape만 달라야 합니다.
 
 ```python
 training_args = TrainingArguments(
@@ -318,6 +332,12 @@ BERT method B evaluation:
               eval_auc: 0.9689
 ```
 
+**결과 해석**
+
+방식 B는 accuracy 0.9104, F1 0.9030, AUC 0.9689로 안정적으로 수렴합니다. 뒤에서 다시 학습하는 방식 A(accuracy 0.9055)와 거의 같은 자리에 떨어지는데, 바로 이 일치가 이 챕터의 핵심입니다.
+
+방식 A와 비교하려면 2차원 logit을 1차원으로 환산해야 합니다. 여기서 핵심은 `logits = logits2[:, 1] - logits2[:, 0]`, 즉 $z = z_1 - z_0$ — 이렇게 두면 $\sigma(z) = \mathrm{softmax}(z_0, z_1)[1] = p_1$ 이 되어 방식 A의 1차원 logit과 정확히 같은 의미를 가집니다.
+
 ```python
 # logits → softmax → 클래스 1 확률 + 1차원 logit z = z1 - z0
 preds_output = trainer.predict(eval_tok)
@@ -364,6 +384,10 @@ First 5 samples:
      1 -1.69  2.29     3.99  0.9818     1
      1 -2.13  2.64     4.77  0.9916     1
 ```
+
+**결과 해석**
+
+확률이 [0.0061, 0.9925]로 양 끝까지 벌어져 모델이 확신을 갖고 분류하고 있음을 보여줍니다. 첫 5개 샘플에서 `z=z1-z0`의 부호가 그대로 예측 클래스를 가르고(양수 → pred 1, 음수 → pred 0), 모두 정답 라벨과 일치합니다.
 
 ```python
 sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
@@ -429,6 +453,8 @@ print(classification_report(
    macro avg     0.9099    0.9099    0.9099       804
 weighted avg     0.9104    0.9104    0.9104       804
 ```
+
+이제 같은 노트북 안에서 방식 A를 다시 학습해 직접 비교합니다. 텍스트·attention_mask는 그대로 두고 라벨만 방식 A 형식(길이 1 multi-hot float `[0.0]`/`[1.0]`)으로 바꿉니다 — 샘플 순서가 동일해야 나중에 점 대 점 비교가 성립합니다.
 
 ```python
 # 방식 A용 라벨 변환 — int 0/1 → 길이 1 multi-hot float [0.0]/[1.0]
@@ -597,6 +623,10 @@ precision                  0.9041                 0.9030 0.0011
       auc                  0.9663                 0.9689 0.0026
 ```
 
+**결과 해석**
+
+모든 지표에서 두 방식의 차이가 0.02 미만입니다 (accuracy 0.0050, AUC 0.0026, precision 0.0011). 같은 데이터·같은 hyperparams로 학습했으니 남는 차이는 random init·dropout 같은 학습 경로 노이즈일 뿐 — 식으로 본 동등성이 BERT에서도 그대로 성립함을 수치로 확인합니다.
+
 ```python
 df_cmp = pd.DataFrame({
     "prob_A": probs_A,
@@ -634,6 +664,10 @@ Pearson corr:        0.9883  (1.0 = perfect equivalence)
 Mean abs diff |A-B|: 0.0239
 ```
 
+**결과 해석**
+
+샘플별 확률의 Pearson 상관이 0.9883, 평균 절대 차가 0.0239로 두 방식이 사실상 같은 함수를 학습했음을 보여줍니다. scatter의 점들이 $y=x$ 직선 주변에 흩어지되 체계적 치우침이 없으니, 차이는 학습 경로 노이즈일 뿐입니다.
+
 ```python
 pred_A = (probs_A >= 0.5).astype(int)
 pred_B = (probs   >= 0.5).astype(int)
@@ -664,3 +698,7 @@ Prediction quadrants:
   only B correct (A wrong): 1.4%
   both wrong:             8.1%
 ```
+
+**결과 해석**
+
+threshold 0.5에서 두 방식의 예측이 97.8% 일치하고, 의견이 갈리는 경우는 합쳐서 2.3%(only A 0.9% + only B 1.4%)에 불과합니다. 실질적으로 같은 분류기로 봐도 무방하다는 결론입니다.
