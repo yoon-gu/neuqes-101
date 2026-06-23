@@ -78,6 +78,8 @@ torch      : 2.11.0+cu128
 use fp16   : True
 ```
 
+데이터를 불러옵니다. 본 챕터의 데이터는 *통제 변수* 라 Ch 26 과 정확히 같은 방식으로 `g0ster/TinyStories-Korean` 을 로드합니다. 이 데이터셋은 story 단위가 아니라 *줄(line) 단위* 로 저장돼 있어, `<|endoftext|>` 마커를 만날 때까지 줄을 이어 붙여 한 story 로 복원해야 합니다.
+
 ```python
 from datasets import load_dataset, Dataset
 
@@ -107,7 +109,11 @@ def rebuild_stories(split, n_stories, max_lines):
         if tail:
             stories.append(tail)
     return stories[:n_stories]
+```
 
+**위 코드 읽기** — `rebuild_stories` 는 스트리밍으로 한 줄씩 받으며 `buf` 에 쌓다가, 줄이 `EOT_MARK` (`<|endoftext|>`) 이면 그때까지 모은 줄을 한 story 로 합쳐 `stories` 에 넣고 `buf` 를 비웁니다. `N_TRAIN = 30_000` 으로 *Ch 26 과 같은 규모* 만 잘라 쓰는 게 데이터 통제의 핵심입니다.
+
+```python
 t0 = time.time()
 train_stories = rebuild_stories("train", N_TRAIN, MAX_LINES_TO_SCAN)
 val_stories   = rebuild_stories("validation", N_VAL, 50_000)
@@ -138,6 +144,12 @@ val  : Dataset({
 한때 벤이라는 이름의 어린 소년이 있었어요. 벤은 주변 세계를 탐험하는 것을 좋아했답니다. 그는 가게에 전시되어 있던 아름다운 꽃병들 같은 멋진 것들을 많이 봤어요. 어느 날, 벤은 가게를 거닐다가 정말 특별한 꽃병을 발견했죠. 벤은 그 꽃병을 보고 …(뒤 240자 생략)
 ```
 
+**결과 해석**
+
+train 30,000 / val 500 stories 가 약 23초 만에 복원됐고, 샘플 story 가 동화체 한국어 (`…했어요` / `…했답니다`) 로 정상 복원됐습니다 — Ch 26 과 글자 그대로 같은 데이터라 격리 실험의 통제 변수가 보장됩니다.
+
+본 챕터의 *유일한 큰 변화* 입니다. Ch 26 의 `GPT2LMHeadModel(config)` random init 대신 *대규모 한국어 코퍼스로 이미 사전학습된* KoGPT2 본체와 토크나이저를 그대로 가져옵니다. 다만 KoGPT2 는 `AutoTokenizer` 가 영어 GPT2 로 잘못 fallback 하는 함정이 있어, `PreTrainedTokenizerFast` 로 special token 을 직접 지정해 로드하는 점을 눈여겨봐야 합니다.
+
 ```python
 from transformers import PreTrainedTokenizerFast, AutoModelForCausalLM
 
@@ -155,7 +167,11 @@ model = AutoModelForCausalLM.from_pretrained("skt/kogpt2-base-v2").to(device)
 # pad token id 를 본체 config 에도 동기화
 model.config.pad_token_id = tokenizer.pad_token_id
 print(f"load done: {time.time()-t0:.1f}s")
+```
 
+**위 코드 읽기** — 토크나이저는 SKT 공식 방식대로 special token (`</s>`, `<unk>`, `<pad>`, `<mask>`) 을 인자로 명시해 `PreTrainedTokenizerFast` 로 로드하고, 본체는 `from_pretrained("skt/kogpt2-base-v2")` 한 줄로 가져옵니다. 마지막에 `model.config.pad_token_id` 를 토크나이저 pad id 에 맞춰 동기화해 collator·generation 에서 pad 처리가 어긋나지 않게 합니다.
+
+```python
 n_params = model.num_parameters()
 print(f"\n=== model ===")
 print(f"#params           : {n_params/1e6:.2f} M  (Ch 26 was approx. 3M; Ch 27 is approx. {n_params/3e6:.0f}x larger)")
@@ -197,6 +213,12 @@ model: GPT2LMHeadModel
   - head : Linear(in=768, out=51200)
 ```
 
+**결과 해석**
+
+본체가 125.16M params (Ch 26 의 약 3M 대비 약 42배), vocab 51,200 (약 13배) 로 로드됐고, LM head 가 `Linear(768, 51200)` 으로 weight tying (`lm_head ↔ wte`) 된 표준 GPT2 구조입니다. `masked_bias` UNEXPECTED 경고는 구버전 GPT2 체크포인트의 흔적이라 무시해도 되고, `pad_token` 이 `<pad>`(id=3) 로 제대로 잡혀 토크나이저 함정을 피했음을 확인할 수 있습니다.
+
+토큰화와 `group_texts` 는 Ch 26 과 *한 글자도 다르지 않은* HF causal LM 학습 표준 패턴 (`run_clm.py`) 입니다. 전처리는 통제 변수라, 같은 30K stories 가 *KoGPT2 BBPE (vocab 51,200)* 로 토큰화되면 Ch 26 의 직접 학습 BBPE (vocab 약 4,000) 보다 토큰 수가 줄어드는 점만 관전 포인트입니다.
+
 ```python
 BLOCK_SIZE = 128   # Ch 26 과 동일
 
@@ -217,7 +239,11 @@ def add_eos(batch):
 
 tok_train = tok_train.map(add_eos, batched=True, desc="add eos train")
 tok_val   = tok_val.map(add_eos,   batched=True, desc="add eos val")
+```
 
+**위 코드 읽기** — 각 story 를 토큰화한 뒤 `add_eos` 로 끝에 `eos_token_id` 를 붙여 *story 경계* 를 표시합니다. 이렇게 해야 다음 단계에서 story 들을 한 스트림으로 이어 붙여도 모델이 어디가 이야기 끝인지 학습할 수 있습니다.
+
+```python
 def group_texts(batch):
     concatenated = {k: sum(batch[k], []) for k in batch.keys()}
     total_len = len(concatenated["input_ids"])
@@ -229,7 +255,11 @@ def group_texts(batch):
 
 lm_train = tok_train.map(group_texts, batched=True, desc="group train")
 lm_val   = tok_val.map(group_texts,   batched=True, desc="group val")
+```
 
+**위 코드 읽기** — `group_texts` 는 batch 안 모든 토큰을 `sum(..., [])` 로 하나의 긴 스트림으로 이어 붙인 뒤 `BLOCK_SIZE`(128) 배수로 내림해 고정 길이 chunk 로 자릅니다. 가변 길이 story 가 PAD 낭비 없이 빈틈없는 학습 블록으로 바뀌는 단계입니다.
+
+```python
 print(f"\ntrain chunks: {len(lm_train):,}  (block_size={BLOCK_SIZE})")
 print(f"val   chunks: {len(lm_val):,}")
 print(f"approx. train tokens: {len(lm_train) * BLOCK_SIZE / 1e6:.2f} M")
@@ -247,6 +277,12 @@ approx. train tokens: 6.21 M
 first chunk decode (first 200 chars):
 한때 벤이라는 이름의 어린 소년이 있었어요. 벤은 주변 세계를 탐험하는 것을 좋아했답니다. 그는 가게에 전시되어 있던 아름다운 꽃병들 같은 멋진 것들을 많이 봤어요. 어느 날, 벤은 가게를 거닐다가 정말 특별한 꽃병을 발견했죠. 벤은 그 꽃병을 보고 …(뒤 60자 생략)
 ```
+
+**결과 해석**
+
+30K stories 가 48,513 chunks (block_size=128, 약 6.21M 토큰) 로 묶였습니다. 첫 chunk 를 decode 하면 원본 동화가 깨짐 없이 그대로 복원돼, KoGPT2 BBPE 의 encode→decode 왕복이 한국어에서 정상 동작함을 확인할 수 있습니다.
+
+학습을 시작하기 전에, *continual pretraining 이 본체에 무엇을 바꾸는가* 를 측정할 기준선을 먼저 기록합니다. 같은 한국어 prompt 3개에 대해 KoGPT2 *그대로* 의 generation 을 저장해 두고, 학습 후 결과와 나란히 비교하기 위함입니다.
 
 ```python
 PROMPTS = [
@@ -305,12 +341,22 @@ BEFORE continual pretraining - KoGPT2 pretrained on Korean corpus, as-is
 그 능력은 하나님의 말씀을 통해서 우리에게 전달되기도 하고, 또 하나
 ```
 
+**결과 해석**
+
+학습 전 KoGPT2 는 *이미 자연스러운 한국어 문장* 을 생성하지만 *일반 도메인 풍* (구어체 / 종교 텍스트 / 산문) 이라 TinyStories 동화체와는 거리가 멉니다 — Ch 26 의 random init baseline 이 byte 조각이던 것과 달리, Ch 27 은 *random 이 아니라 잘 만들어진 본체* 에서 출발한다는 증거입니다.
+
+이제 continual pretraining 본체입니다. collator·loss·trainer 는 Ch 26 과 같고, 변하는 건 *lr (`5e-4 → 2e-5`)* 와 *step 설정 (1 epoch)*, 그리고 *메모리 대응 (batch 4 + grad accum 4)* 뿐입니다. lr 이 작아진 이유는 *이미 학습된 표상이 큰 lr 에 망가지는 catastrophic forgetting* 을 피하기 위해서라는 점을 눈여겨봐야 합니다.
+
 ```python
 from transformers import (DataCollatorForLanguageModeling, Trainer,
                           TrainingArguments, TrainerCallback)
 
 collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
+```
 
+**위 코드 읽기** — `DataCollatorForLanguageModeling(mlm=False)` 는 Ch 26 과 정확히 같은 causal LM collator 로, `labels = input_ids.clone()` 을 자동으로 만들고 pad 자리만 `-100` 으로 가립니다. *거의 모든 자리가 학습 신호* 라는 점이 Ch 28 SFT 의 `labels[:prompt_len] = -100` 과 대비되는 단계 2 의 기준선입니다.
+
+```python
 args = TrainingArguments(
     output_dir="./out_ko_gpt2_continual_pretrain",
     num_train_epochs=1,                    # 본체 이미 학습됨 - 1 epoch 충분
@@ -332,8 +378,11 @@ args = TrainingArguments(
     dataloader_pin_memory=True,
     seed=SEED,
 )
+```
 
+**위 코드 읽기** — `learning_rate=2e-5` 가 Ch 26 (`5e-4`) 대비 유일한 큰 차이이고, `batch_size=4` + `gradient_accumulation_steps=4` 로 effective batch 16 을 맞춰 125M 본체를 T4 16GB 안에서 돌립니다. `num_train_epochs=1` 인데도 chunk 가 많아 약 3,000 step 이 되고, `fp16=True` 는 bf16 불가인 T4 대응입니다.
 
+```python
 class VRAMCallback(TrainerCallback):
     '''step 별 peak VRAM 기록 (로깅 윈도우 단위로 reset). CUDA 에서만 유효.'''
 
@@ -390,6 +439,12 @@ vocab ln (random baseline): 10.8435  (we start MUCH lower than this)
 final peak    : 1455 MiB
 ```
 
+**결과 해석**
+
+T4 에서 약 17분, 3,033 step 만에 누적 평균 `train_loss` 가 2.49 로 끝났습니다. random baseline `ln(51200) ≈ 10.84` 보다 *훨씬 낮은 지점에서 시작해 더 낮아진* 것이 사전학습된 본체의 시작 이점이고, peak VRAM 1,455 MiB 로 T4 16GB 에 여유 있게 들어갑니다.
+
+학습 로그에서 train/eval loss 곡선과 step별 peak VRAM 을 함께 그려, *어디서 시작해 어디까지 내려갔는지* 와 *메모리 여유* 를 한눈에 확인합니다.
+
 ```python
 # loss curve + VRAM trace
 log = trainer.state.log_history
@@ -429,6 +484,12 @@ plt.tight_layout(); plt.show()
 
 ![output](../assets/27-ko_gpt2_continual_pretrain-out1.png)
 
+**결과 해석**
+
+loss 곡선이 random baseline 점선 (`ln(51200) ≈ 10.84`) 보다 한참 아래에서 시작해 약 2.5 부근까지 완만히 내려가는 모양 — Ch 26 이 random baseline 에서 급강하하던 것과 달리, *이미 낮은 지점에서 출발해 천천히 도메인 적응* 하는 단계 2 의 전형적 곡선입니다. VRAM 도 학습 내내 1.5GiB 안쪽으로 안정적입니다.
+
+학습이 끝난 모델에 *같은 prompt·GEN_KWARGS* 로 다시 생성해, BEFORE 와 무엇이 달라졌는지 봅니다. seed 도 동일하게 고정해 *데이터 1 epoch 의 차이* 만 비교에 남깁니다.
+
 ```python
 torch.manual_seed(SEED)
 model.eval()
@@ -456,6 +517,12 @@ AFTER continual pretraining - KoGPT2 + TinyStories-Korean 30K
 [prompt] 큰 개가
 큰 개가 친구들에게 말했죠, "걱정 마, 작은 개야. 우리는 너를 돕고 싶어, 작은 개야." 그들은 공을 되찾으려고 해요. 그들은 계속 시도해요. 그들은 공을 잡으려고 해요. 하지만 공이 너무 커서 쉽지 않아요. 그들은 미끄러져 넘어지고 말죠.
 ```
+
+**결과 해석**
+
+같은 prompt 가 이제 *동화 풍* 으로 이어집니다 — `릴리`, `작은 소녀`, `공원`, `친구`, `예쁜 드레스` 같은 TinyStories 어휘와 짧고 단순한 `…했어요` 문장으로 톤이 바뀌었습니다. 본체는 그대로 125M 이고 *lr 한 숫자 + 1 epoch 데이터* 만으로 generation 의 도메인이 이동한 것이 continual pretraining 의 효과입니다.
+
+앞서 저장한 `before_outputs` 와 방금 얻은 `after_outputs` 를 prompt별로 나란히 출력해, *같은 모델·같은 prompt* 에서 학습 전후가 어떻게 갈리는지 직접 대조합니다.
 
 ```python
 # Ch 27 within-model BEFORE vs AFTER comparison
@@ -499,6 +566,12 @@ BEFORE  : 되어버린 것입니다.
 그 능력은 하나님의 말씀을 통해서 우리에게 전달되기도 하고, 또 하나
 AFTER   : 친구들에게 말했죠, "걱정 마, 작은 개야. 우리는 너를 돕고 싶어, 작은 개야." 그들은 공을 되찾으려고 해요. 그들은 계속 시도해요. 그들은 공을 잡으려고 해요. 하지만 공이 너무 커서 쉽지 않아요. 그들은 미끄러져 넘어지고 말죠.
 ```
+
+**결과 해석**
+
+세 prompt 모두 BEFORE 는 구어체·종교·산문 등 *일반 도메인* 으로 흩어졌지만 AFTER 는 일관되게 *동화체* 로 수렴합니다. head·task·loss 가 그대로인데 출력 분포만 새 데이터 쪽으로 옮겨간 것이 *task adaptation 이 아닌 데이터 적응* (continual pretraining) 임을 보여줍니다.
+
+마지막으로 Ch 26 의 *3M scratch* 모델 generation 을 옆에 두어 *3-way 비교* 를 만듭니다. `ch26_outputs` 는 Ch 26 노트북 §7 의 출력을 인용한 것으로, 본인 결과로 갱신하면 비교가 더 정확해집니다.
 
 ```python
 # Ch 26 의 TRAINED model generation 결과 인용
@@ -563,3 +636,7 @@ Ch 27 BEFORE    : 되어버린 것입니다.
 그 능력은 하나님의 말씀을 통해서 우리에게 전달되기도 하고, 또 하나
 Ch 27 AFTER     : 친구들에게 말했죠, "걱정 마, 작은 개야. 우리는 너를 돕고 싶어, 작은 개야." 그들은 공을 되찾으려고 해요. 그들은 계속 시도해요. 그들은 공을 잡으려고 해요. 하지만 공이 너무 커서 쉽지 않아요. 그들은 미끄러져 넘어지고 말죠.
 ```
+
+**결과 해석**
+
+Ch 26 (3M scratch) 도 동화체 한국어는 만들지만 어휘가 단조롭고, Ch 27 BEFORE 는 어휘 폭은 넓되 동화체가 아니며, Ch 27 AFTER 는 *동화체 + 넓은 어휘력* 을 모두 갖춥니다. 다만 이 격차가 *모델 크기 (3M→125M)* 때문인지 *사전학습* 때문인지는 두 변수가 함께 변해 분리되지 않습니다 (FAQ Q3 참고).
