@@ -2,14 +2,13 @@
 name: notebook-to-wikidocs
 description: 챕터 노트북(.ipynb)을 WikiDocs용 장→절 마크다운으로 변환한다. 코드와 함께 실제 실행 결과(표·로그·그림)를 싣고, 웹·PDF·EPUB(전자책) 어디서도 깨지지 않게 만든다.
 argument-hint: "[챕터] 예: 7 · 07_bert_pipeline · 7 24 · --all"
-disable-model-invocation: true
 ---
 
 # notebook → WikiDocs 변환
 
 챕터 노트북을 WikiDocs 연동용 `pages/NN-slug*.md`(장 1 + 절 여러 개)로 바꾼다.
 
-**호출**: 사용자가 **변환할 챕터를 인자로** 주며 직접 호출한다(모델이 자동 호출하지 않음).
+**호출**: 보통 사용자가 **변환할 챕터를 인자로** 주며 직접 호출한다. 모델이 변환이 필요하다고 판단하면 자율적으로 호출해도 된다.
 ```
 /notebook-to-wikidocs 7                # 7장
 /notebook-to-wikidocs 7 24             # 여러 장
@@ -142,6 +141,6 @@ python3 .claude/skills/notebook-to-wikidocs/scripts/check_wikidocs_md.py   # pag
 
 ## 주의
 
-- `book/chapters/*.tex`(인쇄책용)는 건드리지 않는다(회귀 방지) — 출력 렌더 로직만 tex→md로 포팅.
+- **원본 챕터 노트북(`<NN>_<slug>/*.ipynb`)·인쇄책 tex(`book/chapters/*.tex`)·이미 있는 실행본(`executed/<폴더>.ipynb`)은 읽기만 하고 절대 수정하지 않는다.** 위키독스 작업이 새로 쓰는 산출물은 `pages/`·`assets/`·`TOC.md`뿐이다. 학습 자료(노트북)·인쇄책(tex)은 별도 워크플로 소관이라 회귀를 막기 위해 손대지 않는다(출력 렌더 로직만 tex→md로 포팅). 실행본은 **없을 때만** ①에서 새로 만들고(해시 멱등·resume), **이미 있으면 그 출력을 그대로 신뢰해 다시 실행·덮어쓰지 않는다**(`FORCE=1` 등으로 의도적으로 재생성할 때만 예외).
 - 한 번에 한 챕터씩, 검증 안 된 챕터를 두고 다음으로 넘어가지 않는다(CLAUDE.md 워크플로).
 - 챕터 단위로 의미 있게 커밋. WikiDocs 출판 워크플로는 메모리 `wikidocs-publishing` 참조.
