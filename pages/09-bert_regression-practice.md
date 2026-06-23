@@ -76,6 +76,8 @@ Sun Jun 21 22:51:03 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+Ch 8에서 익힌 토크나이저·`datasets` 패턴을 그대로 가져옵니다. T4에서 30분 안에 끝나도록 학습 4,000건·평가 1,000건만 잘라 씁니다.
+
 ```python
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
 
@@ -84,19 +86,29 @@ ds = load_dataset("Yelp/yelp_review_full")
 # train 4,000 + eval 1,000 — T4 30분 안에 학습 끝나도록 작게
 train_ds = ds["train"].shuffle(seed=42).select(range(4000))
 eval_ds  = ds["test"].shuffle(seed=42).select(range(1000))
+```
 
+**위 코드 읽기** — `shuffle(seed=42)` 로 섞은 뒤 `select(range(...))` 로 앞쪽 일부만 추립니다. 같은 seed라 매번 동일한 부분집합이 잡혀 재현이 됩니다.
+
+```python
 def tokenize_fn(batch):
     out = tokenizer(batch["text"], truncation=True, max_length=128)
     # label(0-4) → 별점(1-5) float 으로 변환. Trainer는 'labels' 컬럼을 사용
     out["labels"] = [float(lbl) + 1.0 for lbl in batch["label"]]
     return out
+```
 
+**위 코드 읽기** — 회귀의 핵심 한 줄입니다. 0-4로 저장된 `label` 에 `+1.0` 을 더해 별점 1-5로 되돌리되, `float(...)` 로 *실수* 라벨을 만듭니다. `Trainer` 는 `labels` 라는 컬럼명을 정답으로 인식하고, 라벨이 float이면 `problem_type="regression"` 과 맞물려 `MSELoss` 로 흘러갑니다. `max_length=128` 로 자른 건 attention 비용과 학습 시간을 T4 한도 안에 두기 위함입니다.
+
+```python
 train_tok = train_ds.map(tokenize_fn, batched=True).remove_columns(["text", "label"])
 eval_tok  = eval_ds.map(tokenize_fn,  batched=True).remove_columns(["text", "label"])
 
 print(train_tok)
 print(f"\nFirst sample label: {train_tok[0]['labels']}  (float)")
 ```
+
+**위 코드 읽기** — `map(batched=True)` 로 전체를 토큰화한 뒤, 더 이상 필요 없는 원문 `text` 와 정수 `label` 컬럼을 `remove_columns` 로 제거합니다. 남는 컬럼은 `input_ids`·`attention_mask` 등 모델 입력과 `labels` 뿐입니다.
 
 **▶ 실행 결과**
 
@@ -109,6 +121,8 @@ Dataset({
 First sample label: 5.0  (float)
 ```
 
+본체만 받고 회귀 헤드를 새로 붙이는 단계입니다. 두 인자가 핵심입니다.
+
 ```python
 model = AutoModelForSequenceClassification.from_pretrained(
     "distilbert-base-uncased",
@@ -119,6 +133,8 @@ print(f"Parameters:    {sum(p.numel() for p in model.parameters()):,}")
 print(f"Classifier:    {model.classifier}")
 print(f"problem_type:  {model.config.problem_type}")
 ```
+
+**위 코드 읽기** — `num_labels=1` 이라 분류 헤드가 `Linear(768, 1)` 로 만들어져 출력이 스칼라 한 개입니다. `problem_type="regression"` 을 명시하면 `Trainer` 가 별다른 설정 없이 `MSELoss` 를 골라 씁니다. 출력의 `MISSING` 표시(`classifier.weight` 등)는 새 헤드가 *랜덤 초기화* 됐다는 정상 신호로, 이 부분이 학습으로 채워집니다.
 
 **▶ 실행 결과**
 
@@ -255,6 +271,8 @@ Sun Jun 21 22:51:27 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+학습 하이퍼파라미터를 한 객체에 모읍니다. 각 값이 T4 30분 제약을 지키는 기본 안전대입니다.
+
 ```python
 training_args = TrainingArguments(
     output_dir="./ch09_output",
@@ -273,11 +291,15 @@ training_args = TrainingArguments(
 print(f"Total training steps: {len(train_tok) // training_args.per_device_train_batch_size * training_args.num_train_epochs}")
 ```
 
+**위 코드 읽기** — `fp16=True` 는 T4에서 필수 선택입니다(T4는 bf16 미지원). `eval_strategy="epoch"` 으로 에폭마다 평가가 돌고, `save_strategy="no"` 라 체크포인트를 남기지 않아 디스크·VRAM을 아낍니다. 전체 step 수는 `4000 / 16 × 2 = 500` 으로 출력에서 확인됩니다.
+
 **▶ 실행 결과**
 
 ```text
 Total training steps: 500
 ```
+
+평가 때 출력할 지표를 직접 정의합니다. `Trainer` 가 넘겨주는 `(preds, labels)` 를 받아 sklearn 헬퍼로 계산합니다.
 
 ```python
 # 평가 지표를 직접 정의 — sklearn 헬퍼 그대로 활용
@@ -290,6 +312,10 @@ def compute_metrics(eval_pred):
         "r2":  float(r2_score(labels, preds)),
     }
 ```
+
+**위 코드 읽기** — 회귀이므로 `preds` 가 `(N, 1)` 형태라 `flatten()` 으로 1차원으로 폅니다. 반환한 dict의 키(`mse`·`mae`·`r2`)는 평가 로그에서 `eval_` 접두사가 붙어 `eval_mse` 처럼 출력됩니다.
+
+이제 모델·인자·데이터·지표를 `Trainer` 하나로 묶고 `train()` 한 줄로 학습을 돌립니다.
 
 ```python
 trainer = Trainer(
@@ -312,6 +338,10 @@ print(f"\nTraining done — mean train loss: {train_result.training_loss:.4f}")
 <IPython.core.display.HTML object>
 Training done — mean train loss: 1.1182
 ```
+
+**결과 해석**
+
+500 step 전체의 평균 train loss가 1.1182로 끝났습니다. 이는 MSE 단위(별점² 오차)라, 초반 step의 큰 loss까지 평균에 섞인 값입니다. 학습이 실제로 줄었는지는 아래 eval 지표(`eval_mse` 0.65)로 확인하는 편이 정확합니다.
 
 ```python
 !nvidia-smi
@@ -362,6 +392,12 @@ BERT evaluation:
               eval_mae: 0.6180
                eval_r2: 0.6644
 ```
+
+**결과 해석**
+
+`eval_loss` 와 `eval_mse` 가 0.6539로 같습니다 — 회귀 loss가 곧 MSE이기 때문입니다. MAE 0.618은 평균적으로 별점을 약 0.6점 틀린다는 뜻이고, R² 0.664는 별점 분산의 약 66%를 설명한다는 의미입니다.
+
+같은 데이터를 Ch 2 방식(TF-IDF + `LinearRegression`)으로도 학습해 BERT와 직접 견줍니다.
 
 ```python
 # 같은 4,000건으로 sklearn LinearRegression 학습 (Ch 2 방식)
@@ -419,6 +455,12 @@ pd.DataFrame(rows).round(4)
 1     DistilBERT fine-tuned  0.6539  0.6180  0.6644
 ```
 
+**결과 해석**
+
+세 지표 모두 BERT가 크게 앞섭니다 — MSE 1.56 → 0.65, MAE 1.01 → 0.62, R² 0.20 → 0.66. 문맥을 attention으로 읽는 BERT가 단어 빈도만 보는 TF-IDF 회귀보다 별점을 훨씬 정확히 맞춘다는 가설이 이 수치로 확인됩니다.
+
+시각화에 쓸 예측값을 모읍니다. `Trainer.predict` 로 BERT 예측을 받아 sklearn 예측과 한 long-form DataFrame으로 합칩니다.
+
 ```python
 # BERT 예측값 직접 받기 (별도 evaluate 호출이지만 빠름)
 preds_output = trainer.predict(eval_tok)
@@ -439,6 +481,8 @@ df_compare["Residual"] = df_compare["Predicted"] - df_compare["Actual star"]
 <IPython.core.display.HTML object>
 ```
 
+실제 별점별로 두 모델이 어떤 값을 출력했는지 split violin으로 좌우에 둡니다. 빨간 점선이 이상적인 정답선(정답 = 예측)입니다.
+
 ```python
 fig, ax = plt.subplots(figsize=(11, 5))
 sns.violinplot(
@@ -456,6 +500,8 @@ plt.show()
 **▶ 실행 결과**
 
 ![output](../assets/09-bert_regression-out1.png)
+
+이번엔 잔차(예측 − 실제)를 y축에 둡니다. 0 기준선에 좁게 모일수록 정확하고, 한쪽으로 치우치면 bias가 있다는 뜻입니다.
 
 ```python
 fig, ax = plt.subplots(figsize=(11, 5))
