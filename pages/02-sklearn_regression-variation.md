@@ -15,12 +15,18 @@ y_pred_norm = model_norm.predict(X_test)
 
 # 정규화 공간에서의 MSE
 print(f"Test MSE (normalized space): {mean_squared_error(y_test_norm, y_pred_norm):.4f}")
+```
 
+**위 코드 읽기** 라벨을 `(y - 1) / 4` 로 [0, 1] 공간으로 옮긴 뒤 같은 `LinearRegression` 을 학습합니다. 정규화 공간에서 잰 MSE 0.0973은 별점 공간 값과 직접 비교할 수 없는데, 라벨 스케일이 1/4로 줄면 오차 제곱은 그 제곱인 1/16 배가 되기 때문입니다($1.5565 / 16 \approx 0.097$).
+
+```python
 # 원래 별점 공간으로 되돌렸을 때 MSE 비교
 y_pred_back = y_pred_norm * 4 + 1
 print(f"Test MSE (back to star space): {mean_squared_error(y_test, y_pred_back):.4f}")
 print(f"Test MSE (no normalization):    {mean_squared_error(y_test, y_pred_test):.4f}")
 ```
+
+**위 코드 읽기** 예측을 `* 4 + 1` 로 별점 공간에 되돌려 정규화 없이 학습한 모델과 같은 척도로 비교합니다. 두 값이 같다면 라벨 정규화가 닫힌 형태 풀이의 결과를 바꾸지 않았다는 뜻입니다.
 
 **▶ 실행 결과**
 
@@ -29,6 +35,12 @@ Test MSE (normalized space): 0.0973
 Test MSE (back to star space): 1.5565
 Test MSE (no normalization):    1.5565
 ```
+
+**결과 해석**
+
+별점 공간으로 되돌린 MSE가 정규화 없이 학습한 1.5565와 정확히 같습니다. `LinearRegression` 은 정규방정식으로 풀기에 라벨 스케일링이 최종 예측에 영향을 주지 않음을 보여줍니다.
+
+라벨을 [0, 1]로 압축했으니 예측도 [0, 1]에 머무를 것 같지만, 정말 그런지 확인합니다. 범위를 벗어난 예측이 몇 개나 되는지 세어, 라벨 스케일링만으로는 출력을 가둘 수 없음을 수치로 드러냅니다.
 
 ```python
 # 정규화한 모델도 여전히 [0, 1]을 벗어나는 값을 뱉는가?

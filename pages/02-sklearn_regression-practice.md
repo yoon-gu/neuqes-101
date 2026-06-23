@@ -38,6 +38,8 @@ print(f"Sample count: {len(df)}")
 Sample count: 5000
 ```
 
+Yelp 데이터의 별점은 0-4로 저장돼 있어, 사람이 읽는 1-5 척도로 옮긴 뒤 회귀 라벨로 씁니다. 이때 라벨을 `astype(float)`로 실수형으로 만드는 것이 핵심입니다 — 회귀는 정수 클래스가 아니라 연속값을 예측하기 때문입니다. 같은 TF-IDF 설정(Ch 1과 동일)으로 텍스트를 sparse 벡터로 바꿔 입력을 만듭니다.
+
 ```python
 # 별점은 0-4로 저장돼 있으니 1-5로 변환
 df["star"] = df["label"] + 1
@@ -47,7 +49,11 @@ X_text_train, X_text_test, y_train, y_test = train_test_split(
     df["text"], df["star"].astype(float),
     test_size=0.2, random_state=42,
 )
+```
 
+**위 코드 읽기** `df["star"].astype(float)` 가 회귀 라벨을 만드는 자리입니다. 별점에 1을 더해 1-5로 옮기고, 정수가 아니라 float 으로 둬 연속값 회귀의 정답으로 삼습니다. `random_state=42` 로 분할을 고정해 재현성을 확보합니다.
+
+```python
 # TF-IDF (Ch 1과 같은 설정)
 tfidf = TfidfVectorizer(max_features=10000)
 X_train = tfidf.fit_transform(X_text_train)
@@ -57,12 +63,18 @@ print(f"X_train: {X_train.shape}, y_train: {y_train.shape}")
 print(f"X_test:  {X_test.shape}, y_test:  {y_test.shape}")
 ```
 
+**위 코드 읽기** `fit_transform` 은 훈련 데이터로만 어휘를 학습하고, 평가 데이터에는 `transform` 만 적용해 같은 어휘로 변환합니다 — 평가 텍스트가 어휘 학습에 새지 않게 하는 표준 방식입니다.
+
 **▶ 실행 결과**
 
 ```text
 X_train: (4000, 10000), y_train: (4000,)
 X_test:  (1000, 10000), y_test:  (1000,)
 ```
+
+**결과 해석**
+
+5,000 샘플이 4,000/1,000으로 나뉘고, 각 텍스트가 10,000차원 TF-IDF 벡터가 됐습니다. 이제 입력은 길이 10,000짜리 sparse 벡터고, 모델은 여기서 별점 숫자 하나를 예측하면 됩니다.
 
 `LinearRegression`은 가중치 벡터 $w$와 편향 $b$를 학습해 다음을 출력합니다.
 
@@ -92,6 +104,12 @@ Test  MAE: 0.9952
 Test  R²:  0.2139
 ```
 
+**결과 해석**
+
+Train MSE가 0에 가까운 건 10,000차원 feature 가 4,000 샘플을 거의 완벽히 외운 과적합 신호입니다. Test MSE 1.56(별점 오차 약 ±1점)·R² 0.21로, 단순 선형 회귀가 일반화에는 한계가 있음을 보여줍니다.
+
+예측값이 별점 척도 [1, 5]를 얼마나 벗어나는지 직접 확인합니다. 활성화 함수가 없는 만큼 음수나 5 초과가 나와도 자연스러운데, 분포 히스토그램으로 그 이탈 정도를 눈으로 봅니다.
+
 ```python
 # 예측값이 1-5 범위를 얼마나 벗어나는지 확인
 print(f"Pred range: [{y_pred_test.min():.2f}, {y_pred_test.max():.2f}]")
@@ -114,5 +132,9 @@ plt.show()
 Pred range: [-1.55, 7.15]
 True range: [1, 5]
 ```
+
+**결과 해석**
+
+실제 별점은 [1, 5]에 갇혀 있지만 예측은 -1.55에서 7.15까지 퍼집니다. 가중합을 그대로 출력하는 한 범위 제약이 없다는 회귀의 본질이 그대로 드러납니다.
 
 ![output](../assets/02-sklearn_regression-out1.png)
