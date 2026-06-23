@@ -42,6 +42,8 @@ GPU: Tesla T4
 
 ### TinyStories 로드 (Ch 24/26과 같은 데이터)
 
+작은 모델을 살릴 만큼의 분량으로 학습/검증 split을 잘라 옵니다. 앞 100,000편을 학습에, 검증 500편을 평가에 씁니다.
+
 ```python
 raw_train = load_dataset("roneneldan/TinyStories", split="train[:100000]")
 raw_val   = load_dataset("roneneldan/TinyStories", split="validation[:500]")
@@ -97,6 +99,8 @@ sample tok : ['ĠOnce', 'Ġupon', 'Ġa', 'Ġtime', 'Ġthere', 'Ġwas', 'Ġa', '�
 
 ### 토큰화 + `group_texts` (BLOCK_SIZE=128)
 
+문장 경계를 무시하고 토큰을 길게 이어 붙인 뒤 `BLOCK_SIZE=128` 단위로 잘라, 길이가 고정된 학습 청크를 만듭니다. 특수 토큰 없이 토큰화한 뒤 이어 붙이므로 청크 하나가 여러 동화에 걸칠 수 있습니다.
+
 ```python
 BLOCK_SIZE = 128
 def tok_fn(b):
@@ -134,10 +138,20 @@ class DiffusionCollator:
         B, L = ids.shape
         t = torch.rand(B, generator=self.gen) * (1.0 - self.eps) + self.eps
         mask = torch.rand(B, L, generator=self.gen) < t.unsqueeze(1)
+```
+
+**위 코드 읽기** — 샘플마다 마스킹 비율 `t`를 `U(0.02, 1)`에서 따로 뽑습니다(`* (1.0 - self.eps) + self.eps`로 하한 절단). 그리고 각 자리를 독립적으로 확률 `t`로 가릴지 정해 `mask`를 만듭니다. 같은 배치라도 행마다 가려지는 비율이 다릅니다.
+
+```python
         no = ~mask.any(dim=1)
         if no.any():
             j = torch.randint(0, L, (int(no.sum()),), generator=self.gen)
             mask[no, j] = True
+```
+
+**위 코드 읽기** — `t`가 매우 작아 한 자리도 안 가려진 행(`no`)은 학습 신호가 0이 됩니다. 그런 행은 무작위 한 자리(`j`)를 강제로 가려, 모든 샘플이 최소 하나의 손실 항을 갖게 합니다.
+
+```python
         inp = ids.clone(); inp[mask] = self.mask_id
         lab = ids.clone(); lab[~mask] = -100
         return {"input_ids": inp, "attention_mask": torch.ones(B, L, dtype=torch.long),
@@ -146,6 +160,8 @@ coll = DiffusionCollator(tokenizer)
 print("collator ready, mask_id =", coll.mask_id)
 ```
 
+**위 코드 읽기** — 입력은 가린 자리를 `mask_id`로 덮고(`inp[mask] = self.mask_id`), 라벨은 가리지 않은 자리를 `-100`으로 두어 손실에서 제외합니다(`lab[~mask] = -100`). 뽑은 `t`도 함께 반환해 손실의 `1/t` 시간가중에 씁니다.
+
 **▶ 실행 결과**
 
 ```text
@@ -153,6 +169,8 @@ collator ready, mask_id = 2
 ```
 
 ### 작은 BERT-MLM 모델 (Ch 24와 동급, 본체는 그대로)
+
+`BertForMaskedLM`을 흡수형 diffusion 백본으로 재활용합니다. hidden 256 / 4층 / 4헤드로 작게 두고, vocab을 2048로 줄인 덕에 임베딩이 차지하던 비중이 크게 떨어집니다.
 
 ```python
 from transformers import BertConfig, BertForMaskedLM
@@ -171,7 +189,11 @@ print(f"#params {np_/1e6:.2f}M | embedding share {emb/np_:.1%}  (Ch32: ~70%)")
 #params 3.79M | embedding share 13.9%  (Ch32: ~70%)
 ```
 
+**결과 해석** — 전체 3.79M 중 임베딩 비중이 13.9%로, vocab 30522일 때의 약 70%에서 크게 줄었습니다. 아낀 용량이 그대로 본체로 돌아가 문맥 추론에 쓰입니다.
+
 ### 시간가중 `1/t` 손실로 30000 step 학습
+
+손실은 마스크된 자리에만 교차엔트로피를 매기고, 거기에 `1/t` 시간가중을 곱하는 흡수형 NELBO입니다. `Trainer.compute_loss`를 오버라이드해 직접 구현합니다.
 
 ```python
 from transformers import Trainer, TrainingArguments
@@ -185,7 +207,11 @@ class DiffusionTrainer(Trainer):
                               ignore_index=-100, reduction="none").view(B, L)
         loss = ((per.sum(dim=1) / L) / t.to(per.dtype)).mean()
         return (loss, out) if return_outputs else loss
+```
 
+**위 코드 읽기** — `reduction="none"`으로 자리별 CE를 따로 받고(`ignore_index=-100`이 마스크 안 된 자리를 자동으로 0 처리), `(B, L)`로 되돌립니다. 핵심은 `((per.sum(dim=1) / L) / t...).mean()` — 샘플별 CE 합을 길이 `L`로 나눈 뒤 다시 `t`로 나눠 `1/t` 시간가중을 건 흡수형 NELBO입니다.
+
+```python
 args = TrainingArguments(
     output_dir="./out33", max_steps=30000,
     per_device_train_batch_size=64, per_device_eval_batch_size=64,
@@ -193,7 +219,11 @@ args = TrainingArguments(
     lr_scheduler_type="cosine", max_grad_norm=1.0, fp16=USE_FP16,
     logging_steps=250, eval_strategy="steps", eval_steps=2000, save_strategy="no",
     report_to="none", label_names=["labels"], remove_unused_columns=False, seed=SEED)
+```
 
+**위 코드 읽기** — diffusion은 자리당 학습 신호가 희박해 `max_steps=30000`으로 길게 돕니다(AR의 약 20배). `fp16=USE_FP16`로 T4에서 메모리·속도를 확보하고, `remove_unused_columns=False`로 collator가 넘긴 `t` 컬럼이 버려지지 않게 막습니다.
+
+```python
 trainer = DiffusionTrainer(model=model, args=args, train_dataset=lm_train,
                            eval_dataset=lm_val, data_collator=coll)
 t0 = time.time(); r = trainer.train(); el = (time.time()-t0)/60
@@ -202,6 +232,8 @@ print(f"random baseline ln(V) = {math.log(tokenizer.vocab_size):.4f}")
 if torch.cuda.is_available():
     print(f"peak VRAM {torch.cuda.max_memory_allocated()/1024**2:.0f} MiB")
 ```
+
+**위 코드 읽기** — 커스텀 collator를 `data_collator`로 넘겨 매 배치 가변 마스킹이 적용됩니다. 학습이 끝나면 train_loss를 무작위 기준선 `ln(V)`와 비교해, 모델이 단순 빈도 모사를 넘어섰는지 한눈에 확인합니다.
 
 **▶ 실행 결과**
 
@@ -212,6 +244,8 @@ elapsed 18.50 min | step 30000 | train_loss 3.5916
 random baseline ln(V) = 7.6246
 peak VRAM 627 MiB
 ```
+
+**결과 해석** — 30000 step을 18.5분에 끝내 T4 30분 예산 안에 들어옵니다. train_loss 3.59는 무작위 기준선 `ln(V)=7.62`의 절반 이하로, 모델이 유니그램 빈도 모사를 넘어 조건부 구조를 학습했다는 신호입니다. peak VRAM도 627 MiB로 여유가 큽니다.
 
 ### carry-over 샘플러로 생성
 
@@ -236,6 +270,11 @@ def generate(model, length=128, block=32, temperature=0.8, top_p=0.92, top_k=0,
         for s in range(steps):
             logits = model(input_ids=x).logits[0].float()        # (L, V)
             logits[:, mask_id] = -1e9
+```
+
+**위 코드 읽기** — 전부 `mask_id`인 상태에서 시작해(`x = torch.full(...)`), 32 토큰 `block` 단위로 왼→오 진행합니다. 매 step 전체를 다시 예측하되 생성 결과에 `[MASK]`가 나오지 않게 `logits[:, mask_id] = -1e9`로 막습니다. 프롬프트가 있으면 `fixed`로 고정해 건드리지 않습니다.
+
+```python
             # 반복 패널티: 이미 확정된 토큰들의 로짓을 깎음
             if rep_penalty and rep_penalty != 1.0:
                 comm = x[0][x[0] != mask_id]
@@ -248,6 +287,11 @@ def generate(model, length=128, block=32, temperature=0.8, top_p=0.92, top_k=0,
                 left = torch.roll(x[0], 1); left[0] = mask_id
                 valid = left != mask_id
                 logits[valid, left[valid]] = -1e9
+```
+
+**위 코드 읽기** — 반복 억제 두 장치입니다. `rep_penalty`는 이미 확정된 토큰(`u`)의 로짓을 깎아 같은 단어가 다시 뽑힐 확률을 낮추고(부호에 따라 나누거나 곱함), `no_immediate_repeat`는 바로 왼쪽 토큰(`left`)과 같은 예측을 `-1e9`로 막아 `the the` 같은 인접 중복을 봉쇄합니다.
+
+```python
             probs = (logits / max(temperature, 1e-6)).softmax(-1)
             if top_k and top_k > 0:
                 kth = probs.topk(top_k, dim=-1).values[:, -1, None]
@@ -260,6 +304,11 @@ def generate(model, length=128, block=32, temperature=0.8, top_p=0.92, top_k=0,
             probs = probs / probs.sum(-1, keepdim=True).clamp_min(1e-9)
             pred = torch.multinomial(probs, 1).squeeze(-1)
             conf = probs.gather(-1, pred.unsqueeze(-1)).squeeze(-1)
+```
+
+**위 코드 읽기** — `temperature`로 분포를 날카롭게 한 뒤 top-k·top-p로 꼬리를 자르고, 정규화해 자리마다 토큰을 샘플링합니다(`pred`). 동시에 그 자리의 확신도 `conf`(뽑힌 토큰의 확률)도 챙겨, 다음에서 어디를 확정할지 고르는 데 씁니다.
+
+```python
             cur = (x[0] == mask_id) & (~fixed)
             cur[:lo] = False; cur[hi:] = False
             nleft = int(cur.sum())
@@ -269,7 +318,11 @@ def generate(model, length=128, block=32, temperature=0.8, top_p=0.92, top_k=0,
             idx = cc.topk(nreveal).indices
             x[0, idx] = pred[idx]
     return tokenizer.decode(x[0], skip_special_tokens=True)
+```
 
+**위 코드 읽기** — carry-over의 핵심입니다. 아직 마스크인 자리(`cur`) 중 확신도(`cc`)가 높은 곳부터 `nreveal`개만 골라 확정하고(`x[0, idx] = pred[idx]`), 한 번 확정한 토큰은 다시 마스크로 되돌리지 않습니다. block 마지막 step에서는 남은 자리를 전부 확정해 빈칸 없이 마무리합니다.
+
+```python
 pid = tokenizer("Once upon a time", add_special_tokens=False)["input_ids"]
 torch.manual_seed(SEED)
 print("=== unconditional (all-[MASK] -> generate, default sampler) ===")
@@ -312,3 +365,5 @@ Lily's mom replied, "I'm sorry! I didn't know what to do."
 
 Her mom explained, "Why don't have 
 ```
+
+**결과 해석** — 작은 3.79M 모델·짧은 학습이라 완벽하진 않아 "She is happy and happy", "Why don't have"처럼 어색한 구절이 남습니다. 그래도 인물(Lily, Ben)·대화·배경이 이어지는 동화가 나오고, 특히 조건부 생성은 프롬프트 "Once upon a time" 뒤로 일관된 이야기를 펼쳐 모델이 조건부 구조를 학습했음을 보여줍니다.

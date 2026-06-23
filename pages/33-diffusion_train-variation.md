@@ -102,3 +102,5 @@ Lily's mom said, "I don't know what to do it!" Her mom replied, "Of course if I 
 
 Her mom explained, "You
 ```
+
+**결과 해석** — 반복 억제 없는 A는 "red red ball", "play with her ball with it"처럼 인접·구절 반복이 보이는 반면, B·C·D는 모두 그 맴돎이 사라지고 대화가 이어지는 이야기가 나옵니다. C(temp 0.9)는 좀 더 다채롭지만 "It's so cool! I won't"처럼 흐름이 거칠고, D(block 16)는 더 촘촘해 국소적으로는 매끄럽되 작은 모델 한계로 "do it!", "have some new things" 같은 어색함은 남습니다.
