@@ -53,6 +53,8 @@ DatasetDict({
 })
 ```
 
+로드한 `DatasetDict` 의 train split이 어떤 구조인지 들여다봅니다. 샘플 수, `features` 스키마(라벨이 `ClassLabel`, 텍스트가 `string`), 그리고 첫 샘플의 라벨·텍스트를 직접 출력해 데이터의 모습을 확인합니다.
+
 ```python
 # train split의 첫 샘플 + features 확인
 print(f"train samples: {len(ds['train']):,}")
@@ -76,6 +78,8 @@ First sample:
   text:  dr. goldberg offers everything i look for in a general practitioner.  he's nice and easy to talk to without being patronizing; he's always on time in seeing his patients; he's affiliated with a top-no...
 ```
 
+65만 건 전체를 다룰 필요는 없으므로, `shuffle(seed=42)` 로 결정론적으로 섞은 뒤 `select(range(5000))` 로 앞 5,000건만 골라냅니다. Phase 0(Ch 1-6)에서 쓴 것과 동일한 subsample이라, 같은 데이터가 이번엔 토크나이저를 통과하는 모습을 보게 됩니다.
+
 ```python
 # 5,000건만 subsample (Phase 0와 동일한 처리)
 small = ds["train"].shuffle(seed=42).select(range(5000))
@@ -94,6 +98,8 @@ Dataset({
 first sample text: I stalk this truck.  I've been to industrial parks where I pretend to be a tech worker standing in line, strip mall parking lots, and of course the fa...
 ```
 
+Ch 7과 같은 `distilbert-base-uncased` 토크나이저를 불러옵니다. 클래스 이름과 vocab 크기, 그리고 패딩에 쓰일 `[PAD]` 토큰의 id를 확인해 둡니다 — 뒤에서 padding을 줄 때 이 id가 빈자리를 채웁니다.
+
 ```python
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
 print(f"Class:     {type(tokenizer).__name__}")
@@ -108,6 +114,8 @@ Class:     BertTokenizer
 vocab:     30,522
 pad_token: [PAD]  (id=0)
 ```
+
+옵션 없이 `tokenizer(sample)` 를 호출하면 기본 동작을 봅니다. 첫 샘플 텍스트를 토큰화해 `input_ids` 의 길이, 앞 30개 id, 그리고 그 id를 다시 텍스트로 `decode` 한 결과를 나란히 출력합니다.
 
 ```python
 sample = small[0]["text"]
@@ -128,6 +136,12 @@ input_ids length: 75
 First 30 IDs:      [101, 1045, 23899, 2023, 4744, 1012, 1045, 1005, 2310, 2042, 2000, 3919, 6328, 2073, 1045, 9811, 2000, 2022, 1037, 6627, 7309, 3061, 1999, 2240, 1010, 6167, 6670, 5581, 7167, 1010]
 Decoded first 30:  [CLS] i stalk this truck. i ' ve been to industrial parks where i pretend to be a tech worker standing in line, strip mall parking lots,
 ```
+
+**결과 해석**
+
+decode 결과 맨 앞의 `[CLS]` 는 토크나이저가 자동으로 붙인 특수 토큰(id 101)이고, 그 뒤로 소문자화된 원문이 이어집니다 — `uncased` 모델이라 대문자가 모두 소문자로 바뀐 점에 주목하세요. `i ' ve` 처럼 `I've` 가 세 토큰으로 쪼개진 것도 WordPiece가 구두점을 분리한 결과입니다.
+
+길이가 크게 다른 두 문장을 한 배치로 묶어 padding의 효과를 봅니다. 먼저 `padding=False` (기본)로 각 문장이 제 길이 그대로인지 확인하고, 이어 `padding=True` 로 묶었을 때 짧은 문장이 긴 문장 길이까지 채워지면서 `attention_mask` 가 어떻게 0/1로 표시되는지 비교합니다.
 
 ```python
 # 길이가 다른 두 문장을 묶기
@@ -162,6 +176,12 @@ padding=True (return_tensors='pt'):
   attention_mask sentence 1: tensor([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1])
 ```
 
+**결과 해석**
+
+`padding=True` 는 배치 안 가장 긴 문장(75 토큰)에 맞춰 짧은 문장을 채우므로 shape이 `[2, 75]` 가 됩니다. 짧은 문장 0번은 앞 5칸만 `attention_mask=1` 이고 나머지는 `0` 으로, 모델이 그 자리를 패딩으로 인식해 무시하도록 표시된 것입니다.
+
+이번엔 `padding="max_length"` 로 두 문장을 *항상 128* 까지 채웁니다. 배치 안 longest와 무관하게 고정 길이가 되며, `attention_mask` 의 1 비율을 계산해 짧은 문장에서 얼마나 많은 자리가 패딩으로 낭비되는지 숫자로 확인합니다.
+
 ```python
 out_fixed = tokenizer(texts, padding="max_length", max_length=128, return_tensors="pt")
 print(f"shape: {out_fixed['input_ids'].shape}  (batch 2, max_length=128)")
@@ -180,6 +200,12 @@ shape: torch.Size([2, 128])  (batch 2, max_length=128)
 attention_mask=1 ratio: 31.2%
   → short sentence is mostly padding (compute wasted)
 ```
+
+**결과 해석**
+
+실제 토큰이 전체의 31.2%뿐이라는 건 약 69%가 패딩이라는 뜻 — 이만큼의 self-attention 계산이 그저 버려집니다. 고정 길이(`max_length`)가 주는 일정한 shape의 대가가 이 낭비이며, 뒤에서 동적 padding으로 이 비율을 끌어올리게 됩니다.
+
+BERT 계열은 사전학습 한도가 512 토큰이라 그보다 긴 입력은 그대로 모델에 넣을 수 없습니다. 일부러 긴 텍스트를 만들어, `truncation` 없이 호출하면 경고와 함께 1,602 토큰이 나오는 것과 `truncation=True, max_length=128` 로 자르면 정확히 128로 맞춰지는 것을 비교합니다.
 
 ```python
 # 매우 긴 텍스트 (512 토큰 초과)
@@ -203,6 +229,12 @@ truncation=False: 1602 tokens  (may exceed BERT limit 512)
 truncation=True, max_length=128: 128 tokens
   Last token: [SEP] (= [SEP], always appended)
 ```
+
+**결과 해석**
+
+`truncation` 없이 1,602 토큰을 만들면 transformers가 512 초과를 경고합니다 — 이 상태로 모델에 넣으면 인덱싱 에러가 납니다. `truncation=True` 로 자른 뒤에도 마지막 토큰이 `[SEP]` 인 점이 핵심으로, 토크나이저는 단순히 뒤를 잘라내는 게 아니라 잘린 끝에 문장 종료 토큰을 항상 다시 붙여 줍니다.
+
+`max_length` 를 어림짐작이 아니라 데이터로 정하기 위해, 앞 1,000건의 토큰 길이 분포(min/mean/median/percentile)를 구합니다. 이어 `64/128/256/512` 각각에서 몇 %가 잘리는지 계산해, 길이 상한과 정보 손실의 trade-off를 한눈에 봅니다.
 
 ```python
 # 5,000건의 토큰 길이 분포
@@ -246,6 +278,10 @@ Fraction truncated at various max_length:
   max_length=512:   3.9% truncated
 ```
 
+**결과 해석**
+
+평균은 177이지만 median이 131이라 분포가 오른쪽으로 길게 늘어진 형태(소수의 매우 긴 리뷰가 평균을 끌어올림)입니다. `max_length=128` 이면 절반가량(50.9%)이 잘리지만, 잘리는 건 대부분 뒷부분 세부 묘사라 별점 예측에는 영향이 작아 이 커리큘럼의 표준값으로 씁니다 — 손실을 더 줄이려면 256/512 쪽으로 올리되 그만큼 계산이 늘어납니다.
+
 ```python
 def tokenize_fn(batch):
     # batch는 dict of lists: {"text": [..., ...], "label": [..., ...]}
@@ -255,7 +291,11 @@ def tokenize_fn(batch):
         truncation=True,
         max_length=128,
     )
+```
 
+**위 코드 읽기** — `batched=True` 로 부르면 `tokenize_fn` 이 받는 `batch` 는 샘플 하나가 아니라 *리스트의 dict* 입니다. 그래서 `batch["text"]` 가 문자열 리스트가 되고, 토크나이저가 이 리스트를 한 번에 처리해 1샘플씩 부르는 것보다 훨씬 빠릅니다.
+
+```python
 # batched=True: tokenize_fn을 batch_size개씩 묶어 호출 (기본 1,000)
 tokenized = small.map(tokenize_fn, batched=True, batch_size=200)
 
@@ -263,6 +303,8 @@ print(tokenized)
 print(f"\nFirst sample input_ids length: {len(tokenized[0]['input_ids'])}  (= 128, fixed)")
 print(f"First sample attention_mask sum: {sum(tokenized[0]['attention_mask'])}  (real tokens)")
 ```
+
+**위 코드 읽기** — `map` 은 원본 컬럼(`text`, `label`)은 그대로 두고 `input_ids`/`token_type_ids`/`attention_mask` 를 *덧붙인* 새 데이터셋을 돌려줍니다. 결과는 디스크에 자동 캐시되어 같은 함수·데이터로 다시 부르면 즉시 로드됩니다.
 
 **▶ 실행 결과**
 
@@ -275,6 +317,8 @@ Dataset({
 First sample input_ids length: 128  (= 128, fixed)
 First sample attention_mask sum: 75  (real tokens)
 ```
+
+`filter` 는 조건을 만족하는 샘플만 남깁니다. 별점이 높은(label ≥ 3) 긍정 리뷰만, 그리고 단어 100개 이하의 짧은 리뷰만 각각 골라내 전체 대비 비율을 확인합니다.
 
 ```python
 # 별점 4-5 (label 3-4) 만
@@ -292,6 +336,8 @@ print(f"Short samples:    {len(short):,} / {len(small):,} = {len(short)/len(smal
 Positive samples: 1,996 / 5,000 = 39.9%
 Short samples:    2,520 / 5,000 = 50.4%
 ```
+
+학습에 넣으려면 출력이 Python 리스트가 아니라 PyTorch 텐서여야 합니다. `with_format("torch", columns=[...])` 로 지정한 컬럼만 텐서로 내보내는 새 데이터셋을 만들고, 첫 샘플의 dtype·shape를 확인합니다.
 
 ```python
 # 모델에 바로 먹일 수 있도록 PyTorch tensor로 변환
@@ -313,6 +359,8 @@ input_ids:      Tensor, dtype=torch.int64, shape=torch.Size([128])
 attention_mask: Tensor, shape=torch.Size([128])
 label:          4  (0-4 = stars 1-5)
 ```
+
+텐서 형식 데이터셋을 `DataLoader` 에 넣으면 배치 묶기와 셔플이 자동으로 처리됩니다. 첫 배치를 꺼내 각 키의 shape(`input_ids`/`attention_mask` 가 `[batch_size, max_length]`)와 라벨 값을 확인합니다 — Ch 9의 `Trainer` 가 내부에서 만들어 쓰는 입력의 모습입니다.
 
 ```python
 from torch.utils.data import DataLoader
@@ -338,6 +386,8 @@ label shape:          torch.Size([8])
 label values:         [1, 3, 3, 3, 1, 1, 3, 3]
 ```
 
+동적 padding을 쓰려면 토큰화 단계에서는 일부러 padding을 *빼고* truncation만 적용합니다. 그러면 샘플마다 길이가 제각각이 되어 그대로는 하나의 텐서로 묶을 수 없는데, 앞 10개의 길이를 출력해 이 점을 직접 확인합니다.
+
 ```python
 from transformers import DataCollatorWithPadding
 
@@ -360,6 +410,8 @@ print(f"  → all different — cannot batch as-is into a tensor")
 First 10 sample token lengths: [75, 128, 89, 28, 128, 128, 128, 128, 64, 128]
   → all different — cannot batch as-is into a tensor
 ```
+
+길이가 제각각인 샘플을 `DataCollatorWithPadding` 에 맡깁니다. 이 collator를 `DataLoader` 의 `collate_fn` 자리에 넣으면 *배치를 만들 때마다 그 배치 안 longest까지만* padding하므로, 배치별 shape와 채움률(`fill`)이 어떻게 달라지는지 출력합니다.
 
 ```python
 # DataCollatorWithPadding이 collate_fn 자리에서 매 배치 동적 padding
@@ -437,6 +489,10 @@ Dynamic vs static total tokens: 100.0% → ~0% reduction
 (this much self-attention compute saved → faster training, less memory)
 ```
 
+**결과 해석**
+
+여기서는 절감이 0%로 나옵니다 — 이 50개 샘플 중 긴 리뷰가 많아 거의 모든 배치의 longest가 max_length(128)에 닿았기 때문입니다. 동적 padding의 이득은 *짧은 문장이 많이 섞인* 배치에서 커지므로, 데이터 분포에 따라 절감 폭이 크게 달라진다는 점을 보여주는 사례입니다.
+
 ### 실험 2 — `DataCollatorForLanguageModeling` 으로 MLM masking 직접 보기
 
 BERT 사전학습은 입력 토큰의 15%를 `[MASK]` 로 가리고 모델이 맞추도록 학습됩니다 (Masked Language Modeling). 그 masking 자체를 담당하는 게 `DataCollatorForLanguageModeling` — 이번 챕터의 학습엔 안 쓰지만, BERT의 기원을 이해하는 데 직접 보는 게 빠릅니다.
@@ -474,6 +530,12 @@ labels shape:    torch.Size([3, 128])  (-100 positions ignored by loss)
 [MASK] tokens: 44 / 384 (11.5%)
   (of the 15% masked: 80% [MASK], 10% random token, 10% kept — so [MASK] rate ~12%)
 ```
+
+**결과 해석**
+
+`labels` shape이 `input_ids` 와 같지만 마스킹된 자리 외에는 모두 `-100` 으로 채워져 loss에서 무시됩니다. 실제 `[MASK]` 토큰 비율이 15%가 아니라 11.5%인 건, 가릴 15% 중 80%만 `[MASK]` 로 바꾸고 10%는 랜덤 토큰, 10%는 원본 유지하는 BERT의 규칙 때문입니다.
+
+masking이 토큰 단위로 정확히 무슨 일을 하는지 첫 샘플 앞 25토큰을 표로 펼쳐 봅니다. 원래 토큰(`original`) / collator가 내보낸 토큰(`masked`) / loss가 맞춰야 할 정답(`label`)을 나란히 두고, 바뀐 자리에 `*` 를 표시합니다.
 
 ```python
 # 첫 샘플 — 원래 vs masked vs label 비교
@@ -529,6 +591,10 @@ industrial industrial (ignored)
 
 Rows marked * are positions where the collator masked or replaced the token — the model learns to predict the original token there.
 ```
+
+**결과 해석**
+
+`*` 표시 행을 보면 세 가지 규칙이 한눈에 드러납니다 — `truck` 자리는 `barrington` 이라는 *랜덤 토큰* 으로 바뀌었고, `.` 와 `i` 자리는 `[MASK]` 로 가려졌습니다. 가려지지 않은 자리의 label은 모두 `(ignored)`(`-100`)라, 모델은 오직 `*` 자리의 원래 토큰만 예측하도록 학습됩니다.
 
 ### 실험 2b — GPT-style CLM 도 같은 collator로
 
@@ -588,6 +654,10 @@ labels shape:     torch.Size([3, 48])
 First sample: input_ids == labels?  (excluding padding, all should match)
   Matching positions: 48 / 48
 ```
+
+**결과 해석**
+
+48자리가 모두 일치한다는 건 CLM에서는 `labels` 가 `input_ids` 의 복사본이라는 뜻입니다 — MLM처럼 일부를 가리지 않습니다. 정답을 그대로 입력에 두고도 컨닝이 안 되는 이유는, 모델이 forward 내부에서 한 칸씩 밀어(shift-by-one) *다음* 토큰을 맞추고 causal mask로 오른쪽을 못 보기 때문입니다.
 
 ```python
 # 첫 샘플 — input vs label (패딩 자리 -100 확인)
