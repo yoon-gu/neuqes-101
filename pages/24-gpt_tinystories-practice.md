@@ -78,6 +78,8 @@ torch      : 2.11.0+cu128
 use fp16   : True
 ```
 
+`roneneldan/TinyStories` 의 학습 split 에서 처음 30,000 편, 검증 split 에서 500 편만 가져옵니다. full 은 약 2.1M 편이라 그대로 쓰면 T4 30분 룰을 넘기므로 subset 으로 제한합니다. 샘플 story 를 한 편 찍어 보면 어휘·문법이 얼마나 단순한지 한눈에 확인할 수 있습니다.
+
 ```python
 from datasets import load_dataset
 
@@ -112,6 +114,12 @@ Lily went to her mom and said, "Mom, I found this needle. Can you share it with 
 To
 ```
 
+**결과 해석**
+
+train 30,000 편 / val 500 편이 정상적으로 로드되었고, 샘플 story 가 "One day, a little girl named Lily..." 처럼 4세 어린이가 이해할 단어로만 쓰인 짧은 동화임이 보입니다. 이 단순한 어휘·문법 덕분에 약 3M 짜리 작은 모델로도 grammatical 한 생성이 가능합니다.
+
+GPT-2 와 같은 종류인 byte-level BPE 토크나이저를 코퍼스에서 직접 학습합니다. Ch 19 의 WordPiece/WordLevel 학습과 같은 절차이고 알고리즘만 BPE 로 바뀝니다. 핵심은 vocab 을 작게 (2,048) 잡아 작은 모델에 맞춘다는 점입니다.
+
 ```python
 from tokenizers import Tokenizer
 from tokenizers.models import BPE
@@ -133,6 +141,11 @@ trainer = BpeTrainer(
     show_progress=True,
 )
 
+```
+
+**위 코드 읽기** — `BPE(unk_token=None)` 으로 빈 BPE 모델을 만들고, `ByteLevel` pre-tokenizer 를 붙입니다. byte-level 방식이라 `unk_token` 이 필요 없습니다 — 가장 작은 단위가 byte (256개) 라 `initial_alphabet=ByteLevel.alphabet()` 으로 모든 byte 를 vocab 에 미리 넣어 두면 어떤 유니코드 문자열도 UNK 없이 완전 가역으로 표현됩니다. `special_tokens=[EOS]` 로 `<|endoftext|>` 단 하나만 등록하는 것이 GPT-2 의 최소 특수 토큰 컨벤션입니다.
+
+```python
 t0 = time.time()
 bpe.train_from_iterator((ex["text"] for ex in raw_train), trainer, length=len(raw_train))
 print(f"BPE training done: {time.time()-t0:.1f}s, vocab={bpe.get_vocab_size()}")
@@ -145,6 +158,11 @@ tokenizer = PreTrainedTokenizerFast(
     pad_token=EOS,
 )
 
+```
+
+**위 코드 읽기** — `train_from_iterator` 로 30,000 편 코퍼스에서 빈도 높은 byte 쌍을 반복 병합해 vocab 2,048 을 학습합니다. 그런 다음 `PreTrainedTokenizerFast` 로 감싸 HF 표준 인터페이스로 만드는데, `bos_token = eos_token = pad_token = EOS` 로 셋을 모두 `<|endoftext|>` 하나에 겸용시키는 것이 GPT-2 컨벤션입니다 (BERT 의 5종 특수 토큰과 대비).
+
+```python
 print("\n=== encode/decode demo ===")
 sample = "Once upon a time, a little rabbit went to the forest."
 enc = tokenizer(sample)
@@ -155,6 +173,8 @@ print(f"decode     : {tokenizer.decode(enc['input_ids'])}")
 print(f"vocab_size : {tokenizer.vocab_size}")
 print(f"eos_token  : {tokenizer.eos_token}  id={tokenizer.eos_token_id}")
 ```
+
+**위 코드 읽기** — 학습된 토크나이저로 예시 문장을 encode → decode 해 가역성을 확인합니다. 토큰 앞의 `Ġ` 는 byte-level 방식에서 *공백* 을 나타내는 표시로, 단어 경계가 별도 접두사 없이 공백 byte 자체로 인코딩됨을 보여 줍니다.
 
 **▶ 실행 결과**
 
@@ -170,6 +190,12 @@ vocab_size : 2048
 eos_token  : <|endoftext|>  id=0
 ```
 
+**결과 해석**
+
+BPE 학습이 약 10초 만에 끝나 vocab 2,048 이 완성되었고, `Once / Ġupon / Ġa / Ġtime` 처럼 자주 등장하는 표현은 한 토큰으로 압축되는 반면 `Ġrabbit` 도 단일 토큰으로 잡혔습니다. decode 결과가 원문과 정확히 일치해 byte-level BPE 의 완전 가역성이 확인되고, `<|endoftext|>` 가 id=0 으로 잘 등록되었습니다.
+
+HuggingFace 의 causal LM 학습 표준 패턴 (`run_clm.py`) 그대로, 가변 길이 story 들을 고정 길이 토큰 블록의 스트림으로 만듭니다. Ch 20·22 의 MLM `group_texts` 와 완전히 같은 패턴이고, 마스킹이 없다는 점만 다릅니다.
+
 ```python
 BLOCK_SIZE = 128
 
@@ -180,6 +206,11 @@ def tokenize_fn(batch):
 tok_train = raw_train.map(tokenize_fn, batched=True, remove_columns=["text"], desc="tokenize train")
 tok_val   = raw_val.map(tokenize_fn,   batched=True, remove_columns=["text"], desc="tokenize val")
 
+```
+
+**위 코드 읽기** — `BLOCK_SIZE=128` 로 chunk 길이를 정하고, 코퍼스를 배치 단위로 토큰화하면서 원본 `text` 컬럼은 제거합니다. 이 시점의 각 행은 아직 *story 한 편 길이* 의 가변 길이 토큰 시퀀스입니다.
+
+```python
 # 각 story 끝에 EOS 부착 (story 경계 표시)
 def add_eos(batch):
     new_ids, new_mask = [], []
@@ -192,6 +223,11 @@ def add_eos(batch):
 tok_train = tok_train.map(add_eos, batched=True, desc="add eos train")
 tok_val   = tok_val.map(add_eos,   batched=True, desc="add eos val")
 
+```
+
+**위 코드 읽기** — 각 story 끝에 `eos_token_id` (`<|endoftext|>`) 를 붙여 story 경계를 표시합니다. 다음 단계에서 모든 토큰을 하나의 스트림으로 이어 붙일 때, 이 EOS 가 *서로 다른 story 가 한 chunk 안에서 섞일 때의 경계 신호* 역할을 합니다.
+
+```python
 # group_texts - 모든 토큰을 이어붙여 BLOCK_SIZE 단위로 자름
 def group_texts(batch):
     concatenated = {k: sum(batch[k], []) for k in batch.keys()}
@@ -212,6 +248,8 @@ print("\nfirst chunk decode (first 200 chars):")
 print(tokenizer.decode(lm_train[0]["input_ids"])[:200])
 ```
 
+**위 코드 읽기** — `concatenated` 에서 배치의 모든 토큰을 하나로 이어 붙인 뒤 `BLOCK_SIZE` 의 배수로 길이를 잘라 (나머지 버림) 128 토큰 chunk 들로 나눕니다. 각 chunk 한 개가 학습 sample 한 개가 되고, 이후 collator 가 `labels` 를 채워 next-token prediction loss 로 이어집니다.
+
 **▶ 실행 결과**
 
 ```text
@@ -222,6 +260,12 @@ approx. train tokens: 7.42 M
 first chunk decode (first 200 chars):
 One day, a little girl named Lily found a needle in her room. She knew it was difficult to play with it because it was sharp. Lily wanted to …(뒤 60자 생략)
 ```
+
+**결과 해석**
+
+30,000 편이 57,973 개의 128-토큰 chunk (약 7.42M 토큰) 로, val 은 867 chunk 로 변환되었습니다. 첫 chunk 를 decode 하면 끊김 없는 연속 텍스트가 나와 가변 길이 story 들이 고정 길이 스트림으로 정상 재구성됐음이 확인됩니다.
+
+`DataCollatorForLanguageModeling(mlm=False)` 가 내부적으로 `labels = input_ids.clone()` 을 만든다는 사실을, 실제 배치를 하나 만들어 `-100` 자리 비율로 직접 확인합니다. MLM collator 가 약 85% 를 `-100` 으로 채웠던 것과 정반대로, CausalLM 은 거의 모든 자리가 학습 신호임을 눈으로 보는 셀입니다.
 
 ```python
 from transformers import DataCollatorForLanguageModeling
@@ -271,6 +315,12 @@ total positions      : 256
 (input_ids == labels) positions: 255/256  - clone as-is
 ```
 
+**결과 해석**
+
+256 자리 중 `-100` 은 단 1자리 (0.39%) 뿐이고 99.61% 가 학습 신호로, MLM 의 약 15% 와 정확히 반대입니다. `input_ids == labels` 가 255/256 으로 일치해 collator 가 정말 `input_ids.clone()` 을 그대로 labels 로 쓴다는 점이 확인되며, 이 토대가 Ch 28 SFT 의 `labels[:prompt_len] = -100` 한 줄을 이해하는 배경이 됩니다.
+
+`GPT2Config` 의 핵심 필드만 작게 (`n_layer=4, n_head=4, n_embd=256`) 잡아 약 3M 짜리 작은 모델을 *random init* 으로 띄웁니다. `from_pretrained` 없이 `GPT2LMHeadModel(config)` 로 만드는 것이 from-scratch 의 핵심이고, bos/eos/pad token id 를 토크나이저와 동기화해야 generation 이 정상 종료됩니다.
+
 ```python
 from transformers import GPT2Config, GPT2LMHeadModel
 
@@ -309,6 +359,12 @@ model: GPT2LMHeadModel
   - head : Linear(in=256, out=2048)
 ```
 
+**결과 해석**
+
+모델이 약 3.72M params (fp32 약 14MiB) 로, weight tying 이 켜져 LM head 와 input embedding 이 같은 텐서를 공유합니다. 본체는 `GPT2Model` (causal attention 내장) 이고 head 는 `Linear(in=256, out=2048)` 로, BERT 의 `BertForMaskedLM` 과 달리 클래스 자체가 decoder 임이 코드로 드러납니다.
+
+학습 *전* random init 모델로 같은 prompt 3개를 생성해 비교 기준선을 만듭니다. Ch 20·22 의 *사전학습 전 [MASK] top-5* 와 같은 역할로, 나중에 학습 후 결과와 나란히 두면 사전학습이 본체에 무엇을 새겼는지가 한 화면에 드러납니다.
+
 ```python
 PROMPTS = [
     "Once upon a time,",
@@ -331,6 +387,11 @@ def generate_text(active_model, prompt: str, gen_tokenizer=None, **kwargs):
     return tok.decode(out[0], skip_special_tokens=True)
 
 
+```
+
+**위 코드 읽기** — `PROMPTS` 3개와 공통 sampling 설정 `GEN_KWARGS` (`temperature=0.8, top_k=50`) 를 정의하고, `generate_text` 헬퍼는 prompt 를 인코딩해 `active_model.generate(...)` 를 호출한 뒤 특수 토큰을 빼고 디코드합니다. `gen_tokenizer` 인자가 있어 뒤에서 reference `gpt2` 의 다른 토크나이저로도 같은 함수를 재사용합니다.
+
+```python
 # 재현성을 위해 학습 전·후 동일 seed
 torch.manual_seed(SEED)
 model.eval()
@@ -345,6 +406,8 @@ for p in PROMPTS:
     print(text)
 ```
 
+**위 코드 읽기** — 학습 전·후를 같은 조건에서 비교하려고 `torch.manual_seed(SEED)` 로 sampling 난수를 고정한 뒤, random init 모델로 각 prompt 의 생성 결과를 `before_outputs` 에 모아 둡니다. 이 리스트가 나중 before/after 비교의 한 축이 됩니다.
+
 **▶ 실행 결과**
 
 ```text
@@ -358,6 +421,12 @@ The little girlakak everyush Sarahgged:un't different different# gl keepner Grai
 [prompt] A big dog
 A big dog cle music hisftere learnedpe fam pullve bat batinin paper paper teacherkes cr wear soup yes curi tw7 colors wall runlf This Sam bb …(뒤 113자 생략)
 ```
+
+**결과 해석**
+
+세 prompt 모두 영어와 거리가 먼 byte 조각·의미 없는 짧은 단어가 반복되는 무작위 나열입니다. logits 가 random 초기값이라 sampling 이 통계적 빈도 토큰 사이에서만 흔들리는 상태로, 학습 후 결과의 비교 기준선이 됩니다.
+
+BERT 챕터들 (Ch 20·22) 과 완전히 같은 `Trainer` 패턴으로 사전학습합니다. 바뀌는 곳은 모델 클래스와 collator 의 `mlm=False` 두 군데뿐이고, `max_steps=1500 / batch_size=32 / fp16=True` 로 T4 약 1분에 맞춥니다 (T4 는 bf16 불가라 항상 fp16). `VRAMCallback` 은 step 별 peak VRAM 을 기록해 뒤 그래프에 씁니다.
 
 ```python
 from transformers import (DataCollatorForLanguageModeling, Trainer,
@@ -443,6 +512,12 @@ random baseline (ln vocab): 7.6246
 final peak    : 60 MiB
 ```
 
+**결과 해석**
+
+1500 step 학습이 약 0.87분 만에 끝났고, 누적 평균 `train_loss` 가 3.83 으로 random baseline `ln(2048) ≈ 7.62` 에서 크게 내려왔습니다. perplexity 로는 약 $e^{3.83} \approx 46$ 으로, vocab 2,048 중 수십 개 후보로 좁힌 상태이고 peak VRAM 도 60MiB 에 불과해 T4 30분 룰 안에 여유롭게 들어옵니다.
+
+학습 로그에서 train/eval loss 와 step 별 peak VRAM 을 뽑아 두 패널로 그립니다. loss 패널에는 `ln(2048)` 무작위 추측 기준선을 점선으로 함께 표시해, 곡선이 그 기준선에서 얼마나 내려왔는지를 한눈에 보게 합니다.
+
 ```python
 # loss curve + VRAM trace
 log = trainer.state.log_history
@@ -482,6 +557,8 @@ plt.tight_layout(); plt.show()
 
 ![output](../assets/24-gpt_tinystories-out1.png)
 
+학습 전과 *완전히 같은* seed·prompt·sampling 설정으로 학습된 모델에서 다시 생성합니다. 조건이 동일하므로 출력 차이는 오직 학습된 가중치에서 옵니다.
+
 ```python
 torch.manual_seed(SEED)
 model.eval()
@@ -515,6 +592,10 @@ A big dog, but they could go in the park. They ran away and the truck. The bird 
 
 "It's okay, it is not very curious. He is not
 ```
+
+**결과 해석**
+
+학습 후에는 "there was a girl named Lily. She loved to play with her friends..." 처럼 주어+동사+목적어 구조의 동화 풍 영어 문장이 나옵니다. 완벽하지는 않지만 학습 전의 무작위 byte 나열과 비교하면 사전학습이 본체에 next-token 분포를 새겼다는 증거가 한눈에 드러납니다.
 
 ```python
 # before / after 나란히 - 사전학습이 본체에 새긴 next-token 분포의 직접적 증거
@@ -556,6 +637,8 @@ AFTER   : , but they could go in the park. They ran away and the truck. The bird
 
 "It's okay, it is not very curious. He is not
 ```
+
+같은 prompt 3개를 충분히 학습된 표준 `gpt2` (124M, WebText 약 40GB 사전학습) 에 넣어, 우리 작은 GPT (약 3M, TinyStories 30K) 와 격차를 직접 비교합니다. Ch 20 의 *3-way [MASK] top-5 비교* 와 같은 패턴이고, T4 에서 약 1분 추가됩니다. 끝에서 `del` + `empty_cache()` 로 124M 모델 메모리를 정리합니다.
 
 ```python
 from transformers import AutoTokenizer, AutoModelForCausalLM
@@ -610,6 +693,10 @@ In the long run, we find that people who have an allergy to animals are less lik
 But these people are less likely to have
 ```
 
+**결과 해석**
+
+`gpt2` (124M, vocab 50,257) 는 같은 prompt 에 동화풍이 아닌 일반 산문·뉴스·대화 등 훨씬 다양한 톤·도메인 어휘로 자연스러운 문장 흐름을 만들어 냅니다. WebText 의 다양성이 generation 다양성으로 직결되며, 이는 우리 작은 GPT 가 동화 도메인에 강한 대신 폭이 좁은 것과 대비됩니다.
+
 ```python
 # 3-way 비교 - BEFORE (random) / OURS (3M, TinyStories) / REF (gpt2 124M, WebText)
 print("=" * 78)
@@ -658,3 +745,7 @@ OURS   : , but they could go in the park. They ran away and the truck. The bird 
 "It's okay, it is not
 ...
 ```
+
+**결과 해석**
+
+세 모델을 한 줄에 놓으면 격차가 또렷합니다. BEFORE 는 영어와 거리가 먼 byte 조각 나열, OURS (3M, TinyStories 30K) 는 "there was a girl named Lily..." 처럼 문법은 맞지만 같은 구절을 반복하는 단순한 동화체, REF (`gpt2` 124M) 는 동화와 무관한 일반 산문·뉴스·대화체입니다. OURS 가 동화 도메인 안에서는 그럴듯하지만 폭이 좁고 반복이 잦은 반면 REF 는 도메인이 넓고 자연스러워, generation 품질이 *모델 크기 + 데이터 규모·다양성* 의 격차를 그대로 반영함이 드러납니다.

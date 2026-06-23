@@ -43,6 +43,10 @@ She did not know what. She liked to do with some other adventure. She would a lo
 Once upon a time, a little rabbit who liked to read water to play the toys. One day, Joe's mommy saw fool, who was gone to explore it. They …(뒤 136자 생략)
 ```
 
+**결과 해석**
+
+`T=0.3, top_k=20` 은 "play with her toys" 가 반복될 만큼 안전하지만 단조롭고, `T=0.8` 은 적당히 다양하면서 문장이 이어집니다. `T=1.0, top_p=0.9` 와 `T=1.2, top_k=100` 으로 갈수록 "read water" 처럼 말이 안 되는 조합이 섞이며, 학습된 본체는 그대로인 채 sampling 분포만으로 다양성↔일관성 trade-off 가 조절됨이 드러납니다.
+
 **관전 포인트**
 
 - `temperature` ↑ → logits 분포 *평탄화* → 다양성 ↑, 일관성 ↓
