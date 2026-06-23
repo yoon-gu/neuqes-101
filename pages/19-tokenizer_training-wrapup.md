@@ -45,7 +45,7 @@ embed_params = vocab_size * hidden  # = 2.05M
 
 모델의 `[UNK]` 임베딩은 *단 하나의 벡터* — 어떤 단어가 `[UNK]` 로 변환되든 같은 임베딩으로 들어갑니다. 즉 *모든 모르는 단어가 같은 자리에 모이는* 셈. 분류 task 라면 한 두 개 UNK 는 문맥으로 보완되어 큰 영향 없지만, 생성·번역 task 라면 정보 손실이 직접 출력에 드러납니다.
 
-이 챕터의 결과 (WordPiece 한국어 UNK 거의 0% vs WordLevel 한국어 UNK 5-15%) 는 한국어 생성 모델 (Ch 26 의 한국어 작은 GPT) 가 *왜 byte-level BPE 같은 subword* 를 쓰는지의 직접적인 이유.
+이 챕터의 결과 (WordPiece 한국어 UNK 거의 0% vs WordLevel 한국어 UNK 약 43.7%) 는 한국어 생성 모델 (Ch 26 의 한국어 작은 GPT) 가 *왜 byte-level BPE 같은 subword* 를 쓰는지의 직접적인 이유.
 
 ### Q4. (실무) 의료·법률 같은 *전문 도메인* 에서 직접 학습한 토크나이저는 얼마나 효과적인가요?
 

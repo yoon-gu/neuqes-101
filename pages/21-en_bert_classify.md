@@ -13,7 +13,7 @@ self-contained 노트북: Ch 20 의 MLM 학습을 압축 (2K × 3 epoch) 재현 
 
 1. 🚀 **분류 데이터**: `fancyzhx/yelp_polarity` 이진 분류 (Ch 10 과 같은 5K/1K split, seed 42)
 2. 🔤 **토크나이저**: `bert-base-uncased` (Ch 20 과 동일)
-3. 📥 **MLM 사전학습 데이터**: `Salesforce/wikitext` config `wikitext-103-raw-v1` paragraphs 5K (일반 도메인 — *분류용 Yelp 와 별도*)
+3. 📥 **MLM 사전학습 데이터**: `Salesforce/wikitext` config `wikitext-103-raw-v1` paragraphs 2K (약 27만 토큰 effective — 일반 도메인, *분류용 Yelp 와 별도*)
 4. 🏗️ **MLM 사전학습 재현 (Ch 20 압축본)**: 같은 작은 BertConfig 로 2K paragraphs × 3 epoch (한국어 Ch 23 와 동일)
 5. 🔀 **헤드 교체**: `BertForMaskedLM` → `BertForSequenceClassification(num_labels=2)`. 본체는 그대로, MLM head 떼고 분류 head 부착
 6. 🚀 **분류 fine-tune**: Trainer fp16, 2 epoch
@@ -71,13 +71,13 @@ self-contained 노트북: Ch 20 의 MLM 학습을 압축 (2K × 3 epoch) 재현 
 | 차원 | Ch 10 (DistilBERT) | Ch 21 (이 챕터) | 비고 |
 |---|---|---|---|
 | 본체 파라미터 | 약 66M | **약 10M** | Ch 21 은 1/6 작음 |
-| 사전학습 코퍼스 | Wikipedia + BookCorpus (약 33억 토큰, 일반 도메인) | **Wikitext-103 paragraphs 5K (약 70만-100만 토큰, 일반 도메인)** | 약 3000-5000배 격차, **둘 다 일반 위키** |
+| 사전학습 코퍼스 | Wikipedia + BookCorpus (약 33억 토큰, 일반 도메인) | **Wikitext-103 paragraphs 2K (약 27만 토큰 effective, 일반 도메인)** | 약 1만배 이상 격차, **둘 다 일반 위키** |
 | 사전학습 시간 | TPU 수일 (대규모 인프라) | **T4 약 10분** | |
 | Fine-tune 도메인 | Yelp 이진 (사전학습과 다른 도메인) | Yelp 이진 (사전학습과 다른 도메인) | **둘 다 일반 → Yelp transfer 라 fair** |
 | 분류 fine-tune 셋업 | Ch 10 = 이번 챕터 동일 (같은 데이터, 같은 hyperparams) | | 변하는 건 *본체 출발점* 뿐 |
 | 실측 accuracy | 약 0.90 | **약 0.63** | 실행본 기준 (Ch 10≈0.90, Ch 21=0.6260) |
 
-비교가 *공정* 한 이유 — Ch 10 도 본 챕터도 둘 다 *일반 도메인 위키 사전학습 → Yelp 분류 transfer* 의 같은 패턴. *사전학습 규모* (3000-5000배) 와 *모델 크기* (6배) 만 차이. 만약 Ch 21 이 Yelp text 로 사전학습했다면 비교가 unfair 했을 것 — domain-adaptive pretraining 우위 때문.
+비교가 *공정* 한 이유 — Ch 10 도 본 챕터도 둘 다 *일반 도메인 위키 사전학습 → Yelp 분류 transfer* 의 같은 패턴. *사전학습 규모* (약 1만배 이상) 와 *모델 크기* (6배) 만 차이. 만약 Ch 21 이 Yelp text 로 사전학습했다면 비교가 unfair 했을 것 — domain-adaptive pretraining 우위 때문.
 
 이 격차가 *사전학습 규모의 가치* 를 정량으로 보여줍니다. *작은 일반 도메인 사전학습도 random init 보다는 낫다* 는 것, 그리고 *같은 GPU compute 를 fine-tune 에 모두 쏟아도 사전학습 효과를 메우기 어렵다* 는 것은 부록 노트북 [`appendix_compute_budget.ipynb`](./appendix_compute_budget.ipynb) 에서 fair-compute 관점으로 다룹니다.
 
@@ -172,7 +172,7 @@ vocab 30,522 의 영어 WordPiece. MLM 사전학습과 분류 fine-tune 전 구�
 
 이 노트북을 *self-contained* 로 만들기 위해 Ch 20 의 MLM 사전학습을 여기서 압축 재현합니다. Ch 20 (5K × 2 epoch) 보다 *데이터를 줄이고 (2K) epoch 를 늘려 (3)* 시간을 보존 — 한국어 Ch 23 self-contained 와 동일한 hyperparams. 같은 도메인 (위키) 표상의 *정렬 깊이* 가 충분해 fine-tune 시 random init 보다 분명히 우위.
 
-**MLM 사전학습 데이터는 *분류용 Yelp 와 별도*** — `Salesforce/wikitext`, config `wikitext-103-raw-v1` paragraphs 5K 를 *새로 로드*. 본 챕터의 *진짜 transfer 메시지* — *일반 위키 사전학습 → Yelp 분류 transfer* 가 노트북 한 구조에 자연스럽게 들어맞도록 *두 데이터셋이 공존*. 같은 토크나이저 (`bert-base-uncased`) 가 두 도메인을 모두 처리.
+**MLM 사전학습 데이터는 *분류용 Yelp 와 별도*** — `Salesforce/wikitext`, config `wikitext-103-raw-v1` paragraphs 2K (약 27만 토큰 effective) 를 *새로 로드*. 본 챕터의 *진짜 transfer 메시지* — *일반 위키 사전학습 → Yelp 분류 transfer* 가 노트북 한 구조에 자연스럽게 들어맞도록 *두 데이터셋이 공존*. 같은 토크나이저 (`bert-base-uncased`) 가 두 도메인을 모두 처리.
 
 같은 작은 `BertConfig` (hidden=256, layer=4, head=4, intermediate=1024) → `BertForMaskedLM(config)` random init → Wikitext-103 paragraphs 2K MLM 3 epoch.
 
@@ -264,12 +264,12 @@ GPT 시대 (Phase 4 Ch 24 이후) 부터는 같은 단어가 *살짝 다른 의�
 | 차원 | Ch 10 (DistilBERT pretrained) | Ch 21 (작은 BERT scratch + 2K × 3 epoch MLM) | 비고 |
 |---|---|---|---|
 | 본체 파라미터 | 약 66M | 약 10M | Ch 21 은 1/6 크기 |
-| 사전학습 코퍼스 | Wikipedia + BookCorpus (약 33억 토큰, 일반 도메인) | Wikitext-103 paragraphs 5K (약 70만-100만 토큰, 일반 도메인) | 약 3000-5000배 격차, **둘 다 일반 위키** |
+| 사전학습 코퍼스 | Wikipedia + BookCorpus (약 33억 토큰, 일반 도메인) | Wikitext-103 paragraphs 2K (약 27만 토큰 effective, 일반 도메인) | 약 1만배 이상 격차, **둘 다 일반 위키** |
 | 사전학습 시간 | TPU 수일 | T4 약 10-12분 | |
 | Fine-tune 도메인 | Yelp 이진 (사전학습과 다른 도메인) | Yelp 이진 (사전학습과 다른 도메인) | **둘 다 일반 → Yelp transfer** |
 | 분류 fine-tune 셋업 | (같음 — 5K/1K, batch 16, lr 2e-5, 2 epoch, fp16) | | 본체 외 통제 |
 
-**관찰 — *동일 transfer 패턴 안에서 3000-5000배 사전학습 격차* 가 분류 정확도에 어떻게 드러나나**
+**관찰 — *동일 transfer 패턴 안에서 약 1만배 이상 사전학습 격차* 가 분류 정확도에 어떻게 드러나나**
 
 실측 (실행본 기준):
 - Ch 10 (DistilBERT, 대규모 Wiki+BookCorpus 사전학습): accuracy 약 0.90

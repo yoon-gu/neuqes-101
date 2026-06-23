@@ -4,7 +4,7 @@
 |---|---|---|
 | `AutoModelForCausalLM.from_pretrained("skt/kogpt2-base-v2")` | KoGPT2 (125M, 대규모 한국어 사전학습) 본체 로드 | **새로 등장** (Ch 26 은 `GPT2LMHeadModel(config)` random init) |
 | `PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2", ...)` | KoGPT2 BBPE 토크나이저 (vocab 51,200) 로드 | **새로 등장** (Ch 26 은 직접 학습 BBPE) |
-| `if tokenizer.pad_token is None: tokenizer.pad_token = tokenizer.eos_token` | KoGPT2 의 pad 컨벤션 (없으면 EOS 재활용) | **새로 등장** (Ch 26 은 PreTrainedTokenizerFast 인자로 직접 지정) |
+| `PreTrainedTokenizerFast.from_pretrained(..., pad_token="<pad>")` | KoGPT2 는 별도 `<pad>` 토큰을 직접 지정(EOS 재활용 아님) | **새로 등장** (Ch 26 도 PreTrainedTokenizerFast 인자로 직접 지정) |
 | `transformers.Trainer` | HuggingFace 표준 학습 루프 | **공유** (Ch 26 과 동일 클래스, 동일 인자 구조) |
 | `DataCollatorForLanguageModeling(mlm=False)` | CausalLM collator (`labels = input_ids.clone()` 자동) | **공유** (Ch 26 과 정확히 같음) |
 | `group_texts` 패턴 (HF run_clm.py 표준) | 가변 길이 텍스트 → 고정 길이 블록 스트림 | **공유** |

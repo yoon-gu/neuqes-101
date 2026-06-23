@@ -35,7 +35,7 @@ Phase 5 의 첫 챕터. Ch 24-31 까지 다룬 **GPT (decoder, autoregressive, �
 | 24 | 작은 GPT2 (직접, scratch) | BPE (직접 학습) | TinyStories | `Linear(H, V)` | autoregressive (왼→오 순차) | `CrossEntropyLoss` (next-token) |
 | 31 | SFT base + GRPO | BBPE | verifiable-reward | `Linear(H, V)` + group adv. | autoregressive + RL | `GRPO loss` |
 | **32 ← 여기** | **작은 BERT-style (직접, scratch)** | **ByteLevel BPE 2048 (직접 학습 + `[MASK]`)** | **TinyStories** | **`Linear(H, V)`** | **parallel denoise (가변 마스킹 + 반복 복원)** | **masked-diffusion denoising loss (`1/t` 재가중)** |
-| 33 (다음) | MDLM (170M) / DiffuGPT (124M) 사전학습 | (각 모델 토크나이저) | 영어 사전학습 추론 시연 | `Linear(H, V)` | parallel denoise (추론만) | — |
+| 33 (다음) | 같은 작은 BERT-style (~3.79M, 재학습) | ByteLevel BPE 2048 (동일) | TinyStories (동일) | `Linear(H, V)` | 샘플러 개선 (carry-over semi-AR + 반복 억제) | masked-diffusion denoising loss (동일) |
 
 전체 챕터 표는 [루트 README](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표) 를 참고하세요.
 
@@ -53,7 +53,7 @@ Ch 24-31 의 GPT 챕터들이 *decoder + next-token 예측 + 왼→오 순차 �
 | 출발 상태 | prompt 토큰들 | **전부 `[MASK]` (무에서 시작)** |
 | 본체 계보 | GPT (Ch 24) | **BERT (Ch 20)** — MLM 을 일반화 |
 
-> **핵심 직관**: GPT 가 *왼쪽부터 한 글자씩 받아쓰기* 라면, diffusion 은 *흐릿한 전체 그림을 여러 번 선명하게 다듬기* 입니다. 이미지 생성에서 노이즈를 점점 걷어내듯, 텍스트에서는 `[MASK]` 를 점점 진짜 단어로 바꿔 갑니다. 본 챕터는 그 메커니즘을 *작은 모델로 직접 구현* 해 봅니다. Ch 33 (MDLM 170M / DiffuGPT 124M 사전학습) 이 *같은 원리의, 충분한 규모로 학습된 실전 모델* 입니다.
+> **핵심 직관**: GPT 가 *왼쪽부터 한 글자씩 받아쓰기* 라면, diffusion 은 *흐릿한 전체 그림을 여러 번 선명하게 다듬기* 입니다. 이미지 생성에서 노이즈를 점점 걷어내듯, 텍스트에서는 `[MASK]` 를 점점 진짜 단어로 바꿔 갑니다. 본 챕터는 그 메커니즘을 *작은 모델로 직접 구현* 해 봅니다. Ch 33 은 *같은 ~3.79M 모델을 그대로 두고 샘플러만 개선* 해 (carry-over semi-AR + 반복 억제) 생성 품질을 끌어올립니다.
 
 ## 변경점 (Diff from Ch 31)
 
@@ -141,7 +141,7 @@ Ch 24 (GPT) 와 *완전히 같은 데이터* — `roneneldan/TinyStories` (Eldan
 
 *데이터를 Ch 24 와 동일* 하게 둔 이유: 나중에 *같은 데이터에서 AR (Ch 24) vs Diffusion (본 챕터) 생성 방식만 다른* 비교를 하기 위함입니다.
 
-학습 split 의 처음 **30,000 stories** 만 사용 (T4 30분 룰 안).
+학습 split 의 처음 **100,000 stories** 만 사용 (T4 30분 룰 안).
 
 ## ByteLevel BPE 2048 직접 학습 + `[MASK]` 추가
 
@@ -246,7 +246,7 @@ BERT/GPT 챕터들과 같은 `Trainer` 패턴이지만, *loss 를 직접 정의*
 | 출발 상태 | prompt | **전부 `[MASK]`** |
 | 성숙도 | 표준 (대부분의 LLM) | **신생 (LLaDA, Trida 등 등장 중)** |
 
-> **왜 diffusion 이 주목받는가**: ① *병렬 생성* 으로 잠재적 속도 이점 (autoregressive 는 토큰 수만큼 순차), ② *양방향 문맥* 으로 infilling·편집에 강점, ③ step 수로 *속도-품질* 을 추론 시점에 조절. 아직 autoregressive 만큼 성숙하진 않지만 *대안 패러다임* 으로 빠르게 발전 중입니다. Ch 33 에서 *사전학습된 작은 diffusion LM (MDLM 170M / DiffuGPT 124M)* 으로 제대로 된 생성을, Ch 34 에서 *한국어 diffusion + AR 직접 비교* 를 다룹니다.
+> **왜 diffusion 이 주목받는가**: ① *병렬 생성* 으로 잠재적 속도 이점 (autoregressive 는 토큰 수만큼 순차), ② *양방향 문맥* 으로 infilling·편집에 강점, ③ step 수로 *속도-품질* 을 추론 시점에 조절. 아직 autoregressive 만큼 성숙하진 않지만 *대안 패러다임* 으로 빠르게 발전 중입니다. Ch 33 에서 *같은 ~3.79M 모델을 재학습하고 샘플러만 개선* (carry-over semi-AR + 반복 억제) 해 생성 품질을 끌어올리는 과정을, Ch 34 에서 *한국어 diffusion + AR 직접 비교* 를 다룹니다.
 
 ## 이 챕터 알고리즘의 논문 계보
 
@@ -265,9 +265,9 @@ BERT/GPT 챕터들과 같은 `Trainer` 패턴이지만, *loss 를 직접 정의*
 1. **D3PM** — Austin et al. 2021, [arXiv:2107.03006](https://arxiv.org/abs/2107.03006). 이산 diffusion + *absorbing(=mask) 상태*. 이론 시초.
 2. **MaskGIT** — Chang et al. 2022, [arXiv:2202.04200](https://arxiv.org/abs/2202.04200). *confidence 기반 반복 병렬 디코딩* — 본 챕터 생성 절차의 원조 (원래 이미지 분야).
 3. **MDLM** — Sahoo et al. 2024, [arXiv:2406.07524](https://arxiv.org/abs/2406.07524). masked diffusion loss = *"고전 MLM loss 들의 가중 혼합"* (NELBO). 본 챕터 `1/t` 재가중의 이론 근거.
-4. **LLaDA** — Nie et al. 2025, [arXiv:2502.09992](https://arxiv.org/abs/2502.09992). 위를 *LLM 스케일* 로. **본 챕터가 직접 따른** forward·loss·sampling. 8B 라 Ch 33 의 *대형 맛보기(선택)* 로 다룹니다.
+4. **LLaDA** — Nie et al. 2025, [arXiv:2502.09992](https://arxiv.org/abs/2502.09992). 위를 *LLM 스케일* 로. **본 챕터가 직접 따른** forward·loss·sampling. 본 챕터·Ch 33 이 단순화해 옮긴 원 알고리즘.
 
-> ⚠️ **혼동 주의** — **Diffusion-LM** (Li et al. 2022, [arXiv:2205.14217](https://arxiv.org/abs/2205.14217)) 은 이름은 비슷하지만 *연속 임베딩 공간* 에서 Gaussian noise 를 더하는 diffusion 이라 본 챕터의 *이산 mask-diffusion* 과 **다른 계열** 입니다. Ch 33 (MDLM/DiffuGPT)·34 는 본 챕터와 같은 이산 mask-diffusion.
+> ⚠️ **혼동 주의** — **Diffusion-LM** (Li et al. 2022, [arXiv:2205.14217](https://arxiv.org/abs/2205.14217)) 은 이름은 비슷하지만 *연속 임베딩 공간* 에서 Gaussian noise 를 더하는 diffusion 이라 본 챕터의 *이산 mask-diffusion* 과 **다른 계열** 입니다. Ch 33·34 는 본 챕터와 같은 이산 mask-diffusion.
 
 > 본 챕터는 *단순화판* 입니다 — 실제 LLaDA 는 semi-autoregressive remasking 등 변형, 대규모 사전학습, 정교한 스케줄을 더합니다. 하지만 *핵심 메커니즘 (가변 마스킹 + `1/t` loss + confidence 병렬 denoise)* 은 동일하므로, 본 챕터를 손으로 구현해 보면 위 논문들의 알고리즘 절을 그대로 읽어낼 수 있습니다.
 

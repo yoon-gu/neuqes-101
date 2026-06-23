@@ -4,7 +4,7 @@
 |---|---|---|
 | `AutoTokenizer.from_pretrained("klue/bert-base")` | 한국어 WordPiece (vocab 약 32,000) | 영어 → 한국어 |
 | `load_dataset("wikimedia/wikipedia", "20231101.ko")` | 한국어 Wikipedia HF 정제본 로드 | `load_dataset("Salesforce/wikitext", ...)` (Ch 20) — 같은 패턴, 언어만 변경 |
-| `Dataset.from_pandas(df[["document"]]).rename_column(...)` | pandas → HF Dataset 변환 | Ch 15 와 같은 패턴 |
+| `collect_paragraphs(...)` + `Dataset.from_dict({"text": paragraphs})` | 위키 본문에서 paragraph 수집 → HF Dataset 구성 | Ch 20 과 같은 패턴 (pandas·`document` 컬럼 없음) |
 | `transformers.BertConfig` (동일) | 작은 BERT hyperparam | (Ch 20 동일) |
 | `transformers.BertForMaskedLM(config)` (동일) | random init MLM 모델 | (Ch 20 동일) |
 | `DataCollatorForLanguageModeling(mlm_probability=0.15)` (동일) | 매 batch 동적 80/10/10 masking | (Ch 20 동일) |

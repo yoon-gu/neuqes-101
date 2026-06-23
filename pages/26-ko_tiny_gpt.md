@@ -1,4 +1,4 @@
-**목표**: Phase 4 의 *한국어 단계 1 (pretraining)* 챕터. Ch 24 에서 *영어 작은 GPT (약 3M params) 를 영어 TinyStories 로 from scratch 사전학습* 했다면, 이번엔 **완전히 같은 본체 구조** 로 **한국어 GPT 사전학습** 을 합니다. 변하는 축은 **언어** — 토크나이저는 한국어 코퍼스 위에 직접 학습한 **byte-level BPE (BBPE)**, 데이터는 **`g0ster/TinyStories-Korean`** (영어 TinyStories 의 한국어 번역본). 본체 구조·loss·trainer·hyperparams 는 Ch 24 와 동일. 같은 prompt 에 *학습 전 / 학습 후* generation 을 나란히 비교해 *사전학습이 본체에 어떤 next-token 분포를 새겼는가* 를 한국어로 직접 봅니다.
+**목표**: Phase 4 의 *한국어 단계 1 (pretraining)* 챕터. Ch 24 에서 *영어 작은 GPT (약 4.2M params) 를 영어 TinyStories 로 from scratch 사전학습* 했다면, 이번엔 **완전히 같은 본체 구조** 로 **한국어 GPT 사전학습** 을 합니다. 변하는 축은 **언어** — 토크나이저는 한국어 코퍼스 위에 직접 학습한 **byte-level BPE (BBPE)**, 데이터는 **`g0ster/TinyStories-Korean`** (영어 TinyStories 의 한국어 번역본). 본체 구조·loss·trainer·hyperparams 는 Ch 24 와 동일. 같은 prompt 에 *학습 전 / 학습 후* generation 을 나란히 비교해 *사전학습이 본체에 어떤 next-token 분포를 새겼는가* 를 한국어로 직접 봅니다.
 
 **환경**: Google Colab **T4 GPU 필수**.
 
@@ -24,9 +24,9 @@
 | Ch | 모델 | 토크나이저 | 데이터 | Output Head | Loss |
 |---|---|---|---|---|---|
 | 23 | 작은 BERT (한국어, scratch) + 분류 head | `klue/bert-base` (가져옴) | NSMC 이진 | `Linear(H, 2)` | `CrossEntropyLoss` |
-| 24 | 작은 GPT2 (약 3M, scratch) | BPE (직접 학습, 영어, vocab 2,048) | 영어 TinyStories 30K stories | `Linear(H, V)` (LM head, weight tied) | `CrossEntropyLoss` (next-token) |
+| 24 | 작은 GPT2 (약 4.2M, scratch) | BPE (직접 학습, 영어, vocab 2,048) | 영어 TinyStories 30K stories | `Linear(H, V)` (LM head, weight tied) | `CrossEntropyLoss` (next-token) |
 | 25 | `gpt2` (124M, OpenAI WebText 사전학습) | BPE (gpt2 그대로, vocab 50,257) | 영어 TinyStories (Ch 24 와 동일) | `Linear(H, V)` (LM head 그대로) | `CrossEntropyLoss` (next-token) - continual pretraining |
-| **26 ← 여기** | **작은 GPT2 (약 3M, scratch)** | **BBPE (직접 학습, 한국어, vocab 약 4,000)** | **한국어 TinyStories 30K stories** | **`Linear(H, V)` (LM head, weight tied)** | **`CrossEntropyLoss` (next-token)** |
+| **26 ← 여기** | **작은 GPT2 (약 4.2M, scratch)** | **BBPE (직접 학습, 한국어, vocab 약 4,000)** | **한국어 TinyStories 30K stories** | **`Linear(H, V)` (LM head, weight tied)** | **`CrossEntropyLoss` (next-token)** |
 | 27 (다음) | KoGPT2 (`skt/kogpt2-base-v2`, 125M, 대규모 한국어 사전학습) | KoGPT2 BBPE (그대로) | 한국어 TinyStories (Ch 26 과 동일) | `Linear(H, V)` (LM head 그대로) | `CrossEntropyLoss` (next-token) - continual pretraining |
 
 전체 챕터 표는 [루트 README](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표) 를 참고하세요.
@@ -51,7 +51,7 @@ Phase 4 는 영어 (Ch 24-25) 와 한국어 (Ch 26-27) 가 *같은 학습 단계
 | 토크나이저 학습 코퍼스 | 영어 TinyStories | **한국어 TinyStories** |
 | 토크나이저 알고리즘 | byte-level BPE (vocab 2,048) | **byte-level BPE (BBPE, vocab 약 4,000)** - 한글은 byte 단위라 어휘를 약간 키움 |
 | 데이터 | `roneneldan/TinyStories` (영어 동화) | **`g0ster/TinyStories-Korean`** (한국어 번역 동화) |
-| 본체 구조 | `GPT2Config(n_layer=4, n_head=4, n_embd=256)` 약 3M | (그대로) |
+| 본체 구조 | `GPT2Config(n_layer=4, n_head=4, n_embd=256)` 약 4.2M | (그대로) |
 | 모델 클래스 | `GPT2LMHeadModel(config)` random init | (그대로) |
 | Collator | `DataCollatorForLanguageModeling(mlm=False)` | (그대로) |
 | Loss | `CrossEntropyLoss` (next-token, vocab 2,048 logits) | **`CrossEntropyLoss`** (next-token, vocab 약 4,000 logits) |
@@ -198,7 +198,7 @@ Ch 24 와 *완전히 같은 패턴* (HF `run_clm.py` 표준):
 
 `GPT2Config` 의 핵심 필드를 작게 잡고 *random init* (사전학습 X) 시작 — Ch 24 와 *완전히 같은 본체*. vocab 만 한국어 BBPE (약 4,000) 에 맞춤.
 
-- `n_layer=4, n_head=4, n_embd=256` → 약 3M params (Ch 24 와 동일)
+- `n_layer=4, n_head=4, n_embd=256` → 약 4.2M params (Ch 24 와 동일)
 - `n_positions = BLOCK_SIZE = 128`
 - bos / eos / pad token id 를 토크나이저와 동기화
 - `tie_word_embeddings=True` (기본) - LM head 와 input embedding weight 공유
@@ -234,11 +234,11 @@ Ch 24 와 *완전히 같은* Trainer 패턴 — 모델 클래스·collator·hype
 
 ## (선택) Reference 비교 - KoGPT2 의 같은 prompt generation
 
-*학습이 충분히 잘 된* 기준점으로 `skt/kogpt2-base-v2` (125M, 대규모 한국어 사전학습) 에 같은 한국어 prompt 를 넣어 *우리 작은 GPT (약 3M, 한국어 TinyStories 30K)* 와 격차를 봅니다. **Ch 27 이 KoGPT2 본격 챕터** 이므로 여기서는 *간단히 한 번만* — T4 시간을 아끼려면 이 셀은 건너뛰어도 됩니다.
+*학습이 충분히 잘 된* 기준점으로 `skt/kogpt2-base-v2` (125M, 대규모 한국어 사전학습) 에 같은 한국어 prompt 를 넣어 *우리 작은 GPT (약 4.2M, 한국어 TinyStories 30K)* 와 격차를 봅니다. **Ch 27 이 KoGPT2 본격 챕터** 이므로 여기서는 *간단히 한 번만* — T4 시간을 아끼려면 이 셀은 건너뛰어도 됩니다.
 
 **해석 가이드 - 규모가 만든 격차**
 
-- **OURS (약 3M, 한국어 TinyStories 30K)**: *동화 풍 단순 한국어* - 어휘는 동화 도메인에 강하지만 *복잡한 문장 구조 / 추상적 어휘* 는 약함.
+- **OURS (약 4.2M, 한국어 TinyStories 30K)**: *동화 풍 단순 한국어* - 어휘는 동화 도메인에 강하지만 *복잡한 문장 구조 / 추상적 어휘* 는 약함.
 - **REF (KoGPT2 125M, 대규모 한국어 코퍼스)**: *다양한 도메인 어휘 + 자연스러운 문장 흐름*. 학습 데이터의 규모·다양성이 generation 다양성으로 직결.
 
 > Ch 27 이 이 격차를 *데이터 축을 통제하고* 다룹니다 - KoGPT2 (125M) 의 사전학습 *위에* 같은 한국어 TinyStories 로 **continual pretraining**. *대규모 한국어 사전학습 모델을 작은 도메인 데이터로 적응* 시킬 때의 generation 품질이, 우리 from-scratch 작은 GPT 와 어떻게 다른지 직접 비교 (Ch 24→25 의 한국어 짝).

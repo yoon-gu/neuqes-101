@@ -115,8 +115,8 @@ Ch 26 과 *완전히 동일* 한 `CrossEntropyLoss` (next-token, `mlm=False`). `
 | 상태 | 정답 토큰 확률 | $-\log p$ |
 |---|---|---|
 | 균등 추측 (KoGPT2 vocab 51,200) | $1/51200$ | **10.84** ← random baseline (도달 불필요) |
-| KoGPT2 사전학습 그대로, TinyStories 평가 | $0.05$ - $0.10$ 범위 | **2.5 - 3.0** ← *우리 시작점* (이미 좋음) |
-| Continual pretraining 후 (수백 step) | $0.10$ - $0.20$ 범위 | **1.6 - 2.3** ← *우리 도달점* |
+| KoGPT2 사전학습 그대로, TinyStories 평가 | $0.05$ - $0.10$ 범위 | **3.0 - 4.0** ← *우리 시작점* (이미 좋음) |
+| Continual pretraining 후 (약 3,000 step) | 약 $0.08$ | **약 2.5** ← *우리 도달점* (PPL ≈ 12) |
 | Reference: 학습 길게 했을 때 | $0.25$+ | 약 1.4 |
 
 > Ch 26 의 시작 loss `약 8.3` (random baseline) 와 Ch 27 의 시작 loss `약 2.5-3.0` (사전학습된 본체의 평가 loss) 의 차이가 *대규모 한국어 사전학습이 본체에 미리 새겨둔 next-token 분포* 의 정량적 가치. *Ch 27 은 random 에서 시작하지 않습니다*.
@@ -128,8 +128,9 @@ $\text{PPL} = e^{L}$:
 | CLM loss | PPL | 해석 |
 |---|---|---|
 | 10.84 | 51,200 | 균등 추측 (51K vocab 전체) |
-| 3.0 | 20 | 약 20 개 후보 ← Ch 27 시작 영역 |
-| 2.0 | 7.4 | 약 7 개 후보 ← Ch 27 도달 영역 |
+| 3.0 - 4.0 | 20 - 55 | ← Ch 27 시작 영역 |
+| 2.5 | 12 | 약 12 개 후보 ← Ch 27 도달 영역 (실측 `train_loss` 2.49) |
+| 2.0 | 7.4 | 약 7 개 후보 (더 길게 학습 시) |
 | 1.4 | 4.1 | 거의 결정적 |
 
 > *vocab 51K 의 거대한 공간에서 평균 7-20 개 후보로 좁힌* 상태에서 시작해 더 좁힙니다. Ch 26 의 vocab 약 4,000 과 정량적 비교는 어렵지만 (vocab 단위가 다름), *generation 품질* 로는 직접 비교 가능 — 그게 본 챕터 §7 (3-way 비교) 의 역할.
@@ -176,7 +177,7 @@ tokenizer = PreTrainedTokenizerFast.from_pretrained(
 
 > 실무 교훈: *사전학습 모델마다 권장 토크나이저 로드 방식이 다를 수 있습니다.* 모델 카드의 example code 를 확인하고, *encode → decode 왕복* 으로 한 번 검증하는 습관이 이런 함정을 막습니다.
 
-EOS 토큰을 pad 로 재활용. `group_texts` 패턴에서 chunk 길이가 모두 같으면 pad 가 거의 없어 실용적으로는 영향 없음. (영어 Ch 25 에서 `tokenizer.pad_token = tokenizer.eos_token` 했던 것과 같은 패턴 — 다만 KoGPT2 는 이미 pad 가 지정돼 있을 수도 있어 `if None` 가드.)
+KoGPT2 토크나이저를 `pad_token="<pad>"` 로 로드해 pad 가 EOS 와 별도 토큰(`<pad>` id 3 ≠ eos id 1)으로 잡힙니다 — EOS 를 pad 로 재활용하는 게 아닙니다. `group_texts` 패턴에서 chunk 길이가 모두 같으면 pad 가 거의 없어 실용적으로는 영향 없음. (영어 Ch 25 의 gpt2 는 pad 가 없어 `tokenizer.pad_token = tokenizer.eos_token` 로 EOS 를 보충했지만, KoGPT2 는 별도 `<pad>` 를 직접 지정하므로 그 가드가 필요 없습니다.)
 
 ### 한국어를 *제대로* 다루는 vocab
 

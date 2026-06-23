@@ -2,11 +2,11 @@
 
 | 이름 | 한 줄 설명 | 다음 챕터에서 |
 |---|---|---|
-| `BertForMaskedLM(config)` (random init) | bidirectional encoder + MLM head, diffusion 의 denoiser | Ch 33 - MDLM / DiffuGPT (사전학습 diffusion 본체) |
-| `DiffusionCollator` (직접 구현) | 매 배치 `t ~ U(0,1)` 가변 마스킹 | Ch 33-34 - 실전 모델은 내부에 동등 로직 |
+| `BertForMaskedLM(config)` (random init) | bidirectional encoder + MLM head, diffusion 의 denoiser | Ch 33 - 같은 모델 재학습 (샘플러만 개선) |
+| `DiffusionCollator` (직접 구현) | 매 배치 `t ~ U(0,1)` 가변 마스킹 | Ch 33-34 - 동일 (학습 방식 그대로) |
 | `1/t` 재가중 loss (`compute_loss` 오버라이드) | masked-diffusion denoising 목표 (log-likelihood bound) | (개념) LLaDA / MDLM 의 핵심 항 |
-| `diffusion_generate` (low-confidence remasking) | 전부 `[MASK]` → 반복 denoise 생성 | Ch 33-34 - 실전 sampler 의 단순화판 |
-| `[MASK]` 토큰 (BPE 2048 에 special token 으로 추가, id 2) | forward (가리기) + reverse (생성) 의 캔버스 | Ch 33-34 - 모델별 mask 토큰 |
+| `diffusion_generate` (low-confidence remasking) | 전부 `[MASK]` → 반복 denoise 생성 | Ch 33 - carry-over semi-AR + 반복 억제로 개선 |
+| `[MASK]` 토큰 (BPE 2048 에 special token 으로 추가, id 2) | forward (가리기) + reverse (생성) 의 캔버스 | Ch 33-34 - 동일 (같은 토크나이저) |
 | denoise 궤적 시각화 | 마스크 → 단어 병렬 채움 관찰 | (개념) AR 과의 핵심 대비 |
 
 ## 체크포인트 질문
@@ -52,7 +52,7 @@ mask = torch.rand(B, L) < t.unsqueeze(1)
 1. **greedy collapse** — 전부 `[MASK]` 에서 greedy(argmax) 로 뽑으면 문맥 없는 첫 step 에서 최빈 토큰(`.`)이 모든 자리 최고 confidence 라 *마침표만 반복* 됩니다. 그래서 `diffusion_generate` 의 기본은 sampling (`temperature=1.0, top_k=50`). greedy 는 진단·비교용으로만.
 2. **규모 한계** — sampling 으로 바꿔도 작은 모델의 unconditional 생성은 거칩니다. 이건 *알고리즘이 아니라 규모* 문제예요: 같은 작은 규모에서 *표준 BERT MLM(고정 15%) 도 복원이 비슷하게 약하고*, `1/t` 재가중 유무도 차이가 없습니다. loss 가 `ln(vocab)` 에서 잘 내려간 것 자체가 학습은 정상이라는 뜻.
 
-품질을 올리려면 규모를 키우거나(아래) — 더 현실적으로는 *사전학습된 작은 모델* 을 쓰면 됩니다 (Ch 33).
+품질을 올리려면 규모를 키우거나(아래) — 더 현실적으로는 *모델은 그대로 두고 샘플러를 개선* 하면 됩니다 (Ch 33).
 
 ```python
 # 규모 키우기 (T4 30분 안에서 가능한 선)
@@ -61,7 +61,7 @@ config.num_hidden_layers = 6; config.hidden_size = 384
 diffusion_generate(model, length=64, steps=32)  # 생성 step 도 늘리기
 ```
 
-*제대로 된 diffusion 생성* 은 Ch 33 에서 — **MDLM (170M) / DiffuGPT (124M)** 같은 사전학습 모델이 *같은 알고리즘, 충분한 규모* 로 얼마나 달라지는지 직접 봅니다.
+*더 깔끔한 diffusion 생성* 은 Ch 33 에서 — **같은 ~3.79M 모델을 재학습하고 샘플러만 개선** (carry-over semi-AR + 반복 억제) 해 같은 모델에서 생성 품질이 얼마나 달라지는지 직접 봅니다.
 
 ### Q4. (실무) `steps` 를 늘리면 무조건 좋아지나요?
 
@@ -95,11 +95,11 @@ trainer = trainers.BpeTrainer(vocab_size=2048,
 
 ## 다음 챕터 예고
 
-**Chapter 33. 작은 사전학습 Diffusion LM — MDLM (170M) + DiffuGPT (124M) 추론**
+**Chapter 33. 샘플러 개선 — carry-over semi-AR + 반복 억제로 생성 품질 끌어올리기**
 
-- **MDLM-owt** (`kuleshov-group/mdlm-owt`, 170M, arXiv:2406.07524) — 본 챕터가 직접 따른 *바로 그 masked diffusion 논문* 의 공식 체크포인트. `AutoModelForMaskedLM` (fill-mask) 라 본 챕터 `BertForMaskedLM` 과 *인터페이스가 거의 동일* → 코드가 매끄럽게 이어집니다. T4 여유.
-- **DiffuGPT-small** (`diffusionfamily/diffugpt-s`, 124M, arXiv:2410.17891) — *가장 작은* 정식 사전학습 diffusion LM. GPT2 본체라 **Ch 24 (GPT, autoregressive) 와 같은 본체에서 AR vs diffusion 직접 비교** 가능.
-- 본 챕터 작은 from-scratch 모델과 *품질 격차* 를 직접 체감 — *같은 알고리즘, 충분한 규모* 면 unconditional 생성이 얼마나 달라지는지.
-- (대형 맛보기) LLaDA-8B 는 4bit 양자화로 *선택 실습*.
+- **모델은 그대로** — 본 챕터와 *같은 작은 BERT-style (~3.79M)* 을 같은 TinyStories·같은 BPE 2048 로 재학습합니다. 바뀌는 건 *생성을 어떻게 뽑아내느냐* 뿐.
+- **carry-over semi-AR 샘플러** — 한 번에 전 영역을 confidence 순으로 채우는 대신, 시퀀스를 블록 단위로 반쯤 순차적으로 진행하면서 앞서 확정한 토큰을 다음 블록의 문맥으로 이어 받아(carry-over) 일관성을 높입니다.
+- **반복 억제** — 본 챕터에서 본 `named named`·`play and play` 같은 반복을 temperature·top-p·repetition penalty·인접 중복 금지로 잡아 한결 깔끔한 생성을 얻습니다.
+- 본 챕터에서 "diffusion 이 글을 만든다"를 확인했다면, Ch 33 은 "그 글을 더 잘 뽑아낸다" — *모델의 확률 분포는 멀쩡한데 샘플러가 거칠다* 는 본 챕터의 진단을 직접 해결합니다.
 
-> **변하는 축**: *모델 출발점* (scratch 약 3.79M → 사전학습 170M / 124M). 메커니즘 (병렬 denoise) 은 본 챕터에서 이미 손으로 구현해 봤습니다. Ch 34 에서 *한국어 diffusion + autoregressive 직접 비교* 로 Phase 5 를 마무리합니다.
+> **변하는 축**: *샘플러* (기본 low-confidence remasking → carry-over semi-AR + 반복 억제). 모델·데이터·loss 는 모두 본 챕터와 동일합니다. Ch 34 에서 *한국어 diffusion + autoregressive 직접 비교* 로 Phase 5 를 마무리합니다.
