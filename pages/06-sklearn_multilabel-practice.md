@@ -39,6 +39,8 @@ print(f"Total samples: {len(df)}")
 Total samples: 5000
 ```
 
+학습된 `model_ml`이 한 샘플에서 만드는 손실을 직접 분해해 봅니다. 라벨이 3개 이상 활성된 샘플을 골라, 정답이 1인 라벨은 $-\log(p)$, 0인 라벨은 $-\log(1-p)$ 로 5개 BCE를 따로 계산하고 평균을 냅니다.
+
 ```python
 # 여러 라벨이 활성된 test 샘플 하나 고르기 (분해가 잘 보이도록)
 multi_active = np.where(Y_test.sum(axis=1) >= 3)[0]
@@ -88,6 +90,10 @@ Active labels: 3
        sum                                                1.8566
   mean BCE                                       / 5      0.3713
 ```
+
+**결과 해석**
+
+이 샘플의 평균 BCE는 0.3713 으로 baseline $\log 2 = 0.693$ 보다 작아, 학습된 모델이 5개 라벨을 평균적으로 맞추고 있음을 보여줍니다. 정답 1인 service(0.9069)는 손실 0.0977로 작고, 정답 0인데도 확률 0.4514로 어정쩡한 food가 0.6003으로 가장 큰 손실을 냅니다.
 
 Yelp 데이터에는 multi-label 정답이 없으므로 **5개 항목(aspect)** 별 키워드 사전을 만들어 매칭합니다.
 
@@ -173,6 +179,10 @@ Active label distribution:
   4 labels: 277 samples  (5.5%)
   5 labels: 55 samples  (1.1%)
 ```
+
+**결과 해석**
+
+항목별 활성률은 food 55.6%부터 ambiance 18.1%까지 크게 갈립니다 — 이 빈도 차이가 뒤에서 micro/macro F1 격차로 이어집니다. 샘플당 평균 1.75개 라벨이 켜지고, 라벨이 0개인 샘플도 14.8% 있어 multi-label의 "0개 이상" 가정이 데이터에 그대로 드러납니다.
 
 ```python
 X_text_train, X_text_test, Y_train, Y_test = train_test_split(
@@ -281,3 +291,7 @@ First 3 sample predicted probabilities (per-label):
 1  0.3494   0.3479  0.4263    0.1693    0.1528
 2  0.2116   0.2889  0.1200    0.1387    0.0696
 ```
+
+**결과 해석**
+
+`coef_` shape이 `(1, 10000)` 인 5개 LogReg가 따로 학습됐고, 각 라벨의 확률은 합=1로 정규화되지 않습니다 — 0번 샘플의 5개 값을 더해도 1이 아닙니다. softmax라면 불가능한 일로, per-label sigmoid가 라벨마다 독립으로 P(label=1)을 내준다는 증거입니다.
