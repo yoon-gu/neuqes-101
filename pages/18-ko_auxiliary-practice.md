@@ -93,6 +93,8 @@ Mon Jun 22 04:03:06 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+KLUE-YNAT 뉴스 분류 데이터를 불러옵니다. 원본 7개 카테고리 이름은 한국어이지만, 플롯·출력의 조판 안정성을 위해 영문 라벨도 함께 준비합니다. `title` 컬럼은 이후 코드에서 일관되게 쓰도록 `text` 로 이름을 바꿉니다.
+
 ```python
 ds = load_dataset("klue/klue", "ynat")
 print(f"splits: {list(ds.keys())}")
@@ -123,6 +125,8 @@ first 2 raw samples:
   label=3 (Life&Culture)  text='유튜브 내달 2일까지 크리에이터 지원 공간 운영'
   label=3 (Life&Culture)  text='어버이날 맑다가 흐려져…남부지방 옅은 황사'
 ```
+
+single-label 데이터를 두 샘플씩 결합해 multi-label 데이터를 합성합니다. 핵심은 결합 과정에서 보조 라벨 `n_active`(활성 카테고리 개수, 1 또는 2)가 *공짜로* 함께 만들어진다는 점입니다. Ch 17 의 합성 함수를 그대로 가져오되 이 부산물을 보조 task 정답으로 활용합니다.
 
 ```python
 SEED = 42
@@ -216,6 +220,12 @@ Aux label (n_active) distribution:
   eval  mean: 1.758
 ```
 
+**결과 해석**
+
+`n_active`=2 가 train 의 85.4% 로 압도적입니다 (7카테고리 무작위 결합이라 두 카테고리가 같을 확률은 1/7 뿐). 보조 task 가 *1 vs 2 이항에 가까운 매우 치우친 분포* 라 상수 평균만 예측해도 손실이 작게 유지된다는 점을 미리 염두에 둬야 합니다.
+
+토큰화 단계에서 메인 라벨과 보조 라벨을 *함께* 부착합니다. 메인은 `labels`(multi-hot 7차원 float), 보조는 `n_active`(float scalar)로, 두 신호가 같은 샘플에 묶여 batch 까지 흘러가도록 준비합니다.
+
 ```python
 tokenizer = AutoTokenizer.from_pretrained("klue/bert-base")
 
@@ -260,6 +270,8 @@ First sample labels:    [0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0]  (length-7 multi-hot
 First sample n_active:  2  (aux scalar)
 ```
 
+기본 `DataCollatorWithPadding` 은 `input_ids`/`attention_mask`/`labels` 만 다룰 줄 알아 `n_active` 같은 *추가 라벨* 은 통과시키지 못합니다. wrapper 를 만들어 `n_active` 를 먼저 빼내 텐서로 만들고, 나머지는 표준 padding 을 거친 뒤 batch 에 다시 합칩니다.
+
 ```python
 class AuxCollator:
     def __init__(self, tokenizer):
@@ -297,6 +309,8 @@ Batch keys: ['input_ids', 'token_type_ids', 'attention_mask', 'labels', 'n_activ
   n_active: shape=(4,), dtype=torch.float32
 ```
 
+메인 task 와 보조 task 가 같은 BERT 본체를 공유하도록 커스텀 `nn.Module` 을 직접 정의합니다. 자동 매핑(`AutoModelForSequenceClassification`)을 못 쓰는 *복합 헤드* 구조라, 본체와 두 헤드를 한 클래스에 명시적으로 둬 디버깅·확장이 쉽도록 합니다.
+
 ```python
 class KoBertMultiTask(nn.Module):
     '''KLUE-BERT 본체 공유 + 메인(multi-label 7) + 보조(count regression 1).
@@ -314,7 +328,11 @@ class KoBertMultiTask(nn.Module):
         self.count_head = nn.Linear(H, 1)
         # config 일부 — id2label 보존용
         self.config = self.bert.config
+```
 
+**위 코드 읽기** — `self.bert` 는 분류 헤드 없는 *본체* 만 (`AutoModel`). 그 위에 `cls_head`(768→7, 메인 multi-label)와 `count_head`(768→1, 보조 회귀) *두 헤드* 를 나란히 둡니다. 두 헤드가 같은 `self.bert` 출력을 공유하는 것이 multi-task 학습의 핵심입니다.
+
+```python
     def forward(self, input_ids=None, attention_mask=None, token_type_ids=None,
                 labels=None, n_active=None, lambda_aux: float = 0.1):
         kwargs = {"input_ids": input_ids, "attention_mask": attention_mask}
@@ -326,13 +344,21 @@ class KoBertMultiTask(nn.Module):
 
         main_logits = self.cls_head(cls)                # (B, K)
         count_pred  = self.count_head(cls).squeeze(-1)  # (B,)
+```
 
+**위 코드 읽기** — `cls` 는 `[CLS]` 위치의 768차원 벡터로, 두 헤드가 *공유* 하는 표현입니다. 같은 `cls` 에서 `main_logits`(7차원)와 `count_pred`(스칼라)가 갈라져 나옵니다. `forward` 가 `lambda_aux` 를 *인자로* 받는 점도 주목 — 보조 가중치를 trainer 가 동적으로 주입할 수 있게 한 설계입니다.
+
+```python
         loss = None
         if labels is not None and n_active is not None:
             l_main = F.binary_cross_entropy_with_logits(main_logits, labels.float())
             l_aux  = F.mse_loss(count_pred, n_active.float())
             loss = l_main + lambda_aux * l_aux
+```
 
+**위 코드 읽기** — 이 챕터의 심장입니다. 메인은 `binary_cross_entropy_with_logits`(per-label BCE), 보조는 `mse_loss`(활성 개수 회귀), 그리고 `loss = l_main + lambda_aux * l_aux` 로 *가중합* 합니다. `lambda_aux=0.1` 이면 보조 MSE 가 메인 BCE 의 1/10 비중으로 섞입니다 — Loss 축에 보조 항을 더하는 변화가 정확히 이 한 줄입니다.
+
+```python
         # Trainer 와 호환되도록 SequenceClassifierOutput 형태로 반환 (loss + logits)
         # count_pred 는 self.last_count_pred 에 보관 (eval 단계에서 따로 추출)
         self.last_count_pred = count_pred.detach()
@@ -416,12 +442,18 @@ Mon Jun 22 04:03:27 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+`Trainer` 의 기본 loss 계산을 교체합니다. 자동 매핑이 못 다루는 *복합 loss* 이므로 `compute_loss` 를 오버라이드해, trainer 에 저장된 λ 를 forward 로 흘려보내고 모델이 계산한 combined loss 를 그대로 받습니다.
+
 ```python
 class AuxTrainer(Trainer):
     def __init__(self, *args, lambda_aux: float = 0.1, **kwargs):
         super().__init__(*args, **kwargs)
         self.lambda_aux = lambda_aux
+```
 
+**위 코드 읽기** — λ 를 trainer 인스턴스에 `self.lambda_aux` 로 보관합니다. 이렇게 두면 같은 trainer 클래스로 λ=0.1 학습과 λ=0 baseline 학습을 *인자만 바꿔* 두 번 돌릴 수 있습니다.
+
+```python
     def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
         # forward 에 lambda_aux 전달 — 모델이 combined loss 계산
         inputs = {**inputs, "lambda_aux": self.lambda_aux}
@@ -432,6 +464,8 @@ class AuxTrainer(Trainer):
 
 print("AuxTrainer 정의 완료 — Trainer 의 compute_loss 만 교체.")
 ```
+
+**위 코드 읽기** — `inputs` 에 `lambda_aux` 를 끼워 넣어 forward 로 전달하는 것이 전부입니다. 실제 combined loss(`l_main + λ·l_aux`)는 *모델 forward 안에서* 이미 계산되므로, `compute_loss` 는 `outputs.loss` 를 그대로 돌려주기만 합니다. Ch 14 가 메인 loss 를 받아 보조를 *여기서* 더했던 것과 달리, Ch 18 은 결합을 모델 쪽으로 옮긴 구조입니다.
 
 **▶ 실행 결과**
 
@@ -467,6 +501,8 @@ def compute_metrics_main(eval_pred):
         out["macro_auc"] = float("nan")
     return out
 ```
+
+보조 ON 상태(λ=0.1)로 학습합니다. Ch 17 과 모든 hyperparams 가 동일하고, `remove_unused_columns=False` 로 `n_active` 컬럼이 collator·forward 까지 안전하게 전달되도록 합니다.
 
 ```python
 LAMBDA_AUX = 0.1
@@ -567,6 +603,12 @@ With-aux (lambda=0.1) — main task metrics:
    eval_steps_per_second: 46.5600
 ```
 
+**결과 해석**
+
+보조 ON 의 메인 micro-F1 은 0.8562, macro-F1 은 0.8507 입니다. 이 값만으로는 좋고 나쁨을 알 수 없고, 뒤에서 학습하는 λ=0 baseline 과 비교해야 보조 loss 의 효과를 판단할 수 있습니다.
+
+보조 헤드의 예측(`count_pred`)은 `SequenceClassifierOutput` 표준 필드가 아니라 `model.last_count_pred` 에 보관됩니다. 보조 metric 을 측정하려면 eval 셋 전체를 수동 forward 해 이 값을 꺼내고, RMSE·R²·Pearson r 로 회귀 성능을 잽니다.
+
 ```python
 # 보조 metric — eval 전체에 대해 수동 forward
 @torch.no_grad()
@@ -612,6 +654,10 @@ With-aux (lambda=0.1) — aux task metrics (n_active regression):
   Aux pred range: [1.029, 2.705]
   Aux true range: [1.0, 2.0]
 ```
+
+**결과 해석**
+
+보조 회귀의 R² 는 0.123 으로 *약합니다*. Pearson r 0.477 로 입력 의존적 학습이 일어나긴 했지만, `n_active` 가 1/7·6/7 로 치우친 *너무 쉬운* 신호라 상수 평균 예측에서 크게 벗어나지 못한 모습입니다. 보조 task 자체가 이 정도로 약하면 메인 정규화 효과도 기대하기 어렵습니다.
 
 ```python
 # 메인 task per-sample 예측 (다음 비교 단계에서 사용)
@@ -664,6 +710,8 @@ Life&Culture     0.8425    0.8849    0.8632       278
 weighted avg     0.8692    0.8464    0.8562      1758
  samples avg     0.8875    0.8635    0.8561      1758
 ```
+
+같은 코드를 `lambda_aux=0.0` 으로 한 번 더 돌려 baseline 을 만듭니다. 보조 loss 의 gradient 가 0 이 되어 메인 task 만 학습되는 상태 = Ch 17 과 동일한 결과입니다. 같은 노트북·같은 환경에서 비교가 self-contained 하도록 의도한 구성입니다.
 
 ```python
 # 새 모델 인스턴스 — λ=0 학습용
@@ -791,6 +839,12 @@ samples_per_second          1408.8240              1455.0020               46.17
   steps_per_second            45.0820                46.5600                1.4780
 ```
 
+**결과 해석**
+
+보조 loss 는 메인 task 를 *살짝 깎았습니다*: micro-F1 0.8600 → 0.8562 (Δ-0.0038), macro-F1 0.8561 → 0.8507 (Δ-0.0053) 로 delta 의 부호가 모두 *음(-)* 입니다. λ 를 0.1 로 낮춰 저하 폭은 줄였지만 방향은 여전히 마이너스 — 보조 신호가 메인에 도움이 되지 못한 셋업입니다.
+
+카테고리별 F1 을 baseline 과 보조 ON 으로 나란히 계산해 막대 그래프로 비교합니다. 어느 카테고리가 보조 loss 로 도움받았는지(혹은 손해를 봤는지)를 한눈에 봅니다.
+
 ```python
 def per_label_f1(Y_true, Y_pred):
     f1s = []
@@ -843,7 +897,13 @@ Life&Culture     0.8646       0.8632               -0.0014
     Politics     0.8466       0.8303               -0.0163
 ```
 
+**결과 해석**
+
+카테고리별로 봐도 6/7 이 음수이고, 가장 크게 떨어진 곳은 Politics(-0.0163)·IT/Science(-0.0151) 입니다. 유일하게 오른 Economy(+0.0092)도 delta 가 quick 모드 노이즈 영역(±0.01) 안이라 보조 효과로 보기 어렵습니다.
+
 ![output](../assets/18-ko_auxiliary-out1.png)
+
+보조 task 가 활성 개수를 얼마나 잘 구분하는지 violin 으로 봅니다. 실제 `n_active`=1, 2 각각에서 예측값 분포가 점선 가이드(1.0/2.0)에 모이면 보조 헤드가 잘 학습된 것입니다.
 
 ```python
 # True n_active 별 예측 분포 — violin
