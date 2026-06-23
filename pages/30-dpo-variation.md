@@ -2,6 +2,8 @@
 
 ### 변형 1. β 조정 — reference 제약 강도
 
+`dpo_config.beta` 값을 바꿔 reference 제약 강도를 조절해 봅니다. 너무 키우면 빨리 정렬되지만 reference 에서 멀어져 collapse 위험이, 너무 낮추면 안전하지만 정렬이 느려지는 trade-off 를 직접 관찰하세요.
+
 ```python
 # dpo_config.beta = 0.5    # 제약 느슨 -> 빨리 정렬되지만 collapse 위험 (reference 에서 멀어짐)
 # dpo_config.beta = 0.05   # 제약 강함 -> 안전하지만 정렬 느림
@@ -9,6 +11,8 @@
 ```
 
 ### 변형 2. 더 많은 preference / SFT 모델에서 출발
+
+subset 크기를 키우거나 출발 모델을 base 대신 Ch 28 SFT 체크포인트로 바꾸는 변형입니다. 특히 SFT 모델에서 DPO 를 시작해야 *지시 따름* 위에 *선호만* 얹히므로 정렬 효과가 훨씬 또렷해집니다.
 
 ```python
 # N_DPO = 5000              # subset 확대 (T4 시간 증가 주의)
