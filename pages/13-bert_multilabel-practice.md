@@ -84,6 +84,8 @@ Mon Jun 22 03:49:55 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+Ch 6과 동일하게 5개 항목(aspect)별 키워드 사전을 정의합니다. `extract_aspects`는 텍스트를 소문자화한 뒤 각 항목의 키워드가 단어 경계(`\b`)로 하나라도 매칭되면 1.0, 아니면 0.0을 채워 길이 5의 multi-hot float 벡터를 만듭니다. 정답이 없는 Yelp에 라벨을 합성하는 단계입니다.
+
 ```python
 ASPECT_KEYWORDS = {
     "food": ["food", "meal", "dish", "taste", "delicious", "flavor", "menu",
@@ -119,6 +121,8 @@ K (number of aspects): 5
 aspects: ['food', 'service', 'price', 'ambiance', 'location']
 ```
 
+Yelp 리뷰 train 5,000건·eval 1,000건을 샘플링한 뒤, 각 텍스트에 `extract_aspects`로 만든 5차원 multi-hot 벡터를 `aspects` 컬럼으로 부착합니다. 첫 샘플의 활성 항목을 출력해 합성 라벨이 제대로 붙었는지 눈으로 확인합니다.
+
 ```python
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
 
@@ -151,6 +155,8 @@ First sample:
   aspects (multi-hot): [0.0, 1.0, 0.0, 0.0, 1.0]
   active aspects: ['service', 'location']
 ```
+
+항목별 활성률과 샘플당 평균 활성 라벨 수를 집계해 데이터의 불균형 구조를 파악합니다. 활성률이 낮은 항목일수록 학습이 어렵고, 한 샘플에 몇 개 라벨이 동시에 켜지는지가 multi-label의 핵심 성격입니다.
 
 ```python
 # 항목별 활성률
@@ -190,19 +196,29 @@ Active label distribution (train):
   5 labels active: 55 samples (1.1%)
 ```
 
+**결과 해석**
+
+food(55.6%)·service(49.6%)가 흔하고 ambiance(18.1%)·location(21.9%)·price(29.4%)는 드뭅니다. 샘플당 평균 1.75개 라벨이 활성되며 2개 활성이 30.1%로 가장 많아, 라벨이 서로 배타적이지 않은 전형적 multi-label 분포임이 드러납니다.
+
 ```python
 def tokenize_fn(batch):
     out = tokenizer(batch["text"], truncation=True, max_length=128)
     # multi-hot 5차원 float 벡터 (BCEWithLogitsLoss가 받는 형식)
     out["labels"] = [list(map(float, a)) for a in batch["aspects"]]
     return out
+```
 
+**위 코드 읽기** — 토큰화한 결과의 `out["labels"]`에 `aspects`를 `float`로 변환한 길이 5 multi-hot 벡터를 그대로 넣습니다. Ch 12의 `int` 스칼라 라벨과 달리 *벡터·float* 형식이어야 `BCEWithLogitsLoss`가 받을 수 있습니다 — 이 한 줄이 multi-label로 가는 핵심 변경점입니다.
+
+```python
 train_tok = train_full.map(tokenize_fn, batched=True).remove_columns(["text", "label", "aspects"])
 eval_tok  = eval_full.map(tokenize_fn,  batched=True).remove_columns(["text", "label", "aspects"])
 
 print(train_tok)
 print(f"\nFirst sample label: {train_tok[0]['labels']}  (length-5 multi-hot float vector)")
 ```
+
+**위 코드 읽기** — `map`으로 전체에 적용한 뒤 `text`·`label`·`aspects` 원본 컬럼을 제거해 `input_ids`·`attention_mask`·`labels`만 남깁니다. 첫 샘플 라벨이 `[0.0, 1.0, 0.0, 0.0, 1.0]`처럼 길이 5 float 벡터로 찍히는지 확인합니다.
 
 **▶ 실행 결과**
 
@@ -214,6 +230,8 @@ Dataset({
 
 First sample label: [0.0, 1.0, 0.0, 0.0, 1.0]  (length-5 multi-hot float vector)
 ```
+
+모델을 `num_labels=5`로 로드하되 `problem_type="multi_label_classification"`을 지정해 loss를 BCE per-label로 자동 매핑합니다. 헤드 구조(`Linear(768, 5)`)와 파라미터 수는 Ch 12와 동일하고, 바뀌는 것은 이 한 줄과 라벨 형식뿐임을 출력으로 확인합니다.
 
 ```python
 model = AutoModelForSequenceClassification.from_pretrained(
@@ -292,6 +310,8 @@ Mon Jun 22 03:50:22 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+multi-label용 평가 함수를 정의합니다. logits를 라벨마다 독립 sigmoid로 확률화하고 0.5 임계값으로 0/1을 정한 뒤, Hamming loss와 micro/macro F1, macro AUC를 계산합니다.
+
 ```python
 def compute_metrics(eval_pred):
     logits, labels = eval_pred                      # logits: (N, K), labels: (N, K) float
@@ -301,7 +321,11 @@ def compute_metrics(eval_pred):
     out = {}
     # Hamming loss — 전체 라벨 위치 중 틀린 비율 (낮을수록 좋음)
     out["hamming_loss"] = float(hamming_loss(labels, preds))
+```
 
+**위 코드 읽기** — softmax가 아니라 `1/(1+exp(-logits))`로 *라벨마다 독립* sigmoid를 적용하는 것이 multi-label의 본질입니다. `probs >= 0.5`로 multi-hot 예측을 만들고, `hamming_loss`는 전체 (샘플 × 라벨) 위치 중 틀린 비율을 잽니다.
+
+```python
     # Micro F1 — 전체 라벨을 한꺼번에 (TP/FP/FN 합산 후 F1)
     p_mi, r_mi, f1_mi, _ = precision_recall_fscore_support(
         labels, preds, average="micro", zero_division=0,
@@ -317,7 +341,11 @@ def compute_metrics(eval_pred):
     out["macro_f1"] = float(f1_ma)
     out["macro_precision"] = float(p_ma)
     out["macro_recall"]    = float(r_ma)
+```
 
+**위 코드 읽기** — `average="micro"`는 모든 라벨의 TP/FP/FN을 합산 후 F1을 내므로 흔한 라벨이 점수를 지배하고, `average="macro"`는 라벨별 F1을 *동일 가중치로 평균* 해 드문 라벨도 똑같이 반영합니다. 두 값의 차이가 클수록 라벨 불균형이 심하다는 신호입니다.
+
+```python
     # Per-label AUC (One-vs-Rest 자체)
     try:
         out["macro_auc"] = float(roc_auc_score(labels, probs, average="macro"))
@@ -325,6 +353,10 @@ def compute_metrics(eval_pred):
         out["macro_auc"] = float("nan")
     return out
 ```
+
+**위 코드 읽기** — AUC는 임계값과 무관하게 *확률 자체의 분리력* 을 재는 지표라, 0.5 임계값으로 손해 본 F1과 별개로 모델이 양/음을 얼마나 잘 정렬하는지 보여줍니다.
+
+Ch 12와 동일한 learning rate·batch size·epoch·seed로 `Trainer`를 구성하고 학습합니다. 바뀐 건 라벨 형식과 `problem_type`, 그리고 위에서 정의한 multi-label용 `compute_metrics`뿐입니다.
 
 ```python
 training_args = TrainingArguments(
@@ -419,6 +451,12 @@ BERT multi-label evaluation:
    eval_steps_per_second: 34.9480
 ```
 
+**결과 해석**
+
+micro F1 0.7977, macro F1 0.7239로 micro가 더 높습니다 — 흔한 food·service가 점수를 끌어올리고 드문 라벨이 macro를 깎는 전형적 패턴입니다. precision(0.91)이 recall(0.71)보다 크게 높아 모델이 *확신할 때만 활성* 하는 보수적 경향을 보입니다.
+
+평가셋 전체를 예측해 라벨별 확률 범위와 실제 활성률(true rate) 대비 예측 활성률(pred rate)을 비교합니다. 두 비율이 가까우면 calibration이 좋고, pred rate가 true rate보다 크게 낮으면 모델이 그 라벨을 잘 안 켜는 것입니다.
+
 ```python
 # logits → per-label sigmoid → multi-hot 예측
 preds_output = trainer.predict(eval_tok)
@@ -447,6 +485,10 @@ prob ranges per label:
    location: [0.0310, 0.9285]  true rate=20.2%, pred rate=16.0%
 ```
 
+**결과 해석**
+
+price가 가장 심각합니다 — 최대 확률이 0.70에 그쳐 0.5를 넘는 샘플이 적고, pred rate 7.9%로 true rate 30.4%의 1/4 수준만 활성합니다. food·service는 두 비율이 거의 일치해 잘 학습됐고, 드문 라벨일수록 모델이 보수적으로 눌러두는 경향이 확인됩니다.
+
 ```python
 # Per-label classification report
 print(classification_report(
@@ -472,6 +514,12 @@ print(classification_report(
 weighted avg     0.9072    0.7127    0.7667      1723
  samples avg     0.7343    0.6316    0.6586      1723
 ```
+
+**결과 해석**
+
+모든 라벨이 precision 0.88 이상으로 *틀린 활성은 거의 안 함* 을 보입니다. 문제는 recall — price는 recall 0.2336으로 정답의 4분의 1만 잡아 F1이 0.3708까지 떨어지고, ambiance(recall 0.494)도 절반을 놓칩니다. 드문 라벨에서 recall이 무너지는 것이 0.5 임계값의 보수성에서 비롯됨을 보여줍니다(FAQ Q1).
+
+평균 metric만으로는 모델이 한 리뷰를 어떻게 판단했는지 감이 안 오므로, 정답 항목이 가장 많은 샘플과 가장 적은 샘플을 골라 항목별 true·prob·pred를 한 줄씩 읽어봅니다.
 
 ```python
 # 평가 셋에서 항목 활성이 가장 *많은* 샘플 1개 + 가장 *적은* 샘플 1개 골라 읽어보기
@@ -539,6 +587,12 @@ text (truncated): I don't quite get this place or why Asians love it, but it is 
   true:      []
 ```
 
+**결과 해석**
+
+5개 전부 정답인 샘플 #29에서 모델은 price·location만 맞히고 food·service·ambiance는 prob 0.29~0.38로 눌러 놓쳤습니다 — recall이 낮은 보수적 경향이 한 샘플에서 그대로 드러납니다. 반대로 활성 라벨이 0개인 샘플 #4는 모든 prob가 0.13 이하로 깔끔하게 전부 0을 맞혔습니다.
+
+라벨 5개의 sigmoid 확률 분포를 실제 라벨(0/1)별로 나눠 5패널 KDE로 그립니다. label=0과 label=1 곡선이 0.5를 기준으로 깨끗이 갈라질수록 그 라벨이 잘 분리된 것입니다.
+
 ```python
 sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
 
@@ -570,6 +624,8 @@ plt.show()
 **▶ 실행 결과**
 
 ![output](../assets/13-bert_multilabel-out1.png)
+
+라벨 i가 활성된 샘플 중 라벨 j도 활성된 조건부 확률 $P(j|i)$ 행렬을 실제 라벨과 모델 예측에 대해 각각 구해 나란히 그립니다. 두 히트맵의 패턴이 비슷하면 모델이 데이터의 라벨 동시출현 구조를 잘 흡수한 것입니다.
 
 ```python
 def cooccurrence_matrix(Y):
@@ -609,6 +665,8 @@ plt.show()
 **▶ 실행 결과**
 
 ![output](../assets/13-bert_multilabel-out2.png)
+
+Ch 6의 sklearn 셋업(TF-IDF + 라벨마다 독립 LogisticRegression)을 같은 데이터로 재현해 BERT와 비교할 baseline을 만듭니다. `OneVsRestClassifier`는 5개 라벨을 *완전히 분리된* 5개 이진 분류기로 학습합니다.
 
 ```python
 # Ch 6 셋업 재현 — TF-IDF + OneVsRestClassifier(LogisticRegression)
@@ -694,6 +752,12 @@ macro_precision         0.9036               0.9155          0.0119
       macro_auc         0.9387               0.8994         -0.0393
 ```
 
+**결과 해석**
+
+BERT가 macro F1에서 +0.11(0.6141 → 0.7239)로 가장 크게 앞서고, 이득의 대부분은 macro recall(+0.114)에서 옵니다 — 드문 라벨을 BERT가 더 잘 잡습니다. 다만 macro AUC는 sklearn이 +0.039 높아, 키워드가 본질 신호인 합성 라벨에서는 TF-IDF의 확률 정렬력도 만만치 않음을 보여줍니다.
+
+라벨별 F1을 두 모델에 대해 따로 계산해 표와 막대그래프로 비교합니다. 어떤 항목에서 BERT가 이기고 어디서 sklearn이 이기는지가 합성 라벨의 성격을 드러냅니다.
+
 ```python
 def per_label_f1(Y_true, Y_pred):
     f1s = []
@@ -741,5 +805,9 @@ plt.show()
 ambiance      0.3333   0.6510          0.3176
 location      0.4211   0.8232          0.4022
 ```
+
+**결과 해석**
+
+BERT는 드문 라벨에서 압도적입니다 — location +0.40, ambiance +0.32로, 키워드만으로 안 잡히는 신호까지 학습한 결과입니다. 반대로 price는 sklearn이 +0.16 앞서는데, 0.5 임계값에서 BERT의 recall이 무너진 탓이라 임계값 조정으로 회복 가능한 손실입니다.
 
 ![output](../assets/13-bert_multilabel-out3.png)
