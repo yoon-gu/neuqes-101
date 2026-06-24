@@ -342,7 +342,16 @@ CHAPTERS = [
             "매크로 F1",
             "캘리브레이션",
             "랜덤 기준선",
+            "data scaling",
+            "sample size",
+            "learning curve",
+            "sklearn baseline",
+            "데이터 스케일링",
+            "학습 데이터 규모",
+            "학습 곡선",
+            "스케일링 곡선",
         ),
+        ("12_bert_multiclass_data_scaling.ipynb",),
     ),
     Chapter(
         13,
@@ -397,7 +406,12 @@ CHAPTERS = [
             "람다",
             "커스텀 Trainer",
             "별점 보조 회귀",
+            "lambda sweep",
+            "sweet spot",
+            "lambda=0.05",
+            "람다 스윕",
         ),
+        ("14_auxiliary_loss_lambda_sweep.ipynb",),
     ),
     Chapter(
         15,
@@ -1015,11 +1029,13 @@ FIGURE_OUTPUTS: dict[tuple[int, int], FigureSpec] = {
     (12, 1): FigureSpec("ch12_confusion_matrix.png", "5클래스 Yelp 분류의 혼동 행렬", "fig:ch12-confusion-matrix", r"0.76\linewidth"),
     (12, 2): FigureSpec("ch12_top1_probability.png", "정답 여부에 따른 최상위 예측 확률 분포", "fig:ch12-top1-probability", r"0.88\linewidth"),
     (12, 3): FigureSpec("ch12_confusion_compare.png", "sklearn TF-IDF와 BERT의 혼동 행렬 비교", "fig:ch12-confusion-compare", r"0.96\linewidth"),
+    (12, 4): FigureSpec("ch12_data_scaling.png", "학습 데이터 규모에 따른 sklearn과 BERT 정확도", "fig:ch12-data-scaling", r"0.86\linewidth"),
     (13, 1): FigureSpec("ch13_label_probability_facets.png", "라벨별 sigmoid 확률 분포", "fig:ch13-label-probability-facets", r"0.94\linewidth"),
     (13, 2): FigureSpec("ch13_cooccurrence.png", "정답 라벨과 예측 라벨의 공동 활성 패턴", "fig:ch13-cooccurrence", r"0.96\linewidth"),
     (13, 3): FigureSpec("ch13_f1_compare.png", "라벨별 F1: sklearn OvR와 BERT 비교", "fig:ch13-f1-compare", r"0.88\linewidth"),
     (14, 1): FigureSpec("ch14_aux_f1_compare.png", "라벨별 F1: 보조 손실 적용 전후 비교", "fig:ch14-aux-f1-compare", r"0.88\linewidth"),
     (14, 2): FigureSpec("ch14_aux_star_violin.png", "보조 별점 회귀 헤드의 예측 분포", "fig:ch14-aux-star-violin", r"0.82\linewidth"),
+    (14, 3): FigureSpec("ch14_lambda_sweep.png", "lambda 스윕에서 확인한 보조 손실 sweet spot", "fig:ch14-lambda-sweep", r"0.86\linewidth"),
     (15, 1): FigureSpec("ch15_probability_kde.png", "NSMC 이진 분류의 positive 확률 분포", "fig:ch15-probability-kde", r"0.88\linewidth"),
     (15, 2): FigureSpec("ch15_logit_kde.png", "NSMC 이진 분류의 logit 차이 분포", "fig:ch15-logit-kde", r"0.88\linewidth"),
     (16, 1): FigureSpec("ch16_confusion_matrix.png", "KLUE-YNAT 7분류 혼동 행렬", "fig:ch16-confusion-matrix", r"0.86\linewidth"),
@@ -4880,6 +4896,35 @@ def supplemental_figures_to_latex(chapter_number: int) -> str:
 
 
 def chapter_specific_fixes(text: str, chapter_number: int) -> str:
+    if chapter_number == 14:
+        text = text.replace(
+            "본편 \\ref{ch:14}장은 \\inlinecode{L = L_main + $\\lambda$·L_aux} 에서 \\textbf{$\\lambda$=1} 로 학습했더니 보조 손실(별점 회귀)이 메인 항목 분류를 크게 짓눌렀습니다 (micro-F1 0.82 \\(\\to\\) 0.66). 그렇다고 보조 손실이 늘 해로운 것은 아니고, \\textbf{$\\lambda$ 를 얼마로 잡느냐의 문제}입니다.",
+            "이 부록은 \\ref{ch:14}장의 보조 손실 가중치 $\\lambda$를 검증하기 위한 스윕입니다. $\\lambda=1$은 보조 손실이 과해 메인 항목 분류를 짓누르는 사례이고, 현재 본편은 스윕에서 확인한 sweet spot인 $\\lambda=0.05$를 사용합니다.",
+        )
+        text = text.replace(
+            "\\(\\lambda\\)=0 은 보조 손실 무시(\\ref{ch:13}장 재현 baseline), \\(\\lambda\\)=1 은 본편 셋업입니다. 그 사이를 촘촘히 봅니다.",
+            "\\(\\lambda\\)=0 은 보조 손실 무시(\\ref{ch:13}장 재현 baseline), \\(\\lambda\\)=1 은 과적용 비교점입니다. 그 사이에서 메인 성능이 가장 좋아지는 지점을 찾습니다.",
+        )
+        text = text.replace(
+            "λ=1.0:          micro-F1=0.6622  (본편 셋업)",
+            "lambda=1.0:     micro-F1=0.6622  (과적용 비교점)",
+        )
+        text = text.replace(
+            "본편 셋업",
+            "과적용 비교점",
+        )
+        text = text.replace(
+            "본편 \\ref{ch:14}장 는 이 sweet spot(\\(\\lambda\\)=0.05)을 메인 학습값으로 쓰고, \\(\\lambda\\)=1 은 “과적용하면 어떻게 무너지는가”의 사례로 둡니다.",
+            "본편 \\ref{ch:14}장은 이 sweet spot(\\(\\lambda\\)=0.05)을 메인 학습값으로 쓰고, \\(\\lambda\\)=1은 “과적용하면 어떻게 무너지는가”의 사례로 둡니다.",
+        )
+        text = text.replace(
+            "\\section{부록: λ 스윕: 보조 손실 가중치의 sweet spot 찾기}",
+            "\\section{\\texorpdfstring{부록: $\\lambda$ 스윕: 보조 손실 가중치의 sweet spot 찾기}{부록: lambda 스윕: 보조 손실 가중치의 sweet spot 찾기}}",
+        )
+        # Code/output listings use NanumGothicCoding through listings; keep Greek symbols
+        # out of those blocks because listings does not reliably render them under XeLaTeX.
+        text = text.replace("λ", "lambda")
+        text = text.replace("Δ", "delta")
     if chapter_number == 31:
         text = text.replace(
             "policy only,\n              ref-free,\n",

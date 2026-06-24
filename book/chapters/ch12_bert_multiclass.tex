@@ -42,6 +42,22 @@
 
 \index{0랜덤 기준선@랜덤 기준선}
 
+\index{1data scaling@data scaling}
+
+\index{1sample size@sample size}
+
+\index{1learning curve@learning curve}
+
+\index{1sklearn baseline@sklearn baseline}
+
+\index{0데이터 스케일링@데이터 스케일링}
+
+\index{0학습 데이터 규모@학습 데이터 규모}
+
+\index{0학습 곡선@학습 곡선}
+
+\index{0스케일링 곡선@스케일링 곡선}
+
 \index{1seaborn heatmap@seaborn.heatmap}
 
 \index{1row normalized confusion matrix@row-normalized confusion matrix}
@@ -1077,9 +1093,49 @@ plt.show()
 
 
 
+\section{결과 해석 --- \textquotesingle 근소 우위\textquotesingle 의 정체: 데이터가 정한다}
+
+§5 에서 BERT 67M 파라미터가 sklearn 을 \textbf{근소하게만}(약 +0.02-0.04) 앞섰습니다. 이진(\ref{ch:10}장, BERT 0.90)·회귀(\ref{ch:09}장, R² 0.67)에서 BERT 가 압도하던 것과 비교하면 5클래스에서 유독 격차가 작아 \emph{실망스럽게} 느껴질 수 있습니다. 하지만 이건 버그가 아니라 \textbf{데이터 양과 task 난이도의 함수} 입니다.
+
+부록 \inlinecode{12\_bert\_multiclass\_data\_scaling} 에서 학습 데이터를 100 \(\to\) 30,000 으로 키우며 두 곡선을 그리면 (고정 eval · nested subsample · epoch 2 고정):
+
+\begin{booktable}{12장 결과 해석 - \textquotesingle 근소 우위\textquotesingle 의 정체: 데이터가 정한다 표}{tab:ch12-06}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{@{}llll@{}}
+\toprule
+학습 수 & sklearn & BERT & gap \\
+\midrule
+
+100 & 0.373 & 0.229 & \textbf{-0.144} \(\leftarrow\) sklearn 압승 \\
+300 & 0.396 & 0.262 & -0.134 \\
+1,000 & 0.471 & 0.500 & +0.029 \(\leftarrow\) 교차 \\
+3,000 & 0.524 & 0.557 & +0.033 \\
+10,000 & 0.569 & 0.588 & +0.019 \\
+30,000 & 0.563 & \textbf{0.600} & +0.037 \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{booktable}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{작은 데이터(100-300)선 sklearn 이 크게 이깁니다.} DistilBERT 는 6,700만 파라미터를 100 샘플로 적응시킬 수 없어 분류 헤드가 거의 random(0.229 \(\approx\) 1/5). \emph{큰 모델이 늘 이기는 게 아니라, 적응할 데이터가 있어야} 이깁니다.
+\item
+  \textbf{교차점은 N\(\approx\)1,000.} 그 위로 BERT 가 줄곧 앞섭니다.
+\item
+  \textbf{30K 까지 키워도 격차는 +0.04 안팎.} 본편(5,000)의 근소 우위는 \emph{이 데이터 규모에서 정상} 이고, 이진만큼 극적이지 않은 건 \textbf{별점 5클래스가 본질적으로 어려운}(인접 별점 경계가 모호한 ordinal) task 이기 때문입니다.
+\end{itemize}
+
+\begin{quote}
+데이터를 더 부으면 BERT 가 더 벌리지만, 정확도를 크게 끌어올리려면 데이터 외에 \emph{더 강한 모델·HPO·LLM distill} 같은 다른 lever 도 필요합니다 --- 부록 §6 의 5가지 lever 카드 참조.
+\end{quote}
+
+
+
 \section{이 장에 등장한 라이브러리·함수}
 
-\begin{booktable}{12장 새로 등장한 라이브러리}{tab:ch12-06}
+\begin{booktable}{12장 새로 등장한 라이브러리}{tab:ch12-07}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -1193,7 +1249,7 @@ class WeightedTrainer(Trainer):
 
 둘 다 가능하고 각각 장단점이 있습니다.
 
-\begin{booktable}{12장 FAQ 표}{tab:ch12-07}
+\begin{booktable}{12장 FAQ 표}{tab:ch12-08}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -1260,7 +1316,7 @@ model.predict(tok("이 식당 음식이 정말 별로였어요"))
 
 같은 \inlinecode{distilbert-base-uncased} 본체로:
 
-\begin{booktable}{12장 FAQ 표}{tab:ch12-08}
+\begin{booktable}{12장 FAQ 표}{tab:ch12-09}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -1402,3 +1458,367 @@ def tokenize_wrong(batch):
 \textbf{변하는 축}: \ref{ch:12}장 \(\to\) \ref{ch:13}장 은 \emph{Loss 축} (CE \(\to\) BCE per-label)이 변합니다 --- task가 \emph{single-label} 에서 \emph{multi-label} 로 바뀌는 것이 본질이고 그에 맞춰 loss/activation/라벨 형식이 동시에 따라옵니다.
 \end{quote}
 \end{previewBox}
+
+
+
+\section{부록: 데이터 스케일링: BERT vs sklearn 곡선}
+
+
+
+\Needspace{5\baselineskip}
+\begin{lstlisting}
+!pip install -q transformers datasets
+\end{lstlisting}
+
+
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}
+import warnings
+warnings.filterwarnings("ignore")
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import torch
+from datasets import load_dataset
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, Trainer, TrainingArguments
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, precision_recall_fscore_support
+
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=15]
+import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run(
+        "apt-get -qq -y install fonts-nanum",
+        shell=True,
+    )
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
+plt.rcParams["axes.unicode_minus"] = False
+print(
+    f"PyTorch: {torch.__version__}  CUDA: "
+    f"{torch.cuda.is_available()}"
+)
+if torch.cuda.is_available(): print(f"GPU: {torch.cuda.get_device_name(0)}")
+\end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+PyTorch: 2.11.0+cu128  CUDA: True
+GPU: Tesla T4
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
+\subsection{데이터 준비}
+
+\inlinecode{pool} 을 30,000 으로 한 번 셔플해 두고, size-N 학습 셋은 \inlinecode{pool.select(range(N))} 로 \emph{앞에서부터} 잘라 nested 가 되게 합니다. eval 은 별도 1,000 으로 고정합니다 (본편 \ref{ch:12}장과 같은 split·seed).
+
+
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}
+MAX_N = 30000
+tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
+ds = load_dataset("Yelp/yelp_review_full")
+pool      = ds["train"].shuffle(seed=42).select(range(MAX_N))
+eval_full = ds["test"].shuffle(seed=42).select(range(1000))
+
+def tok_fn(batch):
+    out = tokenizer(
+        batch["text"],
+        truncation=True,
+        max_length=128,
+    )
+    out["labels"] = [int(l) for l in batch["label"]]
+    return out
+
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 데이터를 불러오고 학습에 맞는 형태로 정리하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{5\baselineskip}
+\begin{lstlisting}[firstnumber=16]
+eval_tok = eval_full.map(tok_fn, batched=True).remove_columns(["text", "label"])
+eval_texts = eval_full["text"]; eval_y = np.array(eval_full["label"])
+print(f"pool: {len(pool)}, eval: {len(eval_full)}")
+\end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+pool: 30000, eval: 1000
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
+\subsection{학습 함수 --- BERT / sklearn}
+
+\inlinecode{train\_bert(N)} 은 size-N 부분집합으로 DistilBERT 5클래스를 epoch 2 학습하고 고정 eval 정확도를 돌려줍니다(매번 seed 42 동일 초기화). \inlinecode{train\_sklearn(N)} 은 같은 부분집합으로 TF-IDF + LogReg 를 학습합니다.
+
+
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}
+def accuracy_metric(eval_pred):
+    logits, labels = eval_pred
+    preds = logits.argmax(axis=1)
+    return {"accuracy": float(accuracy_score(labels, preds))}
+
+def train_bert(N, epochs=2):
+    sub = pool.select(range(N))
+    sub_tok = sub.map(tok_fn, batched=True).remove_columns(["text", "label"])
+    torch.manual_seed(42); np.random.seed(42)
+    model = AutoModelForSequenceClassification.from_pretrained(
+        "distilbert-base-uncased", num_labels=5,
+        problem_type="single_label_classification",
+    )
+    args = TrainingArguments(
+        output_dir=f"./bert_{N}", num_train_epochs=epochs,
+        per_device_train_batch_size=16, per_device_eval_batch_size=32,
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=17]
+        learning_rate=2e-5, fp16=True, eval_strategy="no",
+        logging_steps=200, save_strategy="no", report_to="none", seed=42,
+    )
+    tr = Trainer(model=model, args=args, train_dataset=sub_tok, eval_dataset=eval_tok,
+                 processing_class=tokenizer, compute_metrics=accuracy_metric)
+    tr.train()
+    acc = float(tr.evaluate()["eval_accuracy"])
+    del model, tr; torch.cuda.empty_cache()
+    return acc
+
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 모델 출력을 확률이나 예측값으로 바꾸는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=27]
+def train_sklearn(N):
+    sub = pool.select(range(N))
+    vec = TfidfVectorizer()
+    Xtr = vec.fit_transform(sub["text"]); ytr = np.array(sub["label"])
+    clf = LogisticRegression(max_iter=1000)
+    clf.fit(Xtr, ytr)
+    Xev = vec.transform(eval_texts)
+    return float(accuracy_score(eval_y, clf.predict(Xev)))
+print("학습 함수 준비 완료")
+\end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+학습 함수 준비 완료
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
+\subsection{스윕 --- train size 그리드}
+
+\texttt{N\ ∈\ \{100,\ 300,\ 1000,\ 3000,\ 10000,\ 30000\}} 각각에서 두 모델을 학습해 고정 eval 정확도를 기록합니다. (BERT 30K 학습이 가장 오래 --- 전체 \textasciitilde30분)
+
+
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}
+GRID = [100, 300, 1000, 3000, 10000, 30000]
+rows = []
+for N in GRID:
+    sk = train_sklearn(N)
+    bert = train_bert(N)
+    rows.append({"train_size": N, "sklearn_acc": sk, "bert_acc": bert, "gap": bert - sk})
+    print(
+        f"N={N:>6}: sklearn={sk:.4f}  BERT={bert:.4f}  gap="
+        f"{bert - sk:+.4f}"
+    )
+res = pd.DataFrame(rows)
+print(); print(res.round(4).to_string(index=False))
+\end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+Key                     | Status     | 
+------------------------+------------+-
+pre_classifier.bias     | MISSING    | 
+classifier.weight       | MISSING    | 
+pre_classifier.weight   | MISSING    | 
+classifier.bias         | MISSING    | 
+
+- MISSING: those params were newly initialized because missing from the che...
+Training Loss  Validation Loss  Step  Accuracy
+-------------  ---------------  ----  --------
+No log         1.603589         14    0.229000
+N=   100: sklearn=0.3730  BERT=0.2290  gap=-0.1440
+Key                     | Status     | 
+------------------------+------------+-
+pre_classifier.bias     | MISSING    | 
+classifier.weight       | MISSING    | 
+...
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
+\subsection{곡선 --- 정확도 vs 학습 데이터 양}
+
+
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}
+sns.set_theme(
+    style="whitegrid",
+    context="talk",
+    font="NanumGothic",
+    rc={"axes.unicode_minus": False},
+)
+fig, ax = plt.subplots(figsize=(9.5, 5.5))
+ax.plot(
+    res["train_size"],
+    res["bert_acc"],
+    "o-",
+    color="#F47272",
+    lw=2.2,
+    ms=9,
+    label="DistilBERT (사전학습)",
+)
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 숫자 결과를 그림으로 확인하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=17]
+ax.plot(
+    res["train_size"],
+    res["sklearn_acc"],
+    "s-",
+    color="#5B8DEF",
+    lw=2.2,
+    ms=9,
+    label="sklearn TF-IDF (from scratch)",
+)
+ax.set_xscale("log")
+ax.set_xlabel("학습 데이터 수 (log)")
+ax.set_ylabel("5클래스 정확도 (고정 eval 1K)")
+ax.set_title("데이터 양에 따른 BERT vs sklearn")
+ax.set_xticks(res["train_size"])
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=31]
+ax.set_xticklabels(
+    [f"{n:,}" for n in res["train_size"]],
+    rotation=30,
+)
+ax.legend(fontsize=12)
+for _, r in res.iterrows():
+    ax.annotate(f"{r['gap']:+.3f}", (r["train_size"], max(r["bert_acc"], r["sklearn_acc"]) + 0.012),
+                ha="center", fontsize=9, color="#444")
+plt.tight_layout(); plt.show()
+
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 숫자 결과를 그림으로 확인하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=41]
+sk5  = float(res.loc[res["train_size"]==5000, "sklearn_acc"].iloc[0]) if 5000 in GRID else None
+print(
+    "본편(5,000) 한 점:", "부록 그리드엔 5K 미포함 — 가장 가까운 3K/10K 로 추세 확인" if sk5 is None else sk5
+)
+print(
+    f"가장 작은 데이터(N={GRID[0]}): sklearn={res['sklearn_acc'].iloc[0]:.4f}  BERT={res['bert_acc'].iloc[0]:.4f}  gap="
+    f"{res['gap'].iloc[0]:+.4f}"
+)
+print(
+    f"가장 큰 데이터 (N={GRID[-1]}): sklearn={res['sklearn_acc'].iloc[-1]:.4f}  BERT={res['bert_acc'].iloc[-1]:.4f}  gap="
+    f"{res['gap'].iloc[-1]:+.4f}"
+)
+\end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+본편(5,000) 한 점: 부록 그리드엔 5K 미포함 -- 가장 가까운 3K/10K 로 추세 확인
+가장 작은 데이터(N=100): sklearn=0.3730  BERT=0.2290  gap=-0.1440
+가장 큰 데이터 (N=30000): sklearn=0.5630  BERT=0.6000  gap=+0.0370
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+\begin{bookfigurelabel}[H]{학습 데이터 규모에 따른 sklearn과 BERT 정확도}{fig:ch12-data-scaling}
+\centering
+\includegraphics[width=0.86\linewidth]{assets/figures/ch12_data_scaling.png}
+\end{bookfigurelabel}
+
+\textbf{그림 읽기} --- 그림~\ref{fig:ch12-data-scaling}에서 다음 내용을 확인합니다: 학습 데이터 규모에 따른 sklearn과 BERT 정확도. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
+
+
+
+\subsection{해석}
+
+곡선이 \textbf{두 번 이야기} 합니다.
+
+\textbf{작은 데이터(N=100-300): sklearn 이 크게 앞섭니다 (BERT 가 -0.14).} DistilBERT 는 6,700만 파라미터를 100-300 샘플·2 epoch 로 적응시키기엔 데이터가 턱없이 부족해 분류 헤드가 거의 학습되지 않습니다 (N=100 에서 0.229 --- 5클래스 random 0.20 바로 위). 반면 TF-IDF + LogReg 는 100 샘플에서도 단어 빈도 신호를 곧장 뽑아 0.373 을 냅니다. \textbf{큰 모델이 항상 이기는 게 아니라, 적응할 데이터가 있어야} 이깁니다.
+
+\textbf{교차점은 N\(\approx\)1,000.} 여기서 BERT 가 sklearn 을 추월하고(0.500 vs 0.471), 이후 줄곧 앞섭니다.
+
+\textbf{큰 데이터(1K-30K): BERT 가 앞서지만 격차는 완만합니다 (+0.02-0.04).} sklearn 은 \textasciitilde10K 부터 0.56-0.57 로 평탄해지고, BERT 는 30K 에서 0.600 까지 천천히 오릅니다. \textbf{30K 까지 키워도 격차가 +0.037 에 머문다} 는 건, 본편의 근소한 격차가 \emph{데이터 부족만의 문제가 아니라} 5클래스 별점 분류 자체가 어렵다(인접 별점 경계가 모호한 ordinal task)는 뜻입니다 --- 이진(\ref{ch:10}장, BERT 0.90)에서 BERT 가 압도하던 것과 대조적입니다.
+
+\begin{booktable}{12장 해석 표}{tab:ch12-10}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{@{}llll@{}}
+\toprule
+N & sklearn & BERT & gap \\
+\midrule
+
+100 & 0.373 & 0.229 & -0.144 \\
+300 & 0.396 & 0.262 & -0.134 \\
+1,000 & 0.471 & 0.500 & +0.029 \\
+3,000 & 0.524 & 0.557 & +0.033 \\
+10,000 & 0.569 & 0.588 & +0.019 \\
+30,000 & 0.563 & 0.600 & +0.037 \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{booktable}
+
+\textbf{본편(5,000) 한 점} 은 이 곡선의 1K-10K 구간 --- BERT 가 막 앞서기 시작하지만 격차가 작은 자리 --- 에 놓입니다. 즉 본편의 \textquotesingle 근소 우위\textquotesingle 는 버그가 아니라 \emph{이 task·이 데이터 규모에서 정상} 입니다. 데이터를 더 부으면 BERT 가 더 벌리지만(우상향), 5클래스가 본질적으로 어려워 이진만큼 극적이진 않습니다.
+
+
+
+\subsection{보너스 --- BERT 성능을 끌어올리는 5가지 lever}
+
+데이터는 가장 큰 lever 중 하나일 뿐입니다. 실무에서 분류 정확도를 더 올리고 싶을 때 순서대로 검토하는 카드:
+
+\begin{booktable}{12장 보너스 - BERT 성능을 끌어올리는 5가지 lever 표}{tab:ch12-11}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{@{}lll@{}}
+\toprule
+lever & 방법 & 대략 효과 \\
+\midrule
+
+\textbf{1. 데이터 (양 + 질)} & train size↑, 도메인 적응 사전학습(DAPT), 라벨 노이즈 정리 & \textbf{+3-15\%p} (보통 가장 큼) \\
+\textbf{2. 더 강한 모델} & DistilBERT \(\to\) RoBERTa-large / DeBERTa-v3-large & +2-5\%p \\
+\textbf{3. HPO} & learning rate · warmup · weight decay 튜닝 & +1-3\%p \\
+\textbf{4. 학습 전략} & layer-wise LR decay(LLRD), 앙상블 & 각 +1-2\%p \\
+\textbf{5. LLM 라벨링 + distill} & 큰 LLM 으로 라벨 생성 \(\to\) 작은 모델 증류 (2024-2025 트렌드) & +3-10\%p \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{booktable}
+
+이 부록은 그중 \textbf{1번(데이터 양)} 을 곡선으로 분리해 본 것입니다. 5클래스에서 본편의 근소한 격차가 \emph{데이터 부족} 때문이라면 곡선이 우상향하며 벌어지고, \emph{task 난이도} 때문이라면 큰 데이터에서도 격차가 평탄할 것입니다 --- 위 §4 곡선이 그 답입니다.
