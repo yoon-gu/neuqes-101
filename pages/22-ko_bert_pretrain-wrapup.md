@@ -4,7 +4,7 @@
 |---|---|---|
 | `AutoTokenizer.from_pretrained("klue/bert-base")` | 한국어 WordPiece (vocab 약 32,000) | 영어 → 한국어 |
 | `load_dataset("wikimedia/wikipedia", "20231101.ko")` | 한국어 Wikipedia HF 정제본 로드 | `load_dataset("Salesforce/wikitext", ...)` (Ch 20) — 같은 패턴, 언어만 변경 |
-| `collect_paragraphs(...)` + `Dataset.from_dict({"text": paragraphs})` | 위키 본문에서 paragraph 수집 → HF Dataset 구성 | Ch 20 과 같은 패턴 (pandas·`document` 컬럼 없음) |
+| `Dataset.from_pandas(df[["document"]]).rename_column(...)` | pandas → HF Dataset 변환 | Ch 15 와 같은 패턴 |
 | `transformers.BertConfig` (동일) | 작은 BERT hyperparam | (Ch 20 동일) |
 | `transformers.BertForMaskedLM(config)` (동일) | random init MLM 모델 | (Ch 20 동일) |
 | `DataCollatorForLanguageModeling(mlm_probability=0.15)` (동일) | 매 batch 동적 80/10/10 masking | (Ch 20 동일) |
@@ -15,7 +15,7 @@
 
 1. Ch 19 §5-4 에서 *영어 토크나이저로 한국어를 토큰화하면 UNK 가 폭증* 한다는 걸 봤습니다. 이번 챕터의 토크나이저 비교 표 (셀 2 하단) 가 그 결론과 정확히 일치하나요? `bert-base-uncased` 가 한국어 문장을 *자모 단위* 로 분해한 결과를 어떻게 해석해야 할까요?
 2. MLM random baseline 이 Ch 20 (vocab 30,522) 의 약 10.33 에서 Ch 22 (vocab 32,000) 의 약 10.37 로 *미세하게* 바뀝니다. 이 0.04 차이가 학습 동역학에 의미 있는 영향을 주나요? (힌트: 학습 곡선의 절대값 vs 상대 변화)
-3. 한국어 위키 paragraph 는 *제한 50-2000자 필터* 로 평균 길이가 일정합니다. NSMC 한 줄 리뷰보다는 깁니다. 같은 5K 샘플이라도 *총 토큰 양* 이 Ch 20 (Wikitext-103) 와 어떻게 다른지, 같은 epoch 수에서 *생성 블록 수* 가 어떻게 달라지는지 확인해 보세요.
+3. 한국어 위키 paragraph 는 *제한 50-2000자 필터* 로 평균 길이가 일정합니다. NSMC 한 줄 리뷰보다 길고 Yelp 보다는 짧음. 같은 5K 샘플이라도 *총 토큰 양* 이 Ch 20 (Yelp) 와 어떻게 다른지, 같은 epoch 수에서 *생성 블록 수* 가 어떻게 달라지는지 확인해 보세요.
 4. `DataCollatorForLanguageModeling` 이 토큰 id 만 보고 동작한다는 게 이번 챕터의 결론 중 하나입니다. 그렇다면 *한국어 모델 학습 시 mlm_probability 를 0.15 가 아닌 다른 값으로 바꿔야 할 이유* 가 있을까요?
 
 ## FAQ
@@ -138,7 +138,7 @@ metrics = {
 }
 ```
 
-한국어 위키 paragraphs 는 평균 길이가 NSMC 한 줄 리뷰보다는 깁니다. 같은 5K 샘플이라도 *토큰 총량* 이 Ch 20 의 Wikitext-103 paragraphs 와 살짝 다릅니다. 같은 step 수에 *실제 본 토큰 수* 가 다르고, eval loss 도 영향을 받습니다. *언어 자체의 어려움 차이* 가 아니라 *데이터 크기 차이* 가 더 큰 영향. 공정한 언어 비교는 *토큰 총량 매칭* 이 필요.
+한국어 위키 paragraphs 는 평균 길이가 Yelp 리뷰보다 짧지만 NSMC 보다는 깁니다. 같은 5K 샘플이라도 *토큰 총량* 이 Yelp 와 살짝 다릅니다. 같은 step 수에 *실제 본 토큰 수* 가 다르고, eval loss 도 영향을 받습니다. *언어 자체의 어려움 차이* 가 아니라 *데이터 크기 차이* 가 더 큰 영향. 공정한 언어 비교는 *토큰 총량 매칭* 이 필요.
 
 ## 다음 챕터 예고
 
