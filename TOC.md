@@ -51,6 +51,7 @@
 * [12. BERT 다중 클래스 분류 (Multi-class & CE)](pages/12-bert_multiclass.md)
   * [12-1. 실습](pages/12-bert_multiclass-practice.md)
   * [12-2. 정리와 FAQ](pages/12-bert_multiclass-wrapup.md)
+  * [12-3. 부록 — 데이터 스케일링 곡선](pages/12-bert_multiclass-data_scaling.md)
 * [13. BERT 다중 라벨 분류 (Multi-label & Per-label BCE)](pages/13-bert_multilabel.md)
   * [13-1. 실습](pages/13-bert_multilabel-practice.md)
   * [13-2. 정리와 FAQ](pages/13-bert_multilabel-wrapup.md)
