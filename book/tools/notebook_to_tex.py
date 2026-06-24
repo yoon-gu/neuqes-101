@@ -521,7 +521,13 @@ CHAPTERS = [
             "활성 라벨 수",
             "커스텀 Trainer",
             "커스텀 데이터 콜레이터",
+            "lambda sweep",
+            "sweet spot",
+            "lambda=0.05",
+            "람다 스윕",
+            "약한 보조 신호",
         ),
+        ("18_ko_auxiliary_lambda_sweep.ipynb",),
     ),
     Chapter(
         19,
@@ -1045,6 +1051,7 @@ FIGURE_OUTPUTS: dict[tuple[int, int], FigureSpec] = {
     (17, 3): FigureSpec("ch17_threshold_sweep.png", "KLUE-YNAT 다중 라벨 임계값 탐색", "fig:ch17-threshold-sweep", r"0.86\linewidth"),
     (18, 1): FigureSpec("ch18_per_label_f1_compare.png", "한국어 보조 손실 적용 전후의 카테고리별 F1 비교", "fig:ch18-per-label-f1-compare", r"0.88\linewidth"),
     (18, 2): FigureSpec("ch18_aux_count_violin.png", "활성 라벨 개수 보조 회귀의 예측 분포", "fig:ch18-aux-count-violin", r"0.76\linewidth"),
+    (18, 3): FigureSpec("ch18_lambda_sweep.png", "한국어 보조 손실 lambda 스윕에서 확인한 sweet spot", "fig:ch18-lambda-sweep", r"0.86\linewidth"),
     (19, 1): FigureSpec("ch19_token_length_distribution.png", "WordPiece와 WordLevel의 문장당 토큰 수 분포", "fig:ch19-token-length-distribution", r"0.92\linewidth"),
     (19, 2): FigureSpec("ch19_unk_rate_bar.png", "토크나이저별 미등록 토큰 비율 비교", "fig:ch19-unk-rate-bar", r"0.72\linewidth"),
     (19, 3): FigureSpec("ch19_cross_language_heatmap.png", "학습 언어와 입력 언어가 다를 때의 미등록 토큰 비율", "fig:ch19-cross-language-heatmap", r"0.78\linewidth"),
@@ -4925,6 +4932,44 @@ def chapter_specific_fixes(text: str, chapter_number: int) -> str:
         # out of those blocks because listings does not reliably render them under XeLaTeX.
         text = text.replace("λ", "lambda")
         text = text.replace("Δ", "delta")
+    if chapter_number == 18:
+        text = text.replace(
+            "\\(\\lambda\\) --- 보조 loss 가중치. 본문 기본값 \\textbf{0.1} (보조 MSE 가 메인 BCE 보다 \\emph{크기 자체가 커서} --- 1-4 vs 0.3-0.6 --- \\(\\lambda\\) 를 작게 잡아 균형).",
+            "\\(\\lambda\\) --- 보조 loss 가중치. 본문 기본값은 스윕에서 확인한 sweet spot 인 \\textbf{0.05}입니다. 보조 MSE 가 메인 BCE 보다 \\emph{크기 자체가 커서} \\(\\lambda\\) 를 작게 잡아 균형을 맞춥니다.",
+        )
+        text = text.replace(
+            "활성 개수 정답은 1 또는 2 의 \\emph{정수}. 학습 초기 보조 헤드 예측이 평균 1.5 근처면 MSE 는 약 \\(0.25\\), 무작위 예측이면 \\(1-4\\). 메인 BCE 는 K=7 평균이라 학습 초반에도 \\(0.3-0.7\\) 수준. \\emph{\\(\\lambda\\)=1} 이면 보조가 메인보다 크게 잡힐 수 있어 \\textbf{\\(\\lambda\\)=0.1} 이 권장 기본값.",
+            "활성 개수 정답은 1 또는 2 의 \\emph{정수}. 학습 초기 보조 헤드 예측이 평균 1.5 근처면 MSE 는 약 \\(0.25\\), 무작위 예측이면 \\(1-4\\)까지 커질 수 있습니다. 메인 BCE 는 K=7 평균이라 학습 초반에도 \\(0.3-0.7\\) 수준입니다. 따라서 \\emph{\\(\\lambda\\)=1} 은 과하고, 부록 스윕에서는 \\textbf{\\(\\lambda\\)=0.05} 가 메인 F1 을 가장 끌어올렸습니다.",
+        )
+        text = text.replace(
+            "0.1 & 0.45 & 0.25 & 0.475 & 5\\% \\(\\leftarrow\\) \\textbf{본문 기본} \\\\",
+            "0.05 & 0.45 & 0.25 & 0.4625 & 2.7\\% \\(\\leftarrow\\) \\textbf{본문 기본, sweet spot} \\\\",
+        )
+        text = text.replace(
+            "이 장에선 \\textbf{\\(\\lambda\\)=0.1} 로 학습하고 \\(\\lambda\\)=0 baseline 과 비교, §10 의 변형 섹션에서 \\(\\lambda\\) ∈ \\{0.0, 0.1, 1.0\\} 스윕으로 효과 분포를 봅니다.",
+            "이 장에선 \\textbf{\\(\\lambda\\)=0.05} 로 학습하고 \\(\\lambda\\)=0 baseline 과 비교합니다. 부록 \\inlinecode{18\\_ko\\_auxiliary\\_lambda\\_sweep} 의 공정 seed 스윕에서 \\(\\lambda\\)=0.05 가 micro/macro-F1 을 가장 끌어올리는 sweet spot 으로 확인됐기 때문입니다.",
+        )
+        text = text.replace(
+            "\\section{부록: λ 스윕: 약한 보조 task 의 sweet spot (이슈 \\#22)}",
+            "\\section{\\texorpdfstring{부록: $\\lambda$ 스윕: 약한 보조 task 의 sweet spot}{부록: lambda 스윕: 약한 보조 task 의 sweet spot}}",
+        )
+        text = text.replace("\\(\\lambda\\)=0.1 은 본편 셋업.", "\\(\\lambda\\)=0.1 은 비교점입니다.")
+        text = text.replace("λ=0.1 (본편)", "lambda=0.1 (비교점)")
+        text = text.replace("0.1 (본편)", "0.1 (비교점)")
+        text = text.replace(
+            "본편이 쓴 \\(\\lambda\\)=0.1 은 공정 비교(같은 seed 초기화)에선 거의 \\textbf{중립}(0.8489 \\(\\approx\\) baseline)이고 --- 원래 이슈의 “\\(\\lambda\\)=0.1 에서 -0.008” 은 두 모델을 따로 초기화한 \\emph{불공정 비교} 탓이 큽니다 --- \\(\\lambda\\)\\(\\ge\\)0.2 부터 메인이 무너집니다(\\(\\lambda\\)=0.5 에서 0.804).",
+            "\\(\\lambda\\)=0.1 은 공정 비교(같은 seed 초기화)에선 거의 \\textbf{중립}(0.8489 \\(\\approx\\) baseline)인 비교점입니다. \\(\\lambda\\)\\(\\ge\\)0.2 부터는 메인이 무너집니다(\\(\\lambda\\)=0.5 에서 0.804).",
+        )
+        text = text.replace("본편 \\ref{ch:18}장 은", "본편 \\ref{ch:18}장은")
+        text = text.replace(
+            '    loc="lower left"); plt.tight_layout(); plt.show(,\n)',
+            '    loc="lower left",\n)\nplt.tight_layout()\nplt.show()\n',
+        )
+        text = text.replace("λ", "lambda")
+        text = text.replace("Δ", "delta")
+        text = text.replace("≈", "approx")
+        text = text.replace("∈", "in")
+        text = text.replace("→", "->")
     if chapter_number == 31:
         text = text.replace(
             "policy only,\n              ref-free,\n",

@@ -4,7 +4,7 @@
 
 ```python
 # 시간 여유 있을 때만 실행 — 각 lambda 마다 처음부터 다시 학습
-LAMBDA_GRID = [0.0, 0.1, 1.0]   # 빠르게 보고 싶으면 [0.0, 0.1] 만
+LAMBDA_GRID = [0.0, 0.02, 0.05, 0.1, 0.2, 0.5]
 RUN_LAMBDA_SWEEP = False        # ← True 로 바꿔 실행
 
 sweep_results = []
@@ -62,6 +62,8 @@ Lambda sweep skipped. Set RUN_LAMBDA_SWEEP=True to run (~30 min extra on T4).
 
 **해석 가이드 — 결과를 직접 보면**
 
-- macro_f1 이 λ=0.1 에서 최대 → 가벼운 보조 가중치가 정규화 효과로 메인 도움.
-- macro_f1 이 λ=1.0 에서 최대 → 보조 신호가 충분히 강해 둘 다 학습.
-- macro_f1 이 λ=0 에서 최대 (baseline 이 가장 좋음) → 보조 task 가 이 셋업에선 도움 안 됨. quick 모드 노이즈일 수 있어 시드 바꿔 재실행 권장.
+- macro_f1 이 λ=0.05 근처에서 최대 → 약한 보조 신호가 작은 가중치에서 정규화 효과로 메인에 도움.
+- λ≥0.2 에서 macro_f1 이 하락 → 보조 신호가 메인 학습을 방해하기 시작.
+- λ=0 이 최대 (baseline 이 가장 좋음) → 보조 task 가 이 셋업에선 도움 안 됨. quick 모드 노이즈일 수 있어 시드 바꿔 재실행 권장.
+
+전체 실행 결과와 그래프는 [18-4 부록 — λ 스윕으로 약한 보조 신호의 sweet spot 찾기](18-ko_auxiliary-lambda_sweep.md)에 정리했습니다.

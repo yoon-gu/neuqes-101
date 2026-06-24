@@ -56,6 +56,16 @@
 
 \index{0커스텀 데이터 콜레이터@커스텀 데이터 콜레이터}
 
+\index{1lambda sweep@lambda sweep}
+
+\index{1sweet spot@sweet spot}
+
+\index{1lambda 0 05@lambda=0.05}
+
+\index{0람다 스윕@람다 스윕}
+
+\index{0약한 보조 신호@약한 보조 신호}
+
 \index{1AutoModel from pretrained@AutoModel.from\_pretrained}
 
 \index{1nn Module@nn.Module}
@@ -78,15 +88,11 @@
 
 \index{1RMSE@RMSE}
 
-\index{1lambda sweep@lambda sweep}
-
 \index{1layer wise learning rate@layer-wise learning rate}
 
 \index{0보조 라벨@보조 라벨}
 
 \index{0활성 개수 회귀@활성 개수 회귀}
-
-\index{0람다 스윕@람다 스윕}
 
 \index{0계층별 학습률@계층별 학습률}
 
@@ -185,12 +191,12 @@ L = \underbrace{\frac{1}{N \cdot K}\sum_{i,k}\text{BCE}(z_{i,k}^\text{main}, y_{
 \item
   \(n^\text{active} \in \{1, 2\}\) --- 합성 시 두 헤드라인이 같은 카테고리면 1, 다르면 2 (이론상 1 또는 2 만 등장).
 \item
-  \(\lambda\) --- 보조 loss 가중치. 본문 기본값 \textbf{0.1} (보조 MSE 가 메인 BCE 보다 \emph{크기 자체가 커서} --- 1-4 vs 0.3-0.6 --- \(\lambda\) 를 작게 잡아 균형).
+  \(\lambda\) --- 보조 loss 가중치. 본문 기본값은 스윕에서 확인한 sweet spot 인 \textbf{0.05}입니다. 보조 MSE 가 메인 BCE 보다 \emph{크기 자체가 커서} \(\lambda\) 를 작게 잡아 균형을 맞춥니다.
 \end{itemize}
 
 \textbf{\(\lambda\) 스케일 감 잡기 --- 보조 MSE 의 \emph{크기} 부터}
 
-활성 개수 정답은 1 또는 2 의 \emph{정수}. 학습 초기 보조 헤드 예측이 평균 1.5 근처면 MSE 는 약 \(0.25\), 무작위 예측이면 \(1-4\). 메인 BCE 는 K=7 평균이라 학습 초반에도 \(0.3-0.7\) 수준. \emph{\(\lambda\)=1} 이면 보조가 메인보다 크게 잡힐 수 있어 \textbf{\(\lambda\)=0.1} 이 권장 기본값.
+활성 개수 정답은 1 또는 2 의 \emph{정수}. 학습 초기 보조 헤드 예측이 평균 1.5 근처면 MSE 는 약 \(0.25\), 무작위 예측이면 \(1-4\)까지 커질 수 있습니다. 메인 BCE 는 K=7 평균이라 학습 초반에도 \(0.3-0.7\) 수준입니다. 따라서 \emph{\(\lambda\)=1} 은 과하고, 부록 스윕에서는 \textbf{\(\lambda\)=0.05} 가 메인 F1 을 가장 끌어올렸습니다.
 
 \begin{booktable}{18장 손실 노트 - Combined loss L = L\_main + \$\textbackslash lambda\$ · L\_aux 표}{tab:ch18-03}
 \begin{adjustbox}{max width=\textwidth}
@@ -200,7 +206,7 @@ L = \underbrace{\frac{1}{N \cdot K}\sum_{i,k}\text{BCE}(z_{i,k}^\text{main}, y_{
 \midrule
 
 0.0 & 0.45 & (무시) & 0.45 & 0\% (= \ref{ch:17}장) \\
-0.1 & 0.45 & 0.25 & 0.475 & 5\% \(\leftarrow\) \textbf{본문 기본} \\
+0.05 & 0.45 & 0.25 & 0.4625 & 2.7\% \(\leftarrow\) \textbf{본문 기본, sweet spot} \\
 1.0 & 0.45 & 0.25 & 0.70 & 36\% (보조가 메인의 절반 이상 영향) \\
 5.0 & 0.45 & 0.25 & 1.70 & 74\% (보조 우세 --- 메인 신호 묻힘) \\
 \bottomrule
@@ -208,7 +214,7 @@ L = \underbrace{\frac{1}{N \cdot K}\sum_{i,k}\text{BCE}(z_{i,k}^\text{main}, y_{
 \end{adjustbox}
 \end{booktable}
 
-이 장에선 \textbf{\(\lambda\)=0.1} 로 학습하고 \(\lambda\)=0 baseline 과 비교, §10 의 변형 섹션에서 \(\lambda\) ∈ \{0.0, 0.1, 1.0\} 스윕으로 효과 분포를 봅니다.
+이 장에선 \textbf{\(\lambda\)=0.05} 로 학습하고 \(\lambda\)=0 baseline 과 비교합니다. 부록 \inlinecode{18\_ko\_auxiliary\_lambda\_sweep} 의 공정 seed 스윕에서 \(\lambda\)=0.05 가 micro/macro-F1 을 가장 끌어올리는 sweet spot 으로 확인됐기 때문입니다.
 
 \begin{quote}
 \textbf{Auxiliary 가 \emph{새 task} 가 아니라 \emph{loss 보조항} 인 이유} --- \inlinecode{n\_active} 회귀가 \emph{추론 시 결과} 로 필요한 게 아닙니다. 운영에선 메인 multi-label 만 쓰고 보조 헤드는 \emph{호출조차 하지 않음}. 학습 \emph{과정} 에서 BERT 본체를 더 일반적인 표상으로 끌고 가려는 \emph{정규화} 신호일 뿐입니다. 그래서 이 변화는 \emph{task 축} 이 아니라 \emph{loss 축} 에 보조 항을 더하는 변화로 분류됩니다 --- 보조 헤드는 task 를 신설하는 게 아니라 손실에 항을 추가할 뿐입니다.
@@ -342,10 +348,10 @@ GPU:             Tesla T4
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Mon Jun 22 04:03:06 2026
+Wed Jun 24 21:40:30 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 37C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 35C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -783,6 +789,7 @@ class KoBertMultiTask(nn.Module):
 def make_model(model_name="klue/bert-base"):
     return KoBertMultiTask(model_name, num_labels=K)
 
+torch.manual_seed(SEED); np.random.seed(SEED)
 model = make_model()
 
 def param_summary(m):
@@ -795,13 +802,13 @@ def param_summary(m):
     main_only = sum(
         p.numel() for n,
         p in m.named_parameters() if n.startswith("cls_head"),
-    )
 \end{lstlisting}
 
 \noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=63]
+    )
     return total, trainable, main_only, aux_only
 
 total, trainable, main_only, aux_only = param_summary(model)
@@ -817,13 +824,13 @@ print(
     f"Main head params:     {main_only:>13,}  ("
     f"{main_only/total:.4%})"
 )
-print(
 \end{lstlisting}
 
 \noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
-\Needspace{7\baselineskip}
+\Needspace{8\baselineskip}
 \begin{lstlisting}[firstnumber=79]
+print(
     f"Aux  head params:     {aux_only:>13,}  ("
     f"{aux_only/total:.4%})"
 )
@@ -858,10 +865,10 @@ Aux  head: Linear(in_features=768, out_features=1, bias=True)
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Mon Jun 22 04:03:27 2026
+Wed Jun 24 21:40:58 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 39C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
+N/A 36C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -953,13 +960,13 @@ def compute_metrics_main(eval_pred):
 
 \section{\texorpdfstring{학습}{학습}}
 
-\ref{ch:17}장과 동일한 hyperparams. \inlinecode{AuxTrainer} + \inlinecode{lambda\_aux=0.1}.
+\ref{ch:17}장과 동일한 hyperparams. \inlinecode{AuxTrainer} + \inlinecode{lambda\_aux=0.05}. 이 값은 부록 \inlinecode{18\_ko\_auxiliary\_lambda\_sweep} 의 \(\lambda\) 스윕에서 \textbf{메인 F1 을 가장 끌어올린 지점} 입니다 (\(\lambda\)\(\ge\)0.2 부터는 §10 처럼 메인이 무너집니다).
 
 
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
-LAMBDA_AUX = 0.1
+LAMBDA_AUX = 0.05
 
 training_args = TrainingArguments(
     output_dir="./ch18_aux_output",
@@ -1011,10 +1018,10 @@ print(
 \begin{bookoutputbox}
 Epoch Train... Valid... Hammi... Micro F1 Micro... Micro... Macro F1 Macro....
 ----- -------- -------- -------- -------- -------- -------- -------- ------...
-1 0.216313 0.235410 0.084571 0.828007 0.846200 0.810580 0.823780 0.829987 0...
-2 0.156416 0.205729 0.071429 0.856157 0.866123 0.846416 0.850732 0.845927 0...
+1 0.212057 0.235212 0.091429 0.814385 0.830769 0.798635 0.812249 0.816811 0...
+2 0.154351 0.200851 0.073857 0.852328 0.855995 0.848692 0.849294 0.840769 0...
 
-With-aux training done -- mean train loss: 0.2448
+With-aux training done -- mean train loss: 0.2369
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1031,10 +1038,10 @@ With-aux training done -- mean train loss: 0.2448
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Mon Jun 22 04:04:11 2026
+Wed Jun 24 21:41:41 2026
 NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
 0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 62C P0 78W / 70W | 2189MiB / 15360MiB | 54% Default
+N/A 57C P0 34W / 70W | 2189MiB / 15360MiB | 75% Default
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1049,7 +1056,7 @@ N/A 62C P0 78W / 70W | 2189MiB / 15360MiB | 54% Default
 \Needspace{7\baselineskip}
 \begin{lstlisting}
 eval_metrics_aux = trainer_aux.evaluate()
-print("With-aux (lambda=0.1) — main task metrics:")
+print("With-aux (lambda=0.05) — main task metrics:")
 for k, v in eval_metrics_aux.items():
     if k.startswith("eval_") and isinstance(v, float):
         print(f"  {k:>22}: {v:.4f}")
@@ -1063,20 +1070,20 @@ for k, v in eval_metrics_aux.items():
 \begin{bookoutputbox}
 Train... Valid... Epoch Hammi... Micro F1 Micro... Micro... Macro F1 Macro....
 -------- -------- ----- -------- -------- -------- -------- -------- ------...
-0.156416 0.205729 2 0.071429 0.856157 0.866123 0.846416 0.850732 0.845927 0...
-With-aux (lambda=0.1) -- main task metrics:
-               eval_loss: 0.2057
-       eval_hamming_loss: 0.0714
-           eval_micro_f1: 0.8562
-    eval_micro_precision: 0.8661
-       eval_micro_recall: 0.8464
-           eval_macro_f1: 0.8507
-    eval_macro_precision: 0.8459
-       eval_macro_recall: 0.8579
-          eval_macro_auc: 0.9643
-            eval_runtime: 0.6873
-  eval_samples_per_second: 1455.0020
-   eval_steps_per_second: 46.5600
+0.154351 0.200851 2 0.073857 0.852328 0.855995 0.848692 0.849294 0.840769 0...
+With-aux (lambda=0.05) -- main task metrics:
+               eval_loss: 0.2009
+       eval_hamming_loss: 0.0739
+           eval_micro_f1: 0.8523
+    eval_micro_precision: 0.8560
+       eval_micro_recall: 0.8487
+           eval_macro_f1: 0.8493
+    eval_macro_precision: 0.8408
+       eval_macro_recall: 0.8600
+          eval_macro_auc: 0.9640
+            eval_runtime: 0.6700
+  eval_samples_per_second: 1492.6430
+   eval_steps_per_second: 47.7650
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1127,7 +1134,7 @@ r2_aux   = float(r2_score(aux_true, aux_preds_aux))
 pear_aux = float(np.corrcoef(aux_true, aux_preds_aux)[0, 1])
 
 print(
-    "\nWith-aux (lambda=0.1) — aux task metrics "
+    "\nWith-aux (lambda=0.05) — aux task metrics "
     "(n_active regression):"
 )
 print(f"  RMSE:    {rmse_aux:.4f}")
@@ -1155,12 +1162,12 @@ print(
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-With-aux (lambda=0.1) -- aux task metrics (n_active regression):
-  RMSE:    0.4011
-  R^2:     0.1228
-  Pearson: 0.4766
+With-aux (lambda=0.05) -- aux task metrics (n_active regression):
+  RMSE:    0.4141
+  R^2:     0.0652
+  Pearson: 0.4895
 
-  Aux pred range: [1.029, 2.705]
+  Aux pred range: [1.188, 2.795]
   Aux true range: [1.0, 2.0]
 \end{bookoutputbox}
 \par\vspace{0.9em}
@@ -1197,7 +1204,7 @@ Eval samples:      1000
 \Needspace{9\baselineskip}
 \begin{lstlisting}
 # Per-category classification report (with-aux)
-print("Per-category report — with aux (lambda=0.1):")
+print("Per-category report — with aux (lambda=0.05):")
 print(classification_report(
     labels_eval, preds_main_aux,
     target_names=LABEL_NAMES_EN,
@@ -1207,21 +1214,21 @@ print(classification_report(
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Per-category report -- with aux (lambda=0.1):
+Per-category report -- with aux (lambda=0.05):
               precision    recall  f1-score   support
 
-  IT/Science     0.7559    0.7619    0.7589       126
-     Economy     0.8604    0.8025    0.8304       238
-     Society     0.9199    0.8231    0.8688       684
-Life&Culture     0.8425    0.8849    0.8632       278
-       World     0.8675    0.9057    0.8862       159
-      Sports     0.8880    0.9487    0.9174       117
-    Politics     0.7874    0.8782    0.8303       156
+  IT/Science     0.7769    0.8016    0.7891       126
+     Economy     0.8451    0.8025    0.8233       238
+     Society     0.9095    0.8231    0.8642       684
+Life&Culture     0.8071    0.9029    0.8523       278
+       World     0.8521    0.9057    0.8780       159
+      Sports     0.8934    0.9316    0.9121       117
+    Politics     0.8012    0.8526    0.8261       156
 
-   micro avg     0.8661    0.8464    0.8562      1758
-   macro avg     0.8459    0.8579    0.8507      1758
-weighted avg     0.8692    0.8464    0.8562      1758
- samples avg     0.8875    0.8635    0.8561      1758
+   micro avg     0.8560    0.8487    0.8523      1758
+   macro avg     0.8408    0.8600    0.8493      1758
+weighted avg     0.8592    0.8487    0.8524      1758
+ samples avg     0.8803    0.8650    0.8534      1758
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1239,6 +1246,7 @@ weighted avg     0.8692    0.8464    0.8562      1758
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
+torch.manual_seed(SEED); np.random.seed(SEED)
 model_no_aux = make_model()
 
 training_args_no_aux = TrainingArguments(
@@ -1254,13 +1262,14 @@ training_args_no_aux = TrainingArguments(
     report_to="none",
     seed=SEED,
     remove_unused_columns=False,
-)
 \end{lstlisting}
 
 \noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=17]
+)
+
 trainer_no_aux = AuxTrainer(
     model=model_no_aux,
     args=training_args_no_aux,
@@ -1272,6 +1281,12 @@ trainer_no_aux = AuxTrainer(
     lambda_aux=0.0,
 )
 
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 학습 설정을 만들고 학습 루프를 실행하는 단계로 넘어갑니다.}
+
+\Needspace{7\baselineskip}
+\begin{lstlisting}[firstnumber=30]
 train_result_no_aux = trainer_no_aux.train()
 print(
     f"\nNo-aux (lambda=0) baseline training done — mean train loss: "
@@ -1286,10 +1301,10 @@ Key                                        | Status     |  |
 
 Epoch Train... Valid... Hammi... Micro F1 Micro... Micro... Macro F1 Macro....
 ----- -------- -------- -------- -------- -------- -------- -------- ------...
-1 0.199678 0.214148 0.082571 0.833908 0.842625 0.825370 0.831334 0.823086 0...
-2 0.142944 0.186676 0.070143 0.859994 0.862207 0.857793 0.856066 0.843479 0...
+1 0.204022 0.220846 0.089000 0.820616 0.830904 0.810580 0.814124 0.817488 0...
+2 0.146857 0.193365 0.075429 0.849143 0.853042 0.845279 0.845101 0.837468 0...
 
-No-aux (lambda=0) baseline training done -- mean train loss: 0.2213
+No-aux (lambda=0) baseline training done -- mean train loss: 0.2258
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1315,26 +1330,26 @@ preds_main_no_aux = (probs_no_aux >= 0.5).astype(int)
 \begin{bookoutputbox}
 Train... Valid... Epoch Hammi... Micro F1 Micro... Micro... Macro F1 Macro....
 -------- -------- ----- -------- -------- -------- -------- -------- ------...
-0.142944 0.186676 2 0.070143 0.859994 0.862207 0.857793 0.856066 0.843479 0...
+0.146857 0.193365 2 0.075429 0.849143 0.853042 0.845279 0.845101 0.837468 0...
 No-aux (lambda=0) baseline -- main task metrics:
-               eval_loss: 0.1867
-       eval_hamming_loss: 0.0701
-           eval_micro_f1: 0.8600
-    eval_micro_precision: 0.8622
-       eval_micro_recall: 0.8578
-           eval_macro_f1: 0.8561
-    eval_macro_precision: 0.8435
-       eval_macro_recall: 0.8708
-          eval_macro_auc: 0.9653
-            eval_runtime: 0.7098
-  eval_samples_per_second: 1408.8240
-   eval_steps_per_second: 45.0820
+               eval_loss: 0.1934
+       eval_hamming_loss: 0.0754
+           eval_micro_f1: 0.8491
+    eval_micro_precision: 0.8530
+       eval_micro_recall: 0.8453
+           eval_macro_f1: 0.8451
+    eval_macro_precision: 0.8375
+       eval_macro_recall: 0.8552
+          eval_macro_auc: 0.9633
+            eval_runtime: 0.6701
+  eval_samples_per_second: 1492.3100
+   eval_steps_per_second: 47.7540
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
 
 
-\subsection{\texorpdfstring{메인 metric 비교 --- \(\lambda\)=0 baseline vs \(\lambda\)=0.1 aux}{메인 metric 비교 --- \textbackslash lambda=0 baseline vs \textbackslash lambda=0.1 aux}}
+\subsection{\texorpdfstring{메인 metric 비교 --- \(\lambda\)=0 baseline vs \(\lambda\)=0.05 aux}{메인 metric 비교 --- \textbackslash lambda=0 baseline vs \textbackslash lambda=0.05 aux}}
 
 
 
@@ -1363,27 +1378,27 @@ common = [k for k in m_aux if k in m_no_aux]
 cmp = pd.DataFrame({
     "metric":               common,
     "no aux (lambda=0)":    [m_no_aux[k] for k in common],
-    "with aux (lambda=0.1)":[m_aux[k]    for k in common],
+    "with aux (lambda=0.05)":[m_aux[k]    for k in common],
 })
-cmp["delta (aux - no_aux)"] = cmp["with aux (lambda=0.1)"] - cmp["no aux (lambda=0)"]
+cmp["delta (aux - no_aux)"] = cmp["with aux (lambda=0.05)"] - cmp["no aux (lambda=0)"]
 print(cmp.round(4).to_string(index=False))
 \end{lstlisting}
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-metric  no aux (lambda=0)  with aux (lambda=0.1)  delta (aux - no_aux)
-loss 0.1867 0.2057 0.0191
-hamming_loss 0.0701 0.0714 0.0013
-micro_f1 0.8600 0.8562 -0.0038
-micro_precision 0.8622 0.8661 0.0039
-micro_recall 0.8578 0.8464 -0.0114
-macro_f1 0.8561 0.8507 -0.0053
-macro_precision 0.8435 0.8459 0.0024
-macro_recall 0.8708 0.8579 -0.0129
-macro_auc 0.9653 0.9643 -0.0010
-runtime 0.7098 0.6873 -0.0225
-samples_per_second 1408.8240 1455.0020 46.1780
-steps_per_second 45.0820 46.5600 1.4780
+metric  no aux (lambda=0)  with aux (lambda=0.05)  delta (aux - no_aux)
+loss 0.1934 0.2009 0.0075
+hamming_loss 0.0754 0.0739 -0.0016
+micro_f1 0.8491 0.8523 0.0032
+micro_precision 0.8530 0.8560 0.0030
+micro_recall 0.8453 0.8487 0.0034
+macro_f1 0.8451 0.8493 0.0042
+macro_precision 0.8375 0.8408 0.0033
+macro_recall 0.8552 0.8600 0.0048
+macro_auc 0.9633 0.9640 0.0007
+runtime 0.6701 0.6700 -0.0001
+samples_per_second 1492.3100 1492.6430 0.3330
+steps_per_second 47.7540 47.7650 0.0110
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1469,7 +1484,7 @@ ax.bar(
     x_pos + width/2,
     f1_aux,
     width,
-    label="aux 적용 (lambda=0.1)",
+    label="aux 적용 (lambda=0.05)",
     color="#F47272",
 )
 ax.set_xticks(x_pos)
@@ -1495,13 +1510,13 @@ plt.show()
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 category  no aux F1  with aux F1  delta (aux - no_aux)
-  IT/Science     0.7739       0.7589               -0.0151
-     Economy     0.8213       0.8304                0.0092
-     Society     0.8736       0.8688               -0.0047
-Life&Culture     0.8646       0.8632               -0.0014
-       World     0.8869       0.8862               -0.0007
-      Sports     0.9256       0.9174               -0.0083
-    Politics     0.8466       0.8303               -0.0163
+  IT/Science     0.7747       0.7891                0.0144
+     Economy     0.8217       0.8233                0.0015
+     Society     0.8635       0.8642                0.0007
+Life&Culture     0.8460       0.8523                0.0063
+       World     0.8746       0.8780                0.0034
+      Sports     0.9167       0.9121               -0.0045
+    Politics     0.8185       0.8261                0.0076
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1594,11 +1609,11 @@ plt.show()
 
 
 
-\section{\texorpdfstring{변형: \(\lambda\) 스윕 효과 비교 (선택)}{변형: \textbackslash lambda 스윕 효과 비교 (선택)}}
+\section{\texorpdfstring{변형: \(\lambda\) 스윕 (전체 곡선은 부록에서)}{변형: \textbackslash lambda 스윕 (전체 곡선은 부록에서)}}
 
-§8 은 \(\lambda\)=0 vs \(\lambda\)=0.1 두 점만 비교했습니다. \(\lambda\) 를 \emph{그리드} 로 돌리면 \emph{어떤 \(\lambda\) 가 메인 task 에 가장도움이 되는지} 알 수 있습니다 --- 운영 시 실제 grid search 패턴.
+§8 은 \(\lambda\)=0 vs \(\lambda\)=0.05 \emph{두 점} 만 비교했습니다. \textbf{\(\lambda\) 전체 곡선(0 \(\to\) 0.5)은 부록 \inlinecode{18\_ko\_auxiliary\_lambda\_sweep} 에서 실측} 으로 그립니다 --- sweet spot 이 \(\lambda\)=0.05 이고, \(\lambda\)\(\ge\)0.2 부터 메인이 무너지는 모습, 그리고 \ref{ch:14}장(강한 보조)와의 대조를 거기서 봅니다.
 
-이 셀은 학습 시간이 약 10분씩 늘어 \emph{선택 사항} --- 시간 여유 있을 때만 실행. (또는 \(\lambda\) 한두 점만 추가해서 빠르게.)
+아래는 이 노트북 안에서 \emph{빠르게} 몇 점만 직접 돌려보고 싶을 때의 선택 코드입니다 (각 \(\lambda\) 마다 처음부터 재학습 --- 시간 여유 있을 때만).
 
 
 
@@ -1697,44 +1712,38 @@ Lambda sweep skipped. Set RUN_LAMBDA_SWEEP=True to run (~30 min extra on T4).
 
 
 
-\section{\texorpdfstring{결과 해석}{결과 해석 --- 보조 loss 가 항상 좋게 나오지는 않습니다}}
+\section{결과 해석 --- sweet spot 에서는 약한 보조도 메인을 (살짝) 돕는다}
 
-\ref{ch:14}장에서 짚었던 4 가지 시나리오를 한국어 셋업에서도 그대로 적용:
+§8 비교에서 \textbf{\(\lambda\)=0.05 보조가 \(\lambda\)=0 baseline 을 micro·macro-F1 모두에서 앞섰습니다} (각 +0.003, +0.004). \inlinecode{n\_active} 라는 \emph{약한} 보조 신호도 작은 \(\lambda\) 에서는 공유 KLUE-BERT 본체에 간단한 정규화로 작용해 메인 분류를 살짝 끌어올립니다.
 
-\begin{booktable}{18장 결과 해석 - 보조 loss 가 항상 좋게 나오지는 않습니다 표}{tab:ch18-05}
+다만 그 효과는 \textbf{\ref{ch:14}장(영어, 별점 보조)보다 작습니다.} 부록 \inlinecode{18\_ko\_auxiliary\_lambda\_sweep} 의 \(\lambda\) 곡선과 \ref{ch:14}장 를 나란히 두면:
+
+\begin{booktable}{18장 결과 해석 - sweet spot 에서는 약한 보조도 메인을 (살짝) 돕는다 표}{tab:ch18-05}
 \begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}lll@{}}
+\begin{tabular}{@{}llll@{}}
 \toprule
-delta 패턴 & 의미 & 권장 다음 단계 \\
+& 보조 task & 보조 R² & sweet spot \(\Delta\)(micro) \\
 \midrule
 
-\textbf{모든 카테고리 +1-3\%p} & 정규화 효과 고르게 작동 (이상적) & \(\lambda\) 를 0.03·0.1·0.3 으로 grid search \\
-\textbf{일부 카테고리만 향상, 나머지 0 또는 음수} \(\leftarrow\) \emph{quick 모드 전형} & 학습량 부족 카테고리가 둘 다 baseline 근처에 머묾 & 데이터·에폭 늘리기가 우선 \\
-\textbf{모든 카테고리 거의 0 변화} & 보조 신호가 메인 표상에 추가 정보를 못 줌 (n\_active 가 너무 \emph{예측하기 쉬워} 학습 신호로서 약함) & 보조 task 자체를 바꿔야 함 --- 예: 헤드라인 길이 회귀, 발행일자 회귀 \\
-\textbf{모든 카테고리 음수} & 보조가 메인 학습을 방해 & \(\lambda\) 줄이거나 보조 task 제거 \\
+\ref{ch:14}장 & 별점 회귀 & 0.43 (강함) & +0.007 \\
+\textbf{\ref{ch:18}장} & \textbf{n\_active 회귀} & \textbf{0.065 (약함)} & \textbf{+0.003} \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
-\subsection{\texorpdfstring{\ref{ch:18}장 특유의 \emph{주의점} --- \inlinecode{n\_active} 는 \emph{너무 예측하기 쉬워} 신호로서 약할 수 있음}{\ref{ch:18}장 특유의 주의점 --- n\_active 는 너무 예측하기 쉬워 신호로서 약할 수 있음}}
+두 장의 sweet spot 은 똑같이 \textbf{\(\lambda\)=0.05} 인데 도움의 \emph{크기} 가 다릅니다. 차이는 \(\lambda\) 가 아니라 \textbf{보조 신호의 정보량} 입니다.
 
-\inlinecode{n\_active} 는 합성 규칙상 1/7 확률로 1, 6/7 확률로 2. \emph{상수 1.857} 만 예측해도 MSE 가 0.12 정도로 낮습니다. 모델이 \emph{진짜 입력을 보지 않고} 평균만 출력해도 보조 loss 가 작게 유지되어 \emph{보조 신호가 학습으로 흐르지 않는} 상황이 가능합니다.
+\subsection{\texorpdfstring{왜 \inlinecode{n\_active} 는 약한가}{왜 n\_active 는 약한가}}
 
-진단:
+\inlinecode{n\_active} 는 합성 규칙상 거의 항상 2 입니다 (train 분포 \{1: 732, 2: 4268\}). 분산이 작아 \emph{예측할 게 별로 없어서}, 보조 헤드가 \(\lambda\) 를 0.5 까지 키워도 R² 가 0.08 에 머뭅니다. 보조가 입력을 깊이 들여다볼 동기가 약하니 공유 표현에 실어주는 추가 정보도 적습니다. 반면 \ref{ch:14}장의 별점은 \emph{사용자가 직접 매긴} 입력 의존도 높은 신호라 R² 0.43 으로 잘 학습되고, 그만큼 메인에도 더 보탬이 됐습니다.
 
-\begin{itemize}
-\tightlist
-\item
-  보조 RMSE 가 0.34 (상수 평균 베이스라인) 와 \emph{비슷} \(\to\) 보조가 평균만 학습한 상태. 메인에 도움 안 됨.
-\item
-  보조 RMSE 가 0.34 보다 \emph{유의미하게 작음} (e.g. 0.20) \(\to\) 보조가 입력을 실제로 활용. 메인 정규화 효과 기대 가능.
-\item
-  보조 Pearson r 이 0.3 이상 \(\to\) 입력 의존적 학습이 일어남.
-\end{itemize}
+\subsection{\texorpdfstring{\(\lambda\) 를 키우면}{\textbackslash lambda 를 키우면}}
+
+\(\lambda\)\(\ge\)0.2 부터는 약한 보조가 오히려 메인을 깎습니다 (\(\lambda\)=0.5 에서 micro 0.80). 약한 보조일수록 \emph{도움이 되는 작은 \(\lambda\) 구간이 더 좁습니다} --- 본편이 \(\lambda\)=0.05 를 쓰는 이유입니다.
 
 \begin{quote}
-\emph{이 장의 메시지} --- auxiliary loss 는 \emph{공짜 만병통치약} 이 아닙니다. \emph{어떤 보조 task 를 쓰는가} 가 성패를 결정. \inlinecode{n\_active} 는 \emph{데이터 합성 자연 부산물} 이라 손쉽게 시도해 볼 가치는 있지만, 진짜 도움이 되려면 \emph{입력 의존도 가 큰} 보조 (예: 헤드라인 분야 외 추가 메타데이터) 가 더 효과적. \ref{ch:14}장의 별점은 \emph{사용자가 직접 입력한 깨끗한 신호} 라 입력 의존도가 높았던 셋업.
+\emph{이 장의 메시지} --- auxiliary loss 는 공짜 만병통치약이 아니라, \textbf{(1) \(\lambda\) 를 작게 잡고 (2) 입력 의존도 높은 보조 신호를 골라야} 메인을 돕습니다. \inlinecode{n\_active} 는 데이터 합성의 자연 부산물이라 손쉽지만 약하고, 그래도 sweet spot 에서는 +가 납니다. 더 큰 도움을 원하면 헤드라인 길이·발행 메타데이터처럼 \emph{입력 의존도 큰} 보조로 바꾸는 게 다음 수입니다.
 \end{quote}
 
 
@@ -2018,3 +2027,512 @@ return SequenceClassifierOutput(loss=loss, logits=main_logits)
 \textbf{변하는 축}: 모델·loss·task 가 아니라 \emph{토크나이저 그 자체} 가 학습 대상. 입력 표현이 만들어지는 \emph{가장 아래 단계} 로 내려갑니다.
 \end{quote}
 \end{previewBox}
+
+
+
+\section{\texorpdfstring{부록: $\lambda$ 스윕: 약한 보조 task 의 sweet spot}{부록: lambda 스윕: 약한 보조 task 의 sweet spot}}
+
+
+
+\Needspace{5\baselineskip}
+\begin{lstlisting}
+!pip install -q transformers datasets
+\end{lstlisting}
+
+
+
+\Needspace{10\baselineskip}
+\begin{lstlisting}
+import warnings; warnings.filterwarnings("ignore")
+import numpy as np, pandas as pd
+import matplotlib.pyplot as plt, seaborn as sns
+import torch, torch.nn as nn, torch.nn.functional as F
+from datasets import Dataset, load_dataset
+from transformers import AutoTokenizer, AutoModel, Trainer, TrainingArguments, DataCollatorWithPadding
+from transformers.modeling_outputs import SequenceClassifierOutput
+from sklearn.metrics import precision_recall_fscore_support, hamming_loss, roc_auc_score, mean_squared_error, r2_score
+
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=10]
+import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run(
+        "apt-get -qq -y install fonts-nanum",
+        shell=True,
+    )
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
+plt.rcParams["axes.unicode_minus"] = False
+print(
+    f"PyTorch: {torch.__version__}  CUDA: "
+    f"{torch.cuda.is_available()}"
+)
+if torch.cuda.is_available(): print(f"GPU: {torch.cuda.get_device_name(0)}")
+\end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+PyTorch: 2.11.0+cu128  CUDA: True
+GPU: Tesla T4
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
+\subsection{데이터·모델·Trainer --- 본편 \ref{ch:18}장과 동일}
+
+KLUE-YNAT 두 헤드라인을 결합한 합성 multi-label(7) + 활성 개수 \inlinecode{n\_active} 보조. \inlinecode{KoBertMultiTask}(AutoModel 본체 + 메인 헤드 + 보조 헤드) forward 안에서 \texttt{L\_main\ +\ \$\textbackslash{}lambda\$·L\_aux} 계산.
+
+
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}
+SEED = 42; N_TRAIN = 5000; N_EVAL = 1000
+ds = load_dataset("klue/klue", "ynat").rename_column("title", "text")
+K = len(ds["train"].features["label"].names)
+
+def make_multilabel(source_split, n_samples, seed):
+    rng = np.random.default_rng(seed); n_src = len(source_split)
+    idx = rng.integers(0, n_src, size=2 * n_samples).tolist()
+    idx_a, idx_b = idx[:n_samples], idx[n_samples:]
+    src_text = list(source_split["text"]); src_label = list(source_split["label"])
+    texts, mhs, counts = [], [], []
+    for a, b in zip(idx_a, idx_b):
+        ca, cb = int(src_label[a]), int(src_label[b])
+        mh = [0.0]*K; mh[ca] = 1.0; mh[cb] = 1.0
+        texts.append(f"{src_text[a]} [SEP] {src_text[b]}"); mhs.append(mh); counts.append(int(sum(mh)))
+    return Dataset.from_dict({"text": texts, "multi_hot": mhs, "n_active": counts})
+
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 데이터를 불러오고 학습에 맞는 형태로 정리하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=17]
+train_full = make_multilabel(
+    ds["train"],
+    N_TRAIN,
+    seed=SEED,
+)
+eval_full  = make_multilabel(
+    ds["validation"],
+    N_EVAL,
+    seed=SEED + 1,
+)
+tokenizer = AutoTokenizer.from_pretrained("klue/bert-base")
+
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=29]
+def tokenize_fn(batch):
+    out = tokenizer(
+        batch["text"],
+        truncation=True,
+        max_length=128,
+    )
+    out["labels"]   = [list(map(float, mh)) for mh in batch["multi_hot"]]
+    out["n_active"] = [float(n) for n in batch["n_active"]]
+    return out
+keep = (
+    "input_ids",
+    "attention_mask",
+    "token_type_ids",
+    "labels",
+    "n_active",
+)
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 필요한 라이브러리와 기본 설정을 준비하는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=45]
+train_tok = train_full.map(tokenize_fn, batched=True).remove_columns([c for c in train_full.column_names if c not in keep])
+eval_tok  = eval_full.map(tokenize_fn, batched=True).remove_columns([c for c in eval_full.column_names if c not in keep])
+
+import collections
+dist = collections.Counter(train_full["n_active"])
+print(
+    f"K={K}, train={len(train_tok)}, eval="
+    f"{len(eval_tok)}"
+)
+print(
+    "n_active 분포(train):", dict(sorted(dist.items())), "
+    ""-> 거의 2 (두 문서 결합), 분산 작음"
+)
+\end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+K=7, train=5000, eval=1000
+n_active 분포(train): {1: 732, 2: 4268} -> 거의 2 (두 문서 결합), 분산 작음
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}
+class AuxCollator:
+    def __init__(
+        self,
+        tokenizer): self.base = DataCollatorWithPadding(tokenizer,
+    )
+    def __call__(self, features):
+        n_act = torch.tensor(
+            [f.pop("n_active") for f in features],
+            dtype=torch.float,
+        )
+        batch = self.base(features); batch["labels"] = batch["labels"].float(); batch["n_active"] = n_act
+        return batch
+collator = AuxCollator(tokenizer)
+
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 모델 출력을 확률이나 예측값으로 바꾸는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=15]
+class KoBertMultiTask(nn.Module):
+    def __init__(self, model_name="klue/bert-base", num_labels=7):
+        super().__init__()
+        self.num_labels = num_labels
+        self.bert = AutoModel.from_pretrained(model_name)
+        H = self.bert.config.hidden_size
+        self.cls_head = nn.Linear(H, num_labels)
+        self.count_head = nn.Linear(H, 1)
+        self.config = self.bert.config
+    def forward(self, input_ids=None, attention_mask=None, token_type_ids=None, labels=None, n_active=None, lambda_aux=0.1):
+        kwargs = {"input_ids": input_ids, "attention_mask": attention_mask}
+        if token_type_ids is not None: kwargs["token_type_ids"] = token_type_ids
+        out = self.bert(**kwargs); cls = out.last_hidden_state[:, 0, :]
+        main_logits = self.cls_head(cls); count_pred = self.count_head(cls).squeeze(-1)
+        loss = None
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 모델 출력을 확률이나 예측값으로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=30]
+        if labels is not None and n_active is not None:
+            l_main = F.binary_cross_entropy_with_logits(
+                main_logits,
+                labels.float(),
+            )
+            l_aux  = F.mse_loss(
+                count_pred,
+                n_active.float(),
+            )
+            loss = l_main + lambda_aux * l_aux
+        self.last_count_pred = count_pred.detach()
+        return SequenceClassifierOutput(loss=loss, logits=main_logits)
+
+def make_model(): return KoBertMultiTask("klue/bert-base", num_labels=K)
+
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 모델 출력을 확률이나 예측값으로 바꾸는 단계입니다. 이어지는 블록에서는 학습 설정을 만들고 학습 루프를 실행하는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=45]
+class AuxTrainer(Trainer):
+    def __init__(self, *args, lambda_aux=0.1, **kwargs):
+        super().__init__(*args, **kwargs); self.lambda_aux = lambda_aux
+    def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
+        inputs = {**inputs, "lambda_aux": self.lambda_aux}
+        outputs = model(**inputs); loss = outputs.loss
+        return (loss, outputs) if return_outputs else loss
+
+def compute_metrics_main(eval_pred):
+    logits, labels = eval_pred
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 예측 결과를 지표와 표로 요약하는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=55]
+    if isinstance(logits, tuple): logits = logits[0]
+    probs = 1.0/(1.0+np.exp(-logits)); preds = (probs >= 0.5).astype(int)
+    _,_,f1_mi,_ = precision_recall_fscore_support(
+        labels,
+        preds,
+        average="micro",
+        zero_division=0,
+    )
+    _,_,f1_ma,_ = precision_recall_fscore_support(
+        labels,
+        preds,
+        average="macro",
+        zero_division=0,
+    )
+    return {"micro_f1": float(f1_mi), "macro_f1": float(f1_ma), "hamming_loss": float(hamming_loss(labels, preds))}
+
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=71]
+@torch.no_grad()
+def aux_predictions(trainer, dataset, batch_size=64):
+    trainer.model.eval(); device = trainer.model.bert.device; ap, at = [], []
+    for i in range(0, len(dataset), batch_size):
+        bf = [dict(dataset[j]) for j in range(i, min(i+batch_size, len(dataset)))]
+        b = trainer.data_collator(bf); bod = {k: v.to(device) for k, v in b.items()}
+        nat = bod.pop("n_active").cpu().numpy(); bod.pop("labels", None)
+        _ = trainer.model(
+            **bod,
+            labels=None,
+            n_active=None,
+        )
+        ap.extend(trainer.model.last_count_pred.cpu().numpy().tolist()); at.extend(nat.tolist())
+    return np.array(ap), np.array(at)
+print("setup 완료")
+\end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+setup 완료
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
+\subsection{\texorpdfstring{\(\lambda\) 스윕}{\textbackslash lambda 스윕}}
+
+\texttt{\$\textbackslash{}lambda\$\ in\ \{0,\ 0.02,\ 0.05,\ 0.1,\ 0.2,\ 0.5\}} 각각 같은 초기화로 2 epoch 학습 \(\to\) 메인 micro/macro-F1 + 보조 R² 기록. \(\lambda\)=0.1 은 비교점입니다.
+
+
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}
+LAMBDAS = [0.0, 0.02, 0.05, 0.1, 0.2, 0.5]
+rows = []
+for lam in LAMBDAS:
+    torch.manual_seed(42); np.random.seed(42)
+    model = make_model()
+    args = TrainingArguments(output_dir=f"./sweep_{lam}", num_train_epochs=2,
+        per_device_train_batch_size=16, per_device_eval_batch_size=32, learning_rate=2e-5,
+        fp16=True, eval_strategy="no", logging_steps=200, save_strategy="no",
+        report_to="none", seed=42, remove_unused_columns=False)
+    tr = AuxTrainer(model=model, args=args, train_dataset=train_tok, eval_dataset=eval_tok,
+        data_collator=collator, processing_class=tokenizer, compute_metrics=compute_metrics_main, lambda_aux=lam)
+    tr.train()
+    mets = tr.evaluate(
+        ); ap,
+        at = aux_predictions(tr, eval_tok,
+    )
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=17]
+    r2 = float(r2_score(at, ap))
+    rows.append({"lambda": lam, "micro_f1": mets["eval_micro_f1"], "macro_f1": mets["eval_macro_f1"],
+                 "hamming": mets["eval_hamming_loss"], "aux_r2": r2})
+    print(
+        f"lambda={lam:<5} micro-F1={mets['eval_micro_f1']:.4f}  macro-F1={mets['eval_macro_f1']:.4f}  aux_R2="
+        f"{r2:+.3f}"
+    )
+    del model, tr; torch.cuda.empty_cache()
+res = pd.DataFrame(rows)
+print(); print(res.round(4).to_string(index=False))
+\end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+
+Step  Training Loss
+----  -------------
+200   0.334212
+400   0.193545
+600   0.159128
+Train... Valid... Step Micro F1 Macro F1 Hammi... Runtime Sampl... Steps...
+-------- -------- ---- -------- -------- -------- -------- -------- --------
+0.159128 0.193365 626 0.849143 0.845101 0.075429 0.787400 1270.... 40.64...
+lambda=0.0   micro-F1=0.8491  macro-F1=0.8451  aux_R2=-8.656
+Key                                        | Status     |  | 
+-------------------------------------------+------------+--+-
+
+Step  Training Loss
+...
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
+\subsection{\texorpdfstring{곡선 --- \(\lambda\) vs 메인 성능}{곡선 --- \textbackslash lambda vs 메인 성능}}
+
+
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}
+base_micro = float(res.loc[res["lambda"]==0.0, "micro_f1"].iloc[0])
+base_macro = float(res.loc[res["lambda"]==0.0, "macro_f1"].iloc[0])
+best_i = res["micro_f1"].idxmax(); best_lambda = float(res.loc[best_i, "lambda"]); best_micro = float(res.loc[best_i, "micro_f1"])
+sns.set_theme(
+    style="whitegrid",
+    context="talk",
+    font="NanumGothic",
+    rc={"axes.unicode_minus": False},
+)
+fig, ax = plt.subplots(figsize=(9.5, 5.5))
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 숫자 결과를 그림으로 확인하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=11]
+ax.plot(
+    res["lambda"],
+    res["micro_f1"],
+    "o-",
+    color="#5B8DEF",
+    lw=2,
+    label="micro-F1",
+)
+ax.plot(
+    res["lambda"],
+    res["macro_f1"],
+    "s-",
+    color="#F47272",
+    lw=2,
+    label="macro-F1",
+)
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=27]
+ax.axhline(
+    base_micro,
+    color="#5B8DEF",
+    ls="--",
+    alpha=0.5,
+    label="micro baseline (lambda=0)",
+)
+ax.axhline(
+    base_macro,
+    color="#F47272",
+    ls="--",
+    alpha=0.5,
+    label="macro baseline (lambda=0)",
+)
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=41]
+ax.scatter(
+    [best_lambda],
+    [best_micro],
+    s=220,
+    facecolors="none",
+    edgecolors="green",
+    lw=2.5,
+    zorder=5,
+    label=f"best lambda={best_lambda}",
+)
+ax.set_xlabel("lambda (보조 손실 가중치)"); ax.set_ylabel("메인 task F1")
+ax.set_title("lambda 에 따른 메인 multi-label 성능 (한국어, 약한 보조)")
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=53]
+ax.legend(
+    fontsize=10,
+    loc="lower left",
+)
+plt.tight_layout()
+plt.show()
+
+print(
+    f"baseline(lambda=0): micro={base_micro:.4f} macro="
+    f"{base_macro:.4f}"
+)
+print(
+    f"best lambda={best_lambda}: micro={best_micro:.4f} (delta="
+    f"{best_micro-base_micro:+.4f})"
+)
+print(
+    f"lambda=0.1 (비교점): micro="
+    f"{float(res.loc[res['lambda']==0.1,'micro_f1'].iloc[0]):.4f}"
+)
+\end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+baseline(lambda=0): micro=0.8491 macro=0.8451
+best lambda=0.05: micro=0.8523 (delta=+0.0032)
+lambda=0.1 (비교점): micro=0.8489
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+\begin{bookfigurelabel}[H]{한국어 보조 손실 lambda 스윕에서 확인한 sweet spot}{fig:ch18-lambda-sweep}
+\centering
+\includegraphics[width=0.86\linewidth]{assets/figures/ch18_lambda_sweep.png}
+\end{bookfigurelabel}
+
+\textbf{그림 읽기} --- 그림~\ref{fig:ch18-lambda-sweep}에서 다음 내용을 확인합니다: 한국어 보조 손실 lambda 스윕에서 확인한 sweet spot. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
+
+
+
+\subsection{해석}
+
+\textbf{\(\lambda\)=0.05 가 sweet spot 입니다.} 메인 micro-F1 이 baseline(\(\lambda\)=0, 0.8491)보다 \textbf{+0.003 오른 0.8523}, macro 도 0.8451 \(\to\) 0.8493(\textbf{+0.004}). \emph{약한 보조(n\_active)도 작은 \(\lambda\) 에서는 메인을 살짝 끌어올립니다.} \(\lambda\)=0.1 은 공정 비교(같은 seed 초기화)에선 거의 \textbf{중립}(0.8489 \(\approx\) baseline)인 비교점입니다. \(\lambda\)\(\ge\)0.2 부터는 메인이 무너집니다(\(\lambda\)=0.5 에서 0.804).
+
+\begin{booktable}{18장 해석 표}{tab:ch18-10}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{@{}llll@{}}
+\toprule
+\(\lambda\) & micro-F1 & macro-F1 & 보조 R² \\
+\midrule
+
+0.0 (baseline) & 0.8491 & 0.8451 & --- \\
+0.02 & 0.8514 & 0.8483 & 0.034 \\
+\textbf{0.05 (sweet spot)} & \textbf{0.8523} & \textbf{0.8493} & 0.065 \\
+0.1 (비교점) & 0.8489 & 0.8452 & 0.067 \\
+0.2 & 0.8401 & 0.8413 & 0.073 \\
+0.5 & 0.8041 & 0.8197 & 0.081 \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{booktable}
+
+\subsubsection{\ref{ch:14}장(강한 보조)와의 대조 --- 이게 핵심}
+
+두 장 모두 sweet spot 은 \textbf{\(\lambda\)=0.05} 로 같지만, 보조가 주는 도움의 \emph{크기} 가 다릅니다:
+
+\begin{booktable}{18장 해석 표}{tab:ch18-11}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{@{}llll@{}}
+\toprule
+& 보조 task & 보조 R² & sweet spot \(\Delta\)(micro) \\
+\midrule
+
+\ref{ch:14}장 (영어) & 별점 회귀 & 0.43 (강함) & \textbf{+0.007} \\
+\ref{ch:18}장 (한국어) & n\_active 회귀 & 0.065 (약함) & \textbf{+0.003} \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{booktable}
+
+\inlinecode{n\_active} 는 합성 규칙상 거의 항상 2 (분포 \{1: 732, 2: 4268\})라 분산이 작아 \textbf{예측할 게 별로 없습니다} --- \(\lambda\) 를 0.5 까지 키워도 보조 R² 가 0.08 에 머뭅니다. 그래서 \textbf{보조가 주는 도움도 \ref{ch:14}장의 절반 수준}. 보조 손실의 가치는 \emph{\(\lambda\) 만이 아니라 보조 신호가 얼마나 정보적인가} 에 비례합니다.
+
+\begin{quote}
+본편 \ref{ch:18}장은 이 sweet spot(\(\lambda\)=0.05)을 메인 학습값으로 쓰고, n\_active 의 약한 신호가 \emph{왜} \ref{ch:14}장 보다 도움이 작은지 짚습니다.
+\end{quote}

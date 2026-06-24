@@ -73,6 +73,7 @@
   * [18-1. 실습](pages/18-ko_auxiliary-practice.md)
   * [18-2. 변형: λ 스윕 (전체 곡선은 부록에서)](pages/18-ko_auxiliary-variation.md)
   * [18-3. 정리와 FAQ](pages/18-ko_auxiliary-wrapup.md)
+  * [18-4. 부록 — λ 스윕으로 약한 보조 신호의 sweet spot 찾기](pages/18-ko_auxiliary-lambda_sweep.md)
 * [19. 토크나이저 직접 학습 (Tokenizer Training)](pages/19-tokenizer_training.md)
   * [19-1. 실습](pages/19-tokenizer_training-practice.md)
   * [19-2. 해부: 같은 문장을 4 토크나이저로 비교](pages/19-tokenizer_training-anatomy.md)
