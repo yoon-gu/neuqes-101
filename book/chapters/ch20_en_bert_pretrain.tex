@@ -44,6 +44,16 @@
 
 \index{0일반 도메인@일반 도메인}
 
+\index{0사전학습량 곡선@사전학습량 곡선}
+
+\index{1perplexity curve@perplexity curve}
+
+\index{1scaling curve@scaling curve}
+
+\index{1epoch saturation@epoch saturation}
+
+\index{0데이터 병목@데이터 병목}
+
 \index{1AutoTokenizer@AutoTokenizer}
 
 \index{1AutoModelForMaskedLM@AutoModelForMaskedLM}
@@ -1834,7 +1844,7 @@ Files:
 변형 축 & 이 장 (기본) & 변형 예 & 예상 효과 \\
 \midrule
 
-\inlinecode{num\_train\_epochs} & 2 & 5 & eval loss 하락, perplexity 약 2-3 감소 \\
+\inlinecode{num\_train\_epochs} & 2 & 5 & eval loss 하락, perplexity 완만히 하락(8-10 epoch 이후 평탄) \\
 \inlinecode{BLOCK\_SIZE} & 128 & 64 & 블록 수 약 2배, 한 블록 짧아져 \emph{문맥} 줄음 \(\to\) loss 약간 상승 \\
 \inlinecode{BLOCK\_SIZE} & 128 & 256 & 블록 수 절반, 한 블록 길어 \emph{문맥} 풍부 \(\to\) loss 하락 가능, VRAM 약 4배 (attention \(O(n^2)\)) \\
 \inlinecode{N\_TRAIN\_TEXT} & 5,000 paragraphs & 30,000 paragraphs & loss 큰 폭 하락, 시간 약 6배 증가 (T4 30분 룰 안에선 1 epoch 만 가능) \\
@@ -1847,6 +1857,12 @@ Files:
 \begin{quote}
 \textbf{T4 30분 룰 안에서 가능한 가장 큰 개선} --- Wikitext-103 paragraphs 를 5K \(\to\) 20K (약 4배) 로 늘리고 batch 32 유지하면 한 epoch 약 20-25분, 1 epoch 로 마무리. 이 장의 \emph{짧고 빠른} 실험 이후 직접 변형해 보세요.
 \end{quote}
+
+
+
+\subsection{사전학습을 더 돌리면? --- 부록 곡선 (이슈 \#19)}
+
+본편은 \textbf{2 epoch} 데모라 perplexity 가 높습니다. 부록 \inlinecode{20\_en\_bert\_pretrain\_scaling} 에서 2 \(\to\) 16 epoch 으로 길게 학습하며 측정한 곡선을 보면, perplexity 가 \textbf{영어 1,173 \(\to\) 696, 한국어 1,626 \(\to\) 709 로 \textasciitilde2배} 내려간 뒤 \textbf{epoch 8-10 부터 평탄} 해집니다. 5,000 텍스트로는 모델이 금세 saturate 해 \emph{epoch 만으로는 한계} --- 더 낮추려면 \textbf{데이터 양} 을 늘려야 합니다 (\ref{ch:21}장 부록의 \textquotesingle 데이터가 가장 큰 lever\textquotesingle{} 와 같은 결론). 본편의 높은 perplexity 는 버그가 아니라 \emph{짧은 데모 학습의 정직한 반영} 입니다.
 
 
 
@@ -2081,3 +2097,395 @@ num\_layers & 4 & 12 & \emph{깊은} 추론 (구문 \(\to\) 의미 \(\to\) 문�
 \textbf{변하는 축}: Phase 3 안에서 \emph{task 가 사전학습 (MLM) \(\to\) 분류 (fine-tune)} 로 전환. 모델 구조·토크나이저는 그대로, 데이터 도메인이 \emph{위키 \(\to\) Yelp} 로 바뀌고 loss·평가 metric 이 분류 표준으로 돌아옴.
 \end{quote}
 \end{previewBox}
+
+
+
+\section{\ref{ch:20}·\ref{ch:22}장 부록 --- 사전학습량과 perplexity: 더 돌리면 얼마나 내려가나 (이슈 \#19)}
+
+본편 \ref{ch:20}장(영어)·\ref{ch:22}장(한국어)는 small BERT 를 \textbf{2 epoch} 만 MLM 사전학습해서 perplexity 가 높았습니다 (영어 \textasciitilde1,245, 한국어 \textasciitilde1,918). 짧은 데모 학습의 정직한 반영이지만, \emph{더 돌리면 얼마나 내려가는지} 는 한 점만 봐선 알 수 없습니다.
+
+이 부록은 같은 small BERT(hidden=256·L=4)를 \textbf{2 \(\to\) 16 epoch 으로 길게 학습} 하며, 체크포인트마다 eval perplexity 를 기록해 곡선으로 봅니다. 학습을 한 번만 돌리고 \inlinecode{eval\_strategy="steps"} 로 중간 perplexity 를 모으므로 효율적입니다.
+
+\begin{quote}
+영어(wikitext-103)·한국어(ko-wiki) 두 곡선을 epoch 축에서 비교. small 모델이라 T4 에서 가볍습니다.
+\end{quote}
+
+
+
+\Needspace{5\baselineskip}
+\begin{lstlisting}
+!pip install -q transformers datasets
+\end{lstlisting}
+
+
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}
+import warnings; warnings.filterwarnings("ignore")
+import math, numpy as np, pandas as pd
+import matplotlib.pyplot as plt, seaborn as sns, torch
+from datasets import load_dataset, Dataset
+from transformers import AutoTokenizer, BertConfig, BertForMaskedLM, DataCollatorForLanguageModeling, Trainer, TrainingArguments
+
+import matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run(
+        "apt-get -qq -y install fonts-nanum",
+        shell=True,
+    )
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"; plt.rcParams["axes.unicode_minus"] = False
+print(f"CUDA: {torch.cuda.is_available()}")
+\end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+CUDA: True
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
+\subsection{공통 유틸 --- 블록화 / small BERT / 학습+perplexity 곡선}
+
+본편 \ref{ch:20}·\ref{ch:22}장과 같은 파이프라인: \inlinecode{add\_special\_tokens=False} 토큰화 \(\to\) \inlinecode{group\_texts}(128 블록) \(\to\) MLM collator. \inlinecode{train\_curve} 는 \inlinecode{eval\_strategy="steps"} 로 중간 perplexity 를 모아 곡선을 돌려줍니다 (epoch=2 데모점 포함).
+
+
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}
+BLOCK_SIZE = 128; EPOCHS = 16; SEED = 42
+
+def prep_blocks(text_ds, tokenizer):
+    tok = text_ds.map(lambda e: tokenizer(e["text"], add_special_tokens=False, truncation=False),
+                      batched=True, remove_columns=text_ds.column_names)
+    def group(ex):
+        concat = {k: sum(ex[k], []) for k in ex.keys()}
+        total = (len(concat["input_ids"]) // BLOCK_SIZE) * BLOCK_SIZE
+        return {k: [t[i:i+BLOCK_SIZE] for i in range(0, total, BLOCK_SIZE)] for k, t in concat.items()}
+    return tok.map(group, batched=True)
+
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=12]
+def build_small_bert(tokenizer):
+    cfg = BertConfig(vocab_size=tokenizer.vocab_size, hidden_size=256, num_hidden_layers=4,
+                     num_attention_heads=4, intermediate_size=1024,
+                     max_position_embeddings=BLOCK_SIZE, pad_token_id=tokenizer.pad_token_id)
+    return BertForMaskedLM(cfg)
+
+def train_curve(tokenizer, lm_train, lm_eval, label):
+    torch.manual_seed(SEED); np.random.seed(SEED)
+    model = build_small_bert(tokenizer)
+    collator = DataCollatorForLanguageModeling(
+        tokenizer=tokenizer,
+        mlm=True,
+        mlm_probability=0.15,
+    )
+    spe = max(1, len(lm_train) // 32)   # steps per epoch
+    args = TrainingArguments(output_dir=f"./curve_{label}", num_train_epochs=EPOCHS,
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=28]
+        per_device_train_batch_size=32, per_device_eval_batch_size=64, learning_rate=5e-4,
+        weight_decay=0.01, warmup_ratio=0.06, fp16=torch.cuda.is_available(),
+        eval_strategy="steps", eval_steps=spe, logging_steps=spe, save_strategy="no",
+        report_to="none", seed=SEED)
+    tr = Trainer(model=model, args=args, train_dataset=lm_train, eval_dataset=lm_eval,
+                 data_collator=collator, processing_class=tokenizer)
+    tr.train()
+    curve = [(e["step"]/spe, math.exp(e["eval_loss"])) for e in tr.state.log_history if "eval_loss" in e]
+    del model, tr; torch.cuda.empty_cache()
+    return curve   # [(epoch, perplexity), ...]
+print("유틸 준비 완료")
+\end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+유틸 준비 완료
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
+\subsection{영어 --- wikitext-103, small BERT MLM 16 epoch}
+
+
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}
+raw_tr = load_dataset(
+    "Salesforce/wikitext",
+    "wikitext-103-raw-v1",
+    split="train",
+)
+raw_ev = load_dataset(
+    "Salesforce/wikitext",
+    "wikitext-103-raw-v1",
+    split="validation",
+)
+good = lambda ex: 50 <= len(ex["text"].strip()) <= 2000
+tr_txt = raw_tr.filter(good).shuffle(seed=SEED).select(range(5000))
+ev_txt = raw_ev.filter(good).shuffle(seed=SEED).select(range(500))
+tok_en = AutoTokenizer.from_pretrained("bert-base-uncased")
+lm_tr_en = prep_blocks(
+    tr_txt,
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 데이터를 불러오고 학습에 맞는 형태로 정리하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=17]
+    tok_en); lm_ev_en = prep_blocks(ev_txt, tok_en,
+)
+print(
+    f"EN blocks — train {len(lm_tr_en)}, eval {len(lm_ev_en)}, vocab "
+    f"{tok_en.vocab_size}"
+)
+curve_en = train_curve(tok_en, lm_tr_en, lm_ev_en, "en")
+print(
+    "EN (epoch, ppl):", [(round(e,1), round(p,1)) for e,p in curve_en]
+)
+\end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+EN blocks -- train 5352, eval 535, vocab 30522
+[transformers] warmup_ratio is deprecated and will be removed in v5.2. Use...
+Step  Training Loss  Validation Loss
+----  -------------  ---------------
+167   8.343126       7.316822
+334   7.136370       7.067557
+501   6.943620       6.929424
+668   6.833370       6.824947
+835   6.789655       6.833147
+1002  6.719472       6.781228
+1169  6.674789       6.762815
+1336  6.624700       6.686670
+1503  6.612422       6.679445
+1670  6.578442       6.613037
+1837  6.534213       6.638652
+2004  6.528832       6.597032
+...
+EN (epoch, ppl): [(1.0, 1505.4), (2.0, 1173.3), (3.0, 1021.9), (4.0, 920.5)...
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
+\subsection{한국어 --- ko-wiki, small BERT MLM 16 epoch}
+
+
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}
+ds_ko = load_dataset(
+    "wikimedia/wikipedia",
+    "20231101.ko",
+    split="train",
+)
+def collect_paragraphs(ds, target, min_len=50, max_len=2000):
+    out = []
+    for ex in ds:
+        for para in ex["text"].split("\n\n"):
+            para = para.strip()
+            if min_len <= len(para) <= max_len:
+                out.append(para)
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 데이터를 불러오고 학습에 맞는 형태로 정리하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=13]
+                if len(out) >= target: return out
+    return out
+paras = collect_paragraphs(
+    ds_ko.shuffle(seed=SEED),
+    target=5500,
+)
+tr_ko = Dataset.from_dict({"text": paras[:5000]}); ev_ko = Dataset.from_dict({"text": paras[5000:5500]})
+tok_ko = AutoTokenizer.from_pretrained("klue/bert-base")
+lm_tr_ko = prep_blocks(
+    tr_ko,
+    tok_ko); lm_ev_ko = prep_blocks(ev_ko, tok_ko,
+)
+print(
+    f"KO blocks — train {len(lm_tr_ko)}, eval {len(lm_ev_ko)}, vocab "
+    f"{tok_ko.vocab_size}"
+)
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{6\baselineskip}
+\begin{lstlisting}[firstnumber=29]
+curve_ko = train_curve(tok_ko, lm_tr_ko, lm_ev_ko, "ko")
+print(
+    "KO (epoch, ppl):", [(round(e,1), round(p,1)) for e,p in curve_ko]
+)
+\end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+[transformers] Token indices sequence length is longer than the specified m...
+KO blocks -- train 3924, eval 429, vocab 32000
+[transformers] warmup_ratio is deprecated and will be removed in v5.2. Use...
+Step  Training Loss  Validation Loss
+----  -------------  ---------------
+122   8.756508       7.745484
+244   7.447496       7.394163
+366   7.200142       7.198132
+488   7.008172       7.047074
+610   6.870811       6.983854
+732   6.763340       6.886613
+854   6.696243       6.861089
+976   6.610327       6.848239
+1098  6.533539       6.872924
+1220  6.483323       6.752027
+1342  6.454132       6.759101
+...
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+
+
+\subsection{곡선 --- eval perplexity vs 사전학습 epoch}
+
+
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}
+def at_epoch(curve, ep):
+    return min(curve, key=lambda x: abs(x[0]-ep))[1]
+en_ep, en_pp = zip(
+    *curve_en); ko_ep,
+    ko_pp = zip(*curve_ko,
+)
+sns.set_theme(
+    style="whitegrid",
+    context="talk",
+    font="NanumGothic",
+    rc={"axes.unicode_minus": False},
+)
+fig, ax = plt.subplots(figsize=(9.5, 5.5))
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 숫자 결과를 그림으로 확인하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=14]
+ax.plot(
+    en_ep,
+    en_pp,
+    "o-",
+    color="#5B8DEF",
+    lw=2,
+    label="영어 (wikitext, vocab 30K)",
+)
+ax.plot(
+    ko_ep,
+    ko_pp,
+    "s-",
+    color="#F47272",
+    lw=2,
+    label="한국어 (ko-wiki, vocab 32K)",
+)
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=30]
+ax.scatter(
+    [2],
+    [at_epoch(curve_en,2)],
+    s=200,
+    facecolors="none",
+    edgecolors="#1B3A8A",
+    lw=2.5,
+    zorder=5,
+)
+\end{lstlisting}
+
+\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=39]
+ax.scatter(
+    [2],
+    [at_epoch(curve_ko,2)],
+    s=200,
+    facecolors="none",
+    edgecolors="#8A1B1B",
+    lw=2.5,
+    zorder=5,
+)
+ax.annotate("본편 데모 (2 epoch)", (2, at_epoch(curve_ko,2)), xytext=(3.2, at_epoch(curve_ko,2)*1.3),
+            fontsize=11, arrowprops=dict(
+                arrowstyle="->",
+                color="#555"),
+            )
+ax.set_yscale("log"); ax.set_xlabel("사전학습 epoch"); ax.set_ylabel("eval perplexity (log)")
+ax.set_title("사전학습량에 따른 perplexity")
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
+
+\Needspace{10\baselineskip}
+\begin{lstlisting}[firstnumber=55]
+ax.legend(fontsize=11); plt.tight_layout(); plt.show()
+
+for name, c in [("영어", curve_en), ("한국어", curve_ko)]:
+    p2, pf = at_epoch(c,2), c[-1][1]
+    print(
+        f"{name}: 2 epoch ppl={p2:.0f} -> {EPOCHS} epoch ppl={pf:.0f}  ("
+        f"{p2/pf:.1f}배 감소)"
+    )
+\end{lstlisting}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+영어: 2 epoch ppl=1173 → 16 epoch ppl=696  (1.7배 감소)
+한국어: 2 epoch ppl=1626 → 16 epoch ppl=709  (2.3배 감소)
+\end{bookoutputbox}
+\par\vspace{0.9em}
+
+\begin{bookfigurelabel}[H]{사전학습 epoch에 따른 영어와 한국어 MLM perplexity 곡선}{fig:ch20-pretrain-scaling-curve}
+\centering
+\includegraphics[width=0.86\linewidth]{assets/figures/ch20_pretrain_scaling_curve.png}
+\end{bookfigurelabel}
+
+\textbf{그림 읽기} --- 그림~\ref{fig:ch20-pretrain-scaling-curve}에서 다음 내용을 확인합니다: 사전학습 epoch에 따른 영어와 한국어 MLM perplexity 곡선. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
+
+
+
+\subsection{해석}
+
+\textbf{더 학습하면 perplexity 는 분명히 내려갑니다 --- 다만 곧 평탄해집니다.}
+
+\begin{booktable}{20장 해석 표}{tab:ch20-11}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{@{}llll@{}}
+\toprule
+& 2 epoch (본편 데모) & 16 epoch & 감소 \\
+\midrule
+
+영어 (wikitext) & 1,173 & 696 & 1.7배 \\
+한국어 (ko-wiki) & 1,626 & 709 & 2.3배 \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{booktable}
+
+곡선을 보면 두 언어 모두 처음 몇 epoch 에서 가파르게 떨어지다가 \textbf{epoch 8-10 부터 평탄} 해집니다. 8배 더 돌려도(2\(\to\)16 epoch) perplexity 는 \textasciitilde2배 낮아질 뿐이고, 마지막 6 epoch 은 거의 움직이지 않습니다.
+
+\textbf{왜 평탄해지나 --- 데이터가 병목입니다.} 5,000 텍스트는 small BERT 가 금세 다 외울 만큼 적어, epoch 을 늘리면 train loss 는 계속 떨어져도 \emph{새 패턴} 을 못 봐 eval perplexity 가 saturate 합니다 (overfitting 영역 진입). 잘 학습된 BERT 의 perplexity 가 두 자리-수십 수준인 것과의 큰 격차는 \textbf{epoch 이 아니라 데이터·compute 규모} 의 문제입니다 --- 원본 BERT 는 수십억 토큰으로 학습했습니다.
+
+\textbf{그래서 본편의 높은 perplexity 는 버그가 아닙니다.} “데모용 짧은 학습이라 빈도까지만 익힌 단계” 가 맞고, 더 돌리면 \textasciitilde2배까지는 내려가지만 그 이상은 \emph{데이터 양} 을 늘려야 합니다. 이는 \ref{ch:21}장 부록(데이터 스케일링)에서 본 \emph{데이터가 가장 큰 lever} 라는 교훈, 그리고 \ref{ch:21}·\ref{ch:23}장의 사전학습 분류 천장과 같은 뿌리입니다.

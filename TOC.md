@@ -83,6 +83,7 @@
   * [20-1. 실습](pages/20-en_bert_pretrain-practice.md)
   * [20-2. 변형: 학습 step 더 늘리거나 block_size 변경](pages/20-en_bert_pretrain-variation.md)
   * [20-3. 정리와 FAQ](pages/20-en_bert_pretrain-wrapup.md)
+  * [20-4. 부록 — 사전학습량과 perplexity 곡선](pages/20-en_bert_pretrain-scaling.md)
 * [21. 작은 BERT 이진 분류 (English Yelp Fine-tuning)](pages/21-en_bert_classify.md)
   * [21-1. 실습](pages/21-en_bert_classify-practice.md)
   * [21-2. 정리와 FAQ](pages/21-en_bert_classify-wrapup.md)

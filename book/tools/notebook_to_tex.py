@@ -579,6 +579,14 @@ CHAPTERS = [
             "마스크 토큰",
             "퍼플렉서티",
             "일반 도메인",
+            "사전학습량 곡선",
+            "perplexity curve",
+            "scaling curve",
+            "epoch saturation",
+            "데이터 병목",
+        ),
+        (
+            "20_en_bert_pretrain_scaling.ipynb",
         ),
     ),
     Chapter(
@@ -1058,6 +1066,7 @@ FIGURE_OUTPUTS: dict[tuple[int, int], FigureSpec] = {
     (19, 4): FigureSpec("ch19_vocab_sweep.png", "WordPiece 어휘 수에 따른 토큰 길이와 미등록 토큰 비율", "fig:ch19-vocab-sweep", r"0.78\linewidth"),
     (20, 1): FigureSpec("ch20_mlm_training_loss.png", "작은 BERT의 MLM 사전학습 loss 곡선", "fig:ch20-mlm-training-loss", r"0.82\linewidth"),
     (20, 2): FigureSpec("ch20_eval_loss_ppl.png", "사전학습 전후 MLM eval loss와 perplexity 비교", "fig:ch20-eval-loss-ppl", r"0.88\linewidth"),
+    (20, 3): FigureSpec("ch20_pretrain_scaling_curve.png", "사전학습 epoch에 따른 영어와 한국어 MLM perplexity 곡선", "fig:ch20-pretrain-scaling-curve", r"0.86\linewidth"),
     (21, 1): FigureSpec("ch21_finetune_loss.png", "작은 BERT의 Yelp 이진 분류 fine-tune loss 곡선", "fig:ch21-finetune-loss", r"0.82\linewidth"),
     (21, 2): FigureSpec("ch21_confusion_matrix.png", "작은 BERT의 Yelp 이진 분류 혼동 행렬", "fig:ch21-confusion-matrix", r"0.68\linewidth"),
     (21, 3): FigureSpec("ch21_ch10_compare.png", "Yelp 이진 분류에서 DistilBERT와 작은 BERT 비교", "fig:ch21-ch10-compare", r"0.82\linewidth"),
@@ -4970,6 +4979,15 @@ def chapter_specific_fixes(text: str, chapter_number: int) -> str:
         text = text.replace("≈", "approx")
         text = text.replace("∈", "in")
         text = text.replace("→", "->")
+    if chapter_number in (20, 22):
+        text = text.replace(
+            "eval loss 하락, perplexity 약 2-3 감소",
+            "eval loss 하락, perplexity 완만히 하락(8-10 epoch 이후 평탄)",
+        )
+        text = text.replace(
+            "eval loss 약간 하락, perplexity 약 2-3 정도 감소",
+            "eval loss 약간 하락, perplexity 완만히 하락(8-10 epoch 이후 평탄)",
+        )
     if chapter_number == 31:
         text = text.replace(
             "policy only,\n              ref-free,\n",
