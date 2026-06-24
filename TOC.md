@@ -71,7 +71,7 @@
   * [17-3. 정리와 FAQ](pages/17-ko_multilabel-wrapup.md)
 * [18. 한국어 BERT 보조 손실 (Korean Auxiliary Loss)](pages/18-ko_auxiliary.md)
   * [18-1. 실습](pages/18-ko_auxiliary-practice.md)
-  * [18-2. 변형: λ 스윕 효과 비교 (선택)](pages/18-ko_auxiliary-variation.md)
+  * [18-2. 변형: λ 스윕 (전체 곡선은 부록에서)](pages/18-ko_auxiliary-variation.md)
   * [18-3. 정리와 FAQ](pages/18-ko_auxiliary-wrapup.md)
 * [19. 토크나이저 직접 학습 (Tokenizer Training)](pages/19-tokenizer_training.md)
   * [19-1. 실습](pages/19-tokenizer_training-practice.md)

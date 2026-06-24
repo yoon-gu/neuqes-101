@@ -3,7 +3,7 @@
 | 이름 | 한 줄 설명 | 다음 챕터에서 |
 |---|---|---|
 | `AutoModel.from_pretrained(...)` | 분류 헤드 없이 BERT 본체만 로드 — 메인·보조 헤드를 직접 부착 | Phase 3 토크나이저 학습엔 등장 안 함 (Ch 19 부터는 본체보다 어휘 자체에 집중) |
-| 커스텀 `nn.Module` (KoBertMultiTask) | 본체 공유 + 두 헤드 명시 정의 — multi-task 정통 패턴 | Ch 24 이후 GPT 챕터 의 task-specific head 패턴과 연결 |
+| 커스텀 `nn.Module` (KoBertMultiTask) | 본체 공유 + 두 헤드 명시 정의 — multi-task 정통 패턴 | GPT 챕터 (Ch 21) 의 task-specific head 패턴과 연결 |
 | `Trainer.compute_loss` 오버라이드 + `lambda_aux` 인자 | 자동 매핑이 못 다루는 *복합 loss* + λ 동적 주입 | λ grid search 패턴 |
 | 커스텀 `AuxCollator` | input_ids 외 *추가 라벨* (n_active) 도 batch 에 같이 담기 | Ch 14 와 같은 패턴, 보조 신호 변형마다 재사용 |
 | `remove_unused_columns=False` | 모델 시그니처와 무관하게 모든 컬럼 통과 | custom collator 패턴마다 |
