@@ -57,6 +57,7 @@
 * [14. 보조 손실과 멀티태스크 학습 (Auxiliary Loss)](pages/14-auxiliary_loss.md)
   * [14-1. 실습](pages/14-auxiliary_loss-practice.md)
   * [14-2. 정리와 FAQ](pages/14-auxiliary_loss-wrapup.md)
+  * [14-3. 부록 — λ 스윕으로 sweet spot 찾기](pages/14-auxiliary_loss-lambda_sweep.md)
 * [15. 한국어 BERT 이진 분류 (Korean Binary Classification)](pages/15-ko_binary.md)
   * [15-1. 실습](pages/15-ko_binary-practice.md)
   * [15-2. 정리와 FAQ](pages/15-ko_binary-wrapup.md)

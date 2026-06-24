@@ -270,7 +270,7 @@ Ch 13과 동일한 hyperparams. `AuxTrainer` + `lambda_aux=0.05`. 이 값은 부
 - 손실 종류가 다르면(분류 BCE + 회귀 MSE) sweet spot λ 는 1 보다 *훨씬 작은* 쪽입니다 — 두 손실의 평균 크기를 맞추는 정규화로 보면 됩니다.
 - 보조의 가치는 메인 정확도 향상 *그 자체* 만이 아니라, *운영 시점에 항목+별점 두 출력을 한 모델로* 얻는 데에도 있습니다(§2 동기 5).
 
-> 📓 전체 λ 곡선·그림·보조 R² 추이는 부록 노트북 **`14_auxiliary_loss_lambda_sweep`** 에서 직접 실행해 볼 수 있습니다.
+> 📓 전체 λ 곡선·그림·보조 R² 추이는 [14-3 부록 — λ 스윕으로 sweet spot 찾기](14-auxiliary_loss-lambda_sweep.md)와 Colab 노트북 **`14_auxiliary_loss_lambda_sweep`** 에서 직접 확인할 수 있습니다.
 
 ## 이 장의 구성
 
