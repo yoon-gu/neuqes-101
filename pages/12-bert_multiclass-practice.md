@@ -82,8 +82,6 @@ Mon Jun 22 03:47:31 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
-Yelp 별점 데이터를 별도 이진화 없이 그대로 불러옵니다. train 5,000건, eval 1,000건을 고정 시드로 샘플링하고, 다섯 별점이 대략 균등하게 분포하는지 확인합니다.
-
 ```python
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
 
@@ -156,11 +154,7 @@ model = AutoModelForSequenceClassification.from_pretrained(
     id2label=STAR_LABELS,
     label2id={v: k for k, v in STAR_LABELS.items()},
 )
-```
 
-**위 코드 읽기** — Ch 11과 유일하게 달라진 곳은 `num_labels=5` 한 줄입니다. `problem_type="single_label_classification"` 은 그대로라 활성화·loss는 여전히 softmax + `CrossEntropyLoss` 이고, 분류 헤드만 `Linear(768→5)` 로 늘어납니다. `id2label` 에 별점 표기를 매핑해 두면 예측 결과를 `1★`~`5★` 로 바로 읽을 수 있습니다.
-
-```python
 def param_summary(m):
     total     = sum(p.numel() for p in m.parameters())
     trainable = sum(p.numel() for p in m.parameters() if p.requires_grad)
@@ -173,8 +167,6 @@ print(f"Classifier:           {model.classifier}")
 print(f"problem_type:         {model.config.problem_type}")
 print(f"id2label:             {model.config.id2label}")
 ```
-
-**위 코드 읽기** — 전체 파라미터 수를 세어 K를 늘려도 모델이 거의 무거워지지 않음을 확인합니다. 출력의 `Classifier: Linear(in_features=768, out_features=5)` 에서 헤드만 K=5에 맞춰 바뀌었음이 보입니다.
 
 **▶ 실행 결과**
 
@@ -231,8 +223,6 @@ Mon Jun 22 03:47:57 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
-평가 지표 함수를 정의합니다. K=5 logits를 안정 softmax로 확률화한 뒤 argmax로 예측 별점을 뽑고, 클래스 불균형에 견고하도록 macro 평균 precision/recall/F1을 계산합니다. AUC는 One-vs-Rest 방식이라 한 클래스라도 eval에 없으면 실패하므로 try/except로 감쌌습니다.
-
 ```python
 def compute_metrics(eval_pred):
     logits, labels = eval_pred
@@ -255,8 +245,6 @@ def compute_metrics(eval_pred):
         out["auc_ovr"] = float("nan")
     return out
 ```
-
-Ch 11과 완전히 같은 hyperparams(lr 2e-5, batch 16, 2 에폭, `fp16=True`)로 학습합니다. 학습 후 평균 train loss를 K=5 random baseline인 `log(5)≈1.609` 와 비교해 모델이 baseline 아래로 잘 내려갔는지 한눈에 확인합니다.
 
 ```python
 training_args = TrainingArguments(
@@ -294,10 +282,6 @@ print(f"random baseline loss (K=5): {np.log(5):.4f}")
 Training done — mean train loss: 1.0802
 random baseline loss (K=5): 1.6094
 ```
-
-**결과 해석**
-
-평균 train loss 1.0802 가 random baseline 1.6094 보다 충분히 낮아, 모델이 균등분포 추측을 넘어 별점 신호를 실제로 학습했음을 확인할 수 있습니다.
 
 ```python
 !nvidia-smi
@@ -350,12 +334,6 @@ BERT 5-class evaluation:
            eval_macro_f1: 0.5561
             eval_auc_ovr: 0.8657
 ```
-
-**결과 해석**
-
-정확도 0.5580 으로 random baseline(1/5 = 0.20)보다는 분명히 높지만, 5클래스를 ±1 이웃까지 정확히 맞히기는 쉽지 않다는 점을 보여줍니다. macro 지표들이 accuracy와 거의 같은 0.55~0.56 대라 특정 클래스에 치우치지 않고 고르게 맞히고 있음을 알 수 있습니다.
-
-평가 셋 전체에 대해 logits를 받아 softmax → argmax로 예측 별점을 만들고, 모델이 고른 클래스의 확률(top-1 prob)을 정답·오답으로 나눠 비교합니다. 정답일 때 평균 확신이 오답일 때보다 높은지가 calibration의 첫 신호입니다.
 
 ```python
 # logits → softmax → argmax
@@ -477,12 +455,6 @@ print(classification_report(
 weighted avg     0.5535    0.5580    0.5542      1000
 ```
 
-**결과 해석**
-
-양 끝 별점(1★ F1 0.69, 5★ F1 0.65)이 가장 잘 맞고, 중간 별점(2★~4★)은 F1이 0.46~0.50 으로 눈에 띄게 낮습니다. 칭찬·비판이 섞인 중간 평가가 사람에게도 모델에게도 가장 모호하다는 것을 클래스별 수치로 직접 보여줍니다.
-
-같은 평가 데이터에 Ch 5의 sklearn 셋업(TF-IDF + multinomial LogReg)을 이 노트북 안에서 다시 학습합니다. GPU 없이 수십 초면 끝나므로 BERT 67M 파라미터가 정말 값어치를 하는지 곧바로 대조해 볼 수 있습니다.
-
 ```python
 # Ch 5 셋업 재현 — TF-IDF + multinomial LogReg
 texts_train  = list(train_full["text"])
@@ -556,10 +528,6 @@ macro_precision            0.5377 0.5555          0.0177
        macro_f1            0.5380 0.5561          0.0181
         auc_ovr            0.8420 0.8657          0.0236
 ```
-
-**결과 해석**
-
-BERT가 모든 지표에서 sklearn을 앞서지만 정확도 차이는 0.5420 → 0.5580, 단 +0.016(1.6%p)에 불과합니다. 파라미터가 670배 많은데도 이 정도 차이라는 점이 이 챕터의 핵심 교훈입니다 — 회귀(Ch 9)·이진(Ch 10·11)에서 BERT가 뚜렷이 앞섰던 것과 달리, *클래스가 많고(K=5) 데이터가 적을수록(5,000 샘플·2 에폭)* 사전학습의 이점이 줄어듭니다. 이 좁은 격차를 어떻게 해석할지는 wrap-up의 FAQ에서 비용 대비 가치 관점으로 다룹니다.
 
 ```python
 cm_bert = confusion_matrix(labels, preds, labels=list(range(5)))
