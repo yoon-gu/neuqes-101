@@ -47,6 +47,8 @@ CUDA available: True
 GPU:             Tesla T4
 ```
 
+**baseline VRAM** — 모델 로드 전:
+
 ```python
 !nvidia-smi
 ```
@@ -76,6 +78,12 @@ Sun Jun 21 22:51:03 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+## 데이터 준비
+
+Ch 8에서 익힌 `datasets` + 토크나이저 패턴을 그대로 적용합니다. 차이는 라벨을 *float* 형으로 바꾼다는 점입니다 — 회귀이므로 정답이 정수 클래스가 아닌 실수입니다.
+
+별점 1-5를 그대로 학습 라벨로 사용합니다 (`label` 필드는 0-4로 저장돼 있어 +1).
+
 Ch 8에서 익힌 토크나이저·`datasets` 패턴을 그대로 가져옵니다. T4에서 30분 안에 끝나도록 학습 4,000건·평가 1,000건만 잘라 씁니다.
 
 ```python
@@ -91,16 +99,18 @@ eval_ds  = ds["test"].shuffle(seed=42).select(range(1000))
 **위 코드 읽기** — `shuffle(seed=42)` 로 섞은 뒤 `select(range(...))` 로 앞쪽 일부만 추립니다. 같은 seed라 매번 동일한 부분집합이 잡혀 재현이 됩니다.
 
 ```python
+
 def tokenize_fn(batch):
     out = tokenizer(batch["text"], truncation=True, max_length=128)
     # label(0-4) → 별점(1-5) float 으로 변환. Trainer는 'labels' 컬럼을 사용
     out["labels"] = [float(lbl) + 1.0 for lbl in batch["label"]]
-    return out
 ```
 
 **위 코드 읽기** — 회귀의 핵심 한 줄입니다. 0-4로 저장된 `label` 에 `+1.0` 을 더해 별점 1-5로 되돌리되, `float(...)` 로 *실수* 라벨을 만듭니다. `Trainer` 는 `labels` 라는 컬럼명을 정답으로 인식하고, 라벨이 float이면 `problem_type="regression"` 과 맞물려 `MSELoss` 로 흘러갑니다. `max_length=128` 로 자른 건 attention 비용과 학습 시간을 T4 한도 안에 두기 위함입니다.
 
 ```python
+    return out
+
 train_tok = train_ds.map(tokenize_fn, batched=True).remove_columns(["text", "label"])
 eval_tok  = eval_ds.map(tokenize_fn,  batched=True).remove_columns(["text", "label"])
 
@@ -120,6 +130,10 @@ Dataset({
 
 First sample label: 5.0  (float)
 ```
+
+## 모델 로드 — `num_labels=1`, `problem_type="regression"`
+
+Ch 7에서는 사전학습된 분류 헤드(`distilbert-base-uncased-finetuned-sst-2-english`, num_labels=2)를 그대로 썼습니다. 이번엔 본체 모델만 받고 **분류 헤드를 새로** 만듭니다 — `num_labels=1` 이라 출력 차원이 1, `problem_type="regression"` 이라 `Trainer` 가 자동으로 MSELoss 사용.
 
 본체만 받고 회귀 헤드를 새로 붙이는 단계입니다. 두 인자가 핵심입니다.
 
@@ -160,6 +174,12 @@ Classifier:    Linear(in_features=768, out_features=1, bias=True)
 problem_type:  regression
 ```
 
+**경고 메시지를 보셨을 겁니다** — `Some weights of DistilBertForSequenceClassification were not initialized ...`. 분류 헤드(`Linear(768, 1)`)가 새로 만들어지면서 *랜덤 초기화* 됐다는 알림입니다. 이 부분이 학습으로 채워지고, BERT 본체는 사전학습 가중치를 미세 조정합니다 (transfer learning의 본 모습).
+
+### 학습되는 파라미터 vs 동결된 파라미터
+
+`from_pretrained()` 직후엔 *모든* 파라미터가 학습 대상입니다 (`requires_grad=True`). 그러나 데이터가 작거나 빠른 학습이 필요하면 BERT 본체를 *동결(freeze)* 하고 분류 헤드만 학습하기도 합니다. 학습 시작 전에 *전체 vs 학습되는 파라미터* 를 한 번 확인하는 게 좋은 습관입니다.
+
 ```python
 def param_summary(m):
     total     = sum(p.numel() for p in m.parameters())
@@ -183,6 +203,10 @@ Frozen parameters:                0  (0.0 M, 0.0%)
 
 Default — all layers are trainable
 ```
+
+### 시연: BERT 본체 동결 패턴
+
+본 학습은 *모든 파라미터* 를 학습하지만, 동결 패턴이 어떻게 적용되는지 *별도 모델 인스턴스* 로 한 번 보여드립니다 (이 시연 모델은 학습에 사용하지 않습니다).
 
 ```python
 # 시연용 — 같은 모델을 한 번 더 만들고 BERT 본체를 동결
@@ -242,6 +266,14 @@ Tradeoff: BERT body cannot adapt to the task — usually train the body too if d
 (This demo model is not used for the actual training — del demo_model frees memory.)
 ```
 
+**언제 동결을 쓰나**
+
+- **분류 헤드만 학습 (모든 본체 동결)**: 데이터 매우 작음 (수백 건), 빠른 baseline 필요.
+- **하위 N개 layer 동결**: 일반 언어 표현은 BERT 그대로, 상위 layer만 task 적응.
+- **모든 파라미터 학습 (default)**: 데이터 충분 (수천 건+), 본체도 task에 맞게 적응.
+
+이번 챕터는 4,000건이라 default(전체 학습)이 가장 좋은 선택입니다.
+
 ```python
 !nvidia-smi
 ```
@@ -270,6 +302,12 @@ Sun Jun 21 22:51:27 2026
 |  No running processes found                                                             |
 +-----------------------------------------------------------------------------------------+
 ```
+
+모델 가중치(약 67M 파라미터, fp32 약 255 MB)가 GPU에 올라간 상태입니다. 학습이 시작되면 *옵티마이저 모멘텀(2배) + gradient(1배)* 가 추가되어 VRAM이 더 늘어납니다.
+
+## `TrainingArguments` + `Trainer`
+
+Ch 6 끝에서 미리 본 코드 형태가 이제 실제로 등장합니다. `TrainingArguments` 한 객체에 학습 하이퍼파라미터를 모두 모으고, `Trainer` 가 학습 루프·평가·로그·체크포인트를 자동화합니다.
 
 학습 하이퍼파라미터를 한 객체에 모읍니다. 각 값이 T4 30분 제약을 지키는 기본 안전대입니다.
 
@@ -343,6 +381,18 @@ Training done — mean train loss: 1.1182
 
 500 step 전체의 평균 train loss가 1.1182로 끝났습니다. 이는 MSE 단위(별점² 오차)라, 초반 step의 큰 loss까지 평균에 섞인 값입니다. 학습이 실제로 줄었는지는 아래 eval 지표(`eval_mse` 0.65)로 확인하는 편이 정확합니다.
 
+학습이 진행되는 동안 step별 loss와 에폭별 평가 metric이 출력됩니다. **핵심 관찰**:
+
+- `loss` 가 처음 수 step에서 큰 값(흔히 0.3-0.5)이었다가 학습이 진행되면 줄어들어야 정상입니다.
+- 에폭 끝에서 출력되는 `eval_mse`, `eval_mae`, `eval_r2` 가 우리가 정의한 평가 지표입니다.
+- `loss` 가 줄어들지 않거나 nan으로 가면 학습률을 낮추거나(`5e-6`), `fp16=False` 로 시도해 봅니다.
+
+> 📒 **부록 노트북 두 편**
+>
+> 1. [`appendix_experiment_tracking.ipynb`](./appendix_experiment_tracking.ipynb) — `report_to` 인자로 **wandb · trackio · MLflow** 같은 experiment tracker를 붙이는 패턴. 학습 곡선·평가 metric을 dashboard에서 보고 여러 run을 한 화면에 비교. ([Colab으로](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/09_bert_regression/appendix_experiment_tracking.ipynb))
+>
+> 2. [`appendix_hpo.ipynb`](./appendix_hpo.ipynb) — **하이퍼파라미터 최적화(HPO)의 어려움**. `TrainingArguments` 인자 정리, HPO가 어려운 5가지 이유, `Trainer.hyperparameter_search` + Optuna 직접 시도, wandb sweeps · MLflow autolog 통합. ([Colab으로](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/09_bert_regression/appendix_hpo.ipynb))
+
 ```python
 !nvidia-smi
 ```
@@ -372,151 +422,17 @@ Sun Jun 21 22:51:58 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
-```python
-# BERT 최종 평가 (eval_dataset 기준)
-bert_metrics = trainer.evaluate()
-print("BERT evaluation:")
-for k, v in bert_metrics.items():
-    if k.startswith("eval_") and isinstance(v, float):
-        print(f"  {k:>20}: {v:.4f}")
-```
+학습 후 VRAM 상태입니다. 학습 *중* 에는 옵티마이저 모멘텀과 gradient가 추가되어 더 큰 VRAM을 잠시 쓰지만, 학습이 끝나면 일부가 해제됩니다 (단, PyTorch 캐시 할당자가 다음 사용을 위해 일부 메모리를 보유).
 
-**▶ 실행 결과**
+**학습 시 VRAM 구성 (fp16 기준)**:
 
-```text
-<IPython.core.display.HTML object>
-<IPython.core.display.HTML object>
-BERT evaluation:
-             eval_loss: 0.6539
-              eval_mse: 0.6539
-              eval_mae: 0.6180
-               eval_r2: 0.6644
-```
+| 구성 요소 | 크기 (DistilBERT 67M 기준) |
+|---|---|
+| 모델 가중치 (fp16) | ~128 MB |
+| Adam 1차 모멘텀 (fp32 마스터) | ~255 MB |
+| Adam 2차 모멘텀 (fp32 마스터) | ~255 MB |
+| Gradient (fp16) | ~128 MB |
+| Activation (배치 16, max_len 128) | ~수백 MB |
+| 합계 | 약 1-1.5 GB |
 
-**결과 해석**
-
-`eval_loss` 와 `eval_mse` 가 0.6539로 같습니다 — 회귀 loss가 곧 MSE이기 때문입니다. MAE 0.618은 평균적으로 별점을 약 0.6점 틀린다는 뜻이고, R² 0.664는 별점 분산의 약 66%를 설명한다는 의미입니다.
-
-같은 데이터를 Ch 2 방식(TF-IDF + `LinearRegression`)으로도 학습해 BERT와 직접 견줍니다.
-
-```python
-# 같은 4,000건으로 sklearn LinearRegression 학습 (Ch 2 방식)
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LinearRegression
-
-# 토큰화 전 원문 회수
-train_texts = train_ds["text"]
-train_labels = np.array([float(l) + 1.0 for l in train_ds["label"]])
-eval_texts = eval_ds["text"]
-eval_labels = np.array([float(l) + 1.0 for l in eval_ds["label"]])
-
-tfidf = TfidfVectorizer(max_features=10000)
-X_tr = tfidf.fit_transform(train_texts)
-X_ev = tfidf.transform(eval_texts)
-
-linreg = LinearRegression().fit(X_tr, train_labels)
-sk_pred = linreg.predict(X_ev)
-
-print("sklearn LinearRegression evaluation:")
-print(f"  mse: {mean_squared_error(eval_labels, sk_pred):.4f}")
-print(f"  mae: {mean_absolute_error(eval_labels, sk_pred):.4f}")
-print(f"  r2:  {r2_score(eval_labels, sk_pred):.4f}")
-```
-
-**▶ 실행 결과**
-
-```text
-sklearn LinearRegression evaluation:
-  mse: 1.5597
-  mae: 1.0086
-  r2:  0.1996
-```
-
-```python
-# 한 표로 비교
-rows = [
-    {"model": "sklearn LinearRegression",
-     "mse": mean_squared_error(eval_labels, sk_pred),
-     "mae": mean_absolute_error(eval_labels, sk_pred),
-     "r2":  r2_score(eval_labels, sk_pred)},
-    {"model": "DistilBERT fine-tuned",
-     "mse": bert_metrics["eval_mse"],
-     "mae": bert_metrics["eval_mae"],
-     "r2":  bert_metrics["eval_r2"]},
-]
-pd.DataFrame(rows).round(4)
-```
-
-**▶ 실행 결과**
-
-```text
-                      model     mse     mae      r2
-0  sklearn LinearRegression  1.5597  1.0086  0.1996
-1     DistilBERT fine-tuned  0.6539  0.6180  0.6644
-```
-
-**결과 해석**
-
-세 지표 모두 BERT가 크게 앞섭니다 — MSE 1.56 → 0.65, MAE 1.01 → 0.62, R² 0.20 → 0.66. 문맥을 attention으로 읽는 BERT가 단어 빈도만 보는 TF-IDF 회귀보다 별점을 훨씬 정확히 맞춘다는 가설이 이 수치로 확인됩니다.
-
-시각화에 쓸 예측값을 모읍니다. `Trainer.predict` 로 BERT 예측을 받아 sklearn 예측과 한 long-form DataFrame으로 합칩니다.
-
-```python
-# BERT 예측값 직접 받기 (별도 evaluate 호출이지만 빠름)
-preds_output = trainer.predict(eval_tok)
-bert_pred = preds_output.predictions.flatten()
-
-# seaborn 비교용 long-form DataFrame
-df_compare = pd.DataFrame({
-    "Actual star": np.concatenate([eval_labels, eval_labels]),
-    "Predicted":   np.concatenate([bert_pred,   sk_pred]),
-    "Model":       ["BERT"] * len(eval_labels) + ["sklearn"] * len(eval_labels),
-})
-df_compare["Residual"] = df_compare["Predicted"] - df_compare["Actual star"]
-```
-
-**▶ 실행 결과**
-
-```text
-<IPython.core.display.HTML object>
-```
-
-실제 별점별로 두 모델이 어떤 값을 출력했는지 split violin으로 좌우에 둡니다. 빨간 점선이 이상적인 정답선(정답 = 예측)입니다.
-
-```python
-fig, ax = plt.subplots(figsize=(11, 5))
-sns.violinplot(
-    data=df_compare, x="Actual star", y="Predicted", hue="Model",
-    split=True, inner="quart", ax=ax,
-)
-for i, x_val in enumerate([1, 2, 3, 4, 5]):
-    ax.plot([i - 0.4, i + 0.4], [x_val, x_val], "r--", linewidth=1, alpha=0.7)
-ax.set_title("실제 별점별 예측 별점 분포")
-ax.legend(loc="upper left")
-plt.tight_layout()
-plt.show()
-```
-
-**▶ 실행 결과**
-
-![output](../assets/09-bert_regression-out1.png)
-
-이번엔 잔차(예측 − 실제)를 y축에 둡니다. 0 기준선에 좁게 모일수록 정확하고, 한쪽으로 치우치면 bias가 있다는 뜻입니다.
-
-```python
-fig, ax = plt.subplots(figsize=(11, 5))
-sns.violinplot(
-    data=df_compare, x="Actual star", y="Residual", hue="Model",
-    split=True, inner="quart", ax=ax,
-)
-ax.axhline(0, color="red", linestyle="--", linewidth=1, alpha=0.7)
-ax.set_title("잔차 = 예측 − 실제, 실제 별점별 분포")
-ax.set_ylabel("잔차 (예측 − 실제)")
-ax.legend(loc="upper left")
-plt.tight_layout()
-plt.show()
-```
-
-**▶ 실행 결과**
-
-![output](../assets/09-bert_regression-out2.png)
+큰 모델(BERT-large 340M)이나 큰 배치를 쓰면 한도(15.36 GB)에 빠르게 다가갑니다.

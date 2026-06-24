@@ -213,6 +213,40 @@ def _classify(header_text: str) -> str:
     return "overview"
 
 
+# --- 선형(위→아래) 절 분류 상태 기계 -------------------------------------- #
+# 노트북을 위에서 아래로 읽으며 개요(장) → 본문 절들 → 정리(wrapup) 세 구간으로
+# 나눈다. 본문 절은 실습→해부→변형 순서로만 진행(단조)하며, 마커 없는 절은
+# 직전 절을 그대로 물려받는다. Ch 7까지의 '실습/해부/변형' 키워드와, Ch 9부터의
+# '이모지(🚀/🔬/🛠️) + 내용 이름' 헤더를 모두 같은 규칙으로 처리한다.
+_BODY_ORDER = {"practice": 0, "anatomy": 1, "variation": 2}
+_WRAPUP_START_KW = ("라이브러리", "체크포인트", "FAQ", "삽질",
+                    "다음 챕터", "다음 장", "예고", "회고", "마무리")
+_NUM_HEAD_RE = re.compile(r"^\s*\d+(\.\d+)*\.?\s")
+
+
+def _is_wrapup_start(h: str) -> bool:
+    return any(k in h for k in _WRAPUP_START_KW)
+
+
+def _is_body_start(h: str) -> bool:
+    """본문(첫 실습/번호 절)의 시작 헤더인가."""
+    return (bool(_NUM_HEAD_RE.match(h)) or "환경 셋업" in h or "환경 준비" in h
+            or ("🚀" in h and "실습" in h))
+
+
+def _body_group(h: str) -> str | None:
+    """본문 헤더를 실습/해부/변형으로 분류. 못 정하면 None(직전 절 유지)."""
+    if "환경 셋업" in h or "환경 준비" in h:
+        return "practice"
+    if "🔬" in h or "해부" in h or "해석" in h:
+        return "anatomy"
+    if "변형" in h or "클라이맥스" in h or "🛠️" in h:
+        return "variation"
+    if "🚀" in h or "실습" in h:
+        return "practice"
+    return None
+
+
 def _strip_colab_badge(md: str) -> str:
     return "\n".join(ln for ln in md.splitlines() if not COLAB_BADGE_RE.match(ln)).strip("\n")
 
@@ -632,6 +666,9 @@ def convert(nb: dict, num: int, slug: str, title: str,
 
     current = "overview"
     seen_h1 = False
+    in_body = False    # 첫 본문 절을 지났는가
+    in_wrap = False    # 정리(wrapup) 구간에 진입했는가
+    setup_mode = False  # 첫 본문 헤더 전, 첫 코드셀 이후의 '환경 준비' 영역
 
     for cell in nb.get("cells", []):
         ctype = cell.get("cell_type")
@@ -646,12 +683,35 @@ def convert(nb: dict, num: int, slug: str, title: str,
                 if body.strip():
                     overview_intro.append(_sanitize_md_cell(body, stem, stats))
                 continue
+            cell_md = _strip_header_emoji(_sanitize_md_cell(md, stem, stats))
             if hdr and hdr[0] == 2:
-                current = _classify(hdr[1])
-                if current in ("practice", "anatomy", "variation"):
+                setup_mode = False   # 본문/정리 헤더가 나오면 환경 준비 영역 종료
+                htext = hdr[1]
+                if not in_wrap and _is_wrapup_start(htext):
+                    in_wrap, current = True, "wrapup"
+                elif in_wrap:
+                    current = "wrapup"
+                elif not in_body and _is_body_start(htext):
+                    in_body = True
+                    current = _body_group(htext) or "practice"
+                elif in_body:
+                    g = _body_group(htext)
+                    # 단조 가드: 실습→해부→변형 앞으로만, 뒤로는 안 감.
+                    if g and _BODY_ORDER[g] >= _BODY_ORDER.get(current, 0):
+                        current = g
+                else:
+                    current = "overview"
+                if current in ("practice", "anatomy", "variation") \
+                        and current not in sub_titles:
                     sub_titles[current] = _normalize_subtitle(
-                        current, _clean_heading_text(hdr[1]))
-            groups[current].append(_strip_header_emoji(_sanitize_md_cell(md, stem, stats)))
+                        current, _clean_heading_text(htext))
+                groups[current].append(cell_md)
+            elif setup_mode and current == "overview":
+                # 환경 준비 영역의 헤더 없는 산문(예: 'baseline VRAM —')은
+                # 뒤따르는 셋업 코드와 떨어지지 않게 setup_code 와 같은 흐름에 둔다.
+                setup_code.append(cell_md)
+            else:
+                groups[current].append(cell_md)
         elif ctype == "code":
             code = _cell_text(cell).rstrip("\n")
             if not code.strip():
@@ -670,6 +730,7 @@ def convert(nb: dict, num: int, slug: str, title: str,
                 # 그 외(함수 정의·import 등)는 코드만 남김.
             piece = block + ("\n\n" + outs if outs else "")
             if current == "overview":
+                setup_mode = True   # 본문 전 코드 → 환경 준비 영역 시작
                 setup_code.append(piece)
             else:
                 groups[current].append(piece)
@@ -700,7 +761,12 @@ def convert(nb: dict, num: int, slug: str, title: str,
         if g == "practice" and setup_code:
             parts.append("## 환경 준비\n\n" + "\n\n".join(setup_code))
         if g in ("practice", "anatomy", "variation") and body_blocks:
-            body_blocks[0] = _demote_first_header(body_blocks[0])
+            # 첫 헤더가 절 라벨(실습/해부/변형)을 그대로 반복하면 제거(중복 회피).
+            # 내용 헤더(데이터 준비·평가 등)면 그대로 살려 절 구조를 보존한다.
+            label = SUBTITLE_LABELS.get(g, "")
+            fh = _first_header(body_blocks[0])
+            if fh and label and fh[1].strip().startswith(label):
+                body_blocks[0] = _demote_first_header(body_blocks[0])
         parts.extend(body_blocks)
         (pages_dir / f"{stem}-{sl}.md").write_text(
             "\n\n".join(p for p in parts if p).strip() + "\n", encoding="utf-8")
