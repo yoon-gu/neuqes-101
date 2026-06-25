@@ -1,6 +1,8 @@
 > ▶ **[Google Colab에서 이 장 실습 열기](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/33_diffusion_train/33_diffusion_train.ipynb)** — 브라우저에서 바로 실행해 볼 수 있습니다.
 
-## 환경 준비
+## 환경 셋업
+
+T4 GPU에서 `fp16`로 학습합니다(bf16·flash-attention 불가).
 
 ```python
 %pip install -q -U transformers tokenizers datasets accelerate
@@ -39,6 +41,8 @@ if torch.cuda.is_available():
 torch 2.11.0+cu128 | device cuda | fp16 True
 GPU: Tesla T4
 ```
+
+## 실습
 
 ### TinyStories 로드 (Ch 24/26과 같은 데이터)
 
@@ -189,8 +193,6 @@ print(f"#params {np_/1e6:.2f}M | embedding share {emb/np_:.1%}  (Ch32: ~70%)")
 #params 3.79M | embedding share 13.9%  (Ch32: ~70%)
 ```
 
-**결과 해석** — 전체 3.79M 중 임베딩 비중이 13.9%로, vocab 30522일 때의 약 70%에서 크게 줄었습니다. 아낀 용량이 그대로 본체로 돌아가 문맥 추론에 쓰입니다.
-
 ### 시간가중 `1/t` 손실로 30000 step 학습
 
 손실은 마스크된 자리에만 교차엔트로피를 매기고, 거기에 `1/t` 시간가중을 곱하는 흡수형 NELBO입니다. `Trainer.compute_loss`를 오버라이드해 직접 구현합니다.
@@ -244,8 +246,6 @@ elapsed 18.50 min | step 30000 | train_loss 3.5916
 random baseline ln(V) = 7.6246
 peak VRAM 627 MiB
 ```
-
-**결과 해석** — 30000 step을 18.5분에 끝내 T4 30분 예산 안에 들어옵니다. train_loss 3.59는 무작위 기준선 `ln(V)=7.62`의 절반 이하로, 모델이 유니그램 빈도 모사를 넘어 조건부 구조를 학습했다는 신호입니다. peak VRAM도 627 MiB로 여유가 큽니다.
 
 ### carry-over 샘플러로 생성
 
@@ -365,5 +365,3 @@ Lily's mom replied, "I'm sorry! I didn't know what to do."
 
 Her mom explained, "Why don't have 
 ```
-
-**결과 해석** — 작은 3.79M 모델·짧은 학습이라 완벽하진 않아 "She is happy and happy", "Why don't have"처럼 어색한 구절이 남습니다. 그래도 인물(Lily, Ben)·대화·배경이 이어지는 동화가 나오고, 특히 조건부 생성은 프롬프트 "Once upon a time" 뒤로 일관된 이야기를 펼쳐 모델이 조건부 구조를 학습했음을 보여줍니다.

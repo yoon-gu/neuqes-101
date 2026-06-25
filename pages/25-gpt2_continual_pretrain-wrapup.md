@@ -152,7 +152,7 @@ trainer = Trainer(
 
 Ch 26 는 *Ch 24 의 한국어판* — *작은 GPT + 한국어 TinyStories-Korean + BPE 직접 학습* 패턴. *Ch 25 의 한국어판 (한국어 사전학습 GPT + continual pretraining)* 이 *아닌* 이유:
 
-- **한국어 사전학습 GPT 가 부족** — `skt/kogpt2-base-v2` (125M) 등이 있지만 *영어 gpt2 만큼 표준화된 토크나이저·본체 조합* 이 아님. Ch 27 에서 KoGPT2 가 등장
+- **한국어 사전학습 GPT 가 부족** — `skt/kogpt2-base-v2` (125M) 등이 있지만 *영어 gpt2 만큼 표준화된 토크나이저·본체 조합* 이 아님. Ch 28 SFT 에서 KoGPT2 가 등장
 - **한국어 토크나이저 새로 학습이 필요** — Q4 에서 봤듯 영어 BPE 는 한국어를 못 다룸. *한국어 BBPE 를 직접 학습* 하는 게 정공법
 - **Phase 4 의 한국어 사전학습 단계 1 챕터** — Ch 22 (한국어 BERT scratch) 의 GPT 판
 

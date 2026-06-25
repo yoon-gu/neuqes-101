@@ -1,6 +1,10 @@
 > ▶ **[Google Colab에서 이 장 실습 열기](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/31_grpo/31_grpo.ipynb)** — 브라우저에서 바로 실행해 볼 수 있습니다.
 
-## 환경 준비
+## 환경 셋업
+
+`trl` 의 **`GRPOTrainer`** 와 **`GRPOConfig`**, 그리고 **`reward_funcs`** (verifier 함수) 가 이번 챕터에 새로 등장합니다. `transformers` / `datasets` / `accelerate` 와 함께 설치합니다.
+
+> ⚠️ `trl` 은 버전마다 `GRPOTrainer` / `GRPOConfig` API 변동이 큽니다 (인자 이름이 버전에 따라 바뀝니다 — 예: `max_completion_length` 는 있지만 `max_prompt_length` 는 버전에 따라 없음). 본 노트북은 설치된 `trl` 버전을 셋업 셀에서 출력하고, *버전 간 안정적인 핵심 경로* (`num_generations` + `reward_funcs` + `max_completion_length` + `prompt` 컬럼) 만 사용합니다.
 
 ```python
 %pip install -q -U trl transformers tokenizers datasets accelerate
@@ -84,6 +88,16 @@ torch        : 2.11.0+cu128
 use fp16     : True
 ```
 
+## verifiable 데이터 — `prompt` + 정답 (산술)
+
+GRPO 데이터의 핵심은 **정답을 자동 검증할 수 있어야** 한다는 것입니다. 코드(테스트 실행) 는 무겁고 환경 의존이 크니, 본 챕터는 *가장 깨끗한 verifiable task* 인 **산술(arithmetic)** 로 시작합니다 — 정답이 *정수 하나* 라 *문자열 매칭만으로 채점* 됩니다.
+
+각 샘플은 `(prompt, answer)` 두 컬럼입니다:
+- `prompt`: 풀어야 할 문제 (예: `"3 + 5 = ?"`) — 모델에 입력
+- `answer`: 정답 (예: `"8"`) — *verifier 가 채점할 때만* 사용 (모델 입력 아님)
+
+> 합성 산술이라 *정답을 우리가 알고* 있으니, *verifier (정답 매칭) 가 완벽* 합니다. 이것이 verifiable reward 의 이상적 형태 — *reward 가 잡음 없이 정확*. (GSM8K 같은 실제 수학 데이터셋도 같은 방식이지만, 답 추출이 더 까다롭습니다 — FAQ 참고.)
+
 GRPO 는 verifier 가 자동으로 채점할 수 있는 task 가 필요합니다. 정답이 명확한 산술 문제를 만들어, `prompt` (모델 입력) 와 `answer` (채점용 정답) 를 짝지어 둡니다. prompt 는 Ch 28 SFT 와 동일한 instruction 포맷으로 감싸 학습·추론 포맷을 맞춥니다.
 
 ```python
@@ -142,6 +156,12 @@ train: 256 samples,  eval: 64 samples
 14
 ```
 
+## SFT 모델 (policy) 로드
+
+GRPO 는 *SFT 모델에서 출발* 합니다 (Ch 28 의 SFT 체크포인트가 정석). 노트북 단독 실행을 위해 **base KoGPT2 로 시작** 합니다 — 보통은 *이미 지시를 따르는 SFT 모델* 에서 GRPO 를 시작해야 *rollout 이 의미 있는 답* 을 내고 verifier 가 *섞인 reward* (잘한 답 + 못한 답) 를 줄 수 있습니다.
+
+토크나이저는 Ch 27·28·30 과 동일 (`PreTrainedTokenizerFast` + special token 명시 — `AutoTokenizer` 함정 회피).
+
 학습 대상인 policy 모델과 토크나이저를 불러옵니다. KoGPT2 는 `AutoTokenizer` 가 영어 GPT2 토크나이저로 잘못 fallback 되므로 (Ch 27), `PreTrainedTokenizerFast` 로 special token 을 직접 지정해 로드합니다. 단독 실행을 위해 SFT 체크포인트 대신 base 모델에서 시작합니다.
 
 ```python
@@ -191,6 +211,12 @@ tokenizer    : TokenizersBackend
   pad_token  : <pad>  id=3
 ```
 
+## 5 SFT 워밍스타트 — GRPO 의 비제로 시작점 만들기
+
+GRPO 는 한 prompt 에 여러 답(group)을 생성해 *그룹 안에서* 잘한 답의 확률을 올립니다. 그런데 base KoGPT2 는 산술을 거의 못 풀어 **그룹의 보상이 전부 0** 이 되기 쉽고, 그러면 advantage 가 모두 0 이라 *학습 신호가 없습니다*(GRPO 의 cold-start 함정).
+
+그래서 표준 RLHF 파이프라인처럼 **GRPO 전에 짧은 SFT 로 "포맷 + 산술"을 먼저 가르칩니다.** 산술 prompt 와 정답을 지도학습해 모델이 일부 문제를 맞히기 시작하면(비제로 정확도), 그룹 안에 정답·오답이 섞여 advantage 가 생기고 GRPO 가 비로소 작동합니다. Ch 28 에서 한 그 SFT 를, 이번엔 산술 task 에 맞춰 워밍스타트로 씁니다.
+
 base 모델은 산술을 거의 못 풀어 group 이 전부 오답이 되기 쉽습니다 (std=0 → advantage 0 → 학습 신호 없음). GRPO 가 신호를 얻으려면 모델이 가끔이라도 정답을 내야 하므로, 먼저 정답을 포함한 예제로 짧게 지도학습해 비제로 시작점을 만듭니다.
 
 ```python
@@ -223,6 +249,17 @@ print(f"SFT 워밍스타트 완료 ({(time.time()-t0)/60:.1f}min) - policy 가 �
 <IPython.core.display.HTML object>
 SFT 워밍스타트 완료 (1.2min) - policy 가 이제 산술 포맷을 안다
 ```
+
+## verifier (reward function) 정의 + group advantage 손계산
+
+여기가 본 챕터의 *개념 핵심*. **verifier 함수** 를 정의하고, 한 prompt 에 *여러 답* 을 채점한 뒤 *group relative advantage* 를 손으로 계산해 §의 표를 재현합니다. `GRPOTrainer` 가 매 step·매 prompt 내부에서 하는 일을 *축소판으로 재현* 하는 셈입니다.
+
+### verifier — 생성 답에서 정답 추출 → 매칭 → reward
+
+`trl` 의 reward 함수 시그니처는 **`reward_func(completions, **kwargs)`** 입니다:
+- `completions`: policy 가 생성한 답들의 *리스트* (group)
+- `**kwargs`: 데이터셋의 *나머지 컬럼* 이 *리스트로* 전달 (우리의 `answer` 컬럼이 `answer=[...]` 로 들어옴)
+- 반환: 각 completion 의 **reward 리스트** (`list[float]`)
 
 GRPO 의 핵심은 verifier 입니다. 생성된 답에서 정수를 추출해 정답과 일치하면 1.0, 아니면 0.0 을 주는 이진 보상 함수를 정의합니다. `trl` 의 reward 함수는 `completions` (생성 답 리스트) 와 `answer` (정답 리스트) 를 받아 reward 리스트를 돌려주는 시그니처를 씁니다.
 
@@ -271,6 +308,14 @@ rewards (group): [1.0, 0.0, 1.0, 0.0]
 **결과 해석**
 
 정답 8 이 포함된 `'The answer is 8.'` 과 `'8'` 은 1.0, 7 을 낸 답과 모르겠다는 답은 0.0 을 받았습니다. 한 group 안에 정답·오답이 섞여 있어 다음 단계의 group advantage 가 0 이 아닌 학습 신호를 만들 수 있습니다.
+
+### group relative advantage 손계산 — reward → advantage
+
+verifier 가 매긴 reward $[1, 0, 1, 0]$ 를 *group 평균 대비 상대값* 으로 바꿉니다 (§의 수식):
+
+$$A_i = \frac{r_i - \text{mean}(r)}{\text{std}(r) + \varepsilon}$$
+
+이게 `GRPOTrainer` 가 *critic 없이* advantage 를 만드는 방법 — *group 평균이 baseline*.
 
 GRPO 가 PPO 와 다른 핵심이 여기 있습니다. critic (value model) 없이, 같은 prompt 에서 나온 group 의 reward 평균을 baseline 으로 삼아 advantage 를 계산합니다. 평균보다 높은 답은 확률을 올리고 (advantage>0), 낮은 답은 내립니다 (advantage<0). 손으로 직접 계산해 group 구성에 따라 advantage 가 어떻게 달라지는지 살펴봅니다.
 
@@ -332,6 +377,22 @@ advantage for various group compositions:
 
 reward 가 `[1,0,1,0]` 이면 정답은 +1, 오답은 -1 로 갈립니다. 반면 group 이 전부 정답 `[1,1,1,1]` 이거나 전부 오답 `[0,0,0,0]` 이면 advantage 가 모두 0 — 비교 대상이 없어 학습 신호가 사라집니다. group 안에 정답·오답이 섞여야 GRPO 가 배웁니다.
 
+**무엇을 보고 있나** — 위 두 출력은 `GRPOTrainer` 가 *매 step, 매 prompt* 내부에서 하는 계산입니다:
+
+- **verifier** 가 *사람 없이 자동* 으로 reward 를 매깁니다 (정답 매칭). preference 라벨이 필요 없습니다
+- **group advantage** 가 *critic 없이* 만들어집니다 — *그룹 동료들의 평균* 이 baseline. 평균보다 잘한 답은 +, 못한 답은 −
+- **group 전체가 같으면 (전부 정답·전부 오답) advantage = 0** → 학습 신호 없음. *그룹 안에 다양성* (잘한 답 + 못한 답) 이 있어야 GRPO 가 작동합니다
+
+> 이 두 부품 — *verifier (reward)* 와 *group advantage (baseline)* — 이 GRPO 의 전부입니다. 아래 §4 에서 `GRPOTrainer` 에 이 verifier 를 넘기면, 나머지 (rollout · advantage · 정책 갱신) 는 자동입니다.
+
+## `GRPOTrainer` 로 GRPO 학습 — *새 trainer, verifier 로 정렬*
+
+`trl.GRPOTrainer` 는 본 챕터에 처음 등장합니다. §3 에서 손으로 한 *verifier reward → group advantage* 를, *매 step* *rollout (여러 답 생성) → 채점 → advantage → 정책 갱신* 으로 자동 수행합니다. 설정은 `GRPOConfig` (`TrainingArguments` 상속) 로 주며, **`num_generations`** 가 group size 입니다.
+
+> **rollout 주의 (T4 시간·메모리)**: GRPO 는 *매 step 여러 답을 생성* 하므로 무겁습니다 (DPO 보다 generation 비용이 큼). T4 + 30분 룰을 지키려면: **group size 작게 (`num_generations=4`) + 짧은 generation (`max_completion_length` 작게) + 작은 batch + 적은 step**. 시간이 빡빡하면 `N_TRAIN` 이나 step 을 더 줄이세요.
+
+> **`trl` 버전 주의**: `GRPOConfig` 는 `max_completion_length` 를 받지만 `max_prompt_length` 는 버전에 따라 없습니다. `beta` 는 KL 제약의 세기로, 0 으로 두면 reference 없이(ref-free) 돌지만 정책이 SFT 모델에서 멀어지는 것을 막을 닻이 사라집니다. 본 노트북은 *작은 KL 앵커 (`beta=0.04`)* 로 reference (= SFT 모델) 근처에 묶어 collapse·reward hacking 을 완화합니다.
+
 GRPO 전후를 비교하려면 흔들리지 않는 측정 기준이 필요합니다. sampling 은 실행마다 결과가 달라져 delta 를 읽기 어려우므로, greedy (`do_sample=False`) 로 정확도를 결정적으로 측정하는 함수를 만들고 학습 전 정확도를 먼저 기록합니다.
 
 ```python
@@ -362,6 +423,12 @@ print(f"BEFORE GRPO - arithmetic accuracy (greedy verifier pass rate): {acc_befo
 ```text
 BEFORE GRPO - arithmetic accuracy (greedy verifier pass rate): 0.875
 ```
+
+## 5 🎯 난이도 필터 — GRPO 가 배울 *신호* 만들기
+
+GRPO 의 advantage 는 그룹 안에서 $(r-\text{mean})/\text{std}$ 입니다. 그런데 한 자리 산술은 prompt 마다 정답률이 **0 또는 1 로 양극화** 되기 쉽습니다 - SFT 후 쉬운 문제는 8개 답이 *전부 정답*, 못 푸는 문제는 *전부 오답*. 그러면 그룹 보상의 **표준편차가 0** 이라 advantage 가 전부 0 → *학습 신호가 아예 없습니다*.
+
+그래서 GRPO 가 실제로 배우려면 **그룹 안에 정답과 오답이 섞여야** 합니다. SFT 직후 각 prompt 의 정답률을 재서, *중간 난이도(약 25-87.5%)* 인 prompt 만 GRPO 학습셋으로 남깁니다. 이것이 reward 를 손대지 않고(이진 검증가능 보상 그대로) advantage 분산을 살리는 가장 직접적인 방법입니다.
 
 앞서 봤듯 group 이 전부 정답이거나 전부 오답이면 advantage 가 0 이라 학습 신호가 없습니다. 그래서 각 prompt 에 여러 답을 생성해 정답률 (pass rate) 을 재고, 너무 쉽지도 어렵지도 않은 중간 난이도 문제만 남겨 group 안에 정답·오답이 섞이도록 (std>0) 데이터셋을 거릅니다.
 
@@ -489,6 +556,15 @@ final peak  : 2886 MiB
 
 32 step, 약 0.5 분 만에 끝났고 peak VRAM 은 2886 MiB 로 T4 에 충분히 들어갑니다. `train_loss` 값 자체는 GRPO 목적함수의 부호·스케일이 분류 loss 와 달라 절대값으로 해석하지 않습니다 — 실제 효과는 다음 셀의 정확도 변화로 확인합니다.
 
+## GRPO 전·후 정확도 비교 — *verifier pass rate 가 올랐는가*
+
+본 챕터의 핵심 데모. *같은 eval 셋* (학습에 안 쓴 산술 문제) 에 대해 *GRPO 전* 과 *후* 의 **정확도 (verifier pass rate)** 를 비교합니다.
+
+- **GRPO 전**: policy 가 산술을 잘 못 풀어 pass rate 낮음
+- **GRPO 후**: *정답 방향* 으로 정책이 강화되어 pass rate ↑ (정답을 더 자주 생성)
+
+정확도가 *올랐다면* verifiable reward 로 능력이 정렬된 직접 증거입니다.
+
 ```python
 acc_after = eval_accuracy(policy, eval_ds, n=64)
 
@@ -517,11 +593,24 @@ BEFORE GRPO - arithmetic accuracy                     : 0.875
 delta                                                 : +0.016
 ```
 
+![output](../assets/31-grpo-out1.png)
+
 **결과 해석**
 
 정확도가 0.875 → 0.891 로 +0.016 올랐습니다. 작은 모델·짧은 학습이라 변화 폭은 미미하지만, *verifier reward + group advantage* 만으로 (사람 라벨·critic·reward model 없이) 정렬 방향이 양으로 움직였다는 것이 핵심입니다.
 
-![output](../assets/31-grpo-out1.png)
+**해석 가이드 — verifiable reward alignment 의 증거**
+
+- **before (gray)**: policy 가 산술을 잘 못 풀어 pass rate 가 낮습니다 (base KoGPT2 는 산술에 약함)
+- **after (green)**: *정답 방향* 으로 정책이 강화되어 pass rate 가 오릅니다 — 모델이 *정답을 더 자주 생성*
+
+> **핵심**: GRPO 는 *preference 라벨 없이*, *verifier 가 자동 채점한 reward* 만으로 능력을 정렬합니다. group 안에서 *정답이 평균보다 잘한 답* 으로 강화되며, 그 효과가 *정확도(pass rate) 상승* 으로 나타납니다.
+
+> ⚠️ KoGPT2 (125M) 는 작은 base 모델이고 (정석은 SFT 모델에서 출발), 학습 step·group size 도 작아 효과가 *미묘* 할 수 있습니다. 관전 포인트는 *극적 향상* 이 아니라 ***정확도가 정답 방향으로 올랐는가*** 입니다. 또한 *group 안에 정답·오답이 섞여야* (std>0) 학습 신호가 생기므로, base 모델이 *가끔이라도 정답을 내야* GRPO 가 작동합니다 — §6 의 reward 곡선에서 확인.
+
+## 학습 곡선 — reward / reward std / completion 길이
+
+`GRPOTrainer` 는 학습 중 *loss* 뿐 아니라 *reward (group 평균)·reward_std·completion 길이* 같은 GRPO 고유 지표를 로깅합니다 (`trainer.state.log_history`). reward 가 오르고, reward_std 가 *0 이 아닌* (= group 안에 다양성이 있는) 구간에서 학습이 일어났는지 확인합니다.
 
 학습 로그에서 step 별 group 평균 reward·reward std·loss 를 꺼내 그려, GRPO 가 진행되며 보상이 어떻게 움직였는지와 peak VRAM 을 확인합니다.
 

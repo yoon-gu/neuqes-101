@@ -1,6 +1,6 @@
 > ▶ **[Google Colab에서 이 장 실습 열기](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/25_gpt2_continual_pretrain/25_gpt2_continual_pretrain.ipynb)** — 브라우저에서 바로 실행해 볼 수 있습니다.
 
-## 환경 준비
+## 환경 셋업
 
 ```python
 %pip install -q -U transformers tokenizers datasets accelerate
@@ -82,6 +82,10 @@ use fp16   : True
 
 T4 GPU(VRAM 약 14.56 GiB)가 잡혔고 `use fp16 : True` 라 학습 시 fp16 혼합정밀도가 켜집니다. 124M gpt2 본체를 T4 한 장에서 돌리려면 이 fp16 설정이 메모리·속도 양쪽에서 중요합니다.
 
+## TinyStories 데이터 로드 — *Ch 24 와 완전히 동일*
+
+본 챕터의 데이터는 *통제 변수*. Ch 24 와 정확히 같은 split 을 사용합니다 (`roneneldan/TinyStories`, train 30K + eval 500). *데이터를 고정하고 본체·토크나이저·lr 만 바꿔 격차를 본다* 가 본 챕터의 격리 실험 설계.
+
 이어서 데이터를 불러옵니다. Ch 24 와 *완전히 같은* TinyStories 30K(train) + 500(val) split 을 사용하는데, 데이터를 통제 변수로 고정해야 본체·토크나이저·lr 변화의 효과만 분리해 볼 수 있기 때문입니다.
 
 ```python
@@ -121,6 +125,10 @@ To
 **결과 해석**
 
 train 30,000 / val 500 행이 정상 로드됐고, 첫 story 가 Ch 24 와 똑같은 Lily 이야기인 것으로 *동일 데이터* 임이 확인됩니다. TinyStories 특유의 짧고 단순한 동화 문장이 본 챕터에서 gpt2 가 적응할 도메인입니다.
+
+## `gpt2` 토크나이저·모델 로드 — *모델 로드 한 줄로 학습 단계 2 진입*
+
+본 챕터의 *유일한 큰 변화*. Ch 24 의 `GPT2LMHeadModel(config)` random init 대신 `AutoModelForCausalLM.from_pretrained("gpt2")` 한 줄. 토크나이저도 같이 가져옵니다.
 
 이제 본 챕터의 *유일한 큰 변화* 인 모델·토크나이저 로드입니다. Ch 24 의 random init 대신 OpenAI 가 WebText 로 사전학습한 `gpt2` 본체를 `from_pretrained` 한 줄로 가져오고, 토크나이저도 본체에 맞춰 함께 불러옵니다.
 
@@ -172,6 +180,31 @@ model: GPT2LMHeadModel
 
 본체가 124.44M params 로 Ch 24 의 약 3M 대비 약 41배, vocab 은 50,257 로 약 25배 큽니다. `pad_token` 이 `eos_token`(id=50256)으로 지정됐고, LM head 가 `Linear(768, 50257)` 에 weight tying(`lm_head ↔ wte` 공유)된 점이 Ch 24 와 같은 CausalLM 구조임을 보여줍니다.
 
+### Ch 24 ↔ Ch 25 코드 diff — *모델·토크나이저 로드 두 줄 차이*
+
+```python
+# Ch 24 (영어 GPT scratch) - BPE 직접 학습 후 random init 모델
+# bpe = Tokenizer(BPE(unk_token=None))
+# trainer = BpeTrainer(vocab_size=2048, ...)
+# bpe.train_from_iterator(text_iter, trainer)
+# tokenizer = PreTrainedTokenizerFast(tokenizer_object=bpe, bos_token=EOS, eos_token=EOS, pad_token=EOS)
+# config = GPT2Config(vocab_size=2048, n_layer=4, n_head=4, n_embd=256, ...)
+# model = GPT2LMHeadModel(config)
+
+# Ch 25 (continual pretraining) - 단 두 줄로
+tokenizer = AutoTokenizer.from_pretrained("gpt2")
+tokenizer.pad_token = tokenizer.eos_token
+model = AutoModelForCausalLM.from_pretrained("gpt2")
+```
+
+> *trainer·collator·loss 는 같음* — *모델 로드 한 줄 + 토크나이저 한 줄* 로 학습 단계 2 (continual pretraining) 에 진입합니다. 그게 본 챕터의 메시지.
+
+## 토큰화 + `group_texts` — *Ch 24 와 완전히 같은 패턴*
+
+HF causal LM 학습 표준 패턴 (`run_clm.py`) 그대로. Ch 24 와 정확히 같습니다 — *데이터·전처리·collator 는 통제 변수*.
+
+다만 `BLOCK_SIZE` 는 Ch 24 와 동일하게 유지 (128) — *gpt2 본체의 `n_positions=1024` 까지 가능하지만, T4 + 30분 룰 안에서 비교 가능성 우선*.
+
 토큰화는 Ch 24 와 같은 패턴입니다. 각 story 를 토큰화하고 EOS 로 경계를 표시한 뒤 `group_texts` 로 길이 128 블록 스트림으로 만드는 HF 표준 causal LM 전처리(`run_clm.py`)입니다.
 
 ```python
@@ -182,7 +215,6 @@ def tokenize_fn(batch):
 
 tok_train = raw_train.map(tokenize_fn, batched=True, remove_columns=["text"], desc="tokenize train")
 tok_val   = raw_val.map(tokenize_fn,   batched=True, remove_columns=["text"], desc="tokenize val")
-
 ```
 
 **위 코드 읽기** — `BLOCK_SIZE = 128` 로 한 블록 길이를 Ch 24 와 동일하게 고정합니다. gpt2 본체는 `n_positions=1024` 까지 가능하지만, T4 + 30분 룰 안에서 Ch 24 와 비교 가능성을 우선해 128 로 둡니다. `tokenize_fn` 으로 각 story 를 토큰 id 로 바꾸고 `remove_columns=["text"]` 로 원문 컬럼은 버립니다.
@@ -199,7 +231,6 @@ def add_eos(batch):
 
 tok_train = tok_train.map(add_eos, batched=True, desc="add eos train")
 tok_val   = tok_val.map(add_eos,   batched=True, desc="add eos val")
-
 ```
 
 **위 코드 읽기** — 각 story 끝에 `eos_token_id`(gpt2 의 `<|endoftext|>`, id=50256)를 붙여 story 경계를 표시합니다. 뒤에서 여러 story 를 이어 붙여 블록으로 자를 때 모델이 "이야기가 여기서 끝났다"를 학습하도록 하는 신호이며, Ch 24 와 같은 패턴입니다.
@@ -216,7 +247,6 @@ def group_texts(batch):
 
 lm_train = tok_train.map(group_texts, batched=True, desc="group train")
 lm_val   = tok_val.map(group_texts,   batched=True, desc="group val")
-
 ```
 
 **위 코드 읽기** — `group_texts` 는 여러 story 의 토큰을 한 줄로 이어 붙인 뒤(`concatenated`) `BLOCK_SIZE` 의 배수로 잘라 길이 128 짜리 블록 스트림을 만듭니다. 끝에 남는 자투리는 버립니다(`total_len // BLOCK_SIZE * BLOCK_SIZE`). 가변 길이 텍스트를 패딩 없이 고정 길이 블록으로 빈틈없이 채우는 HF `run_clm.py` 표준 방식으로, Ch 24 와 정확히 같습니다.
@@ -244,6 +274,14 @@ One day, a little girl named Lily found a needle in her room. She knew it was di
 **결과 해석**
 
 train 51,863 chunks(약 6.64M 토큰)가 만들어졌고, 이 값이 뒤의 학습 step 수(eff. batch 16 기준 약 3,200 step)를 결정합니다. 맨 위 1106 > 1024 경고는 일부 story 가 gpt2 max length 를 넘는다는 안내일 뿐, `group_texts` 가 128 블록으로 다시 자르므로 학습에는 영향이 없습니다.
+
+**비교 관전 포인트** — 같은 30K stories 가 *gpt2 BPE (vocab 50,257)* 로 토큰화되면 Ch 24 의 *직접 학습 BPE (vocab 2,048)* 보다 *토큰 수가 적습니다* — vocab 이 클수록 한 토큰이 더 긴 byte 시퀀스를 표현하므로. 같은 데이터의 토큰 수 차이가 *토크나이저 vocab 크기의 직접적 효과*.
+
+## 학습 *전* generation — *이미 잘 만들어진 본체* 라는 사실 확인
+
+Ch 24 의 *random init baseline* 은 *영어와 거리 먼 byte 조각* 이었습니다. Ch 25 의 학습 전 baseline 은 *gpt2 가 WebText 로 이미 사전학습된 본체* 라 *학습 시작 시점에 이미 자연스러운 영어 generation* 이 가능합니다.
+
+같은 prompt 3개로 *gpt2 학습 직전 (BEFORE)* generation 을 기록 — 학습 후 (§6) 와 나란히 비교해 *continual pretraining 이 본체에 어떤 변화를 주는가* 를 직접 봅니다.
 
 학습 *전* generation 입니다. 같은 prompt 3개로 *gpt2 그대로(BEFORE)* 의 생성을 기록해 두고, 학습 후(AFTER)와 나란히 비교해 continual pretraining 이 본체에 준 변화를 직접 봅니다.
 
@@ -308,6 +346,25 @@ But these people are less likely to have
 
 학습 전인데도 세 답 모두 문법적으로 자연스러운 영어입니다 — gpt2 가 이미 WebText 로 사전학습됐기 때문이며, Ch 24 의 random init baseline(의미 없는 byte 조각)과 결정적으로 다른 *시작점* 입니다. 다만 톤은 정부·여행 책·알레르기 같은 *WebText 풍 일반 산문* 이라 TinyStories 동화 풍은 아닙니다.
 
+**해석 가이드 — *Ch 24 random init* vs *Ch 25 gpt2 사전학습* 의 직전 비교**
+
+- **Ch 24 학습 직전 (random init)**: *영어와 거리 먼 byte 조각 / 의미 없는 짧은 단어 반복*
+- **Ch 25 학습 직전 (gpt2 사전학습 그대로)**: *이미 자연스러운 영어 문장* — *주어 + 동사 + 목적어* 구조, 다양한 도메인 어휘. 다만 *TinyStories 풍은 아님* — WebText 풍 일반 문장 / 뉴스 / 대화 등 (학습 데이터 분포 반영)
+
+> 이 차이가 *학습 시작점의 차이*. Ch 25 는 *random 에서 시작하지 않습니다* — *이미 잘 만들어진 본체* 에서 시작해 *TinyStories 풍 적응* 만 더하는 게 학습 단계 2 (continual pretraining) 의 본질.
+
+## Continual Pretraining — *trainer 코드는 Ch 24 와 거의 동일*
+
+Ch 24 와 *완전히 같은 구조* 의 `Trainer` 코드. 변하는 곳은 **lr (`3e-4 → 2e-5`)** 한 곳. step 수는 *데이터 1 epoch 을 도는 방식* 이라 Ch 24 의 `max_steps=1500` 과 달리 chunk 수에 따라 정해집니다 (51,863 chunks / eff. batch 16 ≈ **약 3,200 step**).
+
+### 왜 lr 가 작아지는가 — `2e-5` 의 정확한 의미
+
+Ch 24 (scratch) 의 lr `3e-4` 는 *random init 본체* 가 *빠르게 의미 있는 표상* 을 학습하기 위한 표준 값. Ch 25 (continual pretraining) 는 *이미 학습된 본체* 라 *큰 lr 면 사전학습된 표상이 망가질 위험* — **catastrophic forgetting**. `2e-5` 는 HF 의 continual pretraining / fine-tuning 표준 lr 중 가장 작은 쪽으로, *사전학습 표상 보존* 을 우선.
+
+### `DataCollatorForLanguageModeling(mlm=False)` — *Ch 24 와 한 글자도 다르지 않음*
+
+학습 단계 2 의 정의: *collator 안 바뀜, loss 안 바뀜, trainer 안 바뀜*. *데이터·본체·lr 만 바뀜*.
+
 이제 본 챕터의 핵심인 continual pretraining 학습 설정입니다. Trainer·collator·loss 는 Ch 24 와 같고, 바뀌는 곳은 `learning_rate` 한 곳(`3e-4 → 2e-5`)뿐입니다.
 
 ```python
@@ -315,7 +372,6 @@ from transformers import (DataCollatorForLanguageModeling, Trainer,
                           TrainingArguments, TrainerCallback)
 
 collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
-
 ```
 
 **위 코드 읽기** — `DataCollatorForLanguageModeling(mlm=False)` 는 Ch 24 와 한 글자도 다르지 않은 causal LM collator 입니다. `mlm=False` 라 마스킹 없이 `labels = input_ids.clone()` 을 자동으로 만들어 next-token 예측 loss 를 구성합니다. *collator 가 그대로* 라는 점이 이번 학습이 단계 2(continual pretraining)임을 보여주는 핵심 증거입니다.
@@ -342,8 +398,6 @@ args = TrainingArguments(
     dataloader_pin_memory=True,
     seed=SEED,
 )
-
-
 ```
 
 **위 코드 읽기** — `learning_rate=2e-5` 가 Ch 24 의 `3e-4` 와 다른 *유일한 큰 차이* 입니다. 이미 학습된 본체를 큰 lr 로 흔들면 사전학습 표상이 망가지는 catastrophic forgetting 위험이 있어, continual pretraining 표준 범위(`1e-5`~`5e-5`)의 작은 값을 씁니다. `per_device_train_batch_size=4` + `gradient_accumulation_steps=4` 로 effective batch 16 을 맞춰 124M 본체를 T4 16GB 안에 욱여넣고, `num_train_epochs=1` 은 본체가 이미 좋아 1 epoch 면 충분하다는 뜻입니다.
@@ -368,7 +422,6 @@ class VRAMCallback(TrainerCallback):
 
 
 vram_cb = VRAMCallback()
-
 ```
 
 **위 코드 읽기** — `VRAMCallback` 은 학습과 무관한 관찰용 콜백으로, 로그 구간마다 peak VRAM 을 기록한 뒤 통계를 reset 합니다. 뒤의 VRAM trace 그림을 그리기 위한 데이터 수집일 뿐 loss 계산에는 관여하지 않습니다.
@@ -460,6 +513,12 @@ plt.tight_layout(); plt.show()
 **결과 해석**
 
 왼쪽 loss 곡선은 random baseline 점선(약 10.82)에서 한참 아래인 약 3 부근에서 시작해 천천히 더 내려가는 모양으로, *random 에서 가파르게 떨어지는 Ch 24* 와 대비되는 *이미 낮은 지점에서 시작* 하는 단계 2 의 특징을 보여줍니다. 오른쪽 VRAM trace 는 학습 내내 안정적으로 유지돼 T4 메모리 안에서 무리 없이 돌아갔음을 확인해 줍니다.
+
+**관전 포인트** — Ch 24 와 달리 *첫 step loss 가 random baseline `ln(50257) ≈ 10.82` 부근이 아니라 약 3.0-4.0 부근* 에서 시작합니다. *gpt2 가 이미 일반 영어 분포를 학습해 둔 덕분에 TinyStories 평가에서도 시작 loss 가 낮음*. 학습 진행과 함께 약 2.0-2.5 로 더 떨어지는데, 이게 *TinyStories 도메인 적응* 의 효과. 곡선이 *random baseline 으로부터 빠르게 떨어지는 Ch 24* vs *이미 낮은 지점에서 시작해 천천히 더 떨어지는 Ch 25* 의 모양 차이가 한눈에 보입니다.
+
+## 학습 *후* generation — *continual pretraining 의 효과*
+
+같은 `PROMPTS / GEN_KWARGS` 로 학습 후 모델에서 다시 생성. *BEFORE (gpt2 그대로) → AFTER (continual pretrained on TinyStories)* 비교가 *학습 단계 2 가 본체에 새긴 도메인 적응* 을 직접 드러냅니다.
 
 학습 *후* generation 입니다. BEFORE 와 *완전히 같은* `PROMPTS / GEN_KWARGS` 로 다시 생성해, continual pretraining 이 본체의 생성 톤을 어떻게 바꿨는지 비교합니다.
 
@@ -556,6 +615,25 @@ The big dog felt
 
 세 prompt 모두 BEFORE 의 *WebText 풍 일반 산문*(정부·책상·알레르기)이 AFTER 에서는 *동화 풍 등장인물·대화* 로 일관되게 바뀌었습니다. 같은 본체·같은 prompt·같은 seed 에서 데이터 적응만으로 생긴 차이라, 단계 2 가 본체에 새긴 도메인 적응이 한눈에 드러납니다.
 
+**해석 가이드 — continual pretraining 의 도메인 적응 효과**
+
+- **BEFORE (gpt2 그대로)**: 자연스러운 영어이지만 *WebText 풍* — 일반 산문 / 뉴스 / 대화 톤. *Once upon a time* 같은 동화 도입에 대해서도 *동화 스타일 이어쓰기보다 일반 산문 이어쓰기* 경향
+- **AFTER (gpt2 + TinyStories 1 epoch)**: 같은 prompt 가 *동화 풍* 으로 이어짐 — 짧고 단순한 문장, 동화 어휘 (little / mommy / friend / play / forest / happy ...), TinyStories 특유의 *반복적이고 어린이 어휘 한정* 톤
+
+> 본체는 *같은 124M params 모델* 이고, *한 줄 코드 차이 (lr) + 한 epoch 의 데이터* 만으로 *generation 톤 자체가 도메인 적응*. 그게 *continual pretraining 의 정량적 가치* — *task adaptation 의미의 fine-tune (head 교체 / 새 loss) 이 아닙니다*, *같은 task 의 데이터만 바뀐 단계 1 의 연장*.
+
+## 3-way generation 비교 — Ch 24 (scratch) vs Ch 25 BEFORE vs Ch 25 AFTER
+
+Ch 24 의 *작은 from-scratch 모델* (3M, TinyStories 1500 step) 의 generation 결과를 *옆에 두고* 비교합니다. *Ch 24 노트북 §7 의 "TRAINED model" generation 출력* 을 직접 인용 (사용자가 본인 결과로 갱신 가능).
+
+### 세 셋업의 차이
+
+| 셋업 | 본체 | 사전학습 | TinyStories 학습 |
+|---|---|---|---|
+| Ch 24 (scratch) | 3M params, random init | 없음 (from scratch) | 1500 step 사전학습 자체 |
+| **Ch 25 BEFORE** | 124M params (gpt2) | **WebText 약 40GB** | 없음 (gpt2 그대로) |
+| **Ch 25 AFTER** | 124M params (gpt2) | **WebText 약 40GB** | **1 epoch continual pretraining** |
+
 마지막으로 Ch 24 의 from-scratch 모델 결과까지 함께 놓는 3-way 비교입니다. `ch24_outputs` 는 Ch 24 노트북의 학습된 모델 generation 을 인용한 것으로, 본인 결과로 갱신하면 비교가 더 정확해집니다.
 
 ```python
@@ -627,3 +705,28 @@ In the long run, we find that people who have an
 **결과 해석**
 
 Ch 24(3M scratch)는 작은 모델·작은 데이터로도 동화 풍 단순 영어를 내지만 어휘가 동화 도메인에 한정되고, Ch 25 BEFORE 는 도메인은 넓되 동화 풍이 아니며, Ch 25 AFTER 는 *동화 풍 + 넓은 어휘력* 을 함께 보입니다. 다만 AFTER 가 더 좋아 보이는 것이 모델 크기(약 40배)의 힘인지 사전학습(WebText 40GB)의 힘인지는 두 요인이 함께 바뀌어 본 셋업으로는 분리되지 않습니다(FAQ Q3 참고).
+
+**해석 가이드 — 세 셋업의 격차**
+
+- **Ch 24 (3M scratch, TinyStories 1500 step)**: *동화 풍 단순 영어* 가능 — 작은 모델·작은 데이터로도 grammatical 한 생성. 다만 어휘는 동화 도메인에 한정
+- **Ch 25 BEFORE (gpt2 그대로)**: *다양한 도메인 영어* 가능. 자연스러운 산문이지만 *TinyStories 풍은 아님*
+- **Ch 25 AFTER (gpt2 + TinyStories continual pretrain)**: *동화 풍 + 자연스러움 + 일반 도메인 어휘력* 결합. *작은 from-scratch 의 도메인 특화 + 큰 사전학습 모델의 어휘 폭* 이 모두
+
+> **세 셋업의 비교가 던지는 질문** — Ch 25 AFTER 가 Ch 24 보다 *훨씬 좋아 보인다면*, 이게 *모델 크기 (3M → 124M, 약 40배) 의 위력인가, 사전학습 (WebText 약 40GB) 의 위력인가?* — 본 챕터의 셋업으로는 *분리 불가능*. 두 요인이 *함께 변함*. FAQ Q3 에서 더 자세히.
+
+## 학습 곡선 비교 — Ch 24 vs Ch 25 의 학습 효율
+
+*같은 데이터 (TinyStories 30K)* 에 대한 *random init vs 사전학습 본체* 의 학습 효율 격차를 표로 정리.
+
+| 항목 | Ch 24 (3M scratch) | **Ch 25 (124M continual pretrain)** |
+|---|---|---|
+| 시작 loss | 약 7.62 (`ln(2048)`, random baseline) | **약 3.0-4.0** (gpt2 pretrained, TinyStories 평가) |
+| 도달 loss (학습 끝, 누적 평균 `train_loss`) | 약 3.8 | **약 2.07** |
+| 학습 step | 1,500 | **약 3,200** (1 epoch, 51,863 chunks / eff. batch 16) |
+| 학습 시간 (T4) | 약 1분 | **약 19분** |
+| Vocab 차원 | 2,048 | **50,257** (loss 단위 다름 — 직접 비교 어려움) |
+| Generation 품질 | grammatical 한 동화 | **자연스러운 동화 + 일반 도메인 어휘** |
+
+> **요점**: Ch 25 는 *시작부터 낮은 loss* 에서 출발해 더 낮은 지점까지 내려갑니다 — 사전학습된 본체의 *시작 이점*. step·시간은 Ch 24 보다 오히려 더 큽니다 (124M 본체 + chunk 수가 많아 1 epoch 이 길어짐). 다만 *loss 의 절대값* 은 vocab 단위가 달라 직접 비교 어려움 (vocab 25배 차이). *Generation 품질* 로는 §7 의 3-way 비교가 정성적 차이를 보여줍니다.
+
+> Ch 25 의 결과만 보면 *대규모 사전학습 + continual pretraining* 이 압도적으로 보이지만, *3M params + WebText 사전학습* (가상의 비교군) 이라면 어떻게 될까요 — *모델 크기와 사전학습 데이터를 분리하는 비교* 는 본 챕터의 셋업으로는 어렵습니다. 그게 *실험 설계의 한계* 이자 *학습 단계 2 의 실용성* — 실무는 보통 *큰 사전학습 모델을 그대로 가져와 continual pretraining* 하는 게 비용 대비 최선이라.

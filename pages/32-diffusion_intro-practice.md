@@ -1,6 +1,6 @@
 > ▶ **[Google Colab에서 이 장 실습 열기](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/32_diffusion_intro/32_diffusion_intro.ipynb)** — 브라우저에서 바로 실행해 볼 수 있습니다.
 
-## 환경 준비
+## 환경 셋업
 
 ```python
 %pip install -q -U transformers tokenizers datasets accelerate
@@ -80,6 +80,14 @@ torch      : 2.11.0+cu128
 use fp16   : True
 ```
 
+## TinyStories 데이터 로드
+
+Ch 24 (GPT) 와 *완전히 같은 데이터* — `roneneldan/TinyStories` (Eldan & Li 2023, arXiv:2305.07759). GPT-3.5 / GPT-4 가 *4세 어린이 어휘* 로 생성한 짧은 영어 동화. 어휘·문법이 단순해 작은 모델로도 의미 있는 생성이 가능합니다.
+
+*데이터를 Ch 24 와 동일* 하게 둔 이유: 나중에 *같은 데이터에서 AR (Ch 24) vs Diffusion (본 챕터) 생성 방식만 다른* 비교를 하기 위함입니다.
+
+학습 split 의 처음 **30,000 stories** 만 사용 (T4 30분 룰 안).
+
 `roneneldan/TinyStories` 의 train 처음 10만 개, validation 500 개를 불러옵니다. 첫 story 의 앞부분을 출력해 어휘·문장이 단순한지 눈으로 확인합니다.
 
 ```python
@@ -115,6 +123,10 @@ Lily went to her mom and said, "Mom, I found this needle. Can you share it with 
 
 To
 ```
+
+## ByteLevel BPE 2048 직접 학습 + `[MASK]` 추가
+
+Ch 19·24 처럼 TinyStories 코퍼스에 ByteLevel BPE 를 vocab 2,048 으로 직접 학습하고, `[PAD]`·`[UNK]`·`[MASK]` 특수 토큰을 더해 씁니다. 핵심은 `[MASK]` 토큰의 존재 (직접 학습이라 `special_tokens` 로 명시 추가).
 
 ```python
 # 작은 모델엔 작은 vocab — TinyStories 에 BPE 2048 직접 학습 + [MASK] 추가
@@ -160,6 +172,12 @@ vocab_size : 2048
 original : Once upon a time, a little rabbit went to the forest.
 masked   : [MASK] upon a time[MASK] a[MASK] rabbit went to the forest[MASK]
 ```
+
+**관전 포인트** — `[MASK]` 가 섞인 시퀀스가 바로 diffusion 의 *중간 상태* $x_t$ 입니다. 학습은 *가려진 자리를 맞히는 것*, 생성은 *전부 `[MASK]` 에서 시작해 반복적으로 채우는 것*. Ch 20 의 MLM 과 토큰 수준에서는 똑같이 생겼습니다 — 차이는 *마스킹 비율* 과 *반복 횟수*.
+
+## 토큰화 + `group_texts` (고정 길이 블록 스트림)
+
+Ch 20·24 와 같은 전처리 패턴 — 전체 코퍼스를 토큰화해 이어 붙이고 `block_size=128` 단위로 자릅니다. 특수 토큰 (`[CLS]`, `[SEP]`) 은 넣지 않고 *순수 텍스트 스트림* 으로 만듭니다 (diffusion 은 문장 전체를 한 캔버스로 다루므로 경계 토큰이 불필요).
 
 전체 코퍼스를 `add_special_tokens=False` 로 토큰화한 뒤 모든 토큰을 이어 붙여 `BLOCK_SIZE=128` 단위로 자릅니다. 학습엔 `input_ids` 만 남기는데, 마스킹은 매 배치 collator 가 새로 하기 때문입니다.
 
@@ -207,6 +225,16 @@ approx. train tokens: 24.20 M
 first chunk decode (first 200 chars):
  One day, a little girl named Lily found a needle in her room. She knew it was difficult to play with it because it was sharp. Lily wanted t …(뒤 60자 생략)
 ```
+
+## Diffusion collator — *가변 비율* 마스킹 직접 구현
+
+여기가 BERT MLM 과 갈리는 지점입니다. Ch 20 은 `DataCollatorForLanguageModeling(mlm_probability=0.15)` 로 *고정 15%* 를 가렸지만, diffusion 은 **매 샘플마다 $t \sim U(\epsilon, 1)$ 을 뽑아 그 비율로** 가립니다.
+
+- 각 토큰을 *독립적으로 확률 $t$* 로 `[MASK]` 치환 (LLaDA 의 forward process 와 동일)
+- `labels`: 가려진 자리는 원본 토큰 id, 나머지는 `-100` (Ch 20 의 `-100` 트릭 그대로)
+- `t`: $1/t$ 재가중을 위해 샘플별 비율도 함께 반환
+
+`add_special_tokens=False` 로 토큰화했으므로 시퀀스 안에 특수 토큰이 없어 *모든 자리가 마스킹 가능* 합니다.
 
 ```python
 class DiffusionCollator:
@@ -279,6 +307,23 @@ trial 2 | sample 1: t=0.046  ->  masked   9/128 (  7.0%)
 
 같은 두 chunk 인데 호출마다 마스킹 비율이 7.0% (`t=0.046`) 부터 94.5% (`t=0.937`) 까지 크게 출렁입니다. 한 chunk 가 step 마다 *다른 난이도* 로 가려지므로 모델이 모든 마스킹 비율의 복원을 골고루 학습합니다.
 
+**관전 포인트** — Ch 20 MLM collator 가 *항상 약 15%* 를 가렸다면, 이 collator 는 *호출마다 0-100% 사이 아무 값* 으로 가립니다. 같은 chunk 가 어떤 step 엔 5% 만, 다른 step 엔 90% 가려진 채 학습됩니다 → 모델이 *모든 난이도의 복원* 을 골고루 학습 → 생성 시 *어떤 마스킹 비율에서도* denoise 가능.
+
+> **`-100` thread**: 가려진 자리만 `labels`, 나머지는 `-100`. Ch 20 (MLM 15%) → Ch 28 (SFT, prompt 만 `-100`) → 본 챕터 (가변 마스킹) — 같은 트릭의 세 번째 변주.
+
+## 작은 BERT-style 모델 from scratch
+
+diffusion 의 본체는 *bidirectional encoder* — 가려진 자리를 *좌·우 양방향 문맥* 으로 복원해야 하니 BERT 계열이 자연스럽습니다. `BertForMaskedLM` 을 *random init* 으로 작게 띄웁니다 (Ch 20 의 작은 BERT 와 같은 패턴).
+
+- `num_hidden_layers=4, num_attention_heads=4, hidden_size=256` → 약 3.79M params (작은 vocab 2048 덕분에 임베딩도 가벼움)
+- `max_position_embeddings = BLOCK_SIZE = 128`
+- MLM head (`Linear(H, V)`) 가 *가려진 자리의 토큰 분포* 를 출력 — 이게 곧 diffusion 의 denoiser
+
+### GPT (Ch 24) 와 코드로 갈리는 곳
+
+- `GPT2LMHeadModel` 이 아니라 `BertForMaskedLM` — *causal mask 없는 bidirectional attention*
+- 같은 `from_pretrained` 없이 `BertForMaskedLM(config)` random init — Ch 20·22 와 동일
+
 `BertForMaskedLM` 을 `from_pretrained` 없이 `config` 만으로 random init 합니다. `hidden_size=256`, 레이어 4 개, 작은 vocab 2048 덕분에 약 3.79M 파라미터로 가볍고, bidirectional encoder + MLM head 가 diffusion 의 denoiser 역할을 합니다.
 
 ```python
@@ -313,6 +358,17 @@ model: BertForMaskedLM
   - body : BertModel  (Encoder, bidirectional attention)
   - head : MLM head -> Linear(in=256, out=2048)
 ```
+
+## Reverse process — 병렬 denoise 생성 함수
+
+diffusion 생성의 핵심. **전부 `[MASK]` 인 시퀀스에서 시작**해 여러 step 에 걸쳐 점점 진짜 토큰으로 채웁니다 (LLaDA 의 *low-confidence remasking* 방식):
+
+1. 현재 `[MASK]` 자리들을 모델이 *한꺼번에* 예측 (병렬!)
+2. 각 예측의 *confidence* (softmax 최대 확률) 계산
+3. *확신 높은* 자리부터 확정, *확신 낮은* 자리는 다시 `[MASK]` 로 남김
+4. 스케줄에 따라 남기는 `[MASK]` 수를 step 마다 줄여 마지막엔 0개
+
+GPT 의 *왼→오 순차* 와 결정적으로 다른 점: **채우는 순서가 위치가 아니라 confidence 순** — 문장 중간이나 끝 단어가 앞 단어보다 먼저 확정될 수 있습니다.
 
 매 step 마다 `[MASK]` 자리를 한꺼번에 예측하고, top-k 샘플링으로 토큰을 뽑은 뒤 각 자리의 confidence (softmax 최대 확률) 를 잽니다. 선형 스케줄로 *남길 `[MASK]` 수* (`n_remain`) 를 step 마다 줄이되, confidence 가 낮은 자리를 `topk(..., largest=False)` 로 골라 다시 `[MASK]` 로 되돌립니다 — 확신 높은 자리부터 확정되는 low-confidence remasking 입니다. `prompt_ids` 를 주면 그 앞부분을 `fixed` 로 표시해 절대 마스킹하지 않습니다 (조건부 생성).
 
@@ -372,6 +428,10 @@ def diffusion_generate(active_model, length=64, steps=16, temperature=1.0, top_k
     return (text, traj) if record_trajectory else text
 ```
 
+## 학습 *전* denoise - 비교 기준선 (random init baseline)
+
+학습 전 모델은 가려진 자리를 *균등 추측* 하니, denoise 결과가 *의미 없는 토큰 나열* 이 나옵니다. 학습 후와 나란히 비교하기 위한 기준선 (Ch 20·22 의 *사전학습 전 [MASK] top-5*, Ch 24 의 *학습 전 generation* 과 같은 역할).
+
 학습 전 random init 모델로 전부 `[MASK]` 에서 denoise 를 돌려 비교 기준선을 만듭니다. logits 가 무작위라 confidence 순서도 무의미합니다.
 
 ```python
@@ -396,6 +456,16 @@ UNTRAINED model - parallel denoise from all-[MASK]
 
 [sample 2] aduched mommy smo explainedriesdayelyely gre mommypblem sk goodbye grender mommy�ho birthdayblemblem waitred pictures mommynderar …(뒤 96자 생략)
 ```
+
+**관전 포인트** - 학습 전엔 *영어 문장과 거리가 먼 토큰 나열*. logits 가 random 이라 confidence 순서도 무의미. 학습 후 같은 함수로 다시 생성해 비교하면 *diffusion 학습이 본체에 무엇을 새겼는가* 가 드러납니다.
+
+## `Trainer` 로 diffusion 학습 — `1/t` 재가중 loss
+
+BERT/GPT 챕터들과 같은 `Trainer` 패턴이지만, *loss 를 직접 정의* 합니다. `BertForMaskedLM` 의 기본 loss 는 *가려진 자리 CE 평균* 인데, diffusion 은 거기에 *샘플별 `1/t` 재가중* 을 더해야 합니다 (`compute_loss` 오버라이드).
+
+- `DiffusionCollator` → 매 배치 가변 마스킹 + `t` 반환
+- `compute_loss` → 가려진 자리 CE 를 샘플별로 합산해 `1/t` 곱한 뒤 평균
+- `max_steps=30000`, `batch_size=64`, `fp16=True` - T4 약 19분
 
 `Trainer` 를 상속해 `compute_loss` 만 오버라이드합니다. 가린 자리 CE 를 샘플별로 합산해 `/L` 로 정규화한 뒤 `/t` 로 나눠 평균하므로 `sum/(t·L)` — 이 `1/t` 재가중이 LLaDA / MDLM 의 denoising 목표와 일치하는 핵심입니다. `remove_unused_columns=False` 로 둬야 collator 가 만든 `labels`·`t` 가 보존됩니다.
 
@@ -545,6 +615,12 @@ plt.tight_layout(); plt.show()
 
 왼쪽 loss 곡선은 약 7.6 (uniform baseline) 에서 시작해 가파르게 떨어진 뒤 약 3.7 부근에서 안정화되고, train·eval 이 거의 겹쳐 과적합 없이 학습이 진행됐음을 보여줍니다. 오른쪽 VRAM 추이는 학습 내내 수십 MiB 수준에 머물러 T4 메모리에 여유가 큽니다.
 
+**관전 포인트** - `1/t` 재가중 덕분에 첫 step loss 가 약 7.6 (`ln(2048)`) 부근에서 시작 (직접 학습한 BPE 2048 의 random baseline 과 같은 값!). 빠르게 떨어져 30000 step 끝에 *약 3.7* 부근에서 안정화되면 정상. 작은 모델 + TinyStories 라 완벽하진 않지만 *가려진 자리를 문맥으로 복원* 하는 능력이 본체에 새겨집니다.
+
+## 학습 *후* denoise + 궤적 시각화
+
+같은 `diffusion_generate` 로 학습 후 생성하고, **denoise 궤적** (각 step 의 시퀀스) 을 출력해 *마스크가 단어로 채워지는 과정* 을 직접 봅니다. 이게 이 챕터의 하이라이트 — GPT 의 왼→오 순차와 달리, *문장 전체가 동시에 흐릿하게 떠오르다 선명해지는* 모습.
+
 ```python
 torch.manual_seed(SEED)
 print("=" * 70)
@@ -554,8 +630,6 @@ for i in range(3):
     text = diffusion_generate(model, length=48, steps=16)
     print(f"\n[sample {i}] {text}")
 ```
-
-학습 후 같은 함수로 다시 생성해 학습 전 결과와 나란히 비교합니다.
 
 **▶ 실행 결과**
 
@@ -576,10 +650,6 @@ The boy was very sad. He. He wanted to help the boy. He did not
 [sample 2] . They are good other and hug. They
 They are happy. They. They smile. They hug each other. They hug each other. They are friends.. They They are best friends. They are happy. They hug. Mom
 ```
-
-**결과 해석**
-
-학습 전 의미 없는 토큰 나열과 달리, 전부 `[MASK]` 에서 출발해도 인물·대화가 있는 영어 문장이 병렬 denoise 로 떠오릅니다. `Sam, Sam, Sam`·`They. They` 처럼 같은 조각이 반복되는데, 이는 모델이 아니라 단순한 샘플러의 한계로 Ch 33 에서 개선합니다.
 
 `record_trajectory=True` 로 각 step 의 시퀀스를 모두 저장한 뒤, 일부 step 을 골라 아직 `[MASK]` 인 자리는 `____` 로 표시해 출력합니다. 마스크가 단어로 채워지는 과정을 step 별로 직접 볼 수 있습니다.
 
@@ -635,3 +705,24 @@ They and smile. They play together it. They likes to play and play.. They make b
 **결과 해석**
 
 step 0 에서 37개가 `[MASK]` 인데, 채워지는 자리가 왼쪽부터가 아니라 confidence 가 높은 곳부터라 문장 중간·끝 단어가 앞보다 먼저 떠오릅니다. step 이 진행되며 남은 `[MASK]` 수가 37 → 27 → 17 → 7 → 0 으로 줄어, 전체 문장이 동시에 흐릿하게 떠오르다 선명해지는 것이 GPT 의 왼→오 순차 생성과 결정적으로 다른 점입니다.
+
+**해석 가이드 - 이게 autoregressive 와 결정적으로 다른 점**
+
+- **step 0**: 거의 전부 `____` (`[MASK]`). 모델이 *가장 확신하는* 몇 자리만 먼저 채워짐 — *위치 순서가 아니라 confidence 순서*. 문장 끝/중간 단어가 앞보다 먼저 나타날 수 있음.
+- **중간 step**: 단어들이 *여기저기 동시에* 떠오름. GPT 라면 왼쪽부터 한 칸씩 채워졌을 자리가, diffusion 에선 *전 영역이 함께* 선명해짐.
+- **마지막 step**: 모든 `[MASK]` 가 채워진 완성 문장.
+
+> Ch 24 의 GPT generation 이 *왼→오 받아쓰기* 였다면, 여기선 *흐릿한 전체 그림을 반복적으로 다듬기*. 같은 TinyStories 데이터, 같은 "다음 단어가 뭘까" 직관이지만 *생성 메커니즘이 근본적으로 다릅니다.*
+
+## 솔직한 이야기 — 생성은 되지만 *반복* 이 보인다
+
+학습이 끝난 모델은 전부 `[MASK]` 에서 출발해도 *영어 동화* 를 만들어냅니다 — 인물·대화·배경이 있는 문장이 병렬 denoise 로 채워집니다. 다만 자세히 읽어 보면 **같은 조각이 반복** 되는 게 눈에 띕니다.
+
+> *"Once upon a time, there was a **a** boy named **named** Timmy. ... They are happy friends and happy. They are **to play and play**."*
+
+`named named`, `was a was a`, `play and play` 처럼요. 이건 *모델이 잘못 배운 게 아닙니다.* 고정-$t$(0.15) 복원 정확도가 0.7 안팎까지 오른, 조건부 구조를 제대로 익힌 모델입니다. 반복의 원인은 **샘플러** 에 있습니다.
+
+- 이 챕터의 기본 샘플러는 매 step *confidence 가 높은 자리를 채우고 낮은 자리를 다시 `[MASK]`* 로 두는 방식인데, 한번 "안전한" 고빈도 토큰(`a`, `the`, 자주 나오는 이름)이 높은 confidence 를 받으면 그 토큰이 거듭 뽑히기 쉽습니다.
+- 즉 *모델의 확률 분포는 멀쩡한데, 거기서 문장을 어떻게 뽑아내느냐* 가 아직 거친 것입니다.
+
+> 그래서 **다음 Ch 33 은 모델은 그대로 두고 샘플러만 바꿉니다** — carry-over semi-AR + 반복 억제(temperature·top-p·repetition penalty·인접 중복 금지)로 이 반복을 잡아 한결 깔끔한 생성을 얻습니다. 이 챕터에서 "diffusion 이 글을 만든다"를 확인했다면, 다음 챕터는 "그 글을 더 잘 뽑아낸다"입니다.

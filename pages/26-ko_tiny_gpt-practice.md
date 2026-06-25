@@ -1,6 +1,6 @@
 > ▶ **[Google Colab에서 이 장 실습 열기](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/26_ko_tiny_gpt/26_ko_tiny_gpt.ipynb)** — 브라우저에서 바로 실행해 볼 수 있습니다.
 
-## 환경 준비
+## 환경 셋업
 
 먼저 노트북 실행에 필요한 핵심 라이브러리를 설치합니다. `transformers`(모델·Trainer), `tokenizers`(BBPE 직접 학습), `datasets`(한국어 TinyStories 로드), `accelerate`(학습 가속) 네 가지입니다.
 
@@ -86,7 +86,11 @@ use fp16   : True
 
 T4 GPU(VRAM 약 14.56 GiB)가 정상 감지되어 `fp16` 학습이 활성화됐습니다. 이 챕터의 학습·생성은 이 T4 환경을 전제로 합니다.
 
-이제 한국어 TinyStories를 로드합니다. 이 데이터셋은 story 단위가 아니라 줄(line) 단위로 저장돼 있어, `<|endoftext|>` 마커를 만날 때까지 줄을 이어 붙여 한 story로 복원하는 함수를 정의한 뒤 train 30,000 / val 500 story를 만듭니다.
+## 한국어 TinyStories 데이터 로드 + story 복원
+
+`g0ster/TinyStories-Korean` 은 영어 `roneneldan/TinyStories` 를 한국어로 번역한 동화 데이터셋 (Dohoon Kim, 2024, MIT 라이선스). 어휘·문법이 단순해 **3-5M 파라미터** 짜리 작은 모델로도 한국어 문장 생성을 시연할 수 있습니다.
+
+**데이터 구조 주의** — 이 데이터셋은 *story 단위가 아니라 줄(line) 단위* 로 저장되어 있습니다. 한 story 가 여러 줄로 나뉘어 있고, story 끝마다 `<|endoftext|>` 줄이 들어가며, 사이에 빈 줄도 섞여 있습니다. 그래서 *`<|endoftext|>` 를 만날 때까지 줄을 이어 붙여* 한 story 로 복원합니다. 그렇게 복원한 처음 **30,000 stories** 만 사용 (Ch 24 와 같은 규모, T4 30분 룰 안).
 
 ```python
 from datasets import load_dataset
@@ -161,7 +165,9 @@ story length (chars): mean=468, median=420, max=2754
 
 30,000개 story 복원이 약 19초에 끝났고, story 평균 길이는 약 468자(중앙값 420자)로 짧은 동화 규모입니다. 샘플 story가 한 문장씩 자연스럽게 이어지는 것으로 보아 `<|endoftext|>` 기준 복원이 정상 동작했음을 확인할 수 있습니다.
 
-이제 복원한 한국어 코퍼스 위에 byte-level BPE(BBPE) 토크나이저를 직접 학습합니다. vocab은 4,000으로 잡았는데, 한글이 byte 단위로 표현되어 영어(2,048)보다 약간 키운 값입니다. 학습 후 HF 표준 인터페이스(`PreTrainedTokenizerFast`)로 감싸 bos·eos·pad를 모두 `<|endoftext|>`로 통일합니다.
+## BBPE 토크나이저 직접 학습 (한국어)
+
+`tokenizers.BPE` + ByteLevel pre-tokenizer 로 vocab 약 4,000 의 byte-level BPE 를 *한국어 코퍼스에서 직접* 학습합니다. Ch 24 의 영어 BPE 와 *같은 절차* — 다른 점은 *학습 코퍼스* (영어 → 한국어) 와 *vocab 크기* (2,048 → 약 4,000, 한글 byte 표현을 위해 약간 키움) 뿐.
 
 ```python
 from tokenizers import Tokenizer
@@ -225,6 +231,10 @@ eos_token  : <|endoftext|>  id=0
 
 BBPE 학습이 약 10초 만에 끝나 vocab 4,000을 확보했고, `"옛날 옛날에 작은 토끼가 숲으로 갔어요."`가 단 8개 토큰으로 인코딩됐다가 원문 그대로 복원됩니다. 한국어 코퍼스 위에 학습한 덕분에 자주 등장하는 어절이 의미 단위로 압축됐음을 보여 줍니다.
 
+### 같은 한국어 문장: 영어 BPE (gpt2) vs 한국어 BBPE (본 챕터)
+
+`gpt2` 의 영어 BPE 로 한국어를 토큰화하면 한글이 *byte 단위로 잘게 쪼개져* 토큰 수가 폭증합니다. 우리가 한국어 코퍼스 위에 직접 학습한 BBPE 와 *같은 문장* 을 비교해 봅니다 (Ch 25 Q4 / Ch 19 §5-4 의 cross-language 결론을 한국어 generation 챕터에서 실측).
+
 다음으로 같은 한국어 문장을 영어 `gpt2` BPE와 우리 BBPE로 각각 토큰화해 토큰 수를 비교합니다. 영어 BPE가 한글을 얼마나 잘게 쪼개는지(토큰 수 폭증)를 정량으로 확인하는 cross-language 실측입니다.
 
 ```python
@@ -276,7 +286,16 @@ Korean tokenization: English gpt2 BPE vs our Korean BBPE
 
 세 문장 모두에서 영어 gpt2 BPE가 우리 BBPE보다 약 6.4-7.2배 많은 토큰을 만들어 냅니다(예: `"옛날 옛날에 작은 토끼가 살았어요."`가 43 토큰 대 6 토큰). UNK는 없지만 한글이 byte 조각으로 잘게 쪼개져 의미 단위가 사라지는 것 — 한국어를 직접 학습한 토크나이저로 다뤄야 하는 이유의 실측 답입니다.
 
-이어서 HF 표준 CLM 전처리를 합니다. 전체 코퍼스를 토큰화하고, 각 story 끝에 `<|endoftext|>`를 붙인 뒤, `group_texts`로 모든 토큰을 이어붙여 `BLOCK_SIZE=128` 단위로 잘라 고정 길이 chunk를 만듭니다.
+**관전 포인트** — `옛날 옛날에` 처럼 한국어 코퍼스에 *자주 등장* 하는 표현은 우리 BBPE 가 *적은 토큰* 으로 압축합니다. 영어 gpt2 BPE 는 같은 문장을 *2-4배 많은 byte 조각* 으로 쪼갭니다 — UNK 는 없지만 *의미 단위* 가 사라져, 그 위에서 학습하면 한국어 정보를 압축할 자리가 부족합니다. *왜 한국어는 토크나이저를 직접 학습하는가* 의 실측 답.
+
+## 토큰화 + `group_texts` (HF 표준 CLM 전처리)
+
+Ch 24 와 *완전히 같은 패턴* (HF `run_clm.py` 표준):
+
+1. 전체 코퍼스를 토큰화 (배치 단위)
+2. 각 story 끝에 `<|endoftext|>` 부착 (story 경계 표시)
+3. 모든 토큰을 이어붙여 1D 스트림으로 만든 뒤 `block_size=128` 단위로 잘라 chunk 화
+4. 각 chunk 가 한 학습 sample - `DataCollatorForLanguageModeling(mlm=False)` 가 `labels = input_ids` 를 자동으로 채워 next-token prediction loss 가 됨
 
 ```python
 BLOCK_SIZE = 128
@@ -345,6 +364,10 @@ first chunk decode (first 200 chars):
 
 30,000 story가 128 토큰짜리 45,845개 chunk(약 5.87M 토큰)로 변환됐습니다. 첫 chunk를 디코딩하면 원본 story가 그대로 복원되어, 토큰화·EOS 부착·chunk 분할 전처리가 의도대로 동작했음을 확인할 수 있습니다.
 
+### Collator 가 만드는 `labels` 확인 (한국어) - *거의 모든 자리* 가 학습 신호
+
+`DataCollatorForLanguageModeling(mlm=False)` 가 *내부적으로* `labels = input_ids.clone()` 을 만들어 `-100` 자리는 *없거나 pad 토큰 자리만* 임을 한국어 데이터로 직접 확인합니다. Ch 20·22 의 MLM collator 가 약 85% 를 `-100` 으로 채웠던 것과 *정확히 반대* — Ch 24 (영어) 에서 본 결과의 한국어 재확인.
+
 다음 셀에서는 `DataCollatorForLanguageModeling(mlm=False)`이 만드는 `labels`를 직접 들여다봅니다. MLM(약 85%가 `-100`)과 달리 CausalLM은 거의 모든 자리가 학습 신호임을 한국어 데이터로 확인하는 `-100` thread 셀입니다.
 
 ```python
@@ -399,6 +422,17 @@ total positions      : 256
 
 256개 자리 중 `-100`은 단 1개(0.39%)뿐이고 99.61%가 학습 신호로, MLM의 약 15%와 정확히 반대입니다. `labels`가 `input_ids`를 거의 그대로 복제한(255/256 일치) 결과로, CausalLM 사전학습이 한 step당 토큰 학습 효율이 MLM보다 약 5-6배 높음을 한국어 데이터로 재확인합니다.
 
+> **`-100` thread 환기 (한국어)** - 언어가 한국어로 바뀌어도 collator 동작은 동일. CausalLM 은 *거의 모든 자리* 학습. Ch 28 (한국어 SFT) 에서는 *prompt 자리만 -100* - 같은 트릭의 정반대 자리. 그 한 줄 코드가 *모델이 한국어 instruction 을 따라가게 만드는 핵심* 이고, 본 챕터의 collator 셋업이 그 토대입니다.
+
+## `GPT2LMHeadModel` from scratch (Ch 24 와 동일 구조)
+
+`GPT2Config` 의 핵심 필드를 작게 잡고 *random init* (사전학습 X) 시작 — Ch 24 와 *완전히 같은 본체*. vocab 만 한국어 BBPE (약 4,000) 에 맞춤.
+
+- `n_layer=4, n_head=4, n_embd=256` → 약 3M params (Ch 24 와 동일)
+- `n_positions = BLOCK_SIZE = 128`
+- bos / eos / pad token id 를 토크나이저와 동기화
+- `tie_word_embeddings=True` (기본) - LM head 와 input embedding weight 공유
+
 이제 학습할 모델을 정의합니다. `GPT2Config`를 작게(`n_layer=4, n_head=4, n_embd=256`) 잡아 random init하며, vocab만 한국어 BBPE(4,000)에 맞춥니다. Ch 24의 영어 모델과 완전히 같은 본체 구조입니다.
 
 ```python
@@ -442,6 +476,12 @@ model: GPT2LMHeadModel
 **결과 해석**
 
 약 4.22M 파라미터의 작은 GPT가 만들어졌고, weight tying이 켜져 LM head(`Linear(256, 4000)`)가 입력 임베딩과 가중치를 공유합니다. body는 causal attention을 쓰는 디코더(`GPT2Model`)로, vocab 차원만 4,000으로 바뀐 것 외에는 Ch 24와 동일한 본체입니다.
+
+## 학습 *전* generation - 비교 기준선 (random init baseline)
+
+Ch 24 의 *사전학습 전 generation* 과 같은 역할. random init 모델은 *어느 토큰이든 거의 균등한 확률* 로 뽑으니, 생성 텍스트가 *한국어와 거리가 먼 byte 조각 / 의미 없는 음절 나열* 이 나옵니다.
+
+같은 한국어 prompt 와 sampling 설정을 학습 *전 / 후* 모두에서 호출 → *학습이 본체에 무엇을 새겼는가* 가 한 화면에 드러납니다.
 
 이제 학습 *전* generation을 해 비교 기준선을 만듭니다. random init 모델에 한국어 prompt 4개를 넣어 보면, 아직 아무것도 학습하지 않은 본체가 어떤 텍스트를 뱉는지 확인할 수 있습니다. 같은 prompt·sampling 설정을 학습 후에도 그대로 써서 before/after를 나란히 비교합니다.
 
@@ -501,6 +541,16 @@ prompt: 어느 날,
 **결과 해석**
 
 random init 상태라 네 prompt 모두 의미 없는 음절·byte 조각(`농�`, `보�갔죠티�여` 등)이 뒤죽박죽 나열됩니다. logits가 무작위 초기값이라 next-token 분포가 형성되지 않은 상태로, 학습 후 출력과 비교할 baseline이 됩니다.
+
+**관전 포인트** - 학습 전 출력은 *무작위 음절·byte 조각 나열* (의미 없는 한국어 토큰들). 학습 후 출력과 *나란히 비교* 하면 사전학습이 본체에 *next-token 분포* 를 새긴 증거를 직접 보게 됩니다. Ch 24 (영어) 에서 random init 출력이 영어와 거리 멀었던 것과 같은 현상의 한국어판.
+
+## `Trainer` 로 사전학습 (Ch 24 와 동일 hyperparams)
+
+Ch 24 와 *완전히 같은* Trainer 패턴 — 모델 클래스·collator·hyperparams 모두 동일. 변하는 건 *데이터 (한국어) + 토크나이저 (BBPE)* 뿐.
+
+- `DataCollatorForLanguageModeling(mlm=False)` → `labels = input_ids` (next-token prediction)
+- `max_steps=1500`, `batch_size=32`, `lr=5e-4`, `fp16=True` - T4 약 1분
+- `eval_steps=150` 으로 train / val loss 추이 관찰
 
 이제 `Trainer`로 본격 사전학습을 합니다. Ch 24와 같은 hyperparams(`max_steps=1500`, `batch_size=32`, `fp16`)에 학습률만 한국어 vocab에 맞춰 `5e-4`로 잡았고, VRAM 추적 콜백을 붙여 step별 peak 메모리를 기록합니다.
 
@@ -637,6 +687,12 @@ plt.tight_layout(); plt.show()
 
 왼쪽 그래프에서 train·eval loss가 random baseline(점선 `ln(4000)≈8.29`)에서 수백 step 안에 약 5로 급락한 뒤 완만히 4.5 부근으로 수렴합니다. 오른쪽 VRAM trace는 학습 내내 수십 MiB 수준으로 안정적이어서, 작은 GPT + T4 조합이 메모리 측면에서 매우 여유로움을 보여 줍니다.
 
+**관전 포인트** - 학습 첫 step loss 가 약 8.3 (random baseline `ln(4000)`) 부근에서 시작해 *수백 step 안에 약 5* 로 빠르게 떨어지고, 1500 step 끝에 누적 평균 `train_loss` 가 *약 4.5* 까지 내려가면 정상. 한국어는 번역체 데이터라 영어 챕터 (Ch 24, 약 3.8) 보다 도달 loss 가 다소 높지만, *수백 step 안에 random baseline 에서 빠르게 떨어지는 수렴 곡선* 자체는 동일합니다 — *언어가 달라도 작은 GPT + 30K stories 의 학습 동역학은 비슷하다*.
+
+## 학습 *후* generation + before/after 비교
+
+같은 `PROMPTS / GEN_KWARGS` 로 학습 후 모델에서 다시 생성하고, §5 의 학습 전 결과와 나란히 비교합니다. **이 챕터의 합격 기준**: 학습 후 텍스트가 *전* 보다 명확히 *한국어 문장 (동화 풍)* 에 가까워졌는가 — Ch 24 (영어) 의 *사전·사후 비교* 의 한국어판.
+
 이제 학습 *후* 모델로 같은 prompt에서 다시 생성합니다. 학습 전과 동일한 seed·`GEN_KWARGS`를 써서, 사전학습이 본체에 무엇을 새겼는지를 공정하게 비교할 수 있게 합니다.
 
 ```python
@@ -719,65 +775,9 @@ AFTER   : 팀이라는 소년이 땅에 앉아 있는 것을 봤어요. 그는 "
 
 네 prompt 모두 BEFORE의 무의미한 byte 조각 나열이 AFTER에서 말이 되는 한국어 동화 문장으로 바뀌어, 학습 전·후의 질적 도약이 한눈에 드러납니다. 이것이 이 챕터의 합격 기준 — 1500 step의 from-scratch 사전학습만으로도 본체에 한국어 next-token 분포가 새겨졌다는 직접 증거입니다.
 
-마지막 (선택) 셀은 비교 기준점으로 대규모 한국어 사전학습 모델 KoGPT2(125M)에 같은 prompt를 넣어 봅니다. 시간이 부족하면 `RUN_KOGPT2_REF = False`로 두고 건너뛸 수 있습니다.
+**해석 가이드 - 사전학습이 만든 차이**
 
-```python
-# 선택 셀 - KoGPT2 reference. 시간이 부족하면 RUN_KOGPT2_REF = False 로 두고 건너뜁니다.
-RUN_KOGPT2_REF = True
+- **BEFORE (random init)**: *한국어와 거리가 먼 음절·byte 조각 반복*. logits 가 random 초기값이라 sampling 이 통계적 빈도 토큰 사이에서만 흔들림.
+- **AFTER (한국어 TinyStories 30K × 1500 steps)**: *말이 되는 한국어 문장* - 짧지만 *주어 + 서술어* 구조, *동화 풍 어휘* (소녀, 친구, 엄마, 행복, 숲, 토끼, ...). 완벽하진 않아도 *학습이 본체에 next-token 분포를 새긴 증거* 가 한 줄에서 명확.
 
-if RUN_KOGPT2_REF:
-    from transformers import AutoTokenizer, AutoModelForCausalLM
-
-    print("loading reference KoGPT2 (skt/kogpt2-base-v2, 125M)...")
-    ref_tok = AutoTokenizer.from_pretrained("skt/kogpt2-base-v2")
-    if ref_tok.pad_token is None:
-        ref_tok.pad_token = ref_tok.eos_token
-    ref_model = AutoModelForCausalLM.from_pretrained("skt/kogpt2-base-v2").to(device).eval()
-    print(f"  #params : {ref_model.num_parameters()/1e6:.1f} M")
-
-    torch.manual_seed(SEED)
-    print("\n" + "=" * 70)
-    print("REFERENCE KoGPT2 (125M) - generation on same Korean prompts")
-    print("=" * 70)
-    for p in PROMPTS:
-        text = generate_text(ref_model, p, gen_tokenizer=ref_tok, **GEN_KWARGS)
-        print(f"\nprompt: {p}")
-        print(text)
-
-    # 메모리 정리
-    del ref_model
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
-else:
-    print("Skipped KoGPT2 reference (RUN_KOGPT2_REF=False). Covered in depth in Ch 27.")
-```
-
-**▶ 실행 결과**
-
-```text
-loading reference KoGPT2 (skt/kogpt2-base-v2, 125M)...
-[transformers] GPT2LMHeadModel LOAD REPORT from: skt/kogpt2-base-v2
-Key                                     | Status     |  | 
-----------------------------------------+------------+--+-
-transformer.h.{0...11}.attn.masked_bias | UNEXPECTED |  | 
-
-Notes:
-- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
-  #params : 125.2 M
-
-======================================================================
-REFERENCE KoGPT2 (125M) - generation on same Korean prompts
-======================================================================
-prompt: 옛날 옛날에
-�����▁�ng��▁�ng��n�n�n�n�n�n�n�n�n�n�n�n�n�n�n�n�n�n�n�n�n�n�n�
-prompt: 작은 소녀가
-�����i���i,▁▁▁▁▁▁▁
-prompt: 큰 개가
-����▁▁▁▁▁▁▁▁▁▁▁▁▁▁
-prompt: 어느 날,
-���,▁Gaurius,▁vand.▁Gould,▁Denol,▁Tamil,▁Anat�nn▁McCamel,▁Zehn,▁Guy.▁Cyb,▁Shitch,▁Pellek,▁Nami,▁Jalifa,
-```
-
-**결과 해석**
-
-이 실행에서는 KoGPT2 reference 출력이 `▁▁▁` 반복이나 깨진 토큰으로 나와 정상적인 한국어 문장이 나오지 않았습니다. 우리 GEN_KWARGS·prompt 인코딩이 KoGPT2 토크나이저와 잘 맞지 않은 탓으로, KoGPT2의 제대로 된 generation 품질 비교는 이 모델을 본격적으로 다루는 Ch 27에서 확인합니다.
+> Ch 24 (영어) 의 *사전·사후 generation 비교* 에서 random init 모델이 의미 없는 토큰을 뽑다가 학습 후 *동화 풍 영어 문장* 을 만들어 낸 그 변화의 한국어판입니다. *번역체 데이터* 라 영어판보다 다소 어색할 수 있지만, *학습 전·후의 질적 도약* 자체는 동일하게 드러납니다.

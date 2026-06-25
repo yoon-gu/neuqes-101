@@ -1,6 +1,6 @@
 > ▶ **[Google Colab에서 이 장 실습 열기](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/23_ko_bert_classify/23_ko_bert_classify.ipynb)** — 브라우저에서 바로 실행해 볼 수 있습니다.
 
-## 환경 준비
+## 환경 셋업
 
 ```python
 %pip install -q -U transformers datasets accelerate
@@ -83,6 +83,8 @@ Device:         cuda
 GPU:             Tesla T4
 ```
 
+**baseline VRAM** (CUDA 환경에서만 의미 있는 출력 — Colab T4 기준):
+
 ```python
 !nvidia-smi
 ```
@@ -112,6 +114,12 @@ Mon Jun 22 12:21:55 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+## NSMC 이진 분류 데이터 로드 — Ch 15 와 같은 split
+
+NSMC = Naver Sentiment Movie Corpus. 한국어 *binary* 감성 분류의 표준 벤치마크. 한 줄짜리 짧은 리뷰 + 긍정(1) / 부정(0) 라벨. **5,000 train / 1,000 eval, seed 42** — Ch 15 와 *완전히 같은* 셋업.
+
+**원본**: `e9t/nsmc` GitHub 의 `ratings_train.txt` / `ratings_test.txt` TSV. Hugging Face datasets hub 의 nsmc 레포는 *로더 스크립트* 기반이라 최신 datasets 라이브러리에서 deprecated — 그래서 GitHub raw URL 에서 직접 받습니다 (Ch 15 와 동일 패턴).
+
 분류 fine-tune 에 쓸 NSMC 를 먼저 받습니다. `e9t/nsmc` GitHub 의 raw TSV 를 `pandas` 로 직접 읽어 `document` 가 비어 있는 행만 제거합니다. Hugging Face hub 의 nsmc 로더 스크립트가 최신 `datasets` 에서 deprecated 됐기 때문에, Ch 15 와 같은 raw URL 직접 다운로드 패턴을 씁니다.
 
 ```python
@@ -128,7 +136,6 @@ df_test_full  = pd.read_csv(TEST_URL,  sep="\t").dropna(subset=["document"])
 print(f"  train: {len(df_train_full):,} rows")
 print(f"  test:  {len(df_test_full):,} rows")
 print(f"  label distribution (train): {df_train_full['label'].value_counts().to_dict()}")
-
 ```
 
 **위 코드 읽기** — 전체 원본은 약 15만 train / 5만 test 규모이고, `label` 분포가 0/1 거의 5:5 로 균형 잡혀 있습니다. `random_state` 를 `SEED=42` 로 고정해 두는 게 Ch 15 와 *같은 5K/1K subsample* 을 재현하는 열쇠입니다.
@@ -147,7 +154,6 @@ print(f"\nfirst 3 train samples:")
 for _, row in df_train.head(3).iterrows():
     label_name = "positive" if row["label"] == 1 else "negative"
     print(f"  label={row['label']} ({label_name})  text={row['document'][:80]}")
-
 ```
 
 **위 코드 읽기** — `sample(n=..., random_state=SEED)` 로 5K/1K 만 추출하면 positive rate 가 49% 안팎으로 원본의 균형을 그대로 물려받습니다. 첫 3개 샘플을 찍어 *짧은 한 줄 리뷰* (`원본이 최고` 등) 라는 NSMC 의 특성을 눈으로 확인합니다.
@@ -190,6 +196,10 @@ Dataset({
 
 train positive rate 49.2%, eval positive rate 49.9% 로 두 split 모두 거의 균형이 잡혀 있어, accuracy 가 곧바로 해석 가능한 지표가 됩니다 (불균형 보정 불필요). 첫 샘플들이 `원본이 최고`, `스릴감과 훈훈함이 있는 영화.` 처럼 10~30자 안팎의 짧은 구어체 리뷰임이 확인됩니다.
 
+## 토크나이저 — `klue/bert-base` (Ch 22 와 동일)
+
+vocab 약 32,000 의 한국어 WordPiece. MLM 사전학습과 분류 fine-tune 전 구간에서 *같은 토크나이저* 를 써야 본체가 학습한 임베딩의 의미가 유지됩니다.
+
 MLM 사전학습과 분류 fine-tune 전 구간에서 *같은* 토크나이저를 써야 본체가 학습한 임베딩의 의미가 유지됩니다. 그래서 Ch 22 와 동일하게 `klue/bert-base` 를 불러오고, NSMC 도메인 문장 하나로 토큰화 결과를 미리 확인합니다.
 
 ```python
@@ -222,6 +232,14 @@ tokens (16): ['[CLS]', '이', '영화', '정말', '재미있', '##었', '##고',
 **결과 해석**
 
 vocab 32,000 의 한국어 WordPiece 가 `재미있/##었/##고` 처럼 어간과 어미를 subword 로 분해해, NSMC 의 비격식 구어체도 미등록 토큰 없이 처리합니다. MLM 때와 달리 분류 입력에는 `[CLS]` / `[SEP]` 가 붙는데, 이 `[CLS]` 의 최종 hidden state 가 분류 헤드의 입력이 됩니다.
+
+## MLM 사전학습 — Ch 22 패턴 압축 재현 (한국어 Wikipedia, 3 epoch)
+
+이 노트북을 *self-contained* 로 만들기 위해 Ch 22 의 MLM 사전학습을 여기서 짧게 재현합니다. Ch 22 (5K paragraphs) 보다 *데이터를 줄이고 (2K) 3 epoch* 로 돌려 시간을 단축하면서도, *random init 보다는 낫다* 는 차이를 만들기에는 충분합니다.
+
+**MLM 사전학습 데이터는 *분류용 NSMC 와 별도*** — `wikimedia/wikipedia` config `20231101.ko` paragraphs 5K 를 *새로 로드*. 본 챕터의 *진짜 transfer 메시지* — *일반 한국어 위키 사전학습 → NSMC 영화 리뷰 분류 transfer* 가 노트북 한 구조에 자연스럽게 들어맞도록 *두 데이터셋이 공존*. 같은 토크나이저 (`klue/bert-base`) 가 두 도메인을 모두 처리.
+
+같은 작은 `BertConfig` (hidden=256, layer=4, head=4, intermediate=1024) → `BertForMaskedLM(config)` random init → 한국어 Wikipedia paragraphs 2K MLM **3 epoch** (1 epoch 만으로는 본체 정렬이 약해 *random init 보다 못한* 결과가 나올 수 있음 — Ch 21 부록 패턴 따라 3 epoch).
 
 이제 Ch 22 와 *완전히 같은* 작은 BERT 본체를 정의합니다 (hidden 256, layer 4, head 4, intermediate 1024). 먼저 `BertForMaskedLM` 으로 random init 한 뒤 한국어 위키로 MLM 사전학습할 것이라, `klue/bert-base` 약 110M 과의 규모 격차를 파라미터 수로 미리 확인해 둡니다.
 
@@ -271,7 +289,6 @@ N_MLM_EVAL  = 400
 print("downloading Korean Wikipedia (wikimedia/wikipedia, 20231101.ko)...")
 raw_wiki = load_dataset("wikimedia/wikipedia", "20231101.ko", split="train")
 print(f"  total articles: {len(raw_wiki):,}")
-
 ```
 
 **위 코드 읽기** — `wikimedia/wikipedia` 의 `20231101.ko` config 를 받습니다. Ch 22 (5K) 보다 작은 2K paragraphs 만 쓰되, 시간 단축을 위해 3 epoch 로 돌릴 예정입니다.
@@ -299,7 +316,6 @@ mlm_eval_raw  = Dataset.from_dict({"text": all_paragraphs[N_MLM_TRAIN:N_MLM_TRAI
 print(f"\nMLM train paragraphs: {len(mlm_train_raw):,}  (Korean Wikipedia)")
 print(f"MLM eval paragraphs:  {len(mlm_eval_raw):,}")
 print(f"first MLM sample: {mlm_train_raw[0]['text'][:120]}")
-
 ```
 
 **위 코드 읽기** — `collect_paragraphs` 가 article 을 `\n\n` 으로 잘라 길이 50~2000자 paragraph 만 모읍니다 (Ch 22 와 같은 함수). `shuffle(seed=SEED)` 로 재현성을 확보한 뒤, 모은 paragraph 를 2000/400 으로 train/eval 분리합니다.
@@ -357,6 +373,8 @@ mlm_collator = DataCollatorForLanguageModeling(
     mlm_probability=0.15,
 )
 ```
+
+**`labels = -100` 한 줄 환기** — `DataCollatorForLanguageModeling` 이 가려지지 않은 자리에 `labels = -100` 을 채워 *해당 위치의 CE loss 를 무시*. 분류 fine-tune (다음 섹션) 에서는 -100 을 *전혀 사용하지 않습니다* — 모든 sample 에 *정답 라벨* (0/1) 이 명시되어 있기 때문. 같은 `-100` 트릭이 Phase 4 의 SFT (Ch 27) 에서 *prompt 자리* 를 가리는 정반대 자리로 다시 등장합니다 — 풀버전 표는 Ch 21 §3 *labels = -100 thread* 참조.
 
 MLM 사전학습용 `TrainingArguments` 와 `Trainer` 를 구성합니다. scratch MLM 이라 학습률을 5e-4 로 높게 두고, T4 에서는 `fp16=True` 로 돌립니다 (bf16 은 T4 미지원). 3 epoch 인 이유는 1 epoch 만으로는 본체 정렬이 약해 random init 보다 못한 경우가 생길 수 있어서입니다.
 
@@ -455,6 +473,19 @@ MLM eval perplexity:  2463.13
 
 eval perplexity 2,463 으로 random baseline 32,000 대비 약 13배 좁혀졌습니다 — 가려진 자리에서 vocab 전체가 아니라 수천 개 후보로 압축한 정도로, 학습이 일어나긴 했으나 매우 얕은 수준입니다.
 
+**관전 포인트** — 한국어 Wikipedia paragraphs 에서 MLM loss 가 *random baseline 10.37* 에서 시작해 5-7 부근까지 떨어졌다면 본체가 *일반 한국어 어휘·문맥 구조의 일부* 를 학습한 상태. perplexity 로 환산하면 vocab 약 32,000 중 *수백-수천 개 후보* 로 좁혀진 정도. Ch 22 의 2 epoch 보다는 약간 얕지만, *NSMC 분류 fine-tune 출발점* 으로는 충분합니다 — 본체가 *일반 한국어 구조* 를 가지면 *영화 리뷰 비격식 도메인* 도 fine-tune 으로 빠르게 적응.
+
+> **체크포인트 저장은 생략** — 노트북 안에서 바로 본체 가중치를 분류 모델로 옮기기 때문. Ch 22 처럼 디스크에 저장하려면 `mlm_model.save_pretrained("./ch23_mlm_ckpt")` 한 줄.
+
+## 헤드 교체 — MLM → 분류 + Fine-tune
+
+이제 *방금 학습된 작은 한국어 BERT 본체* 를 분류 모델로 옮깁니다. 두 가지 흐름:
+
+1. `BertForMaskedLM.bert` (embedding + encoder) 를 그대로 가져옴
+2. 새 `BertForSequenceClassification(config)` 을 만들고, 1 의 본체를 *복사*. 분류 헤드는 새로 random init
+
+이렇게 만든 모델을 같은 NSMC 데이터의 *라벨* 까지 사용해 분류 fine-tune. Ch 15 의 hyperparams 와 *완전히 같이* (`lr=2e-5, batch=16, epoch=2, fp16=True`) 둬서 *본체 출발점* 외 모든 조건을 통제.
+
 방금 학습한 MLM 본체를 분류 모델로 옮깁니다. 같은 구조의 config 에 `num_labels=2`, `problem_type="single_label_classification"` 만 더해 `BertForSequenceClassification` 을 만들고, `bert` 본체 가중치만 `load_state_dict` 로 통째로 복사합니다. MLM head 는 버려지고 분류 head (`Linear(256, 2)`) 는 새로 random init 됩니다.
 
 ```python
@@ -480,7 +511,6 @@ missing, unexpected = cls_model.bert.load_state_dict(mlm_model.bert.state_dict()
 print(f"본체 가중치 복사 완료")
 print(f"  missing keys (분류 측에만 있는 부분): {len(missing)}  e.g. {missing[:3] if missing else []}")
 print(f"  unexpected keys (MLM 측 잉여):       {len(unexpected)}  e.g. {unexpected[:3] if unexpected else []}")
-
 ```
 
 **위 코드 읽기** — `problem_type="single_label_classification"` 이 `CrossEntropyLoss` 를 자동 선택하게 합니다. `load_state_dict(..., strict=False)` 의 반환값 `missing` / `unexpected` 가 *어떤 가중치가 새로 init 되고 어떤 게 버려졌는지* 를 그대로 보여 줍니다.
@@ -514,6 +544,10 @@ Classification model parameters:
 **결과 해석**
 
 missing keys 가 `pooler.dense.weight/bias` 2개뿐이고 unexpected 가 0개 — MLM 본체의 embedding/encoder 가 그대로 옮겨졌고 분류 측에만 있는 pooler 와 classifier 만 새로 init 됐다는 뜻입니다. 분류 head 는 514개로 전체의 0.0%, 사실상 모든 표상을 본체에서 물려받습니다.
+
+**`bert.load_state_dict` 가 한 일** — `BertForMaskedLM` 과 `BertForSequenceClassification` 둘 다 *내부에 같은 `BertModel`* (이름 `self.bert`) 을 갖습니다. 그 본체만 통째로 옮긴 셈. MLM head (`cls.predictions`) 와 분류 head (`classifier`) 는 *모델 객체의 다른 자리* 라 자동으로 분리됩니다.
+
+> Ch 7-18 의 `AutoModelForSequenceClassification.from_pretrained(...)` 가 디스크에서 같은 일을 합니다. 우리는 *방금 학습한 본체* 를 디스크 없이 in-memory 로 옮긴 셈. 디스크 경유는 부록이 아닌 FAQ Q3 에서 짧게 다룹니다.
 
 분류 데이터를 토큰화합니다. MLM 때의 `group_texts` 와 달리 *문장 단위* 로 `[CLS]`/`[SEP]` 를 붙이고 `max_length=128` 로 자르며, `label` 을 정수 `labels` 로 옮깁니다. NSMC 가 짧은 한 줄 리뷰라 토큰 길이가 어느 정도인지도 같이 확인합니다.
 
@@ -651,219 +685,3 @@ Mon Jun 22 12:22:57 2026
 |    0   N/A  N/A            4332      C   /usr/bin/python3                        818MiB |
 +-----------------------------------------------------------------------------------------+
 ```
-
-eval 셋에서 5종 지표를 측정합니다. accuracy 가 0.5 (동전 던지기) 에서 얼마나 떨어져 있는지가 이 작은 본체 transfer 의 실효성을 보여 줍니다.
-
-```python
-cls_eval_metrics = cls_trainer.evaluate()
-print("Ch 23 small BERT (scratch MLM 3 epoch on Korean Wikipedia + NSMC fine-tune) — eval:")
-for k, v in cls_eval_metrics.items():
-    if k.startswith("eval_") and isinstance(v, float):
-        print(f"  {k:>20}: {v:.4f}")
-```
-
-**▶ 실행 결과**
-
-```text
-<IPython.core.display.HTML object>
-<IPython.core.display.HTML object>
-Ch 23 small BERT (scratch MLM 3 epoch on Korean Wikipedia + NSMC fine-tune) — eval:
-             eval_loss: 0.6885
-         eval_accuracy: 0.5480
-        eval_precision: 0.5614
-           eval_recall: 0.4309
-               eval_f1: 0.4875
-              eval_auc: 0.5545
-```
-
-**결과 해석**
-
-accuracy 0.548, AUC 0.554 로 동전 던지기(0.5)를 살짝 웃도는 수준입니다. recall 0.431 이 precision 0.561 보다 낮아, 모델이 긍정을 덜 예측하는 쪽으로 약간 치우쳐 있습니다 — 짧은 사전학습으로는 NSMC 의 감성 신호를 거의 잡지 못했음을 보여 줍니다.
-
-eval 셋 전체에 대해 예측을 뽑아 클래스별 precision/recall/f1 을 자세히 봅니다. 정답일 때와 틀릴 때의 top-1 확률 평균도 같이 출력해, 모델이 *확신을 가지고 맞히는지* 아니면 *애매하게 추측하는지* 를 진단합니다.
-
-```python
-preds_output = cls_trainer.predict(cls_eval)
-cls_logits = preds_output.predictions
-cls_labels = preds_output.label_ids.astype(int)
-
-exp = np.exp(cls_logits - cls_logits.max(axis=1, keepdims=True))
-cls_probs_full = exp / exp.sum(axis=1, keepdims=True)
-cls_preds = cls_probs_full.argmax(axis=1)
-cls_probs_pos = cls_probs_full[:, 1]
-
-print(f"Logits shape: {cls_logits.shape}")
-print(f"Predicted positive rate: {(cls_preds == 1).mean():.1%}")
-print(f"Top-1 prob mean: correct={cls_probs_full.max(axis=1)[cls_preds == cls_labels].mean():.4f}, "
-      f"wrong={cls_probs_full.max(axis=1)[cls_preds != cls_labels].mean():.4f}")
-print()
-print(classification_report(
-    cls_labels, cls_preds,
-    target_names=["negative", "positive"],
-    digits=4, zero_division=0,
-))
-```
-
-**▶ 실행 결과**
-
-```text
-<IPython.core.display.HTML object>
-Logits shape: (1000, 2)
-Predicted positive rate: 38.3%
-Top-1 prob mean: correct=0.5245, wrong=0.5226
-
-              precision    recall  f1-score   support
-
-    negative     0.5397    0.6647    0.5957       501
-    positive     0.5614    0.4309    0.4875       499
-
-    accuracy                         0.5480      1000
-   macro avg     0.5505    0.5478    0.5416      1000
-weighted avg     0.5505    0.5480    0.5417      1000
-```
-
-**결과 해석**
-
-정답일 때 top-1 확률 0.5245, 틀릴 때 0.5226 으로 거의 같습니다 — 모델이 맞히든 틀리든 0.5 부근에서 *확신 없이* 판단한다는 뜻입니다. 예측 positive rate 38.3% 와 negative recall 0.665 vs positive recall 0.431 에서 보듯 부정 쪽으로 살짝 기울었지만, 전반적으로 균등 추측에 가깝습니다.
-
-분류 fine-tune 의 step별 train loss 를 그려 *시작점* 과 *수렴점* 을 한눈에 봅니다. random 기준선 `ln 2` ≈ 0.693 을 점선으로 같이 그어, 곡선이 기준선에서 의미 있게 떨어졌는지 시각적으로 확인합니다.
-
-```python
-log_history = cls_trainer.state.log_history
-train_logs = [(e["step"], e["loss"]) for e in log_history if "loss" in e and "eval_loss" not in e]
-
-if train_logs:
-    steps, losses = zip(*train_logs)
-    random_baseline = math.log(2)
-
-    sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
-    fig, ax = plt.subplots(figsize=(9, 5))
-    ax.plot(steps, losses, "o-", color="#4878D0", label="학습 CE loss (small BERT + ko wiki MLM)")
-    ax.axhline(random_baseline, color="black", lw=1.0, ls=":",
-               label=f"랜덤 기준선 (ln 2 = {random_baseline:.3f})")
-    ax.set_xlabel("학습 step")
-    ax.set_ylabel("CE loss (binary)")
-    ax.set_title("NSMC 분류 fine-tune loss — small BERT (한국어 위키백과 MLM body)")
-    ax.legend()
-    plt.tight_layout()
-    plt.show()
-else:
-    print("No train loss logs found.")
-```
-
-**▶ 실행 결과**
-
-![output](../assets/23-ko_bert_classify-out1.png)
-
-**결과 해석**
-
-학습 곡선이 random 기준선 0.693 바로 위에 거의 붙어 머물러, 2 epoch 동안 의미 있는 하강이 일어나지 않았습니다. 얕은 사전학습 본체로는 NSMC 분류 신호를 학습할 출발점이 부족했음을 곡선이 그대로 보여 줍니다.
-
-혼동 행렬로 부정/긍정 각 클래스가 어디로 잘못 분류되는지 봅니다. 셀 숫자는 실제 개수, 색은 행 기준 정규화(recall)라 *실제 라벨별로 얼마나 맞혔는지* 가 색 농도로 드러납니다.
-
-```python
-sns.set_theme(style="white", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
-cm = confusion_matrix(cls_labels, cls_preds, labels=[0, 1])
-cm_norm = cm / cm.sum(axis=1, keepdims=True)
-
-fig, ax = plt.subplots(figsize=(6, 5))
-sns.heatmap(
-    cm_norm, annot=cm, fmt="d",
-    cmap="Blues", vmin=0, vmax=1,
-    xticklabels=["부정", "긍정"],
-    yticklabels=["부정", "긍정"],
-    cbar_kws={"label": "행 기준 정규화 (recall)"}, ax=ax,
-)
-ax.set_xlabel("예측값")
-ax.set_ylabel("실제값")
-ax.set_title("Ch 23 small BERT (ours + ko wiki MLM) — 혼동 행렬")
-plt.tight_layout()
-plt.show()
-```
-
-**▶ 실행 결과**
-
-![output](../assets/23-ko_bert_classify-out2.png)
-
-**결과 해석**
-
-실제 부정의 약 66%, 실제 긍정의 약 43% 만 맞혀, 부정 쪽으로 치우친 예측 경향이 행렬에서도 확인됩니다. 두 클래스 모두 절반 안팎의 오분류가 있어, 모델이 뚜렷한 결정 경계를 형성하지 못했음을 보여 줍니다.
-
-마지막으로 Ch 15 (`klue/bert-base`) 의 참고 수치와 본 챕터 결과를 한 표로 나란히 둡니다. 두 모델 모두 *일반 한국어 → NSMC transfer* 라는 같은 패턴이므로, 격차의 거의 전부가 *사전학습 규모* 에서 옵니다.
-
-```python
-# Ch 15 reference 수치 — klue/bert-base + NSMC 5K/1K + 2 epoch 의 *전형적* 결과
-# (실측치는 학습자가 Ch 15 노트북을 돌려 본인 값으로 갱신 권장)
-CH15_REFERENCE = {
-    "accuracy":  0.86,
-    "precision": 0.86,
-    "recall":    0.86,
-    "f1":        0.86,
-    "auc":       0.93,
-}
-
-ch23_ours = {k.replace("eval_", ""): v for k, v in cls_eval_metrics.items()
-             if k.startswith("eval_") and isinstance(v, float)
-             and k.replace("eval_", "") in CH15_REFERENCE}
-
-comparison = pd.DataFrame({
-    "metric":                    list(CH15_REFERENCE.keys()),
-    "Ch15 klue/bert-base (ref)": [CH15_REFERENCE[k] for k in CH15_REFERENCE.keys()],
-    "Ch23 ours (small + MLM)":   [ch23_ours.get(k, float("nan")) for k in CH15_REFERENCE.keys()],
-})
-print("2-way comparison — NSMC binary classification metrics")
-print(comparison.round(4).to_string(index=False))
-```
-
-**▶ 실행 결과**
-
-```text
-2-way comparison — NSMC binary classification metrics
-   metric  Ch15 klue/bert-base (ref)  Ch23 ours (small + MLM)
- accuracy                       0.86                   0.5480
-precision                       0.86                   0.5614
-   recall                       0.86                   0.4309
-       f1                       0.86                   0.4875
-      auc                       0.93                   0.5545
-```
-
-**결과 해석**
-
-accuracy 0.86 vs 0.548 로 약 32%p 격차입니다. 두 셋업이 *같은 transfer 패턴* 을 따르므로 이 격차는 거의 전부 사전학습 규모(약 10,000배 토큰 차이)와 모델 크기(11배)의 가치를 정량으로 보여 줍니다.
-
-같은 비교를 막대 그래프로 그려 5종 지표의 격차를 한눈에 봅니다. 표를 long-format 으로 `melt` 한 뒤 모델별 색으로 묶어 그립니다.
-
-```python
-# 2-way bar chart 로 한눈에 보기
-sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
-plot_df = comparison.melt(
-    id_vars=["metric"],
-    value_vars=["Ch15 klue/bert-base (ref)", "Ch23 ours (small + MLM)"],
-    var_name="model", value_name="score",
-)
-
-fig, ax = plt.subplots(figsize=(10, 5))
-sns.barplot(
-    data=plot_df, x="metric", y="score", hue="model",
-    palette={
-        "Ch15 klue/bert-base (ref)": "#4878D0",
-        "Ch23 ours (small + MLM)":   "#EE854A",
-    },
-    ax=ax,
-)
-ax.set_ylim(0, 1.05)
-ax.set_title("NSMC 이진 분류 — 2-way 비교 (Ch15 ref / Ch23 ours)")
-ax.set_xlabel("지표")
-ax.set_ylabel("점수")
-ax.legend(loc="lower right", fontsize=10)
-plt.tight_layout()
-plt.show()
-```
-
-**▶ 실행 결과**
-
-![output](../assets/23-ko_bert_classify-out3.png)
-
-**결과 해석**
-
-모든 지표에서 Ch 15 (파란 막대) 가 본 챕터 (주황 막대) 를 크게 앞서며, 특히 AUC 에서 0.93 vs 0.55 의 격차가 두드러집니다. 같은 transfer 패턴·같은 fine-tune 셋업이라는 통제 조건 위에서 이 격차가 *사전학습 규모의 가치* 를 시각적으로 못 박습니다.

@@ -773,6 +773,15 @@ def convert(nb: dict, num: int, slug: str, title: str,
         t = sub_titles.get(g, dt)
         toc_entries.append((f"{num:02d}-{idx}. {t}", f"pages/{stem}-{sl}.md"))
 
+    # 이번 빌드에서 생성되지 않은 표준 절 페이지(구조 변경으로 남은 고아) 삭제 —
+    # 안 그러면 옛 절 내용이 새 절과 중복으로 남는다(예: 해부→변형 재배치 시 옛 anatomy).
+    generated = {sl for _, sl, _ in present_subs}
+    for suf in ("practice", "anatomy", "variation", "wrapup"):
+        if suf not in generated:
+            stale = pages_dir / f"{stem}-{suf}.md"
+            if stale.exists():
+                stale.unlink()
+
     return toc_entries, stats
 
 

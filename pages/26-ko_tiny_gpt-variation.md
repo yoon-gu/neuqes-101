@@ -56,3 +56,77 @@ for c in configs:
 | `n_embd` / `n_layer` | 256 / 4 | 384 / 6 | 표현력 ↑ (약 8M params), T4 메모리 안에서 가능 |
 | `max_steps` | 1500 | 2500 | loss 추가 하락, 30분 룰 주의 |
 | 다른 한국어 코퍼스 | TinyStories-Korean | 한국어 위키 + 동화 혼합 | 도메인 폭 ↑, 단 어휘 난도 ↑ |
+
+## (선택) Reference 비교 - KoGPT2 의 같은 prompt generation
+
+*학습이 충분히 잘 된* 기준점으로 `skt/kogpt2-base-v2` (125M, 대규모 한국어 사전학습) 에 같은 한국어 prompt 를 넣어 *우리 작은 GPT (약 3M, 한국어 TinyStories 30K)* 와 격차를 봅니다. **Ch 27 이 KoGPT2 본격 챕터** 이므로 여기서는 *간단히 한 번만* — T4 시간을 아끼려면 이 셀은 건너뛰어도 됩니다.
+
+마지막 (선택) 셀은 비교 기준점으로 대규모 한국어 사전학습 모델 KoGPT2(125M)에 같은 prompt를 넣어 봅니다. 시간이 부족하면 `RUN_KOGPT2_REF = False`로 두고 건너뛸 수 있습니다.
+
+```python
+# 선택 셀 - KoGPT2 reference. 시간이 부족하면 RUN_KOGPT2_REF = False 로 두고 건너뜁니다.
+RUN_KOGPT2_REF = True
+
+if RUN_KOGPT2_REF:
+    from transformers import AutoTokenizer, AutoModelForCausalLM
+
+    print("loading reference KoGPT2 (skt/kogpt2-base-v2, 125M)...")
+    ref_tok = AutoTokenizer.from_pretrained("skt/kogpt2-base-v2")
+    if ref_tok.pad_token is None:
+        ref_tok.pad_token = ref_tok.eos_token
+    ref_model = AutoModelForCausalLM.from_pretrained("skt/kogpt2-base-v2").to(device).eval()
+    print(f"  #params : {ref_model.num_parameters()/1e6:.1f} M")
+
+    torch.manual_seed(SEED)
+    print("\n" + "=" * 70)
+    print("REFERENCE KoGPT2 (125M) - generation on same Korean prompts")
+    print("=" * 70)
+    for p in PROMPTS:
+        text = generate_text(ref_model, p, gen_tokenizer=ref_tok, **GEN_KWARGS)
+        print(f"\nprompt: {p}")
+        print(text)
+
+    # 메모리 정리
+    del ref_model
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+else:
+    print("Skipped KoGPT2 reference (RUN_KOGPT2_REF=False). Covered in depth in Ch 27.")
+```
+
+**▶ 실행 결과**
+
+```text
+loading reference KoGPT2 (skt/kogpt2-base-v2, 125M)...
+[transformers] GPT2LMHeadModel LOAD REPORT from: skt/kogpt2-base-v2
+Key                                     | Status     |  | 
+----------------------------------------+------------+--+-
+transformer.h.{0...11}.attn.masked_bias | UNEXPECTED |  | 
+
+Notes:
+- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
+  #params : 125.2 M
+
+======================================================================
+REFERENCE KoGPT2 (125M) - generation on same Korean prompts
+======================================================================
+prompt: 옛날 옛날에
+�����▁�ng��▁�ng��n�n�n�n�n�n�n�n�n�n�n�n�n�n�n�n�n�n�n�n�n�n�n�
+prompt: 작은 소녀가
+�����i���i,▁▁▁▁▁▁▁
+prompt: 큰 개가
+����▁▁▁▁▁▁▁▁▁▁▁▁▁▁
+prompt: 어느 날,
+���,▁Gaurius,▁vand.▁Gould,▁Denol,▁Tamil,▁Anat�nn▁McCamel,▁Zehn,▁Guy.▁Cyb,▁Shitch,▁Pellek,▁Nami,▁Jalifa,
+```
+
+**결과 해석**
+
+이 실행에서는 KoGPT2 reference 출력이 `▁▁▁` 반복이나 깨진 토큰으로 나와 정상적인 한국어 문장이 나오지 않았습니다. 우리 GEN_KWARGS·prompt 인코딩이 KoGPT2 토크나이저와 잘 맞지 않은 탓으로, KoGPT2의 제대로 된 generation 품질 비교는 이 모델을 본격적으로 다루는 Ch 27에서 확인합니다.
+
+**해석 가이드 - 규모가 만든 격차**
+
+- **OURS (약 3M, 한국어 TinyStories 30K)**: *동화 풍 단순 한국어* - 어휘는 동화 도메인에 강하지만 *복잡한 문장 구조 / 추상적 어휘* 는 약함.
+- **REF (KoGPT2 125M, 대규모 한국어 코퍼스)**: *다양한 도메인 어휘 + 자연스러운 문장 흐름*. 학습 데이터의 규모·다양성이 generation 다양성으로 직결.
+
+> Ch 27 이 이 격차를 *데이터 축을 통제하고* 다룹니다 - KoGPT2 (125M) 의 사전학습 *위에* 같은 한국어 TinyStories 로 **continual pretraining**. *대규모 한국어 사전학습 모델을 작은 도메인 데이터로 적응* 시킬 때의 generation 품질이, 우리 from-scratch 작은 GPT 와 어떻게 다른지 직접 비교 (Ch 24→25 의 한국어 짝).

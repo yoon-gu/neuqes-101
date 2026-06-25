@@ -1,6 +1,6 @@
 > ▶ **[Google Colab에서 이 장 실습 열기](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/21_en_bert_classify/21_en_bert_classify.ipynb)** — 브라우저에서 바로 실행해 볼 수 있습니다.
 
-## 환경 준비
+## 환경 셋업
 
 ```python
 %pip install -q -U transformers datasets accelerate
@@ -82,6 +82,8 @@ Device:         cuda
 GPU:             Tesla T4
 ```
 
+**baseline VRAM** (CUDA 환경에서만 의미 있는 출력 — Colab T4 기준):
+
 ```python
 !nvidia-smi
 ```
@@ -111,6 +113,10 @@ Mon Jun 22 12:16:39 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+## Yelp 이진 분류 데이터 로드 — Ch 10 과 같은 split
+
+`fancyzhx/yelp_polarity` 는 *이미 이진화된* (긍정/부정) 5점 척도 yelp 리뷰 데이터셋. Ch 10 의 `Yelp/yelp_review_full` + 별점 이진화 와 *완전히 같은 형태* 의 결과가 나오도록 같은 seed·같은 sample 수를 적용. **5,000 train / 1,000 eval, seed 42**.
+
 분류 fine-tune 에 쓸 Yelp 이진 분류 데이터를 불러옵니다. `fancyzhx/yelp_polarity` 는 이미 긍정/부정으로 이진화된 리뷰 데이터셋이라 별점을 직접 자를 필요가 없습니다. Ch 10 과 같은 결과를 얻도록 같은 seed (42) 와 같은 표본 수 (5,000 train / 1,000 eval) 를 그대로 맞춥니다.
 
 ```python
@@ -123,7 +129,6 @@ print(f"splits: {list(ds_raw.keys())}")
 print(f"train size: {len(ds_raw['train']):,}")
 print(f"test size:  {len(ds_raw['test']):,}")
 print(f"label names: {ds_raw['train'].features['label'].names}")
-
 ```
 
 **위 코드 읽기** — `load_dataset("fancyzhx/yelp_polarity")` 로 전체 데이터셋 (train 56만 / test 3.8만) 을 받아 두고, `label names` 가 `['1', '2']` 임을 확인합니다. 여기서 라벨 `1` 은 부정, `2` 는 긍정에 해당하는 원본 표기이고, 뒤에서 0/1 정수로 다룹니다.
@@ -169,6 +174,10 @@ first train sample:
 
 뽑힌 train 의 긍정 비율 50.7%, eval 48.4% 로 두 split 모두 거의 50:50 의 균형 잡힌 이진 분류라, 정확도가 다수 클래스 추측 (majority guess) 으로 부풀려질 걱정이 없습니다.
 
+## 토크나이저 — `bert-base-uncased` (Ch 20 과 동일)
+
+vocab 30,522 의 영어 WordPiece. MLM 사전학습과 분류 fine-tune 전 구간에서 *같은 토크나이저* 를 써야 본체가 학습한 임베딩의 의미가 유지됩니다.
+
 ```python
 TOKENIZER_NAME = "bert-base-uncased"
 tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_NAME)
@@ -176,7 +185,6 @@ tokenizer = AutoTokenizer.from_pretrained(TOKENIZER_NAME)
 print(f"tokenizer:        {TOKENIZER_NAME}")
 print(f"vocab_size:       {tokenizer.vocab_size:,}")
 print(f"model_max_length: {tokenizer.model_max_length}")
-
 ```
 
 **위 코드 읽기** — Ch 20 사전학습과 *완전히 같은* `bert-base-uncased` 토크나이저를 그대로 가져옵니다. vocab 이 30,522 로 고정돼 있어야 MLM 으로 학습한 토큰 임베딩이 분류 단계에서도 같은 의미를 유지합니다.
@@ -206,6 +214,14 @@ tokens (15): ['[CLS]', 'the', 'food', 'was', 'un', '##for', '##get', '##table', 
 **결과 해석**
 
 `unforgettable` 한 단어가 `un / ##for / ##get / ##table` 네 개의 WordPiece 조각으로 쪼개진 것이 보입니다. vocab 에 통째로 없는 단어도 조각으로 표현되므로 `[UNK]` 없이 처리되고, 양끝에 `[CLS]`/`[SEP]` 가 붙어 총 15 토큰이 됩니다.
+
+## MLM 사전학습 — Ch 20 패턴 압축 재현 (Wikitext-103, 2K × 3 epoch)
+
+이 노트북을 *self-contained* 로 만들기 위해 Ch 20 의 MLM 사전학습을 여기서 압축 재현합니다. Ch 20 (5K × 2 epoch) 보다 *데이터를 줄이고 (2K) epoch 를 늘려 (3)* 시간을 보존 — 한국어 Ch 23 self-contained 와 동일한 hyperparams. 같은 도메인 (위키) 표상의 *정렬 깊이* 가 충분해 fine-tune 시 random init 보다 분명히 우위.
+
+**MLM 사전학습 데이터는 *분류용 Yelp 와 별도*** — `Salesforce/wikitext`, config `wikitext-103-raw-v1` paragraphs 5K 를 *새로 로드*. 본 챕터의 *진짜 transfer 메시지* — *일반 위키 사전학습 → Yelp 분류 transfer* 가 노트북 한 구조에 자연스럽게 들어맞도록 *두 데이터셋이 공존*. 같은 토크나이저 (`bert-base-uncased`) 가 두 도메인을 모두 처리.
+
+같은 작은 `BertConfig` (hidden=256, layer=4, head=4, intermediate=1024) → `BertForMaskedLM(config)` random init → Wikitext-103 paragraphs 2K MLM 3 epoch.
 
 Ch 20 과 동일한 작은 `BertConfig` (hidden 256, 4층, head 4, intermediate 1024) 로 `BertForMaskedLM` 을 random init 합니다. 사전학습된 가중치를 받아오는 게 아니라 *맨바닥에서* 시작하는 것이 이 챕터의 핵심이라, 처음 만든 본체의 파라미터 수를 함께 확인해 둡니다.
 
@@ -276,7 +292,6 @@ mlm_eval_raw = (
 print(f"MLM train paragraphs: {len(mlm_train_raw):,}  (wikitext-103)")
 print(f"MLM eval paragraphs:  {len(mlm_eval_raw):,}")
 print(f"first MLM sample: {mlm_train_raw[0]['text'][:120]}...")
-
 ```
 
 **위 코드 읽기** — `is_good` 필터로 빈 줄·제목 같은 짧은 줄과 목록·인용 같은 지나치게 긴 줄을 걸러내, 정상적인 위키 문단만 남깁니다. 거른 뒤 `shuffle(seed=SEED).select(...)` 로 train 2,000 / eval 400 문단만 골라 T4 시간 예산 안에 들어오도록 압축합니다.
@@ -287,7 +302,6 @@ def mlm_tokenize(examples):
 
 mlm_tokenized_train = mlm_train_raw.map(mlm_tokenize, batched=True, remove_columns=["text"])
 mlm_tokenized_eval  = mlm_eval_raw.map(mlm_tokenize,  batched=True, remove_columns=["text"])
-
 ```
 
 **위 코드 읽기** — MLM 단계는 분류와 달리 `add_special_tokens=False`, `truncation=False` 로 토큰화합니다. 문장 단위로 자르는 대신 모든 토큰을 *하나의 긴 스트림* 으로 이어 붙여 고정 길이 블록으로 다시 자를 것이므로, 여기서는 `[CLS]`/`[SEP]` 를 넣지 않고 자르지도 않습니다.
@@ -337,6 +351,20 @@ mlm_collator = DataCollatorForLanguageModeling(
     mlm_probability=0.15,
 )
 ```
+
+### [MASK] 가 들어가는 원리 — 한 눈에 보는 80/10/10
+
+`DataCollatorForLanguageModeling` 은 매 step 마다 *입력 토큰의 약 15%* 를 *무작위로* 선택하고, 선택된 위치마다 세 가지 중 하나를 적용합니다.
+
+| 선택된 토큰 운명 | 비율 | 의도 |
+| --- | --- | --- |
+| `[MASK]` 로 교체 | **80%** | 표준 마스킹 — 모델이 *주변 문맥만으로* 원래 토큰을 맞추도록 |
+| **다른 random 토큰** 으로 교체 | 10% | inference 때는 `[MASK]` 가 없으니, 모델이 *항상* 자기 입력을 *의심* 하게 만듦 |
+| **원본 그대로** 유지 | 10% | 동일 — 입력과 정답이 일치하는 케이스도 학습 데이터에 포함 |
+
+**나머지 85%** 의 토큰은 `labels = -100` 으로 두어 *loss 계산에서 제외* 됩니다 (PyTorch CE 의 `ignore_index` 기본값). 즉 한 step 의 MLM loss 는 *선택된 15% 자리만* 모아 평균한 값.
+
+> 이 80/10/10 비율은 BERT 논문 (Devlin et al., 2018) 의 원안 그대로. `mlm_probability=0.15` 만 바꾸면 *선택률* 이 바뀌고, 80/10/10 자체는 collator 내부에 고정.
 
 방금 만든 collator 가 실제로 어떤 자리를 어떻게 바꾸는지 짧은 예시 문장 하나로 직접 들여다봅니다. 토큰별로 원본·마스킹 후·`label_id`·무슨 일이 일어났는지를 표로 정리해, 15% 선택과 80/10/10 규칙이 토큰 단위에서 어떻게 적용되는지 눈으로 확인합니다.
 
@@ -458,6 +486,45 @@ Selected for loss (target 15%):      1,217  (14.86%)
 
 8,192 토큰 중 14.86% 가 선택됐고 그 안에서 `[MASK]` 78.96% / random 9.94% / kept 11.09% 로, 목표인 15% 와 80/10/10 비율을 표본 오차 범위 안에서 그대로 재현합니다.
 
+**관전 포인트**
+
+- `what_happened` 가 `—` 인 자리(85%) 는 *입력과 정답이 그대로* — loss 에 기여하지 않습니다. 모델은 *문맥을 만들어 주는* 역할만.
+- `[MASK]` 자리(약 12%) 가 본 task 의 *진짜 학습 신호*. 주변 토큰들의 attention 결과로 *가려진 자리* 의 vocab 분포를 예측.
+- `random` (약 1.5%) 와 `kept` (약 1.5%) 는 *inference 분포 일치* 를 위한 정규화. 추론 시에는 `[MASK]` 가 없으므로 *입력을 절대 신뢰하면 안 된다* 는 신호를 학습에 섞어 줌.
+- 매 epoch · 매 batch 마다 마스킹은 *새로 무작위* — 같은 문장이 epoch 마다 다른 자리에서 가려져 학습됩니다 (data augmentation 효과).
+
+### `labels = -100` ignore_index 는 BERT-만의 트릭이 아닙니다 — Phase 4 (GPT) 의 핵심으로 다시
+
+PyTorch `CrossEntropyLoss` 의 `ignore_index=-100` 은 *어느 토큰 자리의 loss 를 학습 신호로 쓸지* 고르는 범용 스위치입니다. 같은 트릭이 Phase 4 GPT 챕터에서 **사전학습 vs Instruction Tuning(SFT) 의 가장 큰 차이** 를 만듭니다.
+
+| 단계 | `labels = ?` | loss 계산 자리 | 학습되는 것 |
+|---|---|---|---|
+| **MLM 사전학습** (이 챕터·Ch 20) | 선택된 약 15% 만 원본 token id, 나머지 = `-100` | 가려진 자리 | 주변 문맥으로 *가려진 토큰 복원* |
+| **GPT CausalLM 사전학습** (Ch 24-26) | `input_ids.clone()` — *거의 모든 토큰* | (pad 만 `-100`) 사실상 *전 자리* | 모든 자리에서 *다음 토큰 예측* — 언어 분포 자체 |
+| **SFT / Instruction Tuning** (Ch 27) | **prompt 부분 = `-100`**, *답변 토큰만* 원본 id | *답변 부분만* | "질문을 외우지 말고 답변하는 법" 만 학습 |
+
+> **세 곳 모두 같은 `-100` 트릭, 적용 자리만 정반대.** MLM 은 *대부분을 가리고 일부만 학습*, GPT 사전학습은 *거의 가리지 않음*, SFT 는 *prompt 만 가림*. Phase 4 (특히 Ch 27 SFT, `SFTTrainer` 의 `response-only mask` 옵션) 에서 이 차이를 *코드 라인 한 줄 — `labels[prompt_mask] = -100`* 으로 직접 보게 될 겁니다.
+
+지금 위 셀에서 본 `label_id = -100` 의 의미를 기억해 두면, Ch 27 의 *왜 모델이 instruction 을 따라가게 되는가* 가 한 줄로 이해됩니다.
+
+### 같은 단어 "파인튜닝", BERT 시대와 GPT 시대의 의미가 살짝 다릅니다
+
+이 챕터의 *fine-tune* 은 **BERT 시대 의미** — *사전학습된 본체 + 새 task-specific head (`Linear(H, 2)`)* 를 붙여 *downstream task* 마다 다른 모델로 분기. 본체는 *일반 표상*, head 는 *task 별 특화*. 분류·회귀·NER·QA 각각 다른 head 가 붙고 라벨 포맷도 다릅니다.
+
+GPT 시대 (Phase 4 Ch 24 이후) 부터는 같은 단어가 *살짝 다른 의미* 를 가집니다.
+
+| 축 | **BERT 파인튜닝** (이 챕터, Ch 9-18, Ch 23) | **GPT 파인튜닝 = SFT** (Ch 25, Ch 27) |
+|---|---|---|
+| 무엇을 바꾸나 | 본체 + **새 head** (task별 부착) | 본체 + **기존 LM head 그대로** |
+| 출력 형식 | task별 다름 (class id / score / multi-hot) | *항상 토큰 시퀀스* — 형식 통일 |
+| 학습 신호 | task별 loss (CE/BCE/MSE) | *항상 next-token CE*, 단 자리 마스킹만 다름 |
+| 학습되는 것 | *task 의 출력 분포* (긍정/부정 결정 경계 등) | *행동 = "이런 입력엔 이런 형식으로 답하라"* |
+| 라벨 | 정답 카테고리/값 | *모범 답안 토큰 시퀀스* |
+
+> **BERT 파인튜닝은 *task 적응*, GPT 파인튜닝은 *행동 정렬*.** GPT 는 head 가 바뀌지 않으므로 "파인튜닝" 이 *동일한 next-token 예측 task 안에서 데이터만 바뀌는* 일이 됩니다 (사전학습 = 웹 텍스트, SFT = 모범 응답 쌍). 그래서 Phase 4 부터는 "fine-tuning ≈ SFT ≈ instruction tuning ≈ behavior alignment" 가 거의 동의어로 섞여 쓰입니다.
+
+이 의미 차이는 *왜 GPT 모델 하나가 모든 task 를 해내는가* 의 핵심 이유 — head 가 task 별로 분기하지 않으니 *입력 프롬프트* 만 바꾸면 *같은 모델* 이 다른 일을 합니다. Ch 27 에서 직접 확인.
+
 MLM 사전학습용 `Trainer` 를 구성합니다. scratch 사전학습이라 fine-tune 보다 큰 학습률 (5e-4) 을 쓰고, T4 미지원인 bf16 대신 `fp16=True` 를 적용합니다.
 
 ```python
@@ -479,7 +546,6 @@ mlm_args = TrainingArguments(
     report_to="none",
     seed=SEED,
 )
-
 ```
 
 **위 코드 읽기** — `learning_rate=5e-4` 는 random init 본체를 빠르게 끌어올리기 위한 사전학습용 값으로, 뒤의 분류 fine-tune (2e-5) 보다 25배 큽니다. `save_strategy="no"` 로 체크포인트를 디스크에 남기지 않는데, 본체를 in-memory 로 바로 분류 모델에 옮길 것이기 때문입니다.
@@ -560,6 +626,19 @@ MLM eval perplexity:  1356.19
 
 eval perplexity 1356 은 random baseline 30,522 의 약 1/22 로, 가려진 자리에서 vocab 전체가 아니라 약 1,300 개 후보로 좁혀진 정도를 뜻합니다. 완벽한 언어모델과는 멀지만 Yelp 분류 fine-tune 의 출발점으로는 충분한 표상입니다.
 
+**관전 포인트** — Wikitext-103 paragraphs 에서 MLM loss 가 *random baseline 10.33* 에서 시작해 약 7 부근까지 떨어졌다면 본체가 *일반 위키 어휘·문맥 구조의 일부* 를 학습한 상태. perplexity 로 환산하면 vocab 30,522 중 *약 1,300 개 후보* 로 좁혀진 정도. Ch 20 의 2 epoch 와 비슷한 수준이지만, *Yelp 분류 fine-tune 출발점* 으로는 충분합니다 — 본체가 *일반 영어 구조* 를 가지면 *Yelp 리뷰(식당·업체) 도메인* 도 fine-tune 으로 빠르게 적응.
+
+> **체크포인트 저장은 생략** — 노트북 안에서 바로 본체 가중치를 분류 모델로 옮기기 때문. Ch 20 처럼 디스크에 저장하려면 `mlm_model.save_pretrained("./ch21_mlm_ckpt")` 한 줄.
+
+## 헤드 교체 — MLM → 분류 + Fine-tune
+
+이제 *방금 학습된 작은 BERT 본체* 를 분류 모델로 옮깁니다. 두 가지 흐름:
+
+1. `BertForMaskedLM.bert` (embedding + encoder) 를 그대로 가져옴
+2. 새 `BertForSequenceClassification(config)` 을 만들고, 1 의 본체를 *복사*. 분류 헤드는 새로 random init
+
+이렇게 만든 모델을 같은 Yelp 데이터의 *라벨* 까지 사용해 분류 fine-tune. Ch 10 의 hyperparams 와 *완전히 같이* (`lr=2e-5, batch=16, epoch=2, fp16=True`) 둬서 *본체 출발점* 외 모든 조건을 통제.
+
 ```python
 # 분류용 config: 같은 본체 구조 + num_labels=2 + problem_type
 cls_config = BertConfig(
@@ -577,7 +656,6 @@ cls_config = BertConfig(
 )
 
 cls_model = BertForSequenceClassification(cls_config)
-
 ```
 
 **위 코드 읽기** — 본체 구조는 MLM 과 똑같이 두되 `num_labels=2` 와 `problem_type="single_label_classification"` 만 추가합니다. 이 `problem_type` 이 `CrossEntropyLoss` 를 자동으로 고르게 하고, `id2label` 로 0/1 이 부정/긍정으로 매핑됩니다.
@@ -588,7 +666,6 @@ missing, unexpected = cls_model.bert.load_state_dict(mlm_model.bert.state_dict()
 print(f"본체 가중치 복사 완료")
 print(f"  missing keys (분류 측에만 있는 부분): {len(missing)}  e.g. {missing[:3] if missing else []}")
 print(f"  unexpected keys (MLM 측 잉여):       {len(unexpected)}  e.g. {unexpected[:3] if unexpected else []}")
-
 ```
 
 **위 코드 읽기** — `cls_model.bert.load_state_dict(mlm_model.bert.state_dict(), strict=False)` 가 핵심 한 줄입니다. 두 모델 모두 내부에 같은 이름의 `self.bert` (`BertModel`) 를 갖기 때문에 사전학습된 임베딩+인코더를 통째로 옮길 수 있고, `strict=False` 라 분류 측에만 있는 `pooler` 같은 키는 missing 으로 넘어갑니다. MLM head 와 분류 head 는 본체 바깥의 다른 자리라 자동으로 분리됩니다.
@@ -620,6 +697,10 @@ Classification model parameters:
 **결과 해석**
 
 missing 은 `pooler` 가중치 2 개뿐이고 unexpected 는 0 으로, 사전학습 본체가 깔끔하게 옮겨졌습니다. 분류 head `Linear(256, 2)` 는 514 개로 전체의 0.0% 에 불과해, *대부분의 지식은 사전학습 본체에 있고 새 head 는 아주 얇게* 얹힌다는 fine-tune 패러다임을 그대로 보여줍니다.
+
+**`bert.load_state_dict` 가 한 일** — `BertForMaskedLM` 과 `BertForSequenceClassification` 둘 다 *내부에 같은 `BertModel`* (이름 `self.bert`) 을 갖습니다. 그 본체만 통째로 옮긴 셈. MLM head (`cls.predictions`) 와 분류 head (`classifier`) 는 *모델 객체의 다른 자리* 라 자동으로 분리됩니다.
+
+> Ch 7-18 의 `AutoModelForSequenceClassification.from_pretrained(...)` 가 디스크에서 같은 일을 합니다. 우리는 *방금 학습한 본체* 를 디스크 없이 in-memory 로 옮긴 셈.
 
 이번엔 Yelp 데이터를 분류용으로 토큰화합니다. MLM 과 달리 *문장 단위* 입력이라 `[CLS]`/`[SEP]` 가 기본으로 붙고 `max_length=128` 로 길이를 자릅니다.
 
@@ -696,7 +777,6 @@ cls_args = TrainingArguments(
     report_to="none",
     seed=SEED,
 )
-
 ```
 
 **위 코드 읽기** — `learning_rate=2e-5`, `batch=16`, `epoch=2` 는 Ch 10 의 DistilBERT fine-tune 과 *완전히 같은* 값입니다. 본체 출발점 외 모든 조건을 통제해야 두 챕터의 정확도 격차를 *사전학습 규모* 탓으로 해석할 수 있습니다.
@@ -762,214 +842,3 @@ Mon Jun 22 12:17:59 2026
 |    0   N/A  N/A            1329      C   /usr/bin/python3                        794MiB |
 +-----------------------------------------------------------------------------------------+
 ```
-
-```python
-cls_eval_metrics = cls_trainer.evaluate()
-print("Ch 21 small BERT (scratch MLM 3 epoch + classification fine-tune) — eval:")
-for k, v in cls_eval_metrics.items():
-    if k.startswith("eval_") and isinstance(v, float):
-        print(f"  {k:>20}: {v:.4f}")
-```
-
-**▶ 실행 결과**
-
-```text
-<IPython.core.display.HTML object>
-<IPython.core.display.HTML object>
-Ch 21 small BERT (scratch MLM 3 epoch + classification fine-tune) — eval:
-             eval_loss: 0.6680
-         eval_accuracy: 0.6260
-        eval_precision: 0.5948
-           eval_recall: 0.7128
-               eval_f1: 0.6485
-              eval_auc: 0.6821
-```
-
-**결과 해석**
-
-eval accuracy 0.626, AUC 0.682 로, random (0.5) 보다는 분명히 높지만 Ch 10 의 DistilBERT (약 0.90) 와는 큰 격차입니다. recall 0.713 이 precision 0.595 보다 높아 모델이 긍정 쪽으로 다소 치우쳐 예측하는 경향도 읽힙니다.
-
-eval set 전체에 대해 예측을 뽑아 클래스별 상세 리포트를 봅니다. 평균 정확도 한 숫자만으로는 모델이 어느 클래스에서 약한지 알 수 없으므로, 클래스별 precision/recall 과 예측 자신감 (top-1 확률) 을 함께 확인합니다.
-
-```python
-preds_output = cls_trainer.predict(cls_eval)
-cls_logits = preds_output.predictions
-cls_labels = preds_output.label_ids.astype(int)
-
-exp = np.exp(cls_logits - cls_logits.max(axis=1, keepdims=True))
-cls_probs_full = exp / exp.sum(axis=1, keepdims=True)
-cls_preds = cls_probs_full.argmax(axis=1)
-cls_probs_pos = cls_probs_full[:, 1]
-
-```
-
-**위 코드 읽기** — `cls_trainer.predict` 로 1,000 개 eval 샘플의 logits 를 한 번에 받고, `compute_metrics` 와 같은 안정 softmax 로 확률·예측을 재계산합니다. 이렇게 따로 뽑아 둔 `cls_preds`/`cls_probs_pos` 를 뒤의 confusion matrix 와 학습곡선에서 재사용합니다.
-
-```python
-print(f"Logits shape: {cls_logits.shape}")
-print(f"Predicted positive rate: {(cls_preds == 1).mean():.1%}")
-print(f"Top-1 prob mean: correct={cls_probs_full.max(axis=1)[cls_preds == cls_labels].mean():.4f}, "
-      f"wrong={cls_probs_full.max(axis=1)[cls_preds != cls_labels].mean():.4f}")
-print()
-print(classification_report(
-    cls_labels, cls_preds,
-    target_names=["negative", "positive"],
-    digits=4, zero_division=0,
-))
-```
-
-**위 코드 읽기** — `Top-1 prob mean` 은 맞춘 예측과 틀린 예측 각각의 평균 자신감을 비교합니다. 두 값이 비슷하면 모델이 *맞을 때나 틀릴 때나 비슷하게 어정쩡한* 확신을 갖는다는 뜻으로, 표상이 아직 약함을 진단하는 신호입니다.
-
-**▶ 실행 결과**
-
-```text
-<IPython.core.display.HTML object>
-Logits shape: (1000, 2)
-Predicted positive rate: 58.0%
-Top-1 prob mean: correct=0.5463, wrong=0.5355
-
-              precision    recall  f1-score   support
-
-    negative     0.6690    0.5446    0.6004       516
-    positive     0.5948    0.7128    0.6485       484
-
-    accuracy                         0.6260      1000
-   macro avg     0.6319    0.6287    0.6245      1000
-weighted avg     0.6331    0.6260    0.6237      1000
-```
-
-**결과 해석**
-
-맞은 예측의 평균 자신감 (0.546) 과 틀린 예측 (0.536) 이 거의 같아, 모델이 0.5 근처에서 머뭇거리며 결정하고 있음을 보여줍니다. 예측 긍정 비율 58% 와 positive 의 높은 recall (0.713) 에서 보이듯 긍정 쪽으로 살짝 기울어, 부정 클래스의 recall (0.545) 이 상대적으로 낮습니다.
-
-```python
-log_history = cls_trainer.state.log_history
-train_logs = [(e["step"], e["loss"]) for e in log_history if "loss" in e and "eval_loss" not in e]
-
-if train_logs:
-    steps, losses = zip(*train_logs)
-    random_baseline = math.log(2)
-
-    sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
-    fig, ax = plt.subplots(figsize=(9, 5))
-    ax.plot(steps, losses, "o-", color="#4878D0", label="학습 CE loss (small BERT)")
-    ax.axhline(random_baseline, color="black", lw=1.0, ls=":",
-               label=f"랜덤 기준선 (ln 2 = {random_baseline:.3f})")
-    ax.set_xlabel("학습 step")
-    ax.set_ylabel("CE loss (binary)")
-    ax.set_title("Yelp 분류 fine-tune loss — small BERT (Wikitext-103 MLM body)")
-    ax.legend()
-    plt.tight_layout()
-    plt.show()
-else:
-    print("No train loss logs found.")
-```
-
-**▶ 실행 결과**
-
-![output](../assets/21-en_bert_classify-out1.png)
-
-**결과 해석**
-
-학습 CE loss 가 random 기준선 (ln 2 = 0.693) 바로 아래에서 시작해 완만하게만 내려갑니다. 사전학습 본체가 출발점을 random 보다 낫게 만들어 주지만, 작은 규모라 수렴이 가파르지는 않다는 점이 곡선에 드러납니다.
-
-```python
-sns.set_theme(style="white", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
-cm = confusion_matrix(cls_labels, cls_preds, labels=[0, 1])
-cm_norm = cm / cm.sum(axis=1, keepdims=True)
-
-fig, ax = plt.subplots(figsize=(6, 5))
-sns.heatmap(
-    cm_norm, annot=cm, fmt="d",
-    cmap="Blues", vmin=0, vmax=1,
-    xticklabels=["부정", "긍정"],
-    yticklabels=["부정", "긍정"],
-    cbar_kws={"label": "행 기준 정규화 (recall)"}, ax=ax,
-)
-ax.set_xlabel("예측값")
-ax.set_ylabel("실제값")
-ax.set_title("Ch 21 small BERT — 혼동 행렬")
-plt.tight_layout()
-plt.show()
-```
-
-**▶ 실행 결과**
-
-![output](../assets/21-en_bert_classify-out2.png)
-
-**결과 해석**
-
-혼동 행렬을 보면 실제 긍정을 긍정으로 맞춘 비율 (recall 0.713) 이 실제 부정을 부정으로 맞춘 비율 (0.545) 보다 높아, 모델이 긍정 쪽으로 치우쳐 오분류가 부정 행에 몰려 있음이 시각적으로 확인됩니다.
-
-```python
-# Ch 10 reference 수치 — yelp_polarity 5K/1K + DistilBERT fine-tune 2 epoch 의 *전형적* 결과
-# (실측치는 학습자가 Ch 10 노트북을 돌려 본인 값으로 갱신 권장)
-CH10_REFERENCE = {
-    "accuracy":  0.93,
-    "precision": 0.93,
-    "recall":    0.93,
-    "f1":        0.93,
-    "auc":       0.98,
-}
-
-ch21_metrics = {k.replace("eval_", ""): v for k, v in cls_eval_metrics.items()
-                if k.startswith("eval_") and isinstance(v, float)
-                and k.replace("eval_", "") in CH10_REFERENCE}
-
-comparison = pd.DataFrame({
-    "metric":              list(CH10_REFERENCE.keys()),
-    "Ch10 DistilBERT (ref)": [CH10_REFERENCE[k] for k in CH10_REFERENCE.keys()],
-    "Ch21 small BERT":     [ch21_metrics.get(k, float("nan")) for k in CH10_REFERENCE.keys()],
-})
-comparison["delta (Ch21 - Ch10)"] = comparison["Ch21 small BERT"] - comparison["Ch10 DistilBERT (ref)"]
-print("Ch10 vs Ch21 — classification metrics")
-print(comparison.round(4).to_string(index=False))
-```
-
-**▶ 실행 결과**
-
-```text
-Ch10 vs Ch21 — classification metrics
-   metric  Ch10 DistilBERT (ref)  Ch21 small BERT  delta (Ch21 - Ch10)
- accuracy                   0.93           0.6260              -0.3040
-precision                   0.93           0.5948              -0.3352
-   recall                   0.93           0.7128              -0.2172
-       f1                   0.93           0.6485              -0.2815
-      auc                   0.98           0.6821              -0.2979
-```
-
-**결과 해석**
-
-accuracy 기준 약 0.30, AUC 약 0.30 의 격차가 일관되게 음수로 나타납니다. 두 모델이 같은 *일반 위키 → Yelp transfer* 패턴을 따르므로, 이 격차의 거의 전부가 *사전학습 규모 (약 3000-5000배) 와 모델 크기 (약 6배)* 의 차이에서 옵니다.
-
-```python
-# bar chart 로 한눈에 보기
-sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
-plot_df = comparison.melt(
-    id_vars=["metric"],
-    value_vars=["Ch10 DistilBERT (ref)", "Ch21 small BERT"],
-    var_name="model", value_name="score",
-)
-
-fig, ax = plt.subplots(figsize=(9, 5))
-sns.barplot(
-    data=plot_df, x="metric", y="score", hue="model",
-    palette={"Ch10 DistilBERT (ref)": "#4878D0", "Ch21 small BERT": "#EE854A"},
-    ax=ax,
-)
-ax.set_ylim(0, 1.05)
-ax.set_title("Yelp 이진 분류 — Ch10 vs Ch21")
-ax.set_xlabel("지표")
-ax.set_ylabel("점수")
-ax.legend(loc="lower right", fontsize=11)
-plt.tight_layout()
-plt.show()
-```
-
-**▶ 실행 결과**
-
-![output](../assets/21-en_bert_classify-out3.png)
-
-**결과 해석**
-
-다섯 지표 모두에서 Ch 10 (DistilBERT) 막대가 Ch 21 (작은 BERT) 보다 일관되게 높습니다. 다만 Ch 21 의 막대가 모두 0.5 (random) 위에 있어, 작은 일반 도메인 사전학습도 random init 보다는 분명히 낫다는 메시지도 함께 읽힙니다.

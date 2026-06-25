@@ -4,7 +4,6 @@
 
 **예상 소요 시간**: 약 8-12분 (데이터 로드 약 2분 + BPE 토크나이저 학습 약 3분 + 학습 전 generation 약 30초 + 모델 학습 약 1분 + 학습 후 generation + reference 비교 약 2분)
 
-
 ## 학습 흐름
 
 1. 📊 **변화 추적표 + Phase 전환 도입부** — Encoder (BERT) → Decoder (GPT) 큰 그림 한 화면
@@ -15,7 +14,6 @@
 6. 🔬 **사전·사후 generation 비교** — 같은 prompt 3개, *학습 전 (random init) vs 학습 후* 나란히, 그리고 reference `gpt2` (124M, WebText) 도 함께
 7. 🛠️ **변형**: `temperature / top_k / top_p` sampling 비교
 8. 📦 **등장 라이브러리** / 🎯 **체크포인트** / ❓ **FAQ** (답변 포함)
-
 
 > 📒 **사전 학습 자료**: Ch 20-23 (작은 BERT scratch MLM + 분류 fine-tune). Ch 24 는 *같은 from-scratch 사전학습* 흐름인데, 본체가 *encoder (BERT) → decoder (GPT)*, 학습 목표가 *MLM → CausalLM*, 산출물이 *fine-tune 체크포인트 → generation 모델* 로 바뀝니다.
 
@@ -31,7 +29,6 @@
 | 25 (다음) | `gpt2` (124M, OpenAI WebText 사전학습) | BPE (GPT2 그대로) | TinyStories (Ch 24 와 동일) | `Linear(H, V)` (LM head 그대로) | `CrossEntropyLoss` (next-token) - **continual pretraining** |
 
 전체 챕터 표는 [루트 README](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표) 를 참고하세요.
-
 
 ## Phase 전환 — Encoder (BERT) → Decoder (GPT) 패러다임
 
@@ -220,98 +217,6 @@ byte-level BPE 의 핵심 장점: *어떤 유니코드 문자열이든* (이모�
 GPT-2 는 특수 토큰을 *최소화* 합니다 - `<|endoftext|>` 하나만 사용 (bos = eos = pad 겸용). BERT 의 `[CLS] [SEP] [MASK] [PAD] [UNK]` 5종과 대비.
 
 > Ch 19 의 "토크나이저는 모델과 운명공동체" 원칙이 본 챕터에서도 유효 - vocab 2,048 의 BPE 를 직접 학습한 뒤, *같은 vocab 으로 GPT 본체를 random init* 합니다. Ch 25 에서는 *반대로* - `gpt2` (124M) 의 vocab 50,257 BPE 를 그대로 가져와 같은 TinyStories 데이터로 **continual pretraining**. 토크나이저 + 모델이 *함께* 변하는 게 Ch 24-25 의 핵심 비교.
-
-## 환경 셋업
-
-## TinyStories 데이터 로드
-
-`roneneldan/TinyStories` 는 GPT-3.5 / GPT-4 가 *4세 어린이가 이해할 단어만* 으로 생성한 짧은 영어 동화 약 2.1M 편 (Eldan & Li 2023, arXiv:2305.07759). 어휘·문법이 단순해 **3-5M 파라미터** 짜리 작은 모델로도 grammatical 한 생성이 가능합니다.
-
-학습 split 의 처음 **30,000 stories** 만 사용 (T4 30분 룰 안).
-
-## BPE 토크나이저 직접 학습
-
-`tokenizers.BPE` + ByteLevel pre-tokenizer 로 vocab 2,048 의 BPE 를 코퍼스에서 직접 학습합니다. Ch 19 의 토크나이저 학습 절차와 같은 패턴 - 다른 점은 *알고리즘* 만 (WordPiece → BPE).
-
-**관전 포인트** — `Once upon a time` 같이 TinyStories 에 *자주 등장* 하는 표현은 *적은 수의 토큰* 으로 압축, `rabbit` 처럼 덜 등장한 단어는 *여러 byte 조각* 으로 분할되는 경향. vocab 2,048 은 작은 모델에 맞춘 *최소한의 크기* 입니다.
-
-## 토큰화 + `group_texts` (HF 표준 CLM 전처리)
-
-HuggingFace 의 causal LM 학습 표준 패턴 (`run_clm.py`) 그대로:
-
-1. 전체 코퍼스를 토큰화 (배치 단위)
-2. 각 story 끝에 `<|endoftext|>` 부착 (story 경계 표시)
-3. 모든 토큰을 이어붙여 1D 스트림으로 만든 뒤 `block_size=128` 단위로 잘라 chunk 화
-4. 각 chunk 가 한 학습 sample - `DataCollatorForLanguageModeling(mlm=False)` 가 `labels = input_ids` 를 자동으로 채워 next-token prediction loss 가 됨
-
-Ch 20·22 의 `group_texts` 와 *완전히 같은 패턴*. MLM 챕터들에선 *마스킹* 만 추가됐다면, CausalLM 챕터에선 *labels = input_ids* 그대로.
-
-### Collator 가 만드는 `labels` 확인 - *거의 모든 자리* 가 학습 신호
-
-`DataCollatorForLanguageModeling(mlm=False)` 가 *내부적으로* `labels = input_ids.clone()` 을 만들어 `-100` 자리는 *없거나 pad 토큰 자리만* 임을 직접 확인합니다. Ch 20·22 의 MLM collator 가 약 85% 를 `-100` 으로 채웠던 것과 *정확히 반대*.
-
-> **`-100` thread 환기** - MLM 은 *마스킹된 자리만* 학습, CausalLM 은 *거의 모든 자리* 학습. 같은 PyTorch `CrossEntropyLoss(ignore_index=-100)` 트릭이 *적용 자리만 정반대*. Ch 28 (SFT) 에서는 *prompt 자리만 -100* - 같은 트릭의 세 번째 적용. 그 한 줄 코드가 *모델이 instruction 을 따라가게 만드는 핵심* 입니다.
-
-본 챕터의 collator 셋업이 *그 토대* - `labels = input_ids.clone()` 의 직관을 손에 익혀 두면 Ch 28 의 `labels[:prompt_len] = -100` 가 단번에 이해됩니다.
-
-## `GPT2LMHeadModel` from scratch
-
-`GPT2Config` 의 핵심 필드만 작게 잡고 *random init* (사전학습 X) 시작.
-
-- `n_layer=4, n_head=4, n_embd=256` → 약 3M params, BERT 챕터들의 small DistilBERT 와 비슷한 스케일
-- `n_positions = BLOCK_SIZE = 128` - 학습한 만큼만 context 사용
-- bos / eos / pad token id 를 토크나이저와 동기화
-- `tie_word_embeddings=True` (기본) - LM head 와 input embedding 의 weight 를 공유 → 파라미터 절약
-
-### BERT 와의 차이가 코드로 드러나는 곳
-
-- `BertForMaskedLM` 이 아니라 `GPT2LMHeadModel` - 클래스 자체가 *causal attention 내장*
-- `from_pretrained(...)` 없이 `GPT2LMHeadModel(config)` - 무작위 초기화 from scratch (Ch 20·22 의 `BertForMaskedLM(config)` 와 같은 패턴, *모델 패밀리만* 다름)
-
-## 학습 *전* generation - 비교 기준선 (random init baseline)
-
-Ch 20·22 의 *사전학습 전 [MASK] top-5 후보* 와 같은 역할. random init 모델은 통계적으로 *어느 토큰이든 거의 균등한 확률* 로 뽑으니, 생성 텍스트가 *영어와 거리가 먼 byte 조각 / 의미 없는 짧은 단어 나열* 이 나옵니다.
-
-같은 prompt 와 sampling 설정을 학습 *전 / 후* 모두에서 호출 → loss 곡선 없이도 *학습이 본체에 무엇을 새겼는가* 가 한 화면에 드러납니다.
-
-**관전 포인트** - 학습 전 출력은 *무작위 토큰 나열* (반복되는 짧은 byte 조각, 의미 없는 단어들). Ch 20·22 의 *학습 전 [MASK] top-5* 가 *the / a / of / , / .* 같은 통계적 빈도 토큰이었던 것과 같은 현상의 *generation 판* 입니다. 학습 후 출력과 *나란히 비교* 하면 사전학습이 본체에 *next-token 분포* 를 새긴 증거를 직접 보게 됩니다.
-
-## `Trainer` 로 사전학습
-
-BERT 챕터들 (Ch 20·22) 과 *완전히 같은* Trainer 패턴 - 바뀌는 건 모델 클래스와 collator 의 `mlm=False` 두 곳.
-
-- `DataCollatorForLanguageModeling(mlm=False)` → `labels = input_ids` (next-token prediction)
-- `max_steps=1500`, `batch_size=32`, `fp16=True` - T4 약 1분
-- `eval_steps=150` 으로 train / val loss 추이 관찰
-
-**관전 포인트** - 학습 첫 step loss 가 약 7.6 (random baseline `ln(2048)`) 부근에서 시작해 *수백 step 안에 약 4-5* 로 빠르게 떨어지고, 1500 step 끝에 누적 평균 `train_loss` 가 *약 3.8* 까지 내려가면 정상 (`train_loss` 는 학습 내내 본 step 들의 누적 평균이라 마지막 step 의 순간 loss 보다 다소 높게 보입니다). perplexity 로 환산하면 vocab 2,048 중 *수십 개 후보* 로 좁힌 상태 - 다음 토큰을 *어느 정도 결정적* 으로 뽑는 수준.
-
-## 학습 *후* generation + before/after 비교
-
-같은 `PROMPTS / GEN_KWARGS` 로 학습 후 모델에서 다시 생성하고, §5 의 학습 전 결과와 나란히 비교합니다. **이 챕터의 합격 기준**: 학습 후 텍스트가 *전* 보다 명확히 *영어 문장* 에 가까워졌는가 - Ch 20·22 의 *사전·사후 [MASK] top-5* 비교의 *generation 판*.
-
-**해석 가이드 - 사전학습이 만든 차이**
-
-- **BEFORE (random init)**: *영어와 거리가 먼 byte 조각 / 의미 없는 짧은 단어 반복*. logits 가 random 초기값이라 sampling 이 통계적 빈도 토큰들 사이에서만 흔들림.
-- **AFTER (TinyStories 30K × 1500 steps)**: *말이 되는 영어 문장* - 짧지만 *주어 + 동사 + 목적어* 구조, *동화 풍 어휘* (rabbit, forest, friend, mom, happy, ...). 완벽하진 않아도 *학습이 본체에 next-token 분포를 새긴 증거* 가 한 줄에서 명확.
-
-> Ch 20·22 의 *사전·사후 [MASK] top-5* 비교에서 `[MASK]` 자리에 *the / a / of* 같은 빈도 토큰만 뽑히던 random init 모델이, 학습 후엔 *문맥에 맞는 정답 토큰* 을 top-5 에 담아내던 그 변화의 *generation 판* 입니다.
-
-### Reference 비교 - `gpt2` (124M, OpenAI WebText) 의 같은 prompt generation
-
-같은 prompt 3개를 *학습이 충분히 잘 된* 표준 `gpt2` (124M params, WebText 약 40GB 사전학습) 에 넣어 *우리 작은 GPT (약 3M, TinyStories 30K)* 와 격차를 직접 비교. Ch 20 의 *3-way [MASK] top-5 비교* (before / ours / `bert-base-uncased`) 와 같은 패턴.
-
-T4 에서 약 1분 추가. 데이터·파라미터 격차가 generation 품질의 격차로 어떻게 드러나는지 한 화면에.
-
-**해석 가이드 - 데이터·파라미터 규모가 만든 격차**
-
-- **BEFORE (random)**: 영어와 거리 먼 byte 조각.
-- **OURS (3M, TinyStories 30K × 1500 steps)**: *동화 풍 단순 영어* - 어휘는 동화 도메인에 강하지만 (rabbit, forest, mom, friend, ...) *복잡한 문장 구조 / 추상적 어휘* 는 약함.
-- **REF (gpt2 124M, WebText 약 40GB)**: *다양한 도메인 어휘 + 자연스러운 문장 흐름* - 같은 prompt 에 대해 *동화풍이 아닌 일반 산문 / 뉴스 / 대화* 등 다양한 톤. 학습 데이터 분포 (WebText) 의 다양성이 generation 다양성으로 직결.
-
-> **세 모델의 격차가 정확히 *모델 크기 + 데이터 크기 + 데이터 다양성* 의 격차** - 우리 작은 GPT (3M, TinyStories 30K stories) → reference `gpt2` (124M, WebText 약 40GB) 사이에 *파라미터 약 40배, 데이터 규모 약 수천 배, 도메인 다양성 격차*. 그게 generation 의 *질적 차이* 로 정확히 드러납니다.
-
-> Ch 25 가 이 격차를 *데이터 축을 통제하고* 좁히는 챕터입니다 - `gpt2` (124M) 의 사전학습 *위에* 같은 TinyStories 30K 로 **continual pretraining**. *대규모 일반 사전학습 모델을 작은 도메인 데이터로 적응* 시킬 때의 generation 품질이, 우리 from-scratch 작은 GPT 와 어떻게 다른지 직접 비교.
 
 ## 이 장의 구성
 

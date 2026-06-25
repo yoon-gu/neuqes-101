@@ -4,7 +4,6 @@
 
 **예상 소요 시간**: 약 22-30분 (verifiable 데이터 준비 약 1분 + SFT 모델 로드 약 2분 + verifier·group advantage 손계산 시연 약 2분 + `GRPOTrainer` 학습 약 15-22분 + GRPO 전·후 정확도(verifier pass rate) 비교 약 3분)
 
-
 ## 학습 흐름
 
 1. 📊 **누적 추적표** (Ch 28/29/30 + **31 강조**) + GPT 학습 4단계 표 (Ch 30 DPO·Ch 31 GRPO = 단계 4 alignment 의 두 방식)
@@ -16,7 +15,6 @@
 7. 🚀 **실습**: verifiable 데이터 → SFT 모델 → **verifier + group advantage 손계산** → `GRPOTrainer` 학습 → GRPO 전·후 정확도 비교
 8. 📦 **등장 라이브러리** (`trl.GRPOTrainer`·`GRPOConfig`·`reward_funcs` 첫 등장) / 🎯 **체크포인트** / ❓ **FAQ** (답변 포함)
 9. 🎓 **Phase 4 회고 + Phase 5 (Diffusion LM) 예고**
-
 
 > 📒 **사전 학습 자료**: Ch 30 (DPO — alignment 의 첫 방식), Ch 28 (KoGPT2 SFT — 본 챕터의 *출발 모델*), Ch 29 (벤치마크 평가 — 특히 부록의 *pass@1·cons@64* 가 verifiable reward 와 직접 연결). 본 챕터는 *alignment 의 두 방식 비교* 를 완성합니다: **DPO (주관적 선호, 사람/AI 비교) vs GRPO (객관적 정답, 자동 검증)**.
 
@@ -30,7 +28,6 @@
 | **31 ← 여기** | **SFT 모델 (policy) + verifier** | **prompt + 정답 (검증 가능, 수학)** | **group relative advantage** | **GRPO loss (group baseline)** | **`GRPOTrainer`** |
 
 전체 챕터 표는 [루트 README](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표) 를 참고하세요.
-
 
 ## GPT 시대 학습 4단계 — 본 챕터의 위치 (단계 4, Alignment 의 두 번째 방식 / GRPO)
 
@@ -177,144 +174,6 @@ DPO 데이터는 `(prompt, chosen, rejected)` *세 텍스트* 였습니다. **GR
 3. 디코딩된 텍스트를 *verifier(reward 함수)* 가 채점 → reward
 
 > 같은 KoGPT2 토크나이저이므로 *Ch 28 SFT·Ch 30 DPO 에서 본 instruction 포맷 토큰화* 가 그대로 적용됩니다. 차이는 *답이 데이터에 있느냐 (DPO) vs 모델이 생성하느냐 (GRPO)* 입니다. 토크나이저는 *Phase 4 내내 고정* — Ch 27 이후 한 번도 바뀌지 않았습니다.
-
-## 환경 셋업
-
-`trl` 의 **`GRPOTrainer`** 와 **`GRPOConfig`**, 그리고 **`reward_funcs`** (verifier 함수) 가 이번 챕터에 새로 등장합니다. `transformers` / `datasets` / `accelerate` 와 함께 설치합니다.
-
-> ⚠️ `trl` 은 버전마다 `GRPOTrainer` / `GRPOConfig` API 변동이 큽니다 (인자 이름이 버전에 따라 바뀝니다 — 예: `max_completion_length` 는 있지만 `max_prompt_length` 는 버전에 따라 없음). 본 노트북은 설치된 `trl` 버전을 셋업 셀에서 출력하고, *버전 간 안정적인 핵심 경로* (`num_generations` + `reward_funcs` + `max_completion_length` + `prompt` 컬럼) 만 사용합니다.
-
-## verifiable 데이터 — `prompt` + 정답 (산술)
-
-GRPO 데이터의 핵심은 **정답을 자동 검증할 수 있어야** 한다는 것입니다. 코드(테스트 실행) 는 무겁고 환경 의존이 크니, 본 챕터는 *가장 깨끗한 verifiable task* 인 **산술(arithmetic)** 로 시작합니다 — 정답이 *정수 하나* 라 *문자열 매칭만으로 채점* 됩니다.
-
-각 샘플은 `(prompt, answer)` 두 컬럼입니다:
-- `prompt`: 풀어야 할 문제 (예: `"3 + 5 = ?"`) — 모델에 입력
-- `answer`: 정답 (예: `"8"`) — *verifier 가 채점할 때만* 사용 (모델 입력 아님)
-
-> 합성 산술이라 *정답을 우리가 알고* 있으니, *verifier (정답 매칭) 가 완벽* 합니다. 이것이 verifiable reward 의 이상적 형태 — *reward 가 잡음 없이 정확*. (GSM8K 같은 실제 수학 데이터셋도 같은 방식이지만, 답 추출이 더 까다롭습니다 — FAQ 참고.)
-
-## SFT 모델 (policy) 로드
-
-GRPO 는 *SFT 모델에서 출발* 합니다 (Ch 28 의 SFT 체크포인트가 정석). 노트북 단독 실행을 위해 **base KoGPT2 로 시작** 합니다 — 보통은 *이미 지시를 따르는 SFT 모델* 에서 GRPO 를 시작해야 *rollout 이 의미 있는 답* 을 내고 verifier 가 *섞인 reward* (잘한 답 + 못한 답) 를 줄 수 있습니다.
-
-토크나이저는 Ch 27·28·30 과 동일 (`PreTrainedTokenizerFast` + special token 명시 — `AutoTokenizer` 함정 회피).
-
-## 2.5 SFT 워밍스타트 — GRPO 의 비제로 시작점 만들기
-
-GRPO 는 한 prompt 에 여러 답(group)을 생성해 *그룹 안에서* 잘한 답의 확률을 올립니다. 그런데 base KoGPT2 는 산술을 거의 못 풀어 **그룹의 보상이 전부 0** 이 되기 쉽고, 그러면 advantage 가 모두 0 이라 *학습 신호가 없습니다*(GRPO 의 cold-start 함정).
-
-그래서 표준 RLHF 파이프라인처럼 **GRPO 전에 짧은 SFT 로 "포맷 + 산술"을 먼저 가르칩니다.** 산술 prompt 와 정답을 지도학습해 모델이 일부 문제를 맞히기 시작하면(비제로 정확도), 그룹 안에 정답·오답이 섞여 advantage 가 생기고 GRPO 가 비로소 작동합니다. Ch 28 에서 한 그 SFT 를, 이번엔 산술 task 에 맞춰 워밍스타트로 씁니다.
-
-## verifier (reward function) 정의 + group advantage 손계산
-
-여기가 본 챕터의 *개념 핵심*. **verifier 함수** 를 정의하고, 한 prompt 에 *여러 답* 을 채점한 뒤 *group relative advantage* 를 손으로 계산해 §의 표를 재현합니다. `GRPOTrainer` 가 매 step·매 prompt 내부에서 하는 일을 *축소판으로 재현* 하는 셈입니다.
-
-### verifier — 생성 답에서 정답 추출 → 매칭 → reward
-
-`trl` 의 reward 함수 시그니처는 **`reward_func(completions, **kwargs)`** 입니다:
-- `completions`: policy 가 생성한 답들의 *리스트* (group)
-- `**kwargs`: 데이터셋의 *나머지 컬럼* 이 *리스트로* 전달 (우리의 `answer` 컬럼이 `answer=[...]` 로 들어옴)
-- 반환: 각 completion 의 **reward 리스트** (`list[float]`)
-
-### group relative advantage 손계산 — reward → advantage
-
-verifier 가 매긴 reward $[1, 0, 1, 0]$ 를 *group 평균 대비 상대값* 으로 바꿉니다 (§의 수식):
-
-$$A_i = \frac{r_i - \text{mean}(r)}{\text{std}(r) + \varepsilon}$$
-
-이게 `GRPOTrainer` 가 *critic 없이* advantage 를 만드는 방법 — *group 평균이 baseline*.
-
-**무엇을 보고 있나** — 위 두 출력은 `GRPOTrainer` 가 *매 step, 매 prompt* 내부에서 하는 계산입니다:
-
-- **verifier** 가 *사람 없이 자동* 으로 reward 를 매깁니다 (정답 매칭). preference 라벨이 필요 없습니다
-- **group advantage** 가 *critic 없이* 만들어집니다 — *그룹 동료들의 평균* 이 baseline. 평균보다 잘한 답은 +, 못한 답은 −
-- **group 전체가 같으면 (전부 정답·전부 오답) advantage = 0** → 학습 신호 없음. *그룹 안에 다양성* (잘한 답 + 못한 답) 이 있어야 GRPO 가 작동합니다
-
-> 이 두 부품 — *verifier (reward)* 와 *group advantage (baseline)* — 이 GRPO 의 전부입니다. 아래 §4 에서 `GRPOTrainer` 에 이 verifier 를 넘기면, 나머지 (rollout · advantage · 정책 갱신) 는 자동입니다.
-
-## `GRPOTrainer` 로 GRPO 학습 — *새 trainer, verifier 로 정렬*
-
-`trl.GRPOTrainer` 는 본 챕터에 처음 등장합니다. §3 에서 손으로 한 *verifier reward → group advantage* 를, *매 step* *rollout (여러 답 생성) → 채점 → advantage → 정책 갱신* 으로 자동 수행합니다. 설정은 `GRPOConfig` (`TrainingArguments` 상속) 로 주며, **`num_generations`** 가 group size 입니다.
-
-> **rollout 주의 (T4 시간·메모리)**: GRPO 는 *매 step 여러 답을 생성* 하므로 무겁습니다 (DPO 보다 generation 비용이 큼). T4 + 30분 룰을 지키려면: **group size 작게 (`num_generations=4`) + 짧은 generation (`max_completion_length` 작게) + 작은 batch + 적은 step**. 시간이 빡빡하면 `N_TRAIN` 이나 step 을 더 줄이세요.
-
-> **`trl` 버전 주의**: `GRPOConfig` 는 `max_completion_length` 를 받지만 `max_prompt_length` 는 버전에 따라 없습니다. `beta` 는 KL 제약의 세기로, 0 으로 두면 reference 없이(ref-free) 돌지만 정책이 SFT 모델에서 멀어지는 것을 막을 닻이 사라집니다. 본 노트북은 *작은 KL 앵커 (`beta=0.04`)* 로 reference (= SFT 모델) 근처에 묶어 collapse·reward hacking 을 완화합니다.
-
-## 4.5 🎯 난이도 필터 — GRPO 가 배울 *신호* 만들기
-
-GRPO 의 advantage 는 그룹 안에서 $(r-\text{mean})/\text{std}$ 입니다. 그런데 한 자리 산술은 prompt 마다 정답률이 **0 또는 1 로 양극화** 되기 쉽습니다 - SFT 후 쉬운 문제는 8개 답이 *전부 정답*, 못 푸는 문제는 *전부 오답*. 그러면 그룹 보상의 **표준편차가 0** 이라 advantage 가 전부 0 → *학습 신호가 아예 없습니다*.
-
-그래서 GRPO 가 실제로 배우려면 **그룹 안에 정답과 오답이 섞여야** 합니다. SFT 직후 각 prompt 의 정답률을 재서, *중간 난이도(약 25-87.5%)* 인 prompt 만 GRPO 학습셋으로 남깁니다. 이것이 reward 를 손대지 않고(이진 검증가능 보상 그대로) advantage 분산을 살리는 가장 직접적인 방법입니다.
-
-## GRPO 전·후 정확도 비교 — *verifier pass rate 가 올랐는가*
-
-본 챕터의 핵심 데모. *같은 eval 셋* (학습에 안 쓴 산술 문제) 에 대해 *GRPO 전* 과 *후* 의 **정확도 (verifier pass rate)** 를 비교합니다.
-
-- **GRPO 전**: policy 가 산술을 잘 못 풀어 pass rate 낮음
-- **GRPO 후**: *정답 방향* 으로 정책이 강화되어 pass rate ↑ (정답을 더 자주 생성)
-
-정확도가 *올랐다면* verifiable reward 로 능력이 정렬된 직접 증거입니다.
-
-**해석 가이드 — verifiable reward alignment 의 증거**
-
-- **before (gray)**: policy 가 산술을 잘 못 풀어 pass rate 가 낮습니다 (base KoGPT2 는 산술에 약함)
-- **after (green)**: *정답 방향* 으로 정책이 강화되어 pass rate 가 오릅니다 — 모델이 *정답을 더 자주 생성*
-
-> **핵심**: GRPO 는 *preference 라벨 없이*, *verifier 가 자동 채점한 reward* 만으로 능력을 정렬합니다. group 안에서 *정답이 평균보다 잘한 답* 으로 강화되며, 그 효과가 *정확도(pass rate) 상승* 으로 나타납니다.
-
-> ⚠️ KoGPT2 (125M) 는 작은 base 모델이고 (정석은 SFT 모델에서 출발), 학습 step·group size 도 작아 효과가 *미묘* 할 수 있습니다. 관전 포인트는 *극적 향상* 이 아니라 ***정확도가 정답 방향으로 올랐는가*** 입니다. 또한 *group 안에 정답·오답이 섞여야* (std>0) 학습 신호가 생기므로, base 모델이 *가끔이라도 정답을 내야* GRPO 가 작동합니다 — §6 의 reward 곡선에서 확인.
-
-## 학습 곡선 — reward / reward std / completion 길이
-
-`GRPOTrainer` 는 학습 중 *loss* 뿐 아니라 *reward (group 평균)·reward_std·completion 길이* 같은 GRPO 고유 지표를 로깅합니다 (`trainer.state.log_history`). reward 가 오르고, reward_std 가 *0 이 아닌* (= group 안에 다양성이 있는) 구간에서 학습이 일어났는지 확인합니다.
-
-## 왜 reward 가 잘 안 올랐는가 — GRPO 의 전제조건
-
-§5 의 정확도 막대를 보면 GRPO 후 정확도가 SFT 베이스라인 위로 **소폭 올랐습니다**(0.875 → 0.891). 극적이진 않지만 분명한 **양(+)의 개선** 이고, 이건 *그냥 얻어진 게 아닙니다*. 사실 이 산술 task 에 GRPO 를 *순진하게* 돌리면 정확도가 **오히려 떨어지거나 collapse** 합니다 — group reward 가 전부 0 이거나 전부 1 로 쏠려 학습 신호가 사라지기 때문입니다. 우리가 §2.5 의 **SFT 워밍스타트**(능력 부여)와 §4.5 의 **난이도 필터**(group 분산 확보)로 *바로 이 전제조건* 을 먼저 충족시켰기에 GRPO 가 비로소 작동했습니다. 이번 절에서 그 전제조건의 정체 — *왜 group 안에 정답·오답이 섞여야 하는가* — 를 짚습니다.
-
-### 증상 — group reward 가 대부분 0
-
-base KoGPT2 (125M) 는 산술을 거의 못 풉니다. 한 prompt 에 4개 답을 생성하면 *대부분 전부 오답* → group reward 가 `[0, 0, 0, 0]` 입니다. §3 의 손계산에서 봤듯이:
-
-| group reward | mean | std | advantage | 학습 신호 |
-|---|---|---|---|---|
-| `[0, 0, 0, 0]` (전부 오답) | 0 | 0 | **전부 0** | **없음** |
-| `[1, 1, 1, 1]` (전부 정답) | 1 | 0 | **전부 0** | **없음** |
-| `[1, 0, 1, 0]` (섞임) | 0.5 | 0.5 | `[+1,-1,+1,-1]` | **있음** |
-
-base KoGPT2 의 GRPO 는 거의 매번 첫 번째 줄 (`[0,0,0,0]`) 에 빠집니다.
-
-### 근본 원인 — GRPO 는 "무에서 유" 를 만들지 못한다
-
-GRPO 의 advantage 는 $A_i = (r_i - \text{mean}) / (\text{std} + \varepsilon)$ 입니다. group 안의 *모든 답이 같은 reward* 면 std = 0 → **advantage 0 → gradient 0 → 학습 신호 없음**. 즉 GRPO 가 작동하려면 *group 안에 잘한 답과 못한 답이 섞여 있어야* 합니다. 그런데 모델이 task 를 *아예 못 풀면* 모든 답이 똑같이 reward 0 이라 비교 자체가 불가능합니다.
-
-> **핵심 교훈**: GRPO(RL)는 SFT 처럼 *없던 능력을 새로 가르치지* 못합니다. *모델이 이미 가끔이라도 성공하는 능력* 을 그 방향으로 **증폭** 하는 기법입니다. 그래서 *"가끔이라도 정답이 나와야"* GRPO 가 그 방향을 강화할 수 있습니다. base KoGPT2 처럼 *한 번도 성공하지 못하는* 모델에는 증폭할 신호 자체가 없습니다.
-
-작은 base 모델 (KoGPT2 125M) + 어려운 task (산술) = **reward 가 sparse(희소)** = GRPO 가 *출발점* 을 잡지 못하는 전형적 상황입니다. DeepSeek-R1 이 *순수 RL* 로 reasoning 을 끌어낼 수 있었던 것도 *충분히 큰 base 모델* 에서 출발했기 때문입니다 — 큰 모델은 어려운 문제도 *가끔* 맞히므로 group 에 다양성이 생기고, GRPO 가 그 *가끔의 성공* 을 증폭할 수 있었습니다.
-
-### reward 가 안 오를 때의 해결 레버 4가지
-
-| 레버 | 무엇을 | 왜 도움이 되나 |
-|---|---|---|
-| **(1) SFT 먼저** | instruction-response 로 형식·기초를 먼저 가르침 (Ch 28) | base 가 *가끔이라도 정답·형식* 을 내게 만들어 group 다양성 확보 |
-| **(2) 더 강한 base 모델** | KoGPT2 125M → 산술 가능한 더 큰/능력 있는 모델 | 어려운 문제도 *가끔 맞혀* group reward 에 차이 발생 |
-| **(3) task 난이도 ↓** | 더 쉬운 문제부터 (한 자리 덧셈 등) | 성공 확률 ↑ → group 에 정답이 섞일 확률 ↑ |
-| **(4) format reward + HPO** | 정답 형식을 따르면 *부분 보상* + group size↑·temperature↑ | reward 가 *0 만 나오는 것* 을 막아 *학습 신호를 확보*. 형식 준수만으로도 std>0 |
-
-특히 **(4) format reward** 는 작은 모델에 강력합니다. 정답을 *못 맞혀도* 답을 *정해진 형식* (예: `"정답: N"`) 으로 내면 0.2 같은 부분 보상을 줍니다. 그러면 group 안에서 *형식을 지킨 답 vs 안 지킨 답* 의 reward 차이가 생겨 (예: `[0.2, 0.0, 0.2, 0.0]`) std>0 → **advantage 가 0 에서 벗어나 학습이 시작** 됩니다. 모델이 먼저 *형식* 을 배우고, 그 위에서 *정답* 으로 나아가는 사다리를 놓는 셈입니다.
-
-### 부록에서 reward 가 실제로 오르는 모습 확인
-
-이 레버들을 적용해 reward 가 *실제로 오르는* GRPO 는 부록 [`31_grpo_appendix.ipynb`](./31_grpo_appendix.ipynb) 에서 봅니다. 부록은:
-
-- **(2) 더 강한 base** — `Qwen/Qwen2.5-0.5B-Instruct` (Ch 29 에서 쓴, 산술을 *가끔 맞히는* 모델) 로 교체
-- **(4) format reward** — correctness reward + format reward 두 개를 조합해 *0 만 나오는 것* 을 방지
-- **HPO** — `num_generations`·`temperature`·`beta`·`learning_rate` 가 reward·수렴에 주는 영향
-
-을 적용해, *본 챕터의 KoGPT2 와 대비* 되도록 **reward 전·후 차이가 명확히 보이는** 셋업을 시연합니다. 본문은 *GRPO 의 전제조건을 (안 오르는 현상으로) 체감* 하는 챕터, 부록은 *그 전제조건을 충족시켜 reward 를 올리는* 챕터입니다.
-
-> 한 문장 요약: ***GRPO 는 모델이 이미 가끔 성공하는 능력을 증폭할 뿐, 무에서 유를 만들지 못한다. 그래서 RL 전에 SFT·충분한 base·format reward 로 "출발점" 을 먼저 마련해야 한다.***
 
 ## 이 장의 구성
 

@@ -4,7 +4,6 @@
 
 **예상 소요 시간**: 약 22-30분 (preference 데이터 로드·필터 약 2분 + SFT 모델 로드 약 2분 + DPO loss 직관 시각화 약 1분 + DPOTrainer 학습 약 15-22분 + DPO 전·후 reward margin 비교 약 3분)
 
-
 ## 학습 흐름
 
 1. 📊 **누적 추적표** (Ch 27/28/29 + **30 강조** + Ch 31 예고) + GPT 학습 4단계 표 (Ch 30 = 단계 4 alignment, DPO)
@@ -15,7 +14,6 @@
 6. 🔤 **토크나이저 노트** — KoGPT2 `PreTrainedTokenizerFast` (Ch 27 이후 고정)
 7. 🚀 **실습**: preference 데이터 로드 → SFT 모델·reference 준비 → **DPO loss 직관 시각화 (margin)** → `DPOTrainer` 학습 → DPO 전·후 reward margin 비교
 8. 📦 **등장 라이브러리** (`trl.DPOTrainer`·`DPOConfig` 첫 등장) / 🎯 **체크포인트** / ❓ **FAQ** (답변 포함)
-
 
 > 📒 **사전 학습 자료**: Ch 28 (KoGPT2 SFT — 본 챕터의 *출발 모델*), Ch 29 (벤치마크 평가), Ch 27 (KoGPT2 토크나이저 함정). 본 챕터는 *alignment 의 두 thread 연장*: (1) `labels = -100` 의 *response-only* 가 DPO 의 log-prob 계산에서도 이어지고, (2) "파인튜닝" 의 의미가 *행동 정렬 (SFT)* 에서 *선호 정렬 (alignment)* 로 한 발 더 나아갑니다.
 
@@ -30,7 +28,6 @@
 | 31 (다음) | SFT 모델 + verifier | verifiable-reward prompts (수학·코드) | group relative advantage | `GRPO loss` | `GRPOTrainer` |
 
 전체 챕터 표는 [루트 README](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표) 를 참고하세요.
-
 
 ## GPT 시대 학습 4단계 — 본 챕터의 위치 (단계 4, Alignment / DPO)
 
@@ -195,105 +192,6 @@ DPO 데이터는 *세 개의 텍스트* 로 구성됩니다 (`prompt`, `chosen`,
 > 같은 KoGPT2 토크나이저이므로 *Ch 28 SFT 에서 본 instruction 포맷 토큰화* 가 그대로 적용됩니다. chosen / rejected 는 *같은 prompt 에 대한 다른 답변* 이라 *prompt 토큰열은 완전히 동일*, 답변 토큰열만 갈립니다 — DPO 가 비교하는 건 정확히 그 *답변 토큰열의 log-prob* 입니다.
 
 토크나이저는 Ch 27 이후 *Phase 4 내내 고정* — Ch 31 (GRPO) 에서도 같은 KoGPT2 토크나이저를 씁니다.
-
-## 환경 셋업
-
-`trl` 의 **`DPOTrainer`** 와 **`DPOConfig`** 가 이번 챕터에 새로 등장합니다. `transformers` / `datasets` / `accelerate` 와 함께 설치합니다.
-
-> ⚠️ `trl` 은 버전마다 `DPOTrainer` / `DPOConfig` API 변동이 큽니다 (`max_prompt_length` 같은 인자가 버전에 따라 사라지기도 합니다). 본 노트북은 설치된 `trl` 버전을 셋업 셀에서 출력하고, *버전 간 안정적인 핵심 경로* (`prompt`/`chosen`/`rejected` 데이터 + `beta` + `max_length`) 만 사용합니다.
-
-## preference 데이터 로드 — `prompt` / `chosen` / `rejected`
-
-**`maywell/ko_Ultrafeedback_binarized`** — 한국어 preference 데이터셋. 각 샘플은 *같은 `prompt` 에 대한 `chosen` (선호되는 답) 과 `rejected` (덜 선호되는 답)* 을 가집니다. 이게 DPO 의 표준 데이터 형식 (`prompt` / `chosen` / `rejected` 세 컬럼).
-
-### 이 데이터는 무엇이고, 어떤 LLM 을 지향하는가 (가장 중요)
-
-> **DPO 의 핵심 — *데이터가 곧 정렬 목표* 입니다.** 모델은 *chosen 으로 표시된 답의 방향* 으로 정렬됩니다. 그러니 *어떤 답을 chosen 으로 두었는가* = *어떤 LLM 을 만들려는가* 입니다. 데이터를 이해하지 않고 DPO 하면, *내가 무엇을 향해 정렬하는지 모르고* 모델을 미는 셈입니다.
-
-**UltraFeedback** (이 데이터의 원조, `openbmb/UltraFeedback`) 의 제작 방식:
-1. 다양한 출처의 prompt 약 64,000개 (ShareGPT, Evol-Instruct, FLAN, TruthfulQA 등)
-2. 각 prompt 에 *여러 LLM* (GPT-4·GPT-3.5·LLaMA·Falcon 등 풀) 의 답변 생성
-3. **GPT-4 가 각 답변을 *네 가지 축* 으로 채점** — 이 네 축이 곧 *지향하는 LLM 의 가치*:
-
-| 평가 축 | 의미 | 지향하는 모델의 성질 |
-|---|---|---|
-| **instruction-following** | 지시를 정확히 따르나 | 시키는 대로 하는 |
-| **truthfulness** | 사실에 맞나 | 거짓·환각 없는 |
-| **honesty** | 모르는 걸 모른다고 하나 (과신 안 함) | 자기 한계를 아는 |
-| **helpfulness** | 실제로 도움되나 | 쓸모 있는 |
-
-→ 즉 이 데이터로 DPO 하면 **"지시를 잘 따르고, 진실하고, 정직하고, 도움되는"** 모델을 지향합니다. (Anthropic 의 *HHH — Helpful, Honest, Harmless* 정렬 철학과 같은 계열. UltraFeedback 은 *harmless(안전성)* 보다 *helpful·honest·truthful* 에 무게.)
-
-**binarized**: 위 4축 점수에서 *최고점 = chosen, 다른 하나 = rejected* 로 *이진 쌍* 을 만든 형식 (DPO 가 쌍을 요구하므로). 사람이 아니라 *GPT-4 가 채점* 했다는 점에서 **RLAIF** (RL from AI Feedback) — Ch 29 부록의 *LLM-as-judge 를 데이터 생성에 쓴 것*. 그래서 judge(GPT-4)의 편향(length·형식 선호)도 *데이터에 상속* 됩니다.
-
-> ⚠️ **한국어판 주의**: `ko_Ultrafeedback_binarized` 의 한국어화 방식(번역인지 한국어 생성인지)은 데이터 카드 확인이 필요합니다. 번역 기반이면 *번역체·문화 불일치*, *한국어 맥락에서 preference 가 어긋날* 가능성이 있습니다 (Ch 29 부록의 *"한국어는 원어 데이터로 검증"* 메시지). **실무에서는 *내 도메인·내 사용자 선호로 직접 수집한 preference* 가 공개 데이터보다 훨씬 중요** — 공개 데이터는 *방법론 학습용*.
-
-원본 답변은 *에세이 길이* 라 T4 + 30분 룰에는 깁니다. **짧은 샘플만 필터 + 약 1,500 샘플 subset** 으로 학습 시간을 통제합니다.
-
-### prompt 포맷 + 답변 길이 통제
-
-Ch 28 SFT 와 *같은 instruction 포맷* (`### 명령어:\n...\n\n### 응답:\n`) 으로 prompt 를 감쌉니다 — SFT 와 추론·학습 포맷을 일치시켜야 정렬이 제대로 됩니다. chosen / rejected 답변은 너무 길면 잘라 시퀀스 길이를 통제합니다.
-
-## SFT 모델 (policy) 로드 + reference 준비
-
-DPO 는 *SFT 모델에서 출발* 합니다. Ch 28 의 SFT 체크포인트가 있으면 그것을 policy 로 쓰는 게 정석입니다 — 여기서는 노트북 단독 실행을 위해 **base KoGPT2 로 시작** 합니다 (보통은 *SFT 를 거친 모델* 에서 DPO 를 시작합니다 — 그래야 이미 지시를 따르는 상태에서 *선호만* 정렬).
-
-토크나이저는 Ch 27·28 과 동일 (`PreTrainedTokenizerFast` + special token 명시 — `AutoTokenizer` 함정 회피).
-
-### reference 모델 — SFT 모델 복사 + freeze
-
-DPO 는 *policy + frozen reference 두 모델* 을 씁니다. reference 는 *학습 시작 시점의 SFT 모델을 복사해 freeze* 한 것 — policy 가 *원본에서 얼마나 멀어졌나* 의 기준 (§4 의 KL 제약 닻).
-
-> `trl` 1.x 의 `DPOTrainer` 는 **`ref_model=None` 으로 주면 reference 를 자동 생성** 합니다 (policy 의 복사본을 freeze, 또는 PEFT 사용 시 adapter 를 끈 base 를 reference 로). 우리는 *명시적으로 어떻게 동작하는지* 보이기 위해 §3 에서 reference 를 직접 복사·freeze 해 margin 을 손으로 계산하고, §4 의 실제 학습에서는 `ref_model=None` 으로 `DPOTrainer` 에 맡깁니다.
-
-## DPO loss 직관 시각화 — margin 을 손으로 계산
-
-여기가 본 챕터의 *개념 핵심*. 한 preference 샘플에 대해 **chosen / rejected 각각의 (정책 대비 reference) log-prob 우위** 를 직접 계산하고, 그 *margin* 으로 DPO loss 를 손으로 구해 봅니다. `DPOTrainer` 가 내부에서 하는 일을 *축소판으로 재현* 하는 셈입니다.
-
-### 절차
-
-1. `prompt + chosen`, `prompt + rejected` 를 각각 토큰화 (prompt 길이를 기록)
-2. policy·reference 로 **response 부분 토큰만** 의 log-prob 합을 계산 (prompt 제외 = `labels = -100` thread)
-3. implicit reward $r(x,y) = \log\pi_\theta(y\mid x) - \log\pi_{\text{ref}}(y\mid x)$ 를 chosen·rejected 각각
-4. margin $= r(y_w) - r(y_l)$, loss $= -\log\sigma(\beta\cdot\text{margin})$
-
-**무엇을 보고 있나** — 위 출력은 `DPOTrainer` 가 *매 step, 매 샘플* 내부에서 하는 계산입니다:
-
-- *학습 전* (policy = reference 와 동일) 이라면 `r_w ≈ r_l ≈ 0`, margin ≈ 0, loss ≈ $-\log 0.5 = 0.693$ 근처에서 출발합니다
-- 학습이 진행되면 policy 가 *chosen 의 log-prob 은 올리고 (r_w ↑), rejected 는 내려 (r_l ↓)* margin 이 커지고 loss 가 줄어듭니다
-- reference 는 *고정* 이라 `log pi_ref` 는 변하지 않습니다 — 변하는 건 *policy 의 log-prob* 뿐 (그래서 reference 가 "닻" 역할)
-
-아래에서 margin 을 바꿔 가며 *loss 곡선* 을 그려, *왜 margin 이 클수록 loss 가 작아지는지* 를 한눈에 봅니다.
-
-## `DPOTrainer` 로 DPO 학습 — *새 trainer, preference 정렬*
-
-`trl.DPOTrainer` 는 본 챕터에 처음 등장합니다. §3 에서 손으로 한 *response-only log-prob → implicit reward → margin → sigmoid loss* 를 *매 step 자동* 으로 수행합니다. 설정은 `DPOConfig` (`TrainingArguments` 상속) 로 주며, **`beta`** 가 reference 제약 강도입니다.
-
-> **VRAM 주의**: DPO 는 *policy + frozen reference 두 모델* 을 메모리에 올립니다 (SFT 의 약 2배). T4 (16GB) 에서는 **batch 를 작게 (2) + gradient accumulation (8)** 으로 effective batch 16 을 만들고 `fp16=True` 로 메모리를 아낍니다. `ref_model=None` 으로 주면 `DPOTrainer` 가 reference 를 자동 생성·freeze 합니다.
-
-## DPO 전·후 reward margin 비교 — *선호가 정렬됐는가*
-
-본 챕터의 핵심 데모. *같은 preference 샘플들* 에 대해 *DPO 전* 과 *DPO 후* 의 **reward margin (chosen - rejected 의 implicit reward)** 분포를 비교합니다.
-
-- **DPO 전**: policy = reference → margin 이 *정확히 0* (무승부). reward accuracy 0.500
-- **DPO 후**: policy 가 *chosen 을 더 선호* → margin 분포가 *양수 쪽으로 이동*, reward accuracy ↑
-
-margin 분포가 *오른쪽 (양수) 으로 밀려났다면* 정렬이 일어난 직접 증거입니다.
-
-> **측정 노트.** 학습 전에는 policy 와 reference 가 같아 margin 이 *모든 샘플에서 정확히 0* 입니다. 'margin>0 비율' 로만 세면 0.000 이 나오지만, 무승부(margin=0)는 동전 던지기처럼 50% 이므로 **0.5 로 집계** 합니다 (코드의 `+ 0.5 * (margin == 0)`). 그래야 before 0.500 → after 0.844 로 정렬 효과가 왜곡 없이 읽힙니다.
-
-**해석 가이드 — preference alignment 의 증거**
-
-- **before (gray)**: policy 가 아직 reference 와 같아 margin 이 *0 근처에 모여* 있습니다. chosen 과 rejected 를 *구별하지 못함* (reward accuracy ≈ 0.5)
-- **after (green)**: 분포가 *양수 쪽으로 이동* — policy 가 *chosen 의 implicit reward 를 rejected 보다 높게* 매깁니다. reward accuracy 가 0.5 보다 위로 올라갑니다
-
-> **핵심**: DPO 는 *답변을 새로 생성하지 않고도*, *주어진 (chosen, rejected) 쌍의 상대적 선호* 를 policy 에 새깁니다. 그게 *implicit reward margin 의 양수 이동* 으로 나타납니다. KoGPT2 (125M) + 짧은 학습이라 이동 폭은 작을 수 있지만, *방향* 이 양수로 잡혔다면 DPO 의 핵심 (선호 정렬) 은 작동한 것입니다.
-
-> ⚠️ KoGPT2 는 작은 base 모델이고 (정석은 SFT 모델에서 출발), DPO 데이터·시간도 작아 효과가 *미묘* 할 수 있습니다. 관전 포인트는 *생성 품질의 극적 향상* 이 아니라 ***reward margin 이 chosen 쪽으로 이동했는가*** 입니다. 품질은 *SFT 모델에서 출발 + 더 많은 preference + 더 큰 모델* 로 끌어올립니다 (FAQ 참고).
-
-## 학습 곡선 — DPO loss / reward 지표
-
-`DPOTrainer` 는 학습 중 *loss* 뿐 아니라 *reward margin·reward accuracy* 같은 DPO 고유 지표를 로깅합니다 (`trainer.state.log_history`). loss 가 내려가고 reward accuracy 가 올라가는지 확인합니다.
 
 ## 이 장의 구성
 

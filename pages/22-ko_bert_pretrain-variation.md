@@ -3,7 +3,7 @@
 | 변형 축 | 이번 챕터 (기본) | 변형 예 | 예상 효과 |
 |---|---|---|---|
 | `N_TRAIN_TEXT` | 5,000 | 30,000 | 한 epoch 시간 약 6배, loss 하락폭 큼. 30분 안엔 1 epoch 만 가능 |
-| `num_train_epochs` | 2 | 3 | eval loss 약간 하락, perplexity 완만히 하락(8-10 epoch 이후 평탄) |
+| `num_train_epochs` | 2 | 3 | eval loss 약간 하락, perplexity 약 2-3 정도 감소 |
 | `BLOCK_SIZE` | 128 | 64 | 블록 수 약 2배 증가, 한 블록 짧아져 *문맥* 줄음 |
 | `mlm_probability` | 0.15 | 0.20-0.25 | 한국어는 형태소 풍부해 *가릴 자리* 가 많음. 학습 신호 약간 늘지만 trade-off 있음 (FAQ Q2 참고) |
 | 데이터 출처 | 한국어 Wikipedia (5K paragraphs) | 더 많은 위키 + 모두의 말뭉치 + 뉴스 | klue/bert-base 의 약 8.4B 토큰에 더 가까이 — 단, 토큰 수 늘리면 학습 시간 비례 증가 |
@@ -12,4 +12,4 @@
 
 ### 사전학습을 더 돌리면? — 부록 곡선 (이슈 #19)
 
-본편은 **2 epoch** 데모라 perplexity 가 높습니다. [20-4 부록 — 사전학습량과 perplexity 곡선](20-en_bert_pretrain-scaling.md)에서 2 → 16 epoch 으로 길게 학습하며 측정한 곡선을 보면, perplexity 가 **영어 1,173 → 696, 한국어 1,626 → 709 로 ~2배** 내려간 뒤 **epoch 8-10 부터 평탄** 해집니다. 5,000 텍스트로는 모델이 금세 saturate 해 *epoch 만으로는 한계* — 더 낮추려면 **데이터 양** 을 늘려야 합니다 (Ch 21 부록의 '데이터가 가장 큰 lever' 와 같은 결론). 본편의 높은 perplexity 는 버그가 아니라 *짧은 데모 학습의 정직한 반영* 입니다.
+본편은 **2 epoch** 데모라 perplexity 가 높습니다. 부록 `20_en_bert_pretrain_scaling` 에서 2 → 16 epoch 으로 길게 학습하며 측정한 곡선을 보면, perplexity 가 **영어 1,173 → 696, 한국어 1,626 → 709 로 ~2배** 내려간 뒤 **epoch 8-10 부터 평탄** 해집니다. 5,000 텍스트로는 모델이 금세 saturate 해 *epoch 만으로는 한계* — 더 낮추려면 **데이터 양** 을 늘려야 합니다 (Ch 21 부록의 '데이터가 가장 큰 lever' 와 같은 결론). 본편의 높은 perplexity 는 버그가 아니라 *짧은 데모 학습의 정직한 반영* 입니다.
