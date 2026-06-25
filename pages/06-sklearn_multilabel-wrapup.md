@@ -2,8 +2,8 @@
 
 | 이름 | 한 줄 설명 | 다음 챕터에서 |
 |---|---|---|
-| `sklearn.multiclass.OneVsRestClassifier` | K개 독립 binary 분류기를 묶고 multi-label 모드 자동 감지 | Ch 13 BERT multi-label에서 같은 패러다임을 BERT로 |
-| `sklearn.metrics.hamming_loss` | 라벨별 평균 오답 비율 | Ch 13에서도 평가 지표로 |
+| `sklearn.multiclass.OneVsRestClassifier` | K개 독립 binary 분류기를 묶고 multi-label 모드 자동 감지 | Ch 12 BERT multi-label에서 같은 패러다임을 BERT로 |
+| `sklearn.metrics.hamming_loss` | 라벨별 평균 오답 비율 | Ch 12에서도 평가 지표로 |
 | `sklearn.metrics.f1_score(average="micro" / "macro")` | multi-label F1 집계 방식 | — |
 | `sklearn.metrics.classification_report` | 라벨별 precision/recall/F1 한 번에 | — |
 
@@ -144,6 +144,64 @@ print(f"강제로 multi-class화 한 경우 accuracy: {acc_pseudo:.4f}")
 ```
 
 힌트: 한 리뷰에 여러 항목이 동시에 있을 때 *하나만* 정답으로 골라 학습하면 정보가 사라집니다. 정답이 임의 선택이라 모델이 어느 라벨을 골라야 할지 모호해지고, multi-label 결과보다 정보가 적은 모델이 됩니다.
+
+## Phase 0 마무리 — sklearn vs HuggingFace 미리보기
+
+이 챕터로 sklearn 시대가 끝납니다. 다음 챕터(Ch 7)부터 등장하는 `transformers` (Hugging Face)는 *loss를 최소화한다* 는 목적은 같지만 **그 방식과 철학** 이 다릅니다. 큰 그림을 미리 잡아두면 Phase 1의 학습 코드가 낯설지 않습니다.
+
+### 핵심 차이 한 문장
+
+> **sklearn은 *수학 문제를 풀어준다*.**
+> **HuggingFace는 *수학 문제를 푸는 과정* 을 우리가 통제한다.**
+
+이 챕터에서 쓴 `LogisticRegression(max_iter=1000)` 은 lbfgs solver가 알아서 BCE를 최소화하는 가중치를 찾아 돌려줬습니다 — 우리는 `fit()` 한 줄과 결과만 봤어요.
+
+HF의 `Trainer`는 학습 *과정* 을 명시합니다 — 학습률, 배치 크기, 에폭 수, 스케줄러, 평가 빈도. loss는 매 step마다 계산되어 backprop으로 가중치를 *조금씩* 옮깁니다. 같은 데이터로 학습해도 random seed가 바뀌면 결과가 미세하게 달라지는 이유.
+
+### 한 표로 정리
+
+| 축 | sklearn (Phase 0) | HuggingFace / PyTorch (Phase 1+) |
+|---|---|---|
+| **최적화 방식** | 수렴 보장 solver (lbfgs 등) 한 번 호출 → 전역 최적해 | 미니배치 SGD/Adam — 학습자가 epoch·step 통제 |
+| **언제 끝나나** | 수렴 기준(`tol`) 도달 시 자동 | 사용자 지정 epoch 수 (멈출 시점 직접 결정) |
+| **결정성** | convex 문제라 같은 입력엔 같은 출력 | non-convex — random seed·batch 순서에 따라 매번 미세 차이 |
+| **에폭/배치 개념** | 보통 없음 — 전체 데이터 한 번에 | **핵심** — `num_train_epochs`, `batch_size` 명시 필수 |
+| **loss를 직접 보나** | 거의 안 봄 (fit 후 평가만) | 매 step마다 loss 출력 + 곡선 추적 (학습이 망가지면 즉시 보임) |
+| **하드웨어** | CPU, 단일 스레드 위주 | **GPU 필수** (fp16, gradient accumulation 등) |
+| **loss 함수 지정** | 모델 클래스에 내장 (LogReg = log loss) | `problem_type` 자동 매핑 또는 `compute_loss` 오버라이드 |
+| **모델 크기** | 수만 ~ 수십만 파라미터 | 사전학습 BERT — 6천만 ~ 수억 파라미터 |
+| **학습 시간 (Yelp 5,000)** | 1초 미만 | T4 GPU에서 2-5분 |
+
+### 코드 형태 미리보기 (Ch 9 BERT 회귀에서 본격 등장)
+
+```python
+# Phase 0 (sklearn — 우리가 한 형태)
+model = LogisticRegression(max_iter=1000)
+model.fit(X, y)   # 한 줄. 수렴 기준까지 알아서 풀어줌.
+
+# Phase 1 이후 (HuggingFace — 다음부터)
+from transformers import AutoModelForSequenceClassification, TrainingArguments, Trainer
+
+model = AutoModelForSequenceClassification.from_pretrained(
+    "distilbert-base-uncased", num_labels=2,
+)
+args = TrainingArguments(
+    output_dir="./output",
+    num_train_epochs=3,             # 학습 반복 횟수
+    per_device_train_batch_size=16, # 미니배치 크기
+    learning_rate=2e-5,             # 학습률
+    fp16=True,                      # T4에서 GPU 효율
+    logging_steps=20,               # loss 곡선 출력
+)
+trainer = Trainer(model=model, args=args, train_dataset=..., ...)
+trainer.train()   # 매 step마다 loss → backward → optimizer step
+```
+
+각 인자가 무엇을 하는지는 Ch 9에서 본격적으로 펼쳐 봅니다. 지금은 "fit 한 줄이 수십 개 인자로 펼쳐진다" 는 감만 가지면 됩니다.
+
+### 변하지 않는 것
+
+Loss 자체 — `BCEWithLogitsLoss`, `CrossEntropyLoss`, `MSELoss` — 는 sklearn에서 익힌 그대로 Phase 1+에서도 등장합니다. **달라지는 건 *어떻게 최소화하느냐* 의 도구뿐**. Phase 0의 직관(BCE 수치 표, OvR fit 분해, softmax 동등성 등)이 Phase 1의 BERT 학습에서도 그대로 살아 있습니다.
 
 ## 다음 챕터 예고
 

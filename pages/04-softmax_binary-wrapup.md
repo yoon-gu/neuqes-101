@@ -2,7 +2,7 @@
 
 | 이름 | 한 줄 설명 | 다음 챕터에서 |
 |---|---|---|
-| `LogisticRegression()` | 데이터가 multi-class 면 multinomial(softmax+CE) 자동, binary 면 sigmoid+BCE (이번 챕터엔 K=2) | Ch 5 에서 K=5 로 확장, Ch 12 BERT multi-class 에서 같은 패러다임 |
+| `LogisticRegression()` | 데이터가 multi-class 면 multinomial(softmax+CE) 자동, binary 면 sigmoid+BCE (이번 챕터엔 K=2) | Ch 5 에서 K=5 로 확장, Ch 11 BERT multi-class 에서 같은 패러다임 |
 | `sklearn.metrics.log_loss` | CE/BCE 평가 함수 (multi-class 호환) | — |
 
 ## 체크포인트 질문

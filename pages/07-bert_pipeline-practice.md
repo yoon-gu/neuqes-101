@@ -2,6 +2,8 @@
 
 ## 환경 준비
 
+Colab에는 `transformers`가 보통 설치돼 있지만, 최신 버전을 보장하기 위해 한 번 설치합니다.
+
 ```python
 !pip install -q transformers
 ```
@@ -23,6 +25,14 @@ PyTorch:        2.11.0+cu128
 CUDA available: True
 GPU:            Tesla T4
 ```
+
+### `!nvidia-smi` — GPU 메모리(VRAM) 실시간 추적
+
+이번 챕터부터 학습·추론 코드가 GPU에 모델을 올리기 시작합니다. **`!nvidia-smi`** 는 NVIDIA에서 제공하는 명령행 도구로, 현재 GPU의 VRAM 사용량·온도·전력을 한 번에 보여줍니다. Colab 셀에서 `!` 접두사로 호출 가능.
+
+T4의 총 VRAM은 **약 15.36 GB** (= 15,360 MiB). 모델·옵티마이저·activation을 모두 이 안에 담아야 합니다 — Ch 9 이후 학습 chapter에서는 이 한도와 자주 부딪히게 되어요.
+
+**baseline** — 아직 아무 모델도 안 올린 상태:
 
 ```python
 !nvidia-smi
@@ -53,145 +63,29 @@ Wed Jun 17 21:13:25 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
-먼저 토크나이저만 비교해 봅니다. 모델 가중치 없이 토크나이저 파일만 받으면 되므로 가볍고, 같은 문장이 모델마다 어떻게 쪼개지는지 한눈에 볼 수 있습니다. DistilBERT/BERT(WordPiece)와 GPT-2(BPE)를 나란히 둡니다.
+**무엇을 봐야 하나** — 출력 가운데 줄 `Memory-Usage` 칸:
+
+```
+| ... |  XXX MiB / 15360MiB | ...
+        └─ used    └─ total
+```
+
+- 처음엔 ~3-200 MiB 정도. CUDA 컨텍스트가 잡혀 있는 만큼만.
+- 모델을 GPU에 올릴 때마다 `used` 가 증가합니다.
+- `Volatile GPU-Util` 은 *현재* GPU가 일하는 비율 — 학습 중에는 90~100% 가까이.
+
+**Python으로도 확인 가능** (셀 내부에서 변수로 받고 싶을 때):
 
 ```python
-# 토크나이저 3종 로드 (모델 가중치는 안 받고 토크나이저 파일만 ~수백 KB)
-tokenizer_specs = {
-    "distilbert-base-uncased": AutoTokenizer.from_pretrained("distilbert-base-uncased"),
-    "bert-base-cased":         AutoTokenizer.from_pretrained("bert-base-cased"),
-    "gpt2":                    AutoTokenizer.from_pretrained("gpt2"),
-}
-
-print(f"{'model':>28}  {'vocab_size':>10}  {'class':>32}")
-print("-" * 76)
-for name, tok in tokenizer_specs.items():
-    print(f"{name:>28}  {tok.vocab_size:>10,}  {type(tok).__name__:>32}")
+if torch.cuda.is_available():
+    used  = torch.cuda.memory_allocated() / 1024**2
+    total = torch.cuda.get_device_properties(0).total_memory / 1024**2
+    print(f"GPU memory: {used:.0f} / {total:.0f} MiB")
 ```
 
-**▶ 실행 결과**
+> Tip: `!nvidia-smi` 는 *시스템 전체* VRAM을 보여주고, `torch.cuda.memory_allocated()` 는 *현재 PyTorch 프로세스* 의 할당량만 보여줍니다 — 후자는 캐시·예약 메모리는 빼고 실제 텐서가 점유한 양에 가깝습니다.
 
-```text
-                       model  vocab_size                             class
-----------------------------------------------------------------------------
-     distilbert-base-uncased      30,522                     BertTokenizer
-             bert-base-cased      28,996                     BertTokenizer
-                        gpt2      50,257                     GPT2Tokenizer
-```
-
-**결과 해석**
-
-어휘 크기가 모델마다 다릅니다 — DistilBERT 30,522, BERT-cased 28,996, GPT-2 50,257. 토크나이저가 다르면 같은 텍스트라도 토큰 ID가 전혀 달라지므로, 모델과 토크나이저는 항상 짝으로 로드해야 합니다.
-
-같은 두 문장을 세 토크나이저로 각각 쪼개 토큰 개수와 조각을 비교합니다.
-
-```python
-sample_sentences = [
-    "I love using Hugging Face!",
-    "Tokenization is fascinating.",
-]
-
-for sent in sample_sentences:
-    print(f"Input: {sent!r}")
-    for name, tok in tokenizer_specs.items():
-        tokens = tok.tokenize(sent)
-        print(f"  {name:>28}  ({len(tokens)} tokens) {tokens}")
-    print()
-```
-
-**▶ 실행 결과**
-
-```text
-Input: 'I love using Hugging Face!'
-       distilbert-base-uncased  (6 tokens) ['i', 'love', 'using', 'hugging', 'face', '!']
-               bert-base-cased  (7 tokens) ['I', 'love', 'using', 'Hu', '##gging', 'Face', '!']
-                          gpt2  (7 tokens) ['I', 'Ġlove', 'Ġusing', 'ĠHug', 'ging', 'ĠFace', '!']
-
-Input: 'Tokenization is fascinating.'
-       distilbert-base-uncased  (5 tokens) ['token', '##ization', 'is', 'fascinating', '.']
-               bert-base-cased  (6 tokens) ['To', '##ken', '##ization', 'is', 'fascinating', '.']
-                          gpt2  (5 tokens) ['Token', 'ization', 'Ġis', 'Ġfascinating', '.']
-```
-
-**결과 해석**
-
-같은 문장이 토크나이저마다 다르게 쪼개집니다. `uncased` 인 DistilBERT는 대소문자를 무시해 `i`/`face` 로, `cased` 인 BERT는 `Hu`+`##gging` 처럼 WordPiece 서브워드로, GPT-2는 `Ġ`(앞 공백) 표시를 붙인 BPE 조각으로 나눕니다. 토큰 개수까지 달라진다는 점에 주목하세요.
-
-다음은 각 모델이 `[CLS]`/`[SEP]`/`[PAD]`/`[UNK]` 자리에 어떤 특수 토큰을 두는지 한 표로 모읍니다.
-
-```python
-# 특수 토큰: 모델마다 어떤 token을 [CLS]/[SEP]/[PAD]/[UNK] 자리에 두는지
-print(f"{'model':>28}  {'BOS/CLS':>16}  {'EOS/SEP':>16}  {'PAD':>10}  {'UNK':>10}")
-print("-" * 90)
-for name, tok in tokenizer_specs.items():
-    cls = tok.cls_token if tok.cls_token else (tok.bos_token or "—")
-    sep = tok.sep_token if tok.sep_token else (tok.eos_token or "—")
-    pad = tok.pad_token or "—"
-    unk = tok.unk_token or "—"
-    print(f"{name:>28}  {cls:>16}  {sep:>16}  {pad:>10}  {unk:>10}")
-
-# 모든 special token을 한 번에 보고 싶으면:
-print()
-for name, tok in tokenizer_specs.items():
-    print(f"{name}.special_tokens_map = {tok.special_tokens_map}")
-```
-
-**▶ 실행 결과**
-
-```text
-                       model           BOS/CLS           EOS/SEP         PAD         UNK
-------------------------------------------------------------------------------------------
-     distilbert-base-uncased             [CLS]             [SEP]       [PAD]       [UNK]
-             bert-base-cased             [CLS]             [SEP]       [PAD]       [UNK]
-                        gpt2     <|endoftext|>     <|endoftext|>           —  <|endoftext|>
-
-distilbert-base-uncased.special_tokens_map = {'unk_token': '[UNK]', 'sep_token': '[SEP]', 'pad_token': '[PAD]', 'cls_token': '[CLS]', 'mask_token': '[MASK]'}
-bert-base-cased.special_tokens_map = {'unk_token': '[UNK]', 'sep_token': '[SEP]', 'pad_token': '[PAD]', 'cls_token': '[CLS]', 'mask_token': '[MASK]'}
-gpt2.special_tokens_map = {'bos_token': '<|endoftext|>', 'eos_token': '<|endoftext|>', 'unk_token': '<|endoftext|>'}
-```
-
-**결과 해석**
-
-BERT 계열은 `[CLS]`/`[SEP]`/`[PAD]`/`[UNK]` 4종을 명확히 구분합니다. 반면 GPT-2는 BOS/EOS/UNK 자리를 모두 `<|endoftext|>` 하나로 쓰고 PAD가 없습니다 — 분류용 인코더(BERT)와 생성용 디코더(GPT-2)의 설계 차이가 특수 토큰에서 드러납니다.
-
-이번엔 분류 모델의 `config` 를 펼쳐, 파라미터 수·은닉 차원·라벨 매핑 같은 모델 정체성을 확인합니다.
-
-```python
-cfg = model.config
-n_params, size_mb = model_size_summary(model)   # 앞에서 정의한 헬퍼 재사용
-
-print(f"Model name/path:          {cfg._name_or_path}")
-print(f"Model type:               {cfg.model_type}")
-print(f"Parameters:               {n_params:,}  ({n_params/1e6:.1f} M)")
-print(f"fp32 size:                {size_mb:.1f} MB  (= params x 4 bytes)")
-print(f"hidden_size:             {cfg.hidden_size}        (BERT-base/DistilBERT: 768)")
-print(f"vocab_size:              {cfg.vocab_size:,}     (matches tokenizer vocab)")
-print(f"max_position_embeddings: {cfg.max_position_embeddings}  (input length cap)")
-print(f"num_labels:              {cfg.num_labels}          (classification head dim)")
-print(f"id2label:                {cfg.id2label}")
-print(f"label2id:                {cfg.label2id}")
-print(f"problem_type:            {cfg.problem_type!r}    (None → auto-inferred from num_labels)")
-```
-
-**▶ 실행 결과**
-
-```text
-Model name/path:          distilbert-base-uncased-finetuned-sst-2-english
-Model type:               distilbert
-Parameters:               66,955,010  (67.0 M)
-fp32 size:                255.4 MB  (= params x 4 bytes)
-hidden_size:             768        (BERT-base/DistilBERT: 768)
-vocab_size:              30,522     (matches tokenizer vocab)
-max_position_embeddings: 512  (input length cap)
-num_labels:              2          (classification head dim)
-id2label:                {0: 'NEGATIVE', 1: 'POSITIVE'}
-label2id:                {'NEGATIVE': 0, 'POSITIVE': 1}
-problem_type:            None    (None → auto-inferred from num_labels)
-```
-
-**결과 해석**
-
-이 모델은 SST-2 감성 분류용이라 `num_labels=2`, `id2label={0: 'NEGATIVE', 1: 'POSITIVE'}` 로 분류 헤드가 2차원입니다. `vocab_size`(30,522)가 앞서 본 DistilBERT 토크나이저 어휘와 정확히 일치하는 점, `problem_type` 이 `None` 이라 `num_labels` 로부터 자동 추론된다는 점을 확인하세요.
+## 실습: 일단 돌려봅시다
 
 Hugging Face의 `pipeline` 은 **"모델 다운로드 → 토큰화 → 추론 → 결과 후처리"** 를 한 줄로 묶어주는 함수입니다.
 

@@ -39,62 +39,6 @@ print(f"Total samples: {len(df)}")
 Total samples: 5000
 ```
 
-학습된 `model_ml`이 한 샘플에서 만드는 손실을 직접 분해해 봅니다. 라벨이 3개 이상 활성된 샘플을 골라, 정답이 1인 라벨은 $-\log(p)$, 0인 라벨은 $-\log(1-p)$ 로 5개 BCE를 따로 계산하고 평균을 냅니다.
-
-```python
-# 여러 라벨이 활성된 test 샘플 하나 고르기 (분해가 잘 보이도록)
-multi_active = np.where(Y_test.sum(axis=1) >= 3)[0]
-sample_idx = int(multi_active[0]) if len(multi_active) > 0 else 0
-
-y_true = Y_test[sample_idx]
-p_pred = proba_ml[sample_idx]
-text = X_text_test.iloc[sample_idx]
-
-print("Review preview (200 chars):")
-print(f"{text[:200]}...")
-print(f"Active labels: {y_true.sum()}\n")
-
-print(f"{'aspect':>10}  {'y_true':>6}  {'pred p':>10}  {'term':>20}  {'loss':>10}")
-print("-" * 64)
-total_loss = 0.0
-for k, aspect in enumerate(ASPECTS):
-    y_k, p_k = int(y_true[k]), float(p_pred[k])
-    if y_k == 1:
-        loss_k = -np.log(max(p_k, 1e-12))
-        formula = f"-log({p_k:.4f})"
-    else:
-        loss_k = -np.log(max(1 - p_k, 1e-12))
-        formula = f"-log(1-{p_k:.4f})"
-    total_loss += loss_k
-    print(f"{aspect:>10}  {y_k:>6d}  {p_k:>10.4f}  {formula:>20}  {loss_k:>10.4f}")
-print("-" * 64)
-print(f"{'sum':>10}  {'':>6}  {'':>10}  {'':>20}  {total_loss:>10.4f}")
-print(f"{'mean BCE':>10}  {'':>6}  {'':>10}  {'/ 5':>20}  {total_loss/5:>10.4f}")
-```
-
-**▶ 실행 결과**
-
-```text
-Review preview (200 chars):
-Okay, so I just went to Vegas for the first time for my 21st birthday. Basically, I LOVE VEGAS! The clubs we went to were absolutely amazing …(뒤 63자 생략)
-Active labels: 3
-
-    aspect  y_true      pred p                  term        loss
-----------------------------------------------------------------
-      food       0      0.4514        -log(1-0.4514)      0.6003
-   service       1      0.9069          -log(0.9069)      0.0977
-     price       1      0.7343          -log(0.7343)      0.3089
-  ambiance       1      0.5806          -log(0.5806)      0.5437
-  location       0      0.2636        -log(1-0.2636)      0.3060
-----------------------------------------------------------------
-       sum                                                1.8566
-  mean BCE                                       / 5      0.3713
-```
-
-**결과 해석**
-
-이 샘플의 평균 BCE는 0.3713 으로 baseline $\log 2 = 0.693$ 보다 작아, 학습된 모델이 5개 라벨을 평균적으로 맞추고 있음을 보여줍니다. 정답 1인 service(0.9069)는 손실 0.0977로 작고, 정답 0인데도 확률 0.4514로 어정쩡한 food가 0.6003으로 가장 큰 손실을 냅니다.
-
 Yelp 데이터에는 multi-label 정답이 없으므로 **5개 항목(aspect)** 별 키워드 사전을 만들어 매칭합니다.
 
 | 항목 | 의미 | 키워드 예시 |
@@ -295,3 +239,81 @@ First 3 sample predicted probabilities (per-label):
 **결과 해석**
 
 `coef_` shape이 `(1, 10000)` 인 5개 LogReg가 따로 학습됐고, 각 라벨의 확률은 합=1로 정규화되지 않습니다 — 0번 샘플의 5개 값을 더해도 1이 아닙니다. softmax라면 불가능한 일로, per-label sigmoid가 라벨마다 독립으로 P(label=1)을 내준다는 증거입니다.
+
+## Loss 한 단계 더: 학습된 모델의 실제 예측으로 BCE 분해
+
+방금 fit한 `model_ml`이 한 샘플에 대해 어떤 손실을 만들어내는지 직접 분해합니다. 변경점 표에서 본 "**per-label BCE 평균**" 이 단순한 수식이 아니라 **실제 5개 숫자의 산수** 라는 걸 확인합니다 — 그리고 그 위에서 "왜 multinomial CE는 여기 못 쓰나"를 진짜 값으로 짚습니다.
+
+학습된 `model_ml`이 한 샘플에서 만드는 손실을 직접 분해해 봅니다. 라벨이 3개 이상 활성된 샘플을 골라, 정답이 1인 라벨은 $-\log(p)$, 0인 라벨은 $-\log(1-p)$ 로 5개 BCE를 따로 계산하고 평균을 냅니다.
+
+```python
+# 여러 라벨이 활성된 test 샘플 하나 고르기 (분해가 잘 보이도록)
+multi_active = np.where(Y_test.sum(axis=1) >= 3)[0]
+sample_idx = int(multi_active[0]) if len(multi_active) > 0 else 0
+
+y_true = Y_test[sample_idx]
+p_pred = proba_ml[sample_idx]
+text = X_text_test.iloc[sample_idx]
+
+print("Review preview (200 chars):")
+print(f"{text[:200]}...")
+print(f"Active labels: {y_true.sum()}\n")
+
+print(f"{'aspect':>10}  {'y_true':>6}  {'pred p':>10}  {'term':>20}  {'loss':>10}")
+print("-" * 64)
+total_loss = 0.0
+for k, aspect in enumerate(ASPECTS):
+    y_k, p_k = int(y_true[k]), float(p_pred[k])
+    if y_k == 1:
+        loss_k = -np.log(max(p_k, 1e-12))
+        formula = f"-log({p_k:.4f})"
+    else:
+        loss_k = -np.log(max(1 - p_k, 1e-12))
+        formula = f"-log(1-{p_k:.4f})"
+    total_loss += loss_k
+    print(f"{aspect:>10}  {y_k:>6d}  {p_k:>10.4f}  {formula:>20}  {loss_k:>10.4f}")
+print("-" * 64)
+print(f"{'sum':>10}  {'':>6}  {'':>10}  {'':>20}  {total_loss:>10.4f}")
+print(f"{'mean BCE':>10}  {'':>6}  {'':>10}  {'/ 5':>20}  {total_loss/5:>10.4f}")
+```
+
+**▶ 실행 결과**
+
+```text
+Review preview (200 chars):
+Okay, so I just went to Vegas for the first time for my 21st birthday. Basically, I LOVE VEGAS! The clubs we went to were absolutely amazing …(뒤 63자 생략)
+Active labels: 3
+
+    aspect  y_true      pred p                  term        loss
+----------------------------------------------------------------
+      food       0      0.4514        -log(1-0.4514)      0.6003
+   service       1      0.9069          -log(0.9069)      0.0977
+     price       1      0.7343          -log(0.7343)      0.3089
+  ambiance       1      0.5806          -log(0.5806)      0.5437
+  location       0      0.2636        -log(1-0.2636)      0.3060
+----------------------------------------------------------------
+       sum                                                1.8566
+  mean BCE                                       / 5      0.3713
+```
+
+**결과 해석**
+
+이 샘플의 평균 BCE는 0.3713 으로 baseline $\log 2 = 0.693$ 보다 작아, 학습된 모델이 5개 라벨을 평균적으로 맞추고 있음을 보여줍니다. 정답 1인 service(0.9069)는 손실 0.0977로 작고, 정답 0인데도 확률 0.4514로 어정쩡한 food가 0.6003으로 가장 큰 손실을 냅니다.
+
+**관찰**
+
+- 5개 라벨이 *각자 독립적으로* 손실을 기여합니다 — 한 라벨에서 잘 맞춰도 다른 라벨에서 못 맞추면 그 영향이 그대로 평균에 더해집니다.
+- 정답이 1인 라벨은 $-\log(p)$ — 예측 확률이 1에 가까울수록 손실 0에 수렴.
+- 정답이 0인 라벨은 $-\log(1-p)$ — 예측 확률이 0에 가까울수록 손실 0에 수렴.
+- 같은 sigmoid 출력에 대해 정답이 0이냐 1이냐에 따라 **정반대 방향** 으로 페널티가 커집니다 (대칭 구조).
+
+### 같은 샘플을 multinomial CE로 풀려고 하면
+
+위 샘플의 정답은 multi-hot — 여러 라벨이 동시에 1입니다. 만약 multinomial CE를 *억지로* 적용하려면 다음 두 가지 *임의 결정* 이 필요합니다.
+
+1. **5개 활성 라벨 중 *하나만* 정답으로 골라야 함**: argmax? 첫 활성? 어느 기준이든 *임의*.
+2. **그러면 나머지 활성 라벨들은 *틀린* 클래스로 학습됨**: 모델이 그 라벨에 강한 확률을 줄수록 손실이 *커짐*.
+
+결과: 모델이 "동시 활성 패턴을 *피하려고*" 학습됩니다 — 실제 정답에서는 동시 활성이 정답인데도. 이건 *데이터 가정과 정반대 방향* 으로 학습 신호가 작동하는 셈입니다.
+
+per-label BCE는 위 표처럼 5개 손실을 *독립적으로* 합산하므로 각 라벨이 자기 정답에만 책임을 집니다. **multi-label 데이터의 본래 구조와 정합한 유일한 선택** 인 이유가 이 산수에 있습니다.

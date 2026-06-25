@@ -2,9 +2,9 @@
 
 | 이름 | 한 줄 설명 | 다음 챕터에서 |
 |---|---|---|
-| `datasets` | Hugging Face의 데이터셋 로딩 라이브러리 (Apache Arrow 기반) | Ch 8에서 깊게 본다 |
+| `datasets` | Hugging Face의 데이터셋 로딩 라이브러리 (Apache Arrow 기반) | Ch 7에서 깊게 본다 |
 | `sklearn.feature_extraction.text.CountVectorizer` | 횟수 벡터화 | 이후 챕터의 비교 기준 |
-| `sklearn.feature_extraction.text.TfidfVectorizer` | TF-IDF 벡터화 | Ch 2-6에서 입력으로 계속 사용 |
+| `sklearn.feature_extraction.text.TfidfVectorizer` | TF-IDF 벡터화 | Ch 2-5에서 입력으로 계속 사용 |
 
 ## 체크포인트 질문
 

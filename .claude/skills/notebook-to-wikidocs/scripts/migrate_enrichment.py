@@ -28,6 +28,17 @@ def _norm(s: str) -> str:
     return re.sub(r"\s+", "", s)
 
 
+def _is_real_codedesc(p: str) -> bool:
+    """④A(코드 앞 짧은 설명)인지. 표/인용/과장 길이는 구버전 노트북 잔재일 수 있어 제외."""
+    if "|" in p:                       # 마크다운 표
+        return False
+    if p.lstrip().startswith(">"):     # 인용/콜아웃(부록 안내 등)
+        return False
+    if p.lstrip().startswith(("- ", "* ", "1.")):  # 목록
+        return False
+    return len(p) <= 400               # 2-3문장 분량 상한
+
+
 # --------------------------------------------------------------------------- #
 # 노트북에서 코드셀·마크다운 모으기
 # --------------------------------------------------------------------------- #
@@ -70,23 +81,30 @@ def parse_blocks(text: str):
             blocks.append(("code", "\n".join(buf)))
             i = j + 1
         elif s == "**▶ 실행 결과**":
-            # 마커 + 뒤따르는 펜스(있으면)
-            j = i + 1
-            while j < n and not lines[j].strip(): j += 1
+            # 마커 + 뒤따르는 출력물(텍스트 펜스/이미지)을 흡수. 이미지 출력
+            # (`![...](..png)`)도 포함해야 그 뒤 '결과 해석'을 코드셀에 정확히 매단다.
+            # 단 코드 펜스(```python)는 흡수하지 않는다(다음 셀을 삼키면 안 됨).
             out_lines = [ln]
-            if j < n and lines[j].strip().startswith("```"):
-                out_lines += lines[i+1:j]
-                fence = lines[j].strip()
-                k = j + 1
-                blk = [lines[j]]
-                while k < n and lines[k].strip() != "```":
-                    blk.append(lines[k]); k += 1
-                if k < n: blk.append(lines[k])
-                out_lines += blk
-                i = k + 1
-            else:
-                i = j
-            blocks.append(("output", "\n".join(out_lines)))
+            j = i + 1
+            while j < n:
+                k = j
+                while k < n and not lines[k].strip():  # 사이 빈 줄 허용
+                    k += 1
+                if k >= n:
+                    j = k; break
+                t = lines[k].strip()
+                if t.startswith("```") and not t.startswith("```python"):
+                    out_lines.extend(lines[j:k+1]); j = k + 1
+                    while j < n and lines[j].strip() != "```":
+                        out_lines.append(lines[j]); j += 1
+                    if j < n:
+                        out_lines.append(lines[j]); j += 1
+                elif t.startswith("!["):
+                    out_lines.extend(lines[j:k+1]); j = k + 1
+                else:
+                    break
+            blocks.append(("output", "\n".join(out_lines).rstrip()))
+            i = j
         elif s.startswith("**위 코드 읽기**"):
             j = i
             buf = []
@@ -95,15 +113,12 @@ def parse_blocks(text: str):
             blocks.append(("walk", "\n".join(buf)))
             i = j
         elif s == "**결과 해석**":
-            j = i + 1
-            buf = [ln]
-            # 본문: 다음 구조 요소 전까지
-            while j < n:
-                t = lines[j].strip()
-                if t.startswith("```") or t.startswith("#") \
-                        or t.startswith("**위 코드 읽기") or t == "**▶ 실행 결과**" \
-                        or t == "**결과 해석**":
-                    break
+            # 표준 형식: 마커 단독 줄 + 빈 줄 + 한 문단. 다음 빈 줄 전까지만 흡수해
+            # 뒤따르는 노트북 산문을 결과 해석에 끌어들이지 않는다(이식 시 중복 방지).
+            buf = [ln]; j = i + 1
+            while j < n and not lines[j].strip():
+                buf.append(lines[j]); j += 1
+            while j < n and lines[j].strip():
                 buf.append(lines[j]); j += 1
             blocks.append(("interp", "\n".join(buf).rstrip()))
             i = j
@@ -156,8 +171,11 @@ def extract_enrichment(old_blocks, code_norms, md_all):
             if matched is None:
                 # 합쳐도 노트북 셀과 안 맞으면(이례적) 첫 조각만 키로
                 matched = _norm(chunks[0][0])
-            # A: pending_prose 중 노트북 마크다운에 없는 것만
-            A = [p for p in pending_prose if _norm(p) not in md_all]
+            # A(코드 앞 설명): 마커가 없어 OLD 페이지의 구버전·발산 내용과 섞일 수 있다.
+            # 1차로 표/인용/목록/과장 길이를 제외하고, 2차로 apply 단계의 중복 가드
+            # (노트북 본문과 겹치면 건너뜀)로 구버전 부활(예: Ch7 옛 표)을 막는다.
+            A = [p for p in pending_prose
+                 if _norm(p) not in md_all and _is_real_codedesc(p)]
             # C: 이 셀 출력 뒤 결과 해석
             C = []
             k = j
@@ -187,25 +205,42 @@ def extract_enrichment(old_blocks, code_norms, md_all):
 # NEW 페이지에 ④ 재부착
 # --------------------------------------------------------------------------- #
 def resplit_code(new_code: str, chunks):
-    """NEW 단일 펜스 코드를 OLD 조각 경계대로 다시 쪼갠다. (코드, walk) 리스트 반환."""
+    """NEW 단일 펜스 코드를 OLD 조각 경계대로 다시 쪼갠다. (코드, walk) 리스트 반환.
+
+    경계는 OLD 조각의 *정규화 내용*으로 맞춰(빈 줄 위치에 안 흔들림), 각 조각은
+    앞뒤 빈 줄을 제거해 ```python 바로 아래가 빈 줄로 시작하지 않게 한다(조각 사이는
+    '위 코드 읽기'로 분리되므로 경계 빈 줄이 불필요)."""
     if len(chunks) == 1:
-        return [(new_code, chunks[0][1])]
+        return [(new_code.strip("\n"), chunks[0][1])]
+    new_lines = new_code.split("\n")
     out = []
-    rest = new_code
-    rest_lines = rest.split("\n")
+    pos = 0
     for idx, (ocode, walk) in enumerate(chunks):
-        olines = ocode.split("\n")
         if idx == len(chunks) - 1:
-            piece = "\n".join(rest_lines)
-            rest_lines = []
+            piece = "\n".join(new_lines[pos:])
         else:
-            piece = "\n".join(rest_lines[:len(olines)])
-            rest_lines = rest_lines[len(olines):]
-        out.append((piece, walk))
+            target = _norm(ocode)
+            acc, k = "", pos
+            while k < len(new_lines) and _norm(acc) != target:
+                acc += new_lines[k]
+                k += 1
+            piece = "\n".join(new_lines[pos:k])
+            pos = k
+        out.append((piece.strip("\n"), walk))
     return out
 
 
-def apply_enrichment(new_text: str, enrich, stats):
+def _a_overlaps_orig(a: str, orig_norm: str) -> bool:
+    """(A) 의 실질 줄(>=30자)이 이미 노트북 본문(재빌드본)에 있으면 True.
+    수식·코드·표 행 등 노트북과 부분 겹침을 잡아 중복 삽입을 막는다."""
+    for ln in a.splitlines():
+        s = ln.strip()
+        if len(s) >= 30 and _norm(s) in orig_norm:
+            return True
+    return False
+
+
+def apply_enrichment(new_text: str, enrich, stats, orig_norm=""):
     blocks = parse_blocks(new_text)
     out = []
     for idx, (kind, payload) in enumerate(blocks):
@@ -214,11 +249,13 @@ def apply_enrichment(new_text: str, enrich, stats):
             pkg = enrich.get(key)
             if not pkg:
                 out.append(("code", payload)); continue
-            # (A) 코드 앞 설명 — 펜스 바로 앞에 삽입(이미 같은 산문이 직전이면 생략)
+            # (A) 코드 앞 설명 — 펜스 바로 앞에 삽입.
+            # 직전 산문과 같거나, 노트북 본문과 겹치면(구버전 잔재·중복) 건너뜀.
             for a in pkg["A"]:
                 prev_prose = out and out[-1][0] == "prose" and _norm(out[-1][1]) == _norm(a)
-                if not prev_prose:
-                    out.append(("prose", a)); stats["A"] += 1
+                if prev_prose or _a_overlaps_orig(a, orig_norm):
+                    continue
+                out.append(("prose", a)); stats["A"] += 1
             # (B) 조각 분할 + 위 코드 읽기
             pieces = resplit_code(payload, pkg["chunks"])
             for pcode, walk in pieces:
@@ -300,9 +337,11 @@ def main():
     # NEW: 워킹트리의 NN-*.md 각각에 적용
     stats = {"A": 0, "B": 0, "C": 0}
     new_pages = sorted(PAGES.glob(f"{num:02d}-*.md"))
+    # 재빌드본(노트북 본문) 전체를 정규화해 (A) 중복 삽입 가드에 사용
+    orig_norm = _norm("".join(p.read_text() for p in new_pages))
     for p in new_pages:
         new_text = p.read_text()
-        merged = apply_enrichment(new_text, enrich, stats)
+        merged = apply_enrichment(new_text, enrich, stats, orig_norm)
         if not args.dry_run:
             p.write_text(merged, encoding="utf-8")
     print(f"[NEW] 재부착: A={stats['A']} B(위 코드 읽기)={stats['B']} C(결과 해석)={stats['C']}"

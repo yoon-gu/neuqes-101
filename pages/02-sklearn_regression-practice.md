@@ -133,8 +133,8 @@ Pred range: [-1.55, 7.15]
 True range: [1, 5]
 ```
 
+![output](../assets/02-sklearn_regression-out1.png)
+
 **결과 해석**
 
 실제 별점은 [1, 5]에 갇혀 있지만 예측은 -1.55에서 7.15까지 퍼집니다. 가중합을 그대로 출력하는 한 범위 제약이 없다는 회귀의 본질이 그대로 드러납니다.
-
-![output](../assets/02-sklearn_regression-out1.png)

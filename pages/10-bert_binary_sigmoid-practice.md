@@ -50,6 +50,8 @@ CUDA available: True
 GPU:             Tesla T4
 ```
 
+**baseline VRAM**:
+
 ```python
 !nvidia-smi
 ```
@@ -78,6 +80,10 @@ Mon Jun 22 03:42:33 2026
 |  No running processes found                                                             |
 +-----------------------------------------------------------------------------------------+
 ```
+
+## 데이터 — Yelp 이진화 (Ch 3·4와 동일)
+
+별점 4-5는 `1.0` (긍정), 1-2는 `0.0` (부정), 3은 제외. 라벨을 *float 1차원 multi-hot 벡터* (`[0.0]` 또는 `[1.0]`) 형태로 둡니다 — 이게 BCE를 자동 적용시키는 핵심 형식.
 
 토크나이저를 불러오고 Yelp 리뷰에서 학습 5,000개·평가 1,000개를 뽑습니다. 이어서 별점 3(중립)을 제외하고 4-5는 `1.0`, 1-2는 `0.0` 으로 이진화해 방식 A가 다룰 binary 라벨을 만듭니다.
 
@@ -147,6 +153,10 @@ Dataset({
 
 First sample label: [1.0]  (length-1 float vector)
 ```
+
+## 모델 로드 — 방식 A 셋업
+
+`num_labels=1` + `problem_type="multi_label_classification"` 이 핵심.
 
 방식 A의 모델 셋업입니다. `num_labels=1` 로 출력 헤드를 1차원 logit으로 두고, `problem_type="multi_label_classification"` 으로 지정해 `Trainer` 가 BCE를 자동으로 고르게 합니다. 새로 붙는 분류 헤드는 무작위 초기화되므로 파인튜닝으로 학습됩니다.
 
@@ -222,6 +232,10 @@ Mon Jun 22 03:42:58 2026
 |  No running processes found                                                             |
 +-----------------------------------------------------------------------------------------+
 ```
+
+## 학습 — Ch 9 골격 그대로
+
+`compute_metrics` 만 binary 분류용으로 새로 짭니다 — sigmoid + threshold 0.5 로 0/1 예측을 만들고 accuracy/F1/AUC 계산.
 
 평가 지표 함수입니다. 모델이 내놓는 건 logit이므로, 여기서 직접 sigmoid를 통과시켜 확률로 바꾼 뒤 0.5 임계값으로 0/1 예측을 만듭니다. accuracy·precision·recall·F1과 함께, 임계값과 무관하게 분리도를 보는 AUC도 계산합니다.
 
@@ -313,177 +327,4 @@ Mon Jun 22 03:43:30 2026
 |=========================================================================================|
 |    0   N/A  N/A             673      C   /usr/bin/python3                       1576MiB |
 +-----------------------------------------------------------------------------------------+
-```
-
-```python
-# 평가 metric
-eval_metrics = trainer.evaluate()
-print("BERT method A evaluation:")
-for k, v in eval_metrics.items():
-    if k.startswith("eval_") and isinstance(v, float):
-        print(f"  {k:>20}: {v:.4f}")
-```
-
-**▶ 실행 결과**
-
-```text
-<IPython.core.display.HTML object>
-<IPython.core.display.HTML object>
-BERT method A evaluation:
-             eval_loss: 0.2759
-         eval_accuracy: 0.8980
-        eval_precision: 0.8981
-           eval_recall: 0.8787
-               eval_f1: 0.8883
-              eval_auc: 0.9680
-```
-
-**결과 해석**
-
-평가 정확도 약 89.8%, F1 0.888, AUC 0.968로 방식 A가 binary 분류를 잘 학습했습니다. AUC가 0.97에 가깝다는 건 임계값을 어디에 두든 두 클래스가 확률적으로 잘 분리된다는 뜻입니다. Ch 11에서 학습할 방식 B(softmax+CE)와 비교할 기준선이 됩니다.
-
-`Trainer.predict()` 로 평가셋의 raw logit을 받아 sigmoid로 확률을 만들고, 처음 5개 샘플의 logit·확률·예측을 정답과 나란히 봅니다.
-
-```python
-# logit → 확률
-preds_output = trainer.predict(eval_tok)
-logits = preds_output.predictions.flatten()
-probs  = 1.0 / (1.0 + np.exp(-logits))
-labels = preds_output.label_ids.flatten().astype(int)
-
-print(f"Logit range: [{logits.min():.2f}, {logits.max():.2f}]")
-print(f"Prob range:  [{probs.min():.4f}, {probs.max():.4f}]")
-print(f"Positive prediction rate (prob >= 0.5): {(probs >= 0.5).mean():.1%}")
-print(f"\nFirst 5 samples:")
-print(pd.DataFrame({
-    "label": labels[:5],
-    "logit": logits[:5].round(2),
-    "prob":  probs[:5].round(4),
-    "pred":  (probs[:5] >= 0.5).astype(int),
-}).to_string(index=False))
-```
-
-**▶ 실행 결과**
-
-```text
-<IPython.core.display.HTML object>
-Logit range: [-4.41, 4.26]
-Prob range:  [0.0120, 0.9861]
-Positive prediction rate (prob >= 0.5): 45.1%
-
-First 5 samples:
- label  logit   prob  pred
-     1   3.70 0.9758     1
-     0  -3.38 0.0331     0
-     1   4.18 0.9849     1
-     1   3.87 0.9796     1
-     1   4.21 0.9854     1
-```
-
-**결과 해석**
-
-logit이 약 -4.4 ~ +4.3 범위로 뻗어, sigmoid 통과 후 확률은 0.01 ~ 0.99 양 끝에 압착됩니다. 처음 5개 모두 정답과 예측이 일치하며 확률도 0.03 또는 0.97처럼 자신감 있게 한쪽으로 쏠려 있습니다 — sigmoid가 큰 logit을 0/1로 포화시키는 성질이 그대로 드러납니다.
-
-```python
-# 메인: 확률 공간 KDE — seaborn으로 부드러운 분포 + 라벨별 hue
-sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
-
-df = pd.DataFrame({"prob": probs, "logit": logits, "label": labels})
-PAL = {0: "#5B8DEF", 1: "#F47272"}  # 파랑=negative, 빨강=positive
-
-fig, ax = plt.subplots(figsize=(9, 5))
-sns.kdeplot(
-    data=df, x="prob", hue="label",
-    fill=True, common_norm=False, alpha=0.5,
-    palette=PAL, clip=(0, 1), ax=ax,
-)
-ax.axvline(0.5, color="black", lw=1.2, ls="--", alpha=0.7)
-ax.set_title("방식 A — 실제 라벨별 확률 분포")
-ax.set_xlabel("예측 확률  P(y=1)")
-ax.set_ylabel("밀도")
-plt.tight_layout()
-plt.show()
-```
-
-**▶ 실행 결과**
-
-![output](../assets/10-bert_binary_sigmoid-out1.png)
-
-```python
-# 보조: logit 공간 KDE — sigmoid를 통과하기 전 모습
-fig, ax = plt.subplots(figsize=(9, 5))
-sns.kdeplot(
-    data=df, x="logit", hue="label",
-    fill=True, common_norm=False, alpha=0.5,
-    palette=PAL, ax=ax,
-)
-ax.axvline(0.0, color="black", lw=1.2, ls="--", alpha=0.7,
-           label="결정 경계 z=0")
-ax.set_title("방식 A — logit 분포 (sigmoid 통과 전)")
-ax.set_xlabel("logit  z")
-ax.set_ylabel("밀도")
-plt.tight_layout()
-plt.show()
-```
-
-**▶ 실행 결과**
-
-![output](../assets/10-bert_binary_sigmoid-out2.png)
-
-```python
-# 상세 분류 리포트
-print(classification_report(
-    labels, (probs >= 0.5).astype(int),
-    target_names=["negative", "positive"],
-    digits=4,
-))
-```
-
-**▶ 실행 결과**
-
-```text
-              precision    recall  f1-score   support
-
-    negative     0.8980    0.9145    0.9062       433
-    positive     0.8981    0.8787    0.8883       371
-
-    accuracy                         0.8980       804
-   macro avg     0.8980    0.8966    0.8972       804
-weighted avg     0.8980    0.8980    0.8979       804
-```
-
-```python
-import json, os
-
-os.makedirs("./shared_binary_results", exist_ok=True)
-
-# numpy 배열을 그대로 저장
-np.save("./shared_binary_results/method_a_probs.npy", probs)
-np.save("./shared_binary_results/method_a_labels.npy", labels)
-
-# metric 요약
-method_a_summary = {
-    "method": "A (sigmoid + BCE, num_labels=1)",
-    "metrics": {
-        k.replace("eval_", ""): v
-        for k, v in eval_metrics.items()
-        if k.startswith("eval_") and isinstance(v, float)
-    },
-}
-with open("./shared_binary_results/method_a_summary.json", "w") as f:
-    json.dump(method_a_summary, f, indent=2)
-
-print("Saved: ./shared_binary_results/")
-for f in sorted(os.listdir("./shared_binary_results")):
-    size_kb = os.path.getsize(f"./shared_binary_results/{f}") / 1024
-    print(f"  {f}  ({size_kb:.1f} KB)")
-```
-
-**▶ 실행 결과**
-
-```text
-Saved: ./shared_binary_results/
-  method_a_labels.npy  (6.4 KB)
-  method_a_probs.npy  (3.3 KB)
-  method_a_summary.json  (0.3 KB)
 ```

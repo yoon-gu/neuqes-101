@@ -2,9 +2,9 @@
 
 | 이름 | 한 줄 설명 | 다음 챕터에서 |
 |---|---|---|
-| `sklearn.linear_model.LinearRegression` | MSE 최소화 1차원 회귀 | sklearn 모델 라인업의 시작, BERT는 Ch 9부터 같은 역할 |
+| `sklearn.linear_model.LinearRegression` | MSE 최소화 1차원 회귀 | sklearn 모델 라인업의 시작, BERT는 Ch 8부터 같은 역할 |
 | `sklearn.model_selection.train_test_split` | 훈련/평가 분할 | Ch 3-5에서 계속 사용 |
-| `sklearn.metrics.mean_squared_error` | MSE 평가 | Ch 9 BERT 회귀에서도 평가 지표로 등장 |
+| `sklearn.metrics.mean_squared_error` | MSE 평가 | Ch 8 BERT 회귀에서도 평가 지표로 등장 |
 | `sklearn.metrics.mean_absolute_error` | MAE 평가 (참고용) | — |
 | `sklearn.metrics.r2_score` | 결정계수 R² | — |
 
