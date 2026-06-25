@@ -64,6 +64,8 @@ Device:         cuda
 GPU:             Tesla T4
 ```
 
+**baseline VRAM** (CUDA 환경에서만 의미 있는 출력 — Colab T4 기준):
+
 ```python
 !nvidia-smi
 ```
@@ -92,6 +94,22 @@ Wed Jun 24 21:40:30 2026
 |  No running processes found                                                             |
 +-----------------------------------------------------------------------------------------+
 ```
+
+## 데이터 — KLUE-YNAT 합성 multi-label + 활성 개수 보조 라벨
+
+Ch 17 의 `make_multilabel` 을 *그대로* 가져옵니다. 함수 안에서 이미 `n_active` (활성 라벨 개수) 컬럼이 만들어지고 있어 보조 라벨로 그대로 사용 가능 — *합성 과정의 자연스러운 부산물*.
+
+| 라벨 | 카테고리 |
+|---|---|
+| 0 | IT과학 |
+| 1 | 경제 |
+| 2 | 사회 |
+| 3 | 생활문화 |
+| 4 | 세계 |
+| 5 | 스포츠 |
+| 6 | 정치 |
+
+> **합성 규칙 (Ch 17 동일)** — 두 헤드라인 A, B 를 `" [SEP] "` 로 연결, multi-hot 라벨에서 $c_A, c_B$ 위치를 1 로. 우연히 $c_A = c_B$ 면 활성 개수 1, 다르면 2. 7카테고리에서 무작위 결합이므로 $P(c_A = c_B) = 1/7$ → 평균 `n_active` 약 $2 \cdot 6/7 + 1 \cdot 1/7 \approx 1.86$.
 
 ```python
 ds = load_dataset("klue/klue", "ynat")
@@ -123,6 +141,10 @@ first 2 raw samples:
   label=3 (Life&Culture)  text='유튜브 내달 2일까지 크리에이터 지원 공간 운영'
   label=3 (Life&Culture)  text='어버이날 맑다가 흐려져…남부지방 옅은 황사'
 ```
+
+### 1-1. 합성 함수 — Ch 17 의 `make_multilabel` 재사용
+
+`n_active` (활성 개수) 컬럼이 합성 시 만들어집니다. Ch 18 의 보조 task 정답이 바로 이 값.
 
 ```python
 SEED = 42
@@ -216,6 +238,10 @@ Aux label (n_active) distribution:
   eval  mean: 1.758
 ```
 
+## 토큰화 — 메인 multi-hot + 보조 `n_active` 같이 부착
+
+Ch 14 의 `aux_labels` 패턴 그대로 — `tokenize_fn` 이 두 라벨을 모두 attach. 메인은 `labels` (multi-hot 7차원 float), 보조는 `n_active` (float scalar).
+
 ```python
 tokenizer = AutoTokenizer.from_pretrained("klue/bert-base")
 
@@ -260,6 +286,10 @@ First sample labels:    [0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0]  (length-7 multi-hot
 First sample n_active:  2  (aux scalar)
 ```
 
+## 커스텀 Data Collator — `n_active` 도 batch 에 같이 담기
+
+Ch 14 의 `AuxCollator` 패턴 그대로. 기본 `DataCollatorWithPadding` 은 `input_ids`/`attention_mask`/`labels` 만 알고 있어 *추가 라벨* 은 통과시키지 못합니다. wrapper 로 `n_active` 를 텐서로 만들어 batch 에 추가.
+
 ```python
 class AuxCollator:
     def __init__(self, tokenizer):
@@ -296,6 +326,12 @@ Batch keys: ['input_ids', 'token_type_ids', 'attention_mask', 'labels', 'n_activ
   labels: shape=(4, 7), dtype=torch.float32
   n_active: shape=(4,), dtype=torch.float32
 ```
+
+## 모델 — `AutoModel` 본체 + 메인 헤드 + 보조 헤드 직접 부착
+
+Ch 14 는 `AutoModelForSequenceClassification` 의 자동 매핑을 *그대로* 쓰면서 `model.aux_head = nn.Linear(...)` 한 줄로 보조 헤드를 attach 했습니다. Ch 18 도 같은 패턴이 가능하지만, *두 헤드를 명시적으로 한 클래스에서 관리* 하는 패턴이 multi-task 의 정통 — 이번엔 **`nn.Module` 을 직접 정의** 해 두 헤드를 같은 곳에 둡니다.
+
+두 패턴 모두 결과는 같습니다. 명시 정의가 *디버깅·확장* (e.g. 헤드를 더 추가하거나 layer-wise lr 차등) 에 유리.
 
 ```python
 class KoBertMultiTask(nn.Module):
@@ -388,6 +424,8 @@ Main head: Linear(in_features=768, out_features=7, bias=True)
 Aux  head: Linear(in_features=768, out_features=1, bias=True)
 ```
 
+**보조 헤드는 약 769개 파라미터** — 768→1 Linear 의 weight + bias. 전체 약 110M 의 *0.0007%*. 이 미세한 추가 자유도만으로 multi-task 학습이 동작합니다 (Ch 14 와 동일한 직관).
+
 ```python
 !nvidia-smi
 ```
@@ -417,6 +455,16 @@ Wed Jun 24 21:40:58 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+## 커스텀 Trainer — `compute_loss` 오버라이드
+
+핵심 로직 한 줄:
+
+```python
+loss = l_main + λ · l_aux       # l_main: BCE per-label, l_aux: MSE on n_active
+```
+
+Ch 14 와의 차이 — Ch 14 는 `outputs.loss` (자동 매핑 메인 BCE) 를 그대로 받고 보조만 직접 계산. Ch 18 은 모델 forward 가 *이미* combined loss 를 계산해 반환하므로 `compute_loss` 는 forward 결과를 그대로 돌려주기만 하면 됩니다. λ 만 trainer 에서 model forward 로 넘김.
+
 ```python
 class AuxTrainer(Trainer):
     def __init__(self, *args, lambda_aux: float = 0.1, **kwargs):
@@ -439,6 +487,8 @@ print("AuxTrainer 정의 완료 — Trainer 의 compute_loss 만 교체.")
 ```text
 AuxTrainer 정의 완료 — Trainer 의 compute_loss 만 교체.
 ```
+
+**평가용 metric 함수** — 메인 (Ch 17 과 동일) 만 자동 계산. 보조 metric (RMSE, R², Pearson r) 은 별도 forward 로 `count_pred` 를 추출해 측정 (eval 후 별도 단계).
 
 ```python
 def compute_metrics_main(eval_pred):
@@ -468,6 +518,10 @@ def compute_metrics_main(eval_pred):
         out["macro_auc"] = float("nan")
     return out
 ```
+
+## 학습 — λ=0.05 (sweet spot, 보조 ON)
+
+Ch 17 과 동일한 hyperparams. `AuxTrainer` + `lambda_aux=0.05`. 이 값은 부록 `18_ko_auxiliary_lambda_sweep` 의 λ 스윕에서 **메인 F1 을 가장 끌어올린 지점** 입니다 (λ≥0.2 부터는 §10 처럼 메인이 무너집니다).
 
 ```python
 LAMBDA_AUX = 0.05
@@ -510,6 +564,8 @@ print(f"\nWith-aux training done — mean train loss: {train_result_aux.training
 With-aux training done — mean train loss: 0.2369
 ```
 
+**중요: `remove_unused_columns=False`** — Trainer 는 기본으로 *model.forward 시그니처에 없는 컬럼* 을 제거합니다. `n_active` 는 KoBertMultiTask.forward 에 있어 자동 인식되지만, 모델 클래스를 바꿔 끼울 때 위험할 수 있어 명시적으로 끕니다 (Ch 14 와 같은 보호 패턴).
+
 ```python
 !nvidia-smi
 ```
@@ -538,338 +594,3 @@ Wed Jun 24 21:41:41 2026
 |    0   N/A  N/A           16123      C   /usr/bin/python3                       2186MiB |
 +-----------------------------------------------------------------------------------------+
 ```
-
-```python
-# 메인 metric
-eval_metrics_aux = trainer_aux.evaluate()
-print("With-aux (lambda=0.05) — main task metrics:")
-for k, v in eval_metrics_aux.items():
-    if k.startswith("eval_") and isinstance(v, float):
-        print(f"  {k:>22}: {v:.4f}")
-```
-
-**▶ 실행 결과**
-
-```text
-<IPython.core.display.HTML object>
-<IPython.core.display.HTML object>
-With-aux (lambda=0.05) — main task metrics:
-               eval_loss: 0.2009
-       eval_hamming_loss: 0.0739
-           eval_micro_f1: 0.8523
-    eval_micro_precision: 0.8560
-       eval_micro_recall: 0.8487
-           eval_macro_f1: 0.8493
-    eval_macro_precision: 0.8408
-       eval_macro_recall: 0.8600
-          eval_macro_auc: 0.9640
-            eval_runtime: 0.6700
-  eval_samples_per_second: 1492.6430
-   eval_steps_per_second: 47.7650
-```
-
-```python
-# 보조 metric — eval 전체에 대해 수동 forward
-@torch.no_grad()
-def aux_predictions(trainer, dataset, batch_size=64):
-    trainer.model.eval()
-    device = trainer.model.bert.device
-    aux_preds, aux_true = [], []
-    for i in range(0, len(dataset), batch_size):
-        batch_features = [dict(dataset[j]) for j in range(i, min(i + batch_size, len(dataset)))]
-        batch = trainer.data_collator(batch_features)
-        batch_on_device = {k: v.to(device) for k, v in batch.items()}
-        n_act_true = batch_on_device.pop("n_active").cpu().numpy()
-        # 메인 labels 도 잠시 제거 (forward 에서 loss 계산 안 하도록)
-        batch_on_device.pop("labels", None)
-        _ = trainer.model(**batch_on_device, labels=None, n_active=None)
-        count_pred = trainer.model.last_count_pred.cpu().numpy()
-        aux_preds.extend(count_pred.tolist())
-        aux_true.extend(n_act_true.tolist())
-    return np.array(aux_preds), np.array(aux_true)
-
-
-aux_preds_aux, aux_true = aux_predictions(trainer_aux, eval_tok)
-rmse_aux = float(np.sqrt(mean_squared_error(aux_true, aux_preds_aux)))
-r2_aux   = float(r2_score(aux_true, aux_preds_aux))
-pear_aux = float(np.corrcoef(aux_true, aux_preds_aux)[0, 1])
-
-print("\nWith-aux (lambda=0.05) — aux task metrics (n_active regression):")
-print(f"  RMSE:    {rmse_aux:.4f}")
-print(f"  R^2:     {r2_aux:.4f}")
-print(f"  Pearson: {pear_aux:.4f}")
-print(f"\n  Aux pred range: [{aux_preds_aux.min():.3f}, {aux_preds_aux.max():.3f}]")
-print(f"  Aux true range: [{aux_true.min():.1f}, {aux_true.max():.1f}]")
-```
-
-**▶ 실행 결과**
-
-```text
-With-aux (lambda=0.05) — aux task metrics (n_active regression):
-  RMSE:    0.4141
-  R^2:     0.0652
-  Pearson: 0.4895
-
-  Aux pred range: [1.188, 2.795]
-  Aux true range: [1.0, 2.0]
-```
-
-```python
-# 메인 task per-sample 예측 (다음 비교 단계에서 사용)
-preds_output_aux = trainer_aux.predict(eval_tok)
-logits_aux = preds_output_aux.predictions
-if isinstance(logits_aux, tuple):
-    logits_aux = logits_aux[0]
-labels_eval = preds_output_aux.label_ids.astype(int)
-probs_aux = 1.0 / (1.0 + np.exp(-logits_aux))
-preds_main_aux = (probs_aux >= 0.5).astype(int)
-
-print(f"Main logits shape: {logits_aux.shape}")
-print(f"Eval samples:      {len(labels_eval)}")
-```
-
-**▶ 실행 결과**
-
-```text
-<IPython.core.display.HTML object>
-Main logits shape: (1000, 7)
-Eval samples:      1000
-```
-
-```python
-# Per-category classification report (with-aux)
-print("Per-category report — with aux (lambda=0.05):")
-print(classification_report(
-    labels_eval, preds_main_aux,
-    target_names=LABEL_NAMES_EN,
-    digits=4, zero_division=0,
-))
-```
-
-**▶ 실행 결과**
-
-```text
-Per-category report — with aux (lambda=0.05):
-              precision    recall  f1-score   support
-
-  IT/Science     0.7769    0.8016    0.7891       126
-     Economy     0.8451    0.8025    0.8233       238
-     Society     0.9095    0.8231    0.8642       684
-Life&Culture     0.8071    0.9029    0.8523       278
-       World     0.8521    0.9057    0.8780       159
-      Sports     0.8934    0.9316    0.9121       117
-    Politics     0.8012    0.8526    0.8261       156
-
-   micro avg     0.8560    0.8487    0.8523      1758
-   macro avg     0.8408    0.8600    0.8493      1758
-weighted avg     0.8592    0.8487    0.8524      1758
- samples avg     0.8803    0.8650    0.8534      1758
-```
-
-```python
-# 새 모델 인스턴스 — λ=0 학습용 (λ=0.05 모델과 동일 초기화로 공정 비교)
-torch.manual_seed(SEED); np.random.seed(SEED)
-model_no_aux = make_model()
-
-training_args_no_aux = TrainingArguments(
-    output_dir="./ch18_baseline_output",
-    num_train_epochs=2,
-    per_device_train_batch_size=16,
-    per_device_eval_batch_size=32,
-    learning_rate=2e-5,
-    fp16=True,
-    eval_strategy="epoch",
-    logging_steps=50,
-    save_strategy="no",
-    report_to="none",
-    seed=SEED,
-    remove_unused_columns=False,
-)
-
-trainer_no_aux = AuxTrainer(
-    model=model_no_aux,
-    args=training_args_no_aux,
-    train_dataset=train_tok,
-    eval_dataset=eval_tok,
-    data_collator=collator,
-    processing_class=tokenizer,
-    compute_metrics=compute_metrics_main,
-    lambda_aux=0.0,    # ← 보조 loss 무시
-)
-
-train_result_no_aux = trainer_no_aux.train()
-print(f"\nNo-aux (lambda=0) baseline training done — mean train loss: {train_result_no_aux.training_loss:.4f}")
-```
-
-**▶ 실행 결과**
-
-```text
-[transformers] BertModel LOAD REPORT from: klue/bert-base
-Key                                        | Status     |  | 
--------------------------------------------+------------+--+-
-cls.predictions.bias                       | UNEXPECTED |  | 
-cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
-cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
-cls.seq_relationship.bias                  | UNEXPECTED |  | 
-cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
-cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
-cls.seq_relationship.weight                | UNEXPECTED |  | 
-
-Notes:
-- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
-<IPython.core.display.HTML object>
-No-aux (lambda=0) baseline training done — mean train loss: 0.2258
-```
-
-```python
-# baseline 메인 metric
-eval_metrics_no_aux = trainer_no_aux.evaluate()
-print("No-aux (lambda=0) baseline — main task metrics:")
-for k, v in eval_metrics_no_aux.items():
-    if k.startswith("eval_") and isinstance(v, float):
-        print(f"  {k:>22}: {v:.4f}")
-
-# baseline 메인 per-sample 예측
-preds_output_no_aux = trainer_no_aux.predict(eval_tok)
-logits_no_aux = preds_output_no_aux.predictions
-if isinstance(logits_no_aux, tuple):
-    logits_no_aux = logits_no_aux[0]
-probs_no_aux = 1.0 / (1.0 + np.exp(-logits_no_aux))
-preds_main_no_aux = (probs_no_aux >= 0.5).astype(int)
-```
-
-**▶ 실행 결과**
-
-```text
-<IPython.core.display.HTML object>
-<IPython.core.display.HTML object>
-No-aux (lambda=0) baseline — main task metrics:
-               eval_loss: 0.1934
-       eval_hamming_loss: 0.0754
-           eval_micro_f1: 0.8491
-    eval_micro_precision: 0.8530
-       eval_micro_recall: 0.8453
-           eval_macro_f1: 0.8451
-    eval_macro_precision: 0.8375
-       eval_macro_recall: 0.8552
-          eval_macro_auc: 0.9633
-            eval_runtime: 0.6701
-  eval_samples_per_second: 1492.3100
-   eval_steps_per_second: 47.7540
-<IPython.core.display.HTML object>
-```
-
-```python
-m_aux    = {k.replace("eval_", ""): v for k, v in eval_metrics_aux.items()
-            if k.startswith("eval_") and isinstance(v, float)}
-m_no_aux = {k.replace("eval_", ""): v for k, v in eval_metrics_no_aux.items()
-            if k.startswith("eval_") and isinstance(v, float)}
-
-common = [k for k in m_aux if k in m_no_aux]
-cmp = pd.DataFrame({
-    "metric":               common,
-    "no aux (lambda=0)":    [m_no_aux[k] for k in common],
-    "with aux (lambda=0.05)":[m_aux[k]    for k in common],
-})
-cmp["delta (aux - no_aux)"] = cmp["with aux (lambda=0.05)"] - cmp["no aux (lambda=0)"]
-print(cmp.round(4).to_string(index=False))
-```
-
-**▶ 실행 결과**
-
-```text
-            metric  no aux (lambda=0)  with aux (lambda=0.05)  delta (aux - no_aux)
-              loss             0.1934                  0.2009                0.0075
-      hamming_loss             0.0754                  0.0739               -0.0016
-          micro_f1             0.8491                  0.8523                0.0032
-   micro_precision             0.8530                  0.8560                0.0030
-      micro_recall             0.8453                  0.8487                0.0034
-          macro_f1             0.8451                  0.8493                0.0042
-   macro_precision             0.8375                  0.8408                0.0033
-      macro_recall             0.8552                  0.8600                0.0048
-         macro_auc             0.9633                  0.9640                0.0007
-           runtime             0.6701                  0.6700               -0.0001
-samples_per_second          1492.3100               1492.6430                0.3330
-  steps_per_second            47.7540                 47.7650                0.0110
-```
-
-```python
-def per_label_f1(Y_true, Y_pred):
-    f1s = []
-    for k in range(K):
-        _, _, f1, _ = precision_recall_fscore_support(
-            Y_true[:, k], Y_pred[:, k], average="binary", zero_division=0,
-        )
-        f1s.append(float(f1))
-    return f1s
-
-
-f1_no_aux = per_label_f1(labels_eval, preds_main_no_aux)
-f1_aux    = per_label_f1(labels_eval, preds_main_aux)
-
-label_cmp = pd.DataFrame({
-    "category":              LABEL_NAMES_EN,
-    "no aux F1":             f1_no_aux,
-    "with aux F1":           f1_aux,
-    "delta (aux - no_aux)":  np.array(f1_aux) - np.array(f1_no_aux),
-})
-print(label_cmp.round(4).to_string(index=False))
-
-# 막대 그래프
-sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
-fig, ax = plt.subplots(figsize=(11, 5))
-x_pos = np.arange(K)
-width = 0.38
-ax.bar(x_pos - width/2, f1_no_aux, width, label="aux 없음 (lambda=0)",    color="#5B8DEF")
-ax.bar(x_pos + width/2, f1_aux,    width, label="aux 적용 (lambda=0.05)", color="#F47272")
-ax.set_xticks(x_pos)
-ax.set_xticklabels(LABEL_NAMES_EN, rotation=20, ha="right")
-ax.set_ylim(0, 1)
-ax.set_ylabel("라벨별 F1")
-ax.set_title("카테고리별 F1 — 보조 loss 효과 (한국어 multi-label)")
-ax.legend()
-plt.tight_layout()
-plt.show()
-```
-
-**▶ 실행 결과**
-
-```text
-    category  no aux F1  with aux F1  delta (aux - no_aux)
-  IT/Science     0.7747       0.7891                0.0144
-     Economy     0.8217       0.8233                0.0015
-     Society     0.8635       0.8642                0.0007
-Life&Culture     0.8460       0.8523                0.0063
-       World     0.8746       0.8780                0.0034
-      Sports     0.9167       0.9121               -0.0045
-    Politics     0.8185       0.8261                0.0076
-```
-
-![output](../assets/18-ko_auxiliary-out1.png)
-
-```python
-# True n_active 별 예측 분포 — violin
-df_aux = pd.DataFrame({
-    "실제 n_active": [f"{int(v)}" for v in aux_true],
-    "예측값":     aux_preds_aux,
-})
-order = ["1", "2"]
-
-fig, ax = plt.subplots(figsize=(7.5, 5.5))
-sns.violinplot(
-    data=df_aux, x="실제 n_active", y="예측값",
-    order=order, inner="quart", cut=0,
-    color="#F47272", alpha=0.6, ax=ax,
-)
-# 정답 위치 점선 가이드
-for i, target in enumerate([1.0, 2.0]):
-    ax.hlines(target, i - 0.4, i + 0.4, color="black", lw=1.1, ls="--", alpha=0.7)
-ax.set_ylim(0.0, 3.0)
-ax.set_title(f"보조 task — 예측 n_active vs 실제 n_active  (RMSE={rmse_aux:.3f}, r={pear_aux:.3f})")
-plt.tight_layout()
-plt.show()
-```
-
-**▶ 실행 결과**
-
-![output](../assets/18-ko_auxiliary-out2.png)

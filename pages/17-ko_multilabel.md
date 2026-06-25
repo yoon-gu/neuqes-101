@@ -8,13 +8,11 @@ KLUE-YNAT 에는 multi-label 정답이 없습니다. 그래서 *서로 다른 �
 
 **예상 소요 시간**: 약 13분 (모델 다운로드 캐시 -10s + 2 에폭 학습 -10분 + 평가/시각화)
 
-
 ## 학습 흐름
 
 1. 🚀 **실습**: KLUE-YNAT 헤드라인 두 개를 결합해 multi-label 5,000건 합성 → klue/bert-base 를 `multi_label_classification` 으로 파인튜닝
 2. 🔬 **해부**: 카테고리별 sigmoid 확률 분포 (7 패널 KDE) + 카테고리 간 공동 활성 패턴 (co-occurrence heatmap)
 3. 🛠️ **변형**: 합성 샘플을 직접 읽어보며 모델이 *두 주제를 모두 잡는지* 확인 + threshold 를 옮기면 결과가 어떻게 바뀌는지
-
 
 > 📒 **사전 학습 자료**: Ch 13 (영어 multi-label, per-label BCE), Ch 16 (한국어 multi-class, KLUE-YNAT). 이번 챕터는 두 챕터의 *결합* — Ch 16 의 한국어 셋업 + Ch 13 의 multi-label 처리.
 
@@ -114,69 +112,6 @@ Ch 16 은 헤드라인 *한 줄* (평균 약 16 토큰) 이었지만, Ch 17 은 
 두 문장을 잇는 `[SEP]` 토큰은 BERT 가 *문장 경계* 를 인식하는 특수 토큰입니다 — NSP (Next Sentence Prediction) 사전학습에서 쓰던 그 토큰. 결합 헤드라인에선 두 주제의 경계 역할을 합니다.
 
 > **다음 챕터 (Ch 18)**: 토크나이저 그대로. 변하는 건 *모델에 보조 헤드* (활성 라벨 *개수* 회귀) 가 추가되고 *loss 에 보조 항* 이 가중합으로 더해지는 점.
-
-**baseline VRAM** (CUDA 환경에서만 의미 있는 출력 — Colab T4 기준):
-
-## 데이터 — KLUE-YNAT 결합으로 multi-label 합성
-
-**KLUE-YNAT** 은 single-label 데이터 (헤드라인 한 줄 → 카테고리 하나) 라 multi-label 정답이 없습니다. Ch 13 에서 Yelp 에 항목 키워드를 합성했듯, 여기선 *서로 다른 두 헤드라인을 결합* 해 두 카테고리가 동시에 활성된 샘플을 만듭니다.
-
-| 라벨 | 카테고리 |
-|---|---|
-| 0 | IT과학 |
-| 1 | 경제 |
-| 2 | 사회 |
-| 3 | 생활문화 |
-| 4 | 세계 |
-| 5 | 스포츠 |
-| 6 | 정치 |
-
-> **합성 방식**: 샘플 A (카테고리 $c_A$) 와 샘플 B (카테고리 $c_B$) 를 뽑아 (1) 텍스트를 `" [SEP] "` 로 이어붙이고 (2) multi-hot 라벨에서 $c_A, c_B$ 두 위치를 1 로. 우연히 $c_A = c_B$ 면 활성 라벨은 1개뿐 (자연스러운 single-label 케이스도 일부 섞임).
-
-### 1-1. 두 헤드라인을 결합해 multi-label 샘플 합성
-
-`make_multilabel` 이 single-label split 을 받아 *짝* 을 지어 합성 데이터셋을 만듭니다. seed 를 고정해 train/eval 이 재현 가능하게.
-
-## 토큰화 — Ch 16 패턴, 라벨 형식만 multi-hot
-
-**Ch 16 과의 한 줄 차이**: `out["labels"] = [int(l) for l in batch["label"]]` → `out["labels"] = [list(map(float, mh)) for mh in batch["multi_hot"]]`. 라벨이 *int 스칼라* 가 아니라 *길이 7 multi-hot float 벡터*. 이 형식 + `problem_type="multi_label_classification"` 두 가지가 BCE per-label 자동 매핑의 트리거입니다.
-
-## 모델 로드 — `num_labels=7` 그대로, `problem_type` 만 전환
-
-Ch 16 과 *모델 아키텍처는 완전히 동일* (`Linear(H, 7)` 분류 헤드). 변하는 한 가지 — `problem_type="multi_label_classification"` — 가 자동 매핑되는 loss 를 BCE per-label 로 바꿉니다.
-
-**Ch 16 과 파라미터 수가 *완전히 동일*** — 둘 다 `Linear(768, 7)` 헤드. 차이는 `problem_type` 한 줄뿐입니다. 같은 모델이 *어떻게 해석되고 어떤 loss 로 학습되는가* 만 바뀝니다. 이게 Ch 16 ↔ Ch 17 변경이 "한 가지 축" 인 이유 — *task 의 의미* 만 single-label → multi-label 로 옮기고 나머지는 전부 고정.
-
-## 학습 — Ch 16 과 동일한 hyperparams
-
-Ch 16 과 *완전히 같은* learning rate, batch size, epoch 수, seed. 평가 metric 만 multi-label 용으로 새로 짭니다 (Ch 13 의 패턴 그대로).
-
-## 평가 — 카테고리별 sigmoid 확률 + 공동 활성 패턴
-
-Ch 16 의 평가가 *7개 클래스 중 하나 고르기* 였다면, Ch 17 은 *7개 카테고리 각각을 독립적으로 0/1 판정* 합니다. Ch 13 의 multi-label 평가 패턴을 한국어 환경에서 재현.
-
-### 5-1. 메인 그림 — 카테고리별 sigmoid 확률 KDE (7 패널)
-
-Ch 16 에선 *top-1 확률 하나* 만 봤지만, multi-label 에선 *각 카테고리* 가 독립이라 7개 확률 분포를 *각각* 그립니다. 카테고리마다 학습 난이도가 *다를 수* 있다는 multi-label 의 본질이 시각적으로 드러납니다.
-
-**해석**
-
-- **잘 학습된 카테고리** (예: 스포츠): label=0 곡선은 0 근처, label=1 곡선은 1 근처에 있고 둘이 거의 만나지 않음. *분리가 깨끗*.
-- **헷갈리는 카테고리** (예: 사회 ↔ 생활문화 ↔ 정치): 두 곡선이 0.5 근처에서 크게 겹침. 결합 헤드라인 안에서 두 주제 신호가 *섞이는* 카테고리.
-- **결합의 부작용** — 한 샘플에 *두 헤드라인* 이 들어가니 모델이 "둘 중 어느 쪽 신호가 어느 라벨인지" 분리해야 합니다. 이게 단일 헤드라인 (Ch 16) 보다 어려운 점이고, multi-label task 의 자연스러운 난이도.
-
-### 5-2. 보조 그림 — 카테고리 간 공동 활성 패턴
-
-Multi-label 의 핵심 질문: *어떤 카테고리 쌍이 같이 등장하는가?* 합성 방식이 *무작위 결합* 이라 true co-occurrence 는 거의 균등에 가까워야 하고, 모델 예측이 그 패턴을 따라가는지 확인합니다.
-
-`true co-occurrence` (실제 합성 라벨의 동시 등장) 와 `predicted co-occurrence` (모델 예측의 동시 등장) 를 나란히 그립니다.
-
-**해석**
-
-- **대각선 = 1.0** — 자기 자신과는 항상 같이 등장 (정의상).
-- **off-diagonal cell M[i, j]** = "카테고리 i 가 활성된 샘플 중 카테고리 j 도 활성된 비율".
-- **합성이 무작위 결합** 이라 true 행렬의 off-diagonal 은 *대략 균등* (각 카테고리의 전체 활성률에 비례) — 특정 쌍이 *유난히 높지 않음*. 실제 사람-annotated 데이터라면 "정치+경제" 처럼 *자연스러운 상관* 이 드러나겠지만, 여기선 합성 방식 때문에 그런 구조가 약합니다.
-- **predicted cell 이 true 보다 일관되게 높으면** → 모델이 라벨을 *너무 많이* 활성하는 경향 (over-prediction). threshold 를 0.5 보다 높게 두면 calibration 개선.
 
 ## 이 장의 구성
 

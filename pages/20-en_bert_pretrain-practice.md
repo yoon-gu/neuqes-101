@@ -1,6 +1,6 @@
 > ▶ **[Google Colab에서 이 장 실습 열기](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/20_en_bert_pretrain/20_en_bert_pretrain.ipynb)** — 브라우저에서 바로 실행해 볼 수 있습니다.
 
-## 환경 준비
+## 환경 셋업
 
 ```python
 %pip install -q -U transformers datasets accelerate
@@ -77,6 +77,8 @@ Device:         cuda
 GPU:             Tesla T4
 ```
 
+**baseline VRAM** (CUDA 환경에서만 의미 있는 출력 — Colab T4 기준):
+
 ```python
 !nvidia-smi
 ```
@@ -105,6 +107,10 @@ Mon Jun 22 04:08:21 2026
 |  No running processes found                                                             |
 +-----------------------------------------------------------------------------------------+
 ```
+
+## 토크나이저 — `bert-base-uncased` 그대로 로드
+
+vocab 30,522 의 영어 WordPiece. *모델은 random init* 이지만 토크나이저는 *완성품* 을 가져옵니다.
 
 ```python
 TOKENIZER_NAME = "bert-base-uncased"
@@ -145,6 +151,12 @@ sample: 'The capital of France is Paris, located on the Seine river.'
 tokens (15): ['[CLS]', 'the', 'capital', 'of', 'france', 'is', 'paris', ',', 'located', 'on', 'the', 'seine', 'river', '.', '[SEP]']
 ids:    [101, 1996, 3007, 1997, 2605, 2003, 3000, 1010, 2284, 2006, 1996, 16470, 2314, 1012, 102]
 ```
+
+## 데이터 — Wikitext-103 paragraphs (일반 도메인 사전학습 코퍼스)
+
+원본 BERT 가 영어 Wikipedia + BookCorpus 라는 *일반 도메인* 코퍼스로 사전학습한 정신을 따라, 본 챕터도 **Wikitext-103** 본문으로 MLM 사전학습합니다 — *task 도메인 (Yelp 리뷰(식당·업체)) 으로 사전학습하면 domain-adaptive pretraining 에 가까워져 사전학습의 진짜 메시지 (일반 표상 학습 → 다른 task 로 transfer) 가 흐려지기 때문*.
+
+**원본**: `Salesforce/wikitext`, config `wikitext-103-raw-v1` (CC-BY-SA, 정제된 영문 위키 paragraphs). HF Hub 정제본 — line 단위로 이미 정리되어 있어 빈 줄 / 너무 짧은 줄 / 너무 긴 줄만 제외하면 바로 사용 가능. Ch 21 의 분류 fine-tune (Yelp 이진) 은 *완전히 다른 도메인* — 사전학습 → fine-tune transfer 메시지가 정직해집니다. Ch 22 의 한국어 (한국어 Wikipedia paragraphs) 와 *대칭* 패턴.
 
 ```python
 SEED = 42
@@ -199,6 +211,14 @@ first sample previews:
   Sample 1:  Bellomont was Member of Parliament for Droitwich from 1688 to 1695 . In the 1690s he became involved in the attempts by
   Sample 2:  Paulet was promoted to full lieutenant in 1791 and appointed to HMS Vulcan , though he was moved to HMS Assistance in A
 ```
+
+## 토큰화 + `group_texts` — HF `run_mlm.py` 표준 패턴
+
+MLM 사전학습의 표준 입력 포맷은 *고정 길이 블록*. 변동 길이 문장에 그대로 padding 하면 *손실*: (a) 짧은 문장이 많으면 PAD 비율이 높아 GPU 시간 낭비, (b) 긴 문장은 truncation 으로 정보 손실.
+
+**해결책**: 모든 문서를 *이어 붙여 토큰 스트림* 으로 만든 뒤, `block_size=128` 단위로 자름. 문장 경계가 사라지는 trade-off 가 있지만, BERT 사전학습은 *임의 위치의 토큰 예측* 이라 문장 경계가 중요하지 않음.
+
+Wikitext-103 paragraphs 는 *제한 50-2000자 필터링* 으로 평균 문장 길이가 일정 (수백 자 위주). 5,000 paragraphs 가 `block_size=128` 로 잘리면 약 5,352 블록 (약 68만 토큰) 으로 정리됩니다. 코드는 HF `examples/pytorch/language-modeling/run_mlm.py` 의 `group_texts` 함수를 그대로 따른 표준 패턴.
 
 ```python
 BLOCK_SIZE = 128
@@ -275,6 +295,23 @@ sample block 0 first 20 ids: [20222, 12131, 10131, 4819, 15272, 1010, 1996, 4410
 sample block 0 first 20 tok: ['bali', '##nor', 'buck', '##han', '##nah', ',', 'the', 'crown', 'prince', 'of', 'the', 'country', 'of', 'call' …(뒤 52자 생략)
 ```
 
+## 작은 `BertConfig` + `BertForMaskedLM` — random init
+
+표준 `bert-base-uncased` 는 hidden=768, layer=12, head=12, intermediate=3072 = **110M params** — T4 에서 scratch 학습은 *수일* 필요.
+
+이번 챕터는 *입문용 작은 BERT* 로 축소:
+
+| hyperparam | 표준 `bert-base-uncased` | 이번 챕터 (작은 BERT) |
+|---|---|---|
+| `hidden_size` | 768 | **256** |
+| `num_hidden_layers` | 12 | **4** |
+| `num_attention_heads` | 12 | **4** |
+| `intermediate_size` | 3072 | **1024** |
+| `max_position_embeddings` | 512 | **128** (BLOCK_SIZE 와 같음) |
+| 총 파라미터 | 약 110M | **약 10M** (toy 규모) |
+
+크기는 1/10 이지만 *MLM 학습이 진행되는지* 보기에는 충분. Ch 21 에서 분류 fine-tune 할 때 성능 비교가 진짜 결과.
+
 ```python
 HIDDEN_SIZE         = 256
 NUM_HIDDEN_LAYERS   = 4
@@ -324,6 +361,21 @@ Trainable:              11,103,290
   MLM head:                 96,826  (0.9%)  ← tied with embeddings
 ```
 
+**관찰** — 작은 BERT 의 파라미터는 *임베딩 테이블이 절반 이상* 차지합니다 (vocab 30522 × hidden 256 ≈ 7.8M). encoder body 자체는 약 2M. 이게 *vocab 큰데 모델이 작은* 셋업의 특징 — 표준 BERT (vocab 30K × hidden 768 ≈ 23M / 110M = 21%) 와 비율이 매우 다릅니다.
+
+> MLM head 의 weight 는 입력 임베딩과 *tied* (공유) — `BertForMaskedLM` 기본 동작. vocab 차원 출력 layer 가 임베딩 테이블과 같아 파라미터 절약.
+
+## `DataCollatorForLanguageModeling` + Trainer 학습
+
+collator 가 매 batch 마다 *무작위로 15% 토큰을 [MASK]* 로 바꾸고, 그 위치의 정답 토큰을 `labels` 로 표시 (나머지 위치는 -100 → CrossEntropyLoss 무시).
+
+**MLM masking 규칙** (BERT 원논문):
+- 선택된 15% 중 80%: 실제로 `[MASK]` 로 교체
+- 10%: 무작위 다른 토큰으로 교체
+- 10%: 원래 토큰 유지
+
+이 비율은 *모델이 [MASK] 토큰 자체에 과도하게 의존하지 않게* 하는 트릭. `DataCollatorForLanguageModeling` 이 자동 처리.
+
 ```python
 data_collator = DataCollatorForLanguageModeling(
     tokenizer=tokenizer,
@@ -331,6 +383,20 @@ data_collator = DataCollatorForLanguageModeling(
     mlm_probability=0.15,
 )
 ```
+
+### [MASK] 가 들어가는 원리 — 한 눈에 보는 80/10/10
+
+`DataCollatorForLanguageModeling` 은 매 step 마다 *입력 토큰의 약 15%* 를 *무작위로* 선택하고, 선택된 위치마다 세 가지 중 하나를 적용합니다.
+
+| 선택된 토큰 운명 | 비율 | 의도 |
+| --- | --- | --- |
+| `[MASK]` 로 교체 | **80%** | 표준 마스킹 — 모델이 *주변 문맥만으로* 원래 토큰을 맞추도록 |
+| **다른 random 토큰** 으로 교체 | 10% | inference 때는 `[MASK]` 가 없으니, 모델이 *항상* 자기 입력을 *의심* 하게 만듦 |
+| **원본 그대로** 유지 | 10% | 동일 — 입력과 정답이 일치하는 케이스도 학습 데이터에 포함 |
+
+**나머지 85%** 의 토큰은 `labels = -100` 으로 두어 *loss 계산에서 제외* 됩니다 (PyTorch CE 의 `ignore_index` 기본값). 즉 한 step 의 MLM loss 는 *선택된 15% 자리만* 모아 평균한 값.
+
+> 이 `labels = -100` 트릭은 BERT-만의 것이 아닙니다 — Phase 4 GPT 사전학습은 *거의 모든 토큰* 을 학습 (`labels = input_ids`), SFT (Ch 27) 는 *prompt 만 -100, 답변만 학습*. 같은 트릭, 정반대 자리. Ch 21 에서 더 자세히.
 
 ```python
 # 짧은 예시 문장 하나에 collator 한 번 돌려서 어떤 자리가 어떻게 바뀌는지 직접 봅니다.
@@ -436,6 +502,13 @@ Selected for loss (target 15%):      1,217  (14.86%)
 Target: 선택 15% / 그 중 80-10-10 으로 [MASK]-random-kept. 표본 크면 비율 안정.
 ```
 
+**관전 포인트**
+
+- `what_happened` 가 `—` 인 자리 (약 85%) 는 *입력과 정답이 그대로* — loss 에 기여하지 않음. 모델은 *문맥을 만들어 주는* 역할만.
+- `[MASK]` 자리 (약 12%) 가 본 task 의 *진짜 학습 신호*. 주변 토큰들의 attention 결과로 *가려진 자리* 의 vocab 분포를 예측.
+- `random` (약 1.5%) 와 `kept` (약 1.5%) 는 *inference 분포 일치* 를 위한 정규화. 추론 시에는 `[MASK]` 가 없으므로 *입력을 절대 신뢰하면 안 된다* 는 신호를 학습에 섞어 줌.
+- 매 epoch · 매 batch 마다 마스킹은 *새로 무작위* — 같은 문장이 epoch 마다 다른 자리에서 가려져 학습됨 (data augmentation 효과).
+
 ```python
 USE_FP16 = (DEVICE == "cuda")   # T4 는 fp16, MPS/CPU 는 fp32
 NUM_EPOCHS = 2
@@ -484,6 +557,15 @@ fp16:          True
 train blocks:  5,352
 steps / epoch: 167
 ```
+
+### 학습 직전 baseline — 사전학습 전·후 비교 준비
+
+`trainer.train()` 을 호출하기 *전* 의 모델 상태 (`BertForMaskedLM(config)` random init) 로 두 가지를 측정해 둡니다 — *학습 후와 나란히* 보면 *사전학습이 본체에 무엇을 새겼는지* 가 한 화면에 드러납니다.
+
+1. **`eval_loss` / `perplexity`** — random init 이므로 vocab 30,522 균등 분포 (`ln V` ≈ 10.33) 근처가 기대치.
+2. **같은 문장의 `[MASK]` top-5** — random init 의 logits 는 거의 균등이라 *문맥과 무관한 토큰* (자주 등장하는 관사·전치사·특수문자 등) 이 뽑힙니다.
+
+학습이 끝난 뒤 6-1 셀에서 *완전히 같은 문장* 으로 다시 측정해 *직접 비교* 합니다.
 
 ```python
 # predict_mask 함수 정의 — 학습 전·후 두 번 호출하므로 먼저 정의
@@ -610,303 +692,4 @@ Mon Jun 22 04:09:26 2026
 |=========================================================================================|
 |    0   N/A  N/A            5453      C   /usr/bin/python3                       3332MiB |
 +-----------------------------------------------------------------------------------------+
-```
-
-```python
-# 학습 로그에서 train loss 추출
-log_history = trainer.state.log_history
-train_logs = [(e["step"], e["loss"]) for e in log_history if "loss" in e and "eval_loss" not in e]
-
-if train_logs:
-    steps, losses = zip(*train_logs)
-    random_baseline = math.log(tokenizer.vocab_size)
-
-    sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
-    fig, ax = plt.subplots(figsize=(9, 5))
-    ax.plot(steps, losses, "o-", color="#4878D0", label="학습 MLM loss")
-    ax.axhline(random_baseline, color="black", lw=1.0, ls=":", label=f"랜덤 기준선 (ln V = {random_baseline:.2f})")
-    ax.set_xlabel("학습 step")
-    ax.set_ylabel("MLM loss (CrossEntropy)")
-    ax.set_title("MLM 학습 loss — Wikitext-103 위에서 처음부터 학습한 small BERT")
-    ax.legend()
-    plt.tight_layout()
-    plt.show()
-else:
-    print("No train loss logs found.")
-```
-
-**▶ 실행 결과**
-
-![output](../assets/20-en_bert_pretrain-out1.png)
-
-```python
-eval_metrics = trainer.evaluate()
-eval_loss = eval_metrics["eval_loss"]
-eval_ppl = math.exp(eval_loss)
-print("=== eval (held-out Wikitext-103 paragraphs) ===")
-for k, v in eval_metrics.items():
-    if isinstance(v, float):
-        print(f"  {k:>22}: {v:.4f}")
-print()
-print(f"  MLM loss:               {eval_loss:.4f}")
-print(f"  perplexity (exp loss):  {eval_ppl:.2f}")
-print(f"  random baseline PPL:    {tokenizer.vocab_size:,}  (uniform over vocab)")
-print(f"  -> model narrowed vocab to approx. {eval_ppl:.0f} candidates per masked position")
-```
-
-**▶ 실행 결과**
-
-```text
-<IPython.core.display.HTML object>
-<IPython.core.display.HTML object>
-=== eval (held-out Wikitext-103 paragraphs) ===
-               eval_loss: 7.1202
-
-  MLM loss:               7.1202
-  perplexity (exp loss):  1236.73
-  random baseline PPL:    30,522  (uniform over vocab)
-  -> model narrowed vocab to approx. 1237 candidates per masked position
-```
-
-```python
-# ---- 사전학습 후 eval_loss / perplexity ----
-post_eval = trainer.evaluate()
-post_eval_loss = post_eval["eval_loss"]
-post_eval_ppl  = math.exp(post_eval_loss)
-
-print("=" * 78)
-print("AFTER pretraining  (2 epoch MLM on Wikitext-103)")
-print("=" * 78)
-print(f"  eval_loss       : {post_eval_loss:.4f}   (before: {pre_eval_loss:.4f})")
-print(f"  eval_perplexity : {post_eval_ppl:,.2f}        (before: {pre_eval_ppl:,.0f})")
-print(f"  -> narrowed vocab to approx. {post_eval_ppl:.0f} candidates per masked position")
-print()
-
-# ---- 사전학습 후 [MASK] top-5 ----
-post_top5_records = []
-for sent in test_sentences:
-    results = predict_mask(sent, top_k=5)
-    top5_tokens = [tok for tok, _ in results[0][1]] if results else []
-    post_top5_records.append({"sentence": sent, "top5_after": top5_tokens})
-    print(f"input: {sent}")
-    print(f"  top-5 after pretraining: {top5_tokens}")
-    print()
-```
-
-**▶ 실행 결과**
-
-```text
-<IPython.core.display.HTML object>
-<IPython.core.display.HTML object>
-==============================================================================
-AFTER pretraining  (2 epoch MLM on Wikitext-103)
-==============================================================================
-  eval_loss       : 7.1278   (before: 10.3834)
-  eval_perplexity : 1,246.14        (before: 32,319)
-  -> narrowed vocab to approx. 1246 candidates per masked position
-
-input: The capital of France is [MASK].
-  top-5 after pretraining: ['the', ',', '.', 'and', 'of']
-
-input: Water freezes at [MASK] degrees Celsius.
-  top-5 after pretraining: ['the', ',', '.', 'and', 'of']
-
-input: The food at this restaurant was absolutely [MASK].
-  top-5 after pretraining: ['the', ',', '.', 'and', 'of']
-
-input: I would [MASK] recommend this place.
-  top-5 after pretraining: ['the', ',', '.', 'and', 'of']
-```
-
-```python
-# 사전·사후 수치 비교 표
-metric_compare = pd.DataFrame({
-    "metric":           ["eval_loss", "eval_perplexity"],
-    "before (random)":  [pre_eval_loss,  pre_eval_ppl],
-    "after (2 epoch)":  [post_eval_loss, post_eval_ppl],
-    "random baseline":  [random_baseline_loss, float(tokenizer.vocab_size)],
-})
-print("Before vs After — eval metrics")
-print(metric_compare.round(4).to_string(index=False))
-```
-
-**▶ 실행 결과**
-
-```text
-Before vs After — eval metrics
-         metric  before (random)  after (2 epoch)  random baseline
-      eval_loss          10.3834           7.1278          10.3262
-eval_perplexity       32319.2119        1246.1431       30522.0000
-```
-
-```python
-# 막대 그래프 두 장 (eval_loss / perplexity)
-sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
-fig, axes = plt.subplots(1, 2, figsize=(12, 5))
-
-loss_values = [pre_eval_loss, post_eval_loss]
-loss_labels = ["학습 전 (랜덤)", "학습 후 (2 epoch)"]
-axes[0].bar(loss_labels, loss_values, color=["#999999", "#4878D0"])
-axes[0].axhline(random_baseline_loss, color="black", lw=1.0, ls=":",
-                label=f"랜덤 기준선 ln V = {random_baseline_loss:.2f}")
-axes[0].set_ylabel("eval_loss")
-axes[0].set_title("MLM eval_loss")
-axes[0].legend(loc="upper right", fontsize=10)
-
-ppl_values = [pre_eval_ppl, post_eval_ppl]
-axes[1].bar(loss_labels, ppl_values, color=["#999999", "#4878D0"])
-axes[1].set_yscale("log")
-axes[1].axhline(tokenizer.vocab_size, color="black", lw=1.0, ls=":",
-                label=f"랜덤 기준선 V = {tokenizer.vocab_size:,}")
-axes[1].set_ylabel("perplexity (log scale)")
-axes[1].set_title("MLM perplexity")
-axes[1].legend(loc="upper right", fontsize=10)
-
-plt.tight_layout()
-plt.show()
-```
-
-**▶ 실행 결과**
-
-![output](../assets/20-en_bert_pretrain-out2.png)
-
-```python
-# 표준 bert-base-uncased 로드 — 학습이 충분히 잘 된 경우의 기준점
-from transformers import AutoModelForMaskedLM
-
-ref_model = AutoModelForMaskedLM.from_pretrained("bert-base-uncased")
-ref_model.to(model.device)
-ref_model.eval()
-
-ref_param_count = sum(p.numel() for p in ref_model.parameters())
-our_param_count = sum(p.numel() for p in model.parameters())
-print(f"Our small BERT params: {our_param_count/1e6:.1f}M")
-print(f"Reference BERT params: {ref_param_count/1e6:.1f}M  ({ref_param_count/our_param_count:.0f}x larger)")
-```
-
-**▶ 실행 결과**
-
-```text
-[transformers] BertForMaskedLM LOAD REPORT from: bert-base-uncased
-Key                         | Status     |  | 
-----------------------------+------------+--+-
-bert.pooler.dense.weight    | UNEXPECTED |  | 
-cls.seq_relationship.weight | UNEXPECTED |  | 
-bert.pooler.dense.bias      | UNEXPECTED |  | 
-cls.seq_relationship.bias   | UNEXPECTED |  | 
-
-Notes:
-- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
-Our small BERT params: 11.1M
-Reference BERT params: 109.5M  (10x larger)
-```
-
-```python
-# Reference 모델로 같은 문장의 top-5 측정
-def predict_mask_with(text, ref, top_k=5):
-    '''임의의 MLM 모델로 [MASK] 자리 top-k 예측.'''
-    ref.eval()
-    inputs = tokenizer(text, return_tensors="pt").to(ref.device)
-    with torch.no_grad():
-        outputs = ref(**inputs)
-    logits = outputs.logits[0]
-    mask_positions = (inputs["input_ids"][0] == tokenizer.mask_token_id).nonzero(as_tuple=True)[0]
-    if len(mask_positions) == 0:
-        return None
-    results = []
-    for pos in mask_positions:
-        probs = torch.softmax(logits[pos], dim=-1)
-        top_p, top_i = probs.topk(top_k)
-        candidates = [(tokenizer.convert_ids_to_tokens(int(i)), float(p))
-                       for p, i in zip(top_p, top_i)]
-        results.append((int(pos), candidates))
-    return results
-
-
-ref_top5_records = []
-for sent in test_sentences:
-    results = predict_mask_with(sent, ref_model, top_k=5)
-    top5_tokens = [tok for tok, _ in results[0][1]] if results else []
-    ref_top5_records.append({"sentence": sent, "top5_ref": top5_tokens})
-
-# 참조 모델 메모리 해제 (분류 fine-tune 챕터 21 가 같은 노트북이 아니므로 안전)
-del ref_model
-if torch.cuda.is_available():
-    torch.cuda.empty_cache()
-```
-
-```python
-# 3-way top-5 비교 표
-rows = []
-for pre, post, ref in zip(pre_top5_records, post_top5_records, ref_top5_records):
-    rows.append({
-        "sentence":          pre["sentence"],
-        "top5_before":       ", ".join(pre["top5_before"]),
-        "top5_ours":         ", ".join(post["top5_after"]),
-        "top5_ref_bert":     ", ".join(ref["top5_ref"]),
-    })
-
-top5_compare = pd.DataFrame(rows)
-print("Before (random) vs Ours (small BERT, 5K paragraphs) vs Reference (bert-base-uncased, approx. 3.3B tokens)")
-print("=" * 100)
-for _, row in top5_compare.iterrows():
-    print(f"input: {row['sentence']}")
-    print(f"  before (random)        : {row['top5_before']}")
-    print(f"  ours  (small, 5K para) : {row['top5_ours']}")
-    print(f"  ref   (bert-base)      : {row['top5_ref_bert']}")
-    print()
-```
-
-**▶ 실행 결과**
-
-```text
-Before (random) vs Ours (small BERT, 5K paragraphs) vs Reference (bert-base-uncased, approx. 3.3B tokens)
-====================================================================================================
-input: The capital of France is [MASK].
-  before (random)        : broadband, ##eti, weights, smack, ##umen
-  ours  (small, 5K para) : the, ,, ., and, of
-  ref   (bert-base)      : paris, lille, lyon, marseille, tours
-
-input: Water freezes at [MASK] degrees Celsius.
-  before (random)        : ##hp, damages, slogan, ##ssion, [unused358]
-  ours  (small, 5K para) : the, ,, ., and, of
-  ref   (bert-base)      : 100, 60, 50, 30, 90
-
-input: The food at this restaurant was absolutely [MASK].
-  before (random)        : languages, sampling, ##pic, libretto, ##orus
-  ours  (small, 5K para) : the, ,, ., and, of
-  ref   (bert-base)      : delicious, amazing, fabulous, fantastic, incredible
-
-input: I would [MASK] recommend this place.
-  before (random)        : ahmed, smack, stations, ##sam, now
-  ours  (small, 5K para) : the, ,, ., and, of
-  ref   (bert-base)      : highly, certainly, definitely, strongly, greatly
-```
-
-```python
-SAVE_DIR = "./ch20_small_bert_mlm"
-model.save_pretrained(SAVE_DIR)
-tokenizer.save_pretrained(SAVE_DIR)
-
-import os
-print(f"Saved to: {SAVE_DIR}")
-print(f"Files:")
-for f in sorted(os.listdir(SAVE_DIR)):
-    size = os.path.getsize(os.path.join(SAVE_DIR, f))
-    if size > 1024 * 1024:
-        size_str = f"{size / 1024 / 1024:.1f} MB"
-    else:
-        size_str = f"{size / 1024:.1f} KB"
-    print(f"  {f:>30s}  {size_str}")
-```
-
-**▶ 실행 결과**
-
-```text
-Saved to: ./ch20_small_bert_mlm
-Files:
-                     config.json  0.7 KB
-               model.safetensors  42.4 MB
-                  tokenizer.json  694.7 KB
-           tokenizer_config.json  0.3 KB
 ```

@@ -54,6 +54,8 @@ CUDA available: True
 GPU:             Tesla T4
 ```
 
+**baseline VRAM**:
+
 ```python
 !nvidia-smi
 ```
@@ -82,6 +84,13 @@ Wed Jun 24 04:13:57 2026
 |  No running processes found                                                             |
 +-----------------------------------------------------------------------------------------+
 ```
+
+## 데이터 — Yelp + 항목 (Ch 13) + 별점 보조 라벨
+
+Ch 13의 항목 합성 라벨을 그대로 쓰고, **별점 보조 회귀 라벨** 을 추가합니다. 별점은 1-5 정수지만 회귀 헤드와 MSE를 자연스럽게 쓰기 위해 *0-1 스케일* 로 변환만 해 둡니다 (학습 정규화 효과를 위한 데이터 가공이 아니라, 그냥 단위만 맞추는 작업).
+
+- 메인 라벨 $\mathbf{y}^\text{main} \in \{0, 1\}^5$ — 항목 multi-hot.
+- 보조 라벨 $y^\text{aux} = \text{label} / 4 \in [0, 1]$ — 1★ → 0.0, 5★ → 1.0.
 
 ```python
 ASPECT_KEYWORDS = {
@@ -180,6 +189,10 @@ Aux score distribution (train):
   1.00  (star 5): 975 samples (19.5%)
 ```
 
+## 토큰화 — 메인 multi-hot + 보조 float 같이 부착
+
+`tokenize_fn` 이 두 라벨을 모두 attach. 메인은 `labels` (multi-hot float), 보조는 `aux_labels` (float scalar).
+
 ```python
 def tokenize_fn(batch):
     out = tokenizer(batch["text"], truncation=True, max_length=128)
@@ -211,6 +224,10 @@ Dataset({
 First sample labels: [0.0, 1.0, 0.0, 0.0, 1.0]
 First sample aux_labels: 1.00
 ```
+
+## 커스텀 Data Collator — `aux_labels` 도 batch에 같이 담기
+
+기본 `DataCollatorWithPadding` 은 input_ids·attention_mask·labels 만 알고 있어 *추가 라벨* 은 통과시키지 못합니다. 한 줄짜리 wrapper로 `aux_labels` 를 텐서로 만들어 batch에 추가합니다.
 
 ```python
 class AuxCollator:
@@ -248,6 +265,10 @@ Batch keys: ['input_ids', 'token_type_ids', 'attention_mask', 'labels', 'aux_lab
   labels: shape=(4, 5), dtype=torch.float32
   aux_labels: shape=(4,), dtype=torch.float32
 ```
+
+## 모델 셋업 — Ch 13 모델 + 보조 헤드 한 줄 추가
+
+`AutoModelForSequenceClassification` (Ch 13과 *완전히 동일*) 을 로드한 뒤 `model.aux_head = nn.Linear(...)` 한 줄로 보조 헤드를 *모델 객체에 attach*. 이후 `Trainer.compute_loss` 가 메인 출력 + 보조 헤드를 동시에 사용해 결합 loss 를 계산합니다.
 
 ```python
 def make_model():
@@ -309,6 +330,19 @@ Main classifier:      Linear(in_features=768, out_features=5, bias=True)
 Aux head:             Linear(in_features=768, out_features=1, bias=True)
 ```
 
+**보조 헤드는 ~770개 파라미터** — 768→1 Linear의 weight + bias. 전체 67M 의 *0.001%*. 이 *미세한 추가 자유도* 만으로 멀티태스크 학습이 동작합니다.
+
+## 커스텀 Trainer — `compute_loss` 오버라이드
+
+핵심 로직 (코드 한 줄로 요약):
+
+```python
+loss = outputs.loss + λ · MSE(aux_head(CLS), aux_labels)
+```
+
+- `outputs.loss` 는 `problem_type="multi_label_classification"` 자동 매핑으로 이미 BCE per-label 평균이 계산됨.
+- 보조 loss는 우리가 *직접 계산* — `output_hidden_states=True` 로 받은 마지막 layer의 CLS 표현을 `aux_head` 에 통과.
+
 ```python
 from transformers.modeling_outputs import SequenceClassifierOutput
 
@@ -349,6 +383,8 @@ print("AuxTrainer 정의 완료 — Trainer 의 compute_loss 만 교체.")
 AuxTrainer 정의 완료 — Trainer 의 compute_loss 만 교체.
 ```
 
+**평가용 metric 함수** — 메인 (Ch 13과 동일) + 보조 (RMSE, R², Pearson r). 보조 logit 추출은 `Trainer.predict()` 가 메인 logits 만 반환하기 때문에 별도 단계로 빼서 처리.
+
 ```python
 def compute_metrics_main(eval_pred):
     # 메인 task 평가 — Ch 13과 동일
@@ -379,6 +415,10 @@ def compute_metrics_main(eval_pred):
         out["macro_auc"] = float("nan")
     return out
 ```
+
+## 학습 — λ=0.05 (sweet spot, 보조 ON)
+
+Ch 13과 동일한 hyperparams. `AuxTrainer` + `lambda_aux=0.05`. 이 값은 부록 `14_auxiliary_loss_lambda_sweep` 의 λ 스윕에서 **메인 F1 을 가장 끌어올린 지점** 입니다 (λ 를 키우면 §9 곡선처럼 메인이 무너집니다).
 
 ```python
 LAMBDA_AUX = 0.05
@@ -420,6 +460,8 @@ print(f"\nWith-aux training done — mean train loss: {train_result_aux.training
 With-aux training done — mean train loss: 0.4046
 ```
 
+**중요: `remove_unused_columns=False`** — Trainer는 기본으로 *model.forward 시그니처에 없는 컬럼* 을 제거합니다. `aux_labels` 는 모델 시그니처에 없어 자동 제거되면 우리 `compute_loss` 가 받을 수 없습니다. 이 옵션을 꺼야 함.
+
 ```python
 !nvidia-smi
 ```
@@ -448,304 +490,3 @@ Wed Jun 24 04:15:10 2026
 |    0   N/A  N/A            1097      C   /usr/bin/python3                       1616MiB |
 +-----------------------------------------------------------------------------------------+
 ```
-
-```python
-# 메인 metric
-eval_metrics_aux = trainer_aux.evaluate()
-print("With-aux (λ=0.05) — main task metrics:")
-for k, v in eval_metrics_aux.items():
-    if k.startswith("eval_") and isinstance(v, float):
-        print(f"  {k:>22}: {v:.4f}")
-```
-
-**▶ 실행 결과**
-
-```text
-<IPython.core.display.HTML object>
-<IPython.core.display.HTML object>
-With-aux (λ=0.05) — main task metrics:
-               eval_loss: 0.2963
-       eval_hamming_loss: 0.0978
-           eval_micro_f1: 0.8469
-    eval_micro_precision: 0.9192
-       eval_micro_recall: 0.7853
-           eval_macro_f1: 0.8109
-    eval_macro_precision: 0.9328
-       eval_macro_recall: 0.7316
-          eval_macro_auc: 0.9182
-            eval_runtime: 0.9952
-  eval_samples_per_second: 1004.7790
-   eval_steps_per_second: 32.1530
-```
-
-```python
-# 보조 metric — eval 전체에 대해 수동 forward (작아서 빠름)
-@torch.no_grad()
-def aux_predictions(trainer, dataset, batch_size=64):
-    trainer.model.eval()
-    device = trainer.model.device
-    aux_preds, aux_true = [], []
-    for i in range(0, len(dataset), batch_size):
-        batch_features = [dict(dataset[j]) for j in range(i, min(i + batch_size, len(dataset)))]
-        batch = trainer.data_collator(batch_features)
-        batch_on_device = {k: v.to(device) for k, v in batch.items()}
-        aux_lbl = batch_on_device.pop("aux_labels").cpu().numpy()
-        out = trainer.model(**{k: v for k, v in batch_on_device.items() if k != "labels"},
-                            output_hidden_states=True)
-        cls = out.hidden_states[-1][:, 0, :]
-        aux_logits = trainer.model.aux_head(cls).squeeze(-1).cpu().numpy()
-        aux_preds.extend(aux_logits.tolist())
-        aux_true.extend(aux_lbl.tolist())
-    return np.array(aux_preds), np.array(aux_true)
-
-
-aux_preds_aux, aux_true = aux_predictions(trainer_aux, eval_tok)
-rmse_aux = float(np.sqrt(mean_squared_error(aux_true, aux_preds_aux)))
-r2_aux   = float(r2_score(aux_true, aux_preds_aux))
-pear_aux = float(np.corrcoef(aux_true, aux_preds_aux)[0, 1])
-
-print("\nWith-aux (λ=0.05) — aux task metrics (star regression, 0-1 scale):")
-print(f"  RMSE:    {rmse_aux:.4f}")
-print(f"  R^2:     {r2_aux:.4f}")
-print(f"  Pearson: {pear_aux:.4f}")
-```
-
-**▶ 실행 결과**
-
-```text
-With-aux (λ=0.05) — aux task metrics (star regression, 0-1 scale):
-  RMSE:    0.2640
-  R^2:     0.4277
-  Pearson: 0.6603
-```
-
-```python
-# 메인 task per-sample 예측 (다음 비교 단계에서 사용)
-preds_output_aux = trainer_aux.predict(eval_tok)
-logits_aux = preds_output_aux.predictions
-if isinstance(logits_aux, tuple):
-    logits_aux = logits_aux[0]
-labels_eval = preds_output_aux.label_ids.astype(int)
-probs_aux = 1.0 / (1.0 + np.exp(-logits_aux))
-preds_main_aux = (probs_aux >= 0.5).astype(int)
-
-print(f"Main logits shape: {logits_aux.shape}")
-print(f"Eval samples:      {len(labels_eval)}")
-```
-
-**▶ 실행 결과**
-
-```text
-<IPython.core.display.HTML object>
-Main logits shape: (1000, 5)
-Eval samples:      1000
-```
-
-```python
-# 새 모델 인스턴스 — λ=0 학습용
-torch.manual_seed(42); np.random.seed(42)   # λ=0.05 모델과 동일 초기화 (공정 비교)
-model_no_aux = make_model()
-
-training_args_no_aux = TrainingArguments(
-    output_dir="./ch14_baseline_output",
-    num_train_epochs=2,
-    per_device_train_batch_size=16,
-    per_device_eval_batch_size=32,
-    learning_rate=2e-5,
-    fp16=True,
-    eval_strategy="epoch",
-    logging_steps=50,
-    save_strategy="no",
-    report_to="none",
-    seed=42,
-    remove_unused_columns=False,
-)
-
-trainer_no_aux = AuxTrainer(
-    model=model_no_aux,
-    args=training_args_no_aux,
-    train_dataset=train_tok,
-    eval_dataset=eval_tok,
-    data_collator=collator,
-    processing_class=tokenizer,
-    compute_metrics=compute_metrics_main,
-    lambda_aux=0.0,    # ← 보조 loss 무시
-)
-
-train_result_no_aux = trainer_no_aux.train()
-print(f"\nNo-aux (λ=0) baseline training done — mean train loss: {train_result_no_aux.training_loss:.4f}")
-```
-
-**▶ 실행 결과**
-
-```text
-[transformers] DistilBertForSequenceClassification LOAD REPORT from: distilbert-base-uncased
-Key                     | Status     | 
-------------------------+------------+-
-vocab_layer_norm.bias   | UNEXPECTED | 
-vocab_transform.weight  | UNEXPECTED | 
-vocab_projector.bias    | UNEXPECTED | 
-vocab_transform.bias    | UNEXPECTED | 
-vocab_layer_norm.weight | UNEXPECTED | 
-classifier.weight       | MISSING    | 
-pre_classifier.bias     | MISSING    | 
-pre_classifier.weight   | MISSING    | 
-classifier.bias         | MISSING    | 
-
-Notes:
-- UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
-- MISSING:	those params were newly initialized because missing from the checkpoint. Consider training on your downstream task.
-<IPython.core.display.HTML object>
-No-aux (λ=0) baseline training done — mean train loss: 0.4010
-```
-
-```python
-# baseline 메인 metric
-eval_metrics_no_aux = trainer_no_aux.evaluate()
-print("No-aux (λ=0) baseline — main task metrics:")
-for k, v in eval_metrics_no_aux.items():
-    if k.startswith("eval_") and isinstance(v, float):
-        print(f"  {k:>22}: {v:.4f}")
-
-# baseline 메인 per-sample 예측
-preds_output_no_aux = trainer_no_aux.predict(eval_tok)
-logits_no_aux = preds_output_no_aux.predictions
-if isinstance(logits_no_aux, tuple):
-    logits_no_aux = logits_no_aux[0]
-probs_no_aux = 1.0 / (1.0 + np.exp(-logits_no_aux))
-preds_main_no_aux = (probs_no_aux >= 0.5).astype(int)
-```
-
-**▶ 실행 결과**
-
-```text
-<IPython.core.display.HTML object>
-<IPython.core.display.HTML object>
-No-aux (λ=0) baseline — main task metrics:
-               eval_loss: 0.2931
-       eval_hamming_loss: 0.1020
-           eval_micro_f1: 0.8399
-    eval_micro_precision: 0.9146
-       eval_micro_recall: 0.7766
-           eval_macro_f1: 0.8023
-    eval_macro_precision: 0.9328
-       eval_macro_recall: 0.7206
-          eval_macro_auc: 0.9179
-            eval_runtime: 1.0469
-  eval_samples_per_second: 955.1760
-   eval_steps_per_second: 30.5660
-<IPython.core.display.HTML object>
-```
-
-```python
-m_aux    = {k.replace("eval_", ""): v for k, v in eval_metrics_aux.items()
-            if k.startswith("eval_") and isinstance(v, float)}
-m_no_aux = {k.replace("eval_", ""): v for k, v in eval_metrics_no_aux.items()
-            if k.startswith("eval_") and isinstance(v, float)}
-
-common = [k for k in m_aux if k in m_no_aux]
-cmp = pd.DataFrame({
-    "metric":             common,
-    "no aux (lambda=0)":  [m_no_aux[k] for k in common],
-    "with aux (lambda=0.05)":[m_aux[k]    for k in common],
-})
-cmp["delta (aux - no_aux)"] = cmp["with aux (lambda=0.05)"] - cmp["no aux (lambda=0)"]
-print(cmp.round(4).to_string(index=False))
-```
-
-**▶ 실행 결과**
-
-```text
-            metric  no aux (lambda=0)  with aux (lambda=0.05)  delta (aux - no_aux)
-              loss             0.2931                  0.2963                0.0032
-      hamming_loss             0.1020                  0.0978               -0.0042
-          micro_f1             0.8399                  0.8469                0.0070
-   micro_precision             0.9146                  0.9192                0.0046
-      micro_recall             0.7766                  0.7853                0.0087
-          macro_f1             0.8023                  0.8109                0.0086
-   macro_precision             0.9328                  0.9328               -0.0001
-      macro_recall             0.7206                  0.7316                0.0109
-         macro_auc             0.9179                  0.9182                0.0003
-           runtime             1.0469                  0.9952               -0.0517
-samples_per_second           955.1760               1004.7790               49.6030
-  steps_per_second            30.5660                 32.1530                1.5870
-```
-
-```python
-def per_label_f1(Y_true, Y_pred):
-    f1s = []
-    for k in range(K):
-        _, _, f1, _ = precision_recall_fscore_support(
-            Y_true[:, k], Y_pred[:, k], average="binary", zero_division=0,
-        )
-        f1s.append(float(f1))
-    return f1s
-
-
-f1_no_aux = per_label_f1(labels_eval, preds_main_no_aux)
-f1_aux    = per_label_f1(labels_eval, preds_main_aux)
-
-label_cmp = pd.DataFrame({
-    "aspect":              ASPECTS,
-    "no aux F1":           f1_no_aux,
-    "with aux F1":         f1_aux,
-    "delta (aux - no_aux)": np.array(f1_aux) - np.array(f1_no_aux),
-})
-print(label_cmp.round(4).to_string(index=False))
-
-# 막대 그래프
-sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
-fig, ax = plt.subplots(figsize=(10, 5))
-x_pos = np.arange(K)
-width = 0.38
-ax.bar(x_pos - width/2, f1_no_aux, width, label="aux 없음 (lambda=0)",  color="#5B8DEF")
-ax.bar(x_pos + width/2, f1_aux,    width, label="aux 적용 (lambda=0.05)",color="#F47272")
-ax.set_xticks(x_pos)
-ax.set_xticklabels(ASPECTS)
-ax.set_ylim(0, 1)
-ax.set_ylabel("라벨별 F1")
-ax.set_title("라벨별 F1 — 보조 loss 효과")
-ax.legend()
-plt.tight_layout()
-plt.show()
-```
-
-**▶ 실행 결과**
-
-```text
-  aspect  no aux F1  with aux F1  delta (aux - no_aux)
-    food     0.9242       0.9295                0.0053
- service     0.8453       0.8536                0.0083
-   price     0.7360       0.7475                0.0115
-ambiance     0.6848       0.7072                0.0224
-location     0.8212       0.8167               -0.0046
-```
-
-![output](../assets/14-auxiliary_loss-out1.png)
-
-```python
-# True star 별로 예측값 분포를 violin 으로 — 정답이 5개 정수 라벨에서만 나오므로
-# scatter 보다 분포가 훨씬 깔끔하게 보임
-true_star = np.round(np.array(aux_true) * 4).astype(int) + 1   # 0-1 스케일을 1-5 별점으로
-star_label = [f"{s}*" for s in true_star]
-df_aux = pd.DataFrame({"실제 별점": star_label, "예측값 (0-1 스케일)": aux_preds_aux})
-order = ["1*", "2*", "3*", "4*", "5*"]
-
-fig, ax = plt.subplots(figsize=(8.5, 5.5))
-sns.violinplot(
-    data=df_aux, x="실제 별점", y="예측값 (0-1 스케일)",
-    order=order, inner="quart", cut=0,
-    color="#F47272", alpha=0.6, ax=ax,
-)
-# 정답이 있는 위치를 점선 가이드로 표시 (1* -> 0.0, 5* -> 1.0)
-for i, target in enumerate([0.0, 0.25, 0.5, 0.75, 1.0]):
-    ax.hlines(target, i - 0.4, i + 0.4, color="black", lw=1.1, ls="--", alpha=0.7)
-ax.set_ylim(-0.2, 1.2)
-ax.set_title(f"보조 task — 예측 별점 vs 실제 별점  (RMSE={rmse_aux:.3f}, r={pear_aux:.3f})")
-plt.tight_layout()
-plt.show()
-```
-
-**▶ 실행 결과**
-
-![output](../assets/14-auxiliary_loss-out2.png)

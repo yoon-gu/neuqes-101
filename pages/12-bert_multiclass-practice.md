@@ -53,6 +53,8 @@ CUDA available: True
 GPU:             Tesla T4
 ```
 
+**baseline VRAM**:
+
 ```python
 !nvidia-smi
 ```
@@ -81,6 +83,10 @@ Mon Jun 22 03:47:31 2026
 |  No running processes found                                                             |
 +-----------------------------------------------------------------------------------------+
 ```
+
+## 데이터 — Yelp 별점 1-5 (Ch 5와 동일)
+
+별점 3 제외 같은 전처리 *없이* 그대로 사용. 라벨은 `dataset["label"]` 가 이미 0-4 int 인덱스 (Yelp 데이터셋의 기본 형식).
 
 ```python
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
@@ -120,6 +126,8 @@ First sample:
   text:  I stalk this truck.  I've been to industrial parks where I pretend to be a tech worker standing in line, strip mall parking lots, a …(뒤 72자 생략)
 ```
 
+**Ch 11 과의 한 줄 차이**: `out["labels"] = [int(b) for b in batch["binary"]]` → `out["labels"] = [int(l) for l in batch["label"]]`. 별점-1 인덱스를 그대로 라벨로 사용.
+
 ```python
 def tokenize_fn(batch):
     out = tokenizer(batch["text"], truncation=True, max_length=128)
@@ -143,6 +151,10 @@ Dataset({
 
 First sample label: 4  (int scalar in 0-4)
 ```
+
+## 모델 로드 — `num_labels=5` 만 바뀜
+
+Ch 11 셋업에서 K=2 → K=5 한 줄 변화.
 
 ```python
 STAR_LABELS = {0: "1★", 1: "2★", 2: "3★", 3: "4★", 4: "5★"}
@@ -194,6 +206,17 @@ problem_type:         single_label_classification
 id2label:             {0: '1★', 1: '2★', 2: '3★', 3: '4★', 4: '5★'}
 ```
 
+**파라미터 수 비교 — K가 늘어나도 거의 변하지 않습니다**
+
+| 부분 | Ch 11 (K=2) | Ch 12 (K=5) |
+|---|---|---|
+| DistilBERT body | 66,362,880 | 66,362,880 |
+| pre_classifier (`Linear(768→768)`) | 590,592 | 590,592 |
+| classifier (`Linear(768→K)`) | 1,538 | **3,845** |
+| 합계 | 66,955,010 | **66,957,317** |
+
+분류 헤드만 K에 비례해 늘어나지만 (768·K + K), DistilBERT body가 약 66M이라 K=2 ↔ K=5 전체 차이는 0.003%. **K가 늘어났다고 모델이 *훨씬* 무거워지지는 않는다** 는 점이 multi-class BERT의 매력 중 하나.
+
 ```python
 !nvidia-smi
 ```
@@ -222,6 +245,10 @@ Mon Jun 22 03:47:57 2026
 |  No running processes found                                                             |
 +-----------------------------------------------------------------------------------------+
 ```
+
+## 학습 — Ch 11과 동일한 hyperparams
+
+Ch 11과 *완전히 같은* learning rate, batch size, epoch 수, seed. 변하는 건 모델의 출력 차원 (5)과 평가 metric의 average 방식 (`"macro"`, multi-class AUC는 `multi_class="ovr"`).
 
 ```python
 def compute_metrics(eval_pred):
@@ -311,249 +338,3 @@ Mon Jun 22 03:48:37 2026
 |    0   N/A  N/A            2000      C   /usr/bin/python3                       1574MiB |
 +-----------------------------------------------------------------------------------------+
 ```
-
-```python
-# 평가 metric
-eval_metrics = trainer.evaluate()
-print("BERT 5-class evaluation:")
-for k, v in eval_metrics.items():
-    if k.startswith("eval_") and isinstance(v, float):
-        print(f"  {k:>22}: {v:.4f}")
-```
-
-**▶ 실행 결과**
-
-```text
-<IPython.core.display.HTML object>
-<IPython.core.display.HTML object>
-BERT 5-class evaluation:
-               eval_loss: 1.0000
-           eval_accuracy: 0.5580
-    eval_macro_precision: 0.5555
-       eval_macro_recall: 0.5595
-           eval_macro_f1: 0.5561
-            eval_auc_ovr: 0.8657
-```
-
-```python
-# logits → softmax → argmax
-preds_output = trainer.predict(eval_tok)
-logits  = preds_output.predictions               # (B, 5)
-labels  = preds_output.label_ids.astype(int)     # (B,)
-
-exp = np.exp(logits - logits.max(axis=1, keepdims=True))
-probs_full = exp / exp.sum(axis=1, keepdims=True)  # (B, 5)
-preds = probs_full.argmax(axis=1)                  # (B,)
-
-# top-1 확률 (모델이 선택한 클래스의 확률)
-top1_prob = probs_full.max(axis=1)
-correct = (preds == labels)
-
-print(f"logits shape: {logits.shape}")
-print(f"top-1 prob range: [{top1_prob.min():.4f}, {top1_prob.max():.4f}]")
-print(f"top-1 prob mean: correct={top1_prob[correct].mean():.4f}, wrong={top1_prob[~correct].mean():.4f}")
-print(f"\nFirst 5 samples:")
-print(pd.DataFrame({
-    "label (star-1)": labels[:5],
-    "pred (star-1)":  preds[:5],
-    "top-1 prob":     top1_prob[:5].round(4),
-    "correct?":       correct[:5],
-}).to_string(index=False))
-```
-
-**▶ 실행 결과**
-
-```text
-<IPython.core.display.HTML object>
-logits shape: (1000, 5)
-top-1 prob range: [0.2245, 0.8730]
-top-1 prob mean: correct=0.6279, wrong=0.5414
-
-First 5 samples:
- label (star-1)  pred (star-1)  top-1 prob  correct?
-              2              4      0.4724     False
-              4              3      0.4351     False
-              1              0      0.7647     False
-              4              4      0.4687      True
-              3              3      0.5864      True
-```
-
-```python
-sns.set_theme(style="white", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
-
-cm = confusion_matrix(labels, preds, labels=list(range(5)))
-# 정답 라벨별 정규화 — 각 행 합이 1이 되어 *재현율* 을 직접 읽을 수 있음
-cm_norm = cm / cm.sum(axis=1, keepdims=True)
-
-fig, ax = plt.subplots(figsize=(7, 6))
-sns.heatmap(
-    cm_norm, annot=cm, fmt="d",                       # 색은 비율, 숫자는 raw count
-    cmap="Blues", vmin=0, vmax=1,
-    xticklabels=[STAR_LABELS[k] for k in range(5)],
-    yticklabels=[STAR_LABELS[k] for k in range(5)],
-    cbar_kws={"label": "행 정규화 (재현율)"}, ax=ax,
-)
-ax.set_xlabel("예측 별점")
-ax.set_ylabel("실제 별점")
-ax.set_title("혼동 행렬 — 5-class Yelp")
-plt.tight_layout()
-plt.show()
-```
-
-**▶ 실행 결과**
-
-![output](../assets/12-bert_multiclass-out1.png)
-
-```python
-df_top = pd.DataFrame({
-    "top1_prob": top1_prob,
-    "outcome":   np.where(correct, "correct", "wrong"),
-})
-
-fig, ax = plt.subplots(figsize=(9, 5))
-sns.kdeplot(
-    data=df_top, x="top1_prob", hue="outcome",
-    fill=True, common_norm=False, alpha=0.5,
-    palette={"correct": "#5BD17F", "wrong": "#E55050"},
-    clip=(1/5, 1.0), ax=ax,
-)
-ax.axvline(1/5, color="black", lw=1.0, ls=":", alpha=0.5)
-ax.text(1/5, ax.get_ylim()[1]*0.95, "  균등분포 = 1/K", va="top", fontsize=10, alpha=0.6)
-ax.set_title("top-1 확률 — 정답/오답으로 나눈 분포")
-ax.set_xlabel("top-1 예측 확률  max_k P(y=k)")
-ax.set_ylabel("밀도")
-plt.tight_layout()
-plt.show()
-```
-
-**▶ 실행 결과**
-
-![output](../assets/12-bert_multiclass-out2.png)
-
-```python
-# 클래스별 분류 리포트 (precision/recall/F1 클래스 단위)
-print(classification_report(
-    labels, preds,
-    target_names=[STAR_LABELS[k] for k in range(5)],
-    digits=4, zero_division=0,
-))
-```
-
-**▶ 실행 결과**
-
-```text
-              precision    recall  f1-score   support
-
-          1★     0.6520    0.7409    0.6936       220
-          2★     0.5056    0.4225    0.4604       213
-          3★     0.5134    0.4898    0.5013       196
-          4★     0.4651    0.4878    0.4762       205
-          5★     0.6412    0.6566    0.6488       166
-
-    accuracy                         0.5580      1000
-   macro avg     0.5555    0.5595    0.5561      1000
-weighted avg     0.5535    0.5580    0.5542      1000
-```
-
-```python
-# Ch 5 셋업 재현 — TF-IDF + multinomial LogReg
-texts_train  = list(train_full["text"])
-labels_train = list(train_full["label"])
-texts_eval   = list(eval_full["text"])
-labels_eval  = list(eval_full["label"])
-
-vec = TfidfVectorizer(max_features=20000, ngram_range=(1, 2))
-X_train = vec.fit_transform(texts_train)
-X_eval  = vec.transform(texts_eval)
-
-clf = LogisticRegression(max_iter=2000, n_jobs=-1)   # 최신 sklearn은 multinomial이 default for multi-class
-clf.fit(X_train, labels_train)
-
-probs_sk = clf.predict_proba(X_eval)                 # (B, 5)
-preds_sk = probs_sk.argmax(axis=1)                   # (B,)
-
-acc_sk = float(accuracy_score(labels_eval, preds_sk))
-ps, rs, f1s, _ = precision_recall_fscore_support(labels_eval, preds_sk, average="macro", zero_division=0)
-auc_sk = float(roc_auc_score(labels_eval, probs_sk, multi_class="ovr"))
-
-print(f"sklearn TF-IDF + LogReg:")
-print(f"  vocabulary size:    {len(vec.vocabulary_):,}")
-print(f"  trained parameters: {clf.coef_.size + clf.intercept_.size:,}  (~{clf.coef_.size/1e3:.0f} K)")
-print(f"  accuracy:           {acc_sk:.4f}")
-print(f"  macro F1:           {f1s:.4f}")
-print(f"  AUC (OvR):          {auc_sk:.4f}")
-```
-
-**▶ 실행 결과**
-
-```text
-sklearn TF-IDF + LogReg:
-  vocabulary size:    20,000
-  trained parameters: 100,005  (~100 K)
-  accuracy:           0.5420
-  macro F1:           0.5380
-  AUC (OvR):          0.8420
-```
-
-```python
-metrics_bert = {
-    k.replace("eval_", ""): v for k, v in eval_metrics.items()
-    if k.startswith("eval_") and isinstance(v, float)
-}
-metrics_sk = {
-    "accuracy":        acc_sk,
-    "macro_precision": float(ps),
-    "macro_recall":    float(rs),
-    "macro_f1":        float(f1s),
-    "auc_ovr":         auc_sk,
-}
-
-common = [k for k in metrics_bert if k in metrics_sk]
-cmp = pd.DataFrame({
-    "metric":             common,
-    "sklearn (TF-IDF)":   [metrics_sk[k]   for k in common],
-    "BERT":               [metrics_bert[k] for k in common],
-})
-cmp["BERT - sklearn"] = cmp["BERT"] - cmp["sklearn (TF-IDF)"]
-print(cmp.round(4).to_string(index=False))
-```
-
-**▶ 실행 결과**
-
-```text
-         metric  sklearn (TF-IDF)   BERT  BERT - sklearn
-       accuracy            0.5420 0.5580          0.0160
-macro_precision            0.5377 0.5555          0.0177
-   macro_recall            0.5410 0.5595          0.0185
-       macro_f1            0.5380 0.5561          0.0181
-        auc_ovr            0.8420 0.8657          0.0236
-```
-
-```python
-cm_bert = confusion_matrix(labels, preds, labels=list(range(5)))
-cm_sk   = confusion_matrix(labels_eval, preds_sk, labels=list(range(5)))
-
-cm_bert_n = cm_bert / cm_bert.sum(axis=1, keepdims=True)
-cm_sk_n   = cm_sk   / cm_sk.sum(axis=1, keepdims=True)
-
-fig, axes = plt.subplots(1, 2, figsize=(13, 5.5))
-for ax, cm_n, cm_raw, title in [
-    (axes[0], cm_sk_n,   cm_sk,   "sklearn TF-IDF + LogReg"),
-    (axes[1], cm_bert_n, cm_bert, "BERT"),
-]:
-    sns.heatmap(
-        cm_n, annot=cm_raw, fmt="d", cmap="Blues", vmin=0, vmax=1,
-        xticklabels=[STAR_LABELS[k] for k in range(5)],
-        yticklabels=[STAR_LABELS[k] for k in range(5)],
-        cbar=False, ax=ax,
-    )
-    ax.set_title(title)
-    ax.set_xlabel("예측 별점")
-    ax.set_ylabel("실제 별점")
-plt.tight_layout()
-plt.show()
-```
-
-**▶ 실행 결과**
-
-![output](../assets/12-bert_multiclass-out3.png)

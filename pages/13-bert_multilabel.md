@@ -4,13 +4,11 @@
 
 **예상 소요 시간**: 약 12분 (BERT 학습 ~10분 + sklearn 비교 ~30초 + 평가/시각화)
 
-
 ## 학습 흐름
 
 1. 🚀 **실습**: Ch 6에서 만들었던 *항목 키워드 합성 라벨* (food/service/price/ambiance/location)을 그대로 BERT로 학습. `num_labels=5` + `problem_type="multi_label_classification"` 로 BCE per-label 자동 매핑.
 2. 🔬 **해부**: 라벨별 sigmoid 확률 분포 (5 패널 KDE) + 라벨 간 공동 활성 패턴 (correlation heatmap).
 3. 🛠️ **클라이맥스**: 같은 노트북 안에서 Ch 6의 sklearn `OneVsRestClassifier(LogisticRegression)` baseline 재현 → 라벨별 metric 비교.
-
 
 > 📒 **사전 학습 자료**: Ch 6 (sklearn multi-label, OvR), Ch 10 (BERT `num_labels=1` + `multi_label_classification` 트릭 — Ch 13은 그 트릭을 K=5 로 확장한 형태), Ch 12 (BERT multi-class). 이번 챕터는 self-contained.
 
@@ -78,96 +76,6 @@ $$L = \frac{1}{N \cdot K}\sum_{i=1}^{N}\sum_{k=1}^{K}\left[ y_{i,k} \log \sigma(
 Ch 12와 동일 — `distilbert-base-uncased` WordPiece, `max_length=128`. 토크나이저는 라벨 *형식* 에 무관하므로 single-label 이든 multi-label 이든 변화 없음.
 
 > **다음 챕터(Ch 14)**: 토크나이저 그대로. 변하는 건 *모델에 보조 헤드* 가 추가되고 *loss에 보조 항* 이 가중합으로 더해지는 점.
-
-**baseline VRAM**:
-
-## 데이터 — Yelp + 항목(aspect) 합성 라벨 (Ch 6과 동일)
-
-Yelp 리뷰엔 multi-label 정답이 없습니다. Ch 6에서처럼 5개 항목(aspect)별 키워드 사전을 만들어 텍스트에서 매칭 — 어떤 키워드라도 등장하면 해당 항목을 1로 활성. 5차원 multi-hot 벡터가 합성됩니다.
-
-| 항목 | 의미 | 키워드 예시 |
-|---|---|---|
-| `food` | 음식의 맛/메뉴 | food, meal, dish, taste, delicious, ... |
-| `service` | 서비스/응대 | service, staff, waiter, friendly, rude, ... |
-| `price` | 가격/가성비 | price, cheap, expensive, value, worth, ... |
-| `ambiance` | 분위기/인테리어 | atmosphere, decor, music, vibe, cozy, ... |
-| `location` | 위치/주차 | location, parking, area, neighborhood, ... |
-
-> **합성의 한계** — 키워드 매칭은 *언급한 항목* 만 잡고 *언급한 항목이 긍정인지 부정인지* 는 알 수 없습니다. 또 *키워드 없이* 항목이 표현된 경우(예: "10 minutes wait" → service)도 놓칩니다. 이 한계는 챕터 끝에서 솔직히 짚습니다.
-
-**Ch 12와의 한 줄 차이**: `out["labels"] = [int(l) for l in batch["label"]]` → `out["labels"] = [list(map(float, a)) for a in batch["aspects"]]`. 라벨이 *int 스칼라* 가 아니라 *길이 5 multi-hot float 벡터*. 이 형식 + `problem_type="multi_label_classification"` 두 가지가 BCE per-label 자동 매핑의 트리거.
-
-## 모델 로드 — `num_labels=5` + `multi_label_classification`
-
-Ch 12와 *모델 아키텍처는 동일* (`Linear(H, 5)` 분류 헤드). 변하는 한 가지 — `problem_type="multi_label_classification"` — 가 자동 매핑되는 loss를 BCE per-label 로 바꿉니다.
-
-**Ch 12와 파라미터 수가 *완전히 동일*** — 차이는 `problem_type` 한 줄뿐. 같은 모델이 *어떻게 해석되고 어떤 loss로 학습되는가* 만 바뀝니다.
-
-## 학습 — Ch 12와 동일한 hyperparams
-
-Ch 12와 *완전히 같은* learning rate, batch size, epoch 수, seed. 평가 metric만 multi-label용으로 새로 짭니다.
-
-## 평가 — 라벨별 sigmoid 확률 + 활성 패턴
-
-Ch 10의 sigmoid+BCE 평가 패턴을 *5번 반복* 한 셈입니다 — 각 라벨에 대해 독립적으로 확률 분포·정확도·F1을 계산.
-
-### 샘플 단위 해석 — 모델 출력을 읽어내는 법
-
-평가 metric (F1·hamming·AUC) 은 *전체 평균* 이라 모델이 *한 리뷰를 보고 어떻게 판단했는지* 직관이 안 옵니다. 본격 시각화로 가기 전에, 5차원 출력을 *문장 단위* 로 어떻게 해석하는지 두 샘플로 짚어 보겠습니다.
-
-**읽는 법 — 표를 한 줄씩**
-
-1. **`true` 컬럼** — 키워드 합성으로 만든 *정답 multi-hot*. 1 이면 "이 리뷰 본문에 그 항목 키워드가 등장했다".
-2. **`prob` 컬럼** — 모델이 출력한 *각 항목 sigmoid 확률* (독립). 합이 1 일 필요 없음 — multi-label 의 본질.
-3. **`pred` 컬럼** — `prob ≥ 0.5` 이면 1, 아니면 0. *임계값 0.5* 는 사후 후처리 — 라벨별로 다른 값을 줄 수도 있음 (FAQ Q1).
-4. **사람이 읽는 한 줄**: `predicted: [...]` 와 `true: [...]` 가 *얼마나 겹치는지* — 두 리스트가 같으면 완벽한 hit, 한 항목 차이면 *near miss*, 전혀 다르면 모델이 헛다리.
-
-**이 표가 한 리뷰에 대해 보여주는 것**:
-
-- 모델이 *어떤 항목에 자신* 있는지 (prob 0.9 이상)
-- 어떤 항목에서 *망설이는지* (prob 0.4-0.6 부근 — threshold 살짝 옮기면 결과가 뒤집히는 자리)
-- 키워드 합성 라벨의 한계가 드러나는 순간 — 예: 본문에 "10 minutes wait" 처럼 service 를 *키워드 없이* 묘사한 경우 정답은 `service=0` 인데 모델이 prob 0.7 로 활성할 수 있음. 이건 *모델 오답이 아니라 합성 라벨의 누락* 으로 봐야 함.
-
-**전체 metric 의 micro/macro F1 해석**: 위 표 같은 *샘플별 (true vs pred) 비교* 를 평가 셋 1,000건에 대해 *집계* 한 게 §4 상단 metric. micro 는 모든 (샘플 × 라벨) 위치를 동등하게 세고, macro 는 항목 5개의 F1 을 평균. 활성률이 낮은 항목 (location 등) 의 정확도가 *전체* 에 묻히는 걸 막으려면 macro 를 봅니다.
-
-### 4-1. 메인 그림 — 라벨별 sigmoid 확률 KDE (5 패널)
-
-Ch 10에서 봤던 *확률 공간 KDE* 를 5개 라벨에 대해 *각각* 그립니다. 라벨이 *독립* 이라는 multi-label의 본질이 시각적으로 드러나는 그림입니다 — 라벨마다 학습 난이도와 분리도가 *다를 수* 있습니다.
-
-**해석**
-
-- **잘 학습된 라벨** (예: food): label=0 곡선은 0 근처, label=1 곡선은 1 근처에 있고 둘이 거의 만나지 않음. *분리가 깨끗*.
-- **활성률이 낮은 라벨** (예: location): label=1 샘플이 적어 곡선이 노이즈가 큼. 그래도 분리는 보여야 함.
-- **두 곡선이 0.5 근처에서 크게 겹치면** → 그 라벨은 모델이 잘 못 분리. 키워드 매칭이 *얕아서* 진짜 신호를 못 잡았거나, 학습 데이터가 부족한 상태.
-
-### 4-2. 보조 그림 — 라벨 간 공동 활성 패턴
-
-Multi-label 의 핵심 질문 중 하나: *어떤 라벨 쌍이 같이 등장하는가?* 모델이 라벨 *간 상관* 을 학습 데이터에서 흡수했는지 확인합니다.
-
-`true co-occurrence` (실제 데이터의 라벨 동시 등장 빈도)와 `predicted co-occurrence` (모델 예측의 동시 등장 빈도)를 나란히 그려 두 행렬이 비슷하면 모델이 라벨 구조를 잘 잡고 있는 것.
-
-**해석**
-
-- **대각선 = 1.0** — 자기 자신과는 항상 같이 등장 (정의상).
-- **off-diagonal cell M[i, j]** = "라벨 i가 활성된 샘플 중 라벨 j 도 활성된 비율". 비대칭 행렬.
-- food와 service가 같이 자주 등장하면 두 모델 모두 0.5+ 값. *true* 와 *predicted* 가 거의 비슷한 패턴이면 모델이 라벨 구조를 잘 학습했다는 뜻.
-- **predicted cell이 true cell 보다 일관되게 높으면** → 모델이 라벨을 *너무 많이* 활성하는 경향 (over-prediction). threshold를 0.5보다 높게 (예: 0.6) 두면 calibration 개선.
-
-## 클라이맥스 — Ch 6 sklearn `OneVsRestClassifier(LogisticRegression)` 와 비교
-
-Ch 6의 sklearn 셋업을 *이 노트북 안에서* 다시 학습해 라벨별로 BERT와 비교합니다. **multi-label에서도 BERT의 67M이 sklearn 대비 어디서 이기는가?**
-
-### 5-1. 두 모델의 metric 비교
-
-### 5-2. 라벨별 F1 비교 — 어디서 BERT가 이기나
-
-**해석**
-
-- 키워드 매칭으로 합성한 라벨은 *키워드 단어가 본질 신호* 라 sklearn TF-IDF가 의외로 강합니다 — 라벨 정의 자체가 단어 빈도와 일치하기 때문.
-- BERT가 *큰 폭으로* 이기는 라벨이 있다면 → 그 라벨의 *합성 룰이 키워드만으로 안 잡히는 신호* 를 BERT가 추가로 학습한 것 (예: ambiance에서 "lighting was perfect" 같은 묘사).
-- BERT가 *지는 라벨* 도 있을 수 있음 — 키워드가 *결정적* 인 라벨에서 sklearn은 *완벽* 한 매칭, BERT는 *근사* 라 약간의 noise가 들어감.
-
-**합성 라벨의 본질적 한계** — 이 비교는 *키워드 매칭으로 만든 라벨* 위에서의 비교. 실제 사람-annotated multi-label 데이터에선 BERT 격차가 훨씬 큼 (단어 빈도로 안 잡히는 미묘한 항목 인식이 BERT의 강점).
 
 ## 이 장의 구성
 

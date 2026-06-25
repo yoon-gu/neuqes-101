@@ -45,7 +45,7 @@ embed_params = vocab_size * hidden  # = 2.05M
 
 모델의 `[UNK]` 임베딩은 *단 하나의 벡터* — 어떤 단어가 `[UNK]` 로 변환되든 같은 임베딩으로 들어갑니다. 즉 *모든 모르는 단어가 같은 자리에 모이는* 셈. 분류 task 라면 한 두 개 UNK 는 문맥으로 보완되어 큰 영향 없지만, 생성·번역 task 라면 정보 손실이 직접 출력에 드러납니다.
 
-이 챕터의 결과 (WordPiece 한국어 UNK 거의 0% vs WordLevel 한국어 UNK 약 43.7%) 는 한국어 생성 모델 (Ch 26 의 한국어 작은 GPT) 가 *왜 byte-level BPE 같은 subword* 를 쓰는지의 직접적인 이유.
+이 챕터의 결과 (WordPiece 한국어 UNK 거의 0% vs WordLevel 한국어 UNK 5-15%) 는 한국어 생성 모델 (Ch 26 의 한국어 작은 GPT) 가 *왜 byte-level BPE 같은 subword* 를 쓰는지의 직접적인 이유.
 
 ### Q4. (실무) 의료·법률 같은 *전문 도메인* 에서 직접 학습한 토크나이저는 얼마나 효과적인가요?
 
@@ -95,7 +95,7 @@ enc = hf_tok("hello world", return_tensors="pt", padding=True)
 - 이번 챕터에서 *경험한* 토크나이저 학습 위에, *모델 자체* 를 from-scratch 로 사전학습.
 - 모델: 작은 BERT (n_layer=4, hidden=256) — `BertConfig` 로 직접 설계.
 - 토크나이저: 표준 `bert-base-uncased` 의 WordPiece 를 가져옴 (학습 안정성 우선).
-- 데이터: Wikitext-103 (일반 도메인 위키) text (라벨 무시) — *MLM* 사전학습.
+- 데이터: `yelp_polarity` 의 text (라벨 무시) — *MLM* 사전학습.
 - Loss: `CrossEntropyLoss` (마스킹된 위치의 토큰 예측).
 - Ch 21 에서 이 사전학습 모델로 Yelp 이진 분류 → Ch 10 (DistilBERT 사전학습) 과 *직접 비교* — *직접 사전학습한 작은 BERT* 가 *대규모 사전학습된 DistilBERT* 와 얼마나 차이 나는지.
 

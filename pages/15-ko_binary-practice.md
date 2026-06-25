@@ -52,6 +52,8 @@ CUDA available: True
 GPU:             Tesla T4
 ```
 
+**baseline VRAM**:
+
 ```python
 !nvidia-smi
 ```
@@ -81,6 +83,10 @@ Mon Jun 22 03:56:11 2026
 +-----------------------------------------------------------------------------------------+
 ```
 
+## 토크나이저 비교 — 같은 한국어 문장, 두 토크나이저
+
+`klue/bert-base` (한국어) 와 `distilbert-base-uncased` (영어) 두 토크나이저로 *같은* 한국어 문장을 처리해 차이를 직접 봅니다.
+
 한국어 토크나이저(`klue/bert-base`)와 영어 토크나이저(`distilbert-base-uncased`)를 둘 다 불러와, 같은 한국어 문장을 양쪽에 통과시켜 결과를 나란히 비교합니다. 이 챕터 교훈의 절반이 여기서 드러납니다.
 
 ```python
@@ -92,7 +98,6 @@ samples = [
     "별로였어요. 시간 낭비",
     "오랜만에 본 명작이네요!",
 ]
-
 ```
 
 **위 코드 읽기** — `klue/bert-base` 는 한국어 위키·뉴스·댓글로 사전학습된 한국어 WordPiece 토크나이저, `distilbert-base-uncased` 는 영어용입니다. 두 토크나이저는 vocab 규모는 비슷해도 *담긴 어휘* 가 완전히 다릅니다. `samples` 에는 양쪽에 통과시킬 짧은 한국어 리뷰 세 개를 둡니다.
@@ -134,6 +139,19 @@ distilbert-base-uncased vocab:    30,522
 **결과 해석**
 
 `"이 영화 정말 재미있었어요"` 가 한국어 토크나이저로는 6 토큰(`이`, `영화`, `정말`, `재미있`, `##었`, `##어요`)인데 영어 토크나이저로는 14 토큰의 자모 부스러기 + `[UNK]` 로 깨집니다. WordPiece 자체는 같은 알고리즘이지만 *어떤 텍스트로 vocab 을 학습했는가* 만 달라도 한국어 표현력이 이렇게 갈립니다 — 영어 vocab 으로는 한국어 의미를 담을 토큰이 없습니다.
+
+**관찰**
+
+- 한국어 토크나이저는 *어휘적 의미 단위* 로 분할 — `재미있` + `##었` + `##어요` 처럼 어간·어미를 살림
+- 영어 토크나이저는 한국어를 *글자 단위* 로 쪼개거나 (`이`, `영`, `##화`) `[UNK]` 로 처리 — 의미를 못 잡음
+- vocab 크기는 비슷 (32K vs 30K) 지만 *내용물이 완전히 다름* — 한국어 vocab 은 한국어 빈도 어휘 32K, 영어 vocab 은 영어 빈도 어휘 30K
+- 토큰 수도 한국어 토크나이저가 *훨씬 적음* — 같은 문장이라도 짧은 시퀀스로 표현되어 학습 효율도 좋음
+
+## 데이터 — NSMC (네이버 영화 리뷰)
+
+NSMC = Naver Sentiment Movie Corpus. 한국어 *binary* 감성 분류의 표준 벤치마크. 한 줄짜리 짧은 리뷰 + 긍정(1) / 부정(0) 라벨.
+
+**원본**: e9t/nsmc GitHub 의 `ratings_train.txt` / `ratings_test.txt` TSV. Hugging Face datasets hub 의 nsmc 레포는 *로더 스크립트* 기반이라 최신 datasets 라이브러리에서 deprecated — 그래서 GitHub raw URL 에서 직접 받습니다.
 
 NSMC(네이버 영화 리뷰)의 train/test TSV 를 GitHub raw URL 에서 직접 받습니다. Hugging Face hub 의 nsmc 레포는 로더 스크립트 기반이라 최신 `datasets` 에서 deprecated 됐기 때문입니다. 라벨 분포와 첫 세 줄을 함께 찍어 데이터 형태를 확인합니다.
 
@@ -208,6 +226,10 @@ Dataset({
 })
 ```
 
+## 토큰화 — Ch 11 패턴 그대로, 토크나이저만 한국어로
+
+Ch 11 와 *한 줄 차이* — 토크나이저 인스턴스가 영어 → 한국어. 라벨 형식 `int(b)` 도 그대로.
+
 위에서 로드한 한국어 토크나이저로 데이터셋을 토큰화합니다. Ch 11 과 비교하면 토크나이저 인스턴스가 영어 → 한국어로 바뀐 *한 줄 차이* 뿐이고, 라벨을 `int` 로 두는 single-label 셋업은 그대로입니다.
 
 ```python
@@ -244,6 +266,10 @@ Token length stats — mean: 21.9, median: 17, max: 117
 **결과 해석**
 
 토큰 길이 평균 21.9, 중앙값 17로 대부분 매우 짧고 최댓값(117)도 `max_length=128` 안에 들어옵니다. NSMC 한 줄 리뷰의 *짧음* 이 수치로 확인되며, truncation 으로 잘려나가는 정보가 거의 없어 학습도 빠릅니다.
+
+## 모델 로드 — `klue/bert-base` + binary 분류 헤드
+
+Ch 11 에서 `distilbert-base-uncased` 였던 자리만 `klue/bert-base` 로 교체. 분류 헤드 `Linear(H, 2)` + `single_label_classification` 셋업은 동일.
 
 `klue/bert-base` 본체에 `num_labels=2` 분류 헤드를 얹습니다. `problem_type="single_label_classification"` 으로 softmax + `CrossEntropyLoss`(방식 B) 가 자동 선택됩니다 — Ch 11 에서 `distilbert-base-uncased` 였던 자리만 한국어 모델로 교체한 셋업입니다.
 
@@ -301,6 +327,16 @@ vocab size V:         32,000
 
 LOAD REPORT 의 `classifier.weight | MISSING` 은 정상입니다 — 사전학습 체크포인트엔 분류 헤드가 없어 새로 초기화된 것이고, 바로 이 헤드를 파인튜닝으로 학습합니다. `cls.predictions.*` 가 `UNEXPECTED` 인 것도 사전학습용 MLM 헤드라 분류엔 안 쓰여 무시됩니다. 총 110.6M 파라미터는 BERT-base 풀 사이즈(12 레이어)로, DistilBERT(약 67M, 6 레이어)의 약 1.5-2배 학습 시간이 듭니다.
 
+**파라미터 수 비교 — Ch 11 vs Ch 15**
+
+| | Ch 11 (`distilbert-base-uncased`) | Ch 15 (`klue/bert-base`) |
+|---|---|---|
+| Layer 수 | 6 | 12 (BERT-base full) |
+| Hidden size H | 768 | 768 |
+| 총 파라미터 | 약 67M (헤드 포함) | **110M** |
+
+`klue/bert-base` 는 BERT-base 풀 사이즈 (12 레이어). DistilBERT 는 그 절반(6 레이어)으로 distill 한 *경량* 모델. 그래서 같은 5K 샘플 학습이 *약 1.5-2 배* 시간이 더 걸립니다.
+
 ```python
 !nvidia-smi
 ```
@@ -329,6 +365,10 @@ Mon Jun 22 03:56:30 2026
 |  No running processes found                                                             |
 +-----------------------------------------------------------------------------------------+
 ```
+
+## 학습 — Ch 11 과 동일한 hyperparams
+
+`compute_metrics` 도 binary 분류용 그대로.
 
 평가 시 호출될 지표 함수를 정의합니다. 2차원 logit 을 softmax 해 클래스 1(positive) 확률을 뽑고, accuracy·precision·recall·F1 에 더해 확률 기반의 AUC 까지 계산합니다.
 
@@ -420,201 +460,3 @@ Mon Jun 22 03:57:18 2026
 |    0   N/A  N/A             661      C   /usr/bin/python3                       2624MiB |
 +-----------------------------------------------------------------------------------------+
 ```
-
-학습된 모델을 eval 1,000건에 대해 평가해 위에서 정의한 지표들을 출력합니다.
-
-```python
-eval_metrics = trainer.evaluate()
-print("klue/bert-base NSMC binary — evaluation:")
-for k, v in eval_metrics.items():
-    if k.startswith("eval_") and isinstance(v, float):
-        print(f"  {k:>20}: {v:.4f}")
-```
-
-**▶ 실행 결과**
-
-```text
-<IPython.core.display.HTML object>
-<IPython.core.display.HTML object>
-klue/bert-base NSMC binary — evaluation:
-             eval_loss: 0.3887
-         eval_accuracy: 0.8640
-        eval_precision: 0.8773
-           eval_recall: 0.8457
-               eval_f1: 0.8612
-              eval_auc: 0.9292
-```
-
-**결과 해석**
-
-accuracy 86.4%, F1 0.861, AUC 0.929 로 NSMC 5K 샘플 + 2 에폭의 전형적 성능 구간(85-88%)에 듭니다. AUC 가 0.93 으로 높아 모델이 긍정/부정을 확률로 잘 분리하고 있음을 보여줍니다. 90%+ 가 목표라면 학습 데이터를 30K 이상으로 늘려야 합니다.
-
-전체 eval 예측을 받아 2차원 raw logit 에서 softmax 확률과, 시각화에 쓸 1차원 logit $z = z_1 - z_0$ 를 만듭니다. 방식 B(2차원 softmax)를 방식 A(1차원 logit) 형태로 환산해 Ch 10·11 과 같은 그림을 그릴 수 있게 하는 단계입니다.
-
-```python
-preds_output = trainer.predict(eval_tok)
-logits2 = preds_output.predictions
-labels  = preds_output.label_ids.astype(int)
-
-exp = np.exp(logits2 - logits2.max(axis=1, keepdims=True))
-probs_full = exp / exp.sum(axis=1, keepdims=True)
-probs = probs_full[:, 1]
-logits = logits2[:, 1] - logits2[:, 0]
-
-print(f"logits2 (raw)  shape: {logits2.shape}")
-print(f"logit z = z1-z0 range: [{logits.min():.2f}, {logits.max():.2f}]")
-print(f"prob range:           [{probs.min():.4f}, {probs.max():.4f}]")
-print(f"positive prediction rate (prob >= 0.5): {(probs >= 0.5).mean():.1%}")
-```
-
-**▶ 실행 결과**
-
-```text
-<IPython.core.display.HTML object>
-logits2 (raw)  shape: (1000, 2)
-logit z = z1-z0 range: [-5.71, 5.19]
-prob range:           [0.0033, 0.9944]
-positive prediction rate (prob >= 0.5): 48.1%
-```
-
-**결과 해석**
-
-확률이 0.0033 ~ 0.9944 까지 양극단으로 넓게 퍼져 있어 모델이 많은 샘플에 자신 있는 판단을 내립니다. positive 예측 비율 48.1% 가 실제 eval 양성 비율(49.9%)과 가까워, 임계값 0.5 기준 예측이 한쪽으로 치우치지 않았습니다.
-
-클래스별 precision/recall/F1 을 한눈에 보는 분류 리포트입니다. negative·positive 가 균형 잡힌 데이터라 두 클래스 지표가 비슷하게 나오는지 확인합니다.
-
-```python
-# 분류 리포트
-print(classification_report(
-    labels, probs_full.argmax(axis=1),
-    target_names=["negative", "positive"],
-    digits=4,
-))
-```
-
-**▶ 실행 결과**
-
-```text
-              precision    recall  f1-score   support
-
-    negative     0.8516    0.8822    0.8667       501
-    positive     0.8773    0.8457    0.8612       499
-
-    accuracy                         0.8640      1000
-   macro avg     0.8645    0.8640    0.8639      1000
-weighted avg     0.8645    0.8640    0.8640      1000
-```
-
-실제 라벨별로 예측 확률 $P(\text{positive})$ 의 분포를 KDE 로 겹쳐 그립니다. 두 곡선이 0.5 경계선 좌우로 잘 분리될수록 모델이 한국어 감성을 또렷하게 학습한 것입니다.
-
-```python
-sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
-PAL = {0: "#5B8DEF", 1: "#F47272"}
-df_eval = pd.DataFrame({"prob": probs, "logit": logits, "label": labels})
-
-fig, ax = plt.subplots(figsize=(9, 5))
-sns.kdeplot(
-    data=df_eval, x="prob", hue="label",
-    fill=True, common_norm=False, alpha=0.5,
-    palette=PAL, clip=(0, 1), ax=ax,
-)
-ax.axvline(0.5, color="black", lw=1.2, ls="--", alpha=0.7)
-ax.set_title("klue/bert-base NSMC — 실제 라벨별 확률 분포")
-ax.set_xlabel("예측 확률  P(positive)")
-ax.set_ylabel("밀도")
-plt.tight_layout()
-plt.show()
-```
-
-**▶ 실행 결과**
-
-![output](../assets/15-ko_binary-out1.png)
-
-같은 분포를 확률 대신 logit $z = z_1 - z_0$ 공간에서 다시 그립니다. 확률은 0~1 로 눌려 양극단이 뭉치지만, logit 공간에선 자신 있는 예측들이 0 양옆으로 멀리 퍼져 분리도가 더 잘 보입니다.
-
-```python
-fig, ax = plt.subplots(figsize=(9, 5))
-sns.kdeplot(
-    data=df_eval, x="logit", hue="label",
-    fill=True, common_norm=False, alpha=0.5,
-    palette=PAL, ax=ax,
-)
-ax.axvline(0.0, color="black", lw=1.2, ls="--", alpha=0.7)
-ax.set_title("klue/bert-base NSMC — logit 분포  (z = z1 − z0)")
-ax.set_xlabel("logit  z = z1 − z0")
-ax.set_ylabel("밀도")
-plt.tight_layout()
-plt.show()
-```
-
-**▶ 실행 결과**
-
-![output](../assets/15-ko_binary-out2.png)
-
-모델이 *가장 자신 있는* positive·negative 샘플과 *가장 망설이는*(prob ≈ 0.5) 샘플을 각각 골라 실제 한국어 리뷰를 직접 읽어봅니다. 짧은 리뷰가 모델 눈에 어떻게 보이는지 감을 잡는 단계입니다.
-
-```python
-# 가장 자신있게 positive (probs 최대), 가장 자신있게 negative (probs 최소),
-# 가장 망설이는 (|probs - 0.5| 최소) 3가지 샘플
-texts = list(df_eval.assign(text=eval_ds["text"])["text"]) if "text" in eval_ds.column_names else list(eval_ds["text"])
-
-# eval_tok 와 eval_ds 의 순서가 같으므로 인덱스 직접 사용
-idx_top_pos    = int(np.argmax(probs))
-idx_top_neg    = int(np.argmin(probs))
-idx_uncertain  = int(np.argmin(np.abs(probs - 0.5)))
-
-samples = [
-    ("most confident positive", idx_top_pos),
-    ("most confident negative", idx_top_neg),
-    ("most uncertain (prob ≈ 0.5)", idx_uncertain),
-]
-
-for label_str, idx in samples:
-    print("=" * 78)
-    print(f"sample #{idx}  ({label_str})")
-    print("=" * 78)
-    print(f"text:        {texts[idx]}")
-    print(f"true label:  {labels[idx]}  ({'positive' if labels[idx] == 1 else 'negative'})")
-    print(f"prob(pos):   {probs[idx]:.4f}")
-    print(f"logit z:     {logits[idx]:+.2f}")
-    pred_label = int(probs[idx] >= 0.5)
-    pred_str = "positive" if pred_label == 1 else "negative"
-    match = "✓" if pred_label == labels[idx] else "✗"
-    print(f"prediction:  {pred_label} ({pred_str})    match: {match}")
-    print()
-```
-
-**▶ 실행 결과**
-
-```text
-==============================================================================
-sample #580  (most confident positive)
-==============================================================================
-text:        아 최고.. 지금 수능 끝나고 보고 있어요ㅠㅠ 현실적인 30대의 사랑이야기~
-true label:  1  (positive)
-prob(pos):   0.9944
-logit z:     +5.19
-prediction:  1 (positive)    match: ✓
-
-==============================================================================
-sample #169  (most confident negative)
-==============================================================================
-text:        한마디로노잼 재미없음
-true label:  0  (negative)
-prob(pos):   0.0033
-logit z:     -5.71
-prediction:  0 (negative)    match: ✓
-
-==============================================================================
-sample #978  (most uncertain (prob ≈ 0.5))
-==============================================================================
-text:        영화보다가 진짜 기도드릴뻔했다. '제발 끝나게해주세요'라고..
-true label:  0  (negative)
-prob(pos):   0.5040
-logit z:     +0.02
-prediction:  1 (positive)    match: ✗
-```
-
-**결과 해석**
-
-가장 자신 있는 두 샘플은 `"아 최고.."`(prob 0.9944), `"한마디로노잼 재미없음"`(prob 0.0033)처럼 감성이 노골적인 표현이라 모델이 거의 확신합니다. 반면 망설인 샘플 `"제발 끝나게해주세요"` 는 *반어적 부정* 인데 표면 단어에 명시적 부정어가 없어 prob 0.504 로 갈팡질팡하다 오답을 냈습니다 — 짧은 한국어 리뷰에서 반어가 모델에게 가장 어려운 케이스임을 보여줍니다.

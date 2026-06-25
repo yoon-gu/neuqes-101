@@ -42,15 +42,26 @@ def _is_real_codedesc(p: str) -> bool:
 # --------------------------------------------------------------------------- #
 # 노트북에서 코드셀·마크다운 모으기
 # --------------------------------------------------------------------------- #
+def chapter_slug(num: int):
+    """레포 루트 NN_slug/ 디렉터리에서 챕터 슬러그. (부록 노트북은 디렉터리가 없음)"""
+    for d in sorted(ROOT.glob(f"{num:02d}_*")):
+        if d.is_dir():
+            return d.name[3:]
+    return None
+
+
 def load_notebook(num: int):
-    folder = None
-    for p in (ROOT / "executed").glob(f"{num:02d}_*.ipynb"):
-        if "appendix" not in p.name:
-            folder = p
-            break
-    if not folder:
-        sys.exit(f"executed/{num:02d}_*.ipynb 없음")
-    nb = json.load(open(folder))
+    # 메인 노트북만(부록 노트북 12_..._data_scaling.ipynb 등 제외). 폴더 슬러그로 특정.
+    slug = chapter_slug(num)
+    main = ROOT / "executed" / f"{num:02d}_{slug}.ipynb" if slug else None
+    if not (main and main.exists()):
+        # 폴백: 가장 짧은 이름(메인이 가장 짧음), appendix 제외
+        cands = sorted((p for p in (ROOT / "executed").glob(f"{num:02d}_*.ipynb")
+                        if "appendix" not in p.name), key=lambda p: len(p.name))
+        if not cands:
+            sys.exit(f"executed/{num:02d}_*.ipynb 없음")
+        main = cands[0]
+    nb = json.load(open(main))
     code_norms, md_norms = [], []
     for c in nb["cells"]:
         src = "".join(c["source"])
@@ -317,14 +328,17 @@ def main():
 
     code_norms, md_all = load_notebook(num)
 
-    # OLD: git ref 의 모든 NN-*.md 페이지를 이어붙여 ④ 추출
-    stem_prefix = None
-    for p in sorted(PAGES.glob(f"{num:02d}-*.md")):
-        stem_prefix = p.name.split("-", 1)[1].rsplit("-", 1)[0] if False else None
+    # 표준 페이지(개요+실습/해부/변형/정리)만 대상. 부록(`-data_scaling`·`-lambda_sweep`
+    # 등 비표준 접미사)은 별도 노트북에서 만든 페이지라 건드리지 않는다.
+    slug = chapter_slug(num)
+    std_names = {f"{num:02d}-{slug}.md"} | {
+        f"{num:02d}-{slug}-{suf}.md" for suf in ("practice", "anatomy", "variation", "wrapup")}
+
+    # OLD: git ref 의 표준 NN-*.md 페이지만 이어붙여 ④ 추출
     old_names = subprocess.check_output(
         ["git", "show", f"{args.old_ref}:pages"], cwd=ROOT
     ).decode().splitlines()
-    old_pages = [nm for nm in old_names if re.match(rf"{num:02d}-.*\.md$", nm)]
+    old_pages = [nm for nm in old_names if nm in std_names]
     old_text = "\n\n".join(filter(None, (git_show(args.old_ref, f"pages/{nm}")
                                          for nm in sorted(old_pages))))
     old_blocks = parse_blocks(old_text)
@@ -334,9 +348,9 @@ def main():
           f"A {sum(len(v['A']) for v in enrich.values())}, "
           f"C {sum(len(v['C']) for v in enrich.values())})")
 
-    # NEW: 워킹트리의 NN-*.md 각각에 적용
+    # NEW: 워킹트리의 표준 NN-*.md 각각에 적용 (부록 페이지 제외)
     stats = {"A": 0, "B": 0, "C": 0}
-    new_pages = sorted(PAGES.glob(f"{num:02d}-*.md"))
+    new_pages = [p for p in sorted(PAGES.glob(f"{num:02d}-*.md")) if p.name in std_names]
     # 재빌드본(노트북 본문) 전체를 정규화해 (A) 중복 삽입 가드에 사용
     orig_norm = _norm("".join(p.read_text() for p in new_pages))
     for p in new_pages:
