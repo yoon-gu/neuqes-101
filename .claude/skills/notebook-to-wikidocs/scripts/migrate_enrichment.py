@@ -318,19 +318,53 @@ def git_show(ref: str, relpath: str):
         return None
 
 
+def _exec_fingerprint(nb: dict) -> str:
+    """실행본 지문: 코드셀 소스 + 텍스트 출력(이미지는 존재만). 결과가 바뀌면 달라진다."""
+    parts = []
+    for c in nb.get("cells", []):
+        if c.get("cell_type") != "code":
+            continue
+        src = "".join(c.get("source", []))
+        outs = []
+        for o in c.get("outputs", []):
+            if "text" in o:
+                outs.append("".join(o["text"]))
+            data = o.get("data", {})
+            if "text/plain" in data:
+                outs.append("".join(data["text/plain"]))
+            if any(k.startswith("image/") for k in data):
+                outs.append("<image>")   # base64 는 매 실행 달라지므로 존재만 비교
+        parts.append(_norm(src) + "||" + _norm("".join(outs)))
+    return "\n".join(parts)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("num", type=int)
     ap.add_argument("--old-ref", default="HEAD")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--force", action="store_true",
+                    help="실행본이 바뀌어도 ④ 보존 강행")
     args = ap.parse_args()
     num = args.num
 
     code_norms, md_all = load_notebook(num)
+    slug = chapter_slug(num)
+
+    # 실행본 변경 가드: 현재 executed 노트북이 --old-ref 대비 바뀌었으면(재실행으로
+    # 결과가 달라졌으면) 옛 ④(특히 결과 해석)는 더 이상 맞지 않으므로 이식을 건너뛴다.
+    # → 페이지는 갓 재변환된 상태(④ 없음)로 두고 새로 작성한다. (--force 로 강행)
+    if not args.force:
+        old_nb_txt = git_show(args.old_ref, f"executed/{num:02d}_{slug}.ipynb")
+        if old_nb_txt:
+            cur_nb = json.load(open(ROOT / "executed" / f"{num:02d}_{slug}.ipynb"))
+            if _exec_fingerprint(cur_nb) != _exec_fingerprint(json.loads(old_nb_txt)):
+                print(f"[skip] Ch {num}: executed 실행본이 {args.old_ref} 대비 변경됨 "
+                      f"— ④ 보존 생략(새로 작성 필요). 강행하려면 --force")
+                return
 
     # 표준 페이지(개요+실습/해부/변형/정리)만 대상. 부록(`-data_scaling`·`-lambda_sweep`
     # 등 비표준 접미사)은 별도 노트북에서 만든 페이지라 건드리지 않는다.
-    slug = chapter_slug(num)
     std_names = {f"{num:02d}-{slug}.md"} | {
         f"{num:02d}-{slug}-{suf}.md" for suf in ("practice", "anatomy", "variation", "wrapup")}
 
