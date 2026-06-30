@@ -63,8 +63,10 @@ python3 .claude/skills/notebook-to-wikidocs/scripts/build_wikidocs.py --all   # 
 - 노이즈 필터(HF Hub 인증·`tqdm`·`generation_config` 보일러플레이트) + EPUB 긴 산문 줄 트렁케이트.
   단 **출력이 곧 학습 내용인 토큰화 챕터(08·15·22)는 opt-out**(원본 보존, 표는 항상 보존).
 
-산출물: `pages/NN-slug.md`(개요) + `-{practice,anatomy,variation,wrapup}.md`(절), 그림 `assets/NN-slug-outK.png`,
+산출물: `pages/NN-slug.md`(개요) + `-{practice,anatomy,variation,wrapup}.md`(절), 그림 `assets/NN-slug-outK-V.png`,
 `TOC.md`(해당 장 블록만 교체, 나머지 번호 순서 보존). 챕터별 실패는 격리되어 배치를 멈추지 않는다.
+
+그림 파일명의 `-V`는 **버전 postfix**다. WikiDocs는 파일명이 같으면 내용이 달라도 캐시된 이미지를 그대로 보여주므로, 같은 출력(`outK`)을 다시 그릴 때마다 `-1` → `-2` → `-3` 으로 버전을 올려 매번 새 파일명을 만든다. 페이지가 더는 안 가리키는 옛 버전(과 버전 도입 전 무버전 `outK.png`)은 빌드가 자동으로 지운다(`build_wikidocs.py:_next_image_version`).
 
 **절 제목 형식**(자동 통일) — 절 제목은 항상 `키워드: 소개` 한 형식으로 맞춘다(`_normalize_subtitle`):
 - 실습 → `실습: <간단한 소개>`, 변형 → `변형: <간단한 안내>`, 해부 → `해부: <간단한 소개>`.

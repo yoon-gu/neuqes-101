@@ -544,6 +544,35 @@ def _synthetic_block(source: str, style: str = DEFAULT_OUTPUT_STYLE) -> str:
     return f"**{SYNTH_LABEL}**\n\n" + _output_box(text, style)
 
 
+def _next_image_version(assets_dir: Path | None, base: str) -> tuple[str, list[Path]]:
+    """`base`(예: '01-tfidf-out1')의 다음 버전 파일명과 지울 옛 버전 목록을 반환.
+
+    WikiDocs는 파일명이 같으면 내용이 달라도 캐시된 이미지를 그대로 보여주므로,
+    이미지를 다시 그릴 때마다 `-1` → `-2` → `-3` 으로 버전 postfix를 올려
+    매번 새 파일명을 만든다(예: '01-tfidf-out1-2.png'). 페이지가 더는 참조하지
+    않는 옛 버전 파일은 함께 지운다.
+
+    assets_dir 가 없으면(드라이런) 디스크를 못 보므로 버전 1 이름만 돌려준다.
+    `{base}-` 뒤에 숫자가 오는 파일만 같은 출력의 버전으로 인식하므로
+    'out1' 과 'out11' 처럼 번호가 다른 출력끼리는 섞이지 않는다.
+    """
+    if assets_dir is None or not assets_dir.exists():
+        return f"{base}-1.png", []
+    pat = re.compile(rf"^{re.escape(base)}-(\d+)\.png$")
+    olds: list[Path] = []
+    max_v = 0
+    for p in assets_dir.glob(f"{base}-*.png"):
+        m = pat.match(p.name)
+        if not m:
+            continue
+        olds.append(p)
+        max_v = max(max_v, int(m.group(1)))
+    legacy = assets_dir / f"{base}.png"  # 버전 도입 전 무버전 이름도 함께 정리
+    if legacy.exists():
+        olds.append(legacy)
+    return f"{base}-{max_v + 1}.png", olds
+
+
 def _render_outputs(cell: dict, assets_dir: Path | None, stem: str, counter: list[int],
                     style: str = DEFAULT_OUTPUT_STYLE, truncate: bool = True) -> str:
     """실행 결과를 코드와 구분되는 **색깔 박스**(HTML <pre>)로 렌더링.
@@ -563,12 +592,17 @@ def _render_outputs(cell: dict, assets_dir: Path | None, stem: str, counter: lis
             data = out.get("data", {})
             if "image/png" in data:
                 counter[0] += 1
-                img_name = f"{stem}-out{counter[0]}.png"
+                base = f"{stem}-out{counter[0]}"
                 if assets_dir is not None:
                     assets_dir.mkdir(parents=True, exist_ok=True)
+                    img_name, old_versions = _next_image_version(assets_dir, base)
                     raw = data["image/png"]
                     raw = raw if isinstance(raw, str) else "".join(raw)
                     (assets_dir / img_name).write_bytes(base64.b64decode(raw))
+                    for old in old_versions:  # 페이지가 더는 안 가리키는 옛 버전 제거
+                        old.unlink()
+                else:
+                    img_name = f"{base}-1.png"
                 items.append(("image", img_name))
                 continue
             text = data.get("text/plain")
