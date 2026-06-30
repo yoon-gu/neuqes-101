@@ -224,7 +224,7 @@ print(f"Mean abs diff |A-B|: {mae:.4f}")
 
 **▶ 실행 결과**
 
-![output](../assets/11-bert_binary_softmax-out3.png)
+![output](../assets/11-bert_binary_softmax-out3-1.png)
 
 ```text
 Pearson corr:        0.9883  (1.0 = perfect equivalence)

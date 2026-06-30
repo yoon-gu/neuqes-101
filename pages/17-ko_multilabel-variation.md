@@ -142,7 +142,7 @@ print(f"F1 at default 0.5:        micro={micro_f1s[list(np.round(thresholds,2)).
 
 **▶ 실행 결과**
 
-![output](../assets/17-ko_multilabel-out3.png)
+![output](../assets/17-ko_multilabel-out3-1.png)
 
 ```text
 best micro F1 threshold: 0.40  (F1=0.8542)

@@ -30,7 +30,7 @@ else:
 
 **▶ 실행 결과**
 
-![output](../assets/20-en_bert_pretrain-out1.png)
+![output](../assets/20-en_bert_pretrain-out1-1.png)
 
 ```python
 eval_metrics = trainer.evaluate()
@@ -169,7 +169,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/20-en_bert_pretrain-out2.png)
+![output](../assets/20-en_bert_pretrain-out2-1.png)
 
 ### 6-3. 🏆 학습이 *충분히 잘 된 경우* 의 기준점 — 표준 `bert-base-uncased` 비교
 

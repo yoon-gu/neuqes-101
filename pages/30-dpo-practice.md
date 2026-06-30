@@ -460,7 +460,7 @@ plt.tight_layout(); plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/30-dpo-out1.png)
+![output](../assets/30-dpo-out1-1.png)
 
 **결과 해석**
 
@@ -665,7 +665,7 @@ AFTER DPO - reward margin (n=64)
   reward accuracy : 0.844  (before: 0.500)
 ```
 
-![output](../assets/30-dpo-out2.png)
+![output](../assets/30-dpo-out2-1.png)
 
 **결과 해석**
 
@@ -725,7 +725,7 @@ if torch.cuda.is_available() and vram_cb.steps:
 
 **▶ 실행 결과**
 
-![output](../assets/30-dpo-out3.png)
+![output](../assets/30-dpo-out3-1.png)
 
 ```text
 peak VRAM (max over training): 4332 MiB  (policy + reference, bs=2, grad_accum=8, fp16)

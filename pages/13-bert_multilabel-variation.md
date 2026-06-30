@@ -146,7 +146,7 @@ ambiance      0.3333   0.6510          0.3176
 location      0.4211   0.8232          0.4022
 ```
 
-![output](../assets/13-bert_multilabel-out3.png)
+![output](../assets/13-bert_multilabel-out3-1.png)
 
 **결과 해석**
 

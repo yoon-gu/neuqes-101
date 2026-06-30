@@ -108,7 +108,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/11-bert_binary_softmax-out1.png)
+![output](../assets/11-bert_binary_softmax-out1-1.png)
 
 ### 4-2. 보조 그림 — $z = z_1 - z_0$ 의 logit 공간 분포
 
@@ -131,7 +131,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/11-bert_binary_softmax-out2.png)
+![output](../assets/11-bert_binary_softmax-out2-1.png)
 
 **여기까지 정리** — 4-1과 4-2의 그림은 Ch 10의 것과 *모양* 이 거의 같아야 합니다. 봉우리 높이나 위치가 미세하게 다를 순 있어도, 양 끝 압착 / 가운데 헷갈림 영역 / 결정 경계 자리 같은 *큰 그림* 은 동일. 이게 두 방식 동등성의 *시각적* 증거.
 

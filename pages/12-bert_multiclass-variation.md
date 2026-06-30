@@ -109,7 +109,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/12-bert_multiclass-out3.png)
+![output](../assets/12-bert_multiclass-out3-1.png)
 
 **해석 가이드**
 

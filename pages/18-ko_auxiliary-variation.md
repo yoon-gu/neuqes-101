@@ -195,7 +195,7 @@ Life&Culture     0.8460       0.8523                0.0063
     Politics     0.8185       0.8261                0.0076
 ```
 
-![output](../assets/18-ko_auxiliary-out1.png)
+![output](../assets/18-ko_auxiliary-out1-1.png)
 
 **해석**
 
@@ -232,7 +232,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/18-ko_auxiliary-out2.png)
+![output](../assets/18-ko_auxiliary-out2-1.png)
 
 **해석**
 

@@ -111,7 +111,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/15-ko_binary-out1.png)
+![output](../assets/15-ko_binary-out1-1.png)
 
 ### 6-2. 보조 그림 — logit 공간 KDE (z = z_1 - z_0)
 
@@ -134,7 +134,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/15-ko_binary-out2.png)
+![output](../assets/15-ko_binary-out2-1.png)
 
 **해석**
 

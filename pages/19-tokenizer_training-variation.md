@@ -50,7 +50,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/19-tokenizer_training-out4.png)
+![output](../assets/19-tokenizer_training-out4-1.png)
 
 **해석**
 

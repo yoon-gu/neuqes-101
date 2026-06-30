@@ -593,7 +593,7 @@ BEFORE GRPO - arithmetic accuracy                     : 0.875
 delta                                                 : +0.016
 ```
 
-![output](../assets/31-grpo-out1.png)
+![output](../assets/31-grpo-out1-1.png)
 
 **결과 해석**
 
@@ -654,7 +654,7 @@ if torch.cuda.is_available() and vram_cb.steps:
 
 **▶ 실행 결과**
 
-![output](../assets/31-grpo-out2.png)
+![output](../assets/31-grpo-out2-1.png)
 
 ```text
 peak VRAM (max over training): 3670 MiB  (policy only, ref-free, num_generations=8, fp16)

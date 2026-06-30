@@ -139,7 +139,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/09-bert_regression-out1.png)
+![output](../assets/09-bert_regression-out1-1.png)
 
 **무엇이 보이나**
 
@@ -153,7 +153,7 @@ plt.show()
 
 `Predicted − Actual` 을 y축에 두고 0 기준선을 긋습니다. 잔차가 0 근처에 좁게 모일수록 정확하고, 양/음 한 쪽으로 치우치면 *bias* 가 있다는 뜻.
 
-![output](../assets/09-bert_regression-out1.png)
+![output](../assets/09-bert_regression-out1-1.png)
 
 이번엔 잔차(예측 − 실제)를 y축에 둡니다. 0 기준선에 좁게 모일수록 정확하고, 한쪽으로 치우치면 bias가 있다는 뜻입니다.
 
@@ -173,7 +173,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/09-bert_regression-out2.png)
+![output](../assets/09-bert_regression-out2-1.png)
 
 **무엇이 보이나**
 

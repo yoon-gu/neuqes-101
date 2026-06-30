@@ -139,7 +139,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/19-tokenizer_training-out1.png)
+![output](../assets/19-tokenizer_training-out1-1.png)
 
 **해석**
 
@@ -209,7 +209,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/19-tokenizer_training-out2.png)
+![output](../assets/19-tokenizer_training-out2-1.png)
 
 **해석 — 이 챕터의 가장 중요한 결과**
 
@@ -372,7 +372,7 @@ plt.tight_layout(); plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/19-tokenizer_training-out3.png)
+![output](../assets/19-tokenizer_training-out3-1.png)
 
 **관찰**
 

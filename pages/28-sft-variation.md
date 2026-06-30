@@ -171,7 +171,7 @@ plt.tight_layout(); plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/28-sft-out1.png)
+![output](../assets/28-sft-out1-1.png)
 
 **결과 해석**
 
@@ -392,7 +392,7 @@ plt.tight_layout(); plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/28-sft-out2.png)
+![output](../assets/28-sft-out2-1.png)
 
 **결과 해석**
 

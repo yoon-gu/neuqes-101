@@ -104,7 +104,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/10-bert_binary_sigmoid-out1.png)
+![output](../assets/10-bert_binary_sigmoid-out1-1.png)
 
 **설명 — 왜 양 끝이 솟아 있나?** sigmoid는 logit이 ±5만 넘어가도 거의 0 또는 1로 수렴합니다 ($\sigma(5) \approx 0.993$, $\sigma(-5) \approx 0.007$). BERT가 학습 후 어느 정도 자신감을 갖게 되면 logit이 ±5-10 범위로 뻗어 나가고, 결과적으로 확률 공간에서는 **양 끝에 압착된 U자 분포**가 나옵니다. 가운데(0.3-0.7)는 모델이 *판단을 망설이는* 샘플 — 진짜 어려운 케이스이거나 라벨 노이즈일 가능성이 큽니다.
 
@@ -135,7 +135,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/10-bert_binary_sigmoid-out2.png)
+![output](../assets/10-bert_binary_sigmoid-out2-1.png)
 
 **두 그림을 함께 보는 법 — sigmoid가 한 일**
 

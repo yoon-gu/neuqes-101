@@ -107,7 +107,7 @@ else:
 
 **▶ 실행 결과**
 
-![output](../assets/23-ko_bert_classify-out1.png)
+![output](../assets/23-ko_bert_classify-out1-1.png)
 
 **결과 해석**
 
@@ -139,7 +139,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/23-ko_bert_classify-out2.png)
+![output](../assets/23-ko_bert_classify-out2-1.png)
 
 **결과 해석**
 
@@ -230,7 +230,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/23-ko_bert_classify-out3.png)
+![output](../assets/23-ko_bert_classify-out3-1.png)
 
 **결과 해석**
 

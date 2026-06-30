@@ -133,7 +133,7 @@ Pred range: [-1.55, 7.15]
 True range: [1, 5]
 ```
 
-![output](../assets/02-sklearn_regression-out1.png)
+![output](../assets/02-sklearn_regression-out1-1.png)
 
 **결과 해석**
 

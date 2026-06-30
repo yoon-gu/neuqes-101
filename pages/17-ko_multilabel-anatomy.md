@@ -143,7 +143,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/17-ko_multilabel-out1.png)
+![output](../assets/17-ko_multilabel-out1-1.png)
 
 **해석**
 
@@ -194,7 +194,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/17-ko_multilabel-out2.png)
+![output](../assets/17-ko_multilabel-out2-1.png)
 
 **해석**
 

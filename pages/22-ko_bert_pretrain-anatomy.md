@@ -31,7 +31,7 @@ else:
 
 **▶ 실행 결과**
 
-![output](../assets/22-ko_bert_pretrain-out1.png)
+![output](../assets/22-ko_bert_pretrain-out1-1.png)
 
 ```python
 eval_metrics = trainer.evaluate()
@@ -170,7 +170,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/22-ko_bert_pretrain-out2.png)
+![output](../assets/22-ko_bert_pretrain-out2-1.png)
 
 ### 7-2. 🏆 학습이 *충분히 잘 된 경우* 의 기준점 — 표준 `klue/bert-base` 비교
 

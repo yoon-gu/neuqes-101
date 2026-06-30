@@ -102,7 +102,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/12-bert_multiclass-out1.png)
+![output](../assets/12-bert_multiclass-out1-1.png)
 
 **해석 가이드**
 
@@ -138,7 +138,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/12-bert_multiclass-out2.png)
+![output](../assets/12-bert_multiclass-out2-1.png)
 
 **해석**
 

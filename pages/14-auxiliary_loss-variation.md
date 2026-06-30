@@ -196,7 +196,7 @@ ambiance     0.6848       0.7072                0.0224
 location     0.8212       0.8167               -0.0046
 ```
 
-![output](../assets/14-auxiliary_loss-out1.png)
+![output](../assets/14-auxiliary_loss-out1-1.png)
 
 **해석**
 
@@ -233,7 +233,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/14-auxiliary_loss-out2.png)
+![output](../assets/14-auxiliary_loss-out2-1.png)
 
 **해석**
 
