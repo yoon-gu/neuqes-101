@@ -92,7 +92,7 @@ print(counts)
 
 **▶ 실행 결과**
 
-![output](../assets/01-tfidf-out1.png)
+![output](../assets/01-tfidf-out1-1.png)
 
 ```text
 label
