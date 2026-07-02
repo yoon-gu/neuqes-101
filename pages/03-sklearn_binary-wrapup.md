@@ -2,7 +2,7 @@
 
 | 이름 | 한 줄 설명 | 다음 챕터에서 |
 |---|---|---|
-| `sklearn.linear_model.LogisticRegression` | sigmoid + BCE 내장 이진/다중 분류 | Ch 4에서 multi-class로 확장 |
+| `sklearn.linear_model.LogisticRegression` | sigmoid + BCE 내장 이진/다중 분류 | Ch 5에서 multi-class로 확장 |
 | `sklearn.metrics.classification_report` | accuracy/precision/recall/F1 한 번에 | 분류 챕터마다 계속 사용 |
 | `sklearn.metrics.confusion_matrix` | 혼동 행렬 | 다중 분류에서도 활용 |
 | `sklearn.metrics.log_loss` | BCE 평가 | Ch 9 이후 BERT binary에서도 |
@@ -30,7 +30,7 @@
 ### Q2. (이론) sigmoid 대신 다른 활성화 함수(tanh, softmax)를 쓰면 어떻게 되나요?
 
 - **tanh**: 출력 범위가 $[-1, 1]$입니다. 라벨을 -1/+1로 매핑하고 hinge loss 등을 쓰면 SVM과 비슷한 모델이 됩니다. 수학적으로는 $\tanh(z) = 2\sigma(2z) - 1$이라 sigmoid의 단순 변환이지만 라벨 컨벤션이 다릅니다.
-- **softmax**: 다중 클래스용 일반화. binary에 softmax를 쓰려면 출력 차원을 2로 늘리고 라벨도 one-hot으로 바꿔야 합니다 → 이게 정확히 Ch 9에서 다룰 "방식 B"입니다 (방식 A=sigmoid 1차원, 방식 B=softmax 2차원이 수학적으로 동등).
+- **softmax**: 다중 클래스용 일반화. binary에 softmax를 쓰려면 출력 차원을 2로 늘리고 라벨도 one-hot으로 바꿔야 합니다 → 이게 정확히 Ch 11에서 다룰 "방식 B"입니다 (방식 A=sigmoid 1차원, 방식 B=softmax 2차원이 수학적으로 동등).
 - **ReLU/identity**: 출력이 [0, 1] 보장이 안 됩니다 — 음수도 1 초과도 가능 → BCE의 $\log$가 정의되지 않습니다.
 
 ### Q3. (실무) 클래스 불균형이 있으면 어떻게 하나요?
@@ -74,7 +74,7 @@ print(f"Youden's J 기준 최적 임계값: {best_thr:.3f}")
 - **recall** (실제 positive 중 잡아낸 비율): **놓치는 비용** 이 클 때. 암 진단, 사기 탐지.
 - **F1** (precision·recall의 조화 평균): 둘 다 중요할 때의 균형 지표. 어느 한 쪽이 0이면 F1도 0.
 
-이 챕터의 Yelp 이진화는 클래스 불균형이 크지 않아(긍정 ≈ 60%) accuracy도 의미 있지만, 실무에선 항상 classification_report 전체를 보는 습관이 안전합니다.
+이 챕터의 Yelp 이진화는 클래스 불균형이 크지 않아(긍정 ≈ 49%, 거의 반반) accuracy도 의미 있지만, 실무에선 항상 classification_report 전체를 보는 습관이 안전합니다.
 
 ### Q6. (실무) sklearn `LogisticRegression`은 정규화(L2)가 기본인데 끄려면?
 
@@ -112,9 +112,9 @@ print(f"LogReg accuracy:               {accuracy_score(y_test, y_pred):.4f}")
 
 ## 다음 챕터 예고
 
-**Chapter 4. sklearn Multi-class — sigmoid가 softmax로**
+**Chapter 4. sklearn Softmax Binary — 같은 이진 데이터를 2차원 softmax+CE로**
 
-- 별점 1-5 를 5개 독립 클래스로 보고 `LogisticRegression()` 한 줄로 분류 (sklearn 이 multi-class 데이터에 자동으로 multinomial+softmax 적용)
-- 출력이 1차원에서 **5차원** 으로 늘어나고, sigmoid 대신 **softmax** 가 붙음 (합 = 1 강제)
-- Loss 는 BCE 에서 **`CrossEntropyLoss`** (sklearn: multinomial log loss) 로 일반화
-- multinomial(softmax+CE) vs OvR(One-vs-Rest, K개 독립 binary) 비교 — OvR 이 Ch 6 multi-label 로 가는 다리
+- Ch 3과 **완전히 같은 이진화 데이터** 를 출력 차원 2로 늘리고 softmax + `CrossEntropyLoss` 로 다시 풉니다.
+- 출력이 1차원에서 **2차원** 으로 늘어나고, sigmoid 대신 **softmax** 가 붙음 (두 열의 합 = 1 강제)
+- $\sigma(z) = \text{softmax}([z_0, z_1])_1 = \sigma(z_1 - z_0)$ — 방식 A(sigmoid+BCE)와 방식 B(softmax+CE)가 **수학적으로 동등** 함을 식과 코드로 직접 확인
+- 이 동등성 직관은 Ch 10·11에서 BERT binary의 두 방식을 비교할 때 그대로 재활용됩니다.

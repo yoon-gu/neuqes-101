@@ -20,7 +20,7 @@
 | 4 | `LogisticRegression()` (multinomial 자동) | `TfidfVectorizer()` | Yelp 이진화 (Ch 3과 동일) | (2차원) | softmax | `CrossEntropyLoss` |
 | **5 ← 여기** | `LogisticRegression()` (multinomial 자동) | `TfidfVectorizer()` | Yelp 5클래스 (별점 0-4) | **(5차원)** | softmax | `CrossEntropyLoss` |
 
-전체 20챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
+전체 챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
 
 ## 변경점 (Diff from Ch 4)
 

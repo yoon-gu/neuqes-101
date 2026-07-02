@@ -2,8 +2,8 @@
 
 | 이름 | 한 줄 설명 | 다음 챕터에서 |
 |---|---|---|
-| `sklearn.multiclass.OneVsRestClassifier` | K개 독립 binary 분류기를 묶고 multi-label 모드 자동 감지 | Ch 12 BERT multi-label에서 같은 패러다임을 BERT로 |
-| `sklearn.metrics.hamming_loss` | 라벨별 평균 오답 비율 | Ch 12에서도 평가 지표로 |
+| `sklearn.multiclass.OneVsRestClassifier` | K개 독립 binary 분류기를 묶고 multi-label 모드 자동 감지 | Ch 13 BERT multi-label에서 같은 패러다임을 BERT로 |
+| `sklearn.metrics.hamming_loss` | 라벨별 평균 오답 비율 | Ch 13에서도 평가 지표로 |
 | `sklearn.metrics.f1_score(average="micro" / "macro")` | multi-label F1 집계 방식 | — |
 | `sklearn.metrics.classification_report` | 라벨별 precision/recall/F1 한 번에 | — |
 
@@ -169,7 +169,7 @@ HF의 `Trainer`는 학습 *과정* 을 명시합니다 — 학습률, 배치 크
 | **loss를 직접 보나** | 거의 안 봄 (fit 후 평가만) | 매 step마다 loss 출력 + 곡선 추적 (학습이 망가지면 즉시 보임) |
 | **하드웨어** | CPU, 단일 스레드 위주 | **GPU 필수** (fp16, gradient accumulation 등) |
 | **loss 함수 지정** | 모델 클래스에 내장 (LogReg = log loss) | `problem_type` 자동 매핑 또는 `compute_loss` 오버라이드 |
-| **모델 크기** | 수만 ~ 수십만 파라미터 | 사전학습 BERT — 6천만 ~ 수억 파라미터 |
+| **모델 크기** | 수만-수십만 파라미터 | 사전학습 BERT — 6천만-수억 파라미터 |
 | **학습 시간 (Yelp 5,000)** | 1초 미만 | T4 GPU에서 2-5분 |
 
 ### 코드 형태 미리보기 (Ch 9 BERT 회귀에서 본격 등장)

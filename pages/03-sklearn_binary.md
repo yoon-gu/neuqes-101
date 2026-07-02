@@ -18,7 +18,7 @@
 | 2 | `LinearRegression()` | `TfidfVectorizer()` | Yelp (별점 1-5) | (1차원) | 없음 | `MSELoss` |
 | **3 ← 여기** | `LogisticRegression()` | `TfidfVectorizer()` | Yelp 이진화 (4-5→1, 1-2→0, 3 제외) | (1차원) | **sigmoid** | **`BCEWithLogitsLoss`** (sklearn: log loss) |
 
-전체 20챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
+전체 챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
 
 ## 변경점 (Diff from Ch 2)
 
@@ -71,7 +71,7 @@ model.fit(X, y)                              # 내부에서 sigmoid + log loss
 
 이번 챕터의 토크나이저는 **Ch 1·2와 동일한 `TfidfVectorizer`** 입니다. 입력 표현은 그대로고, 변화는 모델 출력단·loss·라벨에서만 일어납니다.
 
-> **다음 챕터(Ch 4)**: 같은 TF-IDF 그대로. 변하는 건 출력이 5차원으로 늘어나고 sigmoid가 softmax로 바뀌는 것뿐.
+> **다음 챕터(Ch 4)**: 같은 TF-IDF 그대로, 같은 이진화 데이터 그대로. 변하는 건 출력이 2차원으로 늘어나고 sigmoid가 softmax로 바뀌는 것뿐 — 같은 이진 분류를 softmax+CE로 다시 풀어 두 방식이 동등함을 확인합니다.
 
 ## 이 장의 구성
 

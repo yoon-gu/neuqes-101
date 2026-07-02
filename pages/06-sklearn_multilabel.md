@@ -23,7 +23,7 @@
 | 5 | `LogisticRegression()` (multinomial 자동) | `TfidfVectorizer()` | Yelp 5클래스 | (5차원) | softmax | `CrossEntropyLoss` |
 | **6 ← 여기** | `OneVsRestClassifier(LogisticRegression())` | `TfidfVectorizer()` | Yelp + 항목 키워드 합성 | (5차원) | **sigmoid (각각 독립)** | **`BCEWithLogitsLoss` per-label** |
 
-전체 20챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
+전체 챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
 
 ## 변경점 (Diff from Ch 5)
 
@@ -73,7 +73,7 @@ $$L = \frac{1}{N \cdot K}\sum_{i=1}^{N}\sum_{k=1}^{K}\bigl[-y_{ik}\log \hat p_{i
 baseline = $\log 2 = 0.693$ — 모든 라벨에 0.5를 줄 때 (BCE에서 K=2 분포의 균등 추측과 같은 값). 학습된 모델은 이 값보다 작아야 정상.
 
 ```python
-# PyTorch (Ch 12 이후, multi-label)
+# PyTorch (Ch 13 이후, multi-label)
 criterion = nn.BCEWithLogitsLoss()
 loss = criterion(logits, targets.float())   # logits: (N, K), targets: (N, K) multi-hot
 
