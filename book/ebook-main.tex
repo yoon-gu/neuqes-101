@@ -1,0 +1,101 @@
+\documentclass[11pt,oneside]{book}
+
+\input{epub/ebook-shim}
+
+\title{Hugging Face로 시작하는 텍스트 분석 입문}
+\author{황윤구, 유창민}
+\date{}
+
+\begin{document}
+
+\frontmatter
+
+\begin{titlepage}
+\centering
+\vspace*{4em}
+{\Huge\bfseries Hugging Face로 시작하는\\[0.25em]텍스트 분석 입문\par}
+\vspace{1.5em}
+{\Large EPUB 미리보기 샘플\par}
+\vspace{2em}
+{\large 황윤구, 유창민 지음\par}
+\vfill
+{\small Ch 1--34 변환 검증용\par}
+\end{titlepage}
+
+\tableofcontents
+
+\mainmatter
+
+\chapter*{Phase 0. 기초 다지기}
+\addcontentsline{toc}{part}{Phase 0. 기초 다지기}
+
+이 EPUB 샘플은 리디북스와 같은 리플로우 전자책 뷰어에서 코드, 출력, 표, 그림, FAQ 박스가 어떻게 보이는지 확인하기 위한 변환 검증본입니다. PDF 출판용 간지와 TikZ 장식은 제외하고, 본문 흐름과 학습 내용이 EPUB에서 읽히는지에 집중합니다.
+
+Phase 0의 목적은 텍스트 분석의 가장 작은 부품을 손에 잡히게 만드는 것입니다. 텍스트가 벡터가 되고, 벡터가 head를 지나 출력이 되며, 그 출력이 loss로 평가되는 흐름을 scikit-learn 코드로 먼저 확인합니다.
+
+\input{chapters/ch01_tfidf}
+\input{chapters/ch02_sklearn_regression}
+\input{chapters/ch03_sklearn_binary}
+\input{chapters/ch04_softmax_binary}
+\input{chapters/ch05_sklearn_multiclass}
+\input{chapters/ch06_sklearn_multilabel}
+
+\chapter*{Phase 1. BERT 기반 태스크 재정식화}
+\addcontentsline{toc}{part}{Phase 1. BERT 기반 태스크 재정식화}
+
+Phase 1에서는 Phase 0에서 익힌 loss와 head의 구조를 BERT 위로 옮깁니다. TF-IDF sparse vector 대신 WordPiece 토큰과 attention mask가 들어오고, scikit-learn의 fit 대신 Hugging Face Trainer가 학습 루프를 맡습니다.
+
+\input{chapters/ch07_bert_pipeline}
+\input{chapters/ch08_tokenizer_datasets}
+\input{chapters/ch09_bert_regression}
+\input{chapters/ch10_bert_binary_sigmoid}
+\input{chapters/ch11_bert_binary_softmax}
+\input{chapters/ch12_bert_multiclass}
+\input{chapters/ch13_bert_multilabel}
+\input{chapters/ch14_auxiliary_loss}
+
+\chapter*{Phase 2. 한국어 BERT 재방문}
+\addcontentsline{toc}{part}{Phase 2. 한국어 BERT 재방문}
+
+Phase 2는 영어 BERT에서 배운 구조를 한국어 환경으로 옮겨 보는 압축 재방문입니다. 모델은 klue/bert-base, 토크나이저는 한국어 WordPiece, 데이터는 NSMC와 KLUE-YNAT으로 바뀌지만, loss와 head의 사고방식은 Phase 1과 같습니다.
+
+\input{chapters/ch15_ko_binary}
+\input{chapters/ch16_ko_multiclass}
+\input{chapters/ch17_ko_multilabel}
+\input{chapters/ch18_ko_auxiliary}
+
+\chapter*{Phase 3. 직접 만드는 BERT}
+\addcontentsline{toc}{part}{Phase 3. 직접 만드는 BERT}
+
+Phase 3에서는 사전학습된 도구를 사용하는 관점에서 벗어나, 토크나이저와 작은 BERT 본체를 직접 만들어 봅니다. 토크나이저 학습, MLM 사전학습, downstream fine-tuning을 영어와 한국어에서 나란히 반복합니다.
+
+\input{chapters/ch19_tokenizer_training}
+\input{chapters/ch20_en_bert_pretrain}
+\input{chapters/ch21_en_bert_classify}
+\input{chapters/ch22_ko_bert_pretrain}
+\input{chapters/ch23_ko_bert_classify}
+
+\chapter*{Phase 4. GPT와 자기회귀 언어모델}
+\addcontentsline{toc}{part}{Phase 4. GPT와 자기회귀 언어모델}
+
+Phase 4는 encoder 중심의 BERT 세계에서 decoder-only GPT 세계로 넘어가는 전환부입니다. 작은 GPT 사전학습, continual pretraining, SFT, benchmark evaluation, DPO, GRPO를 이어서 다루며, 파인튜닝의 의미가 task head 적응에서 행동 정렬로 이동하는 흐름을 확인합니다.
+
+\input{chapters/ch24_gpt_tinystories}
+\input{chapters/ch25_gpt2_continual_pretrain}
+\input{chapters/ch26_ko_tiny_gpt}
+\input{chapters/ch27_ko_gpt2_continual_pretrain}
+\input{chapters/ch28_sft}
+\input{chapters/ch29_benchmark_eval}
+\input{chapters/ch30_dpo}
+\input{chapters/ch31_grpo}
+
+\chapter*{Phase 5. Diffusion 언어모델}
+\addcontentsline{toc}{part}{Phase 5. Diffusion 언어모델}
+
+Phase 5는 텍스트 생성을 반드시 왼쪽에서 오른쪽으로만 해야 하는지 묻습니다. BERT의 MLM에서 배운 마스킹과 복원을 생성 문제로 확장하고, diffusion 언어모델의 병렬 denoise 관점을 확인합니다.
+
+\input{chapters/ch32_diffusion_intro}
+\input{chapters/ch33_diffusion_train}
+\input{chapters/ch34_ko_diffusion}
+
+\end{document}

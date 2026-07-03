@@ -35,6 +35,11 @@
   {sklearn · TF-IDF로 task와 loss의 본질}
   {Foundations · before BERT}
   {
+    이 Phase의 목적은 거대한 모델을 잠시 내려놓고, 텍스트 분석의 가장 작은 부품을 손에 잡히게 만드는 것입니다. 텍스트가 벡터가 되고, 벡터가 head를 지나 출력이 되며, 그 출력이 loss로 평가되는 흐름을 scikit-learn 코드로 먼저 확인합니다.
+
+    이후 모든 장에서 반복해서 등장하는 회귀, 이진 분류, 다중 클래스, 다중 라벨, sigmoid, softmax, BCE, CE, MSE의 감각은 여기서 만들어집니다. BERT와 GPT는 아직 나오지 않지만, 뒤에서 모델이 커질수록 이 Phase의 직관이 기준선 역할을 합니다.
+  }
+  {
     \chapline{Ch 1}{텍스트 벡터화}{TF-IDF}
     \chapline{Ch 2}{회귀 분석}{Regression \& MSE}
     \chapline{Ch 3}{이진 분류}{Binary Classification \& BCE}
@@ -53,6 +58,11 @@
   {BERT 기반\hfphasebreak 태스크 재정식화}
   {DistilBERT · Trainer로 Loss와 Head 재해석}
   {BERT-based Reformulation · Loss \& Head with Trainer}
+  {
+    Phase 0에서 익힌 loss와 head의 구조를 BERT 위로 옮깁니다. 바뀌는 것은 도구의 크기와 학습 방식입니다. TF-IDF sparse vector 대신 WordPiece 토큰과 attention mask가 들어오고, scikit-learn의 fit 대신 Hugging Face Trainer가 학습 루프를 맡습니다.
+
+    중요한 점은 개념이 새로 시작되지 않는다는 것입니다. 회귀, 이진 분류, softmax 방식, 다중 클래스, 다중 라벨, 보조 손실을 한 장씩 다시 방문하면서 “BERT라서 특별한 것”과 “모델이 커져도 그대로인 것”을 분리합니다.
+  }
   {
     \chapline{Ch 7}{BERT 파이프라인}{Pipeline}
     \chapline{Ch 8}{토크나이저와 데이터셋}{Tokenizer \& Datasets}
@@ -77,6 +87,11 @@
   {klue/bert-base · 한국어 WordPiece로 같은 구조 재현}
   {Korean BERT Revisit · NSMC and KLUE-YNAT}
   {
+    이 Phase는 영어 BERT에서 배운 구조를 한국어 환경으로 옮겨 보는 압축 재방문입니다. 모델은 klue/bert-base, 토크나이저는 한국어 WordPiece, 데이터는 NSMC와 KLUE-YNAT으로 바뀌지만, loss와 head의 사고방식은 Phase 1과 같습니다.
+
+    한국어에서는 토큰화, 라벨 분포, 문장 길이, 데이터 도메인이 함께 영향을 줍니다. 그래서 이 Phase는 “같은 코드가 한국어에서도 돌아간다”에 머물지 않고, 언어가 바뀌면 어떤 제약이 새로 보이는지 확인하는 구간입니다.
+  }
+  {
     \chapline{Ch 15}{한국어 BERT 이진 분류}{NSMC \& CE}
     \chapline{Ch 16}{한국어 BERT 다중 클래스 분류}{KLUE-YNAT \& CE}
     \chapline{Ch 17}{한국어 BERT 다중 라벨 분류}{KLUE-YNAT \& BCE}
@@ -91,6 +106,11 @@
   {직접 만드는 BERT}
   {토크나이저와 작은 BERT를 직접 만들고 전이 성능을 확인}
   {Tokenizer Training · Small BERT from Scratch}
+  {
+    Phase 3에서는 사전학습된 도구를 사용하는 관점에서 벗어나, 토크나이저와 작은 BERT 본체를 직접 만들어 봅니다. 이전 Phase들이 “이미 만들어진 모델을 어떻게 task에 맞추는가”였다면, 여기서는 모델이 학습 전에 무엇을 갖고 있어야 하는지부터 확인합니다.
+
+    토크나이저 학습, MLM 사전학습, downstream fine-tuning을 영어와 한국어에서 나란히 반복합니다. 성능의 한계도 중요한 결과입니다. 작은 데이터와 짧은 학습으로 만든 본체가 어디까지 전달 학습을 만들 수 있는지 확인해야, 대규모 사전학습 모델의 가치도 정확히 해석할 수 있습니다.
+  }
   {
     \chapline{Ch 19}{토크나이저 직접 학습}{Tokenizer Training}
     \chapline{Ch 20}{작은 BERT 사전학습}{English MLM}
@@ -108,6 +128,11 @@
   {GPT와 자기회귀 언어모델}
   {decoder-only · CausalLM으로 pretraining과 continual pretraining을 분리}
   {GPT/LLM Autoregressive · Causal LM}
+  {
+    Phase 4는 encoder 중심의 BERT 세계에서 decoder-only GPT 세계로 넘어가는 전환부입니다. 입력 전체를 읽고 분류 head를 붙이던 방식에서, 다음 토큰을 예측하는 하나의 언어모델 head를 유지한 채 데이터와 학습 단계가 바뀌는 방식으로 관점이 이동합니다.
+
+    작은 GPT 사전학습, continual pretraining, SFT, benchmark evaluation, DPO, GRPO를 이어서 다룹니다. 이 흐름의 핵심은 “파인튜닝”이라는 단어의 의미 변화입니다. BERT에서는 task head 적응이 중심이었다면, GPT에서는 모델의 행동과 응답 방식을 정렬하는 과정이 됩니다.
+  }
   {
     \chapline{Ch 24}{작은 GPT 사전학습}{TinyStories CLM}
     \chapline{Ch 25}{GPT-2 계속 사전학습}{Continual Pretraining}
@@ -131,6 +156,11 @@
   {Diffusion 언어모델}
   {mask diffusion · 병렬 denoise와 샘플러, 한국어 확장}
   {Diffusion LM · Parallel Denoising}
+  {
+    마지막 Phase는 텍스트 생성을 반드시 왼쪽에서 오른쪽으로만 해야 하는지 묻습니다. GPT가 next-token prediction으로 순차 생성한다면, diffusion 언어모델은 문장 전체를 마스크하고 반복적으로 복원하면서 병렬 생성의 가능성을 탐색합니다.
+
+    구조는 새롭지만 출발점은 낯설지 않습니다. BERT의 MLM에서 배운 마스킹과 복원을 생성 문제로 확장하고, 샘플러와 한국어 적용까지 확인합니다. 이 Phase는 향후 더 다양한 생성 모델을 다루기 위한 연결부이자, “텍스트 생성 방식은 하나가 아니다”라는 결론을 남깁니다.
+  }
   {
     \chapline{Ch 32}{작은 Diffusion LM 입문}{Parallel Denoising}
     \chapline{Ch 33}{Diffusion LM 샘플러 교정}{Carry-over Sampler}

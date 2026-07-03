@@ -1,0 +1,145 @@
+% EPUB-only compatibility layer.
+% Keep PDF design macros out of the reflowable EPUB path.
+
+\usepackage{kotex}
+
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{listings}
+\usepackage{fancyvrb}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  pdftitle={Hugging Face로 시작하는 텍스트 분석 입문 EPUB 미리보기},
+  pdfauthor={황윤구, 유창민}
+}
+
+\renewcommand{\figurename}{그림}
+\renewcommand{\tablename}{표}
+
+\newcommand{\tightlist}{}
+\newcommand{\Needspace}[1]{}
+\renewcommand{\index}[1]{}
+
+\DeclareRobustCommand{\inlinecode}[1]{\texttt{#1}}
+\newcommand{\code}[1]{\inlinecode{#1}}
+\newcommand{\api}[1]{\inlinecode{#1}}
+\newcommand{\dataset}[1]{\inlinecode{#1}}
+\newcommand{\concept}[1]{#1}
+
+\lstset{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  numbers=left,
+  numberstyle=\tiny,
+  numbersep=0.6em,
+  breaklines=true,
+  breakatwhitespace=false,
+  columns=fullflexible,
+  keepspaces=true,
+  showstringspaces=false,
+  frame=single
+}
+
+\DefineVerbatimEnvironment{bookoutputbox}{Verbatim}{
+  fontsize=\small
+}
+
+\newenvironment{adjustbox}[1]{}{}
+
+\newenvironment{booktable}[2]{%
+  \par\begingroup
+  \def\booktablecaption{#1}%
+  \def\booktablelabel{#2}%
+  \begin{center}\small
+}{%
+  \par\medskip
+  \textbf{표: \booktablecaption}\label{\booktablelabel}%
+  \end{center}
+  \endgroup\par
+}
+
+\newenvironment{bookfigurelabel}[3][htbp]{%
+  \begin{figure}[#1]\centering
+  \def\bookfigurecaption{#2}%
+  \def\bookfigurelabel{#3}%
+}{%
+  \caption{\bookfigurecaption}\label{\bookfigurelabel}%
+  \end{figure}
+}
+
+\newenvironment{bookfigure}[2][htbp]{%
+  \begin{figure}[#1]\centering
+  \def\bookfigurecaption{#2}%
+}{%
+  \caption{\bookfigurecaption}%
+  \end{figure}
+}
+
+\newenvironment{bookdiagram}[2][htbp]{%
+  \begin{figure}[#1]\centering
+  \def\bookfigurecaption{#2}%
+}{%
+  \caption{\bookfigurecaption}%
+  \end{figure}
+}
+
+\newenvironment{noteBox}[1][]{%
+  \par\medskip\noindent
+  \begin{quote}
+  \if\relax\detokenize{#1}\relax\else\textbf{#1}\par\smallskip\fi
+}{%
+  \end{quote}\par\medskip
+}
+
+\newenvironment{previewBox}[1]{%
+  \par\medskip\noindent
+  \begin{quote}\textbf{#1}\par\smallskip
+}{%
+  \end{quote}\par\medskip
+}
+
+\newenvironment{faqBox}[1]{%
+  \par\medskip\noindent
+  \begin{quote}\textbf{#1}\par\smallskip
+}{%
+  \end{quote}\par\medskip
+}
+
+\newenvironment{warningBox}[1][]{%
+  \par\medskip\noindent
+  \begin{quote}
+  \if\relax\detokenize{#1}\relax\textbf{주의}\else\textbf{#1}\fi\par\smallskip
+}{%
+  \end{quote}\par\medskip
+}
+
+\newenvironment{practiceBox}[1][]{%
+  \par\medskip\noindent
+  \begin{quote}
+  \if\relax\detokenize{#1}\relax\textbf{실습}\else\textbf{#1}\fi\par\smallskip
+}{%
+  \end{quote}\par\medskip
+}
+
+\newenvironment{codeRead}{%
+  \par\smallskip\noindent\textbf{위 코드 읽기.}\quad
+}{%
+  \par\smallskip
+}
+
+\newcommand{\chaptermeta}[3]{%
+  \begin{noteBox}[Chapter map]
+  \textbf{원천 노트북}: \texttt{\detokenize{#1}}\par
+  \textbf{Colab}: \href{#2}{바로 열기}\par
+  \textbf{이 장의 초점}: #3
+  \end{noteBox}
+}

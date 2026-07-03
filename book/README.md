@@ -13,6 +13,16 @@ latexmk -xelatex book/main.tex
 
 PDF는 `book/build/neuqes-101-ch01-34-manuscript.pdf`에 생성됩니다.
 
+EPUB 리플로우 미리보기 샘플은 다음 명령으로 생성합니다.
+
+```bash
+./book/build-epub.sh
+```
+
+현재 EPUB 샘플은 1-34장 변환 검증용이며, 산출물은 `book/build/epub/neuqes-101-ch01-34-preview.epub`에 생성됩니다. PDF용 원고와 EPUB용 진입점을 분리해 두었기 때문에, 리디북스 같은 EPUB 뷰어에서 본문, 코드, 출력, 표, 그림의 읽힘을 먼저 확인한 뒤 범위를 조정할 수 있습니다.
+
+EPUB 표지 후보는 `book/epub/covers/` 아래 여러 종으로 생성됩니다. 현재 기본 표지는 `cover-illustration-token-core.png`이며, 후보를 바꾸려면 `book/build-epub.sh`의 `--epub-cover-image` 값을 원하는 PNG로 바꿔 다시 빌드합니다.
+
 ## 구조
 
 - `main.tex`: 책 전체 진입점
@@ -24,6 +34,9 @@ PDF는 `book/build/neuqes-101-ch01-34-manuscript.pdf`에 생성됩니다.
 - `appendices/`: 검증 전 부록 노트북의 자리 표시 원고
 - `backmatter/`: 마무리와 색인
 - `tools/notebook_to_tex.py`: 노트북 원천에서 장 원고를 재생성하는 스크립트
+- `ebook-main.tex`: EPUB 리플로우 미리보기용 진입점
+- `epub/`: EPUB 변환용 shim과 CSS
+- `build-epub.sh`: EPUB 미리보기 빌드 스크립트
 
 본문 폰트는 `NanumGothic`, 코드 폰트는 `NanumGothicCoding` 파일을 직접 지정합니다.
 

@@ -427,9 +427,9 @@
   }{#1: #2}%
 }
 
-\newcommand{\phasepart}[5]{%
+\newcommand{\phasepart}[6]{%
   \registerphaseparttrue
-  \phasedivider{#1}{#2}{#3}{#4}{#5}%
+  \phasedivider{#1}{#2}{#3}{#4}{#5}{#6}%
 }
 
 \newcommand{\appendixpart}[4]{%
@@ -485,21 +485,21 @@
 %% 4 컬럼 그리드지만 LaTeX에선 minipage stretch 로 flow + 끝에 자동 wrap.
 %% paper 색 텍스트 (dark phase-page 배경 위) — kicker (mono 모노) + 디스플레이.
 \newcommand{\chapline}[3]{%
-  \begin{minipage}[t]{42mm}%
+  \begin{minipage}[t]{31mm}%
     \raggedright
     \color{hfPaper!85!black}%
-    {\hfMono\fontsize{7.5pt}{9pt}\selectfont\color{hfPaper!55!black}#1}\par
+    {\hfMono\fontsize{6.8pt}{8pt}\selectfont\color{hfPaper!55!black}#1}\par
     \vspace{1pt}
-    {\hfDisplay\bfseries\fontsize{9.5pt}{11pt}\selectfont\color{hfPaper}#2}\par
+    {\hfDisplay\bfseries\fontsize{8.1pt}{9.5pt}\selectfont\color{hfPaper}#2}\par
     \vspace{0.5pt}
-    {\hfMono\fontsize{7pt}{8.5pt}\selectfont\color{hfPaper!50!black}#3}\par
-  \end{minipage}\hspace{2mm}\ignorespaces
+    {\hfMono\fontsize{6.3pt}{7.6pt}\selectfont\color{hfPaper!50!black}#3}\par
+  \end{minipage}\hspace{1.6mm}\ignorespaces
 }
 
 %% phase-divider — 디자인의 PagePhase 매칭. dark ink 풀-페이지 배경 위에
 %% pen-script kicker + 모뉴멘탈 serif 타이틀 + 디스플레이 설명 + 하단 phase
-%% indicator + chapter chip strip (#5 의 \chapline 들).
-\newcommand{\phasedivider}[5]{%
+%% indicator + summary (#5) + chapter chip strip (#6 의 \chapline 들).
+\newcommand{\phasedivider}[6]{%
   \setcounter{taphasecur}{#1}%
   \cleardoublepage
   \ifregisterphasepart
@@ -550,28 +550,35 @@
       at ([xshift=20mm, yshift=-138mm]current page.north west)
       {#3\\[2pt]\textit{\textcolor{hfPaper!55!black}{#4}}};
 
+    %% Phase intent summary — half-page bridge text that explains why this
+    %% part exists and how it connects to the previous/next phase.
+    \node[anchor=north west, text=hfPaper, opacity=0.78, text width=142mm,
+          font=\hfDisplay\fontsize{9.2pt}{14pt}\selectfont]
+      at ([xshift=20mm, yshift=-158mm]current page.north west)
+      {\begin{minipage}{142mm}\setlength{\parskip}{5pt}\raggedright #5\end{minipage}};
+
     %% 하단 영역 ─ horizontal rule + PHASE label + 큰 phase number + dots
     \draw[hfPaper, line width=0.4pt, opacity=0.30]
-      ([xshift=20mm, yshift=-185mm]current page.north west) --
-      ([xshift=-18mm, yshift=-185mm]current page.north east);
+      ([xshift=20mm, yshift=-190mm]current page.north west) --
+      ([xshift=-18mm, yshift=-190mm]current page.north east);
 
     \node[anchor=north west, text=hfPaper, opacity=0.55,
           font=\hfMono\fontsize{7.5pt}{9pt}\selectfont]
-      at ([xshift=20mm, yshift=-192mm]current page.north west)
+      at ([xshift=20mm, yshift=-197mm]current page.north west)
       {PHASE};
     \node[anchor=north west, text=hfPaper,
           font=\hfDisplay\bfseries\fontsize{52pt}{52pt}\selectfont]
-      at ([xshift=20mm, yshift=-200mm]current page.north west)
+      at ([xshift=20mm, yshift=-205mm]current page.north west)
       {0#1};
     \node[anchor=base west, text=hfPaper, opacity=0.40,
           font=\hfMono\fontsize{12pt}{12pt}\selectfont]
-      at ([xshift=42mm, yshift=-218mm]current page.north west)
-      {/04};
+      at ([xshift=42mm, yshift=-223mm]current page.north west)
+      {/05};
 
-    %% chapter chip strip (#5 안의 \chapline 들이 자동 정렬)
+    %% chapter chip strip (#6 안의 \chapline 들이 자동 정렬)
     \node[anchor=north west, inner sep=0pt]
-      at ([xshift=66mm, yshift=-198mm]current page.north west)
-      {\begin{minipage}{90mm}\setlength{\parskip}{6pt}\raggedright #5\end{minipage}};
+      at ([xshift=66mm, yshift=-200mm]current page.north west)
+      {\begin{minipage}{102mm}\setlength{\parskip}{2pt}\raggedright #6\end{minipage}};
   \end{tikzpicture}
   \cleardoublepage
 }
