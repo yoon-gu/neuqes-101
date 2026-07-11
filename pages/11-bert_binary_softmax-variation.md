@@ -116,7 +116,9 @@ print(f"\nMethod A training done — train loss: {train_result_A.training_loss:.
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
+Epoch  Training Loss  Validation Loss  Accuracy  Precision  Recall    F1        Auc
+1      0.245630       0.248752         0.906716  0.893617   0.905660  0.899598  0.968371
+2      0.162265       0.281090         0.905473  0.904110   0.889488  0.896739  0.966261
 Method A training done — train loss: 0.2588
 ```
 
@@ -140,9 +142,8 @@ for k, v in eval_metrics_A.items():
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
-<IPython.core.display.HTML object>
-<IPython.core.display.HTML object>
+Training Loss  Validation Loss  Epoch  Accuracy  Precision  Recall    F1        Auc
+0.162265       0.281090         2      0.905473  0.904110   0.889488  0.896739  0.966261
 Method A evaluation:
              eval_loss: 0.2811
          eval_accuracy: 0.9055

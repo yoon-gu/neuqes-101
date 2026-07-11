@@ -50,8 +50,8 @@ print(f"  -> model narrowed vocab to approx. {eval_ppl:.0f} candidates per maske
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
-<IPython.core.display.HTML object>
+Training Loss  Validation Loss  Epoch
+7.062257       7.120223         2
 === eval (held-out Wikitext-103 paragraphs) ===
                eval_loss: 7.1202
 
@@ -93,8 +93,8 @@ for sent in test_sentences:
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
-<IPython.core.display.HTML object>
+Training Loss  Validation Loss  Epoch
+7.062257       7.127809         2
 ==============================================================================
 AFTER pretraining  (2 epoch MLM on Wikitext-103)
 ==============================================================================

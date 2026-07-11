@@ -55,7 +55,9 @@ cls.seq_relationship.weight                | UNEXPECTED |  |
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
-<IPython.core.display.HTML object>
+Epoch  Training Loss  Validation Loss  Hamming Loss  Micro F1  Micro Precision  Micro Recall  Macro F1  Macro Precision  Macro Recall  Macro Auc  Runtime   Samples Per Second  Steps Per Second
+1      0.204022       0.220846         0.089000      0.820616  0.830904         0.810580      0.814124  0.817488         0.821548      0.958082   0.923800  1082.527000         34.641000
+2      0.146857       0.193365         0.075429      0.849143  0.853042         0.845279      0.845101  0.837468         0.855197      0.963320   0.675400  1480.703000         47.382000
 No-aux (lambda=0) baseline training done — mean train loss: 0.2258
 ```
 
@@ -79,8 +81,8 @@ preds_main_no_aux = (probs_no_aux >= 0.5).astype(int)
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
-<IPython.core.display.HTML object>
+Training Loss  Validation Loss  Epoch  Hamming Loss  Micro F1  Micro Precision  Micro Recall  Macro F1  Macro Precision  Macro Recall  Macro Auc  Runtime   Samples Per Second  Steps Per Second
+0.146857       0.193365         2      0.075429      0.849143  0.853042         0.845279      0.845101  0.837468         0.855197      0.963320   0.670100  1492.310000         47.754000
 No-aux (lambda=0) baseline — main task metrics:
                eval_loss: 0.1934
        eval_hamming_loss: 0.0754
@@ -94,7 +96,6 @@ No-aux (lambda=0) baseline — main task metrics:
             eval_runtime: 0.6701
   eval_samples_per_second: 1492.3100
    eval_steps_per_second: 47.7540
-<IPython.core.display.HTML object>
 ```
 
 ### 8-1. 메인 metric 비교 — λ=0 baseline vs λ=0.05 aux

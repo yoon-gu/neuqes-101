@@ -386,7 +386,9 @@ print(f"random baseline loss (K=7): {np.log(7):.4f}")
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
+Epoch  Training Loss  Validation Loss  Accuracy  Macro Precision  Macro Recall  Macro F1  Auc Ovr
+1      0.441529       0.465393         0.856000  0.838248         0.881824      0.856753  0.978641
+2      0.286288       0.402871         0.856000  0.849702         0.873584      0.860287  0.982976
 Training done — mean train loss: 0.4626
 random baseline loss (K=7): 1.9459
 ```

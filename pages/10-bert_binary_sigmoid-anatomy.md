@@ -14,8 +14,8 @@ for k, v in eval_metrics.items():
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
-<IPython.core.display.HTML object>
+Training Loss  Validation Loss  Epoch  Accuracy  Precision  Recall    F1        Auc
+0.159652       0.275900         2      0.898010  0.898072   0.878706  0.888283  0.967991
 BERT method A evaluation:
              eval_loss: 0.2759
          eval_accuracy: 0.8980
@@ -53,7 +53,6 @@ print(pd.DataFrame({
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
 Logit range: [-4.41, 4.26]
 Prob range:  [0.0120, 0.9861]
 Positive prediction rate (prob >= 0.5): 45.1%

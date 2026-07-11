@@ -417,7 +417,9 @@ print(f"\nTraining done — mean train loss: {train_result.training_loss:.4f}")
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
+Epoch  Training Loss  Validation Loss  Hamming Loss  Micro F1  Micro Precision  Micro Recall  Macro F1  Macro Precision  Macro Recall  Macro Auc  Runtime   Samples Per Second  Steps Per Second
+1      0.391352       0.375564         0.158200      0.730494  0.884488         0.622171      0.579077  0.712338         0.516885      0.858364   0.964200  1037.144000         33.189000
+2      0.313462       0.320437         0.124600      0.797662  0.905605         0.712710      0.723947  0.915523         0.644669      0.899381   0.919700  1087.355000         34.795000
 Training done — mean train loss: 0.4126
 ```
 

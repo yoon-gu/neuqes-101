@@ -14,8 +14,8 @@ for k, v in eval_metrics.items():
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
-<IPython.core.display.HTML object>
+Training Loss  Validation Loss  Epoch  Hamming Loss  Micro F1  Micro Precision  Micro Recall  Macro F1  Macro Precision  Macro Recall  Macro Auc  Runtime   Samples Per Second  Steps Per Second
+0.313462       0.320437         2      0.124600      0.797662  0.905605         0.712710      0.723947  0.915523         0.644669      0.899381   0.915700  1092.112000         34.948000
 BERT multi-label evaluation:
                eval_loss: 0.3204
        eval_hamming_loss: 0.1246
@@ -55,7 +55,6 @@ for k, a in enumerate(ASPECTS):
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
 logits shape: (1000, 5)
 prob ranges per label:
        food: [0.0280, 0.9871]  true rate=55.2%, pred rate=56.5%

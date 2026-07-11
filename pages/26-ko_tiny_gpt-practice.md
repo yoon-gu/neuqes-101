@@ -629,7 +629,17 @@ if torch.cuda.is_available():
 
 ```text
 [transformers] `loss_type=None` was set in the config but it is unrecognized. Using the default loss: `ForCausalLMLoss`.
-<IPython.core.display.HTML object>
+Step  Training Loss  Validation Loss
+150   6.099236       5.745915
+300   5.041654       4.868237
+450   4.596394       4.463939
+600   4.358889       4.229672
+750   4.192318       4.064077
+900   4.076734       3.951416
+1050  3.997099       3.871891
+1200  3.952390       3.828786
+1350  3.926925       3.807920
+1500  3.892811       3.804397
 === training summary ===
 elapsed       : 0.91 min
 global_step   : 1500

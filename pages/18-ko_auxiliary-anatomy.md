@@ -14,8 +14,8 @@ for k, v in eval_metrics_aux.items():
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
-<IPython.core.display.HTML object>
+Training Loss  Validation Loss  Epoch  Hamming Loss  Micro F1  Micro Precision  Micro Recall  Macro F1  Macro Precision  Macro Recall  Macro Auc  Runtime   Samples Per Second  Steps Per Second
+0.154351       0.200851         2      0.073857      0.852328  0.855995         0.848692      0.849294  0.840769         0.859991      0.963988   0.670000  1492.643000         47.765000
 With-aux (lambda=0.05) — main task metrics:
                eval_loss: 0.2009
        eval_hamming_loss: 0.0739
@@ -94,7 +94,6 @@ print(f"Eval samples:      {len(labels_eval)}")
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
 Main logits shape: (1000, 7)
 Eval samples:      1000
 ```

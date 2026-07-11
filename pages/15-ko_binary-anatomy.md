@@ -15,8 +15,8 @@ for k, v in eval_metrics.items():
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
-<IPython.core.display.HTML object>
+Training Loss  Validation Loss  Epoch  Accuracy  Precision  Recall    F1        Auc
+0.199243       0.388650         2      0.864000  0.877339   0.845691  0.861224  0.929182
 klue/bert-base NSMC binary — evaluation:
              eval_loss: 0.3887
          eval_accuracy: 0.8640
@@ -51,7 +51,6 @@ print(f"positive prediction rate (prob >= 0.5): {(probs >= 0.5).mean():.1%}")
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
 logits2 (raw)  shape: (1000, 2)
 logit z = z1-z0 range: [-5.71, 5.19]
 prob range:           [0.0033, 0.9944]

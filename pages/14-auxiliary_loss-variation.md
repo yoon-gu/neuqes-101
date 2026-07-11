@@ -58,7 +58,9 @@ classifier.bias         | MISSING    |
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
 - MISSING:	those params were newly initialized because missing from the checkpoint. Consider training on your downstream task.
-<IPython.core.display.HTML object>
+Epoch  Training Loss  Validation Loss  Hamming Loss  Micro F1  Micro Precision  Micro Recall  Macro F1  Macro Precision  Macro Recall  Macro Auc  Runtime   Samples Per Second  Steps Per Second
+1      0.386839       0.360188         0.140600      0.764962  0.902208         0.663958      0.665433  0.926159         0.567284      0.887096   1.198000  834.696000          26.710000
+2      0.286978       0.293115         0.102000      0.839925  0.914559         0.776553      0.802303  0.932820         0.720649      0.917939   1.047900  954.249000          30.536000
 No-aux (λ=0) baseline training done — mean train loss: 0.4010
 ```
 
@@ -82,8 +84,8 @@ preds_main_no_aux = (probs_no_aux >= 0.5).astype(int)
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
-<IPython.core.display.HTML object>
+Training Loss  Validation Loss  Epoch  Hamming Loss  Micro F1  Micro Precision  Micro Recall  Macro F1  Macro Precision  Macro Recall  Macro Auc  Runtime   Samples Per Second  Steps Per Second
+0.286978       0.293115         2      0.102000      0.839925  0.914559         0.776553      0.802303  0.932820         0.720649      0.917939   1.046900  955.176000          30.566000
 No-aux (λ=0) baseline — main task metrics:
                eval_loss: 0.2931
        eval_hamming_loss: 0.1020
@@ -97,7 +99,6 @@ No-aux (λ=0) baseline — main task metrics:
             eval_runtime: 1.0469
   eval_samples_per_second: 955.1760
    eval_steps_per_second: 30.5660
-<IPython.core.display.HTML object>
 ```
 
 ### 8-1. 메인 metric 비교 — λ=0 baseline vs λ=0.05 aux

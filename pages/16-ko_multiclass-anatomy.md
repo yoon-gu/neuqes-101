@@ -15,8 +15,8 @@ for k, v in eval_metrics.items():
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
-<IPython.core.display.HTML object>
+Training Loss  Validation Loss  Epoch  Accuracy  Macro Precision  Macro Recall  Macro F1  Auc Ovr
+0.286288       0.402871         2      0.856000  0.849702         0.873584      0.860287  0.982976
 klue/bert-base KLUE-YNAT — evaluation:
              eval_loss: 0.4029
          eval_accuracy: 0.8560
@@ -52,7 +52,6 @@ print(f"top-1 prob mean: correct={top1_prob[correct].mean():.4f}, wrong={top1_pr
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
 logits shape:    (1000, 7)
 top-1 prob range: [0.2669, 0.9909]
 top-1 prob mean: correct=0.9033, wrong=0.7097

@@ -345,7 +345,16 @@ if torch.cuda.is_available():
 ```text
 [transformers] warmup_ratio is deprecated and will be removed in v5.2. Use `warmup_steps` instead.
 [transformers] `loss_type=None` was set in the config but it is unrecognized. Using the default loss: `ForCausalLMLoss`.
-<IPython.core.display.HTML object>
+Step  Training Loss
+20    3.886148
+40    3.824287
+60    3.696209
+80    3.649120
+100   3.671241
+120   3.632889
+140   3.672879
+160   3.663117
+180   3.614785
 === SFT summary ===
 elapsed     : 2.40 min
 global_step : 188

@@ -14,8 +14,8 @@ for k, v in eval_metrics.items():
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
-<IPython.core.display.HTML object>
+Training Loss  Validation Loss  Epoch  Accuracy  Macro Precision  Macro Recall  Macro F1  Auc Ovr
+0.921884       1.000020         2      0.558000  0.555456         0.559534      0.556056  0.865652
 BERT 5-class evaluation:
                eval_loss: 1.0000
            eval_accuracy: 0.5580
@@ -54,7 +54,6 @@ print(pd.DataFrame({
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
 logits shape: (1000, 5)
 top-1 prob range: [0.2245, 0.8730]
 top-1 prob mean: correct=0.6279, wrong=0.5414

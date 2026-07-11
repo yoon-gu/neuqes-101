@@ -594,7 +594,10 @@ print(f"random baseline (ln vocab): {math.log(tokenizer.vocab_size):.4f}")
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
+Epoch  Training Loss  Validation Loss
+1      7.424748       7.483847
+2      7.332835       7.229390
+3      7.165433       7.272982
 MLM pretraining done in 0.3 min
 mean train loss: 7.6027
 random baseline (ln vocab): 10.3262
@@ -615,8 +618,8 @@ print(f"(random baseline PPL: {tokenizer.vocab_size:,})")
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
-<IPython.core.display.HTML object>
+Training Loss  Validation Loss  Epoch
+7.165433       7.212437         3
 MLM eval loss:        7.2124
 MLM eval perplexity:  1356.19
 (random baseline PPL: 30,522)
@@ -804,7 +807,9 @@ print(f"random baseline (ln 2): {math.log(2):.4f}")
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
+Epoch  Training Loss  Validation Loss  Accuracy  Precision  Recall    F1        Auc
+1      0.688090       0.690499         0.484000  0.484000   1.000000  0.652291  0.664244
+2      0.671505       0.667989         0.626000  0.594828   0.712810  0.648496  0.682084
 Classification fine-tune done in 0.3 min
 mean train loss: 0.6860
 random baseline (ln 2): 0.6931

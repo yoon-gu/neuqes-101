@@ -99,7 +99,6 @@ eval_ds  = ds["test"].shuffle(seed=42).select(range(1000))
 **위 코드 읽기** — `shuffle(seed=42)` 로 섞은 뒤 `select(range(...))` 로 앞쪽 일부만 추립니다. 같은 seed라 매번 동일한 부분집합이 잡혀 재현이 됩니다.
 
 ```python
-
 def tokenize_fn(batch):
     out = tokenizer(batch["text"], truncation=True, max_length=128)
     # label(0-4) → 별점(1-5) float 으로 변환. Trainer는 'labels' 컬럼을 사용
@@ -373,7 +372,9 @@ print(f"\nTraining done — mean train loss: {train_result.training_loss:.4f}")
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
+Epoch  Training Loss  Validation Loss  Mse       Mae       R2
+1      0.782634       0.660149         0.660149  0.639380  0.661209
+2      0.576040       0.653909         0.653909  0.617953  0.664411
 Training done — mean train loss: 1.1182
 ```
 

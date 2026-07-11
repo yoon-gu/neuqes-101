@@ -456,7 +456,9 @@ print(f"\nWith-aux training done — mean train loss: {train_result_aux.training
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
+Epoch  Training Loss  Validation Loss  Hamming Loss  Micro F1  Micro Precision  Micro Recall  Macro F1  Macro Precision  Macro Recall  Macro Auc  Runtime   Samples Per Second  Steps Per Second
+1      0.388757       0.361938         0.140200      0.767342  0.896124         0.670923      0.668518  0.921665         0.574410      0.889660   1.035500  965.684000          30.902000
+2      0.289381       0.296347         0.097800      0.846948  0.919158         0.785258      0.810893  0.932765         0.731567      0.918232   1.145900  872.672000          27.925000
 With-aux training done — mean train loss: 0.4046
 ```
 

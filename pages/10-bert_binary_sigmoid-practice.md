@@ -292,7 +292,9 @@ print(f"\nTraining done — mean train loss: {train_result.training_loss:.4f}")
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
+Epoch  Training Loss  Validation Loss  Accuracy  Precision  Recall    F1        Auc
+1      0.244964       0.263394         0.905473  0.885117   0.913747  0.899204  0.966201
+2      0.159652       0.275900         0.898010  0.898072   0.878706  0.888283  0.967991
 Training done — mean train loss: 0.2617
 ```
 

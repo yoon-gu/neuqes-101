@@ -14,8 +14,8 @@ for k, v in bert_metrics.items():
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
-<IPython.core.display.HTML object>
+Training Loss  Validation Loss  Epoch  Mse       Mae       R2
+0.576040       0.653909         2      0.653909  0.617953  0.664411
 BERT evaluation:
              eval_loss: 0.6539
               eval_mse: 0.6539
@@ -89,13 +89,13 @@ pd.DataFrame(rows).round(4)
 
 세 지표 모두 BERT가 크게 앞섭니다 — MSE 1.56 → 0.65, MAE 1.01 → 0.62, R² 0.20 → 0.66. 문맥을 attention으로 읽는 BERT가 단어 빈도만 보는 TF-IDF 회귀보다 별점을 훨씬 정확히 맞춘다는 가설이 이 수치로 확인됩니다.
 
-시각화에 쓸 예측값을 모읍니다. `Trainer.predict` 로 BERT 예측을 받아 sklearn 예측과 한 long-form DataFrame으로 합칩니다.
-
 **해석 가이드** (실제 숫자는 random seed에 따라 조금씩 다릅니다):
 
 - BERT의 MSE가 sklearn보다 작다면, *문맥을 활용한 회귀가 단어 독립 회귀보다 정확하다* 는 직관이 확인됩니다.
 - BERT의 R²가 더 높다면 평균 예측이 데이터 분산을 더 잘 설명합니다.
 - 차이가 크지 않다면? Yelp 별점은 단어 빈도(긍정 단어 vs 부정 단어)만으로도 꽤 잡히는 task라 그런 경우가 있습니다. *문맥 활용 효과* 가 크게 드러나는 task는 Ch 14 auxiliary나 Ch 15 한국어 NSMC 쪽이 더 명확할 수 있습니다.
+
+시각화에 쓸 예측값을 모읍니다. `Trainer.predict` 로 BERT 예측을 받아 sklearn 예측과 한 long-form DataFrame으로 합칩니다.
 
 ```python
 # BERT 예측값 직접 받기 (별도 evaluate 호출이지만 빠름)
@@ -109,12 +109,6 @@ df_compare = pd.DataFrame({
     "Model":       ["BERT"] * len(eval_labels) + ["sklearn"] * len(eval_labels),
 })
 df_compare["Residual"] = df_compare["Predicted"] - df_compare["Actual star"]
-```
-
-**▶ 실행 결과**
-
-```text
-<IPython.core.display.HTML object>
 ```
 
 ### 시각 1 — 예측 분포 per actual class
@@ -152,8 +146,6 @@ plt.show()
 ### 시각 2 — 잔차(Residual = Predicted − Actual) 분포 per actual class
 
 `Predicted − Actual` 을 y축에 두고 0 기준선을 긋습니다. 잔차가 0 근처에 좁게 모일수록 정확하고, 양/음 한 쪽으로 치우치면 *bias* 가 있다는 뜻.
-
-![output](../assets/09-bert_regression-out1-1.png)
 
 이번엔 잔차(예측 − 실제)를 y축에 둡니다. 0 기준선에 좁게 모일수록 정확하고, 한쪽으로 치우치면 bias가 있다는 뜻입니다.
 

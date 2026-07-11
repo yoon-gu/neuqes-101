@@ -627,8 +627,8 @@ for sent in test_sentences:
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
-<IPython.core.display.HTML object>
+Training Loss  Validation Loss  Epoch
+No log         10.383417        0
 ==============================================================================
 BEFORE pretraining  (random init body)
 ==============================================================================
@@ -659,7 +659,9 @@ print(f"random baseline loss (uniform over vocab): {math.log(tokenizer.vocab_siz
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
+Epoch  Training Loss  Validation Loss
+1      7.215202       7.198018
+2      7.062257       7.058136
 MLM pretraining done in 0.4 min
 mean train loss: 7.4179
 random baseline loss (uniform over vocab): 10.3262

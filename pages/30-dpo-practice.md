@@ -602,7 +602,16 @@ transformer.h.{0...11}.attn.masked_bias | UNEXPECTED |  |
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
-<IPython.core.display.HTML object>
+Step  Training Loss
+10    0.688411
+20    0.710073
+30    0.678711
+40    0.817179
+50    0.708727
+60    0.683510
+70    0.762712
+80    0.680615
+90    0.670623
 === DPO summary ===
 elapsed     : 2.39 min
 global_step : 94

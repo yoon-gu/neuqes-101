@@ -491,7 +491,38 @@ if torch.cuda.is_available():
 ```text
 [transformers] warmup_ratio is deprecated and will be removed in v5.2. Use `warmup_steps` instead.
 [transformers] `loss_type=None` was set in the config but it is unrecognized. Using the default loss: `ForCausalLMLoss`.
-<IPython.core.display.HTML object>
+Step  Training Loss  Validation Loss
+100   3.043552       2.899030
+200   2.798506       2.683229
+300   2.712242       2.597310
+400   2.669398       2.540780
+500   2.612974       2.499535
+600   2.595014       2.468091
+700   2.548348       2.438415
+800   2.489526       2.418997
+900   2.492317       2.405184
+1000  2.502229       2.384735
+1100  2.461211       2.373174
+1200  2.451401       2.358372
+1300  2.439108       2.347635
+1400  2.437176       2.332937
+1500  2.408855       2.325852
+1600  2.419213       2.315121
+1700  2.418423       2.304565
+1800  2.395895       2.298695
+1900  2.377906       2.292478
+2000  2.399462       2.284666
+2100  2.351143       2.278726
+2200  2.408343       2.274161
+2300  2.357115       2.270545
+2400  2.357828       2.266827
+2500  2.378545       2.264369
+2600  2.342011       2.262938
+2700  2.337422       2.261098
+2800  2.345940       2.260038
+2900  2.349167       2.259549
+3000  2.341200       2.259395
+...
 === continual pretraining summary ===
 elapsed       : 17.11 min
 global_step   : 3033

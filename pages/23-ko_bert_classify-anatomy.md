@@ -15,8 +15,8 @@ for k, v in cls_eval_metrics.items():
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
-<IPython.core.display.HTML object>
+Training Loss  Validation Loss  Epoch  Accuracy  Precision  Recall    F1        Auc
+0.689321       0.688512         2      0.548000  0.561358   0.430862  0.487528  0.554538
 Ch 23 small BERT (scratch MLM 3 epoch on Korean Wikipedia + NSMC fine-tune) — eval:
              eval_loss: 0.6885
          eval_accuracy: 0.5480
@@ -57,7 +57,6 @@ print(classification_report(
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
 Logits shape: (1000, 2)
 Predicted positive rate: 38.3%
 Top-1 prob mean: correct=0.5245, wrong=0.5226

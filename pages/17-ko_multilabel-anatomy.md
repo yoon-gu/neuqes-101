@@ -15,8 +15,8 @@ for k, v in eval_metrics.items():
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
-<IPython.core.display.HTML object>
+Training Loss  Validation Loss  Epoch  Hamming Loss  Micro F1  Micro Precision  Micro Recall  Macro F1  Macro Precision  Macro Recall  Macro Auc  Runtime   Samples Per Second  Steps Per Second
+0.175560       0.216631         2      0.074143      0.850043  0.863770         0.836746      0.848716  0.844496         0.855612      0.962340   0.688500  1452.501000         46.480000
 klue/bert-base KLUE-YNAT multi-label — evaluation:
                eval_loss: 0.2166
        eval_hamming_loss: 0.0741
@@ -56,7 +56,6 @@ for k in range(K):
 **▶ 실행 결과**
 
 ```text
-<IPython.core.display.HTML object>
 logits shape: (1000, 7)
 prob ranges per category:
   IT/Science: [0.0113, 0.9731]  true rate=12.6%, pred rate=13.1%

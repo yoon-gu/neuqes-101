@@ -246,7 +246,16 @@ print(f"SFT 워밍스타트 완료 ({(time.time()-t0)/60:.1f}min) - policy 가 �
 ```text
 [transformers] warmup_ratio is deprecated and will be removed in v5.2. Use `warmup_steps` instead.
 [transformers] `loss_type=None` was set in the config but it is unrecognized. Using the default loss: `ForCausalLMLoss`.
-<IPython.core.display.HTML object>
+Step  Training Loss
+50    1.040984
+100   0.444361
+150   0.348426
+200   0.323162
+250   0.311267
+300   0.293979
+350   0.281557
+400   0.270660
+450   0.261485
 SFT 워밍스타트 완료 (1.2min) - policy 가 이제 산술 포맷을 안다
 ```
 
@@ -544,7 +553,13 @@ transformer.h.{0...11}.attn.masked_bias | UNEXPECTED |  |
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
-<IPython.core.display.HTML object>
+Step  Training Loss
+5     308.503369
+10    0.060175
+15    0.085207
+20    0.057928
+25    0.056811
+30    33098150.400000
 === GRPO summary ===
 elapsed     : 0.48 min
 global_step : 32
