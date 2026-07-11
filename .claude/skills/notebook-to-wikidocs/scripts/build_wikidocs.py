@@ -845,9 +845,20 @@ def convert(nb: dict, num: int, slug: str, title: str,
 # --------------------------------------------------------------------------- #
 # TOC
 # --------------------------------------------------------------------------- #
-def upsert_toc(toc_path: Path, book_title: str, num: int, entries: list[tuple[str, str]]) -> None:
-    """TOC.md에서 이 장(NN. / NN-N.) 블록만 교체하거나 추가. 다른 장은 보존."""
+def upsert_toc(toc_path: Path, book_title: str, num: int, stem: str,
+               entries: list[tuple[str, str]]) -> None:
+    """TOC.md에서 이 장(NN. / NN-N.) 블록만 교체하거나 추가. 다른 장은 보존.
+
+    이 장 블록 안에는 이번 실행이 새로 찍어낸 표준 5페이지(개요 + practice/anatomy/
+    variation/wrapup) 항목 외에, `-data_scaling`·`-lambda_sweep` 같은 **부록** 항목이
+    섞여 있을 수 있다. 부록은 별도 노트북에서 만든 페이지라 이번 `entries` 에는 전혀
+    안 잡히는데, 번호 접두사만으로 블록을 통째로 교체하면 페이지 파일은 멀쩡히 있는데도
+    TOC 링크만 조용히 사라진다(고아 페이지). 표준 경로가 아닌 기존 항목은 그대로
+    보존해 이 문제를 막는다.
+    """
     nn = f"{num:02d}"
+    standard_paths = {f"pages/{stem}.md"} | {
+        f"pages/{stem}-{suf}.md" for suf in ("practice", "anatomy", "variation", "wrapup")}
     new_lines = []
     for title, path in entries:
         indent = "" if re.match(r"^\d+\.\s", title) else "  "
@@ -859,12 +870,17 @@ def upsert_toc(toc_path: Path, book_title: str, num: int, entries: list[tuple[st
 
     lines = toc_path.read_text(encoding="utf-8").splitlines()
     chapter_re = re.compile(rf"^\s*\*\s*\[{nn}[.\-]")
+    path_re = re.compile(r"\]\((pages/[^)]+)\)")
     start = end = None
+    extra: list[str] = []   # 이 장 블록 안에 있던 비표준(부록 등) 항목 — 그대로 보존
     for i, ln in enumerate(lines):
         if chapter_re.match(ln):
             if start is None:
                 start = i
             end = i
+            m = path_re.search(ln)
+            if m and m.group(1) not in standard_paths:
+                extra.append(ln)
     if start is None:
         # 번호 오름차순 유지: 다음으로 큰 장 앞에 삽입, 없으면 끝에 추가
         insert_at = len(lines)
@@ -876,7 +892,7 @@ def upsert_toc(toc_path: Path, book_title: str, num: int, entries: list[tuple[st
                 break
         out = lines[:insert_at] + new_lines + lines[insert_at:]
     else:
-        out = lines[:start] + new_lines + lines[end + 1:]
+        out = lines[:start] + new_lines + extra + lines[end + 1:]
     toc_path.write_text("\n".join(out).rstrip("\n") + "\n", encoding="utf-8")
 
 
@@ -1021,7 +1037,7 @@ def main() -> None:
             title = resolve_title(num, slug, nb, registry)
             entries, stats = convert(nb, num, slug, title, pages_dir, assets_dir,
                                      args.output_style)
-            upsert_toc(toc_path, args.book_title, num, entries)
+            upsert_toc(toc_path, args.book_title, num, f"{num:02d}-{slug}", entries)
             print(f"[{num:02d}] {title}")
             print(f"     원천={source}  코드셀 {stats['code_cells']}개 "
                   f"(실제출력 {stats['code_with_output']} / 합성 {stats['synthetic']}) "
