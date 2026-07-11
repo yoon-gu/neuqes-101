@@ -22,6 +22,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[4]
 PAGES = ROOT / "pages"
+ASSETS = ROOT / "assets"
 
 
 def _norm(s: str) -> str:
@@ -35,6 +36,11 @@ def _is_real_codedesc(p: str) -> bool:
     if p.lstrip().startswith(">"):     # 인용/콜아웃(부록 안내 등)
         return False
     if p.lstrip().startswith(("- ", "* ", "1.")):  # 목록
+        return False
+    if "![" in p:
+        # 이미지 참조는 **▶ 실행 결과** 블록에만 있어야 한다. 구버전 페이지에 잘못
+        # 섞여 들어간 이미지 참조(다른 셀의 그림을 코드 설명 자리에 실수로 붙인 경우 등)를
+        # 그대로 이식하면, 재변환으로 그림 버전이 바뀌거나 삭제될 때 깨진 링크로 남는다.
         return False
     return len(p) <= 400               # 2-3문장 분량 상한
 
@@ -310,6 +316,46 @@ def render_blocks(blocks):
 
 
 # --------------------------------------------------------------------------- #
+# 이미지 참조 재정렬 — assets/ 의 실제 파일과 md 의 경로를 맞춘다
+# --------------------------------------------------------------------------- #
+# 파일명 규약(build_wikidocs.py:_next_image_version): '<stem>-out<N>-<버전>.png'.
+# '<stem>-out<N>' 까지가 base, 마지막 '-<버전>' 만 매 재변환마다 바뀐다.
+_IMG_REF_RE = re.compile(r"!\[([^\]]*)\]\(\.\./assets/(.+?-out\d+)-(\d+)\.png\)")
+
+
+def _realign_image_refs(text: str) -> tuple[str, list[str]]:
+    """이식된 산문(주로 ④A) 속 이미지 참조가 assets/ 의 실제 파일과 어긋나면 맞춘다.
+
+    build_wikidocs.py 는 그림을 다시 그릴 때마다 버전 postfix를 올리고 옛 버전
+    파일을 지운다(WikiDocs가 파일명으로 이미지를 캐싱하기 때문). 정상 경로(매 셀의
+    '**▶ 실행 결과**' 블록)는 그 재변환 때 항상 최신 버전으로 새로 찍히므로 문제가
+    없지만, ④ 산문에 우연히 섞여 있던 이미지 참조(예: 과거 수기 편집 실수)는 이식
+    과정에서 문자 그대로 옮겨지므로 옛 버전 번호가 그대로 남을 수 있다. 이 함수는
+    그런 참조를 실제 assets/ 파일 상태에 맞춰 최신 버전으로 재정렬하거나, 대응하는
+    파일이 아예 없으면(더는 존재하지 않는 그림) 참조를 지운다.
+    """
+    warnings: list[str] = []
+
+    def _sub(m: re.Match) -> str:
+        alt, base, ver = m.group(1), m.group(2), m.group(3)
+        exact = ASSETS / f"{base}-{ver}.png"
+        if exact.exists():
+            return m.group(0)
+        candidates = sorted(
+            ASSETS.glob(f"{base}-*.png"),
+            key=lambda p: int(re.search(r"-(\d+)\.png$", p.name).group(1)),
+        )
+        if candidates:
+            newest = candidates[-1].name
+            warnings.append(f"{base}-{ver}.png → {newest} 로 재정렬")
+            return f"![{alt}](../assets/{newest})"
+        warnings.append(f"{base}-{ver}.png 대응 파일 없음 — 참조 삭제")
+        return ""
+
+    return _IMG_REF_RE.sub(_sub, text), warnings
+
+
+# --------------------------------------------------------------------------- #
 def git_show(ref: str, relpath: str):
     try:
         return subprocess.check_output(["git", "show", f"{ref}:{relpath}"],
@@ -387,13 +433,21 @@ def main():
     new_pages = [p for p in sorted(PAGES.glob(f"{num:02d}-*.md")) if p.name in std_names]
     # 재빌드본(노트북 본문) 전체를 정규화해 (A) 중복 삽입 가드에 사용
     orig_norm = _norm("".join(p.read_text() for p in new_pages))
+    img_warnings: list[str] = []
     for p in new_pages:
         new_text = p.read_text()
         merged = apply_enrichment(new_text, enrich, stats, orig_norm)
+        # 이식된 산문 속 이미지 참조를 assets/ 실제 파일과 정렬(옛 버전 자동 보정/삭제)
+        merged, warns = _realign_image_refs(merged)
+        img_warnings.extend(f"{p.name}: {w}" for w in warns)
         if not args.dry_run:
             p.write_text(merged, encoding="utf-8")
     print(f"[NEW] 재부착: A={stats['A']} B(위 코드 읽기)={stats['B']} C(결과 해석)={stats['C']}"
           + ("  (dry-run)" if args.dry_run else ""))
+    if img_warnings:
+        print(f"[IMG] 이미지 참조 재정렬 {len(img_warnings)}건:")
+        for w in img_warnings:
+            print(f"  - {w}")
 
 
 if __name__ == "__main__":
