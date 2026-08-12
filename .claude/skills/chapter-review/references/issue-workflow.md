@@ -4,12 +4,16 @@
 
 ## 먼저 확인
 
+이미 올라온 결함과 그 댓글을 읽는 것은 **검수 시작 단계**의 일이다 — SKILL.md 의 `0. 먼저` 를 볼 것. 여기서는 등록에 필요한 값만 모은다.
+
 ```bash
-gh issue list --search "Ch 12" --limit 60        # 챕터 검수 이슈 번호 (예: #36)
+gh issue list --search "Ch 12" --state all --limit 60   # 챕터 이슈 번호(예: #36) + 중복 대조
 gh api repos/:owner/:repo/milestones --jq '.[] | "\(.number) \(.title)"'
 gh label list --limit 100 | grep -E "severity|format|type:"
-git rev-parse --short HEAD                        # 기준 커밋
+git rev-parse --short HEAD                               # 기준 커밋
 ```
+
+**등록 직전에 중복을 한 번 더 대조한다.** 검수하는 동안 다른 사람이 같은 것을 올렸을 수 있다.
 
 라벨은 전부 이미 존재한다. 없는 라벨을 `--label` 로 주면 생성이 실패한다.
 
