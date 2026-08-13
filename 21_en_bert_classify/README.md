@@ -54,7 +54,7 @@ Google Colab T4 GPU (fp16). 약 25-28분 (Wikitext-103 다운로드·필터링 �
 | 사전학습 시간 | TPU 수일 | T4 약 10-12분 | |
 | Fine-tune 도메인 | Yelp 이진 (다른 도메인) | Yelp 이진 (다른 도메인) | **둘 다 위키 -> Yelp transfer** |
 | 분류 fine-tune 셋업 | (같음 — 5K/1K, batch 16, lr 2e-5, 2 epoch, fp16) | | 본체 외 통제 |
-| 실측 accuracy | 약 0.90 | 약 0.65 (실행마다 0.62-0.70) | 실행본 기준 *근사* — GPU 학습이라 실행마다 흔들림 |
+| 실측 accuracy | 약 0.90 | random (0.50) 과 Ch 10 의 중간쯤 | 실행마다 흔들려 단일 값으로 적지 않음 — 값은 실행본 `executed/21_en_bert_classify.ipynb` |
 
 비교가 *공정* 한 이유 — 둘 다 *일반 도메인 위키 사전학습 → Yelp 분류 transfer* 의 같은 패턴이라 *사전학습 규모* (약 1.2만배) 와 *모델 크기* (약 6배) 만 변수. 격차가 *사전학습 규모의 가치* 를 정량으로 보여줍니다. *작은 일반 도메인 사전학습도 random init 보다는 분명히 낫다* 는 것, 그리고 *fair-compute (사전학습 compute 를 fine-tune 으로 옮겨도)* 격차가 메워지지 않는다는 것은 부록 [`appendix_compute_budget.ipynb`](./appendix_compute_budget.ipynb) 참조.
 
