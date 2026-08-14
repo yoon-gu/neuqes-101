@@ -469,7 +469,7 @@ plt.rcParams["axes.unicode_minus"] = False
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-trl          : 1.6.0
+trl          : 1.10.0
 device       : cuda  (Tesla T4)
 VRAM total   : 14.56 GiB
 torch        : 2.11.0+cu128
@@ -518,6 +518,7 @@ print(f"\nafter filter + subset: {len(raw):,} samples")
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
+data/train-00000-of-00001-21df739eb88d71(…): downloading bytes: | 0.00B
 raw dataset: Dataset({
     features: ['instruction', 'output', 'url'],
     num_rows: 21155
@@ -665,10 +666,12 @@ print(
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
+pytorch_model.bin: downloading bytes:           |  0.00B
 Key                                     | Status     |  | 
 ----------------------------------------+------------+--+-
 
-load done: 7.2s
+model.safetensors: downloading bytes:           |  0.00B
+load done: 7.5s
 
 roundtrip check: '옛날 옛날에 작은 소녀가'  (OK)
 
@@ -695,7 +698,7 @@ tokenizer    : TokenizersBackend
 \item
   \inlinecode{SFTTrainer} 가 \emph{prompt + completion} 을 토큰화해 이어 붙이고, \emph{completion 부분에 1, prompt 부분에 0} 인 \inlinecode{completion\_mask} 를 만듭니다 (response\_template \texttt{\#\#\#\ 응답:\textbackslash{}n} 가 prompt 의 끝).
 \item
-  collator 가 \inlinecode{labels\ =\ input\_ids.clone()} 한 뒤 \emph{\inlinecode{completion\_mask\ ==\ 0} 인 자리 (= prompt) 를 전부 \inlinecode{-100}} 으로 덮습니다.
+  \inlinecode{SFTTrainer} 가 \emph{데이터 준비 단계} 에서 \inlinecode{labels\ =\ input\_ids} 복사본을 만들고 \emph{\inlinecode{completion\_mask\ ==\ 0} 인 자리 (= prompt) 를 전부 \inlinecode{-100}} 으로 덮은 \inlinecode{labels} 컬럼을 데이터셋에 추가합니다 (trl 1.10 기준 --- 구버전 trl 은 collator 가 담당했습니다. collator 는 완성된 \inlinecode{labels} 를 배치 길이에 맞춰 패딩만 합니다).
 \item
   그래서 loss 는 \emph{답변 토큰에서만} 계산됩니다 --- \texttt{labels{[}:prompt\_len{]}\ =\ -100} 의 효과.
 \end{enumerate}
@@ -704,11 +707,6 @@ tokenizer    : TokenizersBackend
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
-try:
-    from trl.trainer.sft_trainer import DataCollatorForLanguageModeling as SFTCollator
-except Exception:
-    from trl import DataCollatorForLanguageModeling as SFTCollator
-
 sample = sft_ds[0]
 prompt_text = sample["prompt"]
 completion_text = sample["completion"]
@@ -720,30 +718,19 @@ c_ids = c_ids + [tokenizer.eos_token_id]
 input_ids = p_ids + c_ids
 completion_mask = [0] * len(p_ids) + [1] * len(c_ids)
 
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=17]
 print(f"prompt tokens     : {len(p_ids)}")
 print(f"completion tokens : {len(c_ids)}  (incl. EOS)")
 print(f"total tokens      : {len(input_ids)}")
-
-collator = SFTCollator(
-    pad_token_id=tokenizer.pad_token_id,
-    completion_only_loss=True,
-)
-batch = collator([{"input_ids": input_ids, "completion_mask": completion_mask}])
-labels = batch["labels"][0].tolist()
-ids = batch["input_ids"][0].tolist()
 
 \end{lstlisting}
 
 \noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
-\Needspace{7\baselineskip}
-\begin{lstlisting}[firstnumber=29]
+\Needspace{10\baselineskip}
+\begin{lstlisting}[firstnumber=16]
+labels = [tid if m == 1 else -100 for tid, m in zip(input_ids, completion_mask)]
+ids = input_ids
+
 n_learn = sum(1 for l in labels if l != -100)
 print(
     f"\nlabels learned    : {n_learn} / {len(labels)}  (prompt masked = "
@@ -871,7 +858,7 @@ plt.tight_layout(); plt.show()
 
 \section{\texorpdfstring{\inlinecode{SFTTrainer} 로 SFT 학습 --- \emph{새 trainer, 같은 loss 종류}}{SFTTrainer 로 SFT 학습 --- 새 trainer, 같은 loss 종류}}
 
-\inlinecode{trl.SFTTrainer} 는 본 장에 처음 등장하는 클래스입니다. \inlinecode{transformers.Trainer} 를 상속해 \emph{SFT 에 특화된 전처리} (prompt/completion 토큰화, EOS 부착, completion 마스킹) 를 자동으로 해 줍니다. 설정은 \inlinecode{SFTConfig} (── \inlinecode{TrainingArguments} 를 상속) 로 주며, \textbf{\inlinecode{completion\_only\_loss=True}} 가 \emph{답변 부분만 학습} 하라는 핵심 옵션입니다.
+\inlinecode{trl.SFTTrainer} 는 본 장에 처음 등장하는 클래스입니다. \inlinecode{transformers.Trainer} 를 상속해 \emph{SFT 에 특화된 전처리} (prompt/completion 토큰화, EOS 부착, completion 마스킹) 를 자동으로 해 줍니다. 설정은 \inlinecode{SFTConfig} (\inlinecode{TrainingArguments} 를 상속) 로 주며, \textbf{\inlinecode{completion\_only\_loss=True}} 가 \emph{답변 부분만 학습} 하라는 핵심 옵션입니다.
 
 
 
@@ -975,7 +962,7 @@ sft_config = SFTConfig(
     # effective batch = 16
     learning_rate=2e-5,
     weight_decay=0.01,
-    warmup_ratio=0.03,
+    warmup_steps=0.03,
     lr_scheduler_type="cosine",
     max_grad_norm=1.0,
     max_length=512,
@@ -1057,23 +1044,24 @@ if torch.cuda.is_available():
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-[transformers] warmup_ratio is deprecated and will be removed in v5.2. Use...
 [transformers] The tokenizer has new PAD/BOS/EOS tokens that differ from th...
-[transformers] `loss_type=None` was set in the config but it is unrecognize...
 Step  Training Loss
 ----  -------------
-20    3.886148
-40    3.824287
-60    3.696209
-80    3.649120
-100   3.671241
-120   3.632889
-140   3.672879
-160   3.663117
-180   3.614785
+20    3.886173
+40    3.824303
+60    3.696179
+80    3.649105
+100   3.671245
+120   3.632870
+140   3.672873
+160   3.663120
+180   3.614760
 
 === SFT summary ===
-...
+elapsed     : 2.48 min
+global_step : 188
+train_loss  : 3.7007
+final peak  : 1452 MiB
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1302,7 +1290,7 @@ AFTER       : 수열이란 어떤 원인에 의해서 생기는 열입니다.
 \inlinecode{trl.SFTTrainer} & SFT 특화 trainer (prompt/completion 전처리 + completion 마스킹 자동) & \textbf{새로 등장} (\ref{ch:27}장 은 \inlinecode{transformers.Trainer}) \\
 \inlinecode{trl.SFTConfig} & \inlinecode{SFTTrainer} 설정 (\inlinecode{TrainingArguments} 상속 + SFT 옵션) & \textbf{새로 등장} \\
 \inlinecode{SFTConfig(completion\_only\_loss=True)} & \emph{답변 부분만} loss (prompt = \inlinecode{-100}) --- SFT 의 핵심 옵션 & \textbf{새로 등장} \\
-\inlinecode{trl} 의 SFT collator (\inlinecode{DataCollatorForLanguageModeling}) & \inlinecode{completion\_mask} 로 prompt 를 \inlinecode{-100} 마스킹 & \textbf{새로 등장} (\ref{ch:27}장 은 \inlinecode{transformers.DataCollatorForLanguageModeling(mlm=False)}) \\
+\inlinecode{trl} 의 SFT 데이터 준비 + collator & 데이터 준비 단계에서 \inlinecode{completion\_mask} 로 prompt 를 \inlinecode{-100} 마스킹한 \inlinecode{labels} 를 생성, collator 는 패딩만 담당 (trl 1.10 기준) & \textbf{새로 등장} (\ref{ch:27}장 은 \inlinecode{transformers.DataCollatorForLanguageModeling(mlm=False)}) \\
 \inlinecode{prompt} / \inlinecode{completion} 데이터 형식 & instruction-response 쌍 표준 형식 & \textbf{새로 등장} (\ref{ch:27}장 은 단일 \inlinecode{text} 컬럼) \\
 \inlinecode{AutoModelForCausalLM.from\_pretrained("skt/kogpt2-base-v2")} & KoGPT2 본체 로드 & \textbf{공유} (\ref{ch:27}장과 같은 본체) \\
 \inlinecode{PreTrainedTokenizerFast.from\_pretrained("skt/kogpt2-base-v2",\ ...)} & KoGPT2 BBPE 토크나이저 (AutoTokenizer 함정 회피) & \textbf{공유} (\ref{ch:27}장과 동일) \\
