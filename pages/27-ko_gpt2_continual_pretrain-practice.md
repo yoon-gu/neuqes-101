@@ -9,14 +9,12 @@
 **▶ 실행 결과**
 
 ```text
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 92.1 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 40.4 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.2/389.2 kB 30.9 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 0.0/48.9 MB ? eta -:--:--
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━╺━━━━━━━━━━━━━ 32.2/48.9 MB 169.9 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 88.9 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 88.9 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 21.6 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.7/11.7 MB 109.5 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 559.1/559.1 kB 45.6 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━╺━━━━━━━━━━━━━━━━━━━━ 24.2/50.1 MB 229.6 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 235.6 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 235.6 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 50.1/50.1 MB 18.7 MB/s eta 0:00:00
 ```
 
 ```python
@@ -132,7 +130,7 @@ print(raw_train[0]["text"][:400])
 **▶ 실행 결과**
 
 ```text
-rebuilt stories: train=30,000, val=500  (22.7s)
+rebuilt stories: train=30,000, val=500  (22.1s)
 train: Dataset({
     features: ['text'],
     num_rows: 30000
@@ -148,7 +146,7 @@ val  : Dataset({
 
 **결과 해석**
 
-train 30,000 / val 500 stories 가 약 23초 만에 복원됐고, 샘플 story 가 동화체 한국어 (`…했어요` / `…했답니다`) 로 정상 복원됐습니다 — Ch 26 과 글자 그대로 같은 데이터라 격리 실험의 통제 변수가 보장됩니다.
+train 30,000 / val 500 stories 가 약 22초 만에 복원됐고, 샘플 story 가 동화체 한국어 (`…했어요` / `…했답니다`) 로 정상 복원됐습니다 — Ch 26 과 글자 그대로 같은 데이터라 격리 실험의 통제 변수가 보장됩니다.
 
 ## KoGPT2 토크나이저·모델 로드 — *모델 로드 한 줄로 학습 단계 2 진입*
 
@@ -195,6 +193,7 @@ print(f"  - head : {type(model.lm_head).__name__}(in={model.lm_head.in_features}
 **▶ 실행 결과**
 
 ```text
+pytorch_model.bin: downloading bytes:           |  0.00B            
 [transformers] GPT2LMHeadModel LOAD REPORT from: skt/kogpt2-base-v2
 Key                                     | Status     |  | 
 ----------------------------------------+------------+--+-
@@ -202,7 +201,8 @@ transformer.h.{0...11}.attn.masked_bias | UNEXPECTED |  |
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
-load done: 10.0s
+model.safetensors: downloading bytes:           |  0.00B            
+load done: 9.9s
 
 === model ===
 #params           : 125.16 M  (Ch 26 was approx. 3M; Ch 27 is approx. 42x larger)
@@ -426,7 +426,7 @@ args = TrainingArguments(
     gradient_accumulation_steps=4,         # effective batch = 16
     learning_rate=2e-5,                    # <- Ch 26 의 5e-4 와 다른 유일한 큰 차이
     weight_decay=0.01,
-    warmup_ratio=0.06,
+    warmup_steps=0.06,                     # 1 미만이면 전체 step 대비 *비율* 로 해석 (구 warmup_ratio)
     lr_scheduler_type="cosine",
     max_grad_norm=1.0,
     fp16=USE_FP16,                         # T4 는 bf16 불가
@@ -489,7 +489,6 @@ if torch.cuda.is_available():
 **▶ 실행 결과**
 
 ```text
-[transformers] warmup_ratio is deprecated and will be removed in v5.2. Use `warmup_steps` instead.
 [transformers] `loss_type=None` was set in the config but it is unrecognized. Using the default loss: `ForCausalLMLoss`.
 Step  Training Loss  Validation Loss
 100   3.043552       2.899030
@@ -524,7 +523,7 @@ Step  Training Loss  Validation Loss
 3000  2.341200       2.259395
 ...
 === continual pretraining summary ===
-elapsed       : 17.11 min
+elapsed       : 17.09 min
 global_step   : 3033
 train_loss    : 2.4862
 vocab ln (random baseline): 10.8435  (we start MUCH lower than this)
