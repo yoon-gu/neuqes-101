@@ -400,7 +400,7 @@ tokenizer = PreTrainedTokenizerFast.from_pretrained(
 실무 교훈: \emph{사전학습 모델마다 권장 토크나이저 로드 방식이 다를 수 있습니다.} 모델 카드의 example code 를 확인하고, \emph{encode \(\to\) decode 왕복} 으로 한 번 검증하는 습관이 이런 함정을 막습니다.
 \end{quote}
 
-EOS 토큰을 pad 로 재활용. \inlinecode{group\_texts} 패턴에서 chunk 길이가 모두 같으면 pad 가 거의 없어 실용적으로는 영향 없음. (영어 \ref{ch:25}장에서 \inlinecode{tokenizer.pad\_token\ =\ tokenizer.eos\_token} 했던 것과 같은 패턴 --- 다만 KoGPT2 는 이미 pad 가 지정돼 있을 수도 있어 \inlinecode{if\ None} 가드.)
+위 방식으로 로드하면 pad 가 \texttt{\textless{}pad\textgreater{}} 로 제대로 잡혀 별도 처리가 필요 없습니다. \inlinecode{group\_texts} 패턴에서는 chunk 길이가 모두 같아 pad 가 거의 등장하지 않아 실용적으로도 영향이 없습니다. (영어 \ref{ch:25}장 는 gpt2 에 pad 가 없어 \inlinecode{tokenizer.pad\_token\ =\ tokenizer.eos\_token} 으로 EOS 를 재활용했던 것과 대비되는 지점.)
 
 \subsection{\texorpdfstring{한국어를 \emph{제대로} 다루는 vocab}{한국어를 제대로 다루는 vocab}}
 
@@ -585,7 +585,7 @@ print(raw_train[0]["text"][:400])
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-rebuilt stories: train=30,000, val=500  (22.7s)
+rebuilt stories: train=30,000, val=500  (22.1s)
 train: Dataset({
     features: ['text'],
     num_rows: 30000
@@ -687,10 +687,12 @@ print(
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
+pytorch_model.bin: downloading bytes:           |  0.00B
 Key                                     | Status     |  | 
 ----------------------------------------+------------+--+-
 
-load done: 10.0s
+model.safetensors: downloading bytes:           |  0.00B
+load done: 9.9s
 
 === model ===
 #params : 125.16 M (Ch 26 was approx. 3M; Ch 27 is approx. 42x larger)
@@ -701,10 +703,7 @@ fp32 weight size  : 477.5 MiB
 tokenizer    : TokenizersBackend
   eos_token  : </s>  id=1
   pad_token  : <pad>  id=3
-
-model: GPT2LMHeadModel
-  - body : GPT2Model  (Decoder, causal attention)
-  - head : Linear(in=768, out=51200)
+...
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1007,7 +1006,7 @@ args = TrainingArguments(
 \begin{lstlisting}[firstnumber=17]
     learning_rate=2e-5,
     weight_decay=0.01,
-    warmup_ratio=0.06,
+    warmup_steps=0.06,
     lr_scheduler_type="cosine",
     max_grad_norm=1.0,
     fp16=USE_FP16,
@@ -1094,7 +1093,6 @@ if torch.cuda.is_available():
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-[transformers] warmup_ratio is deprecated and will be removed in v5.2. Use...
 [transformers] `loss_type=None` was set in the config but it is unrecognize...
 Step  Training Loss  Validation Loss
 ----  -------------  ---------------
@@ -1110,6 +1108,7 @@ Step  Training Loss  Validation Loss
 1000  2.502229       2.384735
 1100  2.461211       2.373174
 1200  2.451401       2.358372
+...
 ...
 \end{bookoutputbox}
 \par\vspace{0.9em}
@@ -1469,12 +1468,12 @@ Generation 품질 & 동화 풍 단순 한국어 & \textbf{자연스러운 동화
 
 \inlinecode{AutoModelForCausalLM.from\_pretrained("skt/kogpt2-base-v2")} & KoGPT2 (125M, 대규모 한국어 사전학습) 본체 로드 & \textbf{새로 등장} (\ref{ch:26}장 은 \inlinecode{GPT2LMHeadModel(config)} random init) \\
 \inlinecode{PreTrainedTokenizerFast.from\_pretrained("skt/kogpt2-base-v2",\ ...)} & KoGPT2 BBPE 토크나이저 (vocab 51,200) 로드 & \textbf{새로 등장} (\ref{ch:26}장 은 직접 학습 BBPE) \\
-\inlinecode{if\ tokenizer.pad\_token\ is\ None:\ tokenizer.pad\_token\ =\ tokenizer.eos\_token} & KoGPT2 의 pad 컨벤션 (없으면 EOS 재활용) & \textbf{새로 등장} (\ref{ch:26}장 은 PreTrainedTokenizerFast 인자로 직접 지정) \\
+\inlinecode{model.config.pad\_token\_id\ =\ tokenizer.pad\_token\_id} & 토크나이저의 pad id 를 본체 config 에 동기화 & \textbf{새로 등장} (사전학습 본체 로드 시 필요한 동기화) \\
 \inlinecode{transformers.Trainer} & HuggingFace 표준 학습 루프 & \textbf{공유} (\ref{ch:26}장과 동일 클래스, 동일 인자 구조) \\
 \inlinecode{DataCollatorForLanguageModeling(mlm=False)} & CausalLM collator (\inlinecode{labels\ =\ input\_ids.clone()} 자동) & \textbf{공유} (\ref{ch:26}장과 정확히 같음) \\
 \inlinecode{group\_texts} 패턴 (HF run\_clm.py 표준) & 가변 길이 텍스트 \(\to\) 고정 길이 블록 스트림 & \textbf{공유} \\
 \inlinecode{model.generate(do\_sample=True,\ ...)} & sampling-based text generation & \textbf{공유} \\
-\inlinecode{warmup\_ratio} (vs \inlinecode{warmup\_steps}) & epoch 비율 기반 warmup (continual pretraining 표준) & \textbf{약간 다름} (\ref{ch:26}장 은 \inlinecode{warmup\_steps=100}) \\
+\inlinecode{warmup\_steps=0.06} (1 미만이면 비율로 해석) & 전체 step 대비 6\% warmup (구 \inlinecode{warmup\_ratio} --- transformers 5.15 부터 \inlinecode{warmup\_steps} 로 통합) & \textbf{약간 다름} (\ref{ch:26}장 은 \inlinecode{warmup\_steps=100} 고정 step) \\
 \inlinecode{num\_train\_epochs} (vs \inlinecode{max\_steps}) & epoch 수 기반 학습 (continual pretraining 1 epoch 충분) & \textbf{약간 다름} (\ref{ch:26}장 은 \inlinecode{max\_steps=1500}) \\
 \inlinecode{gradient\_accumulation\_steps} & 작은 배치를 누적해 큰 effective batch (T4 + 125M 메모리 제약) & \textbf{새로 등장} (\ref{ch:26}장 은 약 3M 이라 불필요) \\
 \bottomrule
@@ -1658,7 +1657,7 @@ print(len(en_tok(sent)["input_ids"]))
 
 \begin{faqBox}{Q6. (실무) 왜 KoGPT2 는 \inlinecode{AutoTokenizer} 가 아니라 \inlinecode{PreTrainedTokenizerFast} 로 로드하나요?}
 
-\textbf{\inlinecode{PreTrainedTokenizerFast.from\_pretrained("skt/kogpt2-base-v2",\ ...)} 는 영어 GPT2 토크나이저로 잘못 fallback} 하기 때문입니다. 그 결과 special token 이 \texttt{\textless{}\textbar{}endoftext\textbar{}\textgreater{}} 로 잡히고 한국어가 깨집니다 --- 직접 확인해 보면:
+\textbf{\inlinecode{AutoTokenizer.from\_pretrained("skt/kogpt2-base-v2")} 가 영어 GPT2 토크나이저로 잘못 fallback} 하기 때문입니다. 그 결과 special token 이 \texttt{\textless{}\textbar{}endoftext\textbar{}\textgreater{}} 로 잡히고 한국어가 깨집니다 --- 직접 확인해 보면:
 
 \Needspace{7\baselineskip}
 \begin{lstlisting}
