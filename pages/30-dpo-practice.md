@@ -13,16 +13,14 @@
 **▶ 실행 결과**
 
 ```text
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 825.1/825.1 kB 27.6 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━╸━━━━━━━━━━━━━━━━ 6.6/11.2 MB 199.2 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 113.5 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 50.6 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.2/389.2 kB 39.4 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━╸━━━━━━━━━━━━━━━━━━━━━━━ 20.7/48.9 MB 219.7 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 148.1 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 148.1 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 148.1 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 16.2 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 925.8/925.8 kB 24.9 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 11.7/11.7 MB 197.5 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.7/11.7 MB 108.6 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 559.1/559.1 kB 46.6 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━╺━━━━━━━━━━━ 35.5/50.1 MB 257.8 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 276.2 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 276.2 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 50.1/50.1 MB 19.0 MB/s eta 0:00:00
 ```
 
 ```python
@@ -83,7 +81,7 @@ plt.rcParams["axes.unicode_minus"] = False
 **▶ 실행 결과**
 
 ```text
-trl          : 1.6.0
+trl          : 1.10.0
 device       : cuda  (Tesla T4)
 VRAM total   : 14.56 GiB
 torch        : 2.11.0+cu128
@@ -154,6 +152,7 @@ print(f"\nafter filter + subset: {len(raw):,} samples")
 **▶ 실행 결과**
 
 ```text
+data/train-00000-of-00001-dc7eba5173eb6c(…): downloading bytes:           |  0.00B            
 raw dataset: Dataset({
     features: ['prompt', 'chosen', 'rejected'],
     num_rows: 61966
@@ -280,6 +279,7 @@ print(f"  pad_token  : {tokenizer.pad_token}  id={tokenizer.pad_token_id}")
 **▶ 실행 결과**
 
 ```text
+pytorch_model.bin: downloading bytes:           |  0.00B            
 [transformers] GPT2LMHeadModel LOAD REPORT from: skt/kogpt2-base-v2
 Key                                     | Status     |  | 
 ----------------------------------------+------------+--+-
@@ -287,7 +287,8 @@ transformer.h.{0...11}.attn.masked_bias | UNEXPECTED |  |
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
-load done: 15.0s
+model.safetensors: downloading bytes:           |  0.00B            
+load done: 12.9s
 
 === policy model ===
 #params      : 125.16 M
@@ -526,7 +527,7 @@ dpo_config = DPOConfig(
     gradient_accumulation_steps=8,          # effective batch = 16
     learning_rate=5e-6,                     # DPO 는 SFT 보다 작은 lr (천천히 정렬)
     weight_decay=0.0,
-    warmup_ratio=0.1,
+    warmup_steps=0.1,                       # 1 미만이면 전체 step 대비 *비율* 로 해석 (구 warmup_ratio)
     lr_scheduler_type="cosine",
     max_grad_norm=1.0,
     beta=BETA,                              # <- reference 제약 강도 (KL), 기본 0.1
@@ -594,7 +595,6 @@ if torch.cuda.is_available():
 **▶ 실행 결과**
 
 ```text
-[transformers] warmup_ratio is deprecated and will be removed in v5.2. Use `warmup_steps` instead.
 [transformers] GPT2LMHeadModel LOAD REPORT from: skt/kogpt2-base-v2
 Key                                     | Status     |  | 
 ----------------------------------------+------------+--+-
@@ -603,25 +603,25 @@ transformer.h.{0...11}.attn.masked_bias | UNEXPECTED |  |
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
 Step  Training Loss
-10    0.688411
-20    0.710073
-30    0.678711
-40    0.817179
-50    0.708727
-60    0.683510
-70    0.762712
-80    0.680615
-90    0.670623
+10    0.688490
+20    0.710848
+30    0.678916
+40    0.817478
+50    0.708903
+60    0.683319
+70    0.762526
+80    0.680745
+90    0.670299
 === DPO summary ===
-elapsed     : 2.39 min
+elapsed     : 2.47 min
 global_step : 94
-train_loss  : 0.7070
+train_loss  : 0.7071
 final peak  : 2414 MiB
 ```
 
 **결과 해석**
 
-1 epoch DPO 학습이 약 2.39분, 94 step 만에 끝났고 평균 train loss 는 0.7070 입니다. peak VRAM 이 약 2.4GiB 에 그쳐, policy + reference 두 모델을 올리고도 T4 16GB 에 넉넉히 들어옴을 확인할 수 있습니다.
+1 epoch DPO 학습이 약 2.47분, 94 step 만에 끝났고 평균 train loss 는 0.7071 입니다. peak VRAM 이 약 2.4GiB 에 그쳐, policy + reference 두 모델을 올리고도 T4 16GB 에 넉넉히 들어옴을 확인할 수 있습니다.
 
 ## DPO 전·후 reward margin 비교 — *선호가 정렬됐는가*
 
@@ -670,11 +670,11 @@ plt.tight_layout(); plt.show()
 
 ```text
 AFTER DPO - reward margin (n=64)
-  mean margin     : 12.712  (before: 0.000)
+  mean margin     : 12.717  (before: 0.000)
   reward accuracy : 0.844  (before: 0.500)
 ```
 
-![output](../assets/30-dpo-out2-1.png)
+![output](../assets/30-dpo-out2-2.png)
 
 **결과 해석**
 
@@ -734,7 +734,7 @@ if torch.cuda.is_available() and vram_cb.steps:
 
 **▶ 실행 결과**
 
-![output](../assets/30-dpo-out3-1.png)
+![output](../assets/30-dpo-out3-2.png)
 
 ```text
 peak VRAM (max over training): 4332 MiB  (policy + reference, bs=2, grad_accum=8, fp16)

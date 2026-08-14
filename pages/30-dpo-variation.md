@@ -2,12 +2,12 @@
 
 ### 변형 1. β 조정 — reference 제약 강도
 
-`dpo_config.beta` 값을 바꿔 reference 제약 강도를 조절해 봅니다. 너무 키우면 빨리 정렬되지만 reference 에서 멀어져 collapse 위험이, 너무 낮추면 안전하지만 정렬이 느려지는 trade-off 를 직접 관찰하세요.
+`dpo_config.beta` 값을 바꿔 reference 제약 강도를 조절해 봅니다. 너무 키우면 reference 근처에 묶여 정렬이 느려지고, 너무 낮추면 빨리 정렬되지만 reference 에서 멀어져 collapse 위험이 커지는 trade-off 를 직접 관찰하세요.
 
 ```python
-# dpo_config.beta = 0.5    # 제약 느슨 -> 빨리 정렬되지만 collapse 위험 (reference 에서 멀어짐)
-# dpo_config.beta = 0.05   # 제약 강함 -> 안전하지만 정렬 느림
-# 1 이 무난한 출발점. reward accuracy 가 안 오르면 beta 를 약간 올려 보세요.
+# dpo_config.beta = 0.5    # 제약 강함 -> reference 근처에 묶여 안전하지만 정렬 느림
+# dpo_config.beta = 0.05   # 제약 느슨 -> 빨리 정렬되지만 collapse 위험 (reference 에서 멀어짐)
+# 1 이 무난한 출발점. reward accuracy 가 안 오르면 beta 를 약간 낮춰 보세요 (제약 완화).
 ```
 
 ### 변형 2. 더 많은 preference / SFT 모델에서 출발
