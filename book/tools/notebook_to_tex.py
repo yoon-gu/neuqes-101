@@ -29,6 +29,7 @@ CHAPTER_DIR = BOOK / "chapters"
 FIGURE_DIR = BOOK / "assets" / "figures"
 GITHUB_RAW = "https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master"
 RENDER_DATAFRAME_TABLES = False
+COMPACT_CODE_MODE = False
 
 EXECUTED_EXTRA_NOTEBOOKS = {
     (31, "appendix_qwen_grpo_hpo.ipynb"): "31_grpo_appendix.ipynb",
@@ -3842,6 +3843,78 @@ def format_code_for_book(source: str) -> str:
     return "\n".join(formatted)
 
 
+COMPACT_CORE_PATTERNS = (
+    "TfidfVectorizer",
+    "CountVectorizer",
+    "LinearRegression",
+    "LogisticRegression",
+    "OneVsRestClassifier",
+    "MSELoss",
+    "BCEWithLogitsLoss",
+    "CrossEntropyLoss",
+    "problem_type",
+    "num_labels",
+    "compute_loss",
+    "lambda_aux",
+    "labels",
+    "-100",
+    "DataCollatorForLanguageModeling",
+    "SFTConfig",
+    "DPOConfig",
+    "GRPOConfig",
+    "AutoModelForSequenceClassification",
+    "AutoModelForCausalLM",
+    "GPT2Config",
+    "BertConfig",
+    "BertForMaskedLM",
+    "Tokenizer",
+    "BpeTrainer",
+    "WordPieceTrainer",
+    "sigmoid",
+    "softmax",
+    "predict_proba",
+)
+
+
+def should_keep_code_in_compact(source: str) -> bool:
+    stripped_lines = [
+        line
+        for line in source.splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    ]
+    normalized = "\n".join(stripped_lines)
+    lowered = normalized.lower()
+    if not stripped_lines:
+        return False
+    if lowered.startswith("!pip install") or lowered.startswith("%pip install"):
+        return False
+    if all(re.match(r"\s*(import|from)\s+", line) for line in stripped_lines):
+        return False
+    if "plt.show" in lowered or "sns." in lowered:
+        return False
+    core_match = any(pattern.lower() in lowered for pattern in COMPACT_CORE_PATTERNS)
+    if ("trainingarguments" in lowered or "trainer.train" in lowered) and len(stripped_lines) > 8:
+        return False
+    if ("load_dataset" in lowered or "train_test_split" in lowered or "to_pandas" in lowered) and len(stripped_lines) > 8:
+        return False
+    if (
+        "load_dataset" in lowered
+        or "df.head" in lowered
+        or "display(" in lowered
+        or "value_counts" in lowered
+        or re.fullmatch(r"(?s)\s*print\(.*\)\s*", normalized)
+    ) and not core_match:
+        return False
+    if core_match:
+        return True
+    return len(stripped_lines) <= 4
+
+
+def compact_code_omission_to_latex(source: str) -> str:
+    summary = latex_escape_prose(code_chunk_summary(source.splitlines()))
+    return f"\\compactCodeOmitted{{{summary}}}"
+
+
 def output_interpretation(source: str, output: str) -> str:
     source_lower = source.lower()
     output_lower = output.lower()
@@ -4822,11 +4895,18 @@ def code_to_latex(
     outputs: list[dict] | None = None,
     chapter_number: int | None = None,
     image_counts: dict[int, int] | None = None,
+    compact_code: bool = False,
 ) -> str:
     source = sanitize_symbols(source)
     source = polish_code_comments(source)
     source = source.rstrip()
     if not source:
+        return ""
+    if compact_code and not should_keep_code_in_compact(source):
+        if outputs and chapter_number is not None and image_counts is not None:
+            image_latex = image_outputs_to_latex(outputs, chapter_number, image_counts)
+            if image_latex:
+                return "\n\n".join([compact_code_omission_to_latex(source), image_latex])
         return ""
     display_source = format_code_for_book(source)
     listing = split_listing_for_book(display_source)
@@ -5001,6 +5081,11 @@ def chapter_specific_fixes(text: str, chapter_number: int) -> str:
             "policy only, ref-free, num_generat...",
             "policy only, KL beta=0.04, num_generat...",
         )
+    if chapter_number == 33:
+        text = text.replace(
+            r"\mathrm{KL}(P_{\text{gen}} \,\\vert{}\, P_{\text{unigram}})",
+            r"\mathrm{KL}(P_{\text{gen}} \mathbin{\Vert} P_{\text{unigram}})",
+        )
     return text
 
 
@@ -5011,6 +5096,7 @@ def append_notebook_cells(
     *,
     appendix: bool = False,
     image_counts: dict[int, int] | None = None,
+    compact_code: bool = False,
 ) -> None:
     explain_code = False
     appendix_title_added = False
@@ -5045,20 +5131,28 @@ def append_notebook_cells(
             markdown_source = demote_markdown_headings(source) if appendix else source
             chunks.append(markdown_to_latex(markdown_source, chapter_number))
         elif cell.get("cell_type") == "code":
-            chunks.append(
-                code_to_latex(
-                    source,
-                    include_notes=explain_code,
-                    outputs=cell.get("outputs", []),
-                    chapter_number=chapter_number,
-                    image_counts=image_counts,
-                )
+            code_block = code_to_latex(
+                source,
+                include_notes=explain_code,
+                outputs=cell.get("outputs", []),
+                chapter_number=chapter_number,
+                image_counts=image_counts,
+                compact_code=compact_code,
             )
+            if code_block.strip():
+                chunks.append(code_block)
+                chunks.append("")
+            continue
 
         chunks.append("")
 
 
-def chapter_tex(chapter: Chapter, execute: bool = False, use_executed: bool = False) -> str:
+def chapter_tex(
+    chapter: Chapter,
+    execute: bool = False,
+    use_executed: bool = False,
+    compact_code: bool = False,
+) -> str:
     notebook_path = resolved_notebook_path(chapter, use_executed)
     if execute:
         nb = execute_notebook(notebook_path)
@@ -5085,7 +5179,7 @@ def chapter_tex(chapter: Chapter, execute: bool = False, use_executed: bool = Fa
         chunks.append(f"\\index{{{index_sort_key(term)}@{safe}}}")
     chunks.append("")
     image_counts: dict[int, int] = {}
-    append_notebook_cells(chunks, nb, chapter.number, image_counts=image_counts)
+    append_notebook_cells(chunks, nb, chapter.number, image_counts=image_counts, compact_code=compact_code)
 
     supplemental = supplemental_figures_to_latex(chapter.number)
     if supplemental:
@@ -5097,7 +5191,14 @@ def chapter_tex(chapter: Chapter, execute: bool = False, use_executed: bool = Fa
         if not extra_path.exists():
             raise FileNotFoundError(extra_path)
         extra_nb = json.loads(extra_path.read_text(encoding="utf-8"))
-        append_notebook_cells(chunks, extra_nb, chapter.number, appendix=True, image_counts=image_counts)
+        append_notebook_cells(
+            chunks,
+            extra_nb,
+            chapter.number,
+            appendix=True,
+            image_counts=image_counts,
+            compact_code=compact_code,
+        )
 
     chapter_latex = "\n\n".join(chunks).rstrip() + "\n"
     chapter_latex = wrap_tabular_tables(chapter_latex, chapter.number)
@@ -5125,17 +5226,39 @@ def main() -> None:
         action="store_true",
         help="prefer notebooks under executed/ so saved outputs and plot images are reflected",
     )
+    parser.add_argument(
+        "--compact-code",
+        action="store_true",
+        help="keep only concept-critical code cells and replace routine cells with a Colab/QR note",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=CHAPTER_DIR,
+        help="directory for generated chapter .tex files; defaults to book/chapters",
+    )
     args = parser.parse_args()
 
     selected = set(args.chapters or [chapter.number for chapter in CHAPTERS])
-    CHAPTER_DIR.mkdir(parents=True, exist_ok=True)
+    output_dir = args.output_dir
+    if not output_dir.is_absolute():
+        output_dir = BOOK / output_dir
+    output_dir.mkdir(parents=True, exist_ok=True)
     for chapter in CHAPTERS:
         if chapter.number not in selected:
             continue
         if not chapter.notebook.exists():
             raise FileNotFoundError(chapter.notebook)
-        out = CHAPTER_DIR / chapter.tex_name
-        out.write_text(chapter_tex(chapter, execute=args.execute, use_executed=args.use_executed), encoding="utf-8")
+        out = output_dir / chapter.tex_name
+        out.write_text(
+            chapter_tex(
+                chapter,
+                execute=args.execute,
+                use_executed=args.use_executed,
+                compact_code=args.compact_code,
+            ),
+            encoding="utf-8",
+        )
         print(f"wrote {out.relative_to(ROOT)}")
 
 

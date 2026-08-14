@@ -32,6 +32,8 @@ F_BODY_BOLD = font(FONT_BOLD, 34)
 F_MONO = font(FONT_MONO, 30)
 F_MONO_SMALL = font(FONT_MONO, 25)
 F_AUTHOR = font(FONT_BOLD, 46)
+F_DRAFT = font(FONT_BOLD, 66)
+F_DRAFT_SMALL = font(FONT_BOLD, 38)
 
 
 SLATE = (34, 48, 62)
@@ -334,12 +336,52 @@ def cover_ai_illustrations():
             cover_generated_background(source, target, mode=mode, accent=accent)
 
 
+def add_draft_watermark_to_cover():
+    source = OUT / "cover-illustration-token-core.png"
+    target = OUT / "cover-illustration-token-core-draft.png"
+    if not source.exists():
+        return
+
+    img = Image.open(source).convert("RGBA")
+    layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(layer)
+    lines = ["출판 검토용 초안", "무단 복제 및 배포 금지"]
+    total_h = 0
+    sizes = []
+    for i, line in enumerate(lines):
+        fnt = F_DRAFT if i == 0 else F_DRAFT_SMALL
+        w, h = text_size(draw, line, fnt)
+        sizes.append((line, fnt, w, h))
+        total_h += h + (18 if i == 0 else 0)
+
+    y = (H - total_h) // 2
+    for i, (line, fnt, w, h) in enumerate(sizes):
+        draw.text(((W - w) / 2, y), line, font=fnt, fill=(255, 255, 255, 54))
+        y += h + (18 if i == 0 else 0)
+    rotated = layer.rotate(-28, resample=Image.Resampling.BICUBIC, expand=False)
+    img = Image.alpha_composite(img, rotated)
+
+    draw = ImageDraw.Draw(img)
+    badge = (W - 640, 78, W - 88, 230)
+    draw.rounded_rectangle(
+        badge,
+        radius=22,
+        fill=(5, 12, 22, 214),
+        outline=(245, 177, 66, 230),
+        width=3,
+    )
+    draw.text((badge[0] + 38, badge[1] + 28), "출판 검토용 초안", font=F_DRAFT_SMALL, fill=PAPER)
+    draw.text((badge[0] + 40, badge[1] + 88), "무단 복제 및 배포 금지", font=F_MONO_SMALL, fill=(210, 222, 233))
+    img.convert("RGB").save(target, quality=95)
+
+
 if __name__ == "__main__":
     cover_slate_grid()
     cover_phase_axis()
     cover_token_river()
     cover_minimal_axis()
     cover_ai_illustrations()
+    add_draft_watermark_to_cover()
     cover_files = [
         OUT / "cover-illustration-token-core.png",
         OUT / "cover-illustration-model-engine.png",
