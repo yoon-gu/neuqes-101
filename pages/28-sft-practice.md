@@ -11,16 +11,14 @@
 **▶ 실행 결과**
 
 ```text
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 825.1/825.1 kB 22.3 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 11.1/11.2 MB 198.4 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 111.5 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 49.5 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.2/389.2 kB 38.0 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━╸━━━━━━━━━━━━━━━━━━━━━━━━ 19.0/48.9 MB 232.1 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 155.5 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 155.5 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 155.5 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 16.1 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 925.8/925.8 kB 23.4 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━╺━━━━━━━━━━━━━━━━━━━━━━━ 4.8/11.7 MB 135.4 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.7/11.7 MB 72.0 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 559.1/559.1 kB 40.6 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━╸━━━━━━━━━━━━━━━━━━━━━━━━━ 18.7/50.1 MB 181.7 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 174.7 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 174.7 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 50.1/50.1 MB 18.4 MB/s eta 0:00:00
 ```
 
 ```python
@@ -79,7 +77,7 @@ plt.rcParams["axes.unicode_minus"] = False
 **▶ 실행 결과**
 
 ```text
-trl          : 1.6.0
+trl          : 1.10.0
 device       : cuda  (Tesla T4)
 VRAM total   : 14.56 GiB
 torch        : 2.11.0+cu128
@@ -120,6 +118,7 @@ print(f"\nafter filter + subset: {len(raw):,} samples")
 **▶ 실행 결과**
 
 ```text
+data/train-00000-of-00001-21df739eb88d71(…): downloading bytes:           |  0.00B            
 raw dataset: Dataset({
     features: ['instruction', 'output', 'url'],
     num_rows: 21155
@@ -235,6 +234,7 @@ print(f"  pad_token  : {tokenizer.pad_token}  id={tokenizer.pad_token_id}")
 **▶ 실행 결과**
 
 ```text
+pytorch_model.bin: downloading bytes:           |  0.00B            
 [transformers] GPT2LMHeadModel LOAD REPORT from: skt/kogpt2-base-v2
 Key                                     | Status     |  | 
 ----------------------------------------+------------+--+-
@@ -242,7 +242,8 @@ transformer.h.{0...11}.attn.masked_bias | UNEXPECTED |  |
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
-load done: 7.2s
+model.safetensors: downloading bytes:           |  0.00B            
+load done: 7.5s
 
 roundtrip check: '옛날 옛날에 작은 소녀가'  (OK)
 

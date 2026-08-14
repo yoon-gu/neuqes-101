@@ -5,7 +5,7 @@
 | `trl.SFTTrainer` | SFT 특화 trainer (prompt/completion 전처리 + completion 마스킹 자동) | **새로 등장** (Ch 27 은 `transformers.Trainer`) |
 | `trl.SFTConfig` | `SFTTrainer` 설정 (`TrainingArguments` 상속 + SFT 옵션) | **새로 등장** |
 | `SFTConfig(completion_only_loss=True)` | *답변 부분만* loss (prompt = `-100`) — SFT 의 핵심 옵션 | **새로 등장** |
-| `trl` 의 SFT collator (`DataCollatorForLanguageModeling`) | `completion_mask` 로 prompt 를 `-100` 마스킹 | **새로 등장** (Ch 27 은 `transformers.DataCollatorForLanguageModeling(mlm=False)`) |
+| `trl` 의 SFT 데이터 준비 + collator | 데이터 준비 단계에서 `completion_mask` 로 prompt 를 `-100` 마스킹한 `labels` 를 생성, collator 는 패딩만 담당 (trl 1.10 기준) | **새로 등장** (Ch 27 은 `transformers.DataCollatorForLanguageModeling(mlm=False)`) |
 | `prompt` / `completion` 데이터 형식 | instruction-response 쌍 표준 형식 | **새로 등장** (Ch 27 은 단일 `text` 컬럼) |
 | `AutoModelForCausalLM.from_pretrained("skt/kogpt2-base-v2")` | KoGPT2 본체 로드 | **공유** (Ch 27 과 같은 본체) |
 | `PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2", ...)` | KoGPT2 BBPE 토크나이저 (AutoTokenizer 함정 회피) | **공유** (Ch 27 과 동일) |

@@ -5,22 +5,16 @@
 ### 동작 원리
 
 1. `SFTTrainer` 가 *prompt + completion* 을 토큰화해 이어 붙이고, *completion 부분에 1, prompt 부분에 0* 인 `completion_mask` 를 만듭니다 (response_template `### 응답:\n` 가 prompt 의 끝).
-2. collator 가 `labels = input_ids.clone()` 한 뒤 *`completion_mask == 0` 인 자리 (= prompt) 를 전부 `-100`* 으로 덮습니다.
+2. `SFTTrainer` 가 *데이터 준비 단계* 에서 `labels = input_ids` 복사본을 만들고 *`completion_mask == 0` 인 자리 (= prompt) 를 전부 `-100`* 으로 덮은 `labels` 컬럼을 데이터셋에 추가합니다 (trl 1.10 기준 — 구버전 trl 은 collator 가 담당했습니다. collator 는 완성된 `labels` 를 배치 길이에 맞춰 패딩만 합니다).
 3. 그래서 loss 는 *답변 토큰에서만* 계산됩니다 — `labels[:prompt_len] = -100` 의 효과.
 
-여기가 이 챕터의 클라이맥스입니다. 한 샘플을 prompt / completion 으로 직접 토큰화해 이어 붙이고 `completion_mask` (0 = prompt, 1 = 답변) 를 만든 뒤, `trl` 의 SFT collator 가 prompt 부분을 전부 `-100` 으로 덮는 과정을 눈으로 따라갑니다. 답변 끝에 EOS 를 붙이는 것이 `SFTTrainer` 내부 절차와 같다는 점도 함께 봅니다.
+여기가 이 챕터의 클라이맥스입니다. 한 샘플을 prompt / completion 으로 직접 토큰화해 이어 붙이고 `completion_mask` (0 = prompt, 1 = 답변) 를 만든 뒤, `SFTTrainer` 가 데이터 준비 단계에서 하는 것과 같은 규칙으로 prompt 자리를 전부 `-100` 으로 덮는 과정을 눈으로 따라갑니다. 답변 끝에 EOS 를 붙이는 것이 `SFTTrainer` 내부 절차와 같다는 점도 함께 봅니다.
 
 ```python
-# trl 1.x 의 SFT collator. 버전마다 위치가 다를 수 있어 폴백 import.
-try:
-    from trl.trainer.sft_trainer import DataCollatorForLanguageModeling as SFTCollator
-except Exception:
-    from trl import DataCollatorForLanguageModeling as SFTCollator  # 일부 버전
-```
+# trl 1.10 기준: completion 마스킹은 collator 가 아니라 SFTTrainer 의 *데이터 준비 단계* 에서 일어납니다.
+# (SFTTrainer 가 prompt/completion 을 토큰화해 completion_mask 를 만들고, 그걸로 labels 컬럼을 생성한 뒤 mask 를 버립니다.
+#  구버전 trl 은 collator 가 담당 - 버전마다 위치가 달라, 여기서는 같은 규칙을 직접 재현해 눈으로 확인합니다.)
 
-**위 코드 읽기** — `trl` 은 버전마다 SFT collator 의 위치·이름이 달라지는 라이브러리라, `trl.trainer.sft_trainer` 경로를 먼저 시도하고 실패하면 `trl` 최상위에서 가져오는 폴백을 둡니다. 어느 쪽이든 `SFTCollator` 라는 같은 이름으로 묶어 이후 코드가 버전에 무관하게 동작합니다.
-
-```python
 # 한 샘플을 prompt / completion 으로 직접 토큰화 (SFTTrainer 내부와 같은 절차)
 sample = sft_ds[0]
 prompt_text = sample["prompt"]
@@ -45,17 +39,15 @@ print(f"total tokens      : {len(input_ids)}")
 **위 코드 읽기** — prompt 토큰과 completion 토큰을 한 줄로 이어 붙이고, 같은 길이의 `completion_mask` 를 prompt 자리에는 0, 답변 자리에는 1 로 만듭니다. 이 마스크가 바로 다음 단계에서 어느 위치를 `-100` 으로 가릴지 결정하는 기준이 됩니다.
 
 ```python
-# collator 적용 - prompt 부분이 -100 으로 마스킹됨
-collator = SFTCollator(pad_token_id=tokenizer.pad_token_id, completion_only_loss=True)
-batch = collator([{"input_ids": input_ids, "completion_mask": completion_mask}])
-labels = batch["labels"][0].tolist()
-ids = batch["input_ids"][0].tolist()
+# SFTTrainer 의 build_labels 와 같은 규칙 - completion_mask == 0 (= prompt) 자리를 -100 으로
+labels = [tid if m == 1 else -100 for tid, m in zip(input_ids, completion_mask)]
+ids = input_ids
 
 n_learn = sum(1 for l in labels if l != -100)
 print(f"\nlabels learned    : {n_learn} / {len(labels)}  (prompt masked = {len(labels) - n_learn})")
 ```
 
-**위 코드 읽기** — `completion_only_loss=True` 로 만든 collator 에 위 샘플을 넣으면, `completion_mask == 0` 인 prompt 자리가 모두 `-100` 으로 덮인 `labels` 가 돌아옵니다. `-100` 이 아닌 라벨 개수를 세어 보면 실제로 답변 토큰만 학습 대상으로 남았는지 숫자로 확인할 수 있습니다.
+**위 코드 읽기** — `completion_mask` 가 0 인 prompt 자리는 `-100` 으로, 1 인 답변 자리는 원본 token id 로 남겨 `labels` 를 만듭니다. trl 1.10 의 `SFTTrainer` 가 데이터 준비 단계(`build_labels`)에서 수행하는 규칙 그대로입니다. `-100` 이 아닌 라벨 개수를 세어 보면 실제로 답변 토큰만 학습 대상으로 남았는지 숫자로 확인할 수 있습니다.
 
 **▶ 실행 결과**
 
@@ -179,6 +171,8 @@ plt.tight_layout(); plt.show()
 
 ## `SFTTrainer` 로 SFT 학습 — *새 trainer, 같은 loss 종류*
 
+`trl.SFTTrainer` 는 본 챕터에 처음 등장하는 클래스입니다. `transformers.Trainer` 를 상속해 *SFT 에 특화된 전처리* (prompt/completion 토큰화, EOS 부착, completion 마스킹) 를 자동으로 해 줍니다. 설정은 `SFTConfig` (`TrainingArguments` 를 상속) 로 주며, **`completion_only_loss=True`** 가 *답변 부분만 학습* 하라는 핵심 옵션입니다.
+
 `trl.SFTTrainer` 는 본 챕터에 처음 등장하는 클래스입니다. `transformers.Trainer` 를 상속해 *SFT 에 특화된 전처리* (prompt/completion 토큰화, EOS 부착, completion 마스킹) 를 자동으로 해 줍니다. 설정은 `SFTConfig` (── `TrainingArguments` 를 상속) 로 주며, **`completion_only_loss=True`** 가 *답변 부분만 학습* 하라는 핵심 옵션입니다.
 
 SFT 의 효과를 검증하려면 같은 instruction 을 학습 전·후에 넣어 비교해야 합니다. 먼저 비교용 프롬프트와 sampling 설정을 정하고, 답변만 깔끔히 뽑아내는 헬퍼를 정의한 뒤, 아직 SFT 하지 않은 raw KoGPT2 의 출력을 기록해 둡니다.
@@ -285,7 +279,7 @@ sft_config = SFTConfig(
     gradient_accumulation_steps=8,          # effective batch = 16
     learning_rate=2e-5,                     # SFT 표준 lr
     weight_decay=0.01,
-    warmup_ratio=0.03,
+    warmup_steps=0.03,                      # 1 미만이면 전체 step 대비 *비율* 로 해석 (구 warmup_ratio)
     lr_scheduler_type="cosine",
     max_grad_norm=1.0,
     max_length=512,                         # instruction + response 길이 상한
@@ -343,28 +337,26 @@ if torch.cuda.is_available():
 **▶ 실행 결과**
 
 ```text
-[transformers] warmup_ratio is deprecated and will be removed in v5.2. Use `warmup_steps` instead.
-[transformers] `loss_type=None` was set in the config but it is unrecognized. Using the default loss: `ForCausalLMLoss`.
 Step  Training Loss
-20    3.886148
-40    3.824287
-60    3.696209
-80    3.649120
-100   3.671241
-120   3.632889
-140   3.672879
-160   3.663117
-180   3.614785
+20    3.886173
+40    3.824303
+60    3.696179
+80    3.649105
+100   3.671245
+120   3.632870
+140   3.672873
+160   3.663120
+180   3.614760
 === SFT summary ===
-elapsed     : 2.40 min
+elapsed     : 2.48 min
 global_step : 188
 train_loss  : 3.7007
-final peak  : 1453 MiB
+final peak  : 1452 MiB
 ```
 
 **결과 해석**
 
-188 step (3,000 샘플 1 epoch) 학습이 약 2.4 분 만에 끝났고 peak VRAM 은 1,453 MiB 로 T4 16GB 에 한참 여유가 있습니다. train_loss 3.70 은 답변 토큰에서만 계산된 값이라, prompt 까지 합산하는 Ch 27 의 loss 와는 합산 대상이 달라 절대값을 직접 비교하지 않습니다.
+188 step (3,000 샘플 1 epoch) 학습이 약 2.5 분 만에 끝났고 peak VRAM 은 1,452 MiB 로 T4 16GB 에 한참 여유가 있습니다. train_loss 3.70 은 답변 토큰에서만 계산된 값이라, prompt 까지 합산하는 Ch 27 의 loss 와는 합산 대상이 달라 절대값을 직접 비교하지 않습니다.
 
 ## 학습 곡선 — *답변 부분에서만 계산된* loss
 
@@ -401,7 +393,7 @@ plt.tight_layout(); plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/28-sft-out2-1.png)
+![output](../assets/28-sft-out2-2.png)
 
 **결과 해석**
 
