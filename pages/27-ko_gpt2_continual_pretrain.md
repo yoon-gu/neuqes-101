@@ -152,7 +152,7 @@ KoGPT2 본체의 input embedding `wte` (51200 × 768) 와 LM head (768 × 51200)
 | Vocab 크기 | 약 4,000 | **51,200** (약 13배) |
 | 학습 코퍼스 | 한국어 TinyStories 30K (약 4-6M 토큰) | **대규모 한국어 코퍼스** (SKT 가 학습) |
 | 학습 주체 | 본 챕터에서 직접 학습 (Ch 26) | **SKT 가 미리 학습** (그대로 사용) |
-| 특수 토큰 | `<|endoftext|>` (bos = eos = pad) | KoGPT2 컨벤션 (`</s>` 등, pad 는 별도 지정 필요할 수 있음) |
+| 특수 토큰 | `<\|endoftext\|>` (bos = eos = pad) | KoGPT2 컨벤션 (`</s>` 등, pad 는 별도 지정 필요할 수 있음) |
 
 ### KoGPT2 토크나이저 로드 주의 — `AutoTokenizer` 가 잘못 fallback 합니다
 

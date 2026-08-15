@@ -126,52 +126,46 @@
 
 
 
-\section{누적 추적표}\label{uxb204uxc801-uxcd94uxc801uxd45c}
+\section{누적 추적표}
 
-{\def\LTcaptype{none} % do not increment counter
-\begin{booktable}{27장 누적 추적표}\label{uxb204uxc801-uxcd94uxc801uxd45c 표}{tab:ch27-01}
+\begin{booktable}{27장 누적 추적표 표}{tab:ch27-01}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}llllll@{}}
-\toprule\noalign{}
+\toprule
 Ch & 모델 & 토크나이저 & 데이터 & Output Head & Loss \\
-\midrule\noalign{}
+\midrule
 
-\bottomrule\noalign{}
-\endlastfoot
 24 & 작은 GPT2 (약 3M, scratch) & BPE (직접 학습, 영어, vocab 2,048) & 영어 TinyStories 30K & \inlinecode{Linear(H,\ V)} (LM head, weight tied) & \inlinecode{CrossEntropyLoss} (next-token) \\
 25 & \inlinecode{gpt2} (124M, OpenAI WebText 사전학습) & BPE (gpt2 그대로, vocab 50,257) & 영어 TinyStories (\ref{ch:24}장과 동일) & \inlinecode{Linear(H,\ V)} (LM head 그대로) & \inlinecode{CrossEntropyLoss} (next-token) - continual pretraining \\
 26 & 작은 GPT2 (한국어, 약 3M, scratch) & BBPE (직접 학습, 한국어, vocab 약 4,000) & 한국어 TinyStories 30K & \inlinecode{Linear(H,\ V)} (LM head, weight tied) & \inlinecode{CrossEntropyLoss} (next-token) \\
 \textbf{27 \(\leftarrow\) 여기} & \textbf{KoGPT2 \inlinecode{skt/kogpt2-base-v2} (125M, 대규모 한국어 사전학습)} & \textbf{BBPE (KoGPT2 그대로, vocab 51,200)} & \textbf{한국어 TinyStories 30K (\ref{ch:26}장과 동일)} & \textbf{\inlinecode{Linear(H,\ V)} (LM head 그대로)} & \textbf{\inlinecode{CrossEntropyLoss} (next-token) --- \emph{continual pretraining}} \\
 28 (다음) & KoGPT2 + SFT & KoGPT2 BBPE (그대로) & 한국어 instruction 데이터 & \inlinecode{Linear(H,\ V)} (LM head 그대로) & \inlinecode{CrossEntropyLoss} (\texttt{labels{[}:prompt\_len{]}\ =\ -100}) \\
+\bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
-}
 
 전체 장 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README} 를 참고하세요.
 
 \begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
-\section{\texorpdfstring{Phase 4 의 영어·한국어 대칭 --- \ref{ch:25}장 \(\leftrightarrow\) \ref{ch:27}장}{Phase 4 의 영어·한국어 대칭 --- \ref{ch:25}장 \textbackslash leftrightarrow \ref{ch:27}장}}\label{phase-4-uxc758-uxc601uxc5b4uxd55cuxad6duxc5b4-uxb300uxce6d--ch-25-leftrightarrow-ch-27}
+\section{\texorpdfstring{Phase 4 의 영어·한국어 대칭 --- \ref{ch:25}장 \(\leftrightarrow\) \ref{ch:27}장}{Phase 4 의 영어·한국어 대칭 --- \ref{ch:25}장 \textbackslash leftrightarrow \ref{ch:27}장}}
 
 Phase 4 는 영어 (\ref{ch:24}--\ref{ch:25}장) 와 한국어 (\ref{ch:26}--\ref{ch:27}장) 가 \emph{같은 학습 단계} 를 \emph{언어만 바꿔} 반복하는 구조입니다. 본 장은 영어 \ref{ch:25}장 (gpt2 continual pretraining) 의 한국어 짝.
 
-{\def\LTcaptype{none} % do not increment counter
-\begin{booktable}{27장 Phase 4 의 영어·한국어 대칭 - 25장 \textbackslash leftrightarrow 27장}\label{phase-4-uxc758-uxc601uxc5b4uxd55cuxad6duxc5b4-uxb300uxce6d--ch-25-leftrightarrow-ch-27 표}{tab:ch27-02}
+\begin{booktable}{27장 Phase 4 의 영어·한국어 대칭 - 25장 \textbackslash leftrightarrow 27장 표}{tab:ch27-02}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
-\toprule\noalign{}
+\toprule
 학습 단계 & 영어 & \textbf{한국어} \\
-\midrule\noalign{}
+\midrule
 
-\bottomrule\noalign{}
-\endlastfoot
 \textbf{단계 1: Pretraining} (random init \(\to\) scratch) & \ref{ch:24}장 (작은 GPT, 영어 TinyStories) & \ref{ch:26}장 (작은 GPT, 한국어 TinyStories) \\
 \textbf{단계 2: Continual pretraining} (사전학습 본체 + 새 데이터) & \ref{ch:25}장 (\inlinecode{gpt2} 124M + 영어 TinyStories) & \textbf{\ref{ch:27}장 \(\leftarrow\) 여기 (KoGPT2 125M + 한국어 TinyStories)} \\
+\bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
-}
 
 \begin{quote}
 \ref{ch:24}장 \(\leftrightarrow\) \ref{ch:26}장 (scratch, 언어만 다름) 과 \textbf{\ref{ch:25}장 \(\leftrightarrow\) \ref{ch:27}장} (continual pretraining, 언어만 다름) 이 \emph{영어·한국어 완전 대칭}. 본 장은 한국어 단계 2.
@@ -179,18 +173,15 @@ Phase 4 는 영어 (\ref{ch:24}--\ref{ch:25}장) 와 한국어 (\ref{ch:26}--\re
 
 \begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
-\subsection{\texorpdfstring{\ref{ch:26}장 \(\leftrightarrow\) \ref{ch:27}장 격리 실험의 통제 변수}{\ref{ch:26}장 \textbackslash leftrightarrow \ref{ch:27}장 격리 실험의 통제 변수}}\label{ch-26-leftrightarrow-ch-27-uxaca9uxb9ac-uxc2e4uxd5d8uxc758-uxd1b5uxc81c-uxbcc0uxc218}
+\subsection{\texorpdfstring{\ref{ch:26}장 \(\leftrightarrow\) \ref{ch:27}장 격리 실험의 통제 변수}{\ref{ch:26}장 \textbackslash leftrightarrow \ref{ch:27}장 격리 실험의 통제 변수}}
 
-{\def\LTcaptype{none} % do not increment counter
-\begin{booktable}{27장 26장 \textbackslash leftrightarrow 27장 격리 실험의 통제 변수}\label{ch-26-leftrightarrow-ch-27-uxaca9uxb9ac-uxc2e4uxd5d8uxc758-uxd1b5uxc81c-uxbcc0uxc218 표}{tab:ch27-03}
+\begin{booktable}{27장 26장 \textbackslash leftrightarrow 27장 격리 실험의 통제 변수 표}{tab:ch27-03}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}llll@{}}
-\toprule\noalign{}
+\toprule
 항목 & \ref{ch:26}장 & \textbf{\ref{ch:27}장 (본 장)} & 같음 / 다름 \\
-\midrule\noalign{}
+\midrule
 
-\bottomrule\noalign{}
-\endlastfoot
 데이터 & 한국어 TinyStories 30K & 한국어 TinyStories 30K & \textbf{같음} (통제 변수) \\
 Trainer 클래스 & \inlinecode{transformers.Trainer} & \inlinecode{transformers.Trainer} & \textbf{같음} \\
 Data collator & \inlinecode{DataCollatorForLanguageModeling(mlm=False)} & \inlinecode{DataCollatorForLanguageModeling(mlm=False)} & \textbf{같음} \\
@@ -199,10 +190,10 @@ Loss & CE next-token (\inlinecode{labels\ =\ input\_ids.clone()}) & CE next-toke
 토크나이저 & BBPE 직접 학습 (vocab 약 4,000) & \inlinecode{PreTrainedTokenizerFast.from\_pretrained("skt/kogpt2-base-v2",\ ...)} (vocab 51,200) & \textbf{다름} (본체와 운명공동체) \\
 학습률 & 5e-4 (scratch 표준) & \textbf{2e-5} (continual pretraining 표준) & \textbf{다름} \\
 학습 step & 약 1,500 & \textbf{약 3,000} (48,513 chunks / eff. batch 16, 1 epoch) & \textbf{다름} (lr 만 작아짐) \\
+\bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
-}
 
 \begin{quote}
 \textbf{세 줄 차이가 곧 \emph{학습 단계 2 (continual pretraining)} 의 정의} --- 같은 task, 같은 collator, 같은 loss, 같은 trainer. \emph{모델 로드 한 줄 + 토크나이저 한 줄 + lr 한 숫자} 만 바꾸면 됩니다. \ref{ch:25}장 (영어) 에서 본 격리 실험의 한국어 재확인.
@@ -210,18 +201,15 @@ Loss & CE next-token (\inlinecode{labels\ =\ input\_ids.clone()}) & CE next-toke
 
 
 
-\section{변경점: \ref{ch:26}장 대비}\label{uxbcc0uxacbduxc810-diff-from-ch-26}
+\section{변경점: \ref{ch:26}장 대비}
 
-{\def\LTcaptype{none} % do not increment counter
 \begin{booktable}{27장 변경점 요약}{tab:ch27-04}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
-\toprule\noalign{}
+\toprule
 축 & \ref{ch:26}장 (한국어 GPT scratch) & \ref{ch:27}장 (본 장, KoGPT2 continual pretraining) \\
-\midrule\noalign{}
+\midrule
 
-\bottomrule\noalign{}
-\endlastfoot
 \textbf{본체} & 작은 GPT2 (약 3M params, random init) & \textbf{KoGPT2 \inlinecode{skt/kogpt2-base-v2}} (125M, 대규모 한국어 코퍼스 사전학습) \(\leftarrow\) \emph{출발점 변화} \\
 \textbf{토크나이저} & BBPE 직접 학습 (vocab 약 4,000) & \textbf{\inlinecode{PreTrainedTokenizerFast.from\_pretrained("skt/kogpt2-base-v2",\ ...)}} (vocab 51,200) \(\leftarrow\) \emph{본체에 맞춰 함께 변함} \\
 데이터 & 한국어 TinyStories 30K & \textbf{한국어 TinyStories 30K (동일)} \(\leftarrow\) 통제 변수 \\
@@ -231,10 +219,10 @@ Loss & CE next-token (\inlinecode{labels\ =\ input\_ids.clone()}) & \textbf{(동
 \textbf{학습률} & 5e-4 & \textbf{2e-5} \(\leftarrow\) \emph{유일한 hyperparam 큰 차이} \\
 학습 step & 약 1,500 (T4 약 1분) & \textbf{약 3,000 (T4 약 17분)} --- 125M 본체라 step 당 비용이 큼 \\
 Generation 품질 & 동화 풍 단순 한국어 & \textbf{자연스러운 동화 + 일반 도메인 폭} \(\leftarrow\) 메시지 \\
+\bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
-}
 
 \begin{quote}
 \textbf{핵심}: \emph{\ref{ch:26}장 \(\leftrightarrow\) \ref{ch:27}장 은 데이터·trainer·collator·loss 모두 같고 본체 출발점·토크나이저·lr 만 다름}. \textbf{trainer 코드 차이가 극단적으로 적음} --- 그게 GPT 시대 학습 단계 2 (continual pretraining) 의 본질. \emph{task adaptation 의미의 fine-tune 이 아닙니다} --- head 바뀌지 않고, task (next-token 예측) 바뀌지 않습니다. 데이터만 바뀝니다. \ref{ch:24}장\(\to\)\ref{ch:25}장 (영어) 에서 본 그 격리 실험의 한국어 짝.
@@ -242,30 +230,27 @@ Generation 품질 & 동화 풍 단순 한국어 & \textbf{자연스러운 동화
 
 
 
-\section{GPT 시대 학습 4단계 --- 본 장의 위치 (단계 2, 한국어)}\label{gpt-uxc2dcuxb300-uxd559uxc2b5-4uxb2e8uxacc4--uxbcf8-uxcc55uxd130uxc758-uxc704uxce58-uxb2e8uxacc4-2-uxd55cuxad6duxc5b4}
+\section{GPT 시대 학습 4단계 --- 본 장의 위치 (단계 2, 한국어)}
 
 \ref{ch:24}장에서 도입한 GPT 시대 학습 4단계 표의 \emph{단계 2 (continual pretraining)} 의 \emph{한국어판} 이 본 장입니다.
 
-{\def\LTcaptype{none} % do not increment counter
-\begin{booktable}{27장 GPT 시대 학습 4단계 - 본 장의 위치 (단계 2, 한국어)}\label{gpt-uxc2dcuxb300-uxd559uxc2b5-4uxb2e8uxacc4--uxbcf8-uxcc55uxd130uxc758-uxc704uxce58-uxb2e8uxacc4-2-uxd55cuxad6duxc5b4 표}{tab:ch27-05}
+\begin{booktable}{27장 GPT 시대 학습 4단계 - 본 장의 위치 (단계 2, 한국어) 표}{tab:ch27-05}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lllllll@{}}
-\toprule\noalign{}
+\toprule
 단계 & 정확 용어 & 의미 & \inlinecode{labels\ =\ -100} 자리 & 영어 & 한국어 & 본 장? \\
-\midrule\noalign{}
+\midrule
 
-\bottomrule\noalign{}
-\endlastfoot
 1 & \textbf{Pretraining} (사전학습) & 일반 코퍼스 위에 random init 본체부터 학습 & pad 만 & \ref{ch:24}장 & \ref{ch:26}장 & \\
 2 & \textbf{Continual pretraining} (계속 사전학습 / continual learning) & \emph{사전학습된 본체} 를 \emph{새 데이터} 로 \emph{같은 CausalLM task} 더 학습. \textbf{head 그대로, task 그대로, 데이터만 새로} & pad 만 (단계 1 과 동일) & \ref{ch:25}장 & \textbf{\ref{ch:27}장 \(\leftarrow\) 여기} & OK \\
 3 & \textbf{SFT} (Supervised Fine-Tuning / Instruction tuning) & instruction-response 쌍으로 \emph{행동 정렬}. \texttt{labels{[}:prompt\_len{]}\ =\ -100} 으로 답변 부분만 학습 & \textbf{prompt 부분} & - & \ref{ch:28}장 & \\
 4 & \textbf{Alignment} (DPO / RLHF / GRPO) & preference 또는 verifier reward 로 \emph{선호 정렬} & (RL 내부) & - & \ref{ch:30}--\ref{ch:31}장 & \\
+\bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
-}
 
-\subsection{\texorpdfstring{\ref{ch:27}장 은 \emph{SFT 가 아닙니다}}{\ref{ch:27}장 은 SFT 가 아닙니다}}\label{ch-27-uxc740-sft-uxac00-uxc544uxb2d9uxb2c8uxb2e4}
+\subsection{\texorpdfstring{\ref{ch:27}장 은 \emph{SFT 가 아닙니다}}{\ref{ch:27}장 은 SFT 가 아닙니다}}
 
 본 장를 \emph{fine-tune} 으로 부르면 \emph{단계 2 / 3 / 4} 가 모두 섞여 혼동이 생깁니다. \ref{ch:27}장의 정확한 위치는:
 
@@ -285,79 +270,70 @@ SFT (단계 3) 는 \ref{ch:28}장에서 본격. \emph{왜 모델이 한국어 in
 
 
 
-\section{\texorpdfstring{Loss --- 변화 없음, 다만 \emph{시작점} 이 대규모 한국어 사전학습 본체}{Loss --- 변화 없음, 다만 시작점 이 대규모 한국어 사전학습 본체}}\label{loss--uxbcc0uxd654-uxc5c6uxc74c-uxb2e4uxb9cc-uxc2dcuxc791uxc810-uxc774-uxb300uxaddcuxbaa8-uxd55cuxad6duxc5b4-uxc0acuxc804uxd559uxc2b5-uxbcf8uxccb4}
+\section{\texorpdfstring{Loss --- 변화 없음, 다만 \emph{시작점} 이 대규모 한국어 사전학습 본체}{Loss --- 변화 없음, 다만 시작점 이 대규모 한국어 사전학습 본체}}
 
 \ref{ch:26}장과 \emph{완전히 동일} 한 \inlinecode{CrossEntropyLoss} (next-token, \inlinecode{mlm=False}). \inlinecode{labels\ =\ input\_ids.clone()}, pad 만 \inlinecode{-100}. 단 \emph{vocab 차원이 약 4,000 \(\to\) 51,200 로 커진} 영향과, \emph{모델 본체가 random init 이 아닌 이미 대규모 한국어 코퍼스로 학습된 상태} 라는 두 차이가 \emph{loss 곡선의 시작 지점} 을 결정합니다.
 
-\subsection{Random baseline 의 변화}\label{random-baseline-uxc758-uxbcc0uxd654}
+\subsection{Random baseline 의 변화}
 
-{\def\LTcaptype{none} % do not increment counter
-\begin{booktable}{27장 Random baseline 의 변화}\label{random-baseline-uxc758-uxbcc0uxd654 표}{tab:ch27-06}
+\begin{booktable}{27장 Random baseline 의 변화 표}{tab:ch27-06}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}llll@{}}
-\toprule\noalign{}
+\toprule
 토크나이저 & vocab 차원 & \inlinecode{ln(vocab)} (uniform CE) & 장 \\
-\midrule\noalign{}
+\midrule
 
-\bottomrule\noalign{}
-\endlastfoot
 직접 학습 BBPE (한국어) & 약 4,000 & 약 8.29 & \ref{ch:26}장 \\
 \textbf{KoGPT2 BBPE} & \textbf{51,200} & \textbf{10.84} & \textbf{\ref{ch:27}장} \\
 \inlinecode{gpt2} BPE (영어) & 50,257 & 10.82 & \ref{ch:25}장 (참고) \\
+\bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
-}
 
 \emph{만약} KoGPT2 본체가 random init 이었다면 첫 step loss 가 약 10.84 부근에서 시작할 것입니다. 하지만 \textbf{KoGPT2 본체는 이미 대규모 한국어 코퍼스로 사전학습되어 있어} \emph{TinyStories 평가에서도 시작 loss 가 random baseline 보다 훨씬 낮습니다} --- 그게 학습 단계 2 의 핵심 차이.
 
-\subsection{\texorpdfstring{숫자로 감 잡기 --- \emph{시작점 \(\leftrightarrow\) 도달점}}{숫자로 감 잡기 --- 시작점 \textbackslash leftrightarrow 도달점}}\label{uxc22buxc790uxb85c-uxac10-uxc7a1uxae30--uxc2dcuxc791uxc810-leftrightarrow-uxb3c4uxb2ecuxc810}
+\subsection{\texorpdfstring{숫자로 감 잡기 --- \emph{시작점 \(\leftrightarrow\) 도달점}}{숫자로 감 잡기 --- 시작점 \textbackslash leftrightarrow 도달점}}
 
-{\def\LTcaptype{none} % do not increment counter
-\begin{booktable}{27장 숫자로 감 잡기 - 시작점 \textbackslash leftrightarrow 도달점}\label{uxc22buxc790uxb85c-uxac10-uxc7a1uxae30--uxc2dcuxc791uxc810-leftrightarrow-uxb3c4uxb2ecuxc810 표}{tab:ch27-07}
+\begin{booktable}{27장 숫자로 감 잡기 - 시작점 \textbackslash leftrightarrow 도달점 표}{tab:ch27-07}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
-\toprule\noalign{}
+\toprule
 상태 & 정답 토큰 확률 & \(-\log p\) \\
-\midrule\noalign{}
+\midrule
 
-\bottomrule\noalign{}
-\endlastfoot
 균등 추측 (KoGPT2 vocab 51,200) & \(1/51200\) & \textbf{10.84} \(\leftarrow\) random baseline (도달 불필요) \\
 KoGPT2 사전학습 그대로, TinyStories 평가 & \(0.02\) - \(0.05\) 범위 & \textbf{3.0 - 4.0} \(\leftarrow\) \emph{우리 시작점} (이미 좋음) \\
 Continual pretraining 후 (약 3,000 step) & \(0.08\) - \(0.14\) 범위 & \textbf{2.0 - 2.5} \(\leftarrow\) \emph{우리 도달점} \\
 Reference: 학습 길게 했을 때 & \(0.25\)+ & 약 1.4 \\
+\bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
-}
 
 \begin{quote}
 \ref{ch:26}장의 시작 loss \inlinecode{약\ 8.3} (random baseline) 와 \ref{ch:27}장의 시작 loss \inlinecode{약\ 3.0-4.0} (사전학습된 본체의 평가 loss) 의 차이가 \emph{대규모 한국어 사전학습이 본체에 미리 새겨둔 next-token 분포} 의 정량적 가치. \emph{\ref{ch:27}장 은 random 에서 시작하지 않습니다}.
 \end{quote}
 
-\subsection{Perplexity 환산}\label{perplexity-uxd658uxc0b0}
+\subsection{Perplexity 환산}
 
 \(\text{PPL} = e^{L}\):
 
-{\def\LTcaptype{none} % do not increment counter
-\begin{booktable}{27장 Perplexity 환산}\label{perplexity-uxd658uxc0b0 표}{tab:ch27-08}
+\begin{booktable}{27장 Perplexity 환산 표}{tab:ch27-08}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
-\toprule\noalign{}
+\toprule
 CLM loss & PPL & 해석 \\
-\midrule\noalign{}
+\midrule
 
-\bottomrule\noalign{}
-\endlastfoot
 10.84 & 51,200 & 균등 추측 (51K vocab 전체) \\
 3.0 - 4.0 & 20 - 55 & \(\leftarrow\) \ref{ch:27}장 시작 영역 \\
 2.0 - 2.5 & 7 - 12 & \(\leftarrow\) \ref{ch:27}장도달 영역 \\
 1.4 & 4.1 & 거의 결정적 \\
+\bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
-}
 
 \begin{quote}
 \emph{vocab 51K 의 거대한 공간에서 평균 7-55 개 후보로 좁힌} 상태에서 시작해 더 좁힙니다. \ref{ch:26}장의 vocab 약 4,000 과 정량적 비교는 어렵지만 (vocab 단위가 다름), \emph{generation 품질} 로는 직접 비교 가능 --- 그게 본 장 §7 (3-way 비교) 의 역할.
@@ -365,11 +341,11 @@ CLM loss & PPL & 해석 \\
 
 
 
-\section{토크나이저 노트}\label{uxd1a0uxd06cuxb098uxc774uxc800-uxb178uxd2b8--kogpt2-bbpe-uxadf8uxb300uxb85c-vocab-51200}
+\section{토크나이저 노트}
 
 본 장에서는 토크나이저를 \emph{학습하지 않습니다}. \inlinecode{PreTrainedTokenizerFast.from\_pretrained("skt/kogpt2-base-v2",\ ...)} 로 SKT 가 대규모 한국어 코퍼스 위에 학습해 둔 byte-level BPE (BBPE, vocab 51,200) 를 그대로 가져옵니다 (special token 명시 필요 --- 바로 아래 주의 참고).
 
-\subsection{\texorpdfstring{왜 직접 학습하지 않는가 --- \emph{토크나이저는 본체와 운명공동체}}{왜 직접 학습하지 않는가 --- 토크나이저는 본체와 운명공동체}}\label{uxc65c-uxc9c1uxc811-uxd559uxc2b5uxd558uxc9c0-uxc54auxb294uxac00--uxd1a0uxd06cuxb098uxc774uxc800uxb294-uxbcf8uxccb4uxc640-uxc6b4uxba85uxacf5uxb3d9uxccb4}
+\subsection{\texorpdfstring{왜 직접 학습하지 않는가 --- \emph{토크나이저는 본체와 운명공동체}}{왜 직접 학습하지 않는가 --- 토크나이저는 본체와 운명공동체}}
 
 KoGPT2 본체의 input embedding \inlinecode{wte} (51200 \(\times\) 768) 와 LM head (768 \(\times\) 51200) 는 \emph{KoGPT2 가 학습한 그 vocab id 체계} 에 맞춰 학습되어 있습니다. 만약 \emph{다른 vocab} (예: \ref{ch:26}장의 직접 학습 BBPE 약 4,000) 을 붙이면:
 
@@ -385,29 +361,26 @@ KoGPT2 본체의 input embedding \inlinecode{wte} (51200 \(\times\) 768) 와 LM 
 
 따라서 \textbf{사전학습 모델을 가져올 때는 그 모델이 학습한 토크나이저를 \emph{반드시 함께} 가져와야} 합니다. \ref{ch:19}장에서 다룬 \emph{토크나이저는 모델과 운명공동체} 원칙의 정확한 적용 사례 --- 영어 \ref{ch:25}장 (gpt2 BPE 그대로) 의 한국어 재확인.
 
-\subsection{\texorpdfstring{\ref{ch:26}장 \(\leftrightarrow\) \ref{ch:27}장 토크나이저 비교}{\ref{ch:26}장 \textbackslash leftrightarrow \ref{ch:27}장 토크나이저 비교}}\label{ch-26-leftrightarrow-ch-27-uxd1a0uxd06cuxb098uxc774uxc800-uxbe44uxad50}
+\subsection{\texorpdfstring{\ref{ch:26}장 \(\leftrightarrow\) \ref{ch:27}장 토크나이저 비교}{\ref{ch:26}장 \textbackslash leftrightarrow \ref{ch:27}장 토크나이저 비교}}
 
-{\def\LTcaptype{none} % do not increment counter
-\begin{booktable}{27장 26장 \textbackslash leftrightarrow 27장 토크나이저 비교}\label{ch-26-leftrightarrow-ch-27-uxd1a0uxd06cuxb098uxc774uxc800-uxbe44uxad50 표}{tab:ch27-09}
+\begin{booktable}{27장 26장 \textbackslash leftrightarrow 27장 토크나이저 비교 표}{tab:ch27-09}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
-\toprule\noalign{}
+\toprule
 항목 & \ref{ch:26}장 & \textbf{\ref{ch:27}장 (본 장)} \\
-\midrule\noalign{}
+\midrule
 
-\bottomrule\noalign{}
-\endlastfoot
 알고리즘 & byte-level BPE (BBPE) & byte-level BPE (BBPE) (같은 종류) \\
 Vocab 크기 & 약 4,000 & \textbf{51,200} (약 13배) \\
 학습 코퍼스 & 한국어 TinyStories 30K (약 4-6M 토큰) & \textbf{대규모 한국어 코퍼스} (SKT 가 학습) \\
 학습 주체 & 본 장에서 직접 학습 (\ref{ch:26}장) & \textbf{SKT 가 미리 학습} (그대로 사용) \\
-특수 토큰 & `\textless{} & endoftext \\
+특수 토큰 & \texttt{\textless{}\textbar{}endoftext\textbar{}\textgreater{}} (bos = eos = pad) & KoGPT2 컨벤션 (\texttt{\textless{}/s\textgreater{}} 등, pad 는 별도 지정 필요할 수 있음) \\
+\bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
-}
 
-\subsection{\texorpdfstring{KoGPT2 토크나이저 로드 주의 --- \inlinecode{AutoTokenizer} 가 잘못 fallback 합니다}{KoGPT2 토크나이저 로드 주의 --- AutoTokenizer 가 잘못 fallback 합니다}}\label{kogpt2-uxd1a0uxd06cuxb098uxc774uxc800-uxb85cuxb4dc-uxc8fcuxc758--autotokenizer-uxac00-uxc798uxbabb-fallback-uxd569uxb2c8uxb2e4}
+\subsection{\texorpdfstring{KoGPT2 토크나이저 로드 주의 --- \inlinecode{AutoTokenizer} 가 잘못 fallback 합니다}{KoGPT2 토크나이저 로드 주의 --- AutoTokenizer 가 잘못 fallback 합니다}}
 
 KoGPT2 (\inlinecode{skt/kogpt2-base-v2}) 는 \textbf{\inlinecode{AutoTokenizer.from\_pretrained(...)} 가 영어 GPT2 토크나이저로 잘못 fallback} 하는 \emph{알려진 함정} 이 있습니다. 그러면 special token 이 \texttt{\textless{}\textbar{}endoftext\textbar{}\textgreater{}} 로 잡히고, 한국어가 \emph{완전히 깨진 토큰} 으로 인코딩됩니다 (예: \inlinecode{"옛날\ 옛날에"} \(\to\) \texttt{{[}501,\ 500,\ ...{]}} \(\to\) \texttt{\textquotesingle{}?????\textquotesingle{}}).
 
@@ -429,13 +402,13 @@ tokenizer = PreTrainedTokenizerFast.from_pretrained(
 
 위 방식으로 로드하면 pad 가 \texttt{\textless{}pad\textgreater{}} 로 제대로 잡혀 별도 처리가 필요 없습니다. \inlinecode{group\_texts} 패턴에서는 chunk 길이가 모두 같아 pad 가 거의 등장하지 않아 실용적으로도 영향이 없습니다. (영어 \ref{ch:25}장 는 gpt2 에 pad 가 없어 \inlinecode{tokenizer.pad\_token\ =\ tokenizer.eos\_token} 으로 EOS 를 재활용했던 것과 대비되는 지점.)
 
-\subsection{\texorpdfstring{한국어를 \emph{제대로} 다루는 vocab}{한국어를 제대로 다루는 vocab}}\label{uxd55cuxad6duxc5b4uxb97c-uxc81cuxb300uxb85c-uxb2e4uxb8e8uxb294-vocab}
+\subsection{\texorpdfstring{한국어를 \emph{제대로} 다루는 vocab}{한국어를 제대로 다루는 vocab}}
 
 \ref{ch:26}장에서 봤듯, \emph{영어 gpt2 BPE 로 한국어를 토큰화하면 한글이 byte 조각으로 잘게 쪼개져 토큰 수가 폭증} 합니다. KoGPT2 BBPE 는 \emph{한국어 코퍼스 위에 학습} 되어 한국어 어절을 \emph{의미 있는 토큰} 으로 압축합니다 --- 그래서 영어 gpt2 를 한국어에 쓰는 대신 \emph{한국어 사전학습 모델 KoGPT2} 를 가져오는 게 정공법. \ref{ch:26}장 (한국어는 scratch) 와 \ref{ch:27}장 (한국어 사전학습 본체) 이 \emph{영어 \ref{ch:24}--\ref{ch:25}장과 정확히 같은 대칭} 을 이루는 이유.
 
 
 
-\section{환경 준비}\label{uxd658uxacbd-uxc14buxc5c5}
+\section{환경 준비}
 
 
 
@@ -528,7 +501,7 @@ use fp16   : True
 
 
 
-\section{\texorpdfstring{한국어 TinyStories 데이터 로드 + story 복원 --- \emph{\ref{ch:26}장과 완전히 동일}}{한국어 TinyStories 데이터 로드 + story 복원 --- \ref{ch:26}장과 완전히 동일}}\label{1-uxd55cuxad6duxc5b4-tinystories-uxb370uxc774uxd130-uxb85cuxb4dc--story-uxbcf5uxc6d0--ch-26-uxacfc-uxc644uxc804uxd788-uxb3d9uxc77c}
+\section{\texorpdfstring{한국어 TinyStories 데이터 로드 + story 복원 --- \emph{\ref{ch:26}장과 완전히 동일}}{한국어 TinyStories 데이터 로드 + story 복원 --- \ref{ch:26}장과 완전히 동일}}
 
 본 장의 데이터는 \emph{통제 변수}. \ref{ch:26}장과 정확히 같은 방식으로 \inlinecode{g0ster/TinyStories-Korean} 을 로드합니다. 이 데이터셋은 \emph{story 단위가 아니라 줄(line) 단위} 로 저장되어 있어, \emph{\texttt{\textless{}\textbar{}endoftext\textbar{}\textgreater{}} 를 만날 때까지 줄을 이어 붙여} 한 story 로 복원합니다. 그렇게 복원한 처음 \textbf{30,000 stories} 만 사용 (\ref{ch:26}장과 같은 규모, T4 30분 룰 안). \emph{데이터를 고정하고 본체·토크나이저·lr 만 바꿔 격차를 본다} 가 본 장의 격리 실험 설계.
 
@@ -629,7 +602,7 @@ val  : Dataset({
 
 
 
-\section{\texorpdfstring{KoGPT2 토크나이저·모델 로드 --- \emph{모델 로드 한 줄로 학습 단계 2 진입}}{KoGPT2 토크나이저·모델 로드 --- 모델 로드 한 줄로 학습 단계 2 진입}}\label{2-kogpt2-uxd1a0uxd06cuxb098uxc774uxc800uxbaa8uxb378-uxb85cuxb4dc--uxbaa8uxb378-uxb85cuxb4dc-uxd55c-uxc904uxb85c-uxd559uxc2b5-uxb2e8uxacc4-2-uxc9c4uxc785}
+\section{\texorpdfstring{KoGPT2 토크나이저·모델 로드 --- \emph{모델 로드 한 줄로 학습 단계 2 진입}}{KoGPT2 토크나이저·모델 로드 --- 모델 로드 한 줄로 학습 단계 2 진입}}
 
 본 장의 \emph{유일한 큰 변화}. \ref{ch:26}장의 \inlinecode{GPT2LMHeadModel(config)} random init 대신 \inlinecode{AutoModelForCausalLM.from\_pretrained("skt/kogpt2-base-v2")} 한 줄. 토크나이저도 같이 가져옵니다. 영어 \ref{ch:25}장의 \inlinecode{gpt2} 로드와 정확히 같은 패턴 --- 모델 id 만 한국어 KoGPT2.
 
@@ -736,7 +709,7 @@ tokenizer    : TokenizersBackend
 
 
 
-\subsection{\texorpdfstring{\ref{ch:26}장 \(\leftrightarrow\) \ref{ch:27}장 코드 diff --- \emph{모델·토크나이저 로드 두 줄 차이}}{\ref{ch:26}장 \textbackslash leftrightarrow \ref{ch:27}장 코드 diff --- 모델·토크나이저 로드 두 줄 차이}}\label{ch-26-leftrightarrow-ch-27-uxcf54uxb4dc-diff--uxbaa8uxb378uxd1a0uxd06cuxb098uxc774uxc800-uxb85cuxb4dc-uxb450-uxc904-uxcc28uxc774}
+\subsection{\texorpdfstring{\ref{ch:26}장 \(\leftrightarrow\) \ref{ch:27}장 코드 diff --- \emph{모델·토크나이저 로드 두 줄 차이}}{\ref{ch:26}장 \textbackslash leftrightarrow \ref{ch:27}장 코드 diff --- 모델·토크나이저 로드 두 줄 차이}}
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
@@ -764,7 +737,7 @@ model = AutoModelForCausalLM.from_pretrained("skt/kogpt2-base-v2")
 
 
 
-\section{\texorpdfstring{토큰화 + \inlinecode{group\_texts} --- \emph{\ref{ch:26}장과 완전히 같은 패턴}}{토큰화 + group\_texts --- \ref{ch:26}장과 완전히 같은 패턴}}\label{3-uxd1a0uxd070uxd654--group_texts--ch-26-uxacfc-uxc644uxc804uxd788-uxac19uxc740-uxd328uxd134}
+\section{\texorpdfstring{토큰화 + \inlinecode{group\_texts} --- \emph{\ref{ch:26}장과 완전히 같은 패턴}}{토큰화 + group\_texts --- \ref{ch:26}장과 완전히 같은 패턴}}
 
 HF causal LM 학습 표준 패턴 (\inlinecode{run\_clm.py}) 그대로. \ref{ch:26}장과 정확히 같습니다 --- \emph{데이터·전처리·collator 는 통제 변수}.
 
@@ -887,11 +860,11 @@ first chunk decode (first 200 chars):
 
 
 
-\textbf{비교 관전 포인트} --- 같은 30K stories 가 \emph{KoGPT2 BBPE (vocab 51,200)} 로 토큰화되면 \ref{ch:26}장의 \emph{직접 학습 BBPE (vocab 약 4,000)} 보다 \emph{토큰 수가 적습니다} --- vocab 이 클수록 한 토큰이 더 긴 byte 시퀀스를 표현하므로. 같은 데이터의 토큰 수 차이가 \emph{토크나이저 vocab 크기의 직접적 효과} (영어 \ref{ch:24}장\$\textbackslash to\$25 에서 본 결의 한국어 재확인).
+\textbf{비교 관전 포인트} --- 같은 30K stories 가 \emph{KoGPT2 BBPE (vocab 51,200)} 로 토큰화되면 \ref{ch:26}장의 \emph{직접 학습 BBPE (vocab 약 4,000)} 보다 \emph{토큰 수가 적습니다} --- vocab 이 클수록 한 토큰이 더 긴 byte 시퀀스를 표현하므로. 같은 데이터의 토큰 수 차이가 \emph{토크나이저 vocab 크기의 직접적 효과} (영어 \ref{ch:24}장\(\to\)25 에서 본 결의 한국어 재확인).
 
 
 
-\section{\texorpdfstring{학습 \emph{전} generation --- \emph{이미 잘 만들어진 한국어 본체} 라는 사실 확인}{학습 전 generation --- 이미 잘 만들어진 한국어 본체 라는 사실 확인}}\label{4-uxd559uxc2b5-uxc804-generation--uxc774uxbbf8-uxc798-uxb9ccuxb4e4uxc5b4uxc9c4-uxd55cuxad6duxc5b4-uxbcf8uxccb4-uxb77cuxb294-uxc0acuxc2e4-uxd655uxc778}
+\section{\texorpdfstring{학습 \emph{전} generation --- \emph{이미 잘 만들어진 한국어 본체} 라는 사실 확인}{학습 전 generation --- 이미 잘 만들어진 한국어 본체 라는 사실 확인}}
 
 \ref{ch:26}장의 \emph{random init baseline} 은 \emph{한국어와 거리 먼 byte 조각} 이었습니다. \ref{ch:27}장의 학습 전 baseline 은 \emph{KoGPT2 가 대규모 한국어 코퍼스로 이미 사전학습된 본체} 라 \emph{학습 시작 시점에 이미 자연스러운 한국어 generation} 이 가능합니다 (다만 TinyStories 동화체는 아님).
 
@@ -993,15 +966,15 @@ BEFORE continual pretraining - KoGPT2 pretrained on Korean corpus, as-is
 
 
 
-\section{\texorpdfstring{Continual Pretraining --- \emph{trainer 코드는 \ref{ch:26}장과 거의 동일}}{Continual Pretraining --- trainer 코드는 \ref{ch:26}장과 거의 동일}}\label{5-continual-pretraining--trainer-uxcf54uxb4dcuxb294-ch-26-uxacfc-uxac70uxc758-uxb3d9uxc77c}
+\section{\texorpdfstring{Continual Pretraining --- \emph{trainer 코드는 \ref{ch:26}장과 거의 동일}}{Continual Pretraining --- trainer 코드는 \ref{ch:26}장과 거의 동일}}
 
 \ref{ch:26}장과 \emph{완전히 같은 구조} 의 \inlinecode{Trainer} 코드. 변하는 곳은 \textbf{lr (\texttt{5e-4\ \$\textbackslash{}to\$\ 2e-5})} 와 \textbf{step 설정 (max\_steps \(\to\) 1 epoch, 48,513 chunks / eff. batch 16 \(\approx\) 약 3,000 step)}, 그리고 \textbf{메모리 제약 대응 (batch 4 + grad accum 4)} 입니다.
 
-\subsection{\texorpdfstring{왜 lr 가 작아지는가 --- \inlinecode{2e-5} 의 정확한 의미}{왜 lr 가 작아지는가 --- 2e-5 의 정확한 의미}}\label{uxc65c-lr-uxac00-uxc791uxc544uxc9c0uxb294uxac00--2e-5-uxc758-uxc815uxd655uxd55c-uxc758uxbbf8}
+\subsection{\texorpdfstring{왜 lr 가 작아지는가 --- \inlinecode{2e-5} 의 정확한 의미}{왜 lr 가 작아지는가 --- 2e-5 의 정확한 의미}}
 
 \ref{ch:26}장 (scratch) 의 lr \inlinecode{5e-4} 는 \emph{random init 본체} 가 \emph{빠르게 의미 있는 표상} 을 학습하기 위한 표준 값. \ref{ch:27}장 (continual pretraining) 는 \emph{이미 학습된 본체} 라 \emph{큰 lr 면 사전학습된 표상이 망가질 위험} --- \textbf{catastrophic forgetting}. \inlinecode{2e-5} 는 HF 의 continual pretraining / fine-tuning 표준 lr 중 가장 작은 쪽으로, \emph{사전학습 표상 보존} 을 우선. (영어 \ref{ch:25}장과 같은 \inlinecode{2e-5}.)
 
-\subsection{\texorpdfstring{\inlinecode{DataCollatorForLanguageModeling(mlm=False)} --- \emph{\ref{ch:26}장과 한 글자도 다르지 않음}}{DataCollatorForLanguageModeling(mlm=False) --- \ref{ch:26}장과 한 글자도 다르지 않음}}\label{datacollatorforlanguagemodelingmlmfalse--ch-26-uxacfc-uxd55c-uxae00uxc790uxb3c4-uxb2e4uxb974uxc9c0-uxc54auxc74c}
+\subsection{\texorpdfstring{\inlinecode{DataCollatorForLanguageModeling(mlm=False)} --- \emph{\ref{ch:26}장과 한 글자도 다르지 않음}}{DataCollatorForLanguageModeling(mlm=False) --- \ref{ch:26}장과 한 글자도 다르지 않음}}
 
 학습 단계 2 의 정의: \emph{collator 안 바뀜, loss 안 바뀜, trainer 안 바뀜}. \emph{데이터·본체·lr 만 바뀜}.
 
@@ -1198,11 +1171,11 @@ plt.tight_layout(); plt.show()
 
 
 
-\textbf{관전 포인트} --- \ref{ch:26}장과 달리 \emph{첫 step loss 가 random baseline \texttt{ln(51200)\ \$\textbackslash{}approx\$\ 10.84} 부근이 아니라 약 3.0-4.0 부근} 에서 시작합니다. \emph{KoGPT2 가 이미 일반 한국어 분포를 학습해 둔 덕분에 TinyStories 평가에서도 시작 loss 가 낮음}. 학습 진행과 함께 약 2.0-2.5 로 더 떨어지는데, 이게 \emph{TinyStories 동화 도메인 적응} 의 효과. 곡선이 \emph{random baseline 으로부터 빠르게 떨어지는 \ref{ch:26}장} vs \emph{이미 낮은 지점에서 시작해 천천히 더 떨어지는 \ref{ch:27}장} 의 모양 차이가 한눈에 보입니다 (영어 \ref{ch:24}장\$\textbackslash to\$25 와 같은 결).
+\textbf{관전 포인트} --- \ref{ch:26}장과 달리 \emph{첫 step loss 가 random baseline \texttt{ln(51200)\ \$\textbackslash{}approx\$\ 10.84} 부근이 아니라 약 3.0-4.0 부근} 에서 시작합니다. \emph{KoGPT2 가 이미 일반 한국어 분포를 학습해 둔 덕분에 TinyStories 평가에서도 시작 loss 가 낮음}. 학습 진행과 함께 약 2.0-2.5 로 더 떨어지는데, 이게 \emph{TinyStories 동화 도메인 적응} 의 효과. 곡선이 \emph{random baseline 으로부터 빠르게 떨어지는 \ref{ch:26}장} vs \emph{이미 낮은 지점에서 시작해 천천히 더 떨어지는 \ref{ch:27}장} 의 모양 차이가 한눈에 보입니다 (영어 \ref{ch:24}장\(\to\)25 와 같은 결).
 
 
 
-\section{\texorpdfstring{학습 \emph{후} generation --- \emph{continual pretraining 의 효과}}{학습 후 generation --- continual pretraining 의 효과}}\label{6-uxd559uxc2b5-uxd6c4-generation--continual-pretraining-uxc758-uxd6a8uxacfc}
+\section{\texorpdfstring{학습 \emph{후} generation --- \emph{continual pretraining 의 효과}}{학습 후 generation --- continual pretraining 의 효과}}
 
 같은 \inlinecode{PROMPTS\ /\ GEN\_KWARGS} 로 학습 후 모델에서 다시 생성. \emph{BEFORE (KoGPT2 그대로) \(\to\) AFTER (continual pretrained on TinyStories-Korean)} 비교가 \emph{학습 단계 2 가 본체에 새긴 도메인 적응} 을 직접 드러냅니다.
 
@@ -1300,29 +1273,26 @@ BEFORE  : 된 후 소녀에게 한 번도 성적으로 관심을 갖지 않았�
 
 
 
-\section{3-way generation 비교 --- \ref{ch:26}장 (scratch) vs \ref{ch:27}장 BEFORE vs \ref{ch:27}장 AFTER}\label{7-3-way-generation-uxbe44uxad50--ch-26-scratch-vs-ch-27-before-vs-ch-27-after}
+\section{3-way generation 비교 --- \ref{ch:26}장 (scratch) vs \ref{ch:27}장 BEFORE vs \ref{ch:27}장 AFTER}
 
 \ref{ch:26}장의 \emph{작은 from-scratch 모델} (약 3M, 한국어 TinyStories 1500 step) 의 generation 결과를 \emph{옆에 두고} 비교합니다. \emph{\ref{ch:26}장 노트북 §7 의 “TRAINED model” generation 출력} 을 직접 인용 (사용자가 본인 결과로 갱신 가능).
 
-\subsection{세 셋업의 차이}\label{uxc138-uxc14buxc5c5uxc758-uxcc28uxc774}
+\subsection{세 셋업의 차이}
 
-{\def\LTcaptype{none} % do not increment counter
-\begin{booktable}{27장 세 셋업의 차이}\label{uxc138-uxc14buxc5c5uxc758-uxcc28uxc774 표}{tab:ch27-10}
+\begin{booktable}{27장 세 셋업의 차이 표}{tab:ch27-10}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}llll@{}}
-\toprule\noalign{}
+\toprule
 셋업 & 본체 & 사전학습 & TinyStories 학습 \\
-\midrule\noalign{}
+\midrule
 
-\bottomrule\noalign{}
-\endlastfoot
 \ref{ch:26}장 (scratch) & 약 3M params, random init & 없음 (from scratch) & 1500 step 사전학습 자체 \\
 \textbf{\ref{ch:27}장 BEFORE} & 125M params (KoGPT2) & \textbf{대규모 한국어 코퍼스} & 없음 (KoGPT2 그대로) \\
 \textbf{\ref{ch:27}장 AFTER} & 125M params (KoGPT2) & \textbf{대규모 한국어 코퍼스} & \textbf{1 epoch continual pretraining} \\
+\bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
-}
 
 
 
@@ -1421,30 +1391,27 @@ Ch 27 BEFORE    : 된 후 소녀에게 한 번도 성적으로 관심을 갖지 
 
 
 
-\section{학습 곡선 비교 --- \ref{ch:26}장 vs \ref{ch:27}장의 학습 효율}\label{8-uxd559uxc2b5-uxace1uxc120-uxbe44uxad50--ch-26-vs-ch-27-uxc758-uxd559uxc2b5-uxd6a8uxc728}
+\section{학습 곡선 비교 --- \ref{ch:26}장 vs \ref{ch:27}장의 학습 효율}
 
 \emph{같은 데이터 (한국어 TinyStories 30K)} 에 대한 \emph{random init vs 사전학습 본체} 의 학습 효율 격차를 표로 정리.
 
-{\def\LTcaptype{none} % do not increment counter
-\begin{booktable}{27장 학습 곡선 비교 - 26장 vs 27장 의 학습 효율}\label{8-uxd559uxc2b5-uxace1uxc120-uxbe44uxad50--ch-26-vs-ch-27-uxc758-uxd559uxc2b5-uxd6a8uxc728 표}{tab:ch27-11}
+\begin{booktable}{27장 학습 곡선 비교 - 26장 vs 27장 의 학습 효율 표}{tab:ch27-11}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
-\toprule\noalign{}
+\toprule
 항목 & \ref{ch:26}장 (3M scratch) & \textbf{\ref{ch:27}장 (125M continual pretrain)} \\
-\midrule\noalign{}
+\midrule
 
-\bottomrule\noalign{}
-\endlastfoot
 시작 loss & 약 8.29 (\inlinecode{ln(4000)}, random baseline) & \textbf{약 3.0-4.0} (KoGPT2 pretrained, TinyStories 평가) \\
 도달 loss (학습 끝, 누적 평균 \inlinecode{train\_loss}) & 약 4.5 & \textbf{약 2.49} \\
 학습 step & 1,500 & \textbf{약 3,000} (1 epoch, 48,513 chunks / eff. batch 16) \\
 학습 시간 (T4) & 약 1분 & \textbf{약 17분} \\
 Vocab 차원 & 약 4,000 & \textbf{51,200} (loss 단위 다름 --- 직접 비교 어려움) \\
 Generation 품질 & 동화 풍 단순 한국어 & \textbf{자연스러운 동화 + 일반 도메인 어휘} \\
+\bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
-}
 
 \begin{quote}
 \textbf{요점}: \ref{ch:27}장 은 \emph{시작부터 낮은 loss} 에서 출발해 더 낮은 지점까지 내려갑니다 --- 사전학습된 본체의 \emph{시작 이점}. step·시간은 \ref{ch:26}장 보다 오히려 더 큽니다 (125M 본체 + chunk 수가 많아 1 epoch 이 길어짐). 다만 \emph{loss 의 절대값} 은 vocab 단위가 달라 직접 비교 어려움 (vocab 약 13배 차이). \emph{Generation 품질} 로는 §7 의 3-way 비교가 정성적 차이를 보여줍니다.
@@ -1456,32 +1423,32 @@ Generation 품질 & 동화 풍 단순 한국어 & \textbf{자연스러운 동화
 
 
 
-\section{변형: 더 많은 epoch / 다른 도메인 / catastrophic forgetting 시연}\label{uxbcc0uxd615--uxb354-uxb9ceuxc740-epoch--uxb2e4uxb978-uxb3c4uxba54uxc778--catastrophic-forgetting-uxc2dcuxc5f0}
+\section{변형: 더 많은 epoch / 다른 도메인 / catastrophic forgetting 시연}
 
 본 장에서 다루지 못한 변형들 --- 직접 시도해 보고 싶다면 아래 코드를 출발점으로:
 
-\subsection{\texorpdfstring{변형 1. epoch 수 늘리기 --- \emph{언제 catastrophic forgetting 이 시작되는가}}{변형 1. epoch 수 늘리기 --- 언제 catastrophic forgetting 이 시작되는가}}\label{uxbcc0uxd615-1-epoch-uxc218-uxb298uxb9acuxae30--uxc5b8uxc81c-catastrophic-forgetting-uxc774-uxc2dcuxc791uxb418uxb294uxac00}
+\subsection{\texorpdfstring{변형 1. epoch 수 늘리기 --- \emph{언제 catastrophic forgetting 이 시작되는가}}{변형 1. epoch 수 늘리기 --- 언제 catastrophic forgetting 이 시작되는가}}
 
 \Needspace{5\baselineskip}
 \begin{lstlisting}
 
 \end{lstlisting}
 
-\subsection{\texorpdfstring{변형 2. 다른 도메인 데이터 --- \emph{continual pretraining 의 일반성}}{변형 2. 다른 도메인 데이터 --- continual pretraining 의 일반성}}\label{uxbcc0uxd615-2-uxb2e4uxb978-uxb3c4uxba54uxc778-uxb370uxc774uxd130--continual-pretraining-uxc758-uxc77cuxbc18uxc131}
+\subsection{\texorpdfstring{변형 2. 다른 도메인 데이터 --- \emph{continual pretraining 의 일반성}}{변형 2. 다른 도메인 데이터 --- continual pretraining 의 일반성}}
 
 \Needspace{5\baselineskip}
 \begin{lstlisting}
 
 \end{lstlisting}
 
-\subsection{변형 3. catastrophic forgetting 직접 확인}\label{uxbcc0uxd615-3-catastrophic-forgetting-uxc9c1uxc811-uxd655uxc778}
+\subsection{변형 3. catastrophic forgetting 직접 확인}
 
 \Needspace{5\baselineskip}
 \begin{lstlisting}
 
 \end{lstlisting}
 
-\subsection{\texorpdfstring{변형 4. lr 키워 보기 --- \emph{왜 작은 lr 가 표준인가}}{변형 4. lr 키워 보기 --- 왜 작은 lr 가 표준인가}}\label{uxbcc0uxd615-4-lr-uxd0a4uxc6cc-uxbcf4uxae30--uxc65c-uxc791uxc740-lr-uxac00-uxd45cuxc900uxc778uxac00}
+\subsection{\texorpdfstring{변형 4. lr 키워 보기 --- \emph{왜 작은 lr 가 표준인가}}{변형 4. lr 키워 보기 --- 왜 작은 lr 가 표준인가}}
 
 \Needspace{5\baselineskip}
 \begin{lstlisting}
@@ -1490,18 +1457,15 @@ Generation 품질 & 동화 풍 단순 한국어 & \textbf{자연스러운 동화
 
 
 
-\section{이 장에 등장한 라이브러리·함수}\label{uxc774uxbc88-uxcc55uxd130uxc5d0-uxb4f1uxc7a5uxd55c-uxb77cuxc774uxbe0cuxb7ecuxb9acuxd568uxc218}
+\section{이 장에 등장한 라이브러리·함수}
 
-{\def\LTcaptype{none} % do not increment counter
 \begin{booktable}{27장 새로 등장한 라이브러리}{tab:ch27-12}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
-\toprule\noalign{}
+\toprule
 이름 & 한 줄 설명 & \ref{ch:26}장과 차이 \\
-\midrule\noalign{}
+\midrule
 
-\bottomrule\noalign{}
-\endlastfoot
 \inlinecode{AutoModelForCausalLM.from\_pretrained("skt/kogpt2-base-v2")} & KoGPT2 (125M, 대규모 한국어 사전학습) 본체 로드 & \textbf{새로 등장} (\ref{ch:26}장 은 \inlinecode{GPT2LMHeadModel(config)} random init) \\
 \inlinecode{PreTrainedTokenizerFast.from\_pretrained("skt/kogpt2-base-v2",\ ...)} & KoGPT2 BBPE 토크나이저 (vocab 51,200) 로드 & \textbf{새로 등장} (\ref{ch:26}장 은 직접 학습 BBPE) \\
 \inlinecode{model.config.pad\_token\_id\ =\ tokenizer.pad\_token\_id} & 토크나이저의 pad id 를 본체 config 에 동기화 & \textbf{새로 등장} (사전학습 본체 로드 시 필요한 동기화) \\
@@ -1512,14 +1476,14 @@ Generation 품질 & 동화 풍 단순 한국어 & \textbf{자연스러운 동화
 \inlinecode{warmup\_steps=0.06} (1 미만이면 비율로 해석) & 전체 step 대비 6\% warmup (구 \inlinecode{warmup\_ratio} --- transformers 5.15 부터 \inlinecode{warmup\_steps} 로 통합) & \textbf{약간 다름} (\ref{ch:26}장 은 \inlinecode{warmup\_steps=100} 고정 step) \\
 \inlinecode{num\_train\_epochs} (vs \inlinecode{max\_steps}) & epoch 수 기반 학습 (continual pretraining 1 epoch 충분) & \textbf{약간 다름} (\ref{ch:26}장 은 \inlinecode{max\_steps=1500}) \\
 \inlinecode{gradient\_accumulation\_steps} & 작은 배치를 누적해 큰 effective batch (T4 + 125M 메모리 제약) & \textbf{새로 등장} (\ref{ch:26}장 은 약 3M 이라 불필요) \\
+\bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
-}
 
 
 
-\section{체크포인트 질문}\label{uxccb4uxd06cuxd3ecuxc778uxd2b8-uxc9c8uxbb38}
+\section{체크포인트 질문}
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -1536,30 +1500,27 @@ Generation 품질 & 동화 풍 단순 한국어 & \textbf{자연스러운 동화
 
 
 
-\section{FAQ}\label{faq}
+\section{FAQ}
 
-\begin{faqBox}{Q1. (이론) \emph{Continual pretraining} 이 정확히 무엇인가요? \emph{fine-tune} 과 어떻게 다른가요?}\label{q1-uxc774uxb860-continual-pretraining-uxc774-uxc815uxd655uxd788-uxbb34uxc5c7uxc778uxac00uxc694-fine-tune-uxacfc-uxc5b4uxb5bbuxac8c-uxb2e4uxb978uxac00uxc694}
+\begin{faqBox}{Q1. (이론) \emph{Continual pretraining} 이 정확히 무엇인가요? \emph{fine-tune} 과 어떻게 다른가요?}
 
 \textbf{Continual pretraining} (계속 사전학습 / continual learning) 은 GPT 시대 학습 4단계 중 \emph{단계 2}:
 
-{\def\LTcaptype{none} % do not increment counter
-\begin{booktable}{27장 FAQ}\label{faq 표}{tab:ch27-13}
+\begin{booktable}{27장 FAQ 표}{tab:ch27-13}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
-\toprule\noalign{}
+\toprule
 단계 & 정확 용어 & 의미 \\
-\midrule\noalign{}
+\midrule
 
-\bottomrule\noalign{}
-\endlastfoot
 1 & \textbf{Pretraining} & random init 본체 + 일반 코퍼스 \\
 2 & \textbf{Continual pretraining} \(\leftarrow\) \emph{본 장} & \emph{사전학습된 본체} + \emph{새 도메인 데이터}. \textbf{head 그대로, task 그대로, loss 그대로} \\
 3 & \textbf{SFT} (Instruction tuning) & instruction-response 쌍, \texttt{labels{[}:prompt\_len{]}\ =\ -100} \\
 4 & \textbf{Alignment} (DPO / RLHF / GRPO) & preference 또는 verifier reward \\
+\bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
-}
 
 \textbf{\inlinecode{fine-tune} 이라는 단어는 \emph{세 의미가 섞여 쓰입니다}}:
 
@@ -1577,7 +1538,7 @@ Generation 품질 & 동화 풍 단순 한국어 & \textbf{자연스러운 동화
 
 \end{faqBox}
 
-\begin{faqBox}{Q2. (실무) 왜 lr 가 \ref{ch:26}장의 \inlinecode{5e-4} 보다 작은 \inlinecode{2e-5} 인가요?}\label{q2-uxc2e4uxbb34-uxc65c-lr-uxac00-ch-26-uxc758-5e-4-uxbcf4uxb2e4-uxc791uxc740-2e-5-uxc778uxac00uxc694}
+\begin{faqBox}{Q2. (실무) 왜 lr 가 \ref{ch:26}장의 \inlinecode{5e-4} 보다 작은 \inlinecode{2e-5} 인가요?}
 
 \textbf{catastrophic forgetting 방지} 가 핵심 이유. \emph{사전학습된 본체} 는 weight 들이 \emph{이미 의미 있는 표상} 을 학습한 상태. 큰 lr 로 학습하면:
 
@@ -1605,7 +1566,7 @@ HF 의 continual pretraining / fine-tuning 표준 lr 범위: \inlinecode{1e-5} -
 
 \end{faqBox}
 
-\begin{faqBox}{Q3. (이론) \ref{ch:26}장 (3M) 가 같은 데이터로 학습했는데 \ref{ch:27}장 (125M) 결과가 훨씬 좋다면, \emph{모델 크기의 위력} 인가 \emph{사전학습의 위력} 인가?}\label{q3-uxc774uxb860-ch-26-3m-uxac00-uxac19uxc740-uxb370uxc774uxd130uxb85c-uxd559uxc2b5uxd588uxb294uxb370-ch-27-125m-uxacb0uxacfcuxac00-uxd6e8uxc52c-uxc88buxb2e4uxba74-uxbaa8uxb378-uxd06cuxae30uxc758-uxc704uxb825-uxc778uxac00-uxc0acuxc804uxd559uxc2b5uxc758-uxc704uxb825-uxc778uxac00}
+\begin{faqBox}{Q3. (이론) \ref{ch:26}장 (3M) 가 같은 데이터로 학습했는데 \ref{ch:27}장 (125M) 결과가 훨씬 좋다면, \emph{모델 크기의 위력} 인가 \emph{사전학습의 위력} 인가?}
 
 \textbf{둘이 \emph{섞여서} 분리 불가능} 입니다. 본 장의 셋업은 \emph{두 변수가 동시에 변함}:
 
@@ -1617,24 +1578,21 @@ HF 의 continual pretraining / fine-tuning 표준 lr 범위: \inlinecode{1e-5} -
 
 진짜 \emph{모델 크기와 사전학습 효과를 분리} 하려면 \emph{2 \(\times\) 2 격자} 실험이 필요:
 
-{\def\LTcaptype{none} % do not increment counter
-\begin{booktable}{27장 FAQ}\label{faq 표}{tab:ch27-14}
+\begin{booktable}{27장 FAQ 표}{tab:ch27-14}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}llll@{}}
-\toprule\noalign{}
+\toprule
 셋업 & 모델 크기 & 사전학습 & 본 커리큘럼 \\
-\midrule\noalign{}
+\midrule
 
-\bottomrule\noalign{}
-\endlastfoot
 (a) & 3M & 없음 & \textbf{\ref{ch:26}장} \\
 (b) & 3M & 대규모 한국어 사전학습 & (미실험) \\
 (c) & 125M & 없음 & (미실험 --- 125M scratch + TinyStories 만 학습) \\
 (d) & 125M & 대규모 한국어 코퍼스 & \textbf{\ref{ch:27}장} \\
+\bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
-}
 
 본 커리큘럼에는 (a) 와 (d) 만 있어 \emph{둘의 차이} 만 보입니다. (b) 와 (c) 는 \emph{T4 + 30분 룰} 안에 어렵습니다 (125M scratch 는 \emph{TinyStories 만으로 의미 있는 학습이 부족함}, 3M 대규모 사전학습은 \emph{데이터 규모 자체가 30분에 안 맞음}).
 
@@ -1642,7 +1600,7 @@ HF 의 continual pretraining / fine-tuning 표준 lr 범위: \inlinecode{1e-5} -
 
 \end{faqBox}
 
-\begin{faqBox}{Q4. (실무) KoGPT2 토크나이저로 \emph{영어} TinyStories 를 학습하면 어떻게 되나요? (\ref{ch:25}장 Q4 의 거울)}\label{q4-uxc2e4uxbb34-kogpt2-uxd1a0uxd06cuxb098uxc774uxc800uxb85c-uxc601uxc5b4-tinystories-uxb97c-uxd559uxc2b5uxd558uxba74-uxc5b4uxb5bbuxac8c-uxb418uxb098uxc694-ch-25-q4-uxc758-uxac70uxc6b8}
+\begin{faqBox}{Q4. (실무) KoGPT2 토크나이저로 \emph{영어} TinyStories 를 학습하면 어떻게 되나요? (\ref{ch:25}장 Q4 의 거울)}
 
 \textbf{작동은 하지만 비효율적} 입니다 --- KoGPT2 BBPE 는 \emph{byte-level} 이라 영어도 UNK 없이 표현하지만, \emph{한국어 코퍼스 중심} 으로 학습돼 영어 어절의 병합 규칙이 약합니다. 그래서 \emph{같은 영어 문장이 영어 gpt2 BPE 보다 다소 많은 토큰} 으로 쪼개질 수 있습니다.
 
@@ -1664,7 +1622,7 @@ print(len(en_tok(sent)["input_ids"]))
 
 \end{faqBox}
 
-\begin{faqBox}{Q5. (이론·실무) \emph{catastrophic forgetting} 이 무엇인가요? \ref{ch:27}장에서 실제로 일어나나요?}\label{q5-uxc774uxb860uxc2e4uxbb34-catastrophic-forgetting-uxc774-uxbb34uxc5c7uxc778uxac00uxc694-ch-27-uxc5d0uxc11c-uxc2e4uxc81cuxb85c-uxc77cuxc5b4uxb098uxb098uxc694}
+\begin{faqBox}{Q5. (이론·실무) \emph{catastrophic forgetting} 이 무엇인가요? \ref{ch:27}장에서 실제로 일어나나요?}
 
 \textbf{Catastrophic forgetting} (재앙적 망각): 새 데이터로 학습할 때 \emph{이전에 학습한 표상이 덮어쓰기} 되어 \emph{원래 알던 능력이 손실} 되는 현상.
 
@@ -1697,7 +1655,7 @@ print(len(en_tok(sent)["input_ids"]))
 
 \end{faqBox}
 
-\begin{faqBox}{Q6. (실무) 왜 KoGPT2 는 \inlinecode{AutoTokenizer} 가 아니라 \inlinecode{PreTrainedTokenizerFast} 로 로드하나요?}\label{q6-uxc2e4uxbb34-uxc65c-kogpt2-uxb294-autotokenizer-uxac00-uxc544uxb2c8uxb77c-pretrainedtokenizerfast-uxb85c-uxb85cuxb4dcuxd558uxb098uxc694}
+\begin{faqBox}{Q6. (실무) 왜 KoGPT2 는 \inlinecode{AutoTokenizer} 가 아니라 \inlinecode{PreTrainedTokenizerFast} 로 로드하나요?}
 
 \textbf{\inlinecode{AutoTokenizer.from\_pretrained("skt/kogpt2-base-v2")} 가 영어 GPT2 토크나이저로 잘못 fallback} 하기 때문입니다. 그 결과 special token 이 \texttt{\textless{}\textbar{}endoftext\textbar{}\textgreater{}} 로 잡히고 한국어가 깨집니다 --- 직접 확인해 보면:
 
@@ -1731,7 +1689,7 @@ model.config.pad_token_id = tokenizer.pad_token_id
 
 \end{faqBox}
 
-\begin{faqBox}{Q7. (이론) 다음 장 (\ref{ch:28}장 KoGPT2 SFT) 와의 관계는?}\label{q7-uxc774uxb860-uxb2e4uxc74c-uxcc55uxd130-ch-28-kogpt2-sft-uxc640uxc758-uxad00uxacc4uxb294}
+\begin{faqBox}{Q7. (이론) 다음 장 (\ref{ch:28}장 KoGPT2 SFT) 와의 관계는?}
 
 \ref{ch:28}장 = \emph{같은 KoGPT2 본체} 를 \emph{instruction-response 쌍 데이터} 로 \textbf{SFT} (단계 3). 본 장 (단계 2, continual pretraining) 와의 결정적 차이는 \emph{\inlinecode{labels\ =\ -100} 자리}:
 
@@ -1745,24 +1703,21 @@ prompt_len = len(tokenizer(prompt)["input_ids"])
 labels[:prompt_len] = [-100] * prompt_len
 \end{lstlisting}
 
-{\def\LTcaptype{none} % do not increment counter
-\begin{booktable}{27장 FAQ}\label{faq 표}{tab:ch27-15}
+\begin{booktable}{27장 FAQ 표}{tab:ch27-15}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
-\toprule\noalign{}
+\toprule
 항목 & \ref{ch:27}장 (continual pretraining) & \ref{ch:28}장 (SFT) \\
-\midrule\noalign{}
+\midrule
 
-\bottomrule\noalign{}
-\endlastfoot
 본체 & KoGPT2 125M & \textbf{KoGPT2 125M (동일)} \\
 데이터 & 연속된 일반 텍스트 (TinyStories) & \textbf{instruction-response 쌍} \\
 \inlinecode{labels\ =\ -100} 자리 & pad 만 & \textbf{prompt 부분} \\
 효과 & 도메인 적응 & \textbf{instruction 따라가기 (행동 정렬)} \\
+\bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
-}
 
 본 장의 collator 출력 (거의 모든 자리 = 학습 신호) 을 손에 익혀 두면, \ref{ch:28}장의 \emph{왜 모델이 한국어 instruction 을 따라가게 되는가} 가 \emph{한 줄 \texttt{labels{[}:prompt\_len{]}\ =\ -100}} 으로 단번에 이해됩니다. 그게 Phase 4 thread 의 클라이맥스.
 \end{faqBox}
@@ -1789,26 +1744,23 @@ labels[:prompt_len] = [-100] * prompt_len
 
 \textbf{Phase 4 GPT 시대 4단계 흐름 정리}:
 
-{\def\LTcaptype{none} % do not increment counter
-\begin{booktable}{27장 FAQ}\label{faq 표}{tab:ch27-16}
+\begin{booktable}{27장 FAQ 표}{tab:ch27-16}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lllll@{}}
-\toprule\noalign{}
+\toprule
 장 & 단계 & 본체 & 데이터 & 핵심 \\
-\midrule\noalign{}
+\midrule
 
-\bottomrule\noalign{}
-\endlastfoot
 \ref{ch:24}장 & 1 (영어) & 작은 GPT scratch & 영어 TinyStories & 단계 1 출발 \\
 \ref{ch:25}장 & 2 (영어) & \inlinecode{gpt2} 124M & 영어 TinyStories (동일) & 단계 2: continual pretraining \\
 \ref{ch:26}장 & 1 (한국어) & 작은 GPT scratch & 한국어 TinyStories & 한국어 단계 1 \\
 \textbf{\ref{ch:27}장 \(\leftarrow\) 여기} & \textbf{2 (한국어)} & \textbf{KoGPT2 125M} & \textbf{한국어 TinyStories (동일)} & \textbf{한국어 단계 2: continual pretraining} \\
 \ref{ch:28}장 & 3 & KoGPT2 + SFT & 한국어 instruction 데이터 & \textbf{단계 3: SFT} (\texttt{labels{[}:prompt\_len{]}\ =\ -100}) \\
 \ref{ch:30}--\ref{ch:31}장 & 4 & SFT 모델 + DPO / GRPO & preference / verifier reward & \textbf{단계 4: Alignment} \\
+\bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
-}
 
 \begin{quote}
 \textbf{변하는 축} (\ref{ch:27}장 \(\to\) \ref{ch:28}장): \emph{학습 단계} (continual pretraining \(\to\) SFT). 본체·언어는 같고, \emph{데이터 형식 + \inlinecode{labels\ =\ -100} 자리} 만 바뀜. 본 장의 collator 출력 (거의 모든 자리 학습) 이 \emph{그 한 줄과 정확히 대비되는 기준선} --- \ref{ch:28}장 이 Phase 4 thread 의 클라이맥스인 이유.
