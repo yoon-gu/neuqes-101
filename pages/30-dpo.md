@@ -134,8 +134,8 @@ implicit reward 차이 (margin) 가 커질수록 loss 가 어떻게 줄어드는
 
 ### β 의 역할 — reference 에서 벗어나는 정도
 
-- **β 큼** (예: 0.5): reference 제약이 *느슨* → policy 가 preference 에 강하게 끌려가 *빨리 정렬되지만* reference 에서 멀어져 *collapse (degeneration)·reward hacking* 위험
-- **β 작음** (예: 0.05): reference 제약이 *강함* → 안전하지만 *정렬이 느림*
+- **β 큼** (예: 0.5): reference 제약이 *강함* → policy 가 reference 근처에 묶여 *안전하지만 정렬이 느림* (trl 공식 문서: *Higher β means less deviation from the reference model*)
+- **β 작음** (예: 0.05): reference 제약이 *느슨* → policy 가 preference 에 강하게 끌려가 *빨리 정렬되지만* reference 에서 멀어져 *collapse (degeneration)·reward hacking* 위험
 - 기본값 **0.1** 이 무난한 출발점
 
 ### 왜 frozen reference 가 필요한가
