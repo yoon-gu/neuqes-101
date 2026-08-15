@@ -573,20 +573,6 @@ for trial in range(3):
     print()
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-=== diffusion collator demo (same 2 chunks, masking ratio varies each call)...
-trial 0 | sample 0: t=0.885  ->  masked 111/128 ( 86.7%)
-trial 0 | sample 1: t=0.917  ->  masked 119/128 ( 93.0%)
-
-trial 1 | sample 0: t=0.756  ->  masked  98/128 ( 76.6%)
-trial 1 | sample 1: t=0.732  ->  masked  98/128 ( 76.6%)
-
-trial 2 | sample 0: t=0.937  ->  masked 121/128 ( 94.5%)
-trial 2 | sample 1: t=0.046  ->  masked   9/128 (  7.0%)
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \textbf{관전 포인트} --- \ref{ch:20}장 MLM collator 가 \emph{항상 약 15\%} 를 가렸다면, 이 collator 는 \emph{호출마다 0-100\% 사이 아무 값} 으로 가립니다. 같은 chunk 가 어떤 step 엔 5\% 만, 다른 step 엔 90\% 가려진 채 학습됩니다 \(\to\) 모델이 \emph{모든 난이도의 복원} 을 골고루 학습 \(\to\) 생성 시 \emph{어떤 마스킹 비율에서도} denoise 가능.
@@ -1179,39 +1165,7 @@ mask = torch.rand(B, L) < t.unsqueeze(1)
 
 \end{faqBox}
 
-\begin{faqBox}{Q3. (실무) 생성 결과가 GPT (\ref{ch:24}장) 보다 거친데 정상인가요?}
 
-\textbf{정상이고, 작은 from-scratch diffusion 의 \emph{구조적} 한계입니다.} 두 가지를 구분하세요.
-
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  \textbf{greedy collapse} --- 전부 \texttt{{[}MASK{]}} 에서 greedy(argmax) 로 뽑으면 문맥 없는 첫 step 에서 최빈 토큰(\inlinecode{.})이 모든 자리 최고 confidence 라 \emph{마침표만 반복} 됩니다. 그래서 \inlinecode{diffusion\_generate} 의 기본은 sampling (\inlinecode{temperature=1.0,\ top\_k=50}). greedy 는 진단·비교용으로만.
-\item
-  \textbf{규모 한계} --- sampling 으로 바꿔도 작은 모델의 unconditional 생성은 거칩니다. 이건 \emph{알고리즘이 아니라 규모} 문제예요: 같은 작은 규모에서 \emph{표준 BERT MLM(고정 15\%) 도 복원이 비슷하게 약하고}, \inlinecode{1/t} 재가중 유무도 차이가 없습니다. loss 가 \inlinecode{ln(vocab)} 에서 잘 내려간 것 자체가 학습은 정상이라는 뜻.
-\end{enumerate}
-
-품질을 올리려면 규모를 키우거나(아래) --- 더 현실적으로는 \emph{사전학습된 작은 모델} 을 쓰면 됩니다 (33장).
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-args.max_steps = 3000
-config.num_hidden_layers = 6; config.hidden_size = 384
-diffusion_generate(model, length=64, steps=32)
-\end{lstlisting}
-
-\emph{제대로 된 diffusion 생성} 은 33장에서 --- \textbf{MDLM (170M) / DiffuGPT (124M)} 같은 사전학습 모델이 \emph{같은 알고리즘, 충분한 규모} 로 얼마나 달라지는지 직접 봅니다.
-
-\end{faqBox}
-
-\begin{faqBox}{Q4. (실무) \inlinecode{steps} 를 늘리면 무조건 좋아지나요?}
-
-\textbf{어느 지점까지는 좋아지고, 그 뒤로는 포화} 됩니다. 적은 step (\inlinecode{steps=1}) 은 모든 자리를 독립적으로 한 번에 확정해 \emph{서로 안 맞는 단어} 가 섞이기 쉽고, step 을 늘리면 \emph{이미 확정한 단어가 다음 자리의 문맥} 이 되어 일관성이 오릅니다. 하지만 step 수가 시퀀스 길이를 넘어가면 \emph{더 줄일 \texttt{{[}MASK{]}} 가 없어} 이득이 사라집니다.
-
-trade-off: \inlinecode{steps} ↑ \(\to\) 품질 ↑, 속도 \(\downarrow\). 실전에선 \emph{길이의 절반 정도} 가 흔한 출발점 (예: length=64 \(\to\) steps=32). diffusion 의 매력은 \emph{이 값을 추론 시점에 자유롭게} 정할 수 있다는 것 --- autoregressive 는 불가능.
-
-\end{faqBox}
 
 \begin{faqBox}{Q5. (이론) diffusion 이 autoregressive 보다 빠를 수 있다는데 왜 본 장은 안 빨라 보이나요?}
 
@@ -1221,28 +1175,11 @@ trade-off: \inlinecode{steps} ↑ \(\to\) 품질 ↑, 속도 \(\downarrow\). 실
 
 \end{faqBox}
 
-\begin{faqBox}{Q6. (실무) BPE 2048 을 직접 학습하면서 \texttt{{[}MASK{]}} 토큰은 어떻게 마련했나요?}
-
-\textbf{BPE 를 학습할 때 \inlinecode{special\_tokens} 로 함께 등록} 했습니다. diffusion 의 forward/reverse 모두 \texttt{{[}MASK{]}} 가 핵심인데, 일반 BPE/WordPiece 어휘에는 \texttt{{[}MASK{]}} 가 없을 수 있습니다. 이 장은 작은 from-scratch 모델에 맞춰 \emph{vocab 을 작게} 가져가려고 \inlinecode{bert-base-uncased} 의 WordPiece(30,522) 를 그대로 쓰지 않고, TinyStories 코퍼스에 ByteLevel BPE 를 vocab 2,048 으로 직접 학습합니다. 이때 \texttt{BpeTrainer(special\_tokens={[}“{[}PAD{]}”,\ “{[}UNK{]}”,\ “{[}MASK{]}”{]})} 로 세 특수 토큰을 어휘 맨 앞에 고정 배정해 \texttt{{[}MASK{]}} 가 id 2 에 자리 잡습니다.
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-trainer = trainers.BpeTrainer(vocab_size=2048,
-                              special_tokens=["[PAD]", "[UNK]", "[MASK]"])
-\end{lstlisting}
-
-모델은 \inlinecode{BertForMaskedLM} 을 \emph{random init} 으로 띄우므로 임베딩도 처음부터 함께 학습됩니다 --- \texttt{{[}MASK{]}} 임베딩이 별도 부담이 아니라 본체와 같이 자라납니다. bidirectional encoder (\inlinecode{BertForMaskedLM}) 와 \texttt{{[}MASK{]}} 기반 denoising 이 자연스럽게 짝을 이룹니다.
-
-\end{faqBox}
-
-\begin{faqBox}{Q7. (이론) 그럼 앞으로 autoregressive 는 사라지나요?}
-
-\textbf{가까운 미래엔 아닙니다.} autoregressive 는 \emph{성숙도 (KV-cache, 방대한 인프라·최적화), 안정적 품질, 검증된 스케일링} 에서 여전히 표준입니다. diffusion LM 은 \emph{병렬 생성·infilling·step 조절} 이라는 차별점으로 \emph{특정 용도} (빠른 생성, 편집, 제약 만족) 에서 주목받는 \emph{대안} 입니다.
-
-둘은 \emph{대체} 라기보다 \emph{공존·융합} 으로 가는 중 (일부 연구는 둘을 섞음). 본 커리큘럼이 \emph{둘 다 직접 구현} (\ref{ch:24}장 GPT, 32장 diffusion) 해 본 이유 --- \emph{생성 패러다임의 지형} 을 손으로 익혀 두면 어느 쪽이 발전하든 따라갈 수 있습니다.
-\end{faqBox}
 
 
+
+
+\compactFAQMore{4}
 
 \begin{previewBox}{미리보기: 다음 장}
 

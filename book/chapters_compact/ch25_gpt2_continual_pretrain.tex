@@ -432,7 +432,7 @@ print(
 \end{lstlisting}
 
 \begin{codeRead}
-\inlinecode{transformers} 같은 주요 패키지를 불러옵니다. \textbf{3행}의 \inlinecode{t0 = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{4행}의 \inlinecode{tokenizer = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{tokenizer.pad\_token = tok...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{7행}의 \inlinecode{model = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\inlinecode{transformers} 같은 주요 패키지를 불러옵니다. \textbf{3행}의 \inlinecode{t0 = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{4행}의 \inlinecode{tokenizer = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -982,72 +982,7 @@ HF 의 continual pretraining / fine-tuning 표준 lr 범위: \inlinecode{1e-5} -
 
 \end{faqBox}
 
-\begin{faqBox}{Q3. (이론) \ref{ch:24}장 (3M) 가 같은 데이터로 학습했는데 \ref{ch:25}장 (124M) 결과가 훨씬 좋다면, \emph{모델 크기의 위력} 인가 \emph{사전학습의 위력} 인가?}
 
-\textbf{둘이 \emph{섞여서} 분리 불가능} 입니다. 본 장의 셋업은 \emph{두 변수가 동시에 변함}:
-
-\begin{itemize}
-\tightlist
-\item
-  \ref{ch:24}장 \(\to\) \ref{ch:25}장 변화: 모델 크기 \emph{3M \(\to\) 124M (약 40배)} + 사전학습 \emph{없음 \(\to\) WebText 약 40GB}
-\end{itemize}
-
-진짜 \emph{모델 크기와 사전학습 효과를 분리} 하려면 \emph{2 \(\times\) 2 격자} 실험이 필요:
-
-\begin{booktable}{25장 FAQ 표}{tab:ch25-13}
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}llll@{}}
-\toprule
-셋업 & 모델 크기 & 사전학습 & 본 커리큘럼 \\
-\midrule
-
-(a) & 3M & 없음 & \textbf{\ref{ch:24}장} \\
-(b) & 3M & WebText 풍 사전학습 & (미실험) \\
-(c) & 124M & 없음 & (미실험 --- 124M scratch + TinyStories 만 학습) \\
-(d) & 124M & WebText 약 40GB & \textbf{\ref{ch:25}장} \\
-\bottomrule
-\end{tabular}
-\end{adjustbox}
-\end{booktable}
-
-본 커리큘럼에는 (a) 와 (d) 만 있어 \emph{둘의 차이} 만 보입니다. (b) 와 (c) 는 \emph{T4 + 30분 룰} 안에 어렵습니다 (124M scratch 는 \emph{TinyStories 만으로 의미 있는 학습이 부족함}, 3M WebText 사전학습은 \emph{데이터 규모 자체가 30분에 안 맞음}).
-
-\textbf{실용적 결론}: 실무에서는 (b)(c) 가 \emph{비용 대비 비효율} 이라 (d) 패턴이 표준. \emph{대규모 사전학습 모델을 가져와 작은 도메인 데이터로 continual pretraining} --- 본 장의 패턴이 그 자체로 \emph{실무 표준 레시피}.
-
-\end{faqBox}
-
-\begin{faqBox}{Q4. (실무) gpt2 토크나이저로 \emph{한국어} TinyStories-Korean (\ref{ch:26}장도메인) 을 학습하면 어떻게 되나요?}
-
-\textbf{거의 작동하지 않습니다} --- gpt2 BPE 는 \emph{WebText (영어 중심)} 위에 학습되어 \emph{한국어 토큰} 이 vocab 에 거의 없습니다. 한국어 텍스트는 \emph{byte 단위로 잘게 쪼개져} 표현됩니다.
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-tokenizer = AutoTokenizer.from_pretrained("gpt2")
-sample_korean = "옛날 옛적에 작은 토끼가 살았어요."
-enc = tokenizer(sample_korean)
-
-print(f"Korean token count : {len(enc['input_ids'])}")
-print(
-    f"tokens (first 10)  : "
-    f"{tokenizer.convert_ids_to_tokens(enc['input_ids'])[:10]}"
-)
-\end{lstlisting}
-
-결과:
-
-\begin{itemize}
-\tightlist
-\item
-  \emph{토큰 수 폭증} --- 같은 의미가 약 5-10배 많은 토큰으로 표현 \(\to\) context window 낭비
-\item
-  \emph{임베딩이 한국어 단어 단위 의미를 못 가짐} --- byte 단위 임베딩만 있어 학습 효율 매우 낮음
-\item
-  \emph{gpt2 의 사전학습 표상이 한국어로 transfer 안 됨} --- WebText 에 한국어가 거의 없어 일반화 약함
-\end{itemize}
-
-그래서 \textbf{\ref{ch:26}장 (한국어 GPT scratch)} 는 \emph{한국어 데이터로 BPE 를 처음부터 학습 + 한국어 GPT 본체도 처음부터 학습} 패턴을 택합니다. \emph{토크나이저 + 본체가 운명공동체} 이므로 \emph{한국어로 처음부터} 가 정공법.
-
-\end{faqBox}
 
 \begin{faqBox}{Q5. (이론·실무) \emph{catastrophic forgetting} 이 무엇인가요? \ref{ch:25}장에서 실제로 일어나나요?}
 
@@ -1082,107 +1017,11 @@ print(
 
 \end{faqBox}
 
-\begin{faqBox}{Q6. (실무) \emph{Trainer 가 \ref{ch:24}장과 같다} 는데 진짜 같나요?}
-
-\textbf{클래스도, 인자 구조도 같습니다} --- 인스턴스화하는 \inlinecode{transformers.Trainer} 의 \emph{클래스 자체가 동일} 합니다. \ref{ch:24}장 / \ref{ch:25}장의 Trainer 인자만 나란히 비교해 보세요:
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-# 24장
-trainer = Trainer(
-    model=model,                              # GPT2LMHeadModel (
-        3M,
-        random init,
-    )
-    args=args,                                # TrainingArguments(
-        lr=3e-4,
-        max_steps=1500,
-        ...,
-    )
-    train_dataset=lm_train,
-    # TinyStories
-    eval_dataset=lm_val,
-    data_collator=collator,
-    # DataCollatorForLanguageModeling(mlm=False)
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 학습 설정을 만들고 학습 루프를 실행하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-    callbacks=[vram_cb],
-)
-
-# 25장
-trainer = Trainer(
-    model=model,                              # AutoModelForCausalLM (
-        124M,
-        gpt2 pretrained,
-    )
-    args=args,                                # TrainingArguments(
-        lr=2e-5,
-        num_train_epochs=1,
-        ...,
-    )
-    train_dataset=lm_train,
-    eval_dataset=lm_val,
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}[firstnumber=33]
-    data_collator=collator,
-    callbacks=[vram_cb],
-)
-\end{lstlisting}
-
-다른 곳: \emph{model 인자에 넘기는 인스턴스} 와 \emph{args 의 lr / step 설정} 두 곳. 나머지는 \emph{글자 그대로 동일}.
-
-\begin{quote}
-그게 \emph{학습 단계 2 (continual pretraining)} 의 미적 본질 --- \emph{trainer / collator / loss 코드 재사용}. 단계 3 (SFT, \ref{ch:28}장) 에서도 \emph{대부분 같습니다}, 다만 \emph{collator 가 \texttt{labels{[}:prompt\_len{]}\ =\ -100} 마스킹} 한다는 점이 추가될 뿐.
-\end{quote}
-
-\end{faqBox}
-
-\begin{faqBox}{Q7. (이론) 다음 장 (\ref{ch:26}장 한국어 GPT scratch) 와의 관계는?}
-
-\ref{ch:26}장 는 \emph{\ref{ch:24}장의 한국어판} --- \emph{작은 GPT + 한국어 TinyStories-Korean + BPE 직접 학습} 패턴. \emph{\ref{ch:25}장의 한국어판 (한국어 사전학습 GPT + continual pretraining)} 이 \emph{아닌} 이유:
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{한국어 사전학습 GPT 가 부족} --- \inlinecode{skt/kogpt2-base-v2} (125M) 등이 있지만 \emph{영어 gpt2 만큼 표준화된 토크나이저·본체 조합} 이 아님. \ref{ch:28}장 SFT 에서 KoGPT2 가 등장
-\item
-  \textbf{한국어 토크나이저 새로 학습이 필요} --- Q4 에서 봤듯 영어 BPE 는 한국어를 못 다룸. \emph{한국어 BBPE 를 직접 학습} 하는 게 정공법
-\item
-  \textbf{Phase 4 의 한국어 사전학습 단계 1 장} --- \ref{ch:22}장 (한국어 BERT scratch) 의 GPT 판
-\end{itemize}
-
-\ref{ch:24}장 \(\to\) \ref{ch:26}장 흐름:
-
-\begin{booktable}{25장 FAQ 표}{tab:ch25-14}
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}lllll@{}}
-\toprule
-Ch & 언어 & 본체 & 토크나이저 & 단계 \\
-\midrule
-
-22 & 한국어 & 작은 BERT scratch & klue/bert-base 가져옴 & BERT 단계 사전학습 \\
-24 & 영어 & 작은 GPT scratch & BPE 직접 학습 & GPT 시대 단계 1 \\
-\textbf{25 \(\leftarrow\) 본 장} & 영어 & gpt2 (124M, WebText) & gpt2 BPE 그대로 & \textbf{GPT 시대 단계 2} \\
-26 & 한국어 & 작은 GPT scratch & BPE 직접 학습 (한국어) & GPT 시대 단계 1 (한국어판) \\
-\bottomrule
-\end{tabular}
-\end{adjustbox}
-\end{booktable}
-
-\begin{quote}
-\ref{ch:25}장 \(\leftrightarrow\) \ref{ch:26}장 사이엔 \emph{축이 두 개 동시에 바뀝니다} (언어 + 학습 단계). 본 장 한정으로는 \emph{\ref{ch:24}장 \(\leftrightarrow\) \ref{ch:25}장 가 한 축 격리} 임을 기억해 두시면 됩니다.
-\end{quote}
-\end{faqBox}
 
 
+
+
+\compactFAQMore{4}
 
 \begin{previewBox}{미리보기: 다음 장}
 

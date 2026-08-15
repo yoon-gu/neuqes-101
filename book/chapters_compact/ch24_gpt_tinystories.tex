@@ -598,7 +598,7 @@ print(
 \end{lstlisting}
 
 \begin{codeRead}
-\inlinecode{tokenizers, transformers} 같은 주요 패키지를 불러옵니다.
+\inlinecode{tokenizers, transformers} 같은 주요 패키지를 불러옵니다. \textbf{8행}의 \inlinecode{VOCAB\_SIZE = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{9행}의 \inlinecode{EOS = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -1292,13 +1292,6 @@ DataCollatorForLanguageModeling(tokenizer, mlm=False)
 
 \end{faqBox}
 
-\begin{faqBox}{Q2. (이론) TinyStories 는 \emph{일반 도메인} 인가요 \emph{task corpus} 인가요? 왜 일반 위키 (Wikitext-103) 가 아닌가요?}
-
-\textbf{TinyStories 는 \emph{합성된 simple 스토리} 라 \emph{generation 시연 가치} 가 우선} 인 데이터입니다. \emph{진정한 일반 도메인 사전학습} 의 의미에서는 Wikitext-103 보다 약하지만, 본 장의 목적은 \emph{작은 모델로 generation 이 어떻게 동작하는지를 직접 보는 것} - 일반 위키 (Wikitext-103) 로 같은 셋업을 돌리면 3M 모델이 \emph{문장 구조를 학습하기 전에 학습이 끝남}. TinyStories 의 단순한 어휘·문법 덕분에 \emph{작은 모델로도 grammatical 한 생성이 가능} 합니다.
-
-\ref{ch:25}장 가 그 \emph{trade-off 의 반대편} 을 다룹니다 - \emph{큰 모델 (gpt2 124M) + 대규모 일반 코퍼스 (WebText)} 의 사전학습된 본체를 TinyStories 로 \textbf{continual pretraining}. \emph{작은 + 합성 도메인 from-scratch} vs \emph{큰 + 일반 도메인 사전학습 후 continual pretraining} 의 generation 품질 격차가 핵심 비교.
-
-\end{faqBox}
 
 \begin{faqBox}{Q3. (이론) BPE 토크나이저는 \ref{ch:19}장의 WordPiece / WordLevel 과 어떻게 다른가요?}
 
@@ -1333,28 +1326,6 @@ bpe.train_from_iterator(text_iter, trainer)
 
 \end{faqBox}
 
-\begin{faqBox}{Q4. (이론) \inlinecode{tie\_word\_embeddings=True} (weight tying) 가 정확히 무엇을 공유하나요?}
-
-\textbf{Input embedding (\inlinecode{wte}) 의 weight 와 LM head (\inlinecode{Linear(H,\ V)}) 의 weight 가 \emph{같은 텐서를 공유}} 합니다.
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-model.lm_head.weight = model.transformer.wte.weight
-\end{lstlisting}
-
-직관: input embedding 은 \emph{vocab token \(\to\) hidden} 변환, LM head 는 \emph{hidden \(\to\) vocab logit} 변환. 둘이 \emph{transpose 관계} 라 같은 weight 를 공유해도 의미가 통합니다. 효과:
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{파라미터 절약}: \texttt{vocab\_size\ \$\textbackslash{}times\$\ hidden\_size} 만큼 (본 장: 2,048 \(\times\) 256 = 524,288 = 약 0.5M params). 전체 3M 모델의 약 17\% - 작은 모델에선 비중이 큼.
-\item
-  \textbf{학습 안정}: input 과 output 이 \emph{같은 임베딩 공간} 을 공유 \(\to\) 일관성 ↑.
-\end{itemize}
-
-GPT-2 의 기본값. 우리 모델도 자동으로 적용됩니다 (\inlinecode{config.tie\_word\_embeddings=True}).
-
-\end{faqBox}
 
 \begin{faqBox}{Q5. (실무) temperature / top\_k / top\_p sampling 의 의미는?}
 
@@ -1387,55 +1358,11 @@ model.generate(
 
 \end{faqBox}
 
-\begin{faqBox}{Q6. (실무) \inlinecode{labels\ =\ -100} 트릭이 CausalLM 사전학습에서 거의 안 쓰이는데, 그럼 언제 쓰이나요?}
-
-본 장의 collator 출력에서 봤듯 CausalLM 사전학습은 \emph{pad 토큰 자리만} \inlinecode{-100} (그것도 \inlinecode{group\_texts} 로 chunk 길이가 모두 같으면 pad 도 없음). 거의 안 쓰임.
-
-하지만 같은 트릭이 \textbf{\ref{ch:28}장 (SFT, Instruction Tuning)} 에서 \emph{결정적 한 줄} 로 부활합니다:
-
-\Needspace{9\baselineskip}
-\begin{lstlisting}
-prompt = "### 질문: 한국의 수도는?\n### 답변: "
-response = "서울입니다."
-
-input_ids = tokenizer(prompt + response)["input_ids"]
-labels = input_ids.copy()
-prompt_len = len(tokenizer(prompt)["input_ids"])
-labels[:prompt_len] = [-100] * prompt_len
-\end{lstlisting}
-
-이 한 줄로 모델은 \emph{prompt 토큰을 외우지 않고 response 만 학습} - 같은 instruction 에 대한 \emph{다양한 response} 가 학습 가능하고, 추론 시에는 \emph{주어진 instruction 에 대해 response 를 생성} 하게 됩니다. \emph{모델이 instruction 을 따라간다} 는 게 이 한 줄의 효과.
-
-본 장의 collator 출력 (거의 모든 자리 = 학습 신호) 을 손에 익혀 두면 \ref{ch:28}장의 \texttt{labels{[}:prompt\_len{]}\ =\ -100} 가 단번에 이해됩니다.
-
-\end{faqBox}
-
-\begin{faqBox}{Q7. (실무) 다음 장 (\ref{ch:25}장 --- continual pretraining) 와의 비교는 어떻게 되나요?}
-
-\ref{ch:25}장 = \emph{OpenAI 가 사전학습한 \inlinecode{gpt2} (124M params, WebText 약 40GB) 를 TinyStories 로} \textbf{continual pretraining} (같은 CausalLM task, 같은 LM head --- \emph{task adaptation 의미의 fine-tune 이 아님}). 본 장의 \emph{작은 from-scratch 모델} 과 \emph{완전 반대 출발점}:
-
-\begin{booktable}{24장 FAQ 표}{tab:ch24-14}
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}lll@{}}
-\toprule
-축 & \ref{ch:24}장 (본 장) & \ref{ch:25}장 (다음) \\
-\midrule
-
-모델 크기 & 약 3M params & \textbf{약 124M (40배)} \\
-사전학습 & from scratch (random init) & \textbf{OpenAI WebText 약 40GB 사전학습} \\
-TinyStories 학습 & 사전학습 그 자체 (1500 steps) & \textbf{continual pretraining} (1 epoch, 약 3,200 steps) \\
-토크나이저 & 직접 학습 BPE vocab 2,048 & \textbf{gpt2 BPE vocab 50,257 (그대로)} \\
-Generation 품질 & grammatical 한 동화 풍 영어 & \textbf{자연스러운 동화 + 일반 도메인 폭} \\
-학습 시간 & 약 1분 (사전학습) & \textbf{약 19분} (124M 본체 continual pretraining) \\
-\bottomrule
-\end{tabular}
-\end{adjustbox}
-\end{booktable}
-
-\textbf{핵심 메시지}: \emph{대규모 일반 사전학습된 본체} + \emph{작은 도메인 continual pretraining} 이 \emph{작은 from-scratch 모델} 보다 \emph{낮은 loss 에서 출발해 더 좋게} 도달합니다 (학습 시간은 124M 본체라 오히려 더 깁니다). \emph{왜 실무는 보통 from-scratch 가 아니라 사전학습 모델을 가져와 새 데이터로 계속 학습하거나 SFT 하는가} 의 답. (단계 3 SFT 는 \ref{ch:28}장에서 본격.)
-\end{faqBox}
 
 
+
+
+\compactFAQMore{4}
 
 \begin{previewBox}{미리보기: 다음 장}
 

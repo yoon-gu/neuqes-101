@@ -175,15 +175,6 @@ logits \((z_0, z_1)\) & softmax \(\to\) \((p_0, p_1)\) & 정답=1일 때 손실 
 \textbf{1행}의 \inlinecode{!nvidia-smi}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 03:44:42 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 43C P8 11W / 70W | 3MiB / 15360MiB | 0% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \section{데이터 준비}
@@ -222,17 +213,6 @@ print(
     f"{train_tok[0]['labels']}  (int scalar)"
 )
 \end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Dataset({
-    features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'],
-    num_rows: 4040
-})
-
-First sample label: 1  (int scalar)
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -327,15 +307,6 @@ classifier (\texttt{Linear(768\$\textbackslash{}to\$K)}) & \textbf{769} (=768+1)
 !nvidia-smi
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 03:45:15 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 43C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \section{학습}
@@ -384,15 +355,6 @@ def compute_metrics(eval_pred):
 \begin{lstlisting}
 !nvidia-smi
 \end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 03:45:47 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 57C P0 65W / 70W | 1579MiB / 15360MiB | 56% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -451,25 +413,8 @@ print(pd.DataFrame({
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{preds\_output = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{2행}의 \inlinecode{logits2 = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{labels = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{exp = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{probs\_full = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{7행}의 \inlinecode{probs = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\textbf{1행}의 \inlinecode{preds\_output = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{2행}의 \inlinecode{logits2 = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{labels = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-logits2 (raw)  shape: (804, 2)
-logit z = z1-z0 range: [-5.10, 4.88]
-Prob range:            [0.0061, 0.9925]
-Positive prediction rate (prob >= 0.5): 46.1%
-
-First 5 samples:
- label    z0    z1  z=z1-z0  prob_B  pred
-     1 -1.81  2.26     4.08  0.9833     1
-     0  1.47 -1.55    -3.02  0.0466     0
-     1 -2.05  2.60     4.65  0.9905     1
-     1 -1.69  2.29     3.99  0.9818     1
-     1 -2.13  2.64     4.77  0.9916     1
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -900,19 +845,6 @@ model = AutoModelForSequenceClassification.from_pretrained(
 
 \end{faqBox}
 
-\begin{faqBox}{Q3. (실무) \inlinecode{compute\_metrics} 안의 softmax를 직접 구현하지 말고 \inlinecode{torch.softmax} 쓰면 안 되나요?}
-
-써도 됩니다. 단, \inlinecode{compute\_metrics} 가 받는 \inlinecode{logits} 는 \emph{numpy 배열} 이라 \inlinecode{torch.from\_numpy} 로 한 번 감싸야 합니다.
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-import torch
-probs_full = torch.softmax(torch.from_numpy(logits), dim=-1).numpy()
-\end{lstlisting}
-
-이 장에선 \emph{softmax가 어떻게 동작하는지} 노출하기 위해 \inlinecode{np.exp\ /\ sum} 으로 직접 짰습니다 --- \inlinecode{max} 빼서 안정화하는 부분이 곧 PyTorch 내부 구현과 동일한 트릭입니다.
-
-\end{faqBox}
 
 \begin{faqBox}{Q4. (이론) 방식 A·B 가 sklearn 안에선 사실상 같은 모델이라고 했는데, 그러면 BERT 에서도 두 학습 결과가 같아야 하지 않나요?}
 
@@ -935,56 +867,11 @@ sklearn에서는 두 \emph{방식} 의 차이가 BERT보다 훨씬 작습니다.
 
 \end{faqBox}
 
-\begin{faqBox}{Q5. (실무) 학습된 모델을 저장·로드할 때 두 방식 모델은 호환되나요?}
-
-\textbf{아니요, 분류 헤드 shape이 달라서 직접 호환되지 않습니다.}
-
-\begin{itemize}
-\tightlist
-\item
-  방식 A: \inlinecode{classifier.weight.shape\ =\ (1,\ 768)}, \inlinecode{classifier.bias.shape\ =\ (1,)}
-\item
-  방식 B: \inlinecode{classifier.weight.shape\ =\ (2,\ 768)}, \inlinecode{classifier.bias.shape\ =\ (2,)}
-\end{itemize}
-
-\inlinecode{from\_pretrained} 로 다른 방식의 체크포인트를 로드하면 분류 헤드를 \emph{새로 초기화} 한다는 경고가 뜹니다 (DistilBERT body는 그대로 로드됨). 따라서 두 방식 사이의 변환은 \emph{처음부터 다시 학습} 이 정확합니다.
-
-만약 \textbf{같은 표현력을 유지하면서} 변환하고 싶다면, 방식 A의 \(w_A, b_A\) 로부터 방식 B의 헤드를 다음과 같이 만들 수 있습니다 --- 한쪽 클래스 logit을 0으로 고정하면 됩니다.
-
-\Needspace{10\baselineskip}
-\begin{lstlisting}
-W_A = model_A.classifier.weight    # shape (1, 768)
-b_A = model_A.classifier.bias      # shape (1,)
-
-W_B = torch.cat([torch.zeros_like(W_A), W_A], dim=0)
-b_B = torch.cat(
-    [torch.zeros_like(b_A), b_A],
-    dim=0)  # (2,,
-)
-\end{lstlisting}
-
-이러면 \(z_1 - z_0 = (W_A x + b_A) - 0 = z_A\) 가 정확히 일치합니다. 실무에선 거의 안 쓰지만 \emph{수학적 동등성} 의 구체적 모습을 보여주는 좋은 예시.
-
-\end{faqBox}
-
-\begin{faqBox}{Q6. (실무) \inlinecode{id2label} / \inlinecode{label2id} 는 꼭 등록해야 하나요?}
-
-학습·평가 자체에는 영향 없지만 \textbf{추론 시 편리} 합니다.
-
-\Needspace{8\baselineskip}
-\begin{lstlisting}
-pipe = pipeline(
-    "text-classification",
-    model=model,
-    tokenizer=tokenizer,
-)
-pipe("Great food!")
-\end{lstlisting}
-
-또 \inlinecode{model.config.id2label} 이 huggingface hub에 모델을 올릴 때 widget 라벨 표시용으로 쓰입니다. 한 줄 추가로 큰 이득이라 항상 등록하는 게 좋습니다.
-\end{faqBox}
 
 
+
+
+\compactFAQMore{3}
 
 \section{오류 실험 (선택)}
 

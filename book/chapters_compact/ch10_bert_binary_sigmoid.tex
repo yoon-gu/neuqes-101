@@ -201,15 +201,6 @@ L = -\frac{1}{N}\sum_{i=1}^{N}\left[\,y_i \log \hat p_i + (1 - y_i)\log(1 - \hat
 \textbf{1행}의 \inlinecode{!nvidia-smi}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 03:42:33 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 49C P8 14W / 70W | 3MiB / 15360MiB | 0% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \section{데이터 준비}
@@ -324,15 +315,6 @@ problem_type:         multi_label_classification
 !nvidia-smi
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 03:42:58 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 49C P8 14W / 70W | 3MiB / 15360MiB | 0% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \section{학습}
@@ -379,15 +361,6 @@ def compute_metrics(eval_pred):
 !nvidia-smi
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 03:43:30 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 64C P0 70W / 70W | 1579MiB / 15360MiB | 77% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \section{평가}
@@ -431,7 +404,7 @@ print(pd.DataFrame({
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{preds\_output = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{2행}의 \inlinecode{logits = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{probs = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{4행}의 \inlinecode{labels = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\textbf{1행}의 \inlinecode{preds\_output = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{2행}의 \inlinecode{logits = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{probs = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -590,15 +563,6 @@ for f in sorted(os.listdir("./shared_binary_results")):
     print(f"  {f}  ({size_kb:.1f} KB)")
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Saved: ./shared_binary_results/
-  method_a_labels.npy  (6.4 KB)
-  method_a_probs.npy  (3.3 KB)
-  method_a_summary.json  (0.3 KB)
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \textbf{참고}: Colab은 세션이 끝나면 \inlinecode{./shared\_binary\_results/} 가 사라집니다. \emph{Drive에 보존} 하려면 다음과 같이 마운트.
@@ -666,20 +630,6 @@ shutil.copytree(
 
 \end{faqBox}
 
-\begin{faqBox}{Q2. (이론) 라벨을 길이 1 multi-hot 벡터(\texttt{{[}0.0{]}}, \texttt{{[}1.0{]}})로 두는 이유는?}
-
-\inlinecode{BCEWithLogitsLoss} 가 \emph{logits 와 같은 shape의 float 텐서} 를 라벨로 받기 때문입니다.
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-# logits.shape = (batch, num_labels=1)
-
-loss = BCEWithLogitsLoss()(logits, labels)
-\end{lstlisting}
-
-라벨을 scalar(\inlinecode{float(b)})로 두면 batching 시 shape가 (batch,)가 되어 (batch, 1) logits와 안 맞습니다. \texttt{{[}float(b){]}} 한 번 감싸 length-1 list로 두면 (batch, 1) shape이 자동으로 만들어집니다.
-
-\end{faqBox}
 
 \begin{faqBox}{Q3. (실무) \inlinecode{compute\_metrics} 의 \inlinecode{eval\_pred.predictions} 는 어떤 형태인가요?}
 
@@ -716,39 +666,11 @@ loss = BCEWithLogitsLoss()(logits, labels)
 
 \end{faqBox}
 
-\begin{faqBox}{Q5. (실무) 같은 데이터로 두 번 학습하면 결과가 똑같나요?}
-
-\textbf{거의 같지만 미세한 차이가 있습니다}. 이유:
-
-\begin{itemize}
-\tightlist
-\item
-  random seed (\inlinecode{seed=42}) 고정해도 \emph{CUDA 비결정성} 이 남음 (cuDNN의 일부 알고리즘이 floating point 연산 순서를 비결정적으로 처리).
-\item
-  DataLoader의 shuffle, dropout, layer init은 seed로 통제되지만 GPU 부동소수 연산 자체가 결정적이지 않음.
-\end{itemize}
-
-완전히 결정적으로 만들려면 \inlinecode{torch.use\_deterministic\_algorithms(True)} 같은 옵션이 있지만 속도가 느려집니다. 실무에선 \emph{seed 여러 개로 학습 후 평균} 이 일반적.
-
-\end{faqBox}
-
-\begin{faqBox}{Q6. (실무) 학습 도중 학습률을 어떻게 조정하나요?}
-
-\inlinecode{Trainer} 는 기본으로 \emph{linear warmup \(\to\) linear decay} 스케줄러를 적용합니다. \inlinecode{lr\_scheduler\_type} 으로 바꿀 수 있습니다.
-
-\Needspace{7\baselineskip}
-\begin{lstlisting}
-TrainingArguments(
-    ...,
-    lr_scheduler_type="cosine",
-    warmup_ratio=0.1,
-)
-\end{lstlisting}
-
-작은 데이터·짧은 학습이면 default linear가 무난. 학습 중 LR을 직접 모니터링하려면 \inlinecode{report\_to="wandb"} 같은 트래커 필수.
-\end{faqBox}
 
 
+
+
+\compactFAQMore{3}
 
 \section{오류 실험 (선택)}
 

@@ -208,7 +208,7 @@ print(f"Diff: {abs(acc_a - acc_b):.4f}")
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{model\_a = ...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model\_a.fit(...)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{model\_b = ...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{5행}의 \inlinecode{model\_b.fit(...)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{7행}의 \inlinecode{acc\_a = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{8행}의 \inlinecode{acc\_b = ...}에서는 학습된 모델로 최종 예측값을 만듭니다.
+\textbf{1행}의 \inlinecode{model\_a = ...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model\_a.fit(...)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{model\_b = ...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -322,7 +322,7 @@ print(
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{z0\_arr = ...}에서는 비교 실험에 사용할 작은 배열을 만듭니다. \textbf{2행}의 \inlinecode{z1\_arr = ...}에서는 비교 실험에 사용할 작은 배열을 만듭니다. \textbf{4행}의 \inlinecode{softmax\_p1 = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{sigmoid\_diff = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\textbf{1행}의 \inlinecode{z0\_arr = ...}에서는 비교 실험에 사용할 작은 배열을 만듭니다. \textbf{2행}의 \inlinecode{z1\_arr = ...}에서는 비교 실험에 사용할 작은 배열을 만듭니다. \textbf{4행}의 \inlinecode{softmax\_p1 = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -430,22 +430,6 @@ Max diff: 2.22e-16  (numerical noise)
 
 \end{faqBox}
 
-\begin{faqBox}{Q3. (이론) softmax 합=1 제약은 어디서 오나요?}
-
-수식 자체가 정규화를 강제합니다.
-
-\begin{equation}
-\label{eq:ch04-07}
-\text{softmax}(z)_k = \frac{e^{z_k}}{\sum_{j=1}^{K} e^{z_j}}
-\end{equation}
-
-식~\eqref{eq:ch04-07}은 logit 벡터를 확률 분포로 바꾸는 softmax의 정의입니다.
-
-분모가 모든 클래스 \(e^{z_j}\)의 합이라 분자들이 그 합을 정확히 분할 --- 합이 1.
-
-\textbf{왜 이런 구조?} 모델 출력을 “확률 분포”로 해석하고 싶어서입니다. 확률 분포는 정의상 \(\sum_k p_k = 1\) 이고 각 항이 {[}0, 1{]}. softmax는 임의 실수 logit 벡터를 그런 분포로 보내는 가장 자연스러운 변환 중 하나(지수 함수 = 단조증가 + 양수 보장 \(\to\) 정규화).
-
-\end{faqBox}
 
 \begin{faqBox}{Q4. (실무) sklearn binary 에서 \inlinecode{coef\_.shape} 가 왜 \inlinecode{(1,\ V)} 인가요? --- 방식 A·B 가 왜 같은 결과로 수렴하는가}
 
@@ -462,58 +446,11 @@ LogisticRegression().fit(X, y_3class).coef_.shape
 
 \end{faqBox}
 
-\begin{faqBox}{Q5. (이론) sklearn 에서 softmax 와 OvR 을 어떻게 구분하나요?}
-
-\inlinecode{LogisticRegression()} 의 동작은 \textbf{학습 데이터의 클래스 개수} 가 결정합니다.
-
-\begin{booktable}{4장 FAQ 표}{tab:ch04-06}
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}lll@{}}
-\toprule
-데이터 & 자동 학습 형태 & logit head \\
-\midrule
-
-binary (K=2) & sigmoid + BCE & \inlinecode{coef\_} shape \inlinecode{(1,\ V)} \\
-multi-class (K\(\ge\)3) & softmax + CE (multinomial) & \inlinecode{coef\_} shape \inlinecode{(K,\ V)} \\
-\bottomrule
-\end{tabular}
-\end{adjustbox}
-\end{booktable}
-
-\textbf{K개 독립 binary} (multi-label 또는 명시적 OvR) 가 필요하면 별도 wrapper:
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-from sklearn.multiclass import OneVsRestClassifier
-OneVsRestClassifier(LogisticRegression()).fit(X, Y)
-\end{lstlisting}
-
-이 장의 방식 A·B 둘 다 \inlinecode{LogisticRegression()} 한 줄로 학습합니다 --- binary 데이터라 sklearn 이 같은 collapse 형태로 만들어 둘이 \emph{수치적으로 동일} (FAQ Q4). 두 방식이 \emph{진짜로 분리된} 학습이 되려면 PyTorch nn.Linear 를 직접 짜야 합니다 (\ref{ch:10}·\ref{ch:11}장).
-
-\end{faqBox}
-
-\begin{faqBox}{Q6. (실무) Hugging Face \inlinecode{Trainer}도 두 방식이 가능한가요?}
-
-가능하고, \inlinecode{AutoModelForSequenceClassification} 인자 한 줄 차이입니다.
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-AutoModelForSequenceClassification.from_pretrained(
-    "distilbert-base-uncased",
-    num_labels=1,
-    problem_type="single_label_classification",
-)
-
-AutoModelForSequenceClassification.from_pretrained(
-    "distilbert-base-uncased",
-    num_labels=2,
-)
-\end{lstlisting}
-
-이 커리큘럼의 \ref{ch:10}·\ref{ch:11}장이 두 방식을 BERT로 \emph{별도 학습} 해 비교하는 장입니다. 이 장에서 익힌 동등성이 그 비교의 출발점이 됩니다.
-\end{faqBox}
 
 
+
+
+\compactFAQMore{3}
 
 \section{오류 실험 (선택)}
 

@@ -200,15 +200,6 @@ location & 1 & -0.5 & 0.378 & \(-\log 0.378 = 0.974\) \\
 \textbf{1행}의 \inlinecode{!nvidia-smi}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 03:49:55 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 46C P8 11W / 70W | 3MiB / 15360MiB | 0% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \section{데이터 준비}
@@ -270,26 +261,6 @@ for n in range(K + 1):
         f"{cnt/len(Y_train):.1%})"
     )
 \end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Per-aspect activation rate (train):
-       food: 55.6%  (2778 / 5000)
-    service: 49.6%  (2480 / 5000)
-      price: 29.4%  (1472 / 5000)
-   ambiance: 18.1%  (905 / 5000)
-   location: 21.9%  (1095 / 5000)
-
-Mean active labels per sample: 1.75
-Active label distribution (train):
-  0 labels active: 741 samples (14.8%)
-  1 labels active: 1464 samples (29.3%)
-  2 labels active: 1506 samples (30.1%)
-  3 labels active: 957 samples (19.1%)
-  4 labels active: 277 samples (5.5%)
-  5 labels active: 55 samples (1.1%)
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -411,15 +382,6 @@ id2label: {0: 'food', 1: 'service', 2: 'price', 3: 'ambiance', 4: 'location'}
 !nvidia-smi
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 03:50:22 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 47C P8 14W / 70W | 3MiB / 15360MiB | 0% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \section{학습}
@@ -482,15 +444,6 @@ def compute_metrics(eval_pred):
 !nvidia-smi
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 03:51:02 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 63C P0 34W / 70W | 1577MiB / 15360MiB | 72% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \section{평가}
@@ -530,20 +483,8 @@ for k, a in enumerate(ASPECTS):
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{preds\_output = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{2--5행}의 \inlinecode{logits = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{labels = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{8행}의 \inlinecode{probs = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{10행}의 \inlinecode{preds = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\textbf{1행}의 \inlinecode{preds\_output = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{2--5행}의 \inlinecode{logits = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{labels = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-logits shape: (1000, 5)
-prob ranges per label:
-       food: [0.0280, 0.9871]  true rate=55.2%, pred rate=56.5%
-    service: [0.0412, 0.9794]  true rate=49.7%, pred rate=46.5%
-      price: [0.0873, 0.7026]  true rate=30.4%, pred rate=7.9%
-   ambiance: [0.0253, 0.8920]  true rate=16.8%, pred rate=8.7%
-   location: [0.0310, 0.9285]  true rate=20.2%, pred rate=16.0%
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -632,28 +573,6 @@ for label_kind, idx in [("many active labels", idx_many), ("few active labels", 
     print(f"  true:      {true_active}")
     print()
 \end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-==============================================================================
-sample #29  (many active labels)
-==============================================================================
-text (truncated): It's hard to complain about this place given the price I...
-
-    aspect    true      prob    pred (>=0.5)  match
-       food       1    0.2910               0    X
-    service       1    0.3436               0    X
-      price       1    0.5005               1    OK
-   ambiance       1    0.3828               0    X
-   location       1    0.8549               1    OK
-
-  predicted: ['price', 'location']
-  true:      ['food', 'service', 'price', 'ambiance', 'location']
-
-==============================================================================
-...
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -935,29 +854,6 @@ thresholds = [best_threshold(probs[:, k], labels[:, k])[0] for k in range(K)]
 
 \end{faqBox}
 
-\begin{faqBox}{Q2. (이론) Multi-class를 multi-label로 풀어도 되나요? (single-label 데이터를 multi-hot 형식으로 변환)}
-
-기술적으론 됩니다. 단점이 큽니다.
-
-\begin{booktable}{13장 FAQ 표}{tab:ch13-06}
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}lll@{}}
-\toprule
-& multi-class (CE) & single-label을 multi-label (BCE) 로 \\
-\midrule
-
-라벨 간 \emph{경쟁} 학습 & softmax가 자동으로 강제 & BCE per-label은 라벨 간 직접 신호 없음 \\
-confidence 의미 & 항상 합 = 1, 명확 & 5개 라벨의 sigmoid 확률, \emph{합 \(\ne\) 1} \\
-추론 후처리 & \inlinecode{argmax} 한 줄 & \inlinecode{argmax(probs)} 또는 \texttt{np.where(probs\ \textgreater{}\ th)} \\
-학습 수렴 속도 & 빠름 (라벨 경쟁 신호 있음) & 약간 느림 \\
-\bottomrule
-\end{tabular}
-\end{adjustbox}
-\end{booktable}
-
-multi-class가 \emph{명확히 single-label} 이면 CE가 정답. multi-label로 푸는 건 \emph{어떤 이유로 두 task를 통합해야 할 때} (예: \ref{ch:14}장 보조 헤드처럼).
-
-\end{faqBox}
 
 \begin{faqBox}{Q3. (실무) Class weights를 multi-label BCE에 적용하려면?}
 
@@ -1005,52 +901,11 @@ Loss에는 결합 항이 없지만 \emph{gradient가 BERT 본체를 거쳐 흐�
 
 \end{faqBox}
 
-\begin{faqBox}{Q5. (실무) 라벨이 100개 이상인 multi-label은 BERT로 어떻게 푸나요?}
-
-\textbf{일반적 패턴}:
-
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  \textbf{라벨이 \textasciitilde50개 이하}: \inlinecode{num\_labels=K} + per-label sigmoid + BCE 그대로. 본 장 패턴.
-\item
-  \textbf{라벨이 100-1000개}: 헤드의 weight matrix가 커짐 (768·K). 메모리 압박. 해결책:
-
-  \begin{itemize}
-  \tightlist
-  \item
-    \textbf{Hierarchical labels}: 라벨을 트리로 구조화해 \emph{상위 \(\to\) 하위} 단계적 분류 (예: “음식 \textgreater{} 한식 \textgreater{} 김치찌개”)
-  \item
-    \textbf{Knowledge distillation}: 큰 multi-label 모델에서 작은 모델로 distill
-  \end{itemize}
-\item
-  \textbf{라벨이 1000+ 개}: extreme multi-label (XML). 별도 분야 --- \inlinecode{XML-CNN}, \inlinecode{BERT-XMC} 등 특화 모델 사용.
-\end{enumerate}
-
-영화 장르 분류 (\textasciitilde30개), 기사 토픽 (\textasciitilde50개) 정도면 본 장 패턴으로 충분.
-
-\end{faqBox}
-
-\begin{faqBox}{Q6. (실무) Multi-label에서 \emph{클래스가 추가되면} 모델을 처음부터 다시 학습해야 하나요?}
-
-기본적으론 그렇습니다. 분류 헤드의 weight shape이 \inlinecode{(K,\ 768)} 이라 K가 바뀌면 헤드가 호환 안 됨. 단, BERT 본체는 그대로 재사용 가능.
-
-\Needspace{9\baselineskip}
-\begin{lstlisting}
-old_model = AutoModelForSequenceClassification.from_pretrained("./ch13_output")
-new_model = AutoModelForSequenceClassification.from_pretrained(
-    "distilbert-base-uncased", num_labels=6, problem_type="multi_label_classification",
-)
-
-new_model.classifier.weight.data[:5] = old_model.classifier.weight.data
-new_model.classifier.bias.data[:5]   = old_model.classifier.bias.data
-\end{lstlisting}
-
-이러면 기존 5라벨은 \emph{학습된 상태로 시작}, 6번째만 \emph{처음부터 학습} . 실무에서 자주 쓰는 incremental learning 패턴.
-\end{faqBox}
 
 
+
+
+\compactFAQMore{3}
 
 \section{오류 실험 (선택)}
 

@@ -174,15 +174,6 @@ NSMC 영화 리뷰는 보통 \emph{짧은 한 줄} (약 20 토큰), KLUE-YNAT �
 \textbf{1행}의 \inlinecode{!nvidia-smi}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 03:58:31 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 45C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \section{데이터 준비}
@@ -231,15 +222,6 @@ print(
     f"{max(sample_lens)}"
 )
 \end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-sampled train: 5000
-sampled eval:  1000
-
-Token length (sample 200): mean=15.8, median=16, max=27
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -376,15 +358,6 @@ classifier \inlinecode{Linear(768,\ K)} & 1,538 & \textbf{5,383} \\
 !nvidia-smi
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 03:58:51 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 46C P8 14W / 70W | 3MiB / 15360MiB | 0% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \section{학습}
@@ -435,15 +408,6 @@ def compute_metrics(eval_pred):
 !nvidia-smi
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 03:59:33 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 65C P0 72W / 70W | 2195MiB / 15360MiB | 64% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \section{평가}
@@ -483,16 +447,8 @@ print(
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{preds\_output = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{2행}의 \inlinecode{logits = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{labels = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{exp = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{probs\_full = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{7행}의 \inlinecode{preds = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\textbf{1행}의 \inlinecode{preds\_output = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{2행}의 \inlinecode{logits = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{labels = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-logits shape:    (1000, 7)
-top-1 prob range: [0.2669, 0.9909]
-top-1 prob mean: correct=0.9033, wrong=0.7097
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -656,28 +612,6 @@ for label_str, idx in samples:
     print()
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-==============================================================================
-sample #131  (most confident overall)
-==============================================================================
-text:        U+7F8E 시리아 북동부에 다국적 감시군 추진…미군 400명 잔류
-true label:  4  (세계)
-prediction:  4  (세계)  match: OK
-top-1 prob:  0.9909
-top-3 distribution:
-        세계: 0.9909
-        정치: 0.0024
-      IT과학: 0.0014
-
-==============================================================================
-sample #929  (most uncertain (~2/K))
-==============================================================================
-text:        수능 작년보다 쉬워…1등급 컷 국어·수학가 92점·수학나 88점
-...
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \textbf{관찰 포인트}
@@ -779,69 +713,8 @@ KLUE-YNAT 가 \emph{입문에 편한 이유} --- datasets.load\_dataset 한 줄,
 
 \end{faqBox}
 
-\begin{faqBox}{Q3. (실무) \inlinecode{class\_weight} 를 multi-class CE 에 적용하려면?}
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-import torch
-from torch import nn
 
-class_counts = np.bincount(
-    train_full["label"],
-    minlength=len(LABEL_NAMES),
-)
-class_weights = len(train_full) / (len(LABEL_NAMES) * class_counts)
-class_weights = torch.tensor(
-    class_weights,
-    dtype=torch.float,
-)
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 학습 설정을 만들고 학습 루프를 실행하는 단계로 넘어갑니다.}
-
-\Needspace{9\baselineskip}
-\begin{lstlisting}[firstnumber=14]
-class WeightedTrainer(Trainer):
-    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
-        labels = inputs.pop("labels")
-        outputs = model(**inputs)
-        loss_fn = nn.CrossEntropyLoss(weight=class_weights.to(outputs.logits.device))
-        loss = loss_fn(outputs.logits, labels)
-        return (loss, outputs) if return_outputs else loss
-\end{lstlisting}
-
-KLUE-YNAT 는 \emph{심한} 불균형이 아니라 (5K-8K 범위) class\_weight 효과가 \emph{작은 폭} --- 완전 균형이 아닌 데이터에서도 보통 +1-2\%p macro F1 정도 개선. 사용 결정은 \emph{macro F1 vs accuracy} 의 격차로.
-
-\end{faqBox}
-
-\begin{faqBox}{Q4. (이론) 헤드라인 한 줄 (\textasciitilde30 토큰) 이 분류에 \emph{충분} 한가요?}
-
-대부분의 경우 충분합니다 --- \emph{카테고리} 라는 task 가 \emph{키워드 + 표현 스타일} 로 풀리고, 그 신호가 헤드라인에 \emph{압축} 되어 들어 있어요. 예: “월드컵 한국 vs 일본 16강전 시작” \(\to\) 스포츠 신호 명확.
-
-부족한 경우:
-
-\begin{itemize}
-\tightlist
-\item
-  \emph{제목과 본문이 정반대} 인 풍자 기사 (드뭄)
-\item
-  \emph{정치/경제 처럼 경계가 모호} 한 카테고리 (위 Q2)
-\item
-  \emph{지나치게 일반적} 인 헤드라인 (“어제 뉴스 정리”)
-\end{itemize}
-
-이런 케이스엔 \emph{기사 본문} 까지 같이 입력하면 정확도 +5-8\%p 가능. 단 max\_length 가 길어져 학습 비용 ↑.
-
-\end{faqBox}
-
-\begin{faqBox}{Q5. (실무) 한국어 BERT 가 \emph{짧은 헤드라인} 에 \emph{왜 그렇게} 잘 동작하나요?}
-
-\inlinecode{klue/bert-base} 의 사전학습 코퍼스에 \emph{뉴스 + 위키} 가 큰 비중을 차지합니다. 이미 모델 weight 가 한국어 뉴스 텍스트의 \emph{언어 분포} 를 학습한 상태에서 fine-tune 하니, \emph{적은 데이터·짧은 학습} 으로도 좋은 성능.
-
-영어 BERT 가 NLI 같은 \emph{추론 task} 에서 사전학습 효과가 큰 것과 같은 원리 --- \emph{task 의 도메인이 사전학습 코퍼스와 가까울수록} fine-tune 효과가 큼.
-
-\end{faqBox}
 
 \begin{faqBox}{Q6. (실무) 클래스 수가 50, 100 으로 늘면 같은 코드가 동작하나요?}
 
@@ -867,6 +740,8 @@ K 가 50+ 가 되면 \emph{클래스당 학습 샘플} 이 핵심 --- 클래스�
 \end{faqBox}
 
 
+
+\compactFAQMore{3}
 
 \section{오류 실험 (선택)}
 

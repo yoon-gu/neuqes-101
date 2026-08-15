@@ -245,15 +245,6 @@ L = \underbrace{\frac{1}{N \cdot K}\sum_{i,k}\text{BCE}(z_{i,k}^\text{main}, y_{
 \textbf{1행}의 \inlinecode{!nvidia-smi}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Wed Jun 24 21:40:30 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 35C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \section{데이터 준비}
@@ -423,17 +414,6 @@ for k, v in batch.items():
     )
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Batch keys: ['input_ids', 'token_type_ids', 'attention_mask', 'labels', 'n_...
-  input_ids: shape=(4, 32), dtype=torch.int64
-  token_type_ids: shape=(4, 32), dtype=torch.int64
-  attention_mask: shape=(4, 32), dtype=torch.int64
-  labels: shape=(4, 7), dtype=torch.float32
-  n_active: shape=(4,), dtype=torch.float32
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \section{\texorpdfstring{모델 정의}{모델 정의}}
@@ -587,15 +567,6 @@ Aux  head: Linear(in_features=768, out_features=1, bias=True)
 !nvidia-smi
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Wed Jun 24 21:40:58 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 36C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \section{\texorpdfstring{커스텀 Trainer}{커스텀 Trainer}}
@@ -631,12 +602,6 @@ print(
     "교체."
 )
 \end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-AuxTrainer 정의 완료 -- Trainer 의 compute_loss 만 교체.
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -696,15 +661,6 @@ def compute_metrics_main(eval_pred):
 \begin{lstlisting}
 !nvidia-smi
 \end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Wed Jun 24 21:41:41 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 57C P0 34W / 70W | 2189MiB / 15360MiB | 75% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -782,7 +738,7 @@ print(
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{@torch.no\_grad()}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{2행}의 \inlinecode{def aux\_predictions(train...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{trainer.model.eval()}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{4행}의 \inlinecode{device = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{aux\_preds, aux\_true = [], []}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{for i in range(0, len(dat...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\textbf{1행}의 \inlinecode{@torch.no\_grad()}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{2행}의 \inlinecode{def aux\_predictions(train...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{trainer.model.eval()}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -814,15 +770,8 @@ print(f"Eval samples:      {len(labels_eval)}")
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{preds\_output\_aux = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{2행}의 \inlinecode{logits\_aux = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{if isinstance(logits\_aux,...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{4행}의 \inlinecode{logits\_aux = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{labels\_eval = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{probs\_aux = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\textbf{1행}의 \inlinecode{preds\_output\_aux = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{2행}의 \inlinecode{logits\_aux = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{if isinstance(logits\_aux,...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Main logits shape: (1000, 7)
-Eval samples:      1000
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -1073,23 +1022,6 @@ KLUE-YNAT 합성 데이터에서 \emph{공짜로} 얻을 수 있는 보조 신�
 
 \end{faqBox}
 
-\begin{faqBox}{Q2. (이론) \inlinecode{n\_active} 가 메인의 \emph{합} 이라는 게 왜 \emph{보조로 쓰면 의외로 약한} 신호인가요?}
-
-직관적으로는 “메인을 잘 풀면 합도 잘 풂” 인데, 역방향 (“합을 잘 풀면 메인도 잘 풂”) 의 정보량이 작기 때문입니다.
-
-\begin{itemize}
-\tightlist
-\item
-  메인이 잘 풀린 모델 \(\to\) \inlinecode{n\_active} 도 잘 추정 (정의상 합이니까).
-\item
-  그러나 \emph{보조만 잘 학습} 된 모델 \(\to\) “이 헤드라인이 1개 vs 2개 카테고리에 걸친다” 만 알지 \emph{어느} 카테고리인지의 정보는 없음. 표현 공간이 카테고리 \emph{식별} 방향이 아니라 \emph{개수} 방향으로 발전.
-\item
-  BCE per-label 의 gradient 가 \emph{어느} 카테고리를 활성할지 직접 학습 신호. MSE on n\_active 의 gradient 는 \emph{몇 개} 인지만 학습 신호.
-\end{itemize}
-
-따라서 \inlinecode{n\_active} 가 메인의 \emph{함수} 이긴 하지만 \emph{전사 가능한 inverse 가 없는 함수} 라 보조로서의 추가 정보량이 제한적. \ref{ch:14}장의 별점은 항목 분류와 \emph{부분} 상관이지만 \emph{완전히 다른 방향} 의 정보 (감성) 라 BERT 표상에 \emph{추가} 차원을 만듭니다 --- 그래서 보조 효과 자체는 별점 쪽이 클 가능성.
-
-\end{faqBox}
 
 \begin{faqBox}{Q3. (실무) \inlinecode{AutoModel\ +\ nn.Module} 패턴이 \inlinecode{model.aux\_head\ =\ nn.Linear(...)} 한 줄 부착보다 권장되는 경우는?}
 
@@ -1122,78 +1054,7 @@ optimizer = torch.optim.AdamW(optimizer_grouped)
 
 \end{faqBox}
 
-\begin{faqBox}{Q4. (이론) 보조 loss 가 \emph{MSE} 대신 \emph{MAE (L1)} 면 학습 양상이 어떻게 달라지나요?}
 
-\inlinecode{n\_active} 는 1 또는 2 정수라 분포가 \emph{binary 같음}. MAE 와 MSE 의 차이:
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{MSE}: gradient 가 잔차에 \emph{비례} --- 큰 오차에 큰 gradient. 평균값 (\(\sim\) 1.86) 으로 수렴.
-\item
-  \textbf{MAE (L1)}: gradient 가 잔차의 \emph{부호} 만 (크기 일정 ±1). 중앙값 (= 2, 빈도 6/7) 으로 수렴.
-\end{itemize}
-
-따라서 MAE 로 바꾸면 보조 헤드가 \emph{항상 2 를 예측} 하게 되어 (중앙값 = 2) 학습 신호가 거의 없습니다. binary-같은 회귀에선 MSE 가 더 적절.
-
-또 다른 선택: \inlinecode{n\_active\ -\ 1} 을 \emph{binary 분류} 로 풀어 \inlinecode{BCEWithLogitsLoss} 적용 --- 1 vs 2 를 0 vs 1 로 매핑. 회귀보다 분류가 더 자연스러운 형식이지만, \emph{연속적 보조 신호} 라는 multi-task 의 전통적 셋업에선 회귀가 일반적.
-
-\Needspace{9\baselineskip}
-\begin{lstlisting}
-aux_logits = self.count_head(cls).squeeze(-1)   # (B,)
-aux_target = (n_active - 1).float()
-# 1$\to$0, 2$\to$1
-l_aux = F.binary_cross_entropy_with_logits(
-    aux_logits,
-    aux_target,
-)
-\end{lstlisting}
-
-\end{faqBox}
-
-\begin{faqBox}{Q5. (실무) 학습 중 보조 loss 가 \emph{증가} 하면 어떻게 진단하나요?}
-
-\inlinecode{logging\_steps=50} 으로 학습 곡선 (train loss) 만 보면 \emph{combined loss 만} 출력됩니다. 보조 loss 만 분리해 추적하려면 \inlinecode{compute\_loss} 안에서 직접 log:
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
-    inputs = {**inputs, "lambda_aux": self.lambda_aux}
-    outputs = model(**inputs)
-    loss = outputs.loss
-
-    if self.state.global_step % 50 == 0 and not return_outputs:
-
-        with torch.no_grad():
-            cls = model.bert(**{k: v for k, v in inputs.items()
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=10]
-                                if k in ("input_ids", "attention_mask", "token_type_ids")}
-                            ).last_hidden_state[:, 0, :]
-            count_pred = model.count_head(cls).squeeze(-1)
-            l_aux_only = F.mse_loss(count_pred, inputs["n_active"].float()).item()
-        print(
-            f"step {self.state.global_step}  main+aux={loss.item():.4f}  aux_only="
-            f"{l_aux_only:.4f}"
-        )
-    return (loss, outputs) if return_outputs else loss
-\end{lstlisting}
-
-보조 loss 가 \emph{상승} 한다면:
-
-\begin{itemize}
-\tightlist
-\item
-  \(\lambda\) 가 너무 작아 보조 학습이 \emph{메인 방향에 휘둘림} --- \(\lambda\) 키워 보조 학습 강화.
-\item
-  또는 메인과 보조가 \emph{충돌 방향} --- \(\lambda\) 줄이거나 보조 제거.
-\end{itemize}
-
-\end{faqBox}
 
 \begin{faqBox}{Q6. (이론) \ref{ch:14}장과 \ref{ch:18}장의 결과 (delta) 패턴이 \emph{다를} 거라 예상되는 이유는?}
 
@@ -1218,24 +1079,10 @@ def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=N
 
 \end{faqBox}
 
-\begin{faqBox}{Q7. (실무) Phase 2 (한국어, \ref{ch:15}--\ref{ch:18}장) 가 끝났습니다. Phase 3 에서 토크나이저를 \emph{직접 학습} 하는 이유는?}
-
-\ref{ch:01}--\ref{ch:18}장 모두 \emph{사전학습 토크나이저} (sklearn TF-IDF 토큰화, BERT WordPiece) 에 의존했습니다. Phase 3 (\ref{ch:19}--\ref{ch:23}장) 는 이 의존을 끊고 \emph{어휘 자체를 코퍼스에서 학습}:
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{\ref{ch:19}장}: BPE / WordPiece / Unigram 알고리즘을 직접 돌려 어휘 만들기 \(\to\) 토큰화가 \emph{데이터에 따라 어떻게 달라지는지} 직관.
-\item
-  \textbf{\ref{ch:20}장}: 학습한 토크나이저로 \emph{작은 BERT 를 처음부터} 사전학습 \(\to\) 사전학습 의존 없는 경험.
-\end{itemize}
-
-\begin{quote}
-Phase 3 가 클라이맥스인 이유 --- \ref{ch:01}장 부터 따라온 “ 토크나이저 노트” 가 \emph{외부 도구의 사용법} 이었다면 Phase 3 는 \emph{그 도구 자체를 만드는 단계}. 토크나이저를 직접 만들고 나면 \ref{ch:01}--\ref{ch:18}장의 모든 토큰화 노트를 \emph{다시 읽었을 때} 보이는 풍경이 달라집니다.
-\end{quote}
-\end{faqBox}
 
 
+
+\compactFAQMore{4}
 
 \section{오류 실험 (선택)}
 
@@ -1289,206 +1136,15 @@ return SequenceClassifierOutput(loss=loss, logits=main_logits)
 
 
 
-\section{\texorpdfstring{부록: $\lambda$ 스윕: 약한 보조 task 의 sweet spot}{부록: lambda 스윕: 약한 보조 task 의 sweet spot}}
+\Needspace{18\baselineskip}
 
+\section{온라인 부록: 한국어 보조 손실 가중치 스윕}
 
+\onlineAppendixLink{한국어 보조 손실 가중치 스윕}{$\lambda=0.05$에서 micro-F1은 0.8491에서 0.8523으로, macro-F1은 0.8451에서 0.8493으로 올랐습니다. 별점처럼 강한 보조 신호보다 향상 폭은 작지만, 약한 활성 라벨 개수 신호도 적절한 가중치에서는 메인 태스크를 돕습니다.}{https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/18_ko_auxiliary/18_ko_auxiliary_lambda_sweep.ipynb}
 
-\subsection{데이터·모델·Trainer --- 본편 \ref{ch:18}장과 동일}
-
-KLUE-YNAT 두 헤드라인을 결합한 합성 multi-label(7) + 활성 개수 \inlinecode{n\_active} 보조. \inlinecode{KoBertMultiTask}(AutoModel 본체 + 메인 헤드 + 보조 헤드) forward 안에서 \texttt{L\_main\ +\ \$\textbackslash{}lambda\$·L\_aux} 계산.
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-class AuxCollator:
-    def __init__(
-        self,
-        tokenizer): self.base = DataCollatorWithPadding(tokenizer,
-    )
-    def __call__(self, features):
-        n_act = torch.tensor(
-            [f.pop("n_active") for f in features],
-            dtype=torch.float,
-        )
-        batch = self.base(features); batch["labels"] = batch["labels"].float(); batch["n_active"] = n_act
-        return batch
-collator = AuxCollator(tokenizer)
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 모델 출력을 확률이나 예측값으로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=15]
-class KoBertMultiTask(nn.Module):
-    def __init__(self, model_name="klue/bert-base", num_labels=7):
-        super().__init__()
-        self.num_labels = num_labels
-        self.bert = AutoModel.from_pretrained(model_name)
-        H = self.bert.config.hidden_size
-        self.cls_head = nn.Linear(H, num_labels)
-        self.count_head = nn.Linear(H, 1)
-        self.config = self.bert.config
-    def forward(self, input_ids=None, attention_mask=None, token_type_ids=None, labels=None, n_active=None, lambda_aux=0.1):
-        kwargs = {"input_ids": input_ids, "attention_mask": attention_mask}
-        if token_type_ids is not None: kwargs["token_type_ids"] = token_type_ids
-        out = self.bert(**kwargs); cls = out.last_hidden_state[:, 0, :]
-        main_logits = self.cls_head(cls); count_pred = self.count_head(cls).squeeze(-1)
-        loss = None
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 모델 출력을 확률이나 예측값으로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=30]
-        if labels is not None and n_active is not None:
-            l_main = F.binary_cross_entropy_with_logits(
-                main_logits,
-                labels.float(),
-            )
-            l_aux  = F.mse_loss(
-                count_pred,
-                n_active.float(),
-            )
-            loss = l_main + lambda_aux * l_aux
-        self.last_count_pred = count_pred.detach()
-        return SequenceClassifierOutput(loss=loss, logits=main_logits)
-
-def make_model(): return KoBertMultiTask("klue/bert-base", num_labels=K)
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 모델 출력을 확률이나 예측값으로 바꾸는 단계입니다. 이어지는 블록에서는 학습 설정을 만들고 학습 루프를 실행하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=45]
-class AuxTrainer(Trainer):
-    def __init__(self, *args, lambda_aux=0.1, **kwargs):
-        super().__init__(*args, **kwargs); self.lambda_aux = lambda_aux
-    def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
-        inputs = {**inputs, "lambda_aux": self.lambda_aux}
-        outputs = model(**inputs); loss = outputs.loss
-        return (loss, outputs) if return_outputs else loss
-
-def compute_metrics_main(eval_pred):
-    logits, labels = eval_pred
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 예측 결과를 지표와 표로 요약하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=55]
-    if isinstance(logits, tuple): logits = logits[0]
-    probs = 1.0/(1.0+np.exp(-logits)); preds = (probs >= 0.5).astype(int)
-    _,_,f1_mi,_ = precision_recall_fscore_support(
-        labels,
-        preds,
-        average="micro",
-        zero_division=0,
-    )
-    _,_,f1_ma,_ = precision_recall_fscore_support(
-        labels,
-        preds,
-        average="macro",
-        zero_division=0,
-    )
-    return {"micro_f1": float(f1_mi), "macro_f1": float(f1_ma), "hamming_loss": float(hamming_loss(labels, preds))}
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=71]
-@torch.no_grad()
-def aux_predictions(trainer, dataset, batch_size=64):
-    trainer.model.eval(); device = trainer.model.bert.device; ap, at = [], []
-    for i in range(0, len(dataset), batch_size):
-        bf = [dict(dataset[j]) for j in range(i, min(i+batch_size, len(dataset)))]
-        b = trainer.data_collator(bf); bod = {k: v.to(device) for k, v in b.items()}
-        nat = bod.pop("n_active").cpu().numpy(); bod.pop("labels", None)
-        _ = trainer.model(
-            **bod,
-            labels=None,
-            n_active=None,
-        )
-        ap.extend(trainer.model.last_count_pred.cpu().numpy().tolist()); at.extend(nat.tolist())
-    return np.array(ap), np.array(at)
-print("setup 완료")
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-setup 완료
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
-\subsection{\texorpdfstring{\(\lambda\) 스윕}{\textbackslash lambda 스윕}}
-
-\texttt{\$\textbackslash{}lambda\$\ in\ \{0,\ 0.02,\ 0.05,\ 0.1,\ 0.2,\ 0.5\}} 각각 같은 초기화로 2 epoch 학습 \(\to\) 메인 micro/macro-F1 + 보조 R² 기록. \(\lambda\)=0.1 은 비교점입니다.
-
-
-
-\subsection{\texorpdfstring{곡선 --- \(\lambda\) vs 메인 성능}{곡선 --- \textbackslash lambda vs 메인 성능}}
-
-
-
-\compactCodeOmitted{숫자 결과를 그림으로 확인하는 단계}
-
-\begin{bookfigurelabel}[H]{한국어 보조 손실 lambda 스윕에서 확인한 sweet spot}{fig:ch18-lambda-sweep}
+\begin{bookfigurelabel}[H]{한국어 보조 손실 가중치 스윕에서 확인한 sweet spot}{fig:ch18-lambda-sweep}
 \centering
-\includegraphics[width=0.86\linewidth]{assets/figures/ch18_lambda_sweep.png}
+\includegraphics[width=0.72\linewidth]{assets/figures/ch18_lambda_sweep.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch18-lambda-sweep}에서 다음 내용을 확인합니다: 한국어 보조 손실 lambda 스윕에서 확인한 sweet spot. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
-
-
-
-\subsection{해석}
-
-\textbf{\(\lambda\)=0.05 가 sweet spot 입니다.} 메인 micro-F1 이 baseline(\(\lambda\)=0, 0.8491)보다 \textbf{+0.003 오른 0.8523}, macro 도 0.8451 \(\to\) 0.8493(\textbf{+0.004}). \emph{약한 보조(n\_active)도 작은 \(\lambda\) 에서는 메인을 살짝 끌어올립니다.} \(\lambda\)=0.1 은 공정 비교(같은 seed 초기화)에선 거의 \textbf{중립}(0.8489 \(\approx\) baseline)인 비교점입니다. \(\lambda\)\(\ge\)0.2 부터는 메인이 무너집니다(\(\lambda\)=0.5 에서 0.804).
-
-\begin{booktable}{18장 해석 표}{tab:ch18-10}
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}llll@{}}
-\toprule
-\(\lambda\) & micro-F1 & macro-F1 & 보조 R² \\
-\midrule
-
-0.0 (baseline) & 0.8491 & 0.8451 & --- \\
-0.02 & 0.8514 & 0.8483 & 0.034 \\
-\textbf{0.05 (sweet spot)} & \textbf{0.8523} & \textbf{0.8493} & 0.065 \\
-0.1 (비교점) & 0.8489 & 0.8452 & 0.067 \\
-0.2 & 0.8401 & 0.8413 & 0.073 \\
-0.5 & 0.8041 & 0.8197 & 0.081 \\
-\bottomrule
-\end{tabular}
-\end{adjustbox}
-\end{booktable}
-
-\subsubsection{\ref{ch:14}장(강한 보조)와의 대조 --- 이게 핵심}
-
-두 장 모두 sweet spot 은 \textbf{\(\lambda\)=0.05} 로 같지만, 보조가 주는 도움의 \emph{크기} 가 다릅니다:
-
-\begin{booktable}{18장 해석 표}{tab:ch18-11}
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}llll@{}}
-\toprule
-& 보조 task & 보조 R² & sweet spot \(\Delta\)(micro) \\
-\midrule
-
-\ref{ch:14}장 (영어) & 별점 회귀 & 0.43 (강함) & \textbf{+0.007} \\
-\ref{ch:18}장 (한국어) & n\_active 회귀 & 0.065 (약함) & \textbf{+0.003} \\
-\bottomrule
-\end{tabular}
-\end{adjustbox}
-\end{booktable}
-
-\inlinecode{n\_active} 는 합성 규칙상 거의 항상 2 (분포 \{1: 732, 2: 4268\})라 분산이 작아 \textbf{예측할 게 별로 없습니다} --- \(\lambda\) 를 0.5 까지 키워도 보조 R² 가 0.08 에 머뭅니다. 그래서 \textbf{보조가 주는 도움도 \ref{ch:14}장의 절반 수준}. 보조 손실의 가치는 \emph{\(\lambda\) 만이 아니라 보조 신호가 얼마나 정보적인가} 에 비례합니다.
-
-\begin{quote}
-본편 \ref{ch:18}장은 이 sweet spot(\(\lambda\)=0.05)을 메인 학습값으로 쓰고, n\_active 의 약한 신호가 \emph{왜} \ref{ch:14}장 보다 도움이 작은지 짚습니다.
-\end{quote}
+\textbf{그림 읽기} --- 그림~\ref{fig:ch18-lambda-sweep}에서 다음 내용을 확인합니다: 한국어 보조 손실 가중치 스윕에서 확인한 sweet spot. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.

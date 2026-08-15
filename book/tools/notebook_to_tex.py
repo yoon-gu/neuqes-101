@@ -59,6 +59,10 @@ class Chapter:
         rel = f"{self.number:02d}_{self.slug}/{self.number:02d}_{self.slug}.ipynb"
         return f"{GITHUB_RAW}/{rel}"
 
+    def extra_colab_url(self, filename: str) -> str:
+        rel = f"{self.number:02d}_{self.slug}/{filename}"
+        return f"{GITHUB_RAW}/{rel}"
+
 
 @dataclass(frozen=True)
 class FigureSpec:
@@ -66,6 +70,13 @@ class FigureSpec:
     caption: str
     label: str
     width: str = r"0.86\linewidth"
+
+
+@dataclass(frozen=True)
+class CompactAppendixSpec:
+    title: str
+    summary: str
+    figure: FigureSpec | None = None
 
 
 CHAPTERS = [
@@ -1106,6 +1117,125 @@ SUPPLEMENTAL_FIGURES: dict[int, tuple[FigureSpec, ...]] = {
         FigureSpec("ch27_appendix_vocab_share.png", "토크나이저 vocabulary 안의 한국어 점유율 비교", "fig:ch27-appendix-vocab-share", r"0.86\linewidth"),
         FigureSpec("ch27_appendix_vocab_fertility_scatter.png", "한국어 vocab 점유율과 fertility의 관계", "fig:ch27-appendix-vocab-fertility", r"0.72\linewidth"),
     ),
+}
+
+
+# The compact publisher edition keeps the experiment's conclusion and one
+# representative figure in print. The full appendix remains executable through
+# its own Colab link, so reducing page count does not remove reproducibility.
+COMPACT_APPENDICES: dict[int, CompactAppendixSpec] = {
+    12: CompactAppendixSpec(
+        "데이터 스케일링: BERT와 sklearn의 교차점",
+        "작은 데이터에서는 TF-IDF와 선형 모델이 앞서지만 약 1,000개 샘플 부근에서 BERT가 따라잡습니다. "
+        "30,000개에서도 격차가 약 0.04로 남는다는 결과는 5클래스 난이도와 데이터 규모를 함께 해석해야 함을 보여줍니다.",
+        FigureSpec(
+            "ch12_data_scaling.png",
+            "학습 데이터 규모에 따른 sklearn과 BERT 정확도",
+            "fig:ch12-data-scaling",
+            r"0.72\linewidth",
+        ),
+    ),
+    14: CompactAppendixSpec(
+        "보조 손실 가중치 스윕",
+        r"$\lambda=0.05$에서 micro-F1이 0.8399에서 0.8469로, macro-F1이 0.8023에서 0.8109로 올랐습니다. "
+        r"$\lambda$를 더 키우면 보조 손실이 메인 태스크를 누르므로 한 점의 성능보다 전체 곡선으로 sweet spot을 확인해야 합니다.",
+        FigureSpec(
+            "ch14_lambda_sweep.png",
+            "보조 손실 가중치 스윕에서 확인한 sweet spot",
+            "fig:ch14-lambda-sweep",
+            r"0.72\linewidth",
+        ),
+    ),
+    18: CompactAppendixSpec(
+        "한국어 보조 손실 가중치 스윕",
+        r"$\lambda=0.05$에서 micro-F1은 0.8491에서 0.8523으로, macro-F1은 0.8451에서 0.8493으로 올랐습니다. "
+        "별점처럼 강한 보조 신호보다 향상 폭은 작지만, 약한 활성 라벨 개수 신호도 적절한 가중치에서는 메인 태스크를 돕습니다.",
+        FigureSpec(
+            "ch18_lambda_sweep.png",
+            "한국어 보조 손실 가중치 스윕에서 확인한 sweet spot",
+            "fig:ch18-lambda-sweep",
+            r"0.72\linewidth",
+        ),
+    ),
+    20: CompactAppendixSpec(
+        "사전학습량과 perplexity",
+        "영어 perplexity는 1,173에서 696으로, 한국어는 1,626에서 709로 내려가지만 8--10 epoch 이후에는 개선이 평탄해집니다. "
+        "같은 5,000개 텍스트를 반복하는 것보다 데이터와 compute를 늘리는 편이 다음 성능 레버라는 결론입니다.",
+        FigureSpec(
+            "ch20_pretrain_scaling_curve.png",
+            "사전학습 epoch에 따른 영어와 한국어 MLM perplexity",
+            "fig:ch20-pretrain-scaling-curve",
+            r"0.72\linewidth",
+        ),
+    ),
+    29: CompactAppendixSpec(
+        "생성형 LLM 평가 항해 가이드",
+        "벤치마크 생태계, 리더보드, 평가 도구, LLM-as-judge와 사람 평가의 편향을 한 흐름으로 정리합니다. "
+        "공개 점수는 참고 지표로 쓰고 실제 배포 판단은 use-case 맞춤 평가셋으로 내린다는 원칙이 부록의 결론입니다.",
+    ),
+    31: CompactAppendixSpec(
+        "Qwen GRPO와 HPO 요약",
+        "Qwen2.5-0.5B-Instruct와 형식 보상을 사용하면 reward가 실제로 오릅니다. "
+        "부록은 sweep 전체를 다시 싣는 대신 최종 채택값, fp32 로드와 fp16 AMP의 dtype 함정, reward 곡선 읽기에 집중합니다.",
+        FigureSpec(
+            "ch31_qwen_grpo_reward_curves.png",
+            "Qwen GRPO의 reward 상승과 HPO 최종 채택값",
+            "fig:ch31-qwen-grpo-reward-curves",
+            r"0.72\linewidth",
+        ),
+    ),
+    34: CompactAppendixSpec(
+        "한국어 diffusion collapse 복구 실험",
+        r"100\% 마스크 방식에서 나타나는 유니그램 collapse를 재현하고 BERT식 80/10/10 마스킹으로 복원합니다. "
+        "본문에는 두 방식의 핵심 대조만 남기고, 두 번의 경량 학습과 진단 코드는 온라인 부록에서 실행합니다.",
+        FigureSpec(
+            "ch34_masking_ablation.png",
+            "한국어 diffusion 마스킹 방식 비교",
+            "fig:ch34-masking-ablation",
+            r"0.72\linewidth",
+        ),
+    ),
+}
+
+
+# Three questions per chapter preserve a theory/practice/application balance.
+# Later language variants deliberately keep delta-specific questions instead of
+# repeating the same FAQ from their English counterparts.
+COMPACT_FAQ_SELECTIONS: dict[int, tuple[int, ...]] = {
+    1: (2, 3, 6),
+    2: (1, 5, 6),
+    3: (3, 4, 5),
+    4: (1, 2, 4),
+    5: (1, 3, 5),
+    6: (1, 2, 6),
+    7: (1, 3, 6),
+    8: (1, 2, 3),
+    9: (1, 2, 3),
+    10: (1, 3, 4),
+    11: (1, 2, 4),
+    12: (1, 4, 5),
+    13: (1, 3, 4),
+    14: (1, 4, 5),
+    15: (1, 4, 6),
+    16: (1, 2, 6),
+    17: (3, 6, 7),
+    18: (1, 3, 6),
+    19: (1, 2, 4),
+    20: (1, 3, 5),
+    21: (2, 3, 4),
+    22: (1, 5, 6),
+    23: (1, 4, 5),
+    24: (1, 3, 5),
+    25: (1, 2, 5),
+    26: (1, 5, 7),
+    27: (2, 5, 6),
+    28: (1, 2, 5),
+    29: (1, 2, 4),
+    30: (1, 3, 4),
+    31: (1, 2, 4),
+    32: (1, 2, 5),
+    33: (1, 3, 5),
+    34: (1, 2, 5),
 }
 
 
@@ -2943,6 +3073,116 @@ def wrap_faq_blocks(latex: str) -> str:
     return "\n".join(wrapped)
 
 
+def compact_faq_section(latex: str, chapter_number: int) -> str:
+    """Keep three chapter-specific FAQs and link the complete set online."""
+    selected = set(COMPACT_FAQ_SELECTIONS.get(chapter_number, (1, 2, 3)))
+    lines = latex.splitlines()
+    question_numbers: list[int] = []
+    in_faq = False
+    for line in lines:
+        if line == "\\section{FAQ}":
+            in_faq = True
+            continue
+        if in_faq and (
+            (line.startswith("\\section{") and line != "\\section{FAQ}")
+            or line.startswith("\\chapter{")
+            or line.startswith("\\begin{previewBox}")
+        ):
+            in_faq = False
+        if not in_faq:
+            continue
+        match = re.match(r"^\\begin\{faqBox\}\{Q(\d+)\.", line)
+        if match is None:
+            match = re.match(r"^\\textbf\{Q(\d+)\.", line)
+        if match:
+            question_numbers.append(int(match.group(1)))
+
+    omitted = max(0, len(question_numbers) - len([number for number in question_numbers if number in selected]))
+    if omitted == 0:
+        return latex
+
+    compacted: list[str] = []
+    in_faq = False
+    skip_box = False
+    skip_plain = False
+    plain_box_open = False
+    note_added = False
+
+    def add_more_note() -> None:
+        nonlocal note_added
+        if not note_added:
+            compacted.append(f"\\compactFAQMore{{{omitted}}}")
+            compacted.append("")
+            note_added = True
+
+    for line in lines:
+        if line == "\\section{FAQ}":
+            in_faq = True
+            skip_plain = False
+            compacted.append(line)
+            continue
+
+        if in_faq and (
+            (line.startswith("\\section{") and line != "\\section{FAQ}")
+            or line.startswith("\\chapter{")
+            or line.startswith("\\begin{previewBox}")
+        ):
+            if skip_box:
+                skip_box = False
+            if plain_box_open:
+                compacted.append("\\end{faqBox}")
+                compacted.append("")
+                plain_box_open = False
+            add_more_note()
+            in_faq = False
+            skip_plain = False
+
+        if not in_faq:
+            compacted.append(line)
+            continue
+
+        if skip_box:
+            if line == "\\end{faqBox}":
+                skip_box = False
+            continue
+
+        box_match = re.match(r"^\\begin\{faqBox\}\{Q(\d+)\.", line)
+        if box_match:
+            number = int(box_match.group(1))
+            skip_plain = False
+            if number not in selected:
+                skip_box = True
+                continue
+            compacted.append(line)
+            continue
+
+        plain_match = re.match(r"^\\textbf\{Q(\d+)\.", line)
+        if plain_match:
+            if plain_box_open:
+                compacted.append("\\end{faqBox}")
+                compacted.append("")
+                plain_box_open = False
+            number = int(plain_match.group(1))
+            skip_plain = number not in selected
+            if skip_plain:
+                continue
+            title = line[len("\\textbf{") : -1] if line.endswith("}") else line
+            compacted.append(f"\\begin{{faqBox}}{{{title}}}")
+            plain_box_open = True
+            continue
+
+        if skip_plain:
+            continue
+        compacted.append(line)
+
+    if plain_box_open:
+        compacted.append("\\end{faqBox}")
+        compacted.append("")
+    if in_faq:
+        add_more_note()
+    return "\n".join(compacted)
+
+
 def wrap_preview_blocks(latex: str) -> str:
     lines = latex.splitlines()
     wrapped: list[str] = []
@@ -3132,7 +3372,7 @@ def markdown_to_latex(markdown: str, chapter_number: int) -> str:
     return latex.strip()
 
 
-def code_walkthrough(source: str) -> str:
+def code_walkthrough(source: str, compact: bool = False) -> str:
     statements: list[tuple[int, int, list[str]]] = []
     start = 0
     current: list[str] = []
@@ -3262,7 +3502,10 @@ def code_walkthrough(source: str) -> str:
     notes: list[str] = []
     import_note_added = False
     major_imports = imported_modules()
-    for start_line, end_line, content in statements[:6]:
+    note_limit = 3 if compact else 6
+    for start_line, end_line, content in statements:
+        if len(notes) >= note_limit:
+            break
         text = " ".join(line.strip() for line in content)
         if text.startswith(("print(", "display(")) or " print(" in text:
             continue
@@ -3405,6 +3648,105 @@ def compact_nvidia_smi_output(text: str) -> str:
         elif "Tesla T4" in stripped or "MiB /" in stripped:
             selected.append(re.sub(r"\s+", " ", stripped).strip("| "))
     return "\n".join(dict.fromkeys(selected)) or text
+
+
+def should_keep_output_in_compact(source: str, outputs: list[dict]) -> bool:
+    """Keep evidence-bearing output and drop routine notebook confirmations."""
+    source_lower = source.lower()
+    text = output_text(outputs)
+    output_lower = text.lower()
+    if not text:
+        return False
+    if any(output.get("output_type") == "error" for output in outputs):
+        return True
+
+    evidence_patterns = (
+        "accuracy",
+        "precision",
+        "recall",
+        "f1",
+        "auc",
+        "mse",
+        "mae",
+        "r2",
+        "r²",
+        "perplexity",
+        "eval_loss",
+        "train_loss",
+        "classification_report",
+        "confusion_matrix",
+        "tfidfvectorizer",
+        "countvectorizer",
+        "build_analyzer",
+        "vocab size",
+        "agreement",
+        "threshold",
+        "fertility",
+        "generate(",
+        ".generate(",
+        "batch_decode",
+        "decode(",
+        "generation",
+        "before sft",
+        "after sft",
+        "chosen",
+        "rejected",
+        "reward",
+        "margin",
+        "advantage",
+        "labels == -100",
+        "labels != -100",
+        "completion_mask",
+        "prompt_mask",
+        "parameter",
+        "numel(",
+        "predict_proba",
+        "probabilities",
+        "logprob",
+        "log_prob",
+        "exact match",
+        "복원 정확도",
+        "정확도",
+        "손실",
+        "생성",
+    )
+    if any(pattern in source_lower or pattern in output_lower for pattern in evidence_patterns):
+        return True
+
+    routine_patterns = (
+        "!nvidia-smi",
+        "trainer.train()",
+        ".head(",
+        ".value_counts(",
+        ".shape",
+        "save_pretrained",
+        "save_model",
+        "os.listdir",
+        "print(model)",
+        "print(tokenizer)",
+        "print(dataset)",
+        "print(ds)",
+        "print(device)",
+        "cuda is available",
+        "sample_count",
+    )
+    if any(pattern in source_lower for pattern in routine_patterns):
+        return False
+
+    # Short tokenization and masking demonstrations are worth one compact
+    # output; generic assignments and runtime acknowledgements are not.
+    concept_patterns = (
+        "input_ids",
+        "attention_mask",
+        "tokenize(",
+        "convert_ids_to_tokens",
+        "special_tokens_mask",
+        "masked",
+        "softmax",
+        "sigmoid",
+        "logits",
+    )
+    return any(pattern in source_lower for pattern in concept_patterns)
 
 
 class PandasTableParser(HTMLParser):
@@ -3939,7 +4281,9 @@ def output_interpretation(source: str, output: str) -> str:
     return "이 출력은 앞 코드가 만든 중간 결과를 확인해 다음 단계의 입력이 올바르게 준비되었는지 점검합니다."
 
 
-def output_to_latex(source: str, outputs: list[dict]) -> str:
+def output_to_latex(source: str, outputs: list[dict], compact: bool = False) -> str:
+    if compact and not should_keep_output_in_compact(source, outputs):
+        return ""
     tables = output_tables(outputs) if RENDER_DATAFRAME_TABLES else []
     if tables:
         return "\n\n".join(tables)
@@ -4912,11 +5256,11 @@ def code_to_latex(
     listing = split_listing_for_book(display_source)
     parts = [listing]
     if include_notes:
-        notes = code_walkthrough(display_source)
+        notes = code_walkthrough(display_source, compact=compact_code)
         if notes:
             parts.append(notes)
     if outputs:
-        output_latex = output_to_latex(source, outputs)
+        output_latex = output_to_latex(source, outputs, compact=compact_code)
         if output_latex:
             parts.append(output_latex)
         if chapter_number is not None and image_counts is not None:
@@ -4984,11 +5328,34 @@ def resolved_notebook_path(chapter: Chapter, use_executed: bool, extra_notebook:
     return chapter.notebook
 
 
-def supplemental_figures_to_latex(chapter_number: int) -> str:
+def supplemental_figures_to_latex(chapter_number: int, compact: bool = False) -> str:
     specs = SUPPLEMENTAL_FIGURES.get(chapter_number, ())
+    if compact and chapter_number == 27:
+        specs = specs[:2]
     if not specs:
         return ""
     return "\n\n".join(figure_block(spec) for spec in specs)
+
+
+def compact_appendix_to_latex(chapter: Chapter, extra_notebook: str) -> str:
+    spec = COMPACT_APPENDICES.get(chapter.number)
+    if spec is None:
+        title = appendix_section_title(chapter.number, extra_notebook)
+        summary = "상세 실험 절차와 전체 출력은 온라인 부록에서 실행하고 확인합니다."
+        figure = None
+    else:
+        title = spec.title
+        summary = spec.summary
+        figure = spec.figure
+    url = chapter.extra_colab_url(extra_notebook)
+    blocks = [
+        "\\Needspace{18\\baselineskip}",
+        f"\\section{{온라인 부록: {latex_escape_prose(title)}}}",
+        f"\\onlineAppendixLink{{{latex_escape_prose(title)}}}{{{summary}}}{{{url}}}",
+    ]
+    if figure is not None:
+        blocks.append(figure_block(figure))
+    return "\n\n".join(blocks)
 
 
 def chapter_specific_fixes(text: str, chapter_number: int) -> str:
@@ -5181,12 +5548,15 @@ def chapter_tex(
     image_counts: dict[int, int] = {}
     append_notebook_cells(chunks, nb, chapter.number, image_counts=image_counts, compact_code=compact_code)
 
-    supplemental = supplemental_figures_to_latex(chapter.number)
+    supplemental = supplemental_figures_to_latex(chapter.number, compact=compact_code)
     if supplemental:
         chunks.append("\\section{보조 시각화}")
         chunks.append(supplemental)
 
     for extra_notebook in chapter.extra_notebooks:
+        if compact_code:
+            chunks.append(compact_appendix_to_latex(chapter, extra_notebook))
+            continue
         extra_path = resolved_notebook_path(chapter, use_executed, extra_notebook)
         if not extra_path.exists():
             raise FileNotFoundError(extra_path)
@@ -5205,6 +5575,8 @@ def chapter_tex(
     chapter_latex = display_math_to_numbered_equations(chapter_latex, chapter.number)
     chapter_latex = link_chapter_references(chapter_latex)
     chapter_latex = chapter_specific_fixes(chapter_latex, chapter.number)
+    if compact_code:
+        chapter_latex = compact_faq_section(chapter_latex, chapter.number)
     return chapter_latex
 
 
@@ -5259,7 +5631,11 @@ def main() -> None:
             ),
             encoding="utf-8",
         )
-        print(f"wrote {out.relative_to(ROOT)}")
+        try:
+            display_path = out.relative_to(ROOT)
+        except ValueError:
+            display_path = out
+        print(f"wrote {display_path}")
 
 
 if __name__ == "__main__":

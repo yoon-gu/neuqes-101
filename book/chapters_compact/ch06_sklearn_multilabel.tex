@@ -274,18 +274,8 @@ print(f"First 3 multi-hot labels:\n{Y[:3]}")
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1--12행}의 \inlinecode{ASPECT\_KEYWORDS = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{13행}의 \inlinecode{ASPECTS = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{14행}의 \inlinecode{K = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{16행}의 \inlinecode{def extract\_aspects(text:...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{17행}의 \inlinecode{text\_lower = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{18--21행}의 \inlinecode{return [ int(any(re.searc...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\textbf{1--12행}의 \inlinecode{ASPECT\_KEYWORDS = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{13행}의 \inlinecode{ASPECTS = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{14행}의 \inlinecode{K = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Y shape: (5000, 5)  (n_samples, n_aspects)
-First 3 multi-hot labels:
-[[0 1 0 0 1]
- [0 0 0 0 1]
- [0 0 0 1 0]]
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -321,28 +311,8 @@ for n in range(K + 1):
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{4행}의 \inlinecode{for k, aspect in enumerat...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{10행}의 \inlinecode{n\_labels\_per\_sample = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\textbf{4행}의 \inlinecode{for k, aspect in enumerat...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{10행}의 \inlinecode{n\_labels\_per\_sample = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{16행}의 \inlinecode{for n in range(K + 1):}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Per-aspect activation rate (over all 5,000 samples):
-       food: 55.6%  (2778 samples)
-    service: 49.6%  (2480 samples)
-      price: 29.4%  (1472 samples)
-   ambiance: 18.1%  (905 samples)
-   location: 21.9%  (1095 samples)
-
-Mean active labels per sample: 1.75
-Active label distribution:
-  0 labels: 741 samples  (14.8%)
-  1 labels: 1464 samples  (29.3%)
-  2 labels: 1506 samples  (30.1%)
-  3 labels: 957 samples  (19.1%)
-  4 labels: 277 samples  (5.5%)
-  5 labels: 55 samples  (1.1%)
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -364,15 +334,8 @@ print(f"X_test:  {X_test.shape}, Y_test:  {Y_test.shape}")
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1--3행}의 \inlinecode{X\_text\_train, X\_text\_test...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{5행}의 \inlinecode{tfidf = ...}에서는 TF-IDF 기반 벡터라이저를 만듭니다. \textbf{6행}의 \inlinecode{X\_train = ...}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{7행}의 \inlinecode{X\_test = ...}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
+\textbf{1--3행}의 \inlinecode{X\_text\_train, X\_text\_test...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{5행}의 \inlinecode{tfidf = ...}에서는 TF-IDF 기반 벡터라이저를 만듭니다. \textbf{6행}의 \inlinecode{X\_train = ...}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
 \end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-X_train: (4000, 10000), Y_train: (4000, 5)
-X_test:  (1000, 10000), Y_test:  (1000, 5)
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -409,15 +372,8 @@ except ValueError as e:
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{bare\_model = ...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{try:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{3행}의 \inlinecode{bare\_model.fit(...)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{8행}의 \inlinecode{except ValueError as e:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\textbf{1행}의 \inlinecode{bare\_model = ...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{try:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{3행}의 \inlinecode{bare\_model.fit(...)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다.
 \end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Failed: ValueError
-   Message: y should be a 1d array, got an array of shape (4000, 5) instead.
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -493,7 +449,7 @@ print(
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{model\_ml = ...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model\_ml.fit(...)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다.
+\textbf{1행}의 \inlinecode{model\_ml = ...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model\_ml.fit(...)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{18행}의 \inlinecode{for k, aspect in enumerat...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -580,25 +536,6 @@ print(
     f"{total_loss/5:>10.4f}"
 )
 \end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Review preview (200 chars):
-Okay, so I just went to Vegas for the first time for my 21st birthday. Basi...
-Active labels: 3
-
-    aspect  y_true      pred p                  term        loss
-----------------------------------------------------------------
-      food       0      0.4514        -log(1-0.4514)      0.6003
-   service       1      0.9069          -log(0.9069)      0.0977
-     price       1      0.7343          -log(0.7343)      0.3089
-  ambiance       1      0.5806          -log(0.5806)      0.5437
-  location       0      0.2636        -log(1-0.2636)      0.3060
-----------------------------------------------------------------
-       sum                                                1.8566
-  mean BCE                                       / 5      0.3713
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -773,67 +710,8 @@ Loss & CrossEntropy & per-label BCE 평균 \\
 
 \end{faqBox}
 
-\begin{faqBox}{Q3. (실무) 모든 라벨이 0인 샘플은 어떻게 처리하나요?}
 
-세 가지 접근.
 
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  \textbf{그대로 둔다}: BCE가 처리 가능. 각 라벨이 0이라는 신호를 학습. 가장 흔한 방식.
-\item
-  \textbf{버린다}: “라벨이 없으면 학습 신호가 없다”는 가정. 합성 데이터에서 빈 라벨 비율이 너무 크면 고려.
-\item
-  \textbf{“기타” 라벨 추가}: K+1번째 라벨을 만들어 “어느 항목도 안 맞음”을 명시적으로 표현. 데이터셋 설계 결정.
-\end{enumerate}
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-mask_nonempty = Y.sum(axis=1) > 0
-Y_clean = Y[mask_nonempty]
-df_clean = df[mask_nonempty]
-\end{lstlisting}
-
-이 장는 (a) 그대로 두기 --- 합성 데이터에서 “어느 키워드도 없는 짧은 리뷰”는 자연스러운 부분이라.
-
-\end{faqBox}
-
-\begin{faqBox}{Q4. (실무) 키워드 매칭이 너무 단순한 것 같은데 실무에선 어떻게 하나요?}
-
-세 가지 접근이 일반적.
-
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  \textbf{사람 라벨링}: 가장 정확하지만 비용 큼. crowdsourcing, 도메인 전문가, 사내 라벨러.
-\item
-  \textbf{약지도 학습 (weak supervision)}: 우리 장처럼 휴리스틱 라벨로 \emph{부트스트랩} \(\to\) 학습된 모델로 \emph{재라벨링} \(\to\) 사람이 검수. Snorkel 같은 프레임워크.
-\item
-  \textbf{거대 모델 보조}: GPT-4/Claude 같은 LLM에게 라벨 지시문을 줘서 자동 태깅. 비용은 사람 라벨링보다 훨씬 저렴, 정확도는 도메인에 따라 다름.
-\end{enumerate}
-
-이번 합성은 (2)의 가장 단순한 형태입니다 --- 한 번 매칭하고 끝. 실무에선 매칭 결과를 한 번 학습한 모델로 다시 라벨을 매겨 사전을 보강하는 사이클을 돌립니다.
-
-\end{faqBox}
-
-\begin{faqBox}{Q5. (이론) hamming loss는 정확히 무엇을 측정하나요?}
-
-평균 라벨별 오답 비율입니다.
-
-\begin{equation}
-\label{eq:ch06-02}
-\text{Hamming loss} = \frac{1}{N \cdot K}\sum_{i=1}^{N}\sum_{k=1}^{K} \mathbb{1}[\hat y_{ik} \neq y_{ik}]
-\end{equation}
-
-식~\eqref{eq:ch06-02}은 multi-label 평가에서 사용하는 Hamming loss의 정의입니다.
-
-직관: K개 라벨 중 평균적으로 몇 개가 틀렸나. K=5에서 hamming loss 0.1 = 평균 0.5개 라벨 틀림 = 한 샘플의 5개 라벨 중 평균 0.5개 잘못됨.
-
-\textbf{Subset accuracy와의 관계}: subset accuracy는 “5개 라벨 \emph{전부} 맞아야 1점”이라 매우 보수적, hamming은 \emph{부분 점수} 를 줌. 일반적으로 hamming이 더 너그럽게 나옵니다.
-
-\end{faqBox}
 
 \begin{faqBox}{Q6. (실무) 임계값을 라벨마다 다르게 줄 수 있나요?}
 
@@ -862,44 +740,10 @@ print(
 
 \end{faqBox}
 
-\begin{faqBox}{Q7. (실무) sklearn 에서 OvR 을 어떻게 구현하나요?}
-
-\textbf{한 줄 답}: \inlinecode{OneVsRestClassifier(LogisticRegression())} 로 wrap. multi-class·multi-label 양쪽에 통하는 \emph{표준 패턴} 입니다.
-
-\inlinecode{OneVsRestClassifier} wrapper 의 특징:
-
-\begin{booktable}{6장 FAQ 표}{tab:ch06-07}
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}ll@{}}
-\toprule
-비교 항목 & \inlinecode{OneVsRestClassifier(LogisticRegression())} \\
-\midrule
-
-받는 Y 형식 & \textbf{1D + 2D 둘 다} (multi-class 또는 multi-label) \\
-내부 저장 & K개 \emph{별도} estimator 를 \inlinecode{.estimators\_} 리스트로, 각자 \inlinecode{coef\_} shape \inlinecode{(1,\ V)} \\
-base classifier & \textbf{임의 binary 분류기} 가능 (\inlinecode{SVC}, \inlinecode{RandomForestClassifier}, ...) \\
-multi-label 지원 & OK \\
-\bottomrule
-\end{tabular}
-\end{adjustbox}
-\end{booktable}
-
-\Needspace{10\baselineskip}
-\begin{lstlisting}
-OneVsRestClassifier(LogisticRegression()).fit(X, y_1d)
-# OK multi-class
-OneVsRestClassifier(LogisticRegression()).fit(X, y_multihot)
-# OK multi-label
-
-from sklearn.svm import SVC
-OneVsRestClassifier(SVC(probability=True)).fit(X, y_multihot)
-# OK
-\end{lstlisting}
-
-이 커리큘럼은 \ref{ch:05}장 에선 \emph{모던 \inlinecode{LogisticRegression()} (multinomial 자동)} 으로 multi-class softmax 를 하고, \ref{ch:06}장의 multi-label 에서는 \inlinecode{OneVsRestClassifier} 로 \emph{명시적} 으로 K개 binary 학습을 표현합니다.
-\end{faqBox}
 
 
+
+\compactFAQMore{4}
 
 \section{오류 실험 (선택)}
 

@@ -204,15 +204,6 @@ logits \((z_0, z_1, z_2, z_3, z_4)\) & softmax \(\to\) \(\hat p_4\) & 손실 \(-
 \textbf{1행}의 \inlinecode{!nvidia-smi}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 03:47:31 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 54C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \section{데이터 준비}
@@ -251,17 +242,6 @@ print(
     f"{train_tok[0]['labels']}  (int scalar in 0-4)"
 )
 \end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Dataset({
-    features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'],
-    num_rows: 5000
-})
-
-First sample label: 4  (int scalar in 0-4)
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -358,15 +338,6 @@ classifier (\texttt{Linear(768\$\textbackslash{}to\$K)}) & 1,538 & \textbf{3,845
 !nvidia-smi
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 03:47:57 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 55C P8 15W / 70W | 3MiB / 15360MiB | 0% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \section{학습}
@@ -427,15 +398,6 @@ def compute_metrics(eval_pred):
 !nvidia-smi
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 03:48:37 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 75C P0 64W / 70W | 1577MiB / 15360MiB | 73% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \section{평가}
@@ -486,24 +448,8 @@ print(pd.DataFrame({
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{2행}의 \inlinecode{preds\_output = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{3행}의 \inlinecode{logits = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{4행}의 \inlinecode{labels = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{exp = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{7--10행}의 \inlinecode{probs\_full = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{11행}의 \inlinecode{preds = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\textbf{2행}의 \inlinecode{preds\_output = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{3행}의 \inlinecode{logits = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{4행}의 \inlinecode{labels = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-logits shape: (1000, 5)
-top-1 prob range: [0.2245, 0.8730]
-top-1 prob mean: correct=0.6279, wrong=0.5414
-
-First 5 samples:
- label (star-1)  pred (star-1)  top-1 prob  correct?
-              2              4      0.4724     False
-              4              3      0.4351     False
-              1              0      0.7647     False
-              4              4      0.4687      True
-              3              3      0.5864      True
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -834,41 +780,7 @@ class WeightedTrainer(Trainer):
 
 \end{faqBox}
 
-\begin{faqBox}{Q2. (이론) softmax는 왜 \emph{상대 logit} 만 보나요? 그러면 절대 logit 값에 의미가 없나요?}
 
-수식으로:
-
-\begin{equation}
-\label{eq:ch12-02}
-\mathrm{softmax}(z + c \cdot \mathbf 1)_k = \dfrac{e^{z_k + c}}{\sum_j e^{z_j + c}} = \dfrac{e^{z_k} e^c}{e^c \sum_j e^{z_j}} = \mathrm{softmax}(z)_k
-\end{equation}
-
-식~\eqref{eq:ch12-02}은 이 절에서 사용하는 핵심 관계를 정리한 것입니다.
-
-모든 logit에 같은 상수 \(c\) 를 더해도 softmax 출력이 동일합니다. 즉 K-차원 logit 벡터의 K-1 자유도만 학습됨 (K=5에선 4자유도).
-
-\textbf{절대 logit 값은 \emph{학습 신호 크기} 를 결정}합니다. logit 값이 크면 (예: \(\vert{}z_k\vert{} \gg 1\)) softmax가 한쪽에 압착되어 gradient가 작아지고, 작으면 (예: \(\vert{}z_k\vert{} \approx 0\)) gradient가 균등해 모든 클래스가 학습됩니다. 학습 초기엔 logit이 작아 모든 클래스에 신호가 가는 게 좋고, 후반엔 logit이 커져 confident한 결정을 내리게 됩니다.
-
-\end{faqBox}
-
-\begin{faqBox}{Q3. (실무) eval 데이터에 어떤 클래스가 \emph{하나도} 안 나타나면 AUC 계산이 실패하는데 어떻게 하나요?}
-
-\inlinecode{roc\_auc\_score(multi\_class="ovr")} 는 \emph{각 클래스에 대해} positive/negative를 나누어 AUC를 계산하는데, positive 샘플이 0개인 클래스가 있으면 AUC를 정의할 수 없어서 \inlinecode{ValueError} 가 납니다.
-
-처치는 두 가지:
-
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  \textbf{try/except로 NaN 반환} --- 이 장의 \inlinecode{compute\_metrics} 가 사용하는 패턴. 학습 자체엔 영향 없음.
-\item
-  \textbf{eval 데이터를 더 모아서 모든 클래스가 등장하도록} --- 운영 환경에선 이게 정석. 평가의 통계적 신뢰도 자체에도 도움.
-\end{enumerate}
-
-평가 셋이 1,000건 정도면 5클래스가 모두 등장할 가능성이 높지만, 각 클래스 표본이 \textasciitilde200건 안팎이라 통계 잡음이 큽니다. 가능하면 평가 셋을 늘리세요.
-
-\end{faqBox}
 
 \begin{faqBox}{Q4. (이론) 별점 1-5는 \emph{순서형 라벨} 인데 왜 회귀(\ref{ch:09}장) 대신 분류(\ref{ch:12}장)로 푸나요?}
 
@@ -999,42 +911,10 @@ zsc(
 
 \end{faqBox}
 
-\begin{faqBox}{Q6. (실무) 한 모델로 \emph{binary와 5-class를 동시에} 풀 수 있나요?}
-
-\textbf{multi-task learning} 이라는 패턴으로 가능합니다.
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-class MultiTaskModel(nn.Module):
-    def __init__(self, backbone):
-        super().__init__()
-        self.backbone = backbone
-        self.head_binary = nn.Linear(768, 2)
-        # binary head
-        self.head_5class = nn.Linear(768, 5)
-        # 5-class head
-
-    def forward(self, **inputs):
-        h = self.backbone(**inputs).last_hidden_state[:, 0]
-        # CLS
-        return {"binary": self.head_binary(h), "5class": self.head_5class(h)}
-
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{6\baselineskip}
-\begin{lstlisting}[firstnumber=15]
-loss = ce(
-    out["binary"],
-    y_binary) + ce(out["5class"], y_5class,
-)
-\end{lstlisting}
-
-DistilBERT body가 \emph{공유} 되어 두 task가 서로의 학습에 도움을 줍니다. \ref{ch:14}장 (Auxiliary Loss)에서 비슷한 패턴을 본격적으로 다룹니다.
-\end{faqBox}
 
 
+
+\compactFAQMore{3}
 
 \section{오류 실험 (선택)}
 
@@ -1086,94 +966,15 @@ def tokenize_wrong(batch):
 
 
 
-\section{부록: 데이터 스케일링: BERT vs sklearn 곡선}
+\Needspace{18\baselineskip}
 
+\section{온라인 부록: 데이터 스케일링: BERT와 sklearn의 교차점}
 
-
-\subsection{데이터 준비}
-
-\inlinecode{pool} 을 30,000 으로 한 번 셔플해 두고, size-N 학습 셋은 \inlinecode{pool.select(range(N))} 로 \emph{앞에서부터} 잘라 nested 가 되게 합니다. eval 은 별도 1,000 으로 고정합니다 (본편 \ref{ch:12}장과 같은 split·seed).
-
-
-
-\subsection{학습 함수 --- BERT / sklearn}
-
-\inlinecode{train\_bert(N)} 은 size-N 부분집합으로 DistilBERT 5클래스를 epoch 2 학습하고 고정 eval 정확도를 돌려줍니다(매번 seed 42 동일 초기화). \inlinecode{train\_sklearn(N)} 은 같은 부분집합으로 TF-IDF + LogReg 를 학습합니다.
-
-
-
-\subsection{스윕 --- train size 그리드}
-
-\texttt{N\ ∈\ \{100,\ 300,\ 1000,\ 3000,\ 10000,\ 30000\}} 각각에서 두 모델을 학습해 고정 eval 정확도를 기록합니다. (BERT 30K 학습이 가장 오래 --- 전체 \textasciitilde30분)
-
-
-
-\subsection{곡선 --- 정확도 vs 학습 데이터 양}
-
-
-
-\compactCodeOmitted{숫자 결과를 그림으로 확인하는 단계}
+\onlineAppendixLink{데이터 스케일링: BERT와 sklearn의 교차점}{작은 데이터에서는 TF-IDF와 선형 모델이 앞서지만 약 1,000개 샘플 부근에서 BERT가 따라잡습니다. 30,000개에서도 격차가 약 0.04로 남는다는 결과는 5클래스 난이도와 데이터 규모를 함께 해석해야 함을 보여줍니다.}{https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/12_bert_multiclass/12_bert_multiclass_data_scaling.ipynb}
 
 \begin{bookfigurelabel}[H]{학습 데이터 규모에 따른 sklearn과 BERT 정확도}{fig:ch12-data-scaling}
 \centering
-\includegraphics[width=0.86\linewidth]{assets/figures/ch12_data_scaling.png}
+\includegraphics[width=0.72\linewidth]{assets/figures/ch12_data_scaling.png}
 \end{bookfigurelabel}
 
 \textbf{그림 읽기} --- 그림~\ref{fig:ch12-data-scaling}에서 다음 내용을 확인합니다: 학습 데이터 규모에 따른 sklearn과 BERT 정확도. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
-
-
-
-\subsection{해석}
-
-곡선이 \textbf{두 번 이야기} 합니다.
-
-\textbf{작은 데이터(N=100-300): sklearn 이 크게 앞섭니다 (BERT 가 -0.14).} DistilBERT 는 6,700만 파라미터를 100-300 샘플·2 epoch 로 적응시키기엔 데이터가 턱없이 부족해 분류 헤드가 거의 학습되지 않습니다 (N=100 에서 0.229 --- 5클래스 random 0.20 바로 위). 반면 TF-IDF + LogReg 는 100 샘플에서도 단어 빈도 신호를 곧장 뽑아 0.373 을 냅니다. \textbf{큰 모델이 항상 이기는 게 아니라, 적응할 데이터가 있어야} 이깁니다.
-
-\textbf{교차점은 N\(\approx\)1,000.} 여기서 BERT 가 sklearn 을 추월하고(0.500 vs 0.471), 이후 줄곧 앞섭니다.
-
-\textbf{큰 데이터(1K-30K): BERT 가 앞서지만 격차는 완만합니다 (+0.02-0.04).} sklearn 은 \textasciitilde10K 부터 0.56-0.57 로 평탄해지고, BERT 는 30K 에서 0.600 까지 천천히 오릅니다. \textbf{30K 까지 키워도 격차가 +0.037 에 머문다} 는 건, 본편의 근소한 격차가 \emph{데이터 부족만의 문제가 아니라} 5클래스 별점 분류 자체가 어렵다(인접 별점 경계가 모호한 ordinal task)는 뜻입니다 --- 이진(\ref{ch:10}장, BERT 0.90)에서 BERT 가 압도하던 것과 대조적입니다.
-
-\begin{booktable}{12장 해석 표}{tab:ch12-10}
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}llll@{}}
-\toprule
-N & sklearn & BERT & gap \\
-\midrule
-
-100 & 0.373 & 0.229 & -0.144 \\
-300 & 0.396 & 0.262 & -0.134 \\
-1,000 & 0.471 & 0.500 & +0.029 \\
-3,000 & 0.524 & 0.557 & +0.033 \\
-10,000 & 0.569 & 0.588 & +0.019 \\
-30,000 & 0.563 & 0.600 & +0.037 \\
-\bottomrule
-\end{tabular}
-\end{adjustbox}
-\end{booktable}
-
-\textbf{본편(5,000) 한 점} 은 이 곡선의 1K-10K 구간 --- BERT 가 막 앞서기 시작하지만 격차가 작은 자리 --- 에 놓입니다. 즉 본편의 \textquotesingle 근소 우위\textquotesingle 는 버그가 아니라 \emph{이 task·이 데이터 규모에서 정상} 입니다. 데이터를 더 부으면 BERT 가 더 벌리지만(우상향), 5클래스가 본질적으로 어려워 이진만큼 극적이진 않습니다.
-
-
-
-\subsection{보너스 --- BERT 성능을 끌어올리는 5가지 lever}
-
-데이터는 가장 큰 lever 중 하나일 뿐입니다. 실무에서 분류 정확도를 더 올리고 싶을 때 순서대로 검토하는 카드:
-
-\begin{booktable}{12장 보너스 - BERT 성능을 끌어올리는 5가지 lever 표}{tab:ch12-11}
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}lll@{}}
-\toprule
-lever & 방법 & 대략 효과 \\
-\midrule
-
-\textbf{1. 데이터 (양 + 질)} & train size↑, 도메인 적응 사전학습(DAPT), 라벨 노이즈 정리 & \textbf{+3-15\%p} (보통 가장 큼) \\
-\textbf{2. 더 강한 모델} & DistilBERT \(\to\) RoBERTa-large / DeBERTa-v3-large & +2-5\%p \\
-\textbf{3. HPO} & learning rate · warmup · weight decay 튜닝 & +1-3\%p \\
-\textbf{4. 학습 전략} & layer-wise LR decay(LLRD), 앙상블 & 각 +1-2\%p \\
-\textbf{5. LLM 라벨링 + distill} & 큰 LLM 으로 라벨 생성 \(\to\) 작은 모델 증류 (2024-2025 트렌드) & +3-10\%p \\
-\bottomrule
-\end{tabular}
-\end{adjustbox}
-\end{booktable}
-
-이 부록은 그중 \textbf{1번(데이터 양)} 을 곡선으로 분리해 본 것입니다. 5클래스에서 본편의 근소한 격차가 \emph{데이터 부족} 때문이라면 곡선이 우상향하며 벌어지고, \emph{task 난이도} 때문이라면 큰 데이터에서도 격차가 평탄할 것입니다 --- 위 §4 곡선이 그 답입니다.

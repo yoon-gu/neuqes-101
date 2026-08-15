@@ -330,15 +330,6 @@ L = \underbrace{\frac{1}{N \cdot K}\sum_{i,k}\text{BCE}(z_{i,k}^{main}, y_{i,k}^
 \textbf{1행}의 \inlinecode{!nvidia-smi}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Wed Jun 24 04:13:57 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 48C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \section{데이터 준비}
@@ -395,18 +386,6 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Dataset({
-features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels', 'aux_...
-    num_rows: 5000
-})
-
-First sample labels: [0.0, 1.0, 0.0, 0.0, 1.0]
-First sample aux_labels: 1.00
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \section{\texorpdfstring{커스텀 Data Collator}{커스텀 Data Collator}}
@@ -452,17 +431,6 @@ for k, v in batch.items():
         f"{v.dtype}"
     )
 \end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Batch keys: ['input_ids', 'token_type_ids', 'attention_mask', 'labels', 'au...
-  input_ids: shape=(4, 128), dtype=torch.int64
-  token_type_ids: shape=(4, 128), dtype=torch.int64
-  attention_mask: shape=(4, 128), dtype=torch.int64
-  labels: shape=(4, 5), dtype=torch.float32
-  aux_labels: shape=(4,), dtype=torch.float32
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -705,15 +673,6 @@ def compute_metrics_main(eval_pred):
 !nvidia-smi
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Wed Jun 24 04:15:10 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 67C P0 35W / 70W | 1619MiB / 15360MiB | 70% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \section{평가}
@@ -772,7 +731,7 @@ print(f"  Pearson: {pear_aux:.4f}")
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{@torch.no\_grad()}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{2행}의 \inlinecode{def aux\_predictions(train...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{trainer.model.eval()}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{4행}의 \inlinecode{device = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{aux\_preds, aux\_true = [], []}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{for i in range(0, len(dat...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\textbf{1행}의 \inlinecode{@torch.no\_grad()}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{2행}의 \inlinecode{def aux\_predictions(train...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{trainer.model.eval()}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -801,15 +760,8 @@ print(f"Eval samples:      {len(labels_eval)}")
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{preds\_output\_aux = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{2행}의 \inlinecode{logits\_aux = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{if isinstance(logits\_aux,...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{4행}의 \inlinecode{logits\_aux = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{labels\_eval = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{probs\_aux = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\textbf{1행}의 \inlinecode{preds\_output\_aux = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{2행}의 \inlinecode{logits\_aux = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{if isinstance(logits\_aux,...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Main logits shape: (1000, 5)
-Eval samples:      1000
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -1026,60 +978,7 @@ for lam in [0.1, 0.3, 1.0, 3.0, 10.0]:
 
 \end{faqBox}
 
-\begin{faqBox}{Q2. (이론) \inlinecode{outputs.loss} 는 BCE per-label 평균인데 왜 \emph{우리가 따로} 계산 안 하나요?}
 
-\inlinecode{AutoModelForSequenceClassification} 의 forward 가 \inlinecode{problem\_type="multi\_label\_classification"} 와 \inlinecode{labels} 를 보고 \emph{자동으로} \inlinecode{BCEWithLogitsLoss(logits,\ labels)} 를 계산해 \inlinecode{outputs.loss} 에 담기 때문입니다.
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-class DistilBertForSequenceClassification:
-    def forward(self, ..., labels=None):
-        logits = self.classifier(self.pre_classifier(hidden))
-        loss = None
-        if labels is not None:
-            if self.config.problem_type == "multi_label_classification":
-                loss = F.binary_cross_entropy_with_logits(
-                    logits,
-                    labels.float(),
-                )
-            elif self.config.problem_type == "single_label_classification":
-                loss = F.cross_entropy(logits, labels)
-            elif self.config.problem_type == "regression":
-                loss = F.mse_loss(
-                    logits.squeeze(),
-                    labels.float(),
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 모델 출력을 확률이나 예측값으로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-                )
-        return SequenceClassifierOutput(loss=loss, logits=logits, ...)
-\end{lstlisting}
-
-우리는 \emph{메인 loss는 자동으로 받고, 보조 loss만 직접 계산해 더하면} 됩니다. 깔끔.
-
-\end{faqBox}
-
-\begin{faqBox}{Q3. (실무) 보조 헤드의 가중치는 사전학습이 안 되어 있는데 그래도 잘 학습되나요?}
-
-네. 이유:
-
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  \emph{작은 분류 헤드} 는 보통 사전학습 없이 random init 부터 시작해도 fine-tune 동안 충분히 빠르게 학습됩니다 (몇백 step 안에).
-\item
-  보조 헤드 위에 가중치가 \textasciitilde770개라 데이터에 \emph{과적합} 할 위험도 적습니다.
-\item
-  BERT 본체(67M)는 이미 표상이 풍부해 작은 head가 \emph{읽어내기만} 하면 됨.
-\end{enumerate}
-
-대조적으로 \emph{BERT 본체를 random init 부터} 학습하려면 수백 GB 데이터가 필요합니다. 사전학습 + 작은 head fine-tune 패턴이 강력한 이유.
-
-\end{faqBox}
 
 \begin{faqBox}{Q4. (이론) 보조 task가 메인과 \emph{반대 방향} 신호면 학습이 망가지나요?}
 
@@ -1141,23 +1040,10 @@ class DistilBertForSequenceClassification:
 
 \end{faqBox}
 
-\begin{faqBox}{Q6. (실무) 보조 task가 \emph{test 환경에서는 정답이 없는} 라벨이면 어떻게 활용하나요?}
-
-학습 시에만 보조 라벨 사용, 추론 시에는 메인 head만 사용 --- \emph{학습 정규화} 용. 이게 auxiliary loss 의 \emph{정통 사용 패턴} 입니다.
-
-\Needspace{7\baselineskip}
-\begin{lstlisting}
-trainer.train()
-
-with torch.no_grad():
-    out = model(input_ids=..., output_hidden_states=False)
-    main_probs = torch.sigmoid(out.logits)
-\end{lstlisting}
-
-훈련 데이터에만 있는 \emph{부가 신호} (운영 시엔 사라지는 메타데이터)를 학습 시 활용하는 좋은 트릭.
-\end{faqBox}
 
 
+
+\compactFAQMore{3}
 
 \section{오류 실험 (선택)}
 
@@ -1202,205 +1088,15 @@ trainer.train()
 
 
 
-\section{\texorpdfstring{부록: $\lambda$ 스윕: 보조 손실 가중치의 sweet spot 찾기}{부록: lambda 스윕: 보조 손실 가중치의 sweet spot 찾기}}
+\Needspace{18\baselineskip}
 
+\section{온라인 부록: 보조 손실 가중치 스윕}
 
+\onlineAppendixLink{보조 손실 가중치 스윕}{$\lambda=0.05$에서 micro-F1이 0.8399에서 0.8469로, macro-F1이 0.8023에서 0.8109로 올랐습니다. $\lambda$를 더 키우면 보조 손실이 메인 태스크를 누르므로 한 점의 성능보다 전체 곡선으로 sweet spot을 확인해야 합니다.}{https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/14_auxiliary_loss/14_auxiliary_loss_lambda_sweep.ipynb}
 
-\subsection{데이터·모델·Trainer --- 본편 \ref{ch:14}장과 동일}
-
-항목 키워드 기반 multi-hot 라벨 + 별점(0-1 스케일) 보조 라벨, DistilBERT + 보조 헤드, \inlinecode{compute\_loss} 오버라이드까지 본편과 같은 코드입니다.
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-class AuxCollator:
-    def __init__(self, tokenizer):
-        self.base = DataCollatorWithPadding(tokenizer)
-    def __call__(self, features):
-        aux = torch.tensor(
-            [f.pop("aux_labels") for f in features],
-            dtype=torch.float,
-        )
-        batch = self.base(features)
-        batch["labels"] = batch["labels"].float()
-        batch["aux_labels"] = aux
-        return batch
-
-collator = AuxCollator(tokenizer)
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=16]
-def make_model():
-    m = AutoModelForSequenceClassification.from_pretrained(
-        "distilbert-base-uncased", num_labels=K,
-        problem_type="multi_label_classification",
-        id2label={i: a for i, a in enumerate(ASPECTS)},
-        label2id={a: i for i, a in enumerate(ASPECTS)},
-    )
-    m.aux_head = nn.Linear(m.config.dim, 1)
-    return m
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 학습 설정을 만들고 학습 루프를 실행하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=26]
-class AuxTrainer(Trainer):
-    def __init__(self, *args, lambda_aux: float = 1.0, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.lambda_aux = lambda_aux
-    def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
-        aux_labels = inputs.pop("aux_labels")
-        outputs = model(
-            **inputs,
-            output_hidden_states=True,
-        )
-        main_loss = outputs.loss
-        cls = outputs.hidden_states[-1][:, 0, :]
-        aux_logits = model.aux_head(cls).squeeze(-1)
-        aux_loss = F.mse_loss(
-            aux_logits,
-            aux_labels.float(),
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 모델 출력을 확률이나 예측값으로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=42]
-        )
-        loss = main_loss + self.lambda_aux * aux_loss
-        if return_outputs:
-            clean = SequenceClassifierOutput(
-                loss=loss,
-                logits=outputs.logits,
-            )
-            return (loss, clean)
-        return loss
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 모델 출력을 확률이나 예측값으로 바꾸는 단계입니다. 이어지는 블록에서는 예측 결과를 지표와 표로 요약하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=52]
-def compute_metrics_main(eval_pred):
-    logits, labels = eval_pred
-    if isinstance(logits, tuple): logits = logits[0]
-    probs = 1.0 / (1.0 + np.exp(-logits))
-    preds = (probs >= 0.5).astype(int)
-    out = {"hamming_loss": float(hamming_loss(labels, preds))}
-    _, _, f1_mi, _ = precision_recall_fscore_support(
-        labels,
-        preds,
-        average="micro",
-        zero_division=0,
-    )
-    _, _, f1_ma, _ = precision_recall_fscore_support(
-        labels,
-        preds,
-        average="macro",
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 학습 설정을 만들고 학습 루프를 실행하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=68]
-        zero_division=0,
-    )
-    out["micro_f1"] = float(f1_mi)
-    out["macro_f1"] = float(f1_ma)
-    return out
-
-@torch.no_grad()
-def aux_predictions(trainer, dataset, batch_size=64):
-    trainer.model.eval()
-    device = trainer.model.device
-    aux_preds, aux_true = [], []
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=79]
-    for i in range(0, len(dataset), batch_size):
-        bf = [dict(dataset[j]) for j in range(i, min(i + batch_size, len(dataset)))]
-        batch = trainer.data_collator(bf)
-        bod = {k: v.to(device) for k, v in batch.items()}
-        aux_lbl = bod.pop("aux_labels").cpu().numpy()
-        out = trainer.model(
-            **{k: v for k, v in bod.items() if k != "labels"},
-            output_hidden_states=True,
-        )
-        cls = out.hidden_states[-1][:, 0, :]
-        al = trainer.model.aux_head(cls).squeeze(-1).cpu().numpy()
-        aux_preds.extend(al.tolist()); aux_true.extend(aux_lbl.tolist())
-    return np.array(aux_preds), np.array(aux_true)
-print("setup 완료")
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-setup 완료
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
-\subsection{\texorpdfstring{\(\lambda\) 스윕 --- 그리드로 학습}{\textbackslash lambda 스윕 --- 그리드로 학습}}
-
-\texttt{\$\textbackslash{}lambda\$\ ∈\ \{0,\ 0.05,\ 0.1,\ 0.3,\ 0.5,\ 1.0\}} 각각에 대해 \textbf{같은 seed·같은 초기화}로 모델을 새로 만들어 2 epoch 학습하고, 메인 micro/macro-F1 과 보조 R² 를 기록합니다. \(\lambda\) 만 다르므로 곡선의 변화는 온전히 \(\lambda\) 의 효과입니다.
-
-\begin{quote}
-6개 모델을 순차 학습하므로 \textasciitilde30-40분 걸립니다 (부록이라 30분 본편 제약 밖).
-\end{quote}
-
-
-
-\subsection{\texorpdfstring{결과 --- \(\lambda\) vs 메인 성능 곡선}{결과 --- \textbackslash lambda vs 메인 성능 곡선}}
-
-
-
-\compactCodeOmitted{숫자 결과를 그림으로 확인하는 단계}
-
-\begin{bookfigurelabel}[H]{lambda 스윕에서 확인한 보조 손실 sweet spot}{fig:ch14-lambda-sweep}
+\begin{bookfigurelabel}[H]{보조 손실 가중치 스윕에서 확인한 sweet spot}{fig:ch14-lambda-sweep}
 \centering
-\includegraphics[width=0.86\linewidth]{assets/figures/ch14_lambda_sweep.png}
+\includegraphics[width=0.72\linewidth]{assets/figures/ch14_lambda_sweep.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch14-lambda-sweep}에서 다음 내용을 확인합니다: lambda 스윕에서 확인한 보조 손실 sweet spot. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
-
-
-
-\subsection{해석}
-
-\textbf{\(\lambda\)=0.05 가 sweet spot 입니다.} 메인 micro-F1 이 baseline(\(\lambda\)=0, 0.8399)보다 \textbf{+0.007 오른 0.8469}, macro-F1 도 0.8023 \(\to\) 0.8109(\textbf{+0.009})로 보조 손실이 메인 항목 분류를 \emph{끌어올립니다}. 동시에 보조 별점 회귀도 제대로 학습됩니다(R²=0.43). 즉 본편이 보여준 “보조가 메인을 깎는다”는 결과는 \textbf{보조가 해로워서가 아니라 \(\lambda\) 가 과했기 때문}입니다.
-
-\(\lambda\) 를 키우면 보조 task 자체는 계속 좋아지지만(R² 0.43 \(\to\) 0.65) 메인은 무너집니다 --- \(\lambda\)=0.3 에서 이미 baseline 아래로, \(\lambda\)=0.5 에서 macro-F1 0.63, \textbf{\(\lambda\)=1.0 에서는 micro 0.66 · macro 0.39 로 폭락}합니다. \(\lambda\) 는 공유 인코더의 자원을 메인\(\leftrightarrow\)보조에 배분하는 손잡이이고, 보조가 \emph{거드는} 효과를 보려면 \textbf{작게(0.05-0.1) 잡아야} 합니다.
-
-\begin{booktable}{14장 해석 표}{tab:ch14-10}
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}lllll@{}}
-\toprule
-\(\lambda\) & micro-F1 & macro-F1 & 보조 R² & 메인 \(\Delta\)(vs baseline) \\
-\midrule
-
-0.0 & 0.8399 & 0.8023 & --- & (기준) \\
-\textbf{0.05} & \textbf{0.8469} & \textbf{0.8109} & +0.43 & \textbf{+0.007 / +0.009} \\
-0.1 & 0.8440 & 0.8064 & +0.49 & +0.004 / +0.004 \\
-0.3 & 0.8028 & 0.7382 & +0.57 & -0.037 / -0.064 \\
-0.5 & 0.7473 & 0.6319 & +0.60 & -0.093 / -0.170 \\
-1.0 & 0.6622 & 0.3906 & +0.65 & -0.178 / -0.412 \\
-\bottomrule
-\end{tabular}
-\end{adjustbox}
-\end{booktable}
-
-\begin{quote}
-본편 \ref{ch:14}장은 이 sweet spot(\(\lambda\)=0.05)을 메인 학습값으로 쓰고, \(\lambda\)=1은 “과적용하면 어떻게 무너지는가”의 사례로 둡니다.
-\end{quote}
+\textbf{그림 읽기} --- 그림~\ref{fig:ch14-lambda-sweep}에서 다음 내용을 확인합니다: 보조 손실 가중치 스윕에서 확인한 sweet spot. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.

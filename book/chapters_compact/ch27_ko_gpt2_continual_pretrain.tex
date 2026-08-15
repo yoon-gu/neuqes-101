@@ -498,7 +498,7 @@ print(
 \end{lstlisting}
 
 \begin{codeRead}
-\inlinecode{transformers} 같은 주요 패키지를 불러옵니다. \textbf{3행}의 \inlinecode{t0 = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5--9행}의 \inlinecode{tokenizer = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{11행}의 \inlinecode{model = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{13행}의 \inlinecode{model.config.pad\_token\_id...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\inlinecode{transformers} 같은 주요 패키지를 불러옵니다. \textbf{3행}의 \inlinecode{t0 = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5--9행}의 \inlinecode{tokenizer = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -986,41 +986,6 @@ Generation 품질 & 동화 풍 단순 한국어 & \textbf{자연스러운 동화
 
 \section{FAQ}
 
-\begin{faqBox}{Q1. (이론) \emph{Continual pretraining} 이 정확히 무엇인가요? \emph{fine-tune} 과 어떻게 다른가요?}
-
-\textbf{Continual pretraining} (계속 사전학습 / continual learning) 은 GPT 시대 학습 4단계 중 \emph{단계 2}:
-
-\begin{booktable}{27장 FAQ 표}{tab:ch27-13}
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}lll@{}}
-\toprule
-단계 & 정확 용어 & 의미 \\
-\midrule
-
-1 & \textbf{Pretraining} & random init 본체 + 일반 코퍼스 \\
-2 & \textbf{Continual pretraining} \(\leftarrow\) \emph{본 장} & \emph{사전학습된 본체} + \emph{새 도메인 데이터}. \textbf{head 그대로, task 그대로, loss 그대로} \\
-3 & \textbf{SFT} (Instruction tuning) & instruction-response 쌍, \texttt{labels{[}:prompt\_len{]}\ =\ -100} \\
-4 & \textbf{Alignment} (DPO / RLHF / GRPO) & preference 또는 verifier reward \\
-\bottomrule
-\end{tabular}
-\end{adjustbox}
-\end{booktable}
-
-\textbf{\inlinecode{fine-tune} 이라는 단어는 \emph{세 의미가 섞여 쓰입니다}}:
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{BERT 단계 fine-tune}: \emph{task adaptation} --- 본체 + 새 head (\inlinecode{Linear(H,\ K)}) + 새 task loss. \ref{ch:09}--\ref{ch:23}장의 분류 장들.
-\item
-  \textbf{GPT 시대 continual pretraining}: \emph{데이터 적응} --- 본체 + 같은 head + 같은 loss + 새 데이터. \textbf{본 장.}
-\item
-  \textbf{GPT 시대 SFT}: \emph{행동 정렬} --- 본체 + 같은 head + 같은 loss + instruction-response 데이터 + \inlinecode{-100} 마스킹. \ref{ch:28}장.
-\end{itemize}
-
-정확히 부르자면 본 장은 \emph{fine-tune 이 아니라 continual pretraining}. \emph{task 가 안 바뀌고 데이터만 바뀐} 게 핵심.
-
-\end{faqBox}
 
 \begin{faqBox}{Q2. (실무) 왜 lr 가 \ref{ch:26}장의 \inlinecode{5e-4} 보다 작은 \inlinecode{2e-5} 인가요?}
 
@@ -1050,61 +1015,7 @@ HF 의 continual pretraining / fine-tuning 표준 lr 범위: \inlinecode{1e-5} -
 
 \end{faqBox}
 
-\begin{faqBox}{Q3. (이론) \ref{ch:26}장 (3M) 가 같은 데이터로 학습했는데 \ref{ch:27}장 (125M) 결과가 훨씬 좋다면, \emph{모델 크기의 위력} 인가 \emph{사전학습의 위력} 인가?}
 
-\textbf{둘이 \emph{섞여서} 분리 불가능} 입니다. 본 장의 셋업은 \emph{두 변수가 동시에 변함}:
-
-\begin{itemize}
-\tightlist
-\item
-  \ref{ch:26}장 \(\to\) \ref{ch:27}장 변화: 모델 크기 \emph{3M \(\to\) 125M (약 40배)} + 사전학습 \emph{없음 \(\to\) 대규모 한국어 코퍼스}
-\end{itemize}
-
-진짜 \emph{모델 크기와 사전학습 효과를 분리} 하려면 \emph{2 \(\times\) 2 격자} 실험이 필요:
-
-\begin{booktable}{27장 FAQ 표}{tab:ch27-14}
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}llll@{}}
-\toprule
-셋업 & 모델 크기 & 사전학습 & 본 커리큘럼 \\
-\midrule
-
-(a) & 3M & 없음 & \textbf{\ref{ch:26}장} \\
-(b) & 3M & 대규모 한국어 사전학습 & (미실험) \\
-(c) & 125M & 없음 & (미실험 --- 125M scratch + TinyStories 만 학습) \\
-(d) & 125M & 대규모 한국어 코퍼스 & \textbf{\ref{ch:27}장} \\
-\bottomrule
-\end{tabular}
-\end{adjustbox}
-\end{booktable}
-
-본 커리큘럼에는 (a) 와 (d) 만 있어 \emph{둘의 차이} 만 보입니다. (b) 와 (c) 는 \emph{T4 + 30분 룰} 안에 어렵습니다 (125M scratch 는 \emph{TinyStories 만으로 의미 있는 학습이 부족함}, 3M 대규모 사전학습은 \emph{데이터 규모 자체가 30분에 안 맞음}).
-
-\textbf{실용적 결론}: 실무에서는 (b)(c) 가 \emph{비용 대비 비효율} 이라 (d) 패턴이 표준. \emph{대규모 사전학습 모델을 가져와 작은 도메인 데이터로 continual pretraining} --- 본 장의 패턴이 그 자체로 \emph{실무 표준 레시피}. (영어 \ref{ch:25}장 Q3 의 한국어판.)
-
-\end{faqBox}
-
-\begin{faqBox}{Q4. (실무) KoGPT2 토크나이저로 \emph{영어} TinyStories 를 학습하면 어떻게 되나요? (\ref{ch:25}장 Q4 의 거울)}
-
-\textbf{작동은 하지만 비효율적} 입니다 --- KoGPT2 BBPE 는 \emph{byte-level} 이라 영어도 UNK 없이 표현하지만, \emph{한국어 코퍼스 중심} 으로 학습돼 영어 어절의 병합 규칙이 약합니다. 그래서 \emph{같은 영어 문장이 영어 gpt2 BPE 보다 다소 많은 토큰} 으로 쪼개질 수 있습니다.
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-from transformers import PreTrainedTokenizerFast, AutoTokenizer
-ko_tok = PreTrainedTokenizerFast.from_pretrained(
-    "skt/kogpt2-base-v2",
-    bos_token="</s>", eos_token="</s>", unk_token="<unk>",
-    pad_token="<pad>", mask_token="<mask>",
-)
-en_tok = AutoTokenizer.from_pretrained("gpt2")
-sent = "Once upon a time, a little rabbit lived in the forest."
-print(len(ko_tok(sent)["input_ids"]))
-print(len(en_tok(sent)["input_ids"]))
-\end{lstlisting}
-
-핵심 교훈은 \ref{ch:25}장 Q4 와 동일 --- \emph{토크나이저는 본체와 운명공동체}. 영어는 영어 사전학습 모델 (gpt2), 한국어는 한국어 사전학습 모델 (KoGPT2) 을 가져오는 게 정공법. 그래서 영어 \ref{ch:25}장과 한국어 \ref{ch:27}장 이 \emph{각자의 언어에 맞는 본체} 로 같은 단계 2 를 수행합니다.
-
-\end{faqBox}
 
 \begin{faqBox}{Q5. (이론·실무) \emph{catastrophic forgetting} 이 무엇인가요? \ref{ch:27}장에서 실제로 일어나나요?}
 
@@ -1173,40 +1084,10 @@ model.config.pad_token_id = tokenizer.pad_token_id
 
 \end{faqBox}
 
-\begin{faqBox}{Q7. (이론) 다음 장 (\ref{ch:28}장 KoGPT2 SFT) 와의 관계는?}
-
-\ref{ch:28}장 = \emph{같은 KoGPT2 본체} 를 \emph{instruction-response 쌍 데이터} 로 \textbf{SFT} (단계 3). 본 장 (단계 2, continual pretraining) 와의 결정적 차이는 \emph{\inlinecode{labels\ =\ -100} 자리}:
-
-\Needspace{8\baselineskip}
-\begin{lstlisting}
-prompt = "### 질문: 한국의 수도는?\n### 답변: "
-response = "서울입니다."
-input_ids = tokenizer(prompt + response)["input_ids"]
-labels = input_ids.copy()
-prompt_len = len(tokenizer(prompt)["input_ids"])
-labels[:prompt_len] = [-100] * prompt_len
-\end{lstlisting}
-
-\begin{booktable}{27장 FAQ 표}{tab:ch27-15}
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}lll@{}}
-\toprule
-항목 & \ref{ch:27}장 (continual pretraining) & \ref{ch:28}장 (SFT) \\
-\midrule
-
-본체 & KoGPT2 125M & \textbf{KoGPT2 125M (동일)} \\
-데이터 & 연속된 일반 텍스트 (TinyStories) & \textbf{instruction-response 쌍} \\
-\inlinecode{labels\ =\ -100} 자리 & pad 만 & \textbf{prompt 부분} \\
-효과 & 도메인 적응 & \textbf{instruction 따라가기 (행동 정렬)} \\
-\bottomrule
-\end{tabular}
-\end{adjustbox}
-\end{booktable}
-
-본 장의 collator 출력 (거의 모든 자리 = 학습 신호) 을 손에 익혀 두면, \ref{ch:28}장의 \emph{왜 모델이 한국어 instruction 을 따라가게 되는가} 가 \emph{한 줄 \texttt{labels{[}:prompt\_len{]}\ =\ -100}} 으로 단번에 이해됩니다. 그게 Phase 4 thread 의 클라이맥스.
-\end{faqBox}
 
 
+
+\compactFAQMore{4}
 
 \begin{previewBox}{미리보기: 다음 장}
 
@@ -1268,17 +1149,3 @@ labels[:prompt_len] = [-100] * prompt_len
 \end{bookfigurelabel}
 
 \textbf{그림 읽기} --- 그림~\ref{fig:ch27-appendix-fertility}에서 다음 내용을 확인합니다: GPT 계열 14개 토크나이저의 한국어 fertility 비교. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
-
-\begin{bookfigurelabel}[H]{토크나이저 vocabulary 안의 한국어 점유율 비교}{fig:ch27-appendix-vocab-share}
-\centering
-\includegraphics[width=0.86\linewidth]{assets/figures/ch27_appendix_vocab_share.png}
-\end{bookfigurelabel}
-
-\textbf{그림 읽기} --- 그림~\ref{fig:ch27-appendix-vocab-share}에서 다음 내용을 확인합니다: 토크나이저 vocabulary 안의 한국어 점유율 비교. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
-
-\begin{bookfigurelabel}[H]{한국어 vocab 점유율과 fertility의 관계}{fig:ch27-appendix-vocab-fertility}
-\centering
-\includegraphics[width=0.72\linewidth]{assets/figures/ch27_appendix_vocab_fertility_scatter.png}
-\end{bookfigurelabel}
-
-\textbf{그림 읽기} --- 그림~\ref{fig:ch27-appendix-vocab-fertility}에서 다음 내용을 확인합니다: 한국어 vocab 점유율과 fertility의 관계. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.

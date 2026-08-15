@@ -354,12 +354,6 @@ coll = DiffusionCollator(tokenizer)
 print("collator ready, mask_id =", coll.mask_id)
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-collator ready, mask_id = 2
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \subsection{작은 BERT-MLM 모델 (\ref{ch:24}장와 동급, 본체는 그대로)}
@@ -949,30 +943,19 @@ loss = loss.mean()
 
 \section{FAQ}
 
-\textbf{Q1. 왜 큰 vocab(30522)이면 collapse하고 작은 vocab(2048)이면 괜찮나요? 단어를 적게 아는 모델이 더 잘 쓴다는 게 직관에 안 맞습니다.}
+\begin{faqBox}{Q1. 왜 큰 vocab(30522)이면 collapse하고 작은 vocab(2048)이면 괜찮나요? 단어를 적게 아는 모델이 더 잘 쓴다는 게 직관에 안 맞습니다.}
 
 collapse의 핵심은 어휘량이 아니라 파라미터 배분입니다. vocab 30522짜리 11M 모델은 그중 약 70\%가 임베딩 테이블(30522 \(\times\) hidden)에 묶입니다. 정작 문맥을 읽고 다음 토큰을 추론하는 트랜스포머 본체에 쓸 용량이 거의 남지 않았던 셈입니다. vocab을 2048로 줄이면 임베딩 비중이 13.9\%로 내려가고, 같은 예산을 본체가 가져가 조건부 구조를 학습할 여력이 생깁니다. TinyStories는 어휘가 단순한 동화 코퍼스라 2048개로도 표현력이 충분하다는 점도 맞물립니다. 즉 “단어를 적게 안다”가 아니라 “아낀 용량을 문맥 추론에 돌렸다”가 정확한 그림입니다.
 
-\textbf{Q2. 그러면 본체(hidden/layer)는 왜 같이 안 키웠나요? 용량이 핵심이라면 본체도 키우면 더 좋지 않나요?}
+\end{faqBox}
 
-좋아지긴 하겠지만 T4의 30분 예산을 지킬 수 없습니다. 본체를 키우면 step당 연산이 늘어 같은 step 수를 도는 데 시간이 폭증합니다. 이번 교정의 전략은 “본체는 \ref{ch:24}장와 동급(3.79M)으로 유지하되, 임베딩에서 빼낸 용량을 본체가 충분히 활용하도록 학습량을 늘리는 것”이었습니다. 실제로 본체는 그대로 두고 max\_steps를 (ablation의) 1500이 아닌 30000으로 두어 18.5분에 train\_loss 3.59까지 내렸습니다. 같은 예산 안에서는 본체 확대보다 학습량 확보가 더 큰 레버였습니다.
-
-\textbf{Q3. 왜 diffusion이 AR보다 20배나 많은 step이 필요한가요?}
+\begin{faqBox}{Q3. 왜 diffusion이 AR보다 20배나 많은 step이 필요한가요?}
 
 학습 신호의 밀도가 다릅니다. AR(\ref{ch:24}장)은 한 문장을 한 번 넣으면 모든 위치에서 “왼쪽 전체 문맥으로 다음 토큰 맞히기” 감독이 동시에 걸립니다. 매 자리가 매번 학습됩니다. 반면 흡수형 diffusion은 매 배치 확률 \(t\)로 일부 토큰만 \texttt{{[}MASK{]}}로 덮고, 그 마스크 자리에서만 손실을 받습니다. 마스킹 비율 \(t\)도 배치마다 달라져서, 같은 문장이라도 어느 자리가 감독될지가 매번 바뀝니다. 결과적으로 자리당 받는 신호가 희박해 같은 수준에 도달하려면 더 많은 step이 필요합니다. \ref{ch:24}장가 1500 step, 이번 장이 30000 step이었던 약 20배 격차가 이 차이를 보여줍니다.
 
-\textbf{Q4. carry-over가 32장의 저신뢰 재마스킹과 구체적으로 뭐가 다른가요?}
+\end{faqBox}
 
-방향이 정반대입니다. 저신뢰 재마스킹은 매 step “확신이 약한 자리”를 도로 \texttt{{[}MASK{]}}로 지우고 다시 예측합니다. 방금 그럴듯하게 채운 토큰이 다음 step에 다시 빈칸이 되는, 비단조(채웠다 지웠다) 디코딩이라 작은 모델에서는 안정점을 못 찾고 고빈도 토큰으로 무너지기 쉽습니다. carry-over는 반대로 한 번 reveal한 토큰을 끝까지 고정합니다. 블록 안에서 고신뢰부터 차례로 확정하고, 확정된 토큰은 이후 step의 입력에서 불변으로 남습니다(carry-over). 디코딩이 단조롭게 한 방향으로만 진행돼 안정적입니다.
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-logits[..., mask_id] = float("-inf")
-revealed[pos] = True
-x[pos] = chosen_id
-\end{lstlisting}
-
-\textbf{Q5. 손실의 \(1/t\) 시간가중은 왜 필요한가요? 빼면 안 되나요?}
+\begin{faqBox}{Q5. 손실의 \(1/t\) 시간가중은 왜 필요한가요? 빼면 안 되나요?}
 
 흡수형 NELBO를 제대로 근사하려면 필요합니다. 마스킹 비율이 작을 때(\(t\)가 작을 때)는 가려진 토큰이 몇 개 안 되지만, 그 적은 자리를 맞히는 일이 ELBO에서 차지하는 가중치는 큽니다. 선형 schedule \(\alpha_t = 1 - t\)에서 이 가중치가 정확히 \(1/t\)로 나옵니다. 구현은 마스크 자리 CE 합을 길이 \(L\)로 나눈 뒤 다시 \(t\)로 나누는 형태입니다.
 
@@ -983,20 +966,9 @@ loss = ((mask_ce_sum / seq_len) / t).mean()
 
 \(1/t\)를 빼면 마스킹이 많은(쉬운 신호가 많은) step에 학습이 쏠려 적게 가려진 어려운 경우를 덜 배우게 됩니다. 참고로 \inlinecode{/L}은 ELBO를 상수배한 surrogate라 gradient 방향은 그대로지만, \(1/t\)는 step별 가중 자체를 바꾸므로 성질이 다릅니다.
 
-\textbf{Q6. 학습 때 \(t\)의 하한(0.02)만 자르고 상한은 1로 그대로 둔 이유가 있나요?}
+\end{faqBox}
 
-train과 infer의 조건을 맞추기 위해서입니다. 하한 0.02로 절단하는 건 \(t \to 0\)에서 \(1/t\) 가중이 폭발해 학습이 불안정해지는 것을 막으려는 수치적 안전장치입니다. 반대로 상한을 자르지 않는 이유는, 생성이 전부 \texttt{{[}MASK{]}}인 상태(\(t = 1\)에 해당)에서 시작하기 때문입니다. 만약 학습에서 \(t\) 상한을 0.9 같은 값으로 잘라버리면 모델은 “거의 다 가려진 입력”을 본 적이 없는데 추론에서는 바로 그 상황을 마주합니다. train에서 안 본 분포를 infer에서 요구하면 또 무너지기 쉽습니다. 그래서 상한은 1로 열어 둡니다.
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-t = torch.rand(batch).clamp_min(0.02)
-\end{lstlisting}
-
-\textbf{Q7. 생성 결과에 “big collar tree”, “an noise” 같은 잔흠이 남는데, 더 키워야 하나요?}
-
-이건 collapse가 아니라 작은 모델의 한계입니다. 3.79M급에 vocab 2048이면 인물(Lily, Timmy)과 대화, 배경이 있는 동화를 만들어 내는 것 자체가 성공 신호입니다. 실제로 고정-\(t\)(0.15) top-1 정확도가 8000 step의 0.262에서 30000 step의 0.717까지 올랐고, 반복억제 샘플러로 4-gram 반복률이 0.177에서 0.000으로 떨어졌으며, 생성 토큰 분포와 코퍼스 유니그램의 KL이 0.78로(collapse면 0에 가깝습니다) 모델이 단순 빈도 모사를 넘어섰음을 보여줍니다. 자잘한 흠은 모델·데이터 규모를 키우면 줄지만, 그건 T4 30분 예산 밖의 이야기입니다. 이 장의 목표는 “작은 diffusion LM이 coherent하게 생성되게 만든다”이고, 그 선은 넘었습니다.
-
-
+\compactFAQMore{4}
 
 \section{오류 실험 --- “조용한 collapse” 재현하기}
 

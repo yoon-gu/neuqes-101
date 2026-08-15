@@ -329,35 +329,7 @@ Row sums (should be 1): [1. 1. 1. 1. 1.]
 
 \section{FAQ}
 
-\begin{faqBox}{Q1. (이론) 왜 binary classification에서 MSE를 쓰면 안 되나요?}
 
-작동은 하지만 두 가지 문제가 있습니다.
-
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\item
-  \textbf{sigmoid + MSE는 비볼록(non-convex)}: 손실면이 매끈한 그릇 모양이 아니라 평탄한 구간이 생깁니다. local minima에 빠질 수 있고 학습이 불안정합니다. 반면 sigmoid + BCE는 볼록(convex)이라 전역 최적해로 수렴이 보장됩니다.
-\item
-  \textbf{gradient 소실(saturation)}: sigmoid 양 극단(출력이 0이나 1 근처)에서 도함수가 거의 0이 됩니다. MSE의 gradient는 그 도함수에 곱해지므로 함께 0으로 중단될 수 있습니다. BCE는 sigmoid와 결합되었을 때 gradient가 단순히 \(\hat p - y\)로 떨어져 saturation이 사라집니다.
-\end{enumerate}
-
-참고로 통계학에선 0/1 라벨을 그대로 \inlinecode{LinearRegression}으로 푸는 \textbf{Linear Probability Model(LPM)} 이 있긴 합니다. 단순 분석엔 쓰지만 출력이 {[}0, 1{]}을 안 지키고 BCE보다 학습 안정성이 떨어져 ML에선 거의 안 씁니다.
-
-\end{faqBox}
-
-\begin{faqBox}{Q2. (이론) sigmoid 대신 다른 활성화 함수(tanh, softmax)를 쓰면 어떻게 되나요?}
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{tanh}: 출력 범위가 \([-1, 1]\)입니다. 라벨을 -1/+1로 매핑하고 hinge loss 등을 쓰면 SVM과 비슷한 모델이 됩니다. 수학적으로는 \(\tanh(z) = 2\sigma(2z) - 1\)이라 sigmoid의 단순 변환이지만 라벨 컨벤션이 다릅니다.
-\item
-  \textbf{softmax}: 다중 클래스용 일반화. binary에 softmax를 쓰려면 출력 차원을 2로 늘리고 라벨도 one-hot으로 바꿔야 합니다 \(\to\) 이게 정확히 \ref{ch:11}장에서 다룰 “방식 B”입니다 (방식 A=sigmoid 1차원, 방식 B=softmax 2차원이 수학적으로 동등).
-\item
-  \textbf{ReLU/identity}: 출력이 {[}0, 1{]} 보장이 안 됩니다 --- 음수도 1 초과도 가능 \(\to\) BCE의 \(\log\)가 정의되지 않습니다.
-\end{itemize}
-
-\end{faqBox}
 
 \begin{faqBox}{Q3. (실무) 클래스 불균형이 있으면 어떻게 하나요?}
 
@@ -431,20 +403,10 @@ print(f"Youden's J 기준 최적 임계값: {best_thr:.3f}")
 
 \end{faqBox}
 
-\begin{faqBox}{Q6. (실무) sklearn \inlinecode{LogisticRegression}은 정규화(L2)가 기본인데 끄려면?}
-
-\inlinecode{penalty=None}(0.22 이상) 또는 \inlinecode{C} 값을 매우 크게 설정합니다.
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-LogisticRegression(penalty=None, max_iter=1000)
-LogisticRegression(C=1e10, max_iter=1000)
-\end{lstlisting}
-
-기본값은 \inlinecode{C=1.0}(L2 정규화)이고, 텍스트 분류처럼 feature가 많은 경우 정규화가 있어야 일반화 성능이 안정적입니다. 실무에선 거의 끄지 않습니다.
-\end{faqBox}
 
 
+
+\compactFAQMore{3}
 
 \section{오류 실험 (선택)}
 

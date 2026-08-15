@@ -1012,29 +1012,6 @@ DPO 의 통찰은 \emph{“reward model 의 최적 정책을 닫힌 형태로 �
 
 \end{faqBox}
 
-\begin{faqBox}{Q2. (실무) reference 모델 없이 DPO 를 할 수 있나요?}
-
-\inlinecode{DPOTrainer(ref\_model=None)} 은 \emph{reference 가 없는 게 아니라}, \emph{policy 의 복사본을 자동으로 reference 로 freeze} 하는 것입니다 (또는 PEFT 사용 시 adapter 를 끈 base 가 reference). 즉 reference 는 \emph{항상} 있습니다.
-
-\emph{진짜로 reference 를 빼면} (\inlinecode{reference\_free} 류 옵션 또는 ORPO):
-
-\begin{itemize}
-\tightlist
-\item
-  KL 제약이 사라져 \emph{원본에서 멀어지는 것을 막을 닻이 없어집니다}
-\item
-  chosen 확률만 무한정 키우다 \emph{모델이 collapse (한 패턴 반복, 문법 collapse)} 할 위험
-\item
-  ORPO 는 \emph{reference 없이도} 작동하도록 \emph{loss 를 다르게 설계} 한 변종 (SFT 와 preference 를 한 번에)
-\end{itemize}
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-trainer = DPOTrainer(model=policy, ref_model=None, args=cfg,
-                     train_dataset=dpo_ds, processing_class=tokenizer)
-\end{lstlisting}
-
-\end{faqBox}
 
 \begin{faqBox}{Q3. (이론) \(\beta\) 가 너무 크면 / 너무 작으면 어떻게 되나요?}
 
@@ -1083,85 +1060,12 @@ dpo_config.beta = 0.1
 
 \end{faqBox}
 
-\begin{faqBox}{Q5. (이론) DPO 변종 (IPO, KTO, ORPO) 은 무엇인가요?}
-
-모두 \emph{preference 정렬} 의 변주입니다 --- \emph{loss 형태·데이터 요구} 만 다릅니다:
-
-\begin{booktable}{30장 FAQ 표}{tab:ch30-11}
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}lll@{}}
-\toprule
-변종 & 핵심 차이 & 언제 \\
-\midrule
-
-\textbf{IPO} & sigmoid 대신 \emph{squared loss} & DPO 의 \emph{overfitting} 완화 \\
-\textbf{KTO} & \emph{쌍이 아닌} 개별 좋음/나쁨 라벨 & preference \emph{쌍을 만들기 어려울} 때 \\
-\textbf{ORPO} & \emph{reference 없이} SFT + preference 동시 & reference 메모리 절약 + 단계 합치기 \\
-\bottomrule
-\end{tabular}
-\end{adjustbox}
-\end{booktable}
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-dpo_config.loss_type = "ipo"        # IPO
-\end{lstlisting}
-
-\begin{quote}
-본 장은 \emph{원조 DPO (sigmoid loss)} 로 \emph{원리} 에 집중합니다. 변종들은 \emph{같은 목표 (chosen 선호 ↑), 다른 수단}.
-\end{quote}
-
-\end{faqBox}
-
-\begin{faqBox}{Q6. (실무) 작은 모델 (KoGPT2 125M) DPO 의 한계는?}
-
-DPO 의 효과는 \emph{출발 모델의 능력} 에 크게 의존합니다:
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{base 에서 출발 (본 노트북)}: 모델이 아직 \emph{지시를 잘 못 따르므로} preference 정렬 효과가 \emph{미묘}. 정석은 \emph{SFT 모델에서 출발}
-\item
-  \textbf{작은 모델}: chosen/rejected 의 log-prob 차이를 \emph{섬세하게} 다루기 어려워 margin 이동 폭이 작음
-\item
-  \textbf{짧은 학습}: 1 epoch / 1.5K 샘플은 \emph{방향} 을 보기엔 충분하지만 \emph{극적 변화} 는 어려움
-\end{itemize}
-
-\begin{quote}
-본 장의 목표는 \emph{완성된 정렬 모델} 이 아니라 \emph{\textbf{DPO 가 무엇을 최적화하는가 (reward margin) 를 눈으로 확인}} 하는 것입니다. §3 의 손계산과 §5 의 margin 이동이 핵심. 실전 품질은 \emph{SFT 모델 + 큰 모델 + 많은 preference + LoRA} 의 영역.
-\end{quote}
-
-\end{faqBox}
-
-\begin{faqBox}{Q7. (이론) 다음 단계 GRPO (\ref{ch:31}장) 는 DPO 와 뭐가 다른가요?}
-
-둘 다 alignment (단계 4) 지만, \emph{선호의 출처} 가 다릅니다:
-
-\begin{booktable}{30장 FAQ 표}{tab:ch30-12}
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}lll@{}}
-\toprule
-단계 & 선호의 출처 & 데이터 \\
-\midrule
-
-\textbf{DPO (\ref{ch:30}장)} & \emph{사람이 비교} 한 preference 쌍 & \inlinecode{(prompt,\ chosen,\ rejected)} \\
-\textbf{GRPO (\ref{ch:31}장)} & \emph{verifier 가 자동 채점} 한 reward & verifiable-reward prompts (수학·코드) \\
-\bottomrule
-\end{tabular}
-\end{adjustbox}
-\end{booktable}
-
-\begin{quote}
-DPO 는 \emph{주관적 선호} (어느 답이 더 좋은가 --- 사람 판단) 를, GRPO 는 \emph{객관적 정답} (수학 답이 맞나, 코드가 돌아가나 --- 자동 검증) 을 신호로 씁니다. GRPO 는 \emph{같은 prompt 에 여러 답을 rollout} 해 \emph{그룹 안에서 상대 비교} (group relative advantage) 합니다 --- \ref{ch:31}장에서 본격.
-\end{quote}
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-# from trl import GRPOTrainer, GRPOConfig
-\end{lstlisting}
-\end{faqBox}
 
 
+
+
+
+\compactFAQMore{4}
 
 \begin{previewBox}{미리보기: 다음 장}
 

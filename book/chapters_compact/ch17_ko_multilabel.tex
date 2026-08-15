@@ -263,15 +263,6 @@ softmax 는 출력의 \emph{합 = 1} 을 강제합니다 (\(\sum_k \mathrm{softm
 \textbf{1행}의 \inlinecode{!nvidia-smi}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 04:00:43 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 39C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \section{데이터 준비}
@@ -341,24 +332,6 @@ for n in range(K + 1):
             f"{cnt/len(Y_train):.1%})"
         )
 \end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Per-category activation rate (train):
-  IT/Science (label 0): 22.0%  (1100 / 5000)
-    Economy (label 1): 25.2%  (1260 / 5000)
-    Society (label 2): 21.8%  (1089 / 5000)
-  Life&Culture (label 3): 23.3%  (1165 / 5000)
-      World (label 4): 32.8%  (1638 / 5000)
-     Sports (label 5): 31.0%  (1549 / 5000)
-   Politics (label 6): 29.3%  (1467 / 5000)
-
-Mean active labels per sample: 1.85 (expected ~1.86: two draws, occasional...
-Active label distribution (train):
-  1 labels active: 732 samples (14.6%)
-  2 labels active: 4268 samples (85.4%)
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -513,15 +486,6 @@ id2label: {0: 'IT/Science', 1: 'Economy', 2: 'Society', 3: 'Life&Culture',...
 !nvidia-smi
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 04:01:09 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 38C P8 9W / 70W | 3MiB / 15360MiB | 0% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \section{학습}
@@ -584,15 +548,6 @@ def compute_metrics(eval_pred):
 !nvidia-smi
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 04:01:52 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 63C P0 70W / 70W | 2209MiB / 15360MiB | 75% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \section{평가}
@@ -632,22 +587,8 @@ for k in range(K):
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{preds\_output = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{2--5행}의 \inlinecode{logits = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{labels = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{8행}의 \inlinecode{probs = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{10행}의 \inlinecode{preds = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\textbf{1행}의 \inlinecode{preds\_output = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{2--5행}의 \inlinecode{logits = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{labels = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-logits shape: (1000, 7)
-prob ranges per category:
-  IT/Science: [0.0113, 0.9731]  true rate=12.6%, pred rate=13.1%
-    Economy: [0.0165, 0.9889]  true rate=23.8%, pred rate=22.9%
-    Society: [0.0430, 0.9647]  true rate=68.4%, pred rate=58.7%
-  Life&Culture: [0.0148, 0.9864]  true rate=27.8%, pred rate=29.9%
-      World: [0.0109, 0.9884]  true rate=15.9%, pred rate=16.2%
-     Sports: [0.0103, 0.9898]  true rate=11.7%, pred rate=12.5%
-   Politics: [0.0093, 0.9884]  true rate=15.6%, pred rate=17.0%
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -829,28 +770,6 @@ for label_kind, idx in samples:
     print()
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-===========================================================================...
-sample #0  (both categories correct)
-===========================================================================...
-text: 새 현대미술 양식 꽃피운 U+6545강국진 개인전 [SEP] 음성군 충북 혁신도...
-
-  category   true      prob   pred(>=0.5)  match
-  IT/Science      0    0.0778             0    O
-    Economy      0    0.0643             0    O
-    Society      1    0.6206             1    O
-  Life&Culture      1    0.9396             1    O
-      World      0    0.0311             0    O
-     Sports      0    0.1226             0    O
-   Politics      0    0.0603             0    O
-
-  true:      ['Society', 'Life&Culture']
-  predicted: ['Society', 'Life&Culture']
-...
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \textbf{읽는 법}
@@ -928,57 +847,7 @@ text: 새 현대미술 양식 꽃피운 U+6545강국진 개인전 [SEP] 음성�
 
 \section{FAQ}
 
-\begin{faqBox}{Q1. (실무) Multi-label 에서 threshold 0.5 는 항상 옳은가요?}
 
-아닙니다. 0.5 는 \emph{기본값} 일 뿐 카테고리마다 최적 threshold 가 다를 수 있습니다 (§6 의 threshold sweep 에서 확인했듯).
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{활성률 차이}: 활성률이 낮은 카테고리에선 0.5 가 너무 보수적 --- threshold 를 0.3-0.4 로 낮추면 recall 이 크게 올라갑니다.
-\item
-  \textbf{F1 최적 threshold 탐색}: validation set 에서 \emph{카테고리별로} grid search \(\to\) F1 최대 지점 선택.
-\end{itemize}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-def best_threshold(probs_k, labels_k):
-    best_f1, best_th = 0.0, 0.5
-    for th in np.arange(0.1, 0.91, 0.05):
-        preds_k = (probs_k >= th).astype(int)
-        _, _, f1, _ = precision_recall_fscore_support(
-            labels_k,
-            preds_k,
-            average="binary",
-            zero_division=0,
-        )
-        if f1 > best_f1:
-            best_f1, best_th = f1, th
-    return best_th, best_f1
-
-thresholds = [best_threshold(probs[:, k], labels[:, k])[0] for k in range(K)]
-\end{lstlisting}
-
-운영 환경에선 \emph{카테고리별 threshold} 를 저장해 두고 추론 시 적용합니다.
-
-\end{faqBox}
-
-\begin{faqBox}{Q2. (이론) 두 헤드라인을 결합하는 합성 방식의 한계는 무엇인가요?}
-
-합성이 \emph{무작위 결합} 이라 두 가지 한계가 있습니다.
-
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  \textbf{자연스러운 카테고리 상관이 사라짐} --- 실제 뉴스에선 “정치+경제” 가 “스포츠+정치” 보다 훨씬 자주 같이 등장하지만, 무작위 결합은 모든 쌍을 \emph{비슷한 확률} 로 만듭니다. 그래서 §5-2 의 true co-occurrence 가 거의 균등.
-\item
-  \textbf{두 주제가 한 문장에 \emph{섞이지} 않고 단순히 \emph{이어붙음}} --- 진짜 multi-topic 헤드라인 (예: “삼성전자 스포츠단 창단 발표” --- 경제+스포츠가 \emph{한 문장에서 융합}) 과 달리, 결합 샘플은 \texttt{{[}SEP{]}} 로 나뉜 \emph{두 독립 문장}. 모델이 학습하기엔 오히려 \emph{쉬운} 편 (각 절반이 명확한 단일 카테고리 신호).
-\end{enumerate}
-
-더 현실적인 합성은 \emph{문장 수준 paraphrase} 나 \emph{LLM 으로 multi-topic 헤드라인 생성} 이지만, 그건 입문 범위를 넘어섭니다. 핵심 --- \emph{합성 데이터의 통계적 특성은 합성 방식이 결정} 한다는 감각.
-
-\end{faqBox}
 
 \begin{faqBox}{Q3. (실무) \inlinecode{pos\_weight} 로 카테고리 불균형을 다루려면?}
 
@@ -1015,33 +884,7 @@ class WeightedTrainer(Trainer):
 
 \end{faqBox}
 
-\begin{faqBox}{Q4. (이론) 모델이 카테고리 \emph{간} 상관을 학습하는 메커니즘은? (loss 엔 결합 항이 없는데)}
 
-핵심은 \textbf{공유 BERT 본체} 입니다. 7개 카테고리의 logit 이 같은 768-dim CLS hidden state \(h\) 에서 \emph{별도의 7개 가중치 행} 을 통해 나옵니다.
-
-\begin{equation}
-\label{eq:ch17-03}
-z_k = w_k^\top h + b_k, \quad k = 1, \ldots, K
-\end{equation}
-
-식~\eqref{eq:ch17-03}은 이 절에서 사용하는 핵심 관계를 정리한 것입니다.
-
-학습 중 한 합성 샘플에서 경제+스포츠가 동시 활성됐다면 \(w_{\text{경제}}\) 와 \(w_{\text{스포츠}}\) 가 각자 \(h\) 의 관련 차원을 강조하도록 학습됩니다. Loss 에 결합 항은 없지만 \emph{gradient 가 BERT 본체를 거쳐 흐를 때} 결합이 간접적으로 학습됩니다. 다만 Q2 에서 봤듯 무작위 결합이라 \emph{학습할 만한 상관 구조 자체가 약합니다}.
-
-\end{faqBox}
-
-\begin{faqBox}{Q5. (실무) 헤드라인 두 개 대신 \emph{세 개} 를 결합하면 어떻게 되나요?}
-
-활성 라벨 개수가 평균 약 2.7개 (충돌 고려) 로 늘어 \emph{더 어려운} multi-label 이 됩니다. 코드 변경은 작습니다 --- \inlinecode{make\_multilabel} 에서 3개 인덱스를 뽑아 3개 위치를 1 로:
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-idx = rng.integers(0, n_src, size=3 * n_samples).tolist()
-\end{lstlisting}
-
-단 텍스트가 더 길어져 (\inlinecode{max\_length} 압박) 모델이 세 신호를 분리하기 더 어렵고, F1 이 떨어집니다. 이게 \emph{\ref{ch:18}장의 보조 task} (활성 라벨 \emph{개수} 회귀) 가 의미 있는 이유 --- “몇 개 카테고리가 활성됐는가” 를 보조로 학습하면 메인 분류가 도움을 받습니다.
-
-\end{faqBox}
 
 \begin{faqBox}{Q6. (이론) micro F1 과 macro F1 중 multi-label 에선 어느 쪽을 봐야 하나요?}
 
@@ -1075,6 +918,8 @@ micro 가 높은데 macro 가 \emph{훨씬} 낮으면 \(\to\) 모델이 \emph{�
 \end{faqBox}
 
 
+
+\compactFAQMore{4}
 
 \section{오류 실험 (선택)}
 

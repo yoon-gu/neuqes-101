@@ -201,12 +201,6 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-vocab 4000 mask_id 2
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \subsection{토큰화 + group}
@@ -851,11 +845,13 @@ tok.train_from_iterator(
 
 \section{FAQ}
 
-\textbf{Q1. 영어 33장은 100\% \texttt{{[}MASK{]}}로도 잘 됐는데, 왜 한국어는 똑같이 했더니 무너지나요?}
+\begin{faqBox}{Q1. 영어 33장은 100\% \texttt{{[}MASK{]}}로도 잘 됐는데, 왜 한국어는 똑같이 했더니 무너지나요?}
 
 언어의 통계적 성질이 다르기 때문입니다. 한국어는 교착어라 조사(“-는”, “-을”, “-에”)와 어미(“-어요”, “-습니다”)가 위치만으로도 상당히 예측됩니다. 즉 문맥을 깊이 읽지 않고 유니그램 빈도만 따라가도 그럴듯하게 찍히는 자리가 많습니다. 입력 자리가 전부 \texttt{{[}MASK{]}} 하나로만 덮이면, 모델 입장에서는 “\texttt{{[}MASK{]}}를 보면 그 자리에 가장 흔한 토큰을 찍자”는 지름길이 너무 매력적입니다. 그래서 첫 250 step 안에 유니그램만 빠르게 익히고 그 자리에서 멈춥니다(train\_loss 7.06, 유니그램 엔트로피 근처). 반면 영어 TinyStories는 어휘와 구조가 단순·반복적이라 같은 지름길의 유혹이 약해 100\% \texttt{{[}MASK{]}}로도 버틴 것입니다. 데이터가 바뀌면 같은 레시피의 안전 마진도 바뀝니다.
 
-\textbf{Q2. 80/10/10에서 10\% 원본 유지와 10\% 무작위 교체는 각각 무슨 역할을 하나요?}
+\end{faqBox}
+
+\begin{faqBox}{Q2. 80/10/10에서 10\% 원본 유지와 10\% 무작위 교체는 각각 무슨 역할을 하나요?}
 
 서로 다른 지름길 두 개를 막습니다. \textbf{10\% 원본 유지}는 “마스크 안 된 자리도 단순히 믿지 말고 문맥으로 검증하라”는 압박입니다. 입력에 \texttt{{[}MASK{]}}가 없는 멀쩡한 토큰이 있어도 그 자리가 정답 감독 대상일 수 있으니, 모델은 “\texttt{{[}MASK{]}}인 자리만 추론하면 된다”는 위치 기반 지름길을 못 씁니다. \textbf{10\% 무작위 교체}는 “틀린 입력을 교정하라”는 압박입니다. 문맥상 말이 안 되는 토큰이 끼어 있어도 정답을 복원해야 하니, 입력 토큰을 액면 그대로 베끼는 지름길이 막힙니다. 두 분기가 함께 “\texttt{{[}MASK{]}} \(\to\) 고빈도 토큰 찍기”라는 단일 지름길을 봉쇄해, 모델이 어쩔 수 없이 문맥을 읽게 만듭니다.
 
@@ -867,25 +863,9 @@ to_mask   = prob < 0.8
 to_random = (prob >= 0.8) & (prob < 0.9)
 \end{lstlisting}
 
-\textbf{Q3. 33장의 시간가중 \(1/t\) 손실을 왜 이번엔 plain CE로 바꿨나요? 성질이 달라지는 것 아닌가요?}
+\end{faqBox}
 
-기댓값 위에서 둘은 본질적으로 같기 때문입니다. \(1/t\) 가중은 “마스킹 비율이 작은 step일수록 그 적은 마스크 자리를 크게 친다”는 보정인데, 한 자리당 평균으로 환산하면 마스크 토큰당 평균 CE와 상수배 관계입니다. 즉 기댓값상 마스크 토큰당 평균 CE(plain CE가 계산하는 그 값)와 같은 목적함수를 가리킵니다. 이번 장에서 plain CE를 택한 진짜 이유는 \textbf{표준 MLM 대조군과 손실 형태를 정확히 맞추기 위해서}입니다. 표준 MLM(고정 15\% + 80/10/10 + plain CE)이 같은 한국어 데이터로 0.469를 내는데, diffusion 쪽도 같은 plain CE를 쓰면 “달라진 건 마스킹 비율을 가변으로 둔 것뿐”이 되어 두 결과를 깨끗하게 비교할 수 있습니다.
-
-\Needspace{8\baselineskip}
-\begin{lstlisting}
-out = model(
-    input_ids=input_ids,
-    attention_mask=attn,
-    labels=labels,
-)
-loss = out.loss
-\end{lstlisting}
-
-\textbf{Q4. vocab을 왜 영어(2048)보다 큰 4000으로 키웠나요?}
-
-한국어가 교착어라서입니다. 영어는 단어 사이가 공백으로 끊겨 BPE가 비교적 적은 조각으로도 어휘를 덮지만, 한국어는 어간에 조사·어미가 붙어 한 어절이 여러 형태로 변주됩니다(“소년이”, “소년은”, “소년에게”). vocab이 너무 작으면 이런 변주가 잘게 쪼개져 한 이야기를 표현하는 데 토큰이 더 많이 들고 시퀀스가 길어집니다. 4000으로 키우면 자주 쓰는 조사·어미 조합이 적당한 단위로 묶여 시퀀스가 짧아지고 학습이 안정됩니다. \ref{ch:26}장의 한국어 AR도 같은 이유로 4000을 썼고, 같은 크기로 맞춰 두면 AR과 diffusion 비교에서 토크나이저 변수를 제거할 수 있습니다.
-
-\textbf{Q5. 고정-\(t\) accuracy로 무엇을 알 수 있나요? 왜 생성 품질만 보지 않나요?}
+\begin{faqBox}{Q5. 고정-\(t\) accuracy로 무엇을 알 수 있나요? 왜 생성 품질만 보지 않나요?}
 
 샘플러를 떼어내고 “모델 자체”의 실력을 재기 위해서입니다. 생성 품질은 모델뿐 아니라 carry-over·반복억제 같은 디코딩 설정에도 좌우돼서, 출력만 보면 무엇이 좋아졌는지 분리가 안 됩니다. 고정-\(t\) top-1 accuracy는 마스킹 비율을 고정값(여기선 0.15)으로 두고 마스크 자리에서 정답을 1순위로 맞히는 비율만 봅니다. 순진한 diffusion은 0.081로 거의 찍기 수준이었지만, 80/10/10 교정 후 0.652까지 올랐습니다(영어 33장은 0.717). 로컬 8000 step에서는 0.467로 표준 MLM의 0.469와 동급이었습니다. 이 한 숫자만으로 “모델이 문맥 조건부를 배웠는가”를 샘플러와 무관하게 판정할 수 있습니다.
 
@@ -896,15 +876,9 @@ pred = model(**masked).logits.argmax(-1)
 acc = (pred[mask_pos] == gold[mask_pos]).float().mean()
 \end{lstlisting}
 
-\textbf{Q6. AR(\ref{ch:26}장)이 같은 데이터로 단순히 잘 되는데, 왜 굳이 diffusion을 쓰나요?}
+\end{faqBox}
 
-이 장에서 AR은 “대조군”으로서 결정적입니다. AR이 같은 한국어 데이터·같은 용량으로 coherent하게 생성됐다는 사실이, diffusion의 collapse가 데이터나 토크나이저나 모델 크기 탓이 아니라 마스킹 방식 탓임을 증명해 주기 때문입니다. AR은 모든 위치를 매 step 감독하고 좌\(\to\)우로 순차 생성하는 반면, diffusion은 임의 위치를 병렬로 채웁니다. 이 병렬·임의 순서가 주는 잠재적 장점(예: 양방향 문맥 활용, 위치 제약 없는 채우기) 때문에 diffusion 계열을 연구·실험하는 가치가 있고, 이 장은 그 계열을 작은 규모에서 “제대로 학습되게” 만드는 레시피를 확보하는 자리입니다. 실용적 선택이라기보다, AR이라는 기준점 옆에 diffusion을 세워 무엇이 같고 다른지 직접 만져 보는 것이 목적입니다.
-
-\textbf{Q7. 교정 후에도 영어(0.717)보다 한국어(0.652)가 낮은데, 더 키워야 하나요?}
-
-이 격차는 collapse가 아니라 언어 난이도 차이로 보는 게 맞습니다. 한국어는 조사·어미 변주가 많아 같은 규모에서 토큰 예측이 영어보다 까다롭습니다. 중요한 건 절대 수치가 아니라 “벽을 넘었는가”입니다. 순진한 레시피가 0.081에서 멈춰 있던 것을 80/10/10으로 0.652까지 끌어올렸고, train\_loss도 7.0의 벽을 넘어 4.13까지 내려갔으며(30000 step, Colab T4, 20.20분), 무조건 생성에서 인물(팀)과 배경(마을·공원), 대화, 서사가 갖춰진 동화가 나옵니다. 자잘한 흠은 모델·데이터를 키우면 줄지만 그건 T4 30분 예산 밖의 이야기입니다. 이 장의 목표선(“작은 한국어 diffusion LM이 coherent하게 생성된다”)은 이미 넘었습니다.
-
-
+\compactFAQMore{4}
 
 \begin{previewBox}{미리보기: 다음 장}
 
@@ -915,294 +889,15 @@ acc = (pred[mask_pos] == gold[mask_pos]).float().mean()
 
 
 
-\section{34장 부록 --- 한국어 diffusion collapse를 직접 복구하기: 80/10/10 마스킹}
+\Needspace{18\baselineskip}
 
-\begin{quote}
-영어 diffusion(33장)을 한국어로 옮길 때(34장), \emph{언어만 바꿨을 뿐} 인데 모델이 유니그램(구두점·고빈도 토큰 반복)으로 \textbf{collapse} 했습니다. step·용량·마스킹 분포를 아무리 바꿔도 소용없었고, 진짜 범인은 \textbf{마스킹 방식} --- 순진한 \emph{100\% \texttt{{[}MASK{]}}} --- 이었습니다. BERT의 고전적 \textbf{80/10/10} 트릭이 해결책이었고요. 이 부록은 그 collapse를 \textbf{직접 재현하고 \(\to\) 진단하고 \(\to\) 80/10/10으로 고칩니다.}
-\end{quote}
+\section{온라인 부록: 한국어 diffusion collapse 복구 실험}
 
-\textbf{이 부록에서 직접 경험할 것}
-
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  \textbf{collapse 재현} --- 가린 자리를 \emph{전부 \texttt{{[}MASK{]}}} 로 바꿔 학습 \(\to\) loss가 유니그램 값에서 평탄, 복원 정확도 바닥
-\item
-  \textbf{진단} --- 100\% \texttt{{[}MASK{]}} 는 “입력에 \texttt{{[}MASK{]}}가 보이면 출력, 아니면 베끼기” 라는 \emph{복사 지름길} 을 열어 줌
-\item
-  \textbf{수정} --- 80/10/10(80\% \texttt{{[}MASK{]}} / 10\% 랜덤 토큰 / 10\% 원본 유지)으로 그 지름길을 막음 \(\to\) loss 하락, 복원 회복
-\end{enumerate}
-
-\textbf{환경}: Google Colab \textbf{T4 GPU}. \textbf{예상 소요}: 약 18분 (데이터 + 학습 2회를 경량 step으로).
-
-\begin{quote}
-주의 \emph{경량 재현} 입니다. 완전한 한국어 동화 생성은 30000 step(본 장)이 필요하고, 이 부록은 짧은 step으로 \emph{collapse vs 정상} 의 \textbf{방향}(loss·복원 정확도)만 비교합니다. 마스킹 방식의 차이는 \emph{처음부터} 드러나므로 짧은 학습으로도 충분히 보입니다.
-\end{quote}
-
-
-
-\subsection{환경 준비}
-
-
-
-\subsection{한국어 데이터(TinyStories-Korean) + BBPE 4000}
-
-본 장와 같은 데이터·토크나이저입니다. 데이터·모델·loss·step 은 두 실험이 똑같이 쓰고, \emph{유일하게 바꾸는 건 콜레이터의 마스킹 방식} 입니다.
-
-
-
-\subsection{모델·평가 함수 (본 장와 동일, 공통)}
-
-작은 \inlinecode{BertForMaskedLM}(hidden 256/4L) + plain CE. collapse 실험과 정상 실험이 \emph{똑같은} 모델·loss·step 을 쓰고, 콜레이터만 다릅니다.
-
-
-
-\subsection{\texorpdfstring{시도 1 --- 순진한 100\% \texttt{{[}MASK{]}} (영어 레시피 그대로 이식)}{시도 1 --- 순진한 100\% {[}MASK{]} (영어 레시피 그대로 이식)}}
-
-영어(33장)에서 잘 됐던 diffusion 콜레이터를 그대로 옮깁니다. 가릴 자리를 고른 뒤, 그 자리를 \textbf{전부 \texttt{{[}MASK{]}}} 로 바꿉니다. 영어에선 이게 잘 됐으니 한국어도 되겠지요.
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-class MaskOnlyCollator:
-    '''가린 자리를 100% [MASK] 로 — 영어에서 쓰던 순진한 방식.'''
-    def __init__(self, tok, eps=0.05, seed=SEED):
-        self.mask_id = tok.mask_token_id; self.eps = eps
-        self.gen = torch.Generator().manual_seed(seed)
-    def __call__(self, ex):
-        ids = torch.tensor([e["input_ids"] for e in ex], dtype=torch.long); B, L = ids.shape
-        t = torch.rand(B, generator=self.gen) * (1.0 - self.eps) + self.eps
-        sel = torch.rand(
-            B,
-            L,
-            generator=self.gen) < t.unsqueeze(1,
-        )
-        no = ~sel.any(1)
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=15]
-        if no.any(): sel[no, torch.randint(0, L, (int(no.sum()),), generator=self.gen)] = True
-        labels = ids.clone(); labels[~sel] = -100
-        inp = ids.clone(); inp[sel] = self.mask_id
-        # 100% [MASK]
-        return {"input_ids": inp, "attention_mask": torch.ones(B, L, dtype=torch.long), "labels": labels}
-
-torch.manual_seed(SEED)
-model_bad = new_model()
-out_bad = Trainer(model=model_bad, args=args_for("bad"),
-                  train_dataset=lm_train, data_collator=MaskOnlyCollator(tokenizer)).train()
-acc_bad = fixed_t_acc(model_bad)
-print(
-    f"\n[collapse] train_loss {out_bad.training_loss:.3f}  (baseline ln(V)="
-    f"{math.log(4000):.2f})"
-)
-print(f"           fixed-t(0.15) top-1 acc {acc_bad:.3f}")
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{9\baselineskip}
-\begin{lstlisting}[firstnumber=31]
-orig, rest = restore_demo(model_bad)
-print(f"원본 : {orig[:70]}")
-print(f"복원 : {rest[:70]}")
-print(
-    "-> loss 가 유니그램 값 근처에서 거의 안 내려가고, "
-    "복원도 엉뚱합니다 (유니그램 collapse)."
-)
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Step  Training Loss
-----  -------------
-200   7.458007
-400   7.060770
-600   7.061855
-800   7.058340
-1000  7.057528
-1200  7.055311
-1400  7.052003
-1600  7.051403
-1800  7.055881
-2000  7.050085
-2200  7.048411
-2400  7.049087
-...
-
-...
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
-\subsection{\texorpdfstring{진단 --- 100\% \texttt{{[}MASK{]}}의 “복사 지름길”}{진단 --- 100\% {[}MASK{]}의 “복사 지름길”}}
-
-loss 가 baseline(유니그램 엔트로피) 근처에서 평탄하다는 건, 모델이 \emph{문맥} 이 아니라 \emph{빈도} 만 외웠다는 신호입니다. 왜 100\% \texttt{{[}MASK{]}} 가 이걸 부추길까요?
-
-가린 자리를 \emph{전부} \texttt{{[}MASK{]}} 로 바꾸면, 입력에는 \textbf{\texttt{{[}MASK{]}} 아니면 원본 토큰} 만 존재합니다. 그러면 모델은 위험한 지름길을 배울 수 있습니다 --- \emph{“입력이 \texttt{{[}MASK{]}} 면 뭔가 출력하고, \texttt{{[}MASK{]}}가 아니면 그 자리 토큰을 그대로 베끼면 된다.”} 진짜 문맥 추론 대신에요.
-
-영어에선 토큰이 단어 단위라 이 지름길의 해가 덜했지만, 한국어처럼 토큰이 잘게 쪼개지는(교착어) 환경에선 치명적입니다. 모델이 가린 자리에서 \emph{문맥으로 추론하는 법} 을 아예 안 배우고 유니그램으로 주저앉습니다.
-
-\begin{quote}
-그렇다면 데이터·용량 문제가 아니라 \emph{마스킹 방식} 이 범인일까요? BERT(2018)가 바로 이 문제를 알고 있었고, 그 해법이 \textbf{80/10/10} 입니다.
-\end{quote}
-
-
-
-\subsection{수정 --- 80/10/10 마스킹으로 지름길 막기}
-
-BERT의 고전 트릭입니다. 가릴 자리를 고른 뒤, 그 자리를
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{80\%} 는 \texttt{{[}MASK{]}} 로,
-\item
-  \textbf{10\%} 는 \emph{임의의 다른 토큰} 으로,
-\item
-  \textbf{10\%} 는 \emph{원래 토큰 그대로} 둡니다.
-\end{itemize}
-
-이러면 입력에 보이는 토큰이 \texttt{{[}MASK{]}} 가 아니어도 \emph{그게 정답이라고 믿을 수 없게} 됩니다(임의로 바뀐 것일 수도 있으니까요). “베끼기” 지름길이 막히고, 모델은 \emph{모든 자리에서 문맥을 봐야만} 합니다. 모델·step·loss 는 그대로, 콜레이터만 바꿉니다.
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-class DiffMLMCollator:
-    '''가린 자리를 80% [MASK] / 10% 랜덤 / 10% 원본 유지 — BERT 80/10/10.'''
-    def __init__(self, tok, eps=0.05, seed=SEED):
-        self.mask_id = tok.mask_token_id; self.vocab = tok.vocab_size; self.eps = eps
-        self.gen = torch.Generator().manual_seed(seed)
-    def __call__(self, ex):
-        ids = torch.tensor([e["input_ids"] for e in ex], dtype=torch.long); B, L = ids.shape
-        t = torch.rand(B, generator=self.gen) * (1.0 - self.eps) + self.eps
-        sel = torch.rand(
-            B,
-            L,
-            generator=self.gen) < t.unsqueeze(1,
-        )
-        no = ~sel.any(1)
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=15]
-        if no.any(): sel[no, torch.randint(0, L, (int(no.sum()),), generator=self.gen)] = True
-        labels = ids.clone(); labels[~sel] = -100
-        inp = ids.clone(); r = torch.rand(B, L, generator=self.gen)
-        inp[sel & (r < 0.8)] = self.mask_id
-        # 80% [MASK]
-        rp = sel & (r >= 0.8) & (r < 0.9); nr = int(rp.sum())
-        if nr: inp[rp] = torch.randint(
-            N_SPECIAL,
-            self.vocab,
-            (nr,),
-            generator=self.gen,
-        )
-
-        return {"input_ids": inp, "attention_mask": torch.ones(B, L, dtype=torch.long), "labels": labels}
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=30]
-torch.manual_seed(SEED)
-model_good = new_model()
-out_good = Trainer(model=model_good, args=args_for("good"),
-                   train_dataset=lm_train, data_collator=DiffMLMCollator(tokenizer)).train()
-acc_good = fixed_t_acc(model_good)
-print(
-    f"\n[fixed] train_loss {out_good.training_loss:.3f}  (baseline ln(V)="
-    f"{math.log(4000):.2f})"
-)
-print(f"       fixed-t(0.15) top-1 acc {acc_good:.3f}")
-orig, rest = restore_demo(model_good)
-print(f"원본 : {orig[:70]}")
-print(f"복원 : {rest[:70]}")
-print(
-    "-> loss 가 내려가고 복원도 그럴듯해집니다 (8000 step"
-    "이라 거칠지만 방향은 분명)."
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}[firstnumber=46]
-)
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Step  Training Loss
-----  -------------
-200   7.455829
-400   6.806747
-600   6.561232
-800   6.466052
-1000  6.426103
-1200  6.394333
-1400  6.370409
-1600  6.353641
-1800  6.334310
-2000  6.318137
-2200  6.275755
-2400  6.214318
-...
-
-...
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
-\subsection{나란히 비교}
-
-
-
-\compactCodeOmitted{필요한 라이브러리와 기본 설정을 준비하는 단계}
+\onlineAppendixLink{한국어 diffusion collapse 복구 실험}{100\% 마스크 방식에서 나타나는 유니그램 collapse를 재현하고 BERT식 80/10/10 마스킹으로 복원합니다. 본문에는 두 방식의 핵심 대조만 남기고, 두 번의 경량 학습과 진단 코드는 온라인 부록에서 실행합니다.}{https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/34_ko_diffusion/34_ko_diffusion_appendix.ipynb}
 
 \begin{bookfigurelabel}[H]{한국어 diffusion 마스킹 방식 비교}{fig:ch34-masking-ablation}
 \centering
-\includegraphics[width=0.86\linewidth]{assets/figures/ch34_masking_ablation.png}
+\includegraphics[width=0.72\linewidth]{assets/figures/ch34_masking_ablation.png}
 \end{bookfigurelabel}
 
 \textbf{그림 읽기} --- 그림~\ref{fig:ch34-masking-ablation}에서 다음 내용을 확인합니다: 한국어 diffusion 마스킹 방식 비교. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
-
-
-
-\subsection{정리 --- 무엇을 배웠나}
-
-직접 겪은 순서:
-
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  \textbf{collapse 재현}: 영어에서 잘 되던 \emph{100\% \texttt{{[}MASK{]}}} diffusion 을 한국어에 그대로 옮기니, loss 가 유니그램 값에서 평탄 (collapse).
-\item
-  \textbf{진단}: 100\% \texttt{{[}MASK{]}} 는 “\texttt{{[}MASK{]}}면 출력, 아니면 베끼기” 라는 \emph{복사 지름길} 을 열어, 모델이 문맥 추론을 안 배움 --- 토큰이 잘게 쪼개지는 한국어에서 특히 치명적.
-\item
-  \textbf{수정}: 80/10/10(80\% \texttt{{[}MASK{]}} / 10\% 랜덤 / 10\% 원본 유지)으로 그 지름길을 막으니, 모델이 모든 자리에서 문맥을 봐야 해 loss 하락·복원 회복.
-\end{enumerate}
-
-\textbf{핵심 교훈}
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{“한 가지만 바꿨다”의 함정.} “언어만 바꿨다”고 생각했지만, 영어 레시피를 옮기는 과정에서 \emph{80/10/10이라는 숨은 전제} 가 함께 빠져 있었습니다. 내가 \emph{정말 무엇을 바꿨는지} 를 끝까지 의심해야 합니다.
-\item
-  \textbf{고전이 답일 때가 많습니다.} 80/10/10은 2018년 BERT 논문에 이미 있던 트릭입니다. 새 알고리즘(diffusion)에 옛 지혜가 빠졌던 것뿐입니다.
-\item
-  같은 데이터·모델·step·loss 인데 \emph{마스킹 방식 하나} 로 collapse와 정상이 갈렸습니다. 본 장이 80/10/10 을 쓴 이유가 바로 이것입니다.
-\end{itemize}

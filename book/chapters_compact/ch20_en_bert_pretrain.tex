@@ -292,15 +292,6 @@ MLM loss & PPL & 해석 \\
 !nvidia-smi
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 04:08:21 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 36C P8 12W / 70W | 3MiB / 15360MiB | 0% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \section{\texorpdfstring{토크나이저 로드}{토크나이저 로드}}
@@ -338,7 +329,7 @@ print(f"ids:    {enc['input_ids'][0].tolist()}")
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{TOKENIZER\_NAME = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{2행}의 \inlinecode{tokenizer = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\textbf{1행}의 \inlinecode{TOKENIZER\_NAME = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{2행}의 \inlinecode{tokenizer = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{8행}의 \inlinecode{for name in ("pad\_token",...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -995,34 +986,12 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Epoch  Training Loss  Validation Loss
------  -------------  ---------------
-1      7.215202       7.198018
-2      7.062257       7.058136
-
-MLM pretraining done in 0.4 min
-mean train loss: 7.4179
-random baseline loss (uniform over vocab): 10.3262
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \Needspace{5\baselineskip}
 \begin{lstlisting}
 !nvidia-smi
 \end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 04:09:26 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 51C P0 65W / 70W | 3335MiB / 15360MiB | 49% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -1083,7 +1052,7 @@ print(
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{eval\_metrics = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{2행}의 \inlinecode{eval\_loss = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{eval\_ppl = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{for k, v in eval\_metrics....}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{6행}의 \inlinecode{if isinstance(v, float):}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\textbf{1행}의 \inlinecode{eval\_metrics = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{2행}의 \inlinecode{eval\_loss = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{eval\_ppl = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -1266,17 +1235,6 @@ for f in sorted(os.listdir(SAVE_DIR)):
     print(f"  {f:>30s}  {size_str}")
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Saved to: ./ch20_small_bert_mlm
-Files:
-                     config.json  0.7 KB
-               model.safetensors  42.4 MB
-                  tokenizer.json  694.7 KB
-           tokenizer_config.json  0.3 KB
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \textbf{저장된 파일 구조} --- \inlinecode{from\_pretrained} 가 인식하는 HF 표준 레이아웃:
@@ -1398,25 +1356,6 @@ Files:
 
 \end{faqBox}
 
-\begin{faqBox}{Q2. (실무) \inlinecode{bert-base-uncased} 의 모델 weight 도 같이 가져오면 더 빠르지 않나요?}
-
-맞습니다 --- 그게 \emph{fine-tuning} 흐름 (\ref{ch:07}--\ref{ch:18}장). 이 장는 그 흐름을 \emph{뒤집어}, “사전학습이 어떻게 이뤄지는지” 를 보는 게 목적입니다.
-
-\inlinecode{BertForMaskedLM.from\_pretrained("bert-base-uncased")} 라고 쓰면 110M 사전학습 모델이 로드되어 \emph{이미 잘 작동} 함. 반면 이 장는:
-
-\Needspace{8\baselineskip}
-\begin{lstlisting}
-config = BertConfig(
-    hidden_size=256,
-    num_hidden_layers=4,
-    ...,
-)
-model = BertForMaskedLM(config)
-\end{lstlisting}
-
-\inlinecode{from\_pretrained} 가 아니라 \inlinecode{BertForMaskedLM(config)} 라는 생성자 호출로 \emph{비어 있는} 모델을 만듭니다. 학습이 \emph{0 에서 시작} 하는 것 자체가 핵심.
-
-\end{faqBox}
 
 \begin{faqBox}{Q3. (이론) \inlinecode{mlm\_probability=0.15} 의 15\% 는 어디서 나온 숫자인가요?}
 
@@ -1436,24 +1375,6 @@ BERT 원논문 (Devlin et al., 2018, arXiv:1810.04805) 의 sweet spot:
 
 \end{faqBox}
 
-\begin{faqBox}{Q4. (실무) MLM 학습 중 loss 가 갑자기 \emph{발산} 하면 어떻게 해야 하나요?}
-
-작은 BERT scratch 학습은 fine-tune 보다 \emph{학습률에 민감} 합니다. 발산 (loss \(\to\) NaN 또는 100+) 의 흔한 원인:
-
-\Needspace{9\baselineskip}
-\begin{lstlisting}
-training_args = TrainingArguments(learning_rate=1e-4, ...)
-
-training_args = TrainingArguments(warmup_ratio=0.1, ...)
-
-training_args = TrainingArguments(max_grad_norm=0.5, ...)
-
-training_args = TrainingArguments(fp16=False, ...)
-\end{lstlisting}
-
-이 장의 \inlinecode{lr=5e-4,\ warmup=0.06,\ fp16=True} 셋업은 \emph{작은 BERT + 5K 데이터} 에 맞춰 보수적으로 잡았습니다. 모델 키우거나 데이터 늘리면 위 옵션을 조정.
-
-\end{faqBox}
 
 \begin{faqBox}{Q5. (실무) 사전학습이 \emph{얼마나} 도움 되는지 어떻게 확인하나요?}
 
@@ -1481,69 +1402,12 @@ model_scratch = BertForSequenceClassification(config)
 
 \end{faqBox}
 
-\begin{faqBox}{Q6. (이론) \inlinecode{group\_texts} 가 문장 경계를 무시하는데, BERT 가 잘 학습되나요?}
-
-원논문의 BERT 는 NSP (Next Sentence Prediction) 같은 \emph{문장 쌍} task 도 같이 학습했지만, 후속 연구 (RoBERTa, 2019) 가 \emph{NSP 를 빼고 단순히 토큰 스트림으로 학습} 해도 성능이 \emph{더 좋다} 는 걸 보였습니다. 이 장는 그 단순화된 흐름 (MLM only).
-
-토큰 스트림이 \emph{문장 경계 정보를 잃지만} 얻는 게 더 큽니다:
-
-\begin{itemize}
-\tightlist
-\item
-  짧은 문장이 PAD 로 가득 차지 않음 \(\to\) GPU 활용도 ↑
-\item
-  긴 문장이 잘리지 않음 \(\to\) 정보 손실 \(\downarrow\)
-\item
-  학습 신호 (mask 위치) 가 \emph{균등하게 분포}
-\end{itemize}
-
-문장 경계는 분류·NLI 같은 downstream 에서 다시 명시적으로 입력됩니다 ({[}CLS{]} 토큰).
-
-\end{faqBox}
-
-\begin{faqBox}{Q7. (실무) 저장된 체크포인트가 너무 무거우면 어떻게 가볍게 하나요?}
-
-이 장의 작은 BERT 는 약 40MB 정도라 무겁지 않지만, 큰 모델의 경우:
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-model.save_pretrained(
-    "./ch20_small_bert_mlm",
-    safe_serialization=True,
-)
-
-model.half().save_pretrained("./ch20_small_bert_mlm")
-
-# from transformers import BitsAndBytesConfig
-# config = BitsAndBytesConfig(load_in_8bit=True)
-\end{lstlisting}
-
-이 장는 \emph{학습용 체크포인트} 이므로 fp32 그대로 저장 (\ref{ch:21}장 fine-tune 시 정밀도 유지). 배포용이면 inference 단계에서 quantize 고려.
-
-\end{faqBox}
-
-\begin{faqBox}{Q8. (이론) 큰 BERT (110M) 와 비교해 이번 작은 BERT (10M) 의 \emph{근본 한계} 는?}
-
-\begin{booktable}{20장 FAQ 표}{tab:ch20-10}
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}llll@{}}
-\toprule
-차원 & 작은 BERT (이 장) & bert-base-uncased & 차이의 영향 \\
-\midrule
-
-hidden\_size & 256 & 768 & 표현 공간 차원이 1/3 \(\to\) 미세한 의미 구분 어려움 \\
-num\_layers & 4 & 12 & \emph{깊은} 추론 (구문 \(\to\) 의미 \(\to\) 문맥) 단계 부족 \\
-학습 데이터 & 5K paragraphs (약 700K-1M 토큰, Wikitext-103) & 33억 토큰 (BERT-base) & 어휘 다양성·문맥 풍부함 격차 약 5000배 \\
-학습 시간 & 약 0.4분 (MLM 2 epoch) & 4 일 (TPU v3-256) & 압축한 \emph{정보량} 자체가 다름 \\
-\bottomrule
-\end{tabular}
-\end{adjustbox}
-\end{booktable}
-
-\textbf{결론}: 이 장의 산출물은 \emph{fine-tune 출발점으로는 random 보다 나음} 정도. \emph{zero-shot} 또는 \emph{복잡한 downstream} 에선 표준 BERT 와 비교 불가. \emph{작은 모델 + 작은 데이터로도 일반 도메인 사전학습이 가능하다는 메커니즘} 을 \emph{경험} 하는 게 이 장의 목적이고, \emph{실용 모델} 은 표준 사전학습품을 가져다 쓰는 게 정답.
-\end{faqBox}
 
 
+
+
+
+\compactFAQMore{5}
 
 \begin{previewBox}{미리보기: 다음 장}
 
@@ -1570,67 +1434,15 @@ num\_layers & 4 & 12 & \emph{깊은} 추론 (구문 \(\to\) 의미 \(\to\) 문�
 
 
 
-\section{\ref{ch:20}·\ref{ch:22}장 부록 --- 사전학습량과 perplexity: 더 돌리면 얼마나 내려가나 (이슈 \#19)}
+\Needspace{18\baselineskip}
 
-본편 \ref{ch:20}장(영어)·\ref{ch:22}장(한국어)는 small BERT 를 \textbf{2 epoch} 만 MLM 사전학습해서 perplexity 가 높았습니다 (영어 \textasciitilde1,245, 한국어 \textasciitilde1,918). 짧은 데모 학습의 정직한 반영이지만, \emph{더 돌리면 얼마나 내려가는지} 는 한 점만 봐선 알 수 없습니다.
+\section{온라인 부록: 사전학습량과 perplexity}
 
-이 부록은 같은 small BERT(hidden=256·L=4)를 \textbf{2 \(\to\) 16 epoch 으로 길게 학습} 하며, 체크포인트마다 eval perplexity 를 기록해 곡선으로 봅니다. 학습을 한 번만 돌리고 \inlinecode{eval\_strategy="steps"} 로 중간 perplexity 를 모으므로 효율적입니다.
+\onlineAppendixLink{사전학습량과 perplexity}{영어 perplexity는 1,173에서 696으로, 한국어는 1,626에서 709로 내려가지만 8--10 epoch 이후에는 개선이 평탄해집니다. 같은 5,000개 텍스트를 반복하는 것보다 데이터와 compute를 늘리는 편이 다음 성능 레버라는 결론입니다.}{https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/20_en_bert_pretrain/20_en_bert_pretrain_scaling.ipynb}
 
-\begin{quote}
-영어(wikitext-103)·한국어(ko-wiki) 두 곡선을 epoch 축에서 비교. small 모델이라 T4 에서 가볍습니다.
-\end{quote}
-
-
-
-\subsection{공통 유틸 --- 블록화 / small BERT / 학습+perplexity 곡선}
-
-본편 \ref{ch:20}·\ref{ch:22}장과 같은 파이프라인: \inlinecode{add\_special\_tokens=False} 토큰화 \(\to\) \inlinecode{group\_texts}(128 블록) \(\to\) MLM collator. \inlinecode{train\_curve} 는 \inlinecode{eval\_strategy="steps"} 로 중간 perplexity 를 모아 곡선을 돌려줍니다 (epoch=2 데모점 포함).
-
-
-
-\subsection{영어 --- wikitext-103, small BERT MLM 16 epoch}
-
-
-
-\subsection{한국어 --- ko-wiki, small BERT MLM 16 epoch}
-
-
-
-\subsection{곡선 --- eval perplexity vs 사전학습 epoch}
-
-
-
-\compactCodeOmitted{숫자 결과를 그림으로 확인하는 단계}
-
-\begin{bookfigurelabel}[H]{사전학습 epoch에 따른 영어와 한국어 MLM perplexity 곡선}{fig:ch20-pretrain-scaling-curve}
+\begin{bookfigurelabel}[H]{사전학습 epoch에 따른 영어와 한국어 MLM perplexity}{fig:ch20-pretrain-scaling-curve}
 \centering
-\includegraphics[width=0.86\linewidth]{assets/figures/ch20_pretrain_scaling_curve.png}
+\includegraphics[width=0.72\linewidth]{assets/figures/ch20_pretrain_scaling_curve.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch20-pretrain-scaling-curve}에서 다음 내용을 확인합니다: 사전학습 epoch에 따른 영어와 한국어 MLM perplexity 곡선. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
-
-
-
-\subsection{해석}
-
-\textbf{더 학습하면 perplexity 는 분명히 내려갑니다 --- 다만 곧 평탄해집니다.}
-
-\begin{booktable}{20장 해석 표}{tab:ch20-11}
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}llll@{}}
-\toprule
-& 2 epoch (본편 데모) & 16 epoch & 감소 \\
-\midrule
-
-영어 (wikitext) & 1,173 & 696 & 1.7배 \\
-한국어 (ko-wiki) & 1,626 & 709 & 2.3배 \\
-\bottomrule
-\end{tabular}
-\end{adjustbox}
-\end{booktable}
-
-곡선을 보면 두 언어 모두 처음 몇 epoch 에서 가파르게 떨어지다가 \textbf{epoch 8-10 부터 평탄} 해집니다. 8배 더 돌려도(2\(\to\)16 epoch) perplexity 는 \textasciitilde2배 낮아질 뿐이고, 마지막 6 epoch 은 거의 움직이지 않습니다.
-
-\textbf{왜 평탄해지나 --- 데이터가 병목입니다.} 5,000 텍스트는 small BERT 가 금세 다 외울 만큼 적어, epoch 을 늘리면 train loss 는 계속 떨어져도 \emph{새 패턴} 을 못 봐 eval perplexity 가 saturate 합니다 (overfitting 영역 진입). 잘 학습된 BERT 의 perplexity 가 두 자리-수십 수준인 것과의 큰 격차는 \textbf{epoch 이 아니라 데이터·compute 규모} 의 문제입니다 --- 원본 BERT 는 수십억 토큰으로 학습했습니다.
-
-\textbf{그래서 본편의 높은 perplexity 는 버그가 아닙니다.} “데모용 짧은 학습이라 빈도까지만 익힌 단계” 가 맞고, 더 돌리면 \textasciitilde2배까지는 내려가지만 그 이상은 \emph{데이터 양} 을 늘려야 합니다. 이는 \ref{ch:21}장 부록(데이터 스케일링)에서 본 \emph{데이터가 가장 큰 lever} 라는 교훈, 그리고 \ref{ch:21}·\ref{ch:23}장의 사전학습 분류 천장과 같은 뿌리입니다.
+\textbf{그림 읽기} --- 그림~\ref{fig:ch20-pretrain-scaling-curve}에서 다음 내용을 확인합니다: 사전학습 epoch에 따른 영어와 한국어 MLM perplexity. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.

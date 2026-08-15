@@ -248,15 +248,6 @@ L_{\text{MLM}} = -\frac{1}{\vert{}M\vert{}} \sum_{i \in M} \log P(x_i \mid x_{\s
 !nvidia-smi
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 12:19:24 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 45C P8 11W / 70W | 3MiB / 15360MiB | 0% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \section{한국어 Wikipedia 데이터 준비}
@@ -304,7 +295,7 @@ print(f"ids:    {enc['input_ids'][0].tolist()}")
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{TOKENIZER\_NAME = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{2행}의 \inlinecode{tokenizer = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\textbf{1행}의 \inlinecode{TOKENIZER\_NAME = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{2행}의 \inlinecode{tokenizer = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{8행}의 \inlinecode{for name in ("pad\_token",...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -371,7 +362,7 @@ print(cross_df.to_string(index=False))
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{tokenizer\_en = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{EN\_NAME = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{4행}의 \inlinecode{KO\_NAME = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6--10행}의 \inlinecode{ko\_sentences = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{12행}의 \inlinecode{cross\_rows = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{13행}의 \inlinecode{for sent in ko\_sentences:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\textbf{1행}의 \inlinecode{tokenizer\_en = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{EN\_NAME = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{4행}의 \inlinecode{KO\_NAME = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -405,7 +396,7 @@ for sent in ko_sentences:
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{2행}의 \inlinecode{for sent in ko\_sentences:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{4행}의 \inlinecode{for name, tok in [(EN\_NAM...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{5행}의 \inlinecode{enc = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{toks = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\textbf{2행}의 \inlinecode{for sent in ko\_sentences:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{4행}의 \inlinecode{for name, tok in [(EN\_NAM...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{5행}의 \inlinecode{enc = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -1109,34 +1100,12 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Epoch  Training Loss  Validation Loss
------  -------------  ---------------
-1      7.636452       7.672749
-2      7.385564       7.539130
-
-Korean MLM pretraining done in 0.3 min
-mean train loss: 7.7967
-random baseline loss (uniform over vocab): 10.3735
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \Needspace{5\baselineskip}
 \begin{lstlisting}
 !nvidia-smi
 \end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 12:20:24 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 59C P0 41W / 70W | 3449MiB / 15360MiB | 54% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -1378,17 +1347,6 @@ for f in sorted(os.listdir(SAVE_DIR)):
     print(f"  {f:>30s}  {size_str}")
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Saved to: ./ch22_small_bert_mlm_ko
-Files:
-                     config.json  0.7 KB
-               model.safetensors  43.8 MB
-                  tokenizer.json  734.4 KB
-           tokenizer_config.json  0.4 KB
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \textbf{저장된 파일 구조} --- \ref{ch:20}장과 동일한 HF 표준 레이아웃:
@@ -1510,77 +1468,8 @@ toks = tokenizer_en.tokenize(sent)
 
 \end{faqBox}
 
-\begin{faqBox}{Q2. (이론) 한국어는 형태소가 풍부한데 \inlinecode{mlm\_probability} 를 0.20-0.25 로 올리면 학습이 더 잘 되나요?}
 
-\textbf{일부 연구는 그런 시도를 했고 결과는 trade-off} 입니다. 한국어는 한 어절 안에 \emph{어간 + 어미 + 조사} 가 결합되어 형태소 정보가 풍부 \(\to\) 가릴 자리가 많아 \emph{학습 신호 양} 은 늘 수 있습니다. 그러나:
 
-\Needspace{7\baselineskip}
-\begin{lstlisting}
-data_collator = DataCollatorForLanguageModeling(
-    tokenizer=tokenizer,
-    mlm=True,
-    mlm_probability=0.25,
-)
-\end{lstlisting}
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{장점}: 한 batch 당 학습되는 토큰 수가 약 1.7배 증가 \(\to\) loss 가 같은 step 수에서 더 빨리 떨어질 수 있음
-\item
-  \textbf{단점}: 가려진 비율이 높으면 \emph{주변 문맥} 자체가 줄어들어 \emph{추측 가능성} 이 떨어짐. 모델이 \emph{의미 없는 random guess} 만 학습할 위험
-\end{itemize}
-
-BERT 논문의 15\% 는 \emph{모든 언어에서 합리적 sweet spot} 으로 정착했고, 한국어 BERT (\inlinecode{klue/bert-base}) 도 15\% 로 사전학습. \emph{0.20-0.25 시도는 가능} 하지만 \emph{명확한 개선 보장은 없음}. 작은 모델 + 작은 데이터일수록 \emph{기본 셋업 안정} 이 더 가치 있습니다.
-
-\end{faqBox}
-
-\begin{faqBox}{Q3. (이론) \inlinecode{klue/bert-base} 가 이미 학습된 모델인데 왜 같은 구조의 mini 버전을 처음부터 다시 학습하나요?}
-
-\textbf{교육 목적} 입니다. 사전학습이 본체에 무엇을 새기는지 \emph{직접 경험} 하기 위해.
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-model = AutoModelForSequenceClassification.from_pretrained(
-    "klue/bert-base",
-    num_labels=2,
-)
-
-config = BertConfig(
-    hidden_size=256,
-    num_hidden_layers=4,
-    ...,
-)
-model = BertForMaskedLM(config)
-\end{lstlisting}
-
-실무에서는 \emph{클루 본체 그대로 가져다 쓰는 게} 답입니다 --- 데이터·연산이 \emph{5000배 이상} 격차. 본 장의 목적은 \emph{그 격차의 의미} 를 \ref{ch:23}장에서 정량 비교하기 위함이고, \emph{작은 모델 + 작은 데이터로도 사전학습 동역학을 재현} 할 수 있음을 확인하는 것. \ref{ch:20}장 (영어) 의 한국어 대칭본.
-
-\end{faqBox}
-
-\begin{faqBox}{Q4. (실무) 한국어 텍스트에 영어가 섞여 있으면 \inlinecode{klue/bert-base} 토크나이저가 잘 처리하나요?}
-
-대체로 잘 처리합니다 --- \inlinecode{klue/bert-base} 의 vocab 약 32,000 안에 영어 단어·서브워드도 일부 포함되어 있어 \emph{자주 등장하는 영어} 는 자연스럽게 토큰화됩니다. 다만:
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-mixed = "이 movie 정말 amazing 했어요!"
-print(tokenizer.tokenize(mixed))
-\end{lstlisting}
-
-\begin{itemize}
-\tightlist
-\item
-  \emph{자주 쓰는 영단어} (\inlinecode{movie}, \inlinecode{OK} 등): 1 토큰 또는 짧은 WordPiece 로 처리
-\item
-  \emph{드문 영단어} 나 \emph{고유명사}: 자모 단위 분해 또는 \texttt{{[}UNK{]}} 위험
-\item
-  \emph{한자, 일본어, 특수문자}: vocab 안에 일부만 있어 \emph{부분 UNK} 가능
-\end{itemize}
-
-한국어 위키 본문은 \emph{순한국어 + 인명·지명·과학 용어 등 영문 표기} 가 자주 섞입니다. \inlinecode{klue/bert-base} vocab 에 자주 쓰는 영단어 일부가 있어 큰 문제는 없습니다. 다국어 환경이라면 \emph{multilingual BERT} (\inlinecode{bert-base-multilingual-cased}) 또는 \emph{byte-level BPE} (XLM-R) 같은 \emph{공통 vocab} 모델을 고려.
-
-\end{faqBox}
 
 \begin{faqBox}{Q5. (이론) 셀 5-1 에서 본 \inlinecode{label\_id\ =\ -100} 이 정확히 어떻게 \emph{loss 무시} 로 이어지나요?}
 
@@ -1627,27 +1516,10 @@ HIDDEN_SIZE = 384
 
 \end{faqBox}
 
-\begin{faqBox}{Q7. (이론) \ref{ch:20}장 (영어) 와 \ref{ch:22}장 (한국어) 의 학습 곡선을 \emph{비교} 하려면 어떻게 해야 하나요?}
-
-같은 hyperparam·같은 BLOCK\_SIZE·같은 epoch 으로 학습된 두 모델의 \emph{상대} 비교가 의미 있습니다.
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-metrics = {
-    "language":           ["EN (20장)",    "KO (22장)"],
-    "vocab_size":         [30522,           32000],
-    "random_baseline":    [10.33,           10.37],
-    "epoch1_eval_loss":   ["measure",       "measure"],
-    "epoch2_eval_loss":   ["measure",       "measure"],
-    "epoch2_perplexity":  ["measure",       "measure"],
-    "train_tokens":       ["approx 700K",   "approx 500K"],
-}
-\end{lstlisting}
-
-한국어 위키 paragraphs 는 평균 길이가 Yelp 리뷰보다 짧지만 NSMC 보다는 깁니다. 같은 5K 샘플이라도 \emph{토큰 총량} 이 Yelp 와 살짝 다릅니다. 같은 step 수에 \emph{실제 본 토큰 수} 가 다르고, eval loss 도 영향을 받습니다. \emph{언어 자체의 어려움 차이} 가 아니라 \emph{데이터 크기 차이} 가 더 큰 영향. 공정한 언어 비교는 \emph{토큰 총량 매칭} 이 필요.
-\end{faqBox}
 
 
+
+\compactFAQMore{4}
 
 \begin{previewBox}{미리보기: 다음 장}
 

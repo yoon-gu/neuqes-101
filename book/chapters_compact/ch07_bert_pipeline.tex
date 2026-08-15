@@ -181,15 +181,6 @@ T4의 총 VRAM은 \textbf{약 15.36 GB} (= 15,360 MiB). 모델·옵티마이저�
 !nvidia-smi
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Wed Jun 17 21:13:25 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 43C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \textbf{무엇을 봐야 하나} --- 출력 가운데 줄 \inlinecode{Memory-Usage} 칸:
@@ -245,15 +236,8 @@ classifier("I love using Hugging Face! It's so simple.")
 \end{lstlisting}
 
 \begin{codeRead}
-\inlinecode{transformers} 같은 주요 패키지를 불러옵니다. \textbf{3행}의 \inlinecode{DEVICE = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{classifier = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{classifier(...)}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\inlinecode{transformers} 같은 주요 패키지를 불러옵니다. \textbf{3행}의 \inlinecode{DEVICE = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{classifier = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-If the error persists, please let us know by opening an issue on GitHub (ht...
-[{'label': 'POSITIVE', 'score': 0.9998088479042053}]
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -269,15 +253,6 @@ If the error persists, please let us know by opening an issue on GitHub (ht...
 \begin{codeRead}
 \textbf{1행}의 \inlinecode{!nvidia-smi}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Wed Jun 17 21:13:54 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 45C P0 26W / 70W | 423MiB / 15360MiB | 2% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -371,28 +346,6 @@ unmasker = pipeline(
 unmasker("Hugging Face is a [MASK] for NLP.")
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-----------------------------+------------+--+-
-
-[{'score': 0.04617200419306755,
-  'token': 10675,
-  'token_str': 'synonym',
-  'sequence': 'hugging face is a synonym for nlp.'},
- {'score': 0.03509846702218056,
-  'token': 4431,
-  'token_str': 'reference',
-  'sequence': 'hugging face is a reference for nlp.'},
- {'score': 0.02785254456102848,
-  'token': 2944,
-  'token_str': 'model',
-  'sequence': 'hugging face is a model for nlp.'},
- {'score': 0.025830449536442757,
-  'token': 19240,
-...
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \textbf{3개 pipeline(DistilBERT + GPT-2 + BERT-base)이 모두 VRAM에 쌓인 상태:}
@@ -403,15 +356,6 @@ unmasker("Hugging Face is a [MASK] for NLP.")
 \begin{lstlisting}
 !nvidia-smi
 \end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Wed Jun 17 21:14:16 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 48C P0 35W / 70W | 1401MiB / 15360MiB | 9% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -506,15 +450,6 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Model: distilbert/distilbert-base-uncased-finetuned-sst-2-english
-Model class:         DistilBertForSequenceClassification
-Tokenizer class:     BertTokenizer
-Label mapping:       {0: 'NEGATIVE', 1: 'POSITIVE'}
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 기본 모델은 \textbf{\inlinecode{distilbert-base-uncased-finetuned-sst-2-english}} 입니다.
@@ -585,15 +520,6 @@ Loaded
 \begin{lstlisting}
 !nvidia-smi
 \end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Wed Jun 17 21:14:22 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 49C P0 26W / 70W | 1671MiB / 15360MiB | 0% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -836,16 +762,6 @@ for name, tok in tokenizer_specs.items():
 \textbf{1--5행}의 \inlinecode{tokenizer\_specs = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{9행}의 \inlinecode{for name, tok in tokenize...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-model  vocab_size                             class
-----------------------------------------------------------------------------
-     distilbert-base-uncased      30,522                     BertTokenizer
-             bert-base-cased      28,996                     BertTokenizer
-                        gpt2      50,257                     GPT2Tokenizer
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \Needspace{11\baselineskip}
@@ -867,7 +783,7 @@ for sent in sample_sentences:
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1--4행}의 \inlinecode{sample\_sentences = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{for sent in sample\_senten...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{8행}의 \inlinecode{for name, tok in tokenize...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{9행}의 \inlinecode{tokens = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\textbf{1--4행}의 \inlinecode{sample\_sentences = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{for sent in sample\_senten...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{8행}의 \inlinecode{for name, tok in tokenize...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -943,20 +859,6 @@ for name, tok in tokenizer_specs.items():
         f"{tok.special_tokens_map}"
     )
 \end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-model           BOS/CLS           EOS/SEP         PAD         UNK
----------------------------------------------------------------------------...
-distilbert-base-uncased [CLS] [SEP] [PAD] [UNK]
-bert-base-cased [CLS] [SEP] [PAD] [UNK]
-gpt2 <|endoftext|> <|endoftext|> -- <|endoftext|>
-
-distilbert-base-uncased.special_tokens_map = {'unk_token': '[UNK]', 'sep_to...
-bert-base-cased.special_tokens_map = {'unk_token': '[UNK]', 'sep_token': '[...
-gpt2.special_tokens_map = {'bos_token': '<|endoftext|>', 'eos_token': '<|en...
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -1249,34 +1151,6 @@ os.environ["HF_HOME"] = "/content/drive/MyDrive/hf_cache"
 
 \end{faqBox}
 
-\begin{faqBox}{Q2. (이론) 왜 BERT 토크나이저는 단어를 \inlinecode{\#\#} 조각으로 쪼개나요?}
-
-이게 \textbf{WordPiece} 의 핵심입니다 --- 자주 등장하는 부분 문자열을 하나의 토큰으로 두고, 새로운 단어는 \emph{서브워드} 들의 조합으로 표현합니다.
-
-\Needspace{7\baselineskip}
-\begin{lstlisting}
-tokenizer.tokenize("Tokenization")
-# ['token', '##ization']
-tokenizer.tokenize("antidisestablishmentarianism")
-# $\to$ ['anti', '##dis', '##est', '##ab', '##lish', 
-# '##ment', '##arian', '##ism']
-\end{lstlisting}
-
-\inlinecode{\#\#} 은 “이 토큰은 \emph{이전 토큰의 연속}”이라는 표시입니다.
-
-\textbf{왜 이렇게?}
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{OOV 해결}: TF-IDF는 학습 어휘에 없는 단어를 \emph{무시} 했지만, WordPiece는 항상 더 작은 서브워드로 쪼개 표현 가능 (이론적으로 OOV 없음, 최악의 경우 글자 단위까지).
-\item
-  \textbf{어휘 수 관리}: 영어에는 수백만 단어가 있지만 BERT는 30,522개 토큰만으로 모두 표현. 형태 변형(\inlinecode{-ing}, \inlinecode{-ed})도 일관되게 처리.
-\item
-  \textbf{희귀 단어 일반화}: \inlinecode{unhappiness} 를 \inlinecode{un\ +\ happi\ +\ ness} 로 보면, 모델이 \inlinecode{happi} 를 알고 있으면 처음 보는 단어라도 의미 추론 가능.
-\end{itemize}
-
-\end{faqBox}
 
 \begin{faqBox}{Q3. (실무) \inlinecode{pipeline} 결과의 \inlinecode{LABEL\_0}, \inlinecode{LABEL\_1} 이 무슨 의미인지 어떻게 알아내나요?}
 
@@ -1291,46 +1165,7 @@ print(classifier.model.config.id2label)
 
 \end{faqBox}
 
-\begin{faqBox}{Q4. (이론) \texttt{{[}CLS{]}} 와 \texttt{{[}SEP{]}} 토큰은 왜 필요한가요?}
 
-BERT의 사전학습 구조에서 비롯된 특수 토큰입니다.
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{\texttt{{[}CLS{]}}} (Classification): 입력 맨 앞에 항상 붙는 토큰. 사전학습 시 \emph{Next Sentence Prediction} 을 위한 자리였고, 분류 작업에서는 이 위치의 hidden state(전체 문장의 표현)를 분류 헤드에 넣습니다. \emph{모든 토큰의 정보가 attention을 통해 {[}CLS{]}로 모이도록} 학습됨.
-\item
-  \textbf{\texttt{{[}SEP{]}}} (Separator): 문장 끝에 붙거나, 두 문장을 분리. 입력이 한 문장이면 \texttt{{[}CLS{]}\ ...\ {[}SEP{]}} 구조, 두 문장(질문-답변 등)이면 \texttt{{[}CLS{]}\ ...\ {[}SEP{]}\ ...\ {[}SEP{]}}.
-\end{itemize}
-
-이 장의 입력 \inlinecode{"I\ love\ using\ Hugging\ Face!"} 의 token ID 첫 값 \inlinecode{101} 이 \texttt{{[}CLS{]}}, 마지막 \inlinecode{102} 가 \texttt{{[}SEP{]}} --- 위 셀에서 확인했죠.
-
-\inlinecode{AutoTokenizer} 가 이 특수 토큰을 자동으로 추가해주므로 우리가 신경 쓸 일은 거의 없지만, \emph{왜 길이가 입력 단어 수보다 2 길게 나오는지} 이해하는 데는 이 두 토큰을 알아야 합니다.
-
-\end{faqBox}
-
-\begin{faqBox}{Q5. (실무) GPU 없이도 \inlinecode{pipeline} 이 돌아가나요?}
-
-네, CPU에서도 작동합니다. 다만 속도 차이가 큽니다.
-
-\begin{booktable}{7장 FAQ 표}{tab:ch07-13}
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}ll@{}}
-\toprule
-환경 & DistilBERT 1문장 추론 \\
-\midrule
-
-Colab CPU & \textasciitilde80-150ms \\
-Colab T4 GPU & \textasciitilde5-15ms \\
-큰 BERT 모델 & CPU는 5-10x 더 느림 \\
-\bottomrule
-\end{tabular}
-\end{adjustbox}
-\end{booktable}
-
-\textbf{추론} 만 한다면 CPU도 실용적입니다 (예: API 서빙은 보통 GPU지만 간단한 데모는 CPU). \textbf{학습} 은 거의 항상 GPU 필수 --- \ref{ch:09}장 이후 학습할 때는 T4 런타임으로 바꿔야 합니다.
-
-\end{faqBox}
 
 \begin{faqBox}{Q6. (실무) \inlinecode{AutoTokenizer} 와 \inlinecode{BertTokenizer} 를 직접 사용하는 것의 차이는?}
 
@@ -1349,6 +1184,8 @@ tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 \end{faqBox}
 
 
+
+\compactFAQMore{3}
 
 \section{오류 실험 (선택)}
 
