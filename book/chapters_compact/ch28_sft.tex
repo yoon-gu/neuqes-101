@@ -386,99 +386,6 @@ instruction 포맷 \texttt{\#\#\#\ 명령어:\textbackslash{}n피보나치\ 설�
 
 
 
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-%pip install -q -U trl transformers tokenizers datasets accelerate
-\end{lstlisting}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-import warnings
-warnings.filterwarnings("ignore")
-
-import math
-import os
-import random
-import time
-
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import torch
-
-import trl
-print(f"trl          : {trl.__version__}")
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-if torch.cuda.is_available():
-    device = torch.device("cuda")
-    device_name = torch.cuda.get_device_name(0)
-    vram_gib = torch.cuda.get_device_properties(0).total_memory / 1024**3
-    print(f"device       : cuda  ({device_name})")
-    print(f"VRAM total   : {vram_gib:.2f} GiB")
-elif torch.backends.mps.is_available():
-    device = torch.device("mps")
-    print("device       : mps  (Apple Silicon)")
-else:
-    device = torch.device("cpu")
-    print(
-        "device       : cpu  (training will be very slow "
-        "- Colab T4 recommended)"
-    )
-
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=33]
-print(f"torch        : {torch.__version__}")
-
-SEED = 0
-torch.manual_seed(SEED)
-np.random.seed(SEED)
-random.seed(SEED)
-
-USE_FP16 = (device.type == "cuda")
-print(f"use fp16     : {USE_FP16}")
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 필요한 라이브러리와 기본 설정을 준비하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=43]
-import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
-_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
-if not os.path.exists(_fp):
-    subprocess.run(
-        "apt-get -qq -y install fonts-nanum",
-        shell=True,
-    )
-fm.fontManager.addfont(_fp)
-plt.rcParams["font.family"] = "NanumGothic"
-plt.rcParams["axes.unicode_minus"] = False
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-trl          : 1.10.0
-device       : cuda  (Tesla T4)
-VRAM total   : 14.56 GiB
-torch        : 2.11.0+cu128
-use fp16     : True
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
 \section{KoAlpaca instruction 데이터 로드 + 포맷}
 
 \textbf{\inlinecode{beomi/KoAlpaca-v1.1a}} --- 한국어 instruction tuning 데이터셋. 각 샘플은 \inlinecode{instruction} (지시) 과 \inlinecode{output} (응답) 필드를 가집니다 (\inlinecode{url} 필드는 출처 --- 학습에 사용 안 함). T4 + 30분 룰 안에서 \textbf{약 3,000 샘플} 만 subset 으로 사용합니다.
@@ -487,117 +394,9 @@ KoGPT2 는 chat template 이 없으니 \emph{직접 포맷} --- \texttt{\#\#\#\ 
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-from datasets import load_dataset
-
-N_SFT = 3000
-MAX_CHARS = 600
-
-raw = load_dataset("beomi/KoAlpaca-v1.1a", split="train")
-print("raw dataset:", raw)
-print("\nfields:", raw.column_names)
-print("\n=== sample 0 ===")
-ex0 = raw[0]
-print("instruction:", ex0["instruction"][:200])
-print("output     :", ex0["output"][:200])
-
-def keep(ex):
-    return bool(ex["instruction"].strip()) and bool(ex["output"].strip())
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-raw = raw.filter(keep)
-raw = raw.shuffle(seed=SEED).select(range(min(N_SFT, len(raw))))
-print(f"\nafter filter + subset: {len(raw):,} samples")
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-data/train-00000-of-00001-21df739eb88d71(…): downloading bytes: | 0.00B
-raw dataset: Dataset({
-    features: ['instruction', 'output', 'url'],
-    num_rows: 21155
-})
-
-fields: ['instruction', 'output', 'url']
-
-=== sample 0 ===
-instruction: 양파는 어떤 식물 부위인가요? 그리고 고구마는 뿌리인가요?
-output : 양파는 잎이 아닌 식물의 줄기 부분입니다. 고구마는 식물의 뿌리 부분...
-
-식물의 부위의 구분에 대해 궁금해하는 분이라면 분명 이 질문에 대한 답을 찾고...
-
-after filter + subset: 3,000 samples
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
 \subsection{\texorpdfstring{포맷 함수 --- \inlinecode{prompt} / \inlinecode{completion} 두 컬럼으로}{포맷 함수 --- prompt / completion 두 컬럼으로}}
 
 \inlinecode{trl.SFTTrainer} 는 \emph{\inlinecode{prompt} + \inlinecode{completion} 두 컬럼} 형식을 받으면 \emph{completion (답변) 부분만 자동으로 학습 대상} 으로 잡습니다 (\inlinecode{completion\_only\_loss=True}). 그래서 우리는 instruction 을 prompt 쪽에, output 을 completion 쪽에 넣되, \textbf{response\_template \texttt{\#\#\#\ 응답:\textbackslash{}n} 까지를 prompt 에 포함} 시켜 \emph{답변 시작 경계} 를 명확히 합니다.
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-RESPONSE_TEMPLATE = "### 응답:\n"
-
-def build_prompt(instruction: str) -> str:
-    '''KoGPT2 용 instruction 포맷. RESPONSE_TEMPLATE 로 끝나 답변 경계를 명시.'''
-    return f"### 명령어:\n{instruction}\n\n{RESPONSE_TEMPLATE}"
-
-def to_prompt_completion(ex):
-    output = ex["output"].strip()
-    if len(output) > MAX_CHARS:
-        output = output[:MAX_CHARS]
-    return {
-        "prompt": build_prompt(ex["instruction"].strip()),
-        "completion": output,
-    }
-
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=16]
-sft_ds = raw.map(
-    to_prompt_completion,
-    remove_columns=raw.column_names,
-    desc="format",
-)
-print("formatted dataset:", sft_ds)
-print("\n=== formatted sample 0 ===")
-print("--- prompt ---")
-print(sft_ds[0]["prompt"])
-print("--- completion ---")
-print(sft_ds[0]["completion"][:200])
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-formatted dataset: Dataset({
-    features: ['prompt', 'completion'],
-    num_rows: 3000
-})
-
-=== formatted sample 0 ===
---- prompt ---
-### 명령어:
-나무가 말라 죽을 때 왜 속부터 썩는 걸까요? 그리고, 나무 속에 전선을 넣을 수...
-
-### 응답:
-
---- completion ---
-나무 내부에 있는 심재는 죽은 세포들로 이루어져 있습니다. 이 부분은 변재와는...
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -666,12 +465,10 @@ print(
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-pytorch_model.bin: downloading bytes:           |  0.00B
 Key                                     | Status     |  | 
 ----------------------------------------+------------+--+-
 
-model.safetensors: downloading bytes:           |  0.00B
-load done: 7.5s
+load done: 7.2s
 
 roundtrip check: '옛날 옛날에 작은 소녀가'  (OK)
 
@@ -698,7 +495,7 @@ tokenizer    : TokenizersBackend
 \item
   \inlinecode{SFTTrainer} 가 \emph{prompt + completion} 을 토큰화해 이어 붙이고, \emph{completion 부분에 1, prompt 부분에 0} 인 \inlinecode{completion\_mask} 를 만듭니다 (response\_template \texttt{\#\#\#\ 응답:\textbackslash{}n} 가 prompt 의 끝).
 \item
-  \inlinecode{SFTTrainer} 가 \emph{데이터 준비 단계} 에서 \inlinecode{labels\ =\ input\_ids} 복사본을 만들고 \emph{\inlinecode{completion\_mask\ ==\ 0} 인 자리 (= prompt) 를 전부 \inlinecode{-100}} 으로 덮은 \inlinecode{labels} 컬럼을 데이터셋에 추가합니다 (trl 1.10 기준 --- 구버전 trl 은 collator 가 담당했습니다. collator 는 완성된 \inlinecode{labels} 를 배치 길이에 맞춰 패딩만 합니다).
+  collator 가 \inlinecode{labels\ =\ input\_ids.clone()} 한 뒤 \emph{\inlinecode{completion\_mask\ ==\ 0} 인 자리 (= prompt) 를 전부 \inlinecode{-100}} 으로 덮습니다.
 \item
   그래서 loss 는 \emph{답변 토큰에서만} 계산됩니다 --- \texttt{labels{[}:prompt\_len{]}\ =\ -100} 의 효과.
 \end{enumerate}
@@ -707,6 +504,11 @@ tokenizer    : TokenizersBackend
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
+try:
+    from trl.trainer.sft_trainer import DataCollatorForLanguageModeling as SFTCollator
+except Exception:
+    from trl import DataCollatorForLanguageModeling as SFTCollator
+
 sample = sft_ds[0]
 prompt_text = sample["prompt"]
 completion_text = sample["completion"]
@@ -718,19 +520,30 @@ c_ids = c_ids + [tokenizer.eos_token_id]
 input_ids = p_ids + c_ids
 completion_mask = [0] * len(p_ids) + [1] * len(c_ids)
 
+\end{lstlisting}
+
+\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
+
+\Needspace{11\baselineskip}
+\begin{lstlisting}[firstnumber=17]
 print(f"prompt tokens     : {len(p_ids)}")
 print(f"completion tokens : {len(c_ids)}  (incl. EOS)")
 print(f"total tokens      : {len(input_ids)}")
+
+collator = SFTCollator(
+    pad_token_id=tokenizer.pad_token_id,
+    completion_only_loss=True,
+)
+batch = collator([{"input_ids": input_ids, "completion_mask": completion_mask}])
+labels = batch["labels"][0].tolist()
+ids = batch["input_ids"][0].tolist()
 
 \end{lstlisting}
 
 \noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
 
-\Needspace{10\baselineskip}
-\begin{lstlisting}[firstnumber=16]
-labels = [tid if m == 1 else -100 for tid, m in zip(input_ids, completion_mask)]
-ids = input_ids
-
+\Needspace{7\baselineskip}
+\begin{lstlisting}[firstnumber=29]
 n_learn = sum(1 for l in labels if l != -100)
 print(
     f"\nlabels learned    : {n_learn} / {len(labels)}  (prompt masked = "
@@ -820,32 +633,7 @@ Per-token labels - prompt is masked (-100), only response is learned
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-n_prompt = len(labels) - n_learn
-n_resp = n_learn
-
-fig, ax = plt.subplots(figsize=(9, 1.8))
-ax.barh([0], [n_prompt], color="lightgray", edgecolor="gray",
-        label=f"prompt (가림, -100): {n_prompt} tokens")
-ax.barh([0], [n_resp], left=[n_prompt], color="tab:green", edgecolor="darkgreen",
-        label=f"response (학습됨): {n_resp} tokens")
-ax.set_yticks([])
-ax.set_xlabel("토큰 위치")
-ax.set_title("SFT labels: prompt 은 가리고 (-100), response 만 loss 에 기여")
-ax.legend(
-    loc="upper center",
-    bbox_to_anchor=(0.5, -0.4),
-    ncol=2,
-)
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-plt.tight_layout(); plt.show()
-\end{lstlisting}
+\compactCodeOmitted{숫자 결과를 그림으로 확인하는 단계}
 
 \begin{bookfigurelabel}[H]{SFT labels 마스킹: prompt는 제외하고 답변만 학습}{fig:ch28-sft-masking}
 \centering
@@ -858,7 +646,7 @@ plt.tight_layout(); plt.show()
 
 \section{\texorpdfstring{\inlinecode{SFTTrainer} 로 SFT 학습 --- \emph{새 trainer, 같은 loss 종류}}{SFTTrainer 로 SFT 학습 --- 새 trainer, 같은 loss 종류}}
 
-\inlinecode{trl.SFTTrainer} 는 본 장에 처음 등장하는 클래스입니다. \inlinecode{transformers.Trainer} 를 상속해 \emph{SFT 에 특화된 전처리} (prompt/completion 토큰화, EOS 부착, completion 마스킹) 를 자동으로 해 줍니다. 설정은 \inlinecode{SFTConfig} (\inlinecode{TrainingArguments} 를 상속) 로 주며, \textbf{\inlinecode{completion\_only\_loss=True}} 가 \emph{답변 부분만 학습} 하라는 핵심 옵션입니다.
+\inlinecode{trl.SFTTrainer} 는 본 장에 처음 등장하는 클래스입니다. \inlinecode{transformers.Trainer} 를 상속해 \emph{SFT 에 특화된 전처리} (prompt/completion 토큰화, EOS 부착, completion 마스킹) 를 자동으로 해 줍니다. 설정은 \inlinecode{SFTConfig} (── \inlinecode{TrainingArguments} 를 상속) 로 주며, \textbf{\inlinecode{completion\_only\_loss=True}} 가 \emph{답변 부분만 학습} 하라는 핵심 옵션입니다.
 
 
 
@@ -952,160 +740,13 @@ BEFORE SFT - raw KoGPT2 (no instruction tuning yet)
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-sft_config = SFTConfig(
-    output_dir="./out_kogpt2_sft",
-    num_train_epochs=1,
-    per_device_train_batch_size=2,
-    gradient_accumulation_steps=8,
-    # effective batch = 16
-    learning_rate=2e-5,
-    weight_decay=0.01,
-    warmup_steps=0.03,
-    lr_scheduler_type="cosine",
-    max_grad_norm=1.0,
-    max_length=512,
-    completion_only_loss=True,
-    packing=False,
-    fp16=USE_FP16,
-    logging_steps=20,
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 학습 설정을 만들고 학습 루프를 실행하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-    save_strategy="no",
-    report_to="none",
-    dataloader_num_workers=2,
-    seed=SEED,
-)
-
-class VRAMCallback(__import__("transformers").TrainerCallback):
-    '''step 별 peak VRAM 기록 (로깅 윈도우 단위 reset). CUDA 에서만 유효.'''
-
-    def __init__(self):
-        self.steps, self.peak_MiB = [], []
-
-    def on_train_begin(self, args, state, control, **kwargs):
-        if torch.cuda.is_available():
-            torch.cuda.reset_peak_memory_stats()
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{10\baselineskip}
-\begin{lstlisting}[firstnumber=33]
-    def on_log(self, args, state, control, logs=None, **kwargs):
-        if torch.cuda.is_available():
-            peak = torch.cuda.max_memory_allocated() / 1024**2
-            self.steps.append(state.global_step)
-            self.peak_MiB.append(peak)
-            torch.cuda.reset_peak_memory_stats()
-
-vram_cb = VRAMCallback()
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=42]
-trainer = SFTTrainer(
-    model=model,
-    args=sft_config,
-    train_dataset=sft_ds,
-    processing_class=tokenizer,
-    callbacks=[vram_cb],
-)
-
-t0 = time.time()
-train_out = trainer.train()
-elapsed = time.time() - t0
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=54]
-print(f"\n=== SFT summary ===")
-print(f"elapsed     : {elapsed/60:.2f} min")
-print(f"global_step : {train_out.global_step}")
-print(f"train_loss  : {train_out.training_loss:.4f}")
-if torch.cuda.is_available():
-    print(
-        f"final peak  : "
-        f"{torch.cuda.max_memory_allocated()/1024**2:.0f} MiB"
-    )
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-[transformers] The tokenizer has new PAD/BOS/EOS tokens that differ from th...
-Step  Training Loss
-----  -------------
-20    3.886173
-40    3.824303
-60    3.696179
-80    3.649105
-100   3.671245
-120   3.632870
-140   3.672873
-160   3.663120
-180   3.614760
-
-=== SFT summary ===
-elapsed     : 2.48 min
-global_step : 188
-train_loss  : 3.7007
-final peak  : 1452 MiB
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
 \section{\texorpdfstring{학습 곡선 --- \emph{답변 부분에서만 계산된} loss}{학습 곡선 --- 답변 부분에서만 계산된 loss}}
 
 아래 loss 는 \emph{답변 토큰에서만} 계산된 값입니다 (prompt 는 \inlinecode{-100} 으로 제외). \ref{ch:27}장의 loss (거의 모든 자리) 와는 \emph{합산 대상} 이 다르므로 절대값을 직접 비교하지는 않습니다.
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-log = trainer.state.log_history
-train_pts = [(r["step"], r["loss"]) for r in log if "loss" in r and "eval_loss" not in r]
-
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 4))
-
-if train_pts:
-    ax1.plot([s for s, _ in train_pts], [l for _, l in train_pts], "-",
-             color="tab:blue", alpha=0.8, label="train (response 만)")
-ax1.set_xlabel("step"); ax1.set_ylabel("cross-entropy loss (response 토큰만)")
-ax1.set_title("KoGPT2 SFT (KoAlpaca) - loss")
-ax1.grid(True, alpha=0.3); ax1.legend()
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=13]
-if vram_cb.steps:
-    ax2.plot(vram_cb.steps, vram_cb.peak_MiB, "o-", color="tab:green",
-             label="최대 VRAM (로그 구간별)")
-    ax2.set_title("VRAM trace  (bs=2, grad_accum=8, fp16)")
-else:
-    ax2.text(0.5, 0.5, "VRAM 추적은 CUDA 에서만 가능",
-             ha="center", va="center", transform=ax2.transAxes)
-    ax2.set_title("VRAM 추적 - CUDA 전용")
-ax2.set_xlabel("step"); ax2.set_ylabel("VRAM (MiB)")
-ax2.grid(True, alpha=0.3); ax2.legend()
-
-plt.tight_layout(); plt.show()
-\end{lstlisting}
+\compactCodeOmitted{학습 설정을 만들고 학습 루프를 실행하는 단계}
 
 \begin{bookfigurelabel}[H]{KoGPT2 SFT 학습 곡선과 VRAM 추적}{fig:ch28-sft-loss-vram}
 \centering
@@ -1129,99 +770,6 @@ plt.tight_layout(); plt.show()
 \end{itemize}
 
 이 차이가 \emph{행동 정렬 (behavior alignment)} 의 직접 증거입니다.
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-torch.manual_seed(SEED)
-model.eval()
-after_outputs = []
-print("=" * 70)
-print("AFTER SFT - KoGPT2 + KoAlpaca instruction tuning")
-print("=" * 70)
-for p in PROMPTS:
-    ans = generate_answer(model, p, **GEN_KWARGS)
-    after_outputs.append(ans)
-    print(f"\n[instruction] {p}")
-    print(f"[answer] {ans[:240]}")
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-======================================================================
-AFTER SFT - KoGPT2 + KoAlpaca instruction tuning
-======================================================================
-
-[instruction] 피보나치 수열을 설명해줘
-[answer] 수열이란 어떤 원인에 의해서 생기는 열입니다.
-이러한 현상은 두 가지 종류가 있습니다. 첫째는 물 또는 공기 중에 포함된 물이...
-또한, 물을 끓여 끓이면 산소를 흡수하여 수분이 되어 다시 용해되기 때문에 물...
-
-[instruction] 건강한 식습관 3가지를 알려줘
-[answer] 1. 건강한 식사를 위해서는 균형과 식이섭취가 중요합니다. 아침식사는...
-2. 단백질을 풍부한 음식으로 만들기 위해 필요한 비타민 C, E는 필수적이며, 단...
-
-[instruction] 파이썬으로 리스트를 뒤집는 방법은?
-[answer] 리스트에 파일 이름을 등록하여 해당 페이지에 접속한 뒤, 그 계정을...
-- 리스트는 'inficitecture guide' 또는 '이디렉티브', '이미지(Deady Leak)'입...
-...
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-print("=" * 80)
-print(
-    "BEFORE SFT (raw KoGPT2) vs AFTER SFT (KoGPT2 + "
-    "KoAlpaca) - instruction following"
-)
-print("=" * 80)
-comparison = []
-for p, before, after in zip(PROMPTS, before_outputs, after_outputs):
-    print(f"\nINSTRUCTION : {p}")
-    print("-" * 80)
-    print(f"BEFORE      : {before[:300]}")
-    print(f"AFTER       : {after[:300]}")
-    comparison.append({
-        "instruction": p,
-        "before (raw)": before[:80] + ("..." if len(before) > 80 else ""),
-        "after (sft)": after[:80] + ("..." if len(after) > 80 else ""),
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{6\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-    })
-
-print("\n\n=== compact table ===")
-print(pd.DataFrame(comparison).to_string(index=False))
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-===========================================================================...
-BEFORE SFT (raw KoGPT2) vs AFTER SFT (KoGPT2 + KoAlpaca) - instruction foll...
-===========================================================================...
-
-INSTRUCTION : 피보나치 수열을 설명해줘
----------------------------------------------------------------------------...
-BEFORE      : 일단 한 번만 들어주면 끝나요
-이제 본격적으로 사용하셔야겠죠?
-다음부터는 내가 쓰는게 다인 듯!
-내 안에 있는 피보라인의 모든 부분을 소개해드려요! momeljae.eats & pet_bang...
-#미소천사 님이네요.
-아무튼 저는 매일 미소에 대한
-AFTER       : 수열이란 어떤 원인에 의해서 생기는 열입니다.
-이러한 현상은 두 가지 종류가 있습니다. 첫째는 물 또는 공기 중에 포함된 물이...
-또한, 물을 끓여 끓이면 산소를 흡수하여 수분이 되어 다시 용해되기 때문에 물...
-
-...
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -1290,7 +838,7 @@ AFTER       : 수열이란 어떤 원인에 의해서 생기는 열입니다.
 \inlinecode{trl.SFTTrainer} & SFT 특화 trainer (prompt/completion 전처리 + completion 마스킹 자동) & \textbf{새로 등장} (\ref{ch:27}장 은 \inlinecode{transformers.Trainer}) \\
 \inlinecode{trl.SFTConfig} & \inlinecode{SFTTrainer} 설정 (\inlinecode{TrainingArguments} 상속 + SFT 옵션) & \textbf{새로 등장} \\
 \inlinecode{SFTConfig(completion\_only\_loss=True)} & \emph{답변 부분만} loss (prompt = \inlinecode{-100}) --- SFT 의 핵심 옵션 & \textbf{새로 등장} \\
-\inlinecode{trl} 의 SFT 데이터 준비 + collator & 데이터 준비 단계에서 \inlinecode{completion\_mask} 로 prompt 를 \inlinecode{-100} 마스킹한 \inlinecode{labels} 를 생성, collator 는 패딩만 담당 (trl 1.10 기준) & \textbf{새로 등장} (\ref{ch:27}장 은 \inlinecode{transformers.DataCollatorForLanguageModeling(mlm=False)}) \\
+\inlinecode{trl} 의 SFT collator (\inlinecode{DataCollatorForLanguageModeling}) & \inlinecode{completion\_mask} 로 prompt 를 \inlinecode{-100} 마스킹 & \textbf{새로 등장} (\ref{ch:27}장 은 \inlinecode{transformers.DataCollatorForLanguageModeling(mlm=False)}) \\
 \inlinecode{prompt} / \inlinecode{completion} 데이터 형식 & instruction-response 쌍 표준 형식 & \textbf{새로 등장} (\ref{ch:27}장 은 단일 \inlinecode{text} 컬럼) \\
 \inlinecode{AutoModelForCausalLM.from\_pretrained("skt/kogpt2-base-v2")} & KoGPT2 본체 로드 & \textbf{공유} (\ref{ch:27}장과 같은 본체) \\
 \inlinecode{PreTrainedTokenizerFast.from\_pretrained("skt/kogpt2-base-v2",\ ...)} & KoGPT2 BBPE 토크나이저 (AutoTokenizer 함정 회피) & \textbf{공유} (\ref{ch:27}장과 동일) \\

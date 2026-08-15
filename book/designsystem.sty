@@ -12,6 +12,7 @@
 \RequirePackage{listings}
 \RequirePackage{fvextra}
 \RequirePackage{etoolbox}
+\RequirePackage{qrcode}
 \tcbuselibrary{listings, skins}
 \usetikzlibrary{calc, positioning}
 
@@ -64,6 +65,40 @@
   singlelinecheck=false,
   position=below,
   skip=6pt
+}
+
+\providecommand{\bookpublisherdraftdate}{\today}
+\newcommand{\bookpublisherdraftwatermark}{%
+  \AddToHook{shipout/foreground}{%
+    \begin{tikzpicture}[remember picture, overlay]
+      \node[
+        rotate=34,
+        align=center,
+        inner sep=0pt,
+        text=taInk,
+        opacity=0.08,
+        font=\sffamily\bfseries\fontsize{30pt}{36pt}\selectfont
+      ] at (current page.center)
+      {출판 검토용 초안\\[3pt]{\fontsize{14pt}{18pt}\selectfont 무단 복제 및 배포 금지}};
+      \node[
+        rotate=34,
+        align=center,
+        inner sep=0pt,
+        text=white,
+        opacity=0.13,
+        font=\sffamily\bfseries\fontsize{30pt}{36pt}\selectfont
+      ] at (current page.center)
+      {출판 검토용 초안\\[3pt]{\fontsize{14pt}{18pt}\selectfont 무단 복제 및 배포 금지}};
+      \node[
+        anchor=south,
+        yshift=4mm,
+        text=taSubtext,
+        opacity=0.34,
+        font=\sffamily\fontsize{6.6pt}{8pt}\selectfont
+      ] at (current page.south)
+      {Hugging Face로 시작하는 텍스트 분석 입문 · 출판 검토용 초안 · \bookpublisherdraftdate};
+    \end{tikzpicture}%
+  }%
 }
 
 \newenvironment{booktable}[2]{%
@@ -249,6 +284,43 @@
   left=8pt,right=8pt,top=7pt,bottom=7pt
 }
 
+\newtcolorbox{fullNotebookBox}[1][]{
+  enhanced,
+  breakable,
+  width=\linewidth,
+  colback=taPaper,
+  colframe=taSlate,
+  boxrule=0.6pt,
+  sharp corners,
+  left=12pt,right=12pt,top=10pt,bottom=10pt,
+  before upper={%
+    \ifstrempty{#1}{}{\noindent{\sffamily\footnotesize\bfseries\color{taSlate}\MakeUppercase{#1}}\par\vspace{5pt}}%
+  },
+  before skip=10pt,
+  after skip=10pt
+}
+
+\newcommand{\fullNotebookLink}[1]{%
+  \begin{fullNotebookBox}[전체 실습 코드]
+    \begin{minipage}[c]{0.70\linewidth}
+      책 본문에는 개념 이해에 필요한 핵심 코드만 남깁니다. 전체 실행 코드와 최신 출력은 Colab 노트북에서 확인합니다.\par
+      \vspace{4pt}
+      {\small\href{#1}{Colab에서 전체 노트북 열기}}\par
+      {\scriptsize\url{#1}}
+    \end{minipage}\hfill
+    \begin{minipage}[c]{0.22\linewidth}
+      \centering
+      {\color{black}\qrcode*[height=22mm]{#1}}\par
+      {\scriptsize QR로 열기}
+    \end{minipage}
+  \end{fullNotebookBox}
+}
+
+\newcommand{\compactCodeOmitted}[1]{%
+  \par\noindent{\small\sffamily\color{taSubtext}\textbf{코드 생략.}\quad
+  #1 전체 코드는 장 시작의 QR/Colab 링크에서 실행할 수 있습니다.}\par\vspace{0.45em}%
+}
+
 \newtcolorbox{warningBox}[1][]{
   enhanced,
   width=\linewidth,
@@ -384,6 +456,7 @@
   \textbf{Colab}: \href{#2}{바로 열기}\\
   \textbf{이 장의 초점}: #3
   \end{noteBox}
+  \fullNotebookLink{#2}
 }
 
 \newcounter{taphasecur}

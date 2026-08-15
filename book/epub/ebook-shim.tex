@@ -130,6 +130,25 @@
   \end{quote}\par\medskip
 }
 
+\newenvironment{fullNotebookBox}[1][]{%
+  \par\medskip\noindent
+  \begin{quote}
+  \if\relax\detokenize{#1}\relax\textbf{전체 실습 코드}\else\textbf{#1}\fi\par\smallskip
+}{%
+  \end{quote}\par\medskip
+}
+
+\newcommand{\fullNotebookLink}[1]{%
+  \begin{fullNotebookBox}[전체 실습 코드]
+  책 본문에는 개념 이해에 필요한 핵심 코드만 남깁니다. 전체 실행 코드와 최신 출력은 \href{#1}{Colab 노트북}에서 확인합니다.
+  \end{fullNotebookBox}
+}
+
+\newcommand{\compactCodeOmitted}[1]{%
+  \par\noindent\textbf{코드 생략.}\quad
+  #1 전체 코드는 장 시작의 Colab 링크에서 실행할 수 있습니다.\par\smallskip
+}
+
 \newenvironment{codeRead}{%
   \par\smallskip\noindent\textbf{위 코드 읽기.}\quad
 }{%
@@ -142,4 +161,5 @@
   \textbf{Colab}: \href{#2}{바로 열기}\par
   \textbf{이 장의 초점}: #3
   \end{noteBox}
+  \fullNotebookLink{#2}
 }
