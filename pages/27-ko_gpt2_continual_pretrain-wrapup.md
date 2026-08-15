@@ -4,12 +4,12 @@
 |---|---|---|
 | `AutoModelForCausalLM.from_pretrained("skt/kogpt2-base-v2")` | KoGPT2 (125M, 대규모 한국어 사전학습) 본체 로드 | **새로 등장** (Ch 26 은 `GPT2LMHeadModel(config)` random init) |
 | `PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2", ...)` | KoGPT2 BBPE 토크나이저 (vocab 51,200) 로드 | **새로 등장** (Ch 26 은 직접 학습 BBPE) |
-| `if tokenizer.pad_token is None: tokenizer.pad_token = tokenizer.eos_token` | KoGPT2 의 pad 컨벤션 (없으면 EOS 재활용) | **새로 등장** (Ch 26 은 PreTrainedTokenizerFast 인자로 직접 지정) |
+| `model.config.pad_token_id = tokenizer.pad_token_id` | 토크나이저의 pad id 를 본체 config 에 동기화 | **새로 등장** (사전학습 본체 로드 시 필요한 동기화) |
 | `transformers.Trainer` | HuggingFace 표준 학습 루프 | **공유** (Ch 26 과 동일 클래스, 동일 인자 구조) |
 | `DataCollatorForLanguageModeling(mlm=False)` | CausalLM collator (`labels = input_ids.clone()` 자동) | **공유** (Ch 26 과 정확히 같음) |
 | `group_texts` 패턴 (HF run_clm.py 표준) | 가변 길이 텍스트 → 고정 길이 블록 스트림 | **공유** |
 | `model.generate(do_sample=True, ...)` | sampling-based text generation | **공유** |
-| `warmup_ratio` (vs `warmup_steps`) | epoch 비율 기반 warmup (continual pretraining 표준) | **약간 다름** (Ch 26 은 `warmup_steps=100`) |
+| `warmup_steps=0.06` (1 미만이면 비율로 해석) | 전체 step 대비 6% warmup (구 `warmup_ratio` — transformers 5.15 부터 `warmup_steps` 로 통합) | **약간 다름** (Ch 26 은 `warmup_steps=100` 고정 step) |
 | `num_train_epochs` (vs `max_steps`) | epoch 수 기반 학습 (continual pretraining 1 epoch 충분) | **약간 다름** (Ch 26 은 `max_steps=1500`) |
 | `gradient_accumulation_steps` | 작은 배치를 누적해 큰 effective batch (T4 + 125M 메모리 제약) | **새로 등장** (Ch 26 은 약 3M 이라 불필요)
 
@@ -118,7 +118,7 @@ Ch 27 에서는 *짧은 (1 epoch) continual pretraining + 작은 lr (`2e-5`)* �
 
 ### Q6. (실무) 왜 KoGPT2 는 `AutoTokenizer` 가 아니라 `PreTrainedTokenizerFast` 로 로드하나요?
 
-**`PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2", ...)` 는 영어 GPT2 토크나이저로 잘못 fallback** 하기 때문입니다. 그 결과 special token 이 `<|endoftext|>` 로 잡히고 한국어가 깨집니다 — 직접 확인해 보면:
+**`AutoTokenizer.from_pretrained("skt/kogpt2-base-v2")` 가 영어 GPT2 토크나이저로 잘못 fallback** 하기 때문입니다. 그 결과 special token 이 `<|endoftext|>` 로 잡히고 한국어가 깨집니다 — 직접 확인해 보면:
 
 ```python
 from transformers import AutoTokenizer

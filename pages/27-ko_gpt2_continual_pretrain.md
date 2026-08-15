@@ -172,7 +172,7 @@ tokenizer = PreTrainedTokenizerFast.from_pretrained(
 
 > 실무 교훈: *사전학습 모델마다 권장 토크나이저 로드 방식이 다를 수 있습니다.* 모델 카드의 example code 를 확인하고, *encode → decode 왕복* 으로 한 번 검증하는 습관이 이런 함정을 막습니다.
 
-EOS 토큰을 pad 로 재활용. `group_texts` 패턴에서 chunk 길이가 모두 같으면 pad 가 거의 없어 실용적으로는 영향 없음. (영어 Ch 25 에서 `tokenizer.pad_token = tokenizer.eos_token` 했던 것과 같은 패턴 — 다만 KoGPT2 는 이미 pad 가 지정돼 있을 수도 있어 `if None` 가드.)
+위 방식으로 로드하면 pad 가 `<pad>` 로 제대로 잡혀 별도 처리가 필요 없습니다. `group_texts` 패턴에서는 chunk 길이가 모두 같아 pad 가 거의 등장하지 않아 실용적으로도 영향이 없습니다. (영어 Ch 25 는 gpt2 에 pad 가 없어 `tokenizer.pad_token = tokenizer.eos_token` 으로 EOS 를 재활용했던 것과 대비되는 지점.)
 
 ### 한국어를 *제대로* 다루는 vocab
 
