@@ -80,7 +80,7 @@
 
 \index{1mask token@mask\_token}
 
-\index{1KoGPT2 BBPE@KoGPT2 BBPE}
+\index{1KoGPT2 Character BPE@KoGPT2 Character BPE}
 
 \index{1vocab 51200@vocab 51200}
 
@@ -138,8 +138,8 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Loss \\
 24 & 작은 GPT2 (약 3M, scratch) & BPE (직접 학습, 영어, vocab 2,048) & 영어 TinyStories 30K & \inlinecode{Linear(H,\ V)} (LM head, weight tied) & \inlinecode{CrossEntropyLoss} (next-token) \\
 25 & \inlinecode{gpt2} (124M, OpenAI WebText 사전학습) & BPE (gpt2 그대로, vocab 50,257) & 영어 TinyStories (\ref{ch:24}장과 동일) & \inlinecode{Linear(H,\ V)} (LM head 그대로) & \inlinecode{CrossEntropyLoss} (next-token) - continual pretraining \\
 26 & 작은 GPT2 (한국어, 약 3M, scratch) & BBPE (직접 학습, 한국어, vocab 약 4,000) & 한국어 TinyStories 30K & \inlinecode{Linear(H,\ V)} (LM head, weight tied) & \inlinecode{CrossEntropyLoss} (next-token) \\
-\textbf{27 \(\leftarrow\) 여기} & \textbf{KoGPT2 \inlinecode{skt/kogpt2-base-v2} (125M, 대규모 한국어 사전학습)} & \textbf{BBPE (KoGPT2 그대로, vocab 51,200)} & \textbf{한국어 TinyStories 30K (\ref{ch:26}장과 동일)} & \textbf{\inlinecode{Linear(H,\ V)} (LM head 그대로)} & \textbf{\inlinecode{CrossEntropyLoss} (next-token) --- \emph{continual pretraining}} \\
-28 (다음) & KoGPT2 + SFT & KoGPT2 BBPE (그대로) & 한국어 instruction 데이터 & \inlinecode{Linear(H,\ V)} (LM head 그대로) & \inlinecode{CrossEntropyLoss} (\texttt{labels{[}:prompt\_len{]}\ =\ -100}) \\
+\textbf{27 \(\leftarrow\) 여기} & \textbf{KoGPT2 \inlinecode{skt/kogpt2-base-v2} (125M, 대규모 한국어 사전학습)} & \textbf{Character BPE (KoGPT2 그대로, vocab 51,200)} & \textbf{한국어 TinyStories 30K (\ref{ch:26}장과 동일)} & \textbf{\inlinecode{Linear(H,\ V)} (LM head 그대로)} & \textbf{\inlinecode{CrossEntropyLoss} (next-token) --- \emph{continual pretraining}} \\
+28 (다음) & KoGPT2 + SFT & KoGPT2 Character BPE (그대로) & 한국어 instruction 데이터 & \inlinecode{Linear(H,\ V)} (LM head 그대로) & \inlinecode{CrossEntropyLoss} (\texttt{labels{[}:prompt\_len{]}\ =\ -100}) \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -187,7 +187,7 @@ Trainer 클래스 & \inlinecode{transformers.Trainer} & \inlinecode{transformers
 Data collator & \inlinecode{DataCollatorForLanguageModeling(mlm=False)} & \inlinecode{DataCollatorForLanguageModeling(mlm=False)} & \textbf{같음} \\
 Loss & CE next-token (\inlinecode{labels\ =\ input\_ids.clone()}) & CE next-token (\inlinecode{labels\ =\ input\_ids.clone()}) & \textbf{같음} \\
 본체 출발점 & \inlinecode{GPT2LMHeadModel(config)} random init (약 3M) & \inlinecode{AutoModelForCausalLM.from\_pretrained("skt/kogpt2-base-v2")} (125M) & \textbf{다름} \\
-토크나이저 & BBPE 직접 학습 (vocab 약 4,000) & \inlinecode{PreTrainedTokenizerFast.from\_pretrained("skt/kogpt2-base-v2",\ ...)} (vocab 51,200) & \textbf{다름} (본체와 운명공동체) \\
+토크나이저 & BBPE 직접 학습 (vocab 약 4,000) & \inlinecode{PreTrainedTokenizerFast.from\_pretrained("skt/kogpt2-base-v2",\ ...)} (Character BPE, vocab 51,200) & \textbf{다름} (본체와 운명공동체, 알고리즘 계열도 다름) \\
 학습률 & 5e-4 (scratch 표준) & \textbf{2e-5} (continual pretraining 표준) & \textbf{다름} \\
 학습 step & 약 1,500 & \textbf{약 3,000} (48,513 chunks / eff. batch 16, 1 epoch) & \textbf{다름} (lr 만 작아짐) \\
 \bottomrule
@@ -211,7 +211,7 @@ Loss & CE next-token (\inlinecode{labels\ =\ input\_ids.clone()}) & CE next-toke
 \midrule
 
 \textbf{본체} & 작은 GPT2 (약 3M params, random init) & \textbf{KoGPT2 \inlinecode{skt/kogpt2-base-v2}} (125M, 대규모 한국어 코퍼스 사전학습) \(\leftarrow\) \emph{출발점 변화} \\
-\textbf{토크나이저} & BBPE 직접 학습 (vocab 약 4,000) & \textbf{\inlinecode{PreTrainedTokenizerFast.from\_pretrained("skt/kogpt2-base-v2",\ ...)}} (vocab 51,200) \(\leftarrow\) \emph{본체에 맞춰 함께 변함} \\
+\textbf{토크나이저} & BBPE 직접 학습 (vocab 약 4,000) & \textbf{\inlinecode{PreTrainedTokenizerFast.from\_pretrained("skt/kogpt2-base-v2",\ ...)}} (Character BPE, vocab 51,200) \(\leftarrow\) \emph{본체에 맞춰 함께 변함, 알고리즘 계열도 바뀜} \\
 데이터 & 한국어 TinyStories 30K & \textbf{한국어 TinyStories 30K (동일)} \(\leftarrow\) 통제 변수 \\
 Trainer & \inlinecode{transformers.Trainer} & \textbf{\inlinecode{transformers.Trainer} (동일)} \\
 Data collator & \inlinecode{DataCollatorForLanguageModeling(mlm=False)} & \textbf{(동일)} \\
@@ -284,7 +284,7 @@ SFT (단계 3) 는 \ref{ch:28}장에서 본격. \emph{왜 모델이 한국어 in
 \midrule
 
 직접 학습 BBPE (한국어) & 약 4,000 & 약 8.29 & \ref{ch:26}장 \\
-\textbf{KoGPT2 BBPE} & \textbf{51,200} & \textbf{10.84} & \textbf{\ref{ch:27}장} \\
+\textbf{KoGPT2 Character BPE} & \textbf{51,200} & \textbf{10.84} & \textbf{\ref{ch:27}장} \\
 \inlinecode{gpt2} BPE (영어) & 50,257 & 10.82 & \ref{ch:25}장 (참고) \\
 \bottomrule
 \end{tabular}
@@ -343,7 +343,7 @@ CLM loss & PPL & 해석 \\
 
 \section{토크나이저 노트}
 
-본 장에서는 토크나이저를 \emph{학습하지 않습니다}. \inlinecode{PreTrainedTokenizerFast.from\_pretrained("skt/kogpt2-base-v2",\ ...)} 로 SKT 가 대규모 한국어 코퍼스 위에 학습해 둔 byte-level BPE (BBPE, vocab 51,200) 를 그대로 가져옵니다 (special token 명시 필요 --- 바로 아래 주의 참고).
+본 장에서는 토크나이저를 \emph{학습하지 않습니다}. \inlinecode{PreTrainedTokenizerFast.from\_pretrained("skt/kogpt2-base-v2",\ ...)} 로 SKT 가 대규모 한국어 코퍼스 위에 학습해 둔 Character BPE (SentencePiece 스타일, vocab 51,200) 를 그대로 가져옵니다 (special token 명시 필요 --- 바로 아래 주의 참고).
 
 \subsection{\texorpdfstring{왜 직접 학습하지 않는가 --- \emph{토크나이저는 본체와 운명공동체}}{왜 직접 학습하지 않는가 --- 토크나이저는 본체와 운명공동체}}
 
@@ -370,7 +370,7 @@ KoGPT2 본체의 input embedding \inlinecode{wte} (51200 \(\times\) 768) 와 LM 
 항목 & \ref{ch:26}장 & \textbf{\ref{ch:27}장 (본 장)} \\
 \midrule
 
-알고리즘 & byte-level BPE (BBPE) & byte-level BPE (BBPE) (같은 종류) \\
+알고리즘 & byte-level BPE (BBPE) & \textbf{Character BPE} (SentencePiece 스타일) \\
 Vocab 크기 & 약 4,000 & \textbf{51,200} (약 13배) \\
 학습 코퍼스 & 한국어 TinyStories 30K (약 4-6M 토큰) & \textbf{대규모 한국어 코퍼스} (SKT 가 학습) \\
 학습 주체 & 본 장에서 직접 학습 (\ref{ch:26}장) & \textbf{SKT 가 미리 학습} (그대로 사용) \\
@@ -379,6 +379,10 @@ Vocab 크기 & 약 4,000 & \textbf{51,200} (약 13배) \\
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
+
+\begin{quote}
+\textbf{주의} --- 둘 다 서브워드 단위로 압축한다는 점은 같지만 알고리즘 계열은 다릅니다 --- \ref{ch:26}장은 byte 단위(byte-level BPE), KoGPT2는 문자 단위(Character BPE, SentencePiece 스타일 --- \inlinecode{pre\_tokenizer: Metaspace}, 명시적 \inlinecode{<unk>} 보유, SKT 공식 설명 기준)로 학습되었습니다. 이 장의 핵심(사전학습 여부·vocab 크기 차이)은 이 알고리즘 차이와 무관합니다.
+\end{quote}
 
 \subsection{\texorpdfstring{KoGPT2 토크나이저 로드 주의 --- \inlinecode{AutoTokenizer} 가 잘못 fallback 합니다}{KoGPT2 토크나이저 로드 주의 --- AutoTokenizer 가 잘못 fallback 합니다}}
 
@@ -404,7 +408,7 @@ tokenizer = PreTrainedTokenizerFast.from_pretrained(
 
 \subsection{\texorpdfstring{한국어를 \emph{제대로} 다루는 vocab}{한국어를 제대로 다루는 vocab}}
 
-\ref{ch:26}장에서 봤듯, \emph{영어 gpt2 BPE 로 한국어를 토큰화하면 한글이 byte 조각으로 잘게 쪼개져 토큰 수가 폭증} 합니다. KoGPT2 BBPE 는 \emph{한국어 코퍼스 위에 학습} 되어 한국어 어절을 \emph{의미 있는 토큰} 으로 압축합니다 --- 그래서 영어 gpt2 를 한국어에 쓰는 대신 \emph{한국어 사전학습 모델 KoGPT2} 를 가져오는 게 정공법. \ref{ch:26}장 (한국어는 scratch) 와 \ref{ch:27}장 (한국어 사전학습 본체) 이 \emph{영어 \ref{ch:24}--\ref{ch:25}장과 정확히 같은 대칭} 을 이루는 이유.
+\ref{ch:26}장에서 봤듯, \emph{영어 gpt2 BPE 로 한국어를 토큰화하면 한글이 byte 조각으로 잘게 쪼개져 토큰 수가 폭증} 합니다. KoGPT2 Character BPE 는 \emph{한국어 코퍼스 위에 학습} 되어 한국어 어절을 \emph{의미 있는 토큰} 으로 압축합니다 --- 그래서 영어 gpt2 를 한국어에 쓰는 대신 \emph{한국어 사전학습 모델 KoGPT2} 를 가져오는 게 정공법. \ref{ch:26}장 (한국어는 scratch) 와 \ref{ch:27}장 (한국어 사전학습 본체) 이 \emph{영어 \ref{ch:24}--\ref{ch:25}장과 정확히 같은 대칭} 을 이루는 이유.
 
 
 
@@ -860,7 +864,7 @@ first chunk decode (first 200 chars):
 
 
 
-\textbf{비교 관전 포인트} --- 같은 30K stories 가 \emph{KoGPT2 BBPE (vocab 51,200)} 로 토큰화되면 \ref{ch:26}장의 \emph{직접 학습 BBPE (vocab 약 4,000)} 보다 \emph{토큰 수가 적습니다} --- vocab 이 클수록 한 토큰이 더 긴 byte 시퀀스를 표현하므로. 같은 데이터의 토큰 수 차이가 \emph{토크나이저 vocab 크기의 직접적 효과} (영어 \ref{ch:24}장\(\to\)25 에서 본 결의 한국어 재확인).
+\textbf{비교 관전 포인트} --- 같은 30K stories 가 \emph{KoGPT2 Character BPE (vocab 51,200)} 로 토큰화되면 \ref{ch:26}장의 \emph{직접 학습 BBPE (vocab 약 4,000)} 보다 \emph{토큰 수가 적습니다} --- vocab 이 클수록 한 토큰이 더 긴 byte 시퀀스를 표현하므로. 같은 데이터의 토큰 수 차이가 \emph{토크나이저 vocab 크기의 직접적 효과} (영어 \ref{ch:24}장\(\to\)25 에서 본 결의 한국어 재확인).
 
 
 
@@ -1467,7 +1471,7 @@ Generation 품질 & 동화 풍 단순 한국어 & \textbf{자연스러운 동화
 \midrule
 
 \inlinecode{AutoModelForCausalLM.from\_pretrained("skt/kogpt2-base-v2")} & KoGPT2 (125M, 대규모 한국어 사전학습) 본체 로드 & \textbf{새로 등장} (\ref{ch:26}장 은 \inlinecode{GPT2LMHeadModel(config)} random init) \\
-\inlinecode{PreTrainedTokenizerFast.from\_pretrained("skt/kogpt2-base-v2",\ ...)} & KoGPT2 BBPE 토크나이저 (vocab 51,200) 로드 & \textbf{새로 등장} (\ref{ch:26}장 은 직접 학습 BBPE) \\
+\inlinecode{PreTrainedTokenizerFast.from\_pretrained("skt/kogpt2-base-v2",\ ...)} & KoGPT2 Character BPE 토크나이저 (vocab 51,200) 로드 & \textbf{새로 등장} (\ref{ch:26}장 은 직접 학습 byte-level BBPE, 알고리즘 계열 다름) \\
 \inlinecode{model.config.pad\_token\_id\ =\ tokenizer.pad\_token\_id} & 토크나이저의 pad id 를 본체 config 에 동기화 & \textbf{새로 등장} (사전학습 본체 로드 시 필요한 동기화) \\
 \inlinecode{transformers.Trainer} & HuggingFace 표준 학습 루프 & \textbf{공유} (\ref{ch:26}장과 동일 클래스, 동일 인자 구조) \\
 \inlinecode{DataCollatorForLanguageModeling(mlm=False)} & CausalLM collator (\inlinecode{labels\ =\ input\_ids.clone()} 자동) & \textbf{공유} (\ref{ch:26}장과 정확히 같음) \\
@@ -1602,7 +1606,7 @@ HF 의 continual pretraining / fine-tuning 표준 lr 범위: \inlinecode{1e-5} -
 
 \begin{faqBox}{Q4. (실무) KoGPT2 토크나이저로 \emph{영어} TinyStories 를 학습하면 어떻게 되나요? (\ref{ch:25}장 Q4 의 거울)}
 
-\textbf{작동은 하지만 비효율적} 입니다 --- KoGPT2 BBPE 는 \emph{byte-level} 이라 영어도 UNK 없이 표현하지만, \emph{한국어 코퍼스 중심} 으로 학습돼 영어 어절의 병합 규칙이 약합니다. 그래서 \emph{같은 영어 문장이 영어 gpt2 BPE 보다 다소 많은 토큰} 으로 쪼개질 수 있습니다.
+\textbf{작동은 하지만 비효율적} 입니다 --- KoGPT2 Character BPE 는 \emph{한국어 코퍼스 중심} 으로 학습돼 영어 어절의 병합 규칙이 약하고, byte-level BPE 와 달리 학습에 없던 문자는 \inlinecode{<unk>} 로 빠질 가능성도 있습니다. 그래서 \emph{같은 영어 문장이 영어 gpt2 BPE 보다 다소 많은 토큰} 으로 쪼개질 수 있습니다.
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}

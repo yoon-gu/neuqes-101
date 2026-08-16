@@ -117,8 +117,8 @@ Ch & 모델 & 토크나이저 & 데이터 & \inlinecode{labels\ =\ -100} 자리 
 
 25 & \inlinecode{gpt2} (124M, 사전학습) & BPE (gpt2 그대로, vocab 50,257) & 영어 TinyStories 30K & pad 만 & \inlinecode{CrossEntropyLoss} (next-token) - continual pretraining \\
 26 & 작은 GPT2 (한국어, 약 3M, scratch) & BBPE (직접 학습, vocab 약 4,000) & 한국어 TinyStories 30K & pad 만 & \inlinecode{CrossEntropyLoss} (next-token) \\
-27 & KoGPT2 \inlinecode{skt/kogpt2-base-v2} (125M) & BBPE (KoGPT2 그대로, vocab 51,200) & 한국어 TinyStories 30K & pad 만 & \inlinecode{CrossEntropyLoss} (next-token) - continual pretraining \\
-\textbf{28 \(\leftarrow\) 여기} & \textbf{KoGPT2 \inlinecode{skt/kogpt2-base-v2} (125M, 동일)} & \textbf{BBPE (KoGPT2 그대로, vocab 51,200, 동일)} & \textbf{KoAlpaca instruction-response 쌍 (약 3K, 3,000 샘플)} & \textbf{prompt 부분 (\inlinecode{\#\#\#\ 응답:} 앞 전부)} & \textbf{\inlinecode{CrossEntropyLoss} (next-token, \emph{답변 부분만}) --- SFT} \\
+27 & KoGPT2 \inlinecode{skt/kogpt2-base-v2} (125M) & Character BPE (KoGPT2 그대로, vocab 51,200) & 한국어 TinyStories 30K & pad 만 & \inlinecode{CrossEntropyLoss} (next-token) - continual pretraining \\
+\textbf{28 \(\leftarrow\) 여기} & \textbf{KoGPT2 \inlinecode{skt/kogpt2-base-v2} (125M, 동일)} & \textbf{Character BPE (KoGPT2 그대로, vocab 51,200, 동일)} & \textbf{KoAlpaca instruction-response 쌍 (약 3K, 3,000 샘플)} & \textbf{prompt 부분 (\inlinecode{\#\#\#\ 응답:} 앞 전부)} & \textbf{\inlinecode{CrossEntropyLoss} (next-token, \emph{답변 부분만}) --- SFT} \\
 29 (다음) & \ref{ch:28}장 SFT 모델 + 비교 & (동일) & 분야별 벤치마크 (KMMLU / HAERAE / MMLU ...) & - (평가만) & - (\inlinecode{lm-evaluation-harness}) \\
 \bottomrule
 \end{tabular}
@@ -175,7 +175,7 @@ Ch & 모델 & 토크나이저 & 데이터 & \inlinecode{labels\ =\ -100} 자리 
 \midrule
 
 본체 & KoGPT2 \inlinecode{skt/kogpt2-base-v2} (125M) & \textbf{KoGPT2 \inlinecode{skt/kogpt2-base-v2} (125M, 동일)} \(\leftarrow\) 고정 \\
-토크나이저 & \inlinecode{PreTrainedTokenizerFast} (KoGPT2 BBPE, vocab 51,200) & \textbf{(동일)} \(\leftarrow\) 고정 \\
+토크나이저 & \inlinecode{PreTrainedTokenizerFast} (KoGPT2 Character BPE, vocab 51,200) & \textbf{(동일)} \(\leftarrow\) 고정 \\
 Loss 종류 & next-token \inlinecode{CrossEntropyLoss} & \textbf{next-token \inlinecode{CrossEntropyLoss} (종류 동일)} \(\leftarrow\) 고정 \\
 \textbf{데이터 형식} & 연속된 일반 텍스트 (TinyStories) & \textbf{instruction-response 쌍 (KoAlpaca)} \(\leftarrow\) \emph{변화 1} \\
 \textbf{Trainer} & \inlinecode{transformers.Trainer} & \textbf{\inlinecode{trl.SFTTrainer}} \(\leftarrow\) \emph{변화 2} (새 클래스, 첫 등장) \\
@@ -335,7 +335,7 @@ instruction \texttt{“\#\#\#\ 명령어:\textbackslash{}n2+2\ 는?\textbackslas
 
 \section{\texorpdfstring{토크나이저 노트}{토크나이저 노트}}
 
-본 장의 토크나이저는 \emph{\ref{ch:27}장과 완전히 동일}. KoGPT2 BBPE (vocab 51,200) 를 그대로 가져옵니다. \textbf{단 KoGPT2 는 \inlinecode{AutoTokenizer} 가 영어 GPT2 로 잘못 fallback 하는 함정} 이 있어 (\ref{ch:27}장 §토크나이저 노트), \inlinecode{PreTrainedTokenizerFast} + special token 명시로 로드합니다.
+본 장의 토크나이저는 \emph{\ref{ch:27}장과 완전히 동일}. KoGPT2 Character BPE (vocab 51,200) 를 그대로 가져옵니다. \textbf{단 KoGPT2 는 \inlinecode{AutoTokenizer} 가 영어 GPT2 로 잘못 fallback 하는 함정} 이 있어 (\ref{ch:27}장 §토크나이저 노트), \inlinecode{PreTrainedTokenizerFast} + special token 명시로 로드합니다.
 
 \Needspace{8\baselineskip}
 \begin{lstlisting}
@@ -362,7 +362,7 @@ KoGPT2 는 \emph{chat template 이 없습니다} (instruction-tuned 모델이 �
 
 \subsection{같은 문장이 어떻게 토큰화되는가}
 
-instruction 포맷 \texttt{\#\#\#\ 명령어:\textbackslash{}n피보나치\ 설명\textbackslash{}n\textbackslash{}n\#\#\#\ 응답:\textbackslash{}n} 을 KoGPT2 BBPE 로 토큰화하면:
+instruction 포맷 \texttt{\#\#\#\ 명령어:\textbackslash{}n피보나치\ 설명\textbackslash{}n\textbackslash{}n\#\#\#\ 응답:\textbackslash{}n} 을 KoGPT2 Character BPE 로 토큰화하면:
 
 \begin{itemize}
 \tightlist
@@ -1293,7 +1293,7 @@ AFTER       : 수열이란 어떤 원인에 의해서 생기는 열입니다.
 \inlinecode{trl} 의 SFT 데이터 준비 + collator & 데이터 준비 단계에서 \inlinecode{completion\_mask} 로 prompt 를 \inlinecode{-100} 마스킹한 \inlinecode{labels} 를 생성, collator 는 패딩만 담당 (trl 1.10 기준) & \textbf{새로 등장} (\ref{ch:27}장 은 \inlinecode{transformers.DataCollatorForLanguageModeling(mlm=False)}) \\
 \inlinecode{prompt} / \inlinecode{completion} 데이터 형식 & instruction-response 쌍 표준 형식 & \textbf{새로 등장} (\ref{ch:27}장 은 단일 \inlinecode{text} 컬럼) \\
 \inlinecode{AutoModelForCausalLM.from\_pretrained("skt/kogpt2-base-v2")} & KoGPT2 본체 로드 & \textbf{공유} (\ref{ch:27}장과 같은 본체) \\
-\inlinecode{PreTrainedTokenizerFast.from\_pretrained("skt/kogpt2-base-v2",\ ...)} & KoGPT2 BBPE 토크나이저 (AutoTokenizer 함정 회피) & \textbf{공유} (\ref{ch:27}장과 동일) \\
+\inlinecode{PreTrainedTokenizerFast.from\_pretrained("skt/kogpt2-base-v2",\ ...)} & KoGPT2 Character BPE 토크나이저 (AutoTokenizer 함정 회피) & \textbf{공유} (\ref{ch:27}장과 동일) \\
 \inlinecode{model.generate(repetition\_penalty=...)} & 반복 억제 sampling (작은 모델의 반복 완화) & \textbf{약간 다름} (반복 페널티 추가) \\
 \bottomrule
 \end{tabular}

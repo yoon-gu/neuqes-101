@@ -23,8 +23,8 @@
 |---|---|---|---|---|---|
 | 25 | `gpt2` (124M, 사전학습) | BPE (gpt2 그대로, vocab 50,257) | 영어 TinyStories 30K | pad 만 | `CrossEntropyLoss` (next-token) - continual pretraining |
 | 26 | 작은 GPT2 (한국어, 약 3M, scratch) | BBPE (직접 학습, vocab 약 4,000) | 한국어 TinyStories 30K | pad 만 | `CrossEntropyLoss` (next-token) |
-| 27 | KoGPT2 `skt/kogpt2-base-v2` (125M) | BBPE (KoGPT2 그대로, vocab 51,200) | 한국어 TinyStories 30K | pad 만 | `CrossEntropyLoss` (next-token) - continual pretraining |
-| **28 ← 여기** | **KoGPT2 `skt/kogpt2-base-v2` (125M, 동일)** | **BBPE (KoGPT2 그대로, vocab 51,200, 동일)** | **KoAlpaca instruction-response 쌍 (약 3K, 3,000 샘플)** | **prompt 부분 (`### 응답:` 앞 전부)** | **`CrossEntropyLoss` (next-token, *답변 부분만*) — SFT** |
+| 27 | KoGPT2 `skt/kogpt2-base-v2` (125M) | Character BPE (KoGPT2 그대로, vocab 51,200) | 한국어 TinyStories 30K | pad 만 | `CrossEntropyLoss` (next-token) - continual pretraining |
+| **28 ← 여기** | **KoGPT2 `skt/kogpt2-base-v2` (125M, 동일)** | **Character BPE (KoGPT2 그대로, vocab 51,200, 동일)** | **KoAlpaca instruction-response 쌍 (약 3K, 3,000 샘플)** | **prompt 부분 (`### 응답:` 앞 전부)** | **`CrossEntropyLoss` (next-token, *답변 부분만*) — SFT** |
 | 29 (다음) | Ch 28 SFT 모델 + 비교 | (동일) | 분야별 벤치마크 (KMMLU / HAERAE / MMLU ...) | - (평가만) | - (`lm-evaluation-harness`) |
 
 전체 챕터 표는 [루트 README](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표) 를 참고하세요.
@@ -52,7 +52,7 @@ Ch 24 에서 도입한 GPT 시대 학습 4단계 표. 본 챕터는 *단계 3 (S
 | 축 | Ch 27 (KoGPT2 continual pretraining) | Ch 28 (본 챕터, KoGPT2 SFT) |
 |---|---|---|
 | 본체 | KoGPT2 `skt/kogpt2-base-v2` (125M) | **KoGPT2 `skt/kogpt2-base-v2` (125M, 동일)** ← 고정 |
-| 토크나이저 | `PreTrainedTokenizerFast` (KoGPT2 BBPE, vocab 51,200) | **(동일)** ← 고정 |
+| 토크나이저 | `PreTrainedTokenizerFast` (KoGPT2 Character BPE, vocab 51,200) | **(동일)** ← 고정 |
 | Loss 종류 | next-token `CrossEntropyLoss` | **next-token `CrossEntropyLoss` (종류 동일)** ← 고정 |
 | **데이터 형식** | 연속된 일반 텍스트 (TinyStories) | **instruction-response 쌍 (KoAlpaca)** ← *변화 1* |
 | **Trainer** | `transformers.Trainer` | **`trl.SFTTrainer`** ← *변화 2* (새 클래스, 첫 등장) |
@@ -140,6 +140,8 @@ instruction `"### 명령어:\n2+2 는?\n\n### 응답:\n"` 뒤에 답변 `"4 입�
 
 ## 토크나이저 노트 — KoGPT2 `PreTrainedTokenizerFast` (Ch 27 방식 그대로)
 
+본 챕터의 토크나이저는 *Ch 27 과 완전히 동일*. KoGPT2 Character BPE (vocab 51,200) 를 그대로 가져옵니다. **단 KoGPT2 는 `AutoTokenizer` 가 영어 GPT2 로 잘못 fallback 하는 함정** 이 있어 (Ch 27 §토크나이저 노트), `PreTrainedTokenizerFast` + special token 명시로 로드합니다.
+
 본 챕터의 토크나이저는 *Ch 27 과 완전히 동일*. KoGPT2 BBPE (vocab 51,200) 를 그대로 가져옵니다. **단 KoGPT2 는 `AutoTokenizer` 가 영어 GPT2 로 잘못 fallback 하는 함정** 이 있어 (Ch 27 §토크나이저 노트), `PreTrainedTokenizerFast` + special token 명시로 로드합니다.
 
 ```python
@@ -168,7 +170,7 @@ KoGPT2 는 *chat template 이 없습니다* (instruction-tuned 모델이 아니�
 
 ### 같은 문장이 어떻게 토큰화되는가
 
-instruction 포맷 `### 명령어:\n피보나치 설명\n\n### 응답:\n` 을 KoGPT2 BBPE 로 토큰화하면:
+instruction 포맷 `### 명령어:\n피보나치 설명\n\n### 응답:\n` 을 KoGPT2 Character BPE 로 토큰화하면:
 
 - `###` → `#`·`#`·`#` (3 토큰), `명령어` → `명령`·`어` (2 토큰), `:` → 1 토큰, `\n` → 1 토큰 ...
 - 한국어 어절 (`피보나치`, `설명`) 은 KoGPT2 가 한국어 코퍼스로 학습한 *의미 있는 토큰* 으로 압축
