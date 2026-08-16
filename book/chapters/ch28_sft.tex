@@ -119,7 +119,7 @@ Ch & 모델 & 토크나이저 & 데이터 & \inlinecode{labels\ =\ -100} 자리 
 26 & 작은 GPT2 (한국어, 약 3M, scratch) & BBPE (직접 학습, vocab 약 4,000) & 한국어 TinyStories 30K & pad 만 & \inlinecode{CrossEntropyLoss} (next-token) \\
 27 & KoGPT2 \inlinecode{skt/kogpt2-base-v2} (125M) & BBPE (KoGPT2 그대로, vocab 51,200) & 한국어 TinyStories 30K & pad 만 & \inlinecode{CrossEntropyLoss} (next-token) - continual pretraining \\
 \textbf{28 \(\leftarrow\) 여기} & \textbf{KoGPT2 \inlinecode{skt/kogpt2-base-v2} (125M, 동일)} & \textbf{BBPE (KoGPT2 그대로, vocab 51,200, 동일)} & \textbf{KoAlpaca instruction-response 쌍 (약 3K, 3,000 샘플)} & \textbf{prompt 부분 (\inlinecode{\#\#\#\ 응답:} 앞 전부)} & \textbf{\inlinecode{CrossEntropyLoss} (next-token, \emph{답변 부분만}) --- SFT} \\
-29 (다음) & \ref{ch:28}장 SFT 모델 + 비교 & (동일) & 분야별 벤치마크 (KMMLU / HAERAE / MMLU ...) & - (평가만) & - (\inlinecode{lm-evaluation-harness}) \\
+29 (다음) & Qwen2.5-0.5B-Instruct (평가 대상 --- \ref{ch:28}장 SFT 모델은 \ref{ch:29}장의 §7 섹션에서 대조(비교) 용도로만 서술) & (Qwen2.5 자체 토크나이저) & KoBEST(HellaSwag·BoolQ subset) MC 구현 + 산술 생성 + lm-eval 시연 & - (평가만) & - (\inlinecode{lm-evaluation-harness}) \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -1123,7 +1123,7 @@ plt.tight_layout(); plt.show()
 \begin{itemize}
 \tightlist
 \item
-  \textbf{SFT 전 (raw KoGPT2)}: instruction 을 \emph{지시로 인식하지 못하고} --- 질문을 \emph{이어쓰기} 하거나, 동화처럼 계속 쓰거나, 엉뚱한 방향으로 흐름
+  \textbf{SFT 전 (raw KoGPT2)}: instruction 을 \emph{지시로 인식하지 못하고} --- 질문을 \emph{이어쓰기} 하거나, 블로그·해시태그·SNS 잡담체로 흘러가는 경향, 엉뚱한 방향으로 흐름
 \item
   \textbf{SFT 후}: instruction 을 \emph{따라} --- 질문에 \emph{대답} 하는 구조화된 답변
 \end{itemize}
@@ -1230,7 +1230,7 @@ AFTER       : 수열이란 어떤 원인에 의해서 생기는 열입니다.
 \begin{itemize}
 \tightlist
 \item
-  \textbf{BEFORE (raw KoGPT2)}: 같은 \emph{125M 본체} 인데도 instruction 을 \emph{지시로 받아들이지 못합니다}. \inlinecode{"피보나치\ 수열을\ 설명해줘"} 를 넣으면 \emph{설명} 대신 \emph{질문을 이어 쓰거나}, 일반 산문으로 흘러가거나, 동화체로 새는 경향
+  \textbf{BEFORE (raw KoGPT2)}: 같은 \emph{125M 본체} 인데도 instruction 을 \emph{지시로 받아들이지 못합니다}. \inlinecode{"피보나치\ 수열을\ 설명해줘"} 를 넣으면 \emph{설명} 대신 \emph{질문을 이어 쓰거나}, 일반 산문으로 흘러가거나, 블로그·해시태그·SNS 잡담체로 흘러가는 경향
 \item
   \textbf{AFTER (KoGPT2 + KoAlpaca SFT)}: \emph{같은 본체} 가 이제 instruction 을 \emph{따라} --- 질문에 \emph{대답하는} 구조로 응답. 짧은 SFT (1 epoch, 약 3K 샘플) 만으로도 \emph{행동의 방향} 이 바뀝니다
 \end{itemize}
@@ -1507,11 +1507,11 @@ SFT 는 \emph{“좋은 답변 하나” 를 따라 학습} 합니다 (정답 de
 \begin{itemize}
 \tightlist
 \item
-  본 장에서 만든 \emph{SFT 모델} 을 \emph{정량 벤치마크} 로 평가: 한국어 (KMMLU / HAERAE-Bench / LogicKor / KoBEST) + 영어 (MMLU / HellaSwag / GSM8K ...)
+  평가 대상은 \textbf{Qwen2.5-0.5B-Instruct} --- 본 장의 SFT 모델은 \ref{ch:29}장의 §7 섹션에서 대조(비교) 용도로만 서술
 \item
-  \inlinecode{lm-evaluation-harness} 로 \emph{task-format 별} 자동 평가 --- \emph{instruction following 이 점수로 드러나는가}
+  \textbf{KoBEST(HellaSwag·BoolQ subset) MC 직접 구현 + 산술 생성 평가 + \inlinecode{lm-evaluation-harness} 시연 1건} --- MMLU/KMMLU/GSM8K/LogicKor 등은 분야 소개(§6 지도)로만 다룸, 실제 실행 대상 아님
 \item
-  \emph{SFT 전 (base) vs SFT 후} 벤치마크 비교 --- §6 의 정성적 BEFORE/AFTER 를 \emph{정량} 으로
+  \emph{분류(Ch 1-23) vs 생성(Ch 24-)} 평가 방식의 근본 차이 --- 정답이 하나가 아니라 log-likelihood/생성 채점이 필요한 이유
 \item
   그 다음 \ref{ch:30}장 (DPO) --- \emph{preference 정렬}. \textbf{\inlinecode{labels\ =\ -100} thread 가 DPO 에서도 이어집니다} --- chosen/rejected \emph{response 부분만} 계산
 \end{itemize}

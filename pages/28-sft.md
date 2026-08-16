@@ -25,7 +25,7 @@
 | 26 | 작은 GPT2 (한국어, 약 3M, scratch) | BBPE (직접 학습, vocab 약 4,000) | 한국어 TinyStories 30K | pad 만 | `CrossEntropyLoss` (next-token) |
 | 27 | KoGPT2 `skt/kogpt2-base-v2` (125M) | BBPE (KoGPT2 그대로, vocab 51,200) | 한국어 TinyStories 30K | pad 만 | `CrossEntropyLoss` (next-token) - continual pretraining |
 | **28 ← 여기** | **KoGPT2 `skt/kogpt2-base-v2` (125M, 동일)** | **BBPE (KoGPT2 그대로, vocab 51,200, 동일)** | **KoAlpaca instruction-response 쌍 (약 3K, 3,000 샘플)** | **prompt 부분 (`### 응답:` 앞 전부)** | **`CrossEntropyLoss` (next-token, *답변 부분만*) — SFT** |
-| 29 (다음) | Ch 28 SFT 모델 + 비교 | (동일) | 분야별 벤치마크 (KMMLU / HAERAE / MMLU ...) | - (평가만) | - (`lm-evaluation-harness`) |
+| 29 (다음) | Qwen2.5-0.5B-Instruct (평가 대상 — Ch 28 SFT 모델은 Ch29의 §7 섹션에서 대조(비교) 용도로만 서술) | (Qwen2.5 자체 토크나이저) | KoBEST(HellaSwag·BoolQ subset) MC 구현 + 산술 생성 + lm-eval 시연 | - (평가만) | - (`lm-evaluation-harness`) |
 
 전체 챕터 표는 [루트 README](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표) 를 참고하세요.
 
