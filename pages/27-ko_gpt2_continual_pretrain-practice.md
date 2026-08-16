@@ -316,7 +316,7 @@ first chunk decode (first 200 chars):
 
 30K stories 가 48,513 chunks (block_size=128, 약 6.21M 토큰) 로 묶였습니다. 첫 chunk 를 decode 하면 원본 동화가 깨짐 없이 그대로 복원돼, KoGPT2 BBPE 의 encode→decode 왕복이 한국어에서 정상 동작함을 확인할 수 있습니다.
 
-**비교 관전 포인트** — 같은 30K stories 가 *KoGPT2 BBPE (vocab 51,200)* 로 토큰화되면 Ch 26 의 *직접 학습 BBPE (vocab 약 4,000)* 보다 *토큰 수가 적습니다* — vocab 이 클수록 한 토큰이 더 긴 byte 시퀀스를 표현하므로. 같은 데이터의 토큰 수 차이가 *토크나이저 vocab 크기의 직접적 효과* (영어 Ch 24→25 에서 본 결의 한국어 재확인).
+**비교 관전 포인트** — 같은 30K stories 가 *KoGPT2 Character BPE (vocab 51,200)* 로 토큰화되면 Ch 26 의 *직접 학습 BBPE (vocab 약 4,000)* 보다 *토큰 수가 적습니다* — vocab 이 클수록 한 토큰이 더 긴 byte 시퀀스를 표현하므로. 같은 데이터의 토큰 수 차이가 *토크나이저 vocab 크기의 직접적 효과* (영어 Ch 24→25 에서 본 결의 한국어 재확인).
 
 ## 학습 *전* generation — *이미 잘 만들어진 한국어 본체* 라는 사실 확인
 

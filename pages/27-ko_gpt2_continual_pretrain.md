@@ -10,7 +10,7 @@
 2. 🔄 **변경점 (Diff from Ch 26)** — *모델 출발점 + 토크나이저 + lr* 만 변함. *데이터·trainer·collator·loss 는 동일*
 3. 🌏 **GPT 시대 학습 4단계 표** — 본 챕터의 위치 (단계 2). Ch 27 은 *SFT 가 아님* 을 명확히
 4. 📐 **Loss** — 변화 없음 (CE next-token). 다만 *시작점이 random 이 아닌 대규모 한국어 사전학습 본체* 라는 게 핵심
-5. 🔤 **토크나이저 노트** — *KoGPT2 BBPE 그대로* (vocab 51,200). Ch 26 의 직접 학습 BBPE (vocab 약 4,000) 와 비교
+5. 🔤 **토크나이저 노트** — *KoGPT2 Character BPE 그대로* (vocab 51,200). Ch 26 의 직접 학습 BBPE (vocab 약 4,000) 와 비교
 6. 🚀 **실습**: 한국어 TinyStories 30K → KoGPT2 로드 → 학습 전 generation → continual pretraining → 학습 후 generation
 7. 🆚 **3-way generation 비교** — Ch 26 (3M scratch) vs Ch 27 BEFORE (KoGPT2 그대로) vs Ch 27 AFTER (continual pretraining)
 8. 📦 **등장 라이브러리** / 🎯 **체크포인트** / ❓ **FAQ** (답변 포함)
@@ -24,8 +24,8 @@
 | 24 | 작은 GPT2 (약 3M, scratch) | BPE (직접 학습, 영어, vocab 2,048) | 영어 TinyStories 30K | `Linear(H, V)` (LM head, weight tied) | `CrossEntropyLoss` (next-token) |
 | 25 | `gpt2` (124M, OpenAI WebText 사전학습) | BPE (gpt2 그대로, vocab 50,257) | 영어 TinyStories (Ch 24 와 동일) | `Linear(H, V)` (LM head 그대로) | `CrossEntropyLoss` (next-token) - continual pretraining |
 | 26 | 작은 GPT2 (한국어, 약 3M, scratch) | BBPE (직접 학습, 한국어, vocab 약 4,000) | 한국어 TinyStories 30K | `Linear(H, V)` (LM head, weight tied) | `CrossEntropyLoss` (next-token) |
-| **27 ← 여기** | **KoGPT2 `skt/kogpt2-base-v2` (125M, 대규모 한국어 사전학습)** | **BBPE (KoGPT2 그대로, vocab 51,200)** | **한국어 TinyStories 30K (Ch 26 과 동일)** | **`Linear(H, V)` (LM head 그대로)** | **`CrossEntropyLoss` (next-token) — *continual pretraining*** |
-| 28 (다음) | KoGPT2 + SFT | KoGPT2 BBPE (그대로) | 한국어 instruction 데이터 | `Linear(H, V)` (LM head 그대로) | `CrossEntropyLoss` (`labels[:prompt_len] = -100`) |
+| **27 ← 여기** | **KoGPT2 `skt/kogpt2-base-v2` (125M, 대규모 한국어 사전학습)** | **Character BPE (KoGPT2 그대로, vocab 51,200)** | **한국어 TinyStories 30K (Ch 26 과 동일)** | **`Linear(H, V)` (LM head 그대로)** | **`CrossEntropyLoss` (next-token) — *continual pretraining*** |
+| 28 (다음) | KoGPT2 + SFT | KoGPT2 Character BPE (그대로) | 한국어 instruction 데이터 | `Linear(H, V)` (LM head 그대로) | `CrossEntropyLoss` (`labels[:prompt_len] = -100`) |
 
 전체 챕터 표는 [루트 README](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표) 를 참고하세요.
 
@@ -49,7 +49,7 @@ Phase 4 는 영어 (Ch 24-25) 와 한국어 (Ch 26-27) 가 *같은 학습 단계
 | Data collator | `DataCollatorForLanguageModeling(mlm=False)` | `DataCollatorForLanguageModeling(mlm=False)` | **같음** |
 | Loss | CE next-token (`labels = input_ids.clone()`) | CE next-token (`labels = input_ids.clone()`) | **같음** |
 | 본체 출발점 | `GPT2LMHeadModel(config)` random init (약 3M) | `AutoModelForCausalLM.from_pretrained("skt/kogpt2-base-v2")` (125M) | **다름** |
-| 토크나이저 | BBPE 직접 학습 (vocab 약 4,000) | `PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2", ...)` (vocab 51,200) | **다름** (본체와 운명공동체) |
+| 토크나이저 | BBPE 직접 학습 (vocab 약 4,000) | `PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2", ...)` (Character BPE, vocab 51,200) | **다름** (본체와 운명공동체, 알고리즘 계열도 다름 — 아래 §토크나이저 노트 참고) |
 | 학습률 | 5e-4 (scratch 표준) | **2e-5** (continual pretraining 표준) | **다름** |
 | 학습 step | 약 1,500 | **약 3,000** (48,513 chunks / eff. batch 16, 1 epoch) | **다름** (lr 만 작아짐) |
 
@@ -60,7 +60,7 @@ Phase 4 는 영어 (Ch 24-25) 와 한국어 (Ch 26-27) 가 *같은 학습 단계
 | 축 | Ch 26 (한국어 GPT scratch) | Ch 27 (본 챕터, KoGPT2 continual pretraining) |
 |---|---|---|
 | **본체** | 작은 GPT2 (약 3M params, random init) | **KoGPT2 `skt/kogpt2-base-v2`** (125M, 대규모 한국어 코퍼스 사전학습) ← *출발점 변화* |
-| **토크나이저** | BBPE 직접 학습 (vocab 약 4,000) | **`PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2", ...)`** (vocab 51,200) ← *본체에 맞춰 함께 변함* |
+| **토크나이저** | BBPE 직접 학습 (vocab 약 4,000) | **`PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2", ...)`** (Character BPE, vocab 51,200) ← *본체에 맞춰 함께 변함 (알고리즘 계열도 byte-level→Character 로 바뀜)* |
 | 데이터 | 한국어 TinyStories 30K | **한국어 TinyStories 30K (동일)** ← 통제 변수 |
 | Trainer | `transformers.Trainer` | **`transformers.Trainer` (동일)** |
 | Data collator | `DataCollatorForLanguageModeling(mlm=False)` | **(동일)** |
@@ -101,7 +101,7 @@ Ch 26 과 *완전히 동일* 한 `CrossEntropyLoss` (next-token, `mlm=False`). `
 | 토크나이저 | vocab 차원 | `ln(vocab)` (uniform CE) | 챕터 |
 |---|---|---|---|
 | 직접 학습 BBPE (한국어) | 약 4,000 | 약 8.29 | Ch 26 |
-| **KoGPT2 BBPE** | **51,200** | **10.84** | **Ch 27** |
+| **KoGPT2 Character BPE** | **51,200** | **10.84** | **Ch 27** |
 | `gpt2` BPE (영어) | 50,257 | 10.82 | Ch 25 (참고) |
 
 *만약* KoGPT2 본체가 random init 이었다면 첫 step loss 가 약 10.84 부근에서 시작할 것입니다. 하지만 **KoGPT2 본체는 이미 대규모 한국어 코퍼스로 사전학습되어 있어** *TinyStories 평가에서도 시작 loss 가 random baseline 보다 훨씬 낮습니다* — 그게 학습 단계 2 의 핵심 차이.
@@ -130,9 +130,9 @@ $\text{PPL} = e^{L}$:
 
 > *vocab 51K 의 거대한 공간에서 평균 7-20 개 후보로 좁힌* 상태에서 시작해 더 좁힙니다. Ch 26 의 vocab 약 4,000 과 정량적 비교는 어렵지만 (vocab 단위가 다름), *generation 품질* 로는 직접 비교 가능 — 그게 본 챕터 §7 (3-way 비교) 의 역할.
 
-## 토크나이저 노트 — KoGPT2 BBPE 그대로 (vocab 51,200)
+## 토크나이저 노트 — KoGPT2 Character BPE 그대로 (vocab 51,200)
 
-본 챕터에서는 토크나이저를 *학습하지 않습니다*. `PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2", ...)` 로 SKT 가 대규모 한국어 코퍼스 위에 학습해 둔 byte-level BPE (BBPE, vocab 51,200) 를 그대로 가져옵니다 (special token 명시 필요 — 바로 아래 주의 참고).
+본 챕터에서는 토크나이저를 *학습하지 않습니다*. `PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2", ...)` 로 SKT 가 대규모 한국어 코퍼스 위에 학습해 둔 Character BPE (SentencePiece 스타일, vocab 51,200) 를 그대로 가져옵니다 (special token 명시 필요 — 바로 아래 주의 참고).
 
 ### 왜 직접 학습하지 않는가 — *토크나이저는 본체와 운명공동체*
 
@@ -148,11 +148,13 @@ KoGPT2 본체의 input embedding `wte` (51200 × 768) 와 LM head (768 × 51200)
 
 | 항목 | Ch 26 | **Ch 27 (본 챕터)** |
 |---|---|---|
-| 알고리즘 | byte-level BPE (BBPE) | byte-level BPE (BBPE) (같은 종류) |
+| 알고리즘 | byte-level BPE (BBPE) | **Character BPE** (SentencePiece 스타일) |
 | Vocab 크기 | 약 4,000 | **51,200** (약 13배) |
 | 학습 코퍼스 | 한국어 TinyStories 30K (약 4-6M 토큰) | **대규모 한국어 코퍼스** (SKT 가 학습) |
 | 학습 주체 | 본 챕터에서 직접 학습 (Ch 26) | **SKT 가 미리 학습** (그대로 사용) |
 | 특수 토큰 | `<|endoftext|>` (bos = eos = pad) | KoGPT2 컨벤션 (`</s>` 등, pad 는 별도 지정 필요할 수 있음) |
+
+> ⚠️ 둘 다 *서브워드 단위로 압축한다* 는 점은 같지만 알고리즘 계열은 다릅니다 — Ch 26 은 byte 단위(byte-level BPE), KoGPT2 는 문자 단위(Character BPE, SentencePiece 스타일 — `pre_tokenizer: Metaspace`, 명시적 `<unk>` 보유, SKT 공식 설명 기준)로 학습되었습니다. 이 챕터의 핵심(사전학습 여부·vocab 크기 차이)은 이 알고리즘 차이와 무관합니다.
 
 ### KoGPT2 토크나이저 로드 주의 — `AutoTokenizer` 가 잘못 fallback 합니다
 
@@ -176,7 +178,7 @@ tokenizer = PreTrainedTokenizerFast.from_pretrained(
 
 ### 한국어를 *제대로* 다루는 vocab
 
-Ch 26 에서 봤듯, *영어 gpt2 BPE 로 한국어를 토큰화하면 한글이 byte 조각으로 잘게 쪼개져 토큰 수가 폭증* 합니다. KoGPT2 BBPE 는 *한국어 코퍼스 위에 학습* 되어 한국어 어절을 *의미 있는 토큰* 으로 압축합니다 — 그래서 영어 gpt2 를 한국어에 쓰는 대신 *한국어 사전학습 모델 KoGPT2* 를 가져오는 게 정공법. Ch 26 (한국어는 scratch) 와 Ch 27 (한국어 사전학습 본체) 이 *영어 Ch 24-25 와 정확히 같은 대칭* 을 이루는 이유.
+Ch 26 에서 봤듯, *영어 gpt2 BPE 로 한국어를 토큰화하면 한글이 byte 조각으로 잘게 쪼개져 토큰 수가 폭증* 합니다. KoGPT2 Character BPE 는 *한국어 코퍼스 위에 학습* 되어 한국어 어절을 *의미 있는 토큰* 으로 압축합니다 — 그래서 영어 gpt2 를 한국어에 쓰는 대신 *한국어 사전학습 모델 KoGPT2* 를 가져오는 게 정공법. Ch 26 (한국어는 scratch) 와 Ch 27 (한국어 사전학습 본체) 이 *영어 Ch 24-25 와 정확히 같은 대칭* 을 이루는 이유.
 
 ## 이 장의 구성
 

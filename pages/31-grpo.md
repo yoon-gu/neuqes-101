@@ -52,7 +52,7 @@ Ch 24 에서 도입한 GPT 시대 학습 4단계 표. 본 챕터는 *단계 4 (A
 | 축 | Ch 30 (DPO) | Ch 31 (본 챕터, GRPO) |
 |---|---|---|
 | 본체 | SFT 모델 (policy) + frozen reference | **SFT 모델 (policy)** ← *reference 는 옵션* (β=0 이면 불필요) |
-| 토크나이저 | `PreTrainedTokenizerFast` (KoGPT2 BBPE) | **(동일)** ← 고정 |
+| 토크나이저 | `PreTrainedTokenizerFast` (KoGPT2 Character BPE) | **(동일)** ← 고정 |
 | **신호 출처** | preference 쌍 (사람/AI 가 비교) | **verifier reward (정답 자동 검증)** ← *변화 1* |
 | **Trainer** | `trl.DPOTrainer` | **`trl.GRPOTrainer`** ← *변화 2* (새 클래스, 첫 등장) |
 | **데이터** | `(prompt, chosen, rejected)` 쌍 | **`(prompt, 정답)`** ← *변화 3* (검증 가능한 task) |
@@ -153,6 +153,8 @@ verifiable reward 의 강점은 *검증 가능한 task* 에서만 성립합니�
 > 실무에서는 **두 신호를 섞습니다** — *검증 가능한 부분은 verifier (GRPO)*, *주관적 품질은 preference/judge (DPO)*. 본 챕터는 *verifiable reward 의 원리* 를 *산술 task* 로 가장 깨끗하게 보입니다.
 
 ## 토크나이저 노트 — KoGPT2 `PreTrainedTokenizerFast` (Ch 27 이후 고정)
+
+본 챕터의 토크나이저는 *Ch 27·28·30 과 완전히 동일*. KoGPT2 Character BPE (vocab 51,200) 를 그대로 가져옵니다. **KoGPT2 는 `AutoTokenizer` 가 영어 GPT2 로 잘못 fallback 하는 함정** 이 있어 (Ch 27 §토크나이저 노트), `PreTrainedTokenizerFast` + special token 명시로 로드합니다.
 
 본 챕터의 토크나이저는 *Ch 27·28·30 과 완전히 동일*. KoGPT2 BBPE (vocab 51,200) 를 그대로 가져옵니다. **KoGPT2 는 `AutoTokenizer` 가 영어 GPT2 로 잘못 fallback 하는 함정** 이 있어 (Ch 27 §토크나이저 노트), `PreTrainedTokenizerFast` + special token 명시로 로드합니다.
 

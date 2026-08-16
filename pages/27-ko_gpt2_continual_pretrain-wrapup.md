@@ -3,7 +3,7 @@
 | 이름 | 한 줄 설명 | Ch 26 과 차이 |
 |---|---|---|
 | `AutoModelForCausalLM.from_pretrained("skt/kogpt2-base-v2")` | KoGPT2 (125M, 대규모 한국어 사전학습) 본체 로드 | **새로 등장** (Ch 26 은 `GPT2LMHeadModel(config)` random init) |
-| `PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2", ...)` | KoGPT2 BBPE 토크나이저 (vocab 51,200) 로드 | **새로 등장** (Ch 26 은 직접 학습 BBPE) |
+| `PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2", ...)` | KoGPT2 Character BPE 토크나이저 (vocab 51,200) 로드 | **새로 등장** (Ch 26 은 직접 학습 byte-level BBPE — 알고리즘 계열 다름) |
 | `model.config.pad_token_id = tokenizer.pad_token_id` | 토크나이저의 pad id 를 본체 config 에 동기화 | **새로 등장** (사전학습 본체 로드 시 필요한 동기화) |
 | `transformers.Trainer` | HuggingFace 표준 학습 루프 | **공유** (Ch 26 과 동일 클래스, 동일 인자 구조) |
 | `DataCollatorForLanguageModeling(mlm=False)` | CausalLM collator (`labels = input_ids.clone()` 자동) | **공유** (Ch 26 과 정확히 같음) |
@@ -81,6 +81,8 @@ HF 의 continual pretraining / fine-tuning 표준 lr 범위: `1e-5` - `5e-5`. SF
 **실용적 결론**: 실무에서는 (b)(c) 가 *비용 대비 비효율* 이라 (d) 패턴이 표준. *대규모 사전학습 모델을 가져와 작은 도메인 데이터로 continual pretraining* — 본 챕터의 패턴이 그 자체로 *실무 표준 레시피*. (영어 Ch 25 Q3 의 한국어판.)
 
 ### Q4. (실무) KoGPT2 토크나이저로 *영어* TinyStories 를 학습하면 어떻게 되나요? (Ch 25 Q4 의 거울)
+
+**작동은 하지만 비효율적** 입니다 — KoGPT2 Character BPE 는 *한국어 코퍼스 중심* 으로 학습돼 영어 어절의 병합 규칙이 약하고, byte-level BPE 와 달리 학습에 없던 문자는 `<unk>` 로 빠질 가능성도 있습니다. 그래서 *같은 영어 문장이 영어 gpt2 BPE 보다 다소 많은 토큰* 으로 쪼개질 수 있습니다.
 
 **작동은 하지만 비효율적** 입니다 — KoGPT2 BBPE 는 *byte-level* 이라 영어도 UNK 없이 표현하지만, *한국어 코퍼스 중심* 으로 학습돼 영어 어절의 병합 규칙이 약합니다. 그래서 *같은 영어 문장이 영어 gpt2 BPE 보다 다소 많은 토큰* 으로 쪼개질 수 있습니다.
 

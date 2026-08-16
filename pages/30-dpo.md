@@ -52,7 +52,7 @@ Ch 24 에서 도입한 GPT 시대 학습 4단계 표. 본 챕터는 *단계 4 (A
 | 축 | Ch 28 (KoGPT2 SFT) | Ch 30 (본 챕터, DPO) |
 |---|---|---|
 | 본체 | KoGPT2 `skt/kogpt2-base-v2` (125M) | **SFT 모델 (= KoGPT2 SFT 산출) 을 policy 로** ← 출발점이 SFT 모델 |
-| 토크나이저 | `PreTrainedTokenizerFast` (KoGPT2 BBPE) | **(동일)** ← 고정 |
+| 토크나이저 | `PreTrainedTokenizerFast` (KoGPT2 Character BPE) | **(동일)** ← 고정 |
 | **데이터** | instruction-response 쌍 (`prompt` / `completion`) | **preference 쌍 (`prompt` / `chosen` / `rejected`)** ← *변화 1* |
 | **Trainer** | `trl.SFTTrainer` | **`trl.DPOTrainer`** ← *변화 2* (새 클래스, 첫 등장) |
 | **Loss** | next-token `CrossEntropyLoss` (response-only) | **DPO sigmoid loss** ← *변화 3* (log-likelihood ratio) |
@@ -169,6 +169,8 @@ rejected: ㄴㄴ 몰라 아무거나 먹어                          <- 이 부�
 > `labels = -100` thread 가 *alignment 단계까지* 이어집니다. SFT 에서 "답변 부분만 학습" 이었다면, DPO 에서는 "답변 부분의 log-prob 만 비교". **prompt 는 늘 조건 (given), 답변만 학습·비교 대상 (target)** 이라는 원리가 Phase 4 전체를 관통합니다. `DPOTrainer` 가 이 마스킹을 자동으로 처리하므로 우리가 직접 `-100` 을 찍을 필요는 없습니다 (§3 에서 그 효과를 *손으로 재현* 해 확인).
 
 ## 토크나이저 노트 — KoGPT2 `PreTrainedTokenizerFast` (Ch 27 이후 고정)
+
+본 챕터의 토크나이저는 *Ch 27·28 과 완전히 동일*. KoGPT2 Character BPE (vocab 51,200) 를 그대로 가져옵니다. **KoGPT2 는 `AutoTokenizer` 가 영어 GPT2 로 잘못 fallback 하는 함정** 이 있어 (Ch 27 §토크나이저 노트), `PreTrainedTokenizerFast` + special token 명시로 로드합니다.
 
 본 챕터의 토크나이저는 *Ch 27·28 과 완전히 동일*. KoGPT2 BBPE (vocab 51,200) 를 그대로 가져옵니다. **KoGPT2 는 `AutoTokenizer` 가 영어 GPT2 로 잘못 fallback 하는 함정** 이 있어 (Ch 27 §토크나이저 노트), `PreTrainedTokenizerFast` + special token 명시로 로드합니다.
 

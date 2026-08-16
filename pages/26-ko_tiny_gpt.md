@@ -25,7 +25,7 @@
 | 24 | 작은 GPT2 (약 3M, scratch) | BPE (직접 학습, 영어, vocab 2,048) | 영어 TinyStories 30K stories | `Linear(H, V)` (LM head, weight tied) | `CrossEntropyLoss` (next-token) |
 | 25 | `gpt2` (124M, OpenAI WebText 사전학습) | BPE (gpt2 그대로, vocab 50,257) | 영어 TinyStories (Ch 24 와 동일) | `Linear(H, V)` (LM head 그대로) | `CrossEntropyLoss` (next-token) - continual pretraining |
 | **26 ← 여기** | **작은 GPT2 (약 3M, scratch)** | **BBPE (직접 학습, 한국어, vocab 약 4,000)** | **한국어 TinyStories 30K stories** | **`Linear(H, V)` (LM head, weight tied)** | **`CrossEntropyLoss` (next-token)** |
-| 27 (다음) | KoGPT2 (`skt/kogpt2-base-v2`, 125M, 대규모 한국어 사전학습) | KoGPT2 BBPE (그대로) | 한국어 TinyStories (Ch 26 과 동일) | `Linear(H, V)` (LM head 그대로) | `CrossEntropyLoss` (next-token) - continual pretraining |
+| 27 (다음) | KoGPT2 (`skt/kogpt2-base-v2`, 125M, 대규모 한국어 사전학습) | KoGPT2 Character BPE (그대로) | 한국어 TinyStories (Ch 26 과 동일) | `Linear(H, V)` (LM head 그대로) | `CrossEntropyLoss` (next-token) - continual pretraining |
 
 전체 챕터 표는 [루트 README](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표) 를 참고하세요.
 
@@ -156,7 +156,7 @@ byte-level BPE 의 핵심: *가장 작은 단위가 byte (256개)* 라 *어떤 �
 
 GPT 계열은 특수 토큰을 *최소화* — `<|endoftext|>` 하나로 bos = eos = pad 겸용. 마침 한국어 TinyStories 데이터도 story 경계를 `<|endoftext|>` 로 표시하고 있어 컨벤션이 자연스럽게 일치합니다.
 
-> Ch 19 의 "토크나이저는 모델과 운명공동체" 원칙이 본 챕터에서도 유효 — vocab 약 4,000 의 BBPE 를 직접 학습한 뒤, *같은 vocab 으로 GPT 본체를 random init* 합니다. Ch 27 에서는 *반대로* KoGPT2 의 사전학습된 BBPE + 본체를 그대로 가져와 continual pretraining — 토크나이저 + 모델이 *함께* 변하는 게 Ch 26-27 의 핵심 비교 (Ch 24-25 의 한국어 짝).
+> Ch 19 의 "토크나이저는 모델과 운명공동체" 원칙이 본 챕터에서도 유효 — vocab 약 4,000 의 BBPE 를 직접 학습한 뒤, *같은 vocab 으로 GPT 본체를 random init* 합니다. Ch 27 에서는 *반대로* KoGPT2 의 사전학습된 Character BPE(SentencePiece 스타일, 본 챕터의 byte-level BBPE 와는 다른 계열) + 본체를 그대로 가져와 continual pretraining — 토크나이저 + 모델이 *함께* 변하는 게 Ch 26-27 의 핵심 비교 (Ch 24-25 의 한국어 짝).
 
 ## 이 장의 구성
 

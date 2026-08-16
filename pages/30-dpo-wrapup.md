@@ -9,7 +9,7 @@
 | `prompt` / `chosen` / `rejected` 데이터 형식 | preference 쌍 표준 형식 | **새로 등장** (Ch 28 은 `prompt`/`completion`) |
 | `torch.nn.functional.log_softmax` + `gather` | response 토큰의 log-prob 합 (§3 손계산) | **공유** (개념은 CausalLM loss 와 동일) |
 | `copy.deepcopy(policy)` + `requires_grad_(False)` | frozen reference 직접 생성 (§3 시연용) | **새로 등장** |
-| `PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2", ...)` | KoGPT2 BBPE (AutoTokenizer 함정 회피) | **공유** (Ch 27 이후 고정) |
+| `PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2", ...)` | KoGPT2 Character BPE (AutoTokenizer 함정 회피) | **공유** (Ch 27 이후 고정) |
 
 > `trl` 은 버전마다 `DPOTrainer` / `DPOConfig` API 변동이 큽니다 (`max_prompt_length` 같은 인자가 버전에 따라 사라지기도). 본 노트북은 *버전 간 안정적인 핵심 경로* (`prompt`/`chosen`/`rejected` 데이터 + `beta` + `max_length` + `ref_model=None`) 만 사용합니다. 설치된 `trl` 버전은 셋업 셀 출력에서 확인하세요.
 
