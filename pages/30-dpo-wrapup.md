@@ -64,7 +64,7 @@ trainer = DPOTrainer(model=policy, ref_model=None, args=cfg,
 - **β 너무 작음** (예: 0.01): reference 제약이 *거의 없음* → policy 가 preference 에 강하게 끌려가 *빨리 정렬* 되지만, *원본 SFT 의 일반 능력이 collapse* (degeneration)·*reward hacking* 위험. margin 만 키우려고 *답변 품질을 희생* 할 수 있습니다
 
 ```python
-# 1 에서 시작. reward accuracy 가 안 오르면 0.05 로 낮춰 보고 (제약 완화),
+# 0.1 에서 시작. reward accuracy 가 안 오르면 0.05 로 낮춰 보고 (제약 완화),
 # 답변이 망가지면 (반복/collapse) 0.2-0.3 으로 올려 보세요 (제약 강화).
 dpo_config.beta = 0.1
 ```
