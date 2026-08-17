@@ -28,8 +28,8 @@
 
 ```python
 # 이번 챕터 (Ch 20 → Ch 21) 흐름 — 원본 BERT 와 같은 정신
-# 일반 위키 (Wikitext-103) 로 MLM 사전학습
-# Yelp 리뷰(식당·업체) 로 분류 fine-tune  ← 다른 도메인 transfer
+# 1. 일반 위키 (Wikitext-103) 로 MLM 사전학습
+# 2. Yelp 리뷰(식당·업체) 로 분류 fine-tune  ← 다른 도메인 transfer
 
 # 만약 Yelp 로 사전학습 → Yelp 분류 fine-tune 이었다면
 # domain-adaptive pretraining 에 가까워져 transfer 메시지가 약해짐
@@ -67,16 +67,16 @@ BERT 원논문 (Devlin et al., 2018, arXiv:1810.04805) 의 sweet spot:
 작은 BERT scratch 학습은 fine-tune 보다 *학습률에 민감* 합니다. 발산 (loss → NaN 또는 100+) 의 흔한 원인:
 
 ```python
-# 학습률 낮추기 (5e-4 → 1e-4 → 5e-5 순서로)
+# 1. 학습률 낮추기 (5e-4 → 1e-4 → 5e-5 순서로)
 training_args = TrainingArguments(learning_rate=1e-4, ...)
 
-# warmup 늘리기 (0.06 → 0.1)
+# 2. warmup 늘리기 (0.06 → 0.1)
 training_args = TrainingArguments(warmup_steps=0.1, ...)
 
-# gradient clipping (Trainer 기본 1.0, 더 빡빡하게)
+# 3. gradient clipping (Trainer 기본 1.0, 더 빡빡하게)
 training_args = TrainingArguments(max_grad_norm=0.5, ...)
 
-# fp16 끄고 fp32 로 시도 (loss scale overflow 가능성)
+# 4. fp16 끄고 fp32 로 시도 (loss scale overflow 가능성)
 training_args = TrainingArguments(fp16=False, ...)
 ```
 
@@ -117,13 +117,13 @@ model_scratch = BertForSequenceClassification(config)
 이 챕터의 작은 BERT 는 약 40MB 정도라 무겁지 않지만, 큰 모델의 경우:
 
 ```python
-# safetensors 형식 강제 (bin 보다 약간 작음 + 안전)
+# 1. safetensors 형식 강제 (bin 보다 약간 작음 + 안전)
 model.save_pretrained("./ch20_small_bert_mlm", safe_serialization=True)
 
-# fp16 으로 저장 (weight 자체를 half 로)
+# 2. fp16 으로 저장 (weight 자체를 half 로)
 model.half().save_pretrained("./ch20_small_bert_mlm")
 
-# 양자화 (advanced — bitsandbytes 8-bit/4-bit)
+# 3. 양자화 (advanced — bitsandbytes 8-bit/4-bit)
 # from transformers import BitsAndBytesConfig
 # config = BitsAndBytesConfig(load_in_8bit=True)
 ```
