@@ -36,7 +36,7 @@ else:
 
 **▶ 실행 결과**
 
-![output](../assets/20-en_bert_pretrain-out1-2.png)
+![output](../assets/20-en_bert_pretrain-out1-3.png)
 
 **결과 해석**
 
@@ -68,19 +68,19 @@ print(f"  -> model narrowed vocab to approx. {eval_ppl:.0f} candidates per maske
 
 ```text
 Training Loss  Validation Loss  Epoch
-7.072174       7.133022         2
+7.072258       7.133166         2
 === eval (held-out Wikitext-103 paragraphs) ===
-               eval_loss: 7.1330
+               eval_loss: 7.1332
 
-  MLM loss:               7.1330
-  perplexity (exp loss):  1252.66
+  MLM loss:               7.1332
+  perplexity (exp loss):  1252.84
   random baseline PPL:    30,522  (uniform over vocab)
   -> model narrowed vocab to approx. 1253 candidates per masked position
 ```
 
 **결과 해석**
 
-eval_loss 7.1330, perplexity 1,252.66 — 30,522 개 후보를 약 1,253 개로 좁힌 셈이니 24 배 줄었습니다. 숫자만 보면 큰 진전이지만, 그 1,253 이 *어느 수준인지* 는 6-3 의 unigram 기준선과 견줘 봐야 드러납니다.
+eval_loss 7.1332, perplexity 1,252.84 — 30,522 개 후보를 약 1,253 개로 좁힌 셈이니 24 배 줄었습니다. 숫자만 보면 큰 진전이지만, 그 1,253 이 *어느 수준인지* 는 6-3 의 unigram 기준선과 견줘 봐야 드러납니다.
 
 ### 6-1. 🔬 사전학습 전·후 비교 — random init 본체 vs 2 epoch 학습 후
 
@@ -128,8 +128,8 @@ for sent in test_sentences:
 ==============================================================================
 AFTER pretraining  (2 epoch MLM on Wikitext-103)
 ==============================================================================
-  eval_loss       : 7.1330   (before: 10.3721)
-  eval_perplexity : 1,252.66        (before: 31,956)
+  eval_loss       : 7.1332   (before: 10.3721)
+  eval_perplexity : 1,252.84        (before: 31,956)
   -> narrowed vocab to approx. 1253 candidates per masked position
 
 input: The capital of France is [MASK].
@@ -147,7 +147,7 @@ input: I would [MASK] recommend this place.
 
 **결과 해석**
 
-수치는 10.3721 → 7.1330 (perplexity 31,956 → 1,253) 으로 확실히 좋아졌는데, top-5 는 네 문장이 거의 똑같이 `the`, `,`, `.`, `and` 입니다. 학습 전의 난수 토큰이 *흔한 토큰* 으로 바뀐 것 자체가 진전이지만, 입력이 달라져도 답이 그대로라는 점에서 아직 문맥은 읽지 못하는 상태입니다.
+수치는 10.3721 → 7.1332 (perplexity 31,956 → 1,253) 으로 확실히 좋아졌는데, top-5 는 네 문장이 거의 똑같이 `the`, `,`, `.`, `and` 입니다. 학습 전의 난수 토큰이 *흔한 토큰* 으로 바뀐 것 자체가 진전이지만, 입력이 달라져도 답이 그대로라는 점에서 아직 문맥은 읽지 못하는 상태입니다.
 
 ### 6-2. eval_loss / perplexity — 수치 비교
 
@@ -172,13 +172,13 @@ print(metric_compare.round(4).to_string(index=False))
 ```text
 Before vs After — eval metrics
          metric  before (random)  after (2 epoch)  random baseline
-      eval_loss          10.3721           7.1330          10.3262
-eval_perplexity       31955.8444        1252.6572       30522.0000
+      eval_loss          10.3721           7.1332          10.3262
+eval_perplexity       31955.8444        1252.8376       30522.0000
 ```
 
 **결과 해석**
 
-학습 전 값 10.3721 / 31,956 이 random baseline 10.3262 / 30,522 을 아주 살짝 웃도는데, 이는 난수 가중치가 *균등보다도 조금 나쁜* 편향을 갖기 때문으로 정상입니다. 학습 후 7.1330 / 1,253 이 기준선 아래로 확실히 내려온 것이 사전학습이 실제로 무언가를 새겼다는 증거입니다.
+학습 전 값 10.3721 / 31,956 이 random baseline 10.3262 / 30,522 을 아주 살짝 웃도는데, 이는 난수 가중치가 *균등보다도 조금 나쁜* 편향을 갖기 때문으로 정상입니다. 학습 후 7.1332 / 1,253 이 기준선 아래로 확실히 내려온 것이 사전학습이 실제로 무언가를 새겼다는 증거입니다.
 
 같은 두 수치를 막대로도 그립니다. perplexity 는 3만과 1천 처럼 자릿수가 달라 선형 축에서는 뒤쪽 막대가 보이지 않으므로 로그 축을 씁니다.
 
@@ -292,10 +292,10 @@ MLM loss 사다리 — 우리 모델은 지금 어디에 있나
 ==============================================================================
   1) 균등 분포 (random init) : 10.3262   ppl    30,522
   2) unigram (빈도만, 문맥 X):  7.2525   ppl     1,412
-  3) 우리 작은 BERT (2 epoch):  7.1330   ppl     1,253
+  3) 우리 작은 BERT (2 epoch):  7.1332   ppl     1,253
 
   1) -> 2) : +3.0737 nats   <- 빈도만 배워도 이만큼 내려감
-  2) vs 3) : +0.1194 nats   <- 문맥으로 벌어들인 이득 (양수면 unigram 보다 나음)
+  2) vs 3) : +0.1193 nats   <- 문맥으로 벌어들인 이득 (양수면 unigram 보다 나음)
 
   학습 코퍼스 top-5 unigram : ['the', ',', '.', 'of', 'and']
   우리 모델의 top-5         : ['the', ',', '.', 'and', 'in']
@@ -340,8 +340,8 @@ Key                         | Status     |  |
 ----------------------------+------------+--+-
 cls.seq_relationship.weight | UNEXPECTED |  | 
 bert.pooler.dense.bias      | UNEXPECTED |  | 
-bert.pooler.dense.weight    | UNEXPECTED |  | 
 cls.seq_relationship.bias   | UNEXPECTED |  | 
+bert.pooler.dense.weight    | UNEXPECTED |  | 
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.

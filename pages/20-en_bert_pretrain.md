@@ -4,7 +4,6 @@
 
 **예상 소요 시간**: 약 5-8분 (`bert-base-uncased` 토크나이저 로드 + Wikitext-103 다운로드·필터링·토큰화가 대부분을 차지 + MLM 2 epoch 약 0.4분 + 평가/저장). 전체 소요는 데이터 다운로드가 지배합니다.
 
-
 ## 학습 흐름
 
 1. 🔤 **토크나이저**: `bert-base-uncased` WordPiece (vocab 30,522) 그대로 로드
@@ -14,7 +13,6 @@
 5. 🚀 **학습**: `DataCollatorForLanguageModeling(mlm=True, mlm_probability=0.15)` + Trainer, fp16, 2 epoch
 6. 🔬 **평가**: MLM loss 학습 곡선, perplexity, masked token 예측 시연 ([MASK] top-5 후보 — 위키 도메인 + Yelp 도메인 혼합)
 7. 💾 **저장**: `model.save_pretrained("./ch20_small_bert_mlm")` — Ch 21 에서 `from_pretrained` 로 재사용
-
 
 > 📒 **사전 학습 자료**: Ch 19 (토크나이저 직접 학습) — 토크나이저가 "어떻게 만들어지는지" 를 본 뒤, 이번 챕터는 *모델이 어떻게 사전학습되는지* 를 봅니다. 둘이 합쳐져 "사전학습된 BERT 를 가져다 쓰는" 흐름 (Ch 7-18) 의 *안쪽* 이 드러납니다.
 

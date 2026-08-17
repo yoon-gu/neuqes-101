@@ -2,6 +2,8 @@
 
 ## 환경 셋업
 
+설치가 끝나면 **라이브러리 버전을 먼저 찍습니다.** 같은 `seed` 로 돌려도 `transformers`·`datasets` 가 올라가면 수치가 미세하게 달라질 수 있어서, 아래 출력이 이 챕터에 실린 값과 다르다면 *버전 차이* 를 먼저 의심하면 됩니다.
+
 ```python
 %pip install -q -U transformers datasets accelerate
 ```
@@ -9,13 +11,13 @@
 **▶ 실행 결과**
 
 ```text
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.7/11.7 MB 118.8 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 559.1/559.1 kB 46.7 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 0.0/50.1 MB ? eta -:--:--
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸━━━━━━━━━ 38.2/50.1 MB 111.6 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 221.7 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 221.7 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 50.1/50.1 MB 16.8 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 11.7/11.7 MB 264.4 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.7/11.7 MB 125.3 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 559.1/559.1 kB 47.5 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━╸━━━━━━━━━━━━ 35.1/50.1 MB 246.5 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 250.5 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 250.5 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 50.1/50.1 MB 19.6 MB/s eta 0:00:00
 ```
 
 ```python
@@ -31,6 +33,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import torch
 
+import accelerate
+import datasets
+import transformers
 from datasets import load_dataset
 from transformers import (
     AutoTokenizer,
@@ -60,7 +65,11 @@ elif getattr(torch.backends, "mps", None) is not None and torch.backends.mps.is_
 else:
     DEVICE = "cpu"
 
+# 실행 환경 기록 — 재현이 안 될 때 가장 먼저 확인할 정보입니다.
 print(f"PyTorch:        {torch.__version__}")
+print(f"transformers:   {transformers.__version__}")
+print(f"datasets:       {datasets.__version__}")
+print(f"accelerate:     {accelerate.__version__}")
 print(f"CUDA available: {torch.cuda.is_available()}")
 print(f"Device:         {DEVICE}")
 if DEVICE == "cuda":
@@ -73,10 +82,17 @@ elif DEVICE == "cpu":
 
 ```text
 PyTorch:        2.11.0+cu128
+transformers:   5.15.0
+datasets:       5.0.1
+accelerate:     1.14.0
 CUDA available: True
 Device:         cuda
 GPU:             Tesla T4
 ```
+
+**결과 해석**
+
+이 챕터에 실린 수치는 모두 위 조합(`transformers` 5.15.0 · `datasets` 5.0.1 · `accelerate` 1.14.0 · PyTorch 2.11.0, Tesla T4)에서 나온 값입니다. `Device: cuda` 가 아니면 학습이 몇 시간 단위로 늘어나니 런타임 유형을 먼저 T4 로 바꾸세요.
 
 **baseline VRAM** (CUDA 환경에서만 의미 있는 출력 — Colab T4 기준):
 
@@ -87,7 +103,7 @@ GPU:             Tesla T4
 **▶ 실행 결과**
 
 ```text
-Mon Aug 17 05:14:08 2026       
+Mon Aug 17 09:01:01 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -96,7 +112,7 @@ Mon Aug 17 05:14:08 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   56C    P8             10W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   53C    P8             14W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -790,8 +806,8 @@ print(f"random baseline loss (uniform over vocab): {math.log(tokenizer.vocab_siz
 
 ```text
 Epoch  Training Loss  Validation Loss
-1      7.239540       7.226878
-2      7.072174       7.064749
+1      7.239586       7.226577
+2      7.072258       7.064893
 MLM pretraining done in 0.4 min
 mean train loss: 7.4361
 random baseline loss (uniform over vocab): 10.3262
@@ -808,7 +824,7 @@ random baseline loss (uniform over vocab): 10.3262
 **▶ 실행 결과**
 
 ```text
-Mon Aug 17 05:15:20 2026       
+Mon Aug 17 09:02:00 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -817,7 +833,7 @@ Mon Aug 17 05:15:20 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   70C    P0             76W /   70W |    3335MiB /  15360MiB |     52%      Default |
+| N/A   67C    P0             64W /   70W |    3335MiB /  15360MiB |     66%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -826,7 +842,7 @@ Mon Aug 17 05:15:20 2026
 |  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
 |        ID   ID                                                               Usage      |
 |=========================================================================================|
-|    0   N/A  N/A             771      C   /usr/bin/python3                       3332MiB |
+|    0   N/A  N/A            1229      C   /usr/bin/python3                       3332MiB |
 +-----------------------------------------------------------------------------------------+
 ```
 
