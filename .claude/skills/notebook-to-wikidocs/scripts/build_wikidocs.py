@@ -261,9 +261,21 @@ def _demote_first_header(md: str) -> str:
 
 
 def _strip_header_emoji(md: str) -> str:
+    """헤딩에서 선두 순번·이모지를 떼어낸다. **코드펜스 안은 건드리지 않는다.**
+
+    펜스를 추적하지 않으면 파이썬 주석 `# 1. 학습률 낮추기` 가 마크다운 H1 과
+    똑같이 생겨서(`^#\\s+`) 선두 번호 `1.` 이 지워진다 — 번호가 곧 순서인 FAQ
+    스니펫이 "# 학습률 낮추기" 로 바뀌어 본문 설명과 어긋났다. `_sanitize_md_cell`
+    과 같은 방식으로 ``` 토글을 세어 펜스 안을 원문 그대로 통과시킨다.
+    """
     out = []
+    fence = False
     for line in md.splitlines():
-        m = HEADER_RE.match(line)
+        if line.lstrip().startswith("```"):
+            fence = not fence
+            out.append(line)
+            continue
+        m = None if fence else HEADER_RE.match(line)
         if m:
             out.append(f"{m.group(1)} {_clean_heading_text(m.group(2))}")
         else:
