@@ -1,4 +1,4 @@
-**목표**: Phase 3 의 두 번째 챕터. Ch 19 에서 *토크나이저를 직접 학습* 해 봤다면, 이번엔 **모델 본체를 직접 random init 해 사전학습** 합니다. 표준 BERT 보다 *훨씬 작은* (약 10M params) BERT 를 짜서 **일반 도메인 Wikitext-103** paragraphs 로 **Masked Language Modeling (MLM)** 사전학습. 원본 BERT 의 Wikipedia + BookCorpus 정신을 따라 *task 도메인이 아닌* 일반 위키 본문 사용 — Ch 21 의 분류 fine-tune (Yelp 리뷰(식당·업체)) 은 *완전히 다른 도메인* 으로 *일반 표상 → 다른 task* transfer 메시지가 정직해집니다. 토크나이저는 학습 안정성을 위해 표준 `bert-base-uncased` 를 그대로 가져옵니다.
+**목표**: Phase 3 의 두 번째 챕터. Ch 19 에서 *토크나이저를 직접 학습* 해 봤다면, 이번엔 **모델 본체를 직접 random init 해 사전학습** 합니다. 표준 BERT 보다 *훨씬 작은* (약 11M params) BERT 를 짜서 **일반 도메인 Wikitext-103** paragraphs 로 **Masked Language Modeling (MLM)** 사전학습. 원본 BERT 의 Wikipedia + BookCorpus 정신을 따라 *task 도메인이 아닌* 일반 위키 본문 사용 — Ch 21 의 분류 fine-tune (Yelp 리뷰(식당·업체)) 은 *완전히 다른 도메인* 으로 *일반 표상 → 다른 task* transfer 메시지가 정직해집니다. 토크나이저는 학습 안정성을 위해 표준 `bert-base-uncased` 를 그대로 가져옵니다.
 
 **환경**: Google Colab **T4 GPU 필수**.
 
@@ -35,7 +35,7 @@
 | 축 | Ch 19 (토크나이저 학습 전용) | Ch 20 (작은 BERT scratch MLM) |
 |---|---|---|
 | **이 챕터의 task** | 토크나이저 학습 (모델 없음) | **모델 사전학습 (MLM)** ← *유일한 변화* |
-| 모델 | 없음 | **작은 `BertForMaskedLM` (random init, 약 10M params)** |
+| 모델 | 없음 | **작은 `BertForMaskedLM` (random init, 약 11M params)** |
 | 토크나이저 | WordPiece + WordLevel *직접 학습* | **`bert-base-uncased` *가져옴*** (vocab 30,522) |
 | 데이터 | Yelp text + NSMC text (vocab 학습용) | **Wikitext-103 paragraphs (일반 도메인 MLM 학습용)** |
 | Loss | 없음 (vocab + merge rules 가 산출물) | **`CrossEntropyLoss` (masked token 위치만)** |
@@ -74,14 +74,18 @@ $$L_{\text{MLM}} = -\frac{1}{|M|} \sum_{i \in M} \log P(x_i \mid x_{\setminus M}
 | 모델 상태 | 정답 토큰 확률 | $-\log p$ |
 |---|---|---|
 | 균등 추측 (random init 초기) | $1/30522 \approx 3.28 \times 10^{-5}$ | **10.33** ← random baseline |
+| unigram — 빈도만 아는 단계 | 코퍼스 빈도 그대로 | **7.25** ← 이번 챕터가 넘어서야 할 기준선 |
+| **이번 챕터 도달점** (5K paragraphs × 2 epoch) | — | **7.06 - 7.13** ← 실측 (train 7.07 / eval 7.06-7.13) |
 | 약하게 학습 (정답 확률 0.01) | $0.01$ | 4.61 |
-| 잘 학습된 작은 BERT (정답 확률 0.05-0.1) | $0.05$ - $0.1$ | **2.3 - 3.0** ← 이번 챕터 목표 영역 |
+| 잘 학습된 작은 BERT (정답 확률 0.05-0.1) | $0.05$ - $0.1$ | 2.3 - 3.0 (이 셋업의 사정거리 밖) |
 | 큰 사전학습 BERT (정답 확률 0.3+) | $0.3$ | 1.20 |
 | 완벽 (정답 확률 1.0) | $1.0$ | 0.00 |
 
 **관전 포인트**:
 - 학습 첫 step 의 loss 가 약 10 부근이면 random init 직후 *균등 추측* 상태. 첫 100 step 안에 빠르게 떨어지면 vocab 정상.
-- 목표는 *vocab 의 일부 후보를 추려내는* 단계 (약 2.5-4.0). 작은 모델 + 5K paragraphs + 2 epoch 으로 *완벽* 은 불가능 — 그러나 Ch 21 의 fine-tune 출발점으로는 충분.
+- **이번 챕터의 목표는 `unigram 기준선 (7.25)` 을 넘어서는 데까지** 입니다. 실제로 2 epoch 뒤 train loss 약 7.07, eval loss 약 7.06-7.13 에 도달합니다 — *"어떤 토큰이 흔한가"* 를 막 새긴 단계. 표의 loss 는 train/eval 공통 척도이고, 이 챕터에선 두 값이 거의 붙어 있습니다. 모델 생성 직전에 `set_seed(SEED)` 를 걸어 두었으므로, 직접 돌려도 위 값이 소수점 둘째 자리까지 그대로 재현됩니다.
+- *vocab 의 일부 후보를 추려내는* 단계 (2.5-4.0) 는 **이 셋업으로는 도달하지 않습니다.** 부록 `20_en_bert_pretrain_scaling` 에서 16 epoch 까지 늘려도 loss 는 약 6.5 (ppl 697) 에서 평탄해집니다 — 더 내리려면 epoch 이 아니라 **데이터** 를 늘려야 합니다 (🛠️ 변형 참조).
+- 작은 모델 + 5K paragraphs + 2 epoch 으로 *완벽* 은 불가능 — 그러나 Ch 21 의 fine-tune 출발점으로는 충분.
 
 ### Perplexity (PPL)
 
@@ -90,6 +94,9 @@ $$L_{\text{MLM}} = -\frac{1}{|M|} \sum_{i \in M} \log P(x_i \mid x_{\setminus M}
 | MLM loss | PPL | 해석 |
 |---|---|---|
 | 10.33 | 30,522 | 균등 (전체 vocab) |
+| 7.25 | 1,412 | unigram — 빈도만 아는 단계 |
+| **7.13** | **1,253** | ← **이번 챕터 2 epoch 실측** |
+| 6.55 | 697 | 부록에서 16 epoch 까지 늘린 결과 |
 | 5.0 | 148 | vocab 의 일부로 좁혀짐 |
 | 3.0 | 20 | 20 개 후보 중에서 결정 |
 | 1.0 | 2.7 | 거의 결정적 |

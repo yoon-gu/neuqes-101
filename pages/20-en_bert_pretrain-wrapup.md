@@ -13,7 +13,7 @@
 
 ## 체크포인트 질문
 
-1. MLM 사전학습의 random baseline loss 가 `ln(30522) ≈ 10.33` 인 이유는 무엇이고, 학습 첫 step 의 loss 가 이 값과 *크게* 다르다면 무엇을 의심해야 하나요?
+1. MLM 사전학습의 random baseline loss 가 `ln(30522) ≈ 10.33` 인 이유는 무엇이고, 학습 첫 step 의 loss 가 이 값과 *크게* 다르다면 무엇을 의심해야 하나요? 또 학습 후 loss 가 **unigram 기준선 근처에서 멈춰 있다면** 모델은 무엇을 배웠고 무엇을 아직 못 배운 상태인가요?
 2. `DataCollatorForLanguageModeling` 이 매 batch 마다 *다른* 위치를 mask 합니다. 같은 위치를 *고정해서* mask 하면 어떤 문제가 생길까요?
 3. `BertForMaskedLM` 의 MLM head 가 *입력 임베딩과 tied* 됩니다. 왜 이렇게 묶으면 파라미터 절약 + 학습 안정에 모두 도움이 되나요?
 4. Ch 21 에서 `AutoModelForSequenceClassification.from_pretrained("./ch20_small_bert_mlm", num_labels=2)` 를 호출하면, *이번 챕터 모델의 어떤 부분* 이 이어지고 *어떤 부분* 이 버려지나요?
@@ -28,8 +28,8 @@
 
 ```python
 # 이번 챕터 (Ch 20 → Ch 21) 흐름 — 원본 BERT 와 같은 정신
-# 일반 위키 (Wikitext-103) 로 MLM 사전학습
-# Yelp 리뷰(식당·업체) 로 분류 fine-tune  ← 다른 도메인 transfer
+# 1. 일반 위키 (Wikitext-103) 로 MLM 사전학습
+# 2. Yelp 리뷰(식당·업체) 로 분류 fine-tune  ← 다른 도메인 transfer
 
 # 만약 Yelp 로 사전학습 → Yelp 분류 fine-tune 이었다면
 # domain-adaptive pretraining 에 가까워져 transfer 메시지가 약해짐
@@ -67,16 +67,16 @@ BERT 원논문 (Devlin et al., 2018, arXiv:1810.04805) 의 sweet spot:
 작은 BERT scratch 학습은 fine-tune 보다 *학습률에 민감* 합니다. 발산 (loss → NaN 또는 100+) 의 흔한 원인:
 
 ```python
-# 학습률 낮추기 (5e-4 → 1e-4 → 5e-5 순서로)
+# 1. 학습률 낮추기 (5e-4 → 1e-4 → 5e-5 순서로)
 training_args = TrainingArguments(learning_rate=1e-4, ...)
 
-# warmup_ratio 늘리기 (0.06 → 0.1)
-training_args = TrainingArguments(warmup_ratio=0.1, ...)
+# 2. warmup 늘리기 (0.06 → 0.1)
+training_args = TrainingArguments(warmup_steps=0.1, ...)
 
-# gradient clipping (Trainer 기본 1.0, 더 빡빡하게)
+# 3. gradient clipping (Trainer 기본 1.0, 더 빡빡하게)
 training_args = TrainingArguments(max_grad_norm=0.5, ...)
 
-# fp16 끄고 fp32 로 시도 (loss scale overflow 가능성)
+# 4. fp16 끄고 fp32 로 시도 (loss scale overflow 가능성)
 training_args = TrainingArguments(fp16=False, ...)
 ```
 
@@ -117,26 +117,26 @@ model_scratch = BertForSequenceClassification(config)
 이 챕터의 작은 BERT 는 약 40MB 정도라 무겁지 않지만, 큰 모델의 경우:
 
 ```python
-# safetensors 형식 강제 (bin 보다 약간 작음 + 안전)
+# 1. safetensors 형식 강제 (bin 보다 약간 작음 + 안전)
 model.save_pretrained("./ch20_small_bert_mlm", safe_serialization=True)
 
-# fp16 으로 저장 (weight 자체를 half 로)
+# 2. fp16 으로 저장 (weight 자체를 half 로)
 model.half().save_pretrained("./ch20_small_bert_mlm")
 
-# 양자화 (advanced — bitsandbytes 8-bit/4-bit)
+# 3. 양자화 (advanced — bitsandbytes 8-bit/4-bit)
 # from transformers import BitsAndBytesConfig
 # config = BitsAndBytesConfig(load_in_8bit=True)
 ```
 
 이번 챕터는 *학습용 체크포인트* 이므로 fp32 그대로 저장 (Ch 21 fine-tune 시 정밀도 유지). 배포용이면 inference 단계에서 quantize 고려.
 
-### Q8. (이론) 큰 BERT (110M) 와 비교해 이번 작은 BERT (10M) 의 *근본 한계* 는?
+### Q8. (이론) 큰 BERT (110M) 와 비교해 이번 작은 BERT (약 11M) 의 *근본 한계* 는?
 
 | 차원 | 작은 BERT (이번 챕터) | bert-base-uncased | 차이의 영향 |
 |---|---|---|---|
 | hidden_size | 256 | 768 | 표현 공간 차원이 1/3 → 미세한 의미 구분 어려움 |
 | num_layers | 4 | 12 | *깊은* 추론 (구문 → 의미 → 문맥) 단계 부족 |
-| 학습 데이터 | 5K paragraphs (약 700K-1M 토큰, Wikitext-103) | 33억 토큰 (BERT-base) | 어휘 다양성·문맥 풍부함 격차 약 5000배 |
+| 학습 데이터 | 5K paragraphs (약 68.5만 토큰 = 5,352 block × 128, Wikitext-103) | 33억 토큰 (BERT-base) | 어휘 다양성·문맥 풍부함 격차 약 5000배 |
 | 학습 시간 | 약 0.4분 (MLM 2 epoch) | 4 일 (TPU v3-256) | 압축한 *정보량* 자체가 다름 |
 
 **결론**: 이번 챕터의 산출물은 *fine-tune 출발점으로는 random 보다 나음* 정도. *zero-shot* 또는 *복잡한 downstream* 에선 표준 BERT 와 비교 불가. *작은 모델 + 작은 데이터로도 일반 도메인 사전학습이 가능하다는 메커니즘* 을 *경험* 하는 게 이 챕터의 목적이고, *실용 모델* 은 표준 사전학습품을 가져다 쓰는 게 정답.
@@ -147,7 +147,7 @@ model.half().save_pretrained("./ch20_small_bert_mlm")
 
 - 이번 챕터의 `./ch20_small_bert_mlm` 체크포인트를 `AutoModelForSequenceClassification.from_pretrained(..., num_labels=2)` 로 로드 → MLM head 떼고 분류 헤드 부착
 - **Yelp 이진 분류 fine-tune** (Ch 10·11 과 같은 데이터·셋업) — *완전히 다른 도메인 transfer*. 일반 위키로 사전학습한 본체가 *Yelp 리뷰(식당·업체) 도메인* 에 얼마나 잘 적응하는가 측정
-- **핵심 비교**: 이번 작은 사전학습 BERT (약 10M params, Wikitext-103 5K paragraphs MLM) vs Ch 10 의 DistilBERT (약 66M params, 대규모 Wikipedia + BookCorpus 사전학습). 둘 다 *일반 도메인 → Yelp transfer* 라 비교가 *fair* — *사전학습 규모* 차이만 측정됨
+- **핵심 비교**: 이번 작은 사전학습 BERT (약 11M params, Wikitext-103 5K paragraphs MLM) vs Ch 10 의 DistilBERT (약 66M params, 대규모 Wikipedia + BookCorpus 사전학습). 둘 다 *일반 도메인 → Yelp transfer* 라 비교가 *fair* — *사전학습 규모* 차이만 측정됨
 - 작은 모델 + 작은 데이터 사전학습이 *얼마나 도움 되는가* 의 정량 측정 — fine-tune 학습 곡선·최종 accuracy·confusion matrix 모두 나란히
 - 일부러 *random init* baseline (사전학습 없이 분류 직접) 도 함께 학습해 *사전학습의 순 효과* 분리
 
