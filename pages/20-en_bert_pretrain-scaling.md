@@ -1,4 +1,4 @@
-## 20-4. 부록 — 사전학습량과 perplexity 곡선
+## 부록 — 사전학습량과 perplexity 곡선
 
 > ▶ **[Google Colab에서 사전학습량 부록 열기](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/20_en_bert_pretrain/20_en_bert_pretrain_scaling.ipynb)** — Ch 20·22 본편의 높은 perplexity가 버그인지, 짧은 데모 학습의 한계인지 직접 확인합니다.
 
