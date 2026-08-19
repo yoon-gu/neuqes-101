@@ -185,105 +185,6 @@ mean_squared_error(y, model.predict(X))
 
 
 
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-!pip install -q datasets scikit-learn pandas matplotlib
-\end{lstlisting}
-
-\begin{codeRead}
-\textbf{1행}의 \inlinecode{!pip install -q datasets...}에서는 Colab 실행에 필요한 패키지를 설치합니다.
-\end{codeRead}
-
-
-
-\Needspace{10\baselineskip}
-\begin{lstlisting}
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-from datasets import load_dataset
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=10]
-import matplotlib.font_manager as fm, subprocess, os
-_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
-if not os.path.exists(_fp):
-    subprocess.run(
-        "apt-get -qq -y install fonts-nanum",
-        shell=True,
-    )
-fm.fontManager.addfont(_fp)
-plt.rcParams["font.family"] = "NanumGothic"
-plt.rcParams["axes.unicode_minus"] = False
-
-dataset = load_dataset("Yelp/yelp_review_full")
-SAMPLE_SIZE = 5000
-ds = dataset["train"].shuffle(seed=42).select(range(SAMPLE_SIZE))
-df = ds.to_pandas()
-print(f"Sample count: {len(df)}")
-\end{lstlisting}
-
-\begin{codeRead}
-\inlinecode{numpy, pandas, matplotlib, datasets, scikit-learn} 같은 주요 패키지를 불러옵니다.
-\end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-If the error persists, please let us know by opening an issue on GitHub (ht...
-Sample count: 5000
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-df["star"] = df["label"] + 1
-
-# train / test split
-X_text_train, X_text_test, y_train, y_test = train_test_split(
-    df["text"], df["star"].astype(float),
-    test_size=0.2, random_state=42,
-)
-
-tfidf = TfidfVectorizer(max_features=10000)
-X_train = tfidf.fit_transform(X_text_train)
-X_test = tfidf.transform(X_text_test)
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 데이터를 불러오고 학습에 맞는 형태로 정리하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{7\baselineskip}
-\begin{lstlisting}[firstnumber=13]
-print(
-    f"X_train: {X_train.shape}, y_train: "
-    f"{y_train.shape}"
-)
-print(f"X_test:  {X_test.shape}, y_test:  {y_test.shape}")
-\end{lstlisting}
-
-\begin{codeRead}
-\textbf{1행}의 \inlinecode{df["star"] = df["label"] + 1}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{4--7행}의 \inlinecode{X\_text\_train, X\_text\_test...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{9행}의 \inlinecode{tfidf = ...}에서는 TF-IDF 기반 벡터라이저를 만듭니다. \textbf{10행}의 \inlinecode{X\_train = ...}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{11행}의 \inlinecode{X\_test = ...}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
-\end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-X_train: (4000, 10000), y_train: (4000,)
-X_test:  (1000, 10000), y_test:  (1000,)
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
 \section{실습: 별점 1-5를 그대로 회귀하기}
 
 \inlinecode{LinearRegression}은 가중치 벡터 \(w\)와 편향 \(b\)를 학습해 다음을 출력합니다.
@@ -329,7 +230,7 @@ print(f"Test  R²:  {r2_score(y_test, y_pred_test):.4f}")
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{model = ...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model.fit(...)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{y\_pred\_train = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{5행}의 \inlinecode{y\_pred\_test = ...}에서는 학습된 모델로 최종 예측값을 만듭니다.
+\textbf{1행}의 \inlinecode{model = ...}에서는 이번 실습에서 관찰할 모델 객체를 정의합니다. \textbf{2행}의 \inlinecode{model.fit(...)}에서는 학습 데이터로 모델 또는 변환기를 적합합니다. \textbf{4행}의 \inlinecode{y\_pred\_train = ...}에서는 학습된 모델로 최종 예측값을 만듭니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -343,46 +244,7 @@ Test  R²:  0.2139
 
 
 
-\Needspace{10\baselineskip}
-\begin{lstlisting}
-print(
-    f"Pred range: [{y_pred_test.min():.2f}, "
-    f"{y_pred_test.max():.2f}]"
-)
-print(
-    f"True range: [{y_test.min():.0f}, "
-    f"{y_test.max():.0f}]"
-)
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=10]
-plt.hist(y_pred_test, bins=40, alpha=0.6, label="예측")
-plt.hist(y_test, bins=5, alpha=0.6, label="실제")
-plt.axvline(
-    1,
-    color="red",
-    linestyle="--",
-    linewidth=1,
-    label="1 / 5 경계",
-)
-plt.axvline(5, color="red", linestyle="--", linewidth=1)
-plt.xlabel("별점 (1-5)")
-plt.ylabel("개수")
-plt.legend()
-plt.title("예측 분포: 실제 vs 예측")
-plt.show()
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Pred range: [-1.55, 7.15]
-True range: [1, 5]
-\end{bookoutputbox}
-\par\vspace{0.9em}
+\compactCodeOmitted{숫자 결과를 그림으로 확인하는 단계}
 
 \begin{bookfigurelabel}[H]{회귀 예측값과 실제 별점 분포}{fig:ch02-prediction-distribution}
 \centering
@@ -400,30 +262,6 @@ True range: [1, 5]
 \inlinecode{LinearRegression}이 학습한 것은 단지 “MSE를 최소화하는 가중합”이지, “출력값이 1과 5 사이여야 한다”는 제약을 포함하지 않습니다. 모델은 활성화 함수 없이 \(w^\top x + b\)를 그대로 출력할 뿐이라 음수도 5 초과도 모두 가능한 결과입니다.
 
 이게 \textbf{회귀의 본질} 입니다. 출력 범위 제약은 모델이 아니라 사람이 따로 입혀야 합니다 --- clipping 같은 후처리, 혹은 sigmoid 같은 활성화 함수로요.
-
-
-
-\Needspace{8\baselineskip}
-\begin{lstlisting}
-manual_mse = ((y_test - y_pred_test) ** 2).mean()
-sklearn_mse = mean_squared_error(y_test, y_pred_test)
-
-print(f"Manual MSE: {manual_mse:.6f}")
-print(f"sklearn MSE: {sklearn_mse:.6f}")
-print(f"Diff:        {abs(manual_mse - sklearn_mse):.2e}")
-\end{lstlisting}
-
-\begin{codeRead}
-\textbf{1행}의 \inlinecode{manual\_mse = ...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다. \textbf{2행}의 \inlinecode{sklearn\_mse = ...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다.
-\end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Manual MSE: 1.556471
-sklearn MSE: 1.556471
-Diff:        0.00e+00
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -479,38 +317,6 @@ print(
 Test MSE (normalized space): 0.0973
 Test MSE (back to star space): 1.5565
 Test MSE (no normalization):    1.5565
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-print(
-    f"Normalized model pred range: [{y_pred_norm.min():.3f}, "
-    f"{y_pred_norm.max():.3f}]"
-)
-print(f"Ideal range: [0, 1]")
-
-n_below = (y_pred_norm < 0).sum()
-n_above = (y_pred_norm > 1).sum()
-print(
-    f"\nPredictions < 0: {n_below} ("
-    f"{n_below / len(y_pred_norm):.1%})"
-)
-print(
-    f"Predictions > 1: {n_above} ("
-    f"{n_above / len(y_pred_norm):.1%})"
-)
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Normalized model pred range: [-0.638, 1.538]
-Ideal range: [0, 1]
-
-Predictions < 0: 85 (8.5%)
-Predictions > 1: 92 (9.2%)
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -596,46 +402,8 @@ mean_absolute_error(y_test, y_pred_test)
 
 \end{faqBox}
 
-\begin{faqBox}{Q2. (이론) 별점을 {[}0, 1{]}로 정규화하면 학습이 더 잘 되나요?}
 
-\inlinecode{LinearRegression}은 정규방정식(closed-form)으로 풀기 때문에 라벨 스케일이 결과에 영향을 거의 주지 않습니다. 위 셀에서 보았듯 정규화 공간에서 학습한 모델을 원래 별점 공간으로 되돌리면 정규화 없이 학습한 모델과 거의 같은 MSE가 나옵니다.
 
-라벨 정규화가 의미 있는 경우는 따로 있습니다.
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{SGD 기반 학습 (BERT 포함)}: 라벨 스케일이 크면 gradient도 커져 학습률 조정이 까다로워집니다. {[}0, 1{]} 정규화가 안정성에 도움.
-\item
-  \textbf{다른 loss와 호환}: BCE/sigmoid는 {[}0, 1{]} 라벨이 필요. 이 장의 정규화는 다음 장을 위한 다리.
-\item
-  \textbf{해석 편의}: {[}0, 1{]}은 “확률”처럼 읽혀 다른 점수와 비교할 때 편함.
-\end{itemize}
-
-\end{faqBox}
-
-\begin{faqBox}{Q3. (실무) 학습이 너무 빨리 끝나는데 정상인가요?}
-
-네, 정상입니다. \inlinecode{LinearRegression}은 SGD가 아니라 \textbf{정규방정식(normal equation)} 으로 한 번에 답을 내는 닫힌 형태 풀이입니다.
-
-\begin{equation}
-\label{eq:ch02-05}
-w = (X^\top X)^{-1} X^\top y
-\end{equation}
-
-식~\eqref{eq:ch02-05}은 선형회귀의 정규방정식 해를 나타냅니다.
-
-5,000 샘플 \(\times\) 10,000 feature(sparse) 정도는 1초 안에 끝납니다. BERT 파인튜닝은 같은 데이터로 5-10분 걸리는 것과 비교하면 수백 배 빠릅니다 --- 모델 표현력이 다르기 때문입니다.
-
-\end{faqBox}
-
-\begin{faqBox}{Q4. (이론) \inlinecode{LinearRegression}은 왜 활성화 함수가 없나요?}
-
-회귀의 정의가 “임의의 실수를 예측한다”이기 때문입니다. 활성화 함수는 출력 범위에 제약을 거는 도구라(sigmoid \(\to\) {[}0,1{]}, tanh \(\to\) {[}-1,1{]}, softmax \(\to\) 확률 분포), 범위 제약이 필요 없는 회귀에서는 자연스럽게 빠집니다.
-
-오히려 혼동하는 건 분류 쪽입니다. 분류는 출력이 “확률”이어야 하므로 sigmoid/softmax가 강제로 들어가는 거지, 활성화 함수가 더 “원본” 형태인 게 아닙니다. \textbf{회귀의 비활성 출력이 가장 단순한 형태} 라고 보면 됩니다.
-
-\end{faqBox}
 
 \begin{faqBox}{Q5. (실무) 예측값이 5보다 크거나 1보다 작게 나오는데 어떻게 하나요?}
 
@@ -687,6 +455,8 @@ print(
 \end{faqBox}
 
 
+
+\compactFAQMore{3}
 
 \section{오류 실험 (선택)}
 

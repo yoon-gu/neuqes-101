@@ -185,75 +185,9 @@ T4 GPU에서 \inlinecode{fp16}로 학습합니다(bf16·flash-attention 불가).
 
 
 
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-%pip install -q -U transformers tokenizers datasets accelerate
-\end{lstlisting}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-import math, time, torch
-import torch.nn.functional as F
-from datasets import load_dataset
-
-SEED = 42
-torch.manual_seed(SEED)
-device = "cuda" if torch.cuda.is_available() else "cpu"
-USE_FP16 = torch.cuda.is_available()
-print(
-    "torch", torch.__version__, "| device", device, "| fp16", USE_FP16
-)
-if torch.cuda.is_available():
-    print("GPU:", torch.cuda.get_device_name(0))
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-torch 2.11.0+cu128 | device cuda | fp16 True
-GPU: Tesla T4
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
 \section{실습}
 
 \subsection{TinyStories 로드 (\ref{ch:24}장/26과 같은 데이터)}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-raw_train = load_dataset(
-    "roneneldan/TinyStories",
-    split="train[:100000]",
-)
-raw_val   = load_dataset(
-    "roneneldan/TinyStories",
-    split="validation[:500]",
-)
-print(raw_train)
-print(raw_val[0]["text"][:160])
-\end{lstlisting}
-
-\begin{codeRead}
-\textbf{1--4행}의 \inlinecode{raw\_train = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5--8행}의 \inlinecode{raw\_val = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
-\end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-If the error persists, please let us know by opening an issue on GitHub (ht...
-Dataset({
-    features: ['text'],
-    num_rows: 100000
-})
-Spot. Spot saw the shiny car and said, "Wow, Kitty, your car is so bright a...
-
-After
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -420,12 +354,6 @@ coll = DiffusionCollator(tokenizer)
 print("collator ready, mask_id =", coll.mask_id)
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-collator ready, mask_id = 2
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \subsection{작은 BERT-MLM 모델 (\ref{ch:24}장와 동급, 본체는 그대로)}
@@ -456,85 +384,6 @@ print(
 
 
 \subsection{\texorpdfstring{시간가중 \inlinecode{1/t} 손실로 30000 step 학습}{시간가중 1/t 손실로 30000 step 학습}}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-from transformers import Trainer, TrainingArguments
-
-class DiffusionTrainer(Trainer):
-    def compute_loss(self, model, inputs, return_outputs=False, **kw):
-        t = inputs["t"]; labels = inputs["labels"]
-        out = model(
-            input_ids=inputs["input_ids"],
-            attention_mask=inputs["attention_mask"],
-        )
-        B, L, V = out.logits.shape
-        per = F.cross_entropy(out.logits.view(-1, V), labels.view(-1),
-                              ignore_index=-100, reduction="none").view(B, L)
-        loss = ((per.sum(dim=1) / L) / t.to(per.dtype)).mean()
-        return (loss, out) if return_outputs else loss
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=16]
-args = TrainingArguments(
-    output_dir="./out33", max_steps=30000,
-    per_device_train_batch_size=64, per_device_eval_batch_size=64,
-    learning_rate=3e-4, weight_decay=0.01, warmup_steps=500,
-    lr_scheduler_type="cosine", max_grad_norm=1.0, fp16=USE_FP16,
-    logging_steps=250, eval_strategy="steps", eval_steps=2000, save_strategy="no",
-    report_to="none", label_names=["labels"], remove_unused_columns=False, seed=SEED)
-
-trainer = DiffusionTrainer(model=model, args=args, train_dataset=lm_train,
-                           eval_dataset=lm_val, data_collator=coll)
-t0 = time.time(); r = trainer.train(); el = (time.time()-t0)/60
-print(
-    f"\n=== summary ===\nelapsed {el:.2f} min | step {r.global_step} | train_loss "
-    f"{r.training_loss:.4f}"
-)
-print(
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{10\baselineskip}
-\begin{lstlisting}[firstnumber=32]
-    f"random baseline ln(V) = "
-    f"{math.log(tokenizer.vocab_size):.4f}"
-)
-if torch.cuda.is_available():
-    print(
-        f"peak VRAM "
-        f"{torch.cuda.max_memory_allocated()/1024**2:.0f} MiB"
-    )
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Step   Training Loss  Validation Loss
------  -------------  ---------------
-2000   5.888882       5.841110
-4000   5.283085       4.966988
-6000   3.858773       3.558012
-8000   3.558880       3.373290
-10000  3.355387       3.059401
-12000  3.253868       2.970810
-14000  3.169541       2.887027
-16000  3.130559       2.847089
-18000  3.058771       2.807509
-20000  3.020011       2.741545
-22000  3.022684       2.713714
-24000  2.976005       2.729231
-...
-
-...
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -749,7 +598,7 @@ The boy was sad and wished he had never been here for being playing with hi...
 \end{adjustbox}
 \end{booktable}
 
-만약 모델이 유니그램 marginal만 외운 채 붕괴했다면 이 정확도는 0에 가깝습니다. 가린 자리에 문맥과 무관하게 늘 \inlinecode{the}나 마침표만 찍을 테니까요. 0.262는 이미 붕괴 상태를 벗어났다는 신호이고, 0.717는 가려진 자리 10개 중 7개를 양방향 문맥만 보고 정확히 복원했다는 뜻입니다. 모델이 “이 앞뒤 문맥이면 여기 올 단어는 이것”이라는 조건부 구조를 실제로 학습했다는 직접 증거입니다.
+만약 모델이 유니그램 marginal만 외운 채 collapse했다면 이 정확도는 0에 가깝습니다. 가린 자리에 문맥과 무관하게 늘 \inlinecode{the}나 마침표만 찍을 테니까요. 0.262는 이미 collapse 상태를 벗어났다는 신호이고, 0.717는 가려진 자리 10개 중 7개를 양방향 문맥만 보고 정확히 복원했다는 뜻입니다. 모델이 “이 앞뒤 문맥이면 여기 올 단어는 이것”이라는 조건부 구조를 실제로 학습했다는 직접 증거입니다.
 
 여기서 한 가지 짚을 점이 있습니다. top-1 accuracy 0.717는 곧바로 생성 품질 0.717를 뜻하지 않습니다. 생성은 마스크 비율 \(t\)가 1(전부 가림)에서 시작해 0까지 내려가는 훨씬 어려운 조건이고, 한 번이 아니라 수십 번의 forward를 누적합니다. 그래도 “쉬운 조건(15\%만 가림)에서조차 못 맞히면 어려운 생성은 가망이 없다”는 점에서, 이 숫자는 모델 용량에 대한 하한 진단으로 충분합니다.
 
@@ -757,7 +606,7 @@ The boy was sad and wished he had never been here for being playing with hi...
 
 \subsection{진단 2 --- KL(생성 ‖ 유니그램): 빈도를 넘어선 구조인가}
 
-붕괴한 모델의 가장 교묘한 점은 “그럴듯하게 흔한 단어”를 내놓는다는 것입니다. \inlinecode{the}, \inlinecode{and}, 마침표는 코퍼스에서 원래 자주 등장하므로, 이것들만 반복해도 개별 토큰 빈도는 코퍼스와 비슷해 보입니다. 이 함정을 잡으려면 생성된 토큰의 분포가 코퍼스의 유니그램 분포와 얼마나 \textbf{다른지}를 재야 합니다.
+collapse한 모델의 가장 교묘한 점은 “그럴듯하게 흔한 단어”를 내놓는다는 것입니다. \inlinecode{the}, \inlinecode{and}, 마침표는 코퍼스에서 원래 자주 등장하므로, 이것들만 반복해도 개별 토큰 빈도는 코퍼스와 비슷해 보입니다. 이 함정을 잡으려면 생성된 토큰의 분포가 코퍼스의 유니그램 분포와 얼마나 \textbf{다른지}를 재야 합니다.
 
 \begin{equation}
 \label{eq:ch33-05}
@@ -781,7 +630,7 @@ The boy was sad and wished he had never been here for being playing with hi...
 \end{adjustbox}
 \end{booktable}
 
-0.78은 생성 토큰 분포가 단순 빈도표와 뚜렷이 갈라졌다는 뜻입니다. 붕괴 모델이라면 여기서 0에 가까운 값이 나왔을 것입니다. 진단 1의 top-1 accuracy가 “마스크 자리를 맞힌다”는 국소적 증거라면, 이 KL은 “생성 전체가 유니그램 흉내를 넘어섰다”는 분포 차원의 증거입니다. 두 숫자가 같은 결론을 다른 각도에서 받쳐 줍니다.
+0.78은 생성 토큰 분포가 단순 빈도표와 뚜렷이 갈라졌다는 뜻입니다. collapse 모델이라면 여기서 0에 가까운 값이 나왔을 것입니다. 진단 1의 top-1 accuracy가 “마스크 자리를 맞힌다”는 국소적 증거라면, 이 KL은 “생성 전체가 유니그램 흉내를 넘어섰다”는 분포 차원의 증거입니다. 두 숫자가 같은 결론을 다른 각도에서 받쳐 줍니다.
 
 
 
@@ -796,28 +645,28 @@ The boy was sad and wished he had never been here for being playing with hi...
 샘플러 & 4-gram 반복률 \\
 \midrule
 
-반복 억제 없음 & 0.173 \\
+반복 억제 없음 & 0.177 \\
 반복 억제 적용 & \textbf{0.000} \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
-반복 억제가 없을 때의 0.173은 생성문 4-gram의 약 17\%가 어딘가에서 다시 등장한다는 뜻으로, 자연스러운 문장이라기엔 높습니다. 반복 억제를 켜면 0.000으로 떨어집니다. 여기서 쓴 장치는 세 가지입니다. 이미 사용한 토큰의 로짓을 깎는 repetition penalty(1.3), 바로 왼쪽 토큰과 동일한 예측을 막는 no-immediate-repeat, 그리고 분포 꼬리를 잘라 안정화하는 temperature 0.8 + top-p 0.92입니다.
+반복 억제가 없을 때의 0.177은 생성문 4-gram의 약 18\%가 어딘가에서 다시 등장한다는 뜻으로, 자연스러운 문장이라기엔 높습니다. 반복 억제를 켜면 0.000으로 떨어집니다. 여기서 쓴 장치는 세 가지입니다. 이미 사용한 토큰의 로짓을 깎는 repetition penalty(1.3), 바로 왼쪽 토큰과 동일한 예측을 막는 no-immediate-repeat, 그리고 분포 꼬리를 잘라 안정화하는 temperature 0.8 + top-p 0.92입니다.
 
 한 가지 균형을 분명히 해 둡니다. 4-gram 반복률 0.000은 그 자체로 “좋은 글”의 증거가 아닙니다. 무작위로 단어를 뽑아도 반복은 0이 나올 수 있으니까요. 이 숫자는 진단 1(조건부 학습됨)과 진단 2(구조 있음)가 이미 통과한 \textbf{뒤에} 읽어야 의미가 있습니다. 모델은 구조를 배웠고, 샘플러는 그 구조를 같은 조각으로 망치지 않는다 --- 세 숫자를 함께 읽을 때 비로소 이 결론이 섭니다.
 
 
 
-\subsection{세 숫자를 한 장에 --- 붕괴 ablation 대비}
+\subsection{세 숫자를 한 장에 --- collapse ablation 대비}
 
-레시피를 일부러 되돌려 망가뜨린 붕괴 모델(아래 오류 실험에서 재현)과 이 장의 모델을 같은 잣대로 나란히 놓으면, 레시피가 무엇을 바꾸는지 한눈에 들어옵니다.
+레시피를 일부러 되돌려 망가뜨린 collapse 모델(아래 오류 실험에서 재현)과 이 장의 모델을 같은 잣대로 나란히 놓으면, 레시피가 무엇을 바꾸는지 한눈에 들어옵니다.
 
-\begin{booktable}{33장 세 숫자를 한 장에 - 붕괴 ablation 대비 표}{tab:ch33-07}
+\begin{booktable}{33장 세 숫자를 한 장에 - collapse ablation 대비 표}{tab:ch33-07}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}llll@{}}
 \toprule
-진단 지표 & 붕괴 상태 (예상) & 교정된 모델 (실측) & 무엇을 증명하나 \\
+진단 지표 & collapse 상태 (예상) & 교정된 모델 (실측) & 무엇을 증명하나 \\
 \midrule
 
 고정-t(0.15) top-1 accuracy & \(\approx\)0 & 0.262 \(\to\) \textbf{0.717} & 모델이 조건부를 학습 \\
@@ -828,7 +677,7 @@ KL(생성 ‖ 유니그램) & \(\approx\)0 & \textbf{0.78} & 생성이 유니그
 \end{adjustbox}
 \end{booktable}
 
-세 숫자는 같은 이야기를 세 각도에서 합니다. top-1 accuracy 0.717는 모델이 가려진 자리를 양방향 문맥으로 복원한다는 것을, KL 0.78은 그 결과가 단순 빈도표가 아니라 문맥 의존 구조라는 것을, 4-gram 0.000은 그 구조가 디코딩 단계에서 반복 루프로 무너지지 않는다는 것을 보여줍니다. 붕괴 ablation이 “무엇이 망가지나”를 보여준다면, 이 숫자들은 “이 모델이 정말 조건부 구조를 배웠나”를 답합니다.
+세 숫자는 같은 이야기를 세 각도에서 합니다. top-1 accuracy 0.717는 모델이 가려진 자리를 양방향 문맥으로 복원한다는 것을, KL 0.78은 그 결과가 단순 빈도표가 아니라 문맥 의존 구조라는 것을, 4-gram 0.000은 그 구조가 디코딩 단계에서 반복 루프로 무너지지 않는다는 것을 보여줍니다. collapse ablation이 “무엇이 망가지나”를 보여준다면, 이 숫자들은 “이 모델이 정말 조건부 구조를 배웠나”를 답합니다.
 
 이렇게 진단된 모델이 실제로 어떤 문장을 쓰는지는 다음 셀의 생성 예시에서 직접 확인합니다.
 
@@ -917,7 +766,7 @@ print(
 
 \subsection{“모델이 좋아야 샘플러가 산다”}
 
-여기서 한 가지를 분명히 해 둘 필요가 있습니다. 반복 억제 샘플러가 \textbf{붕괴한 모델}(오류 실험에서 vocab·step을 되돌려 망가뜨린 ablation)을 살려내는 건 \textbf{아닙니다.} 그렇게 유니그램만 외운 모델에 이 샘플러를 붙였다면 반복은 줄었겠지만 여전히 의미 없는 문장만 나왔을 것입니다. 유니그램 marginal만 학습한 모델에는 애초에 뽑아낼 조건부 구조가 없기 때문입니다.
+여기서 한 가지를 분명히 해 둘 필요가 있습니다. 반복 억제 샘플러가 \textbf{collapse한 모델}(오류 실험에서 vocab·step을 되돌려 망가뜨린 ablation)을 살려내는 건 \textbf{아닙니다.} 그렇게 유니그램만 외운 모델에 이 샘플러를 붙였다면 반복은 줄었겠지만 여전히 의미 없는 문장만 나왔을 것입니다. 유니그램 marginal만 학습한 모델에는 애초에 뽑아낼 조건부 구조가 없기 때문입니다.
 
 이번 장에서 반복 억제가 효과를 본 건 \textbf{모델이 먼저 제대로 학습됐기 때문}입니다. 고정-t(0.15) top-1 accuracy가 0.262에서 0.717로 오른, 조건부 구조를 실제로 익힌 모델 위에서만 샘플러의 미세 조정이 빛을 봅니다. 샘플러는 좋은 모델의 잠재력을 끌어낼 뿐, 없는 능력을 만들어 내지는 못합니다.
 
@@ -1028,7 +877,7 @@ Diffusion 모델은 한 배치에서 확률 \(t\)로 일부 자리만 가립니�
 
 결과물의 결을 보면, 같은 약 3.7M 규모에서 \ref{ch:24}장의 GPT는 1500 step만으로도 “there was a girl named Lily” 같은 매끄러운 문장을 냈습니다. 이 장의 diffusion은 30000 step을 들여 인물(Lily, Timmy)·대화·배경이 있는 이야기까지 도달했지만, “big collar tree”, “an noise” 같은 자잘한 흠이 남습니다.
 
-이 거칠기는 모델이 잘못 학습됐다는 신호가 아닙니다. \textbf{같은 규모에서 diffusion이 autoregressive보다 거친 건 정상} 입니다. 양방향 병렬 채움이라는 더 어려운 과제를, 더 희박한 감독으로, 작은 본체로 풀고 있기 때문입니다. 중요한 건 이 모델이 유니그램 붕괴(“. the the.. was” 같은 고빈도 토큰 반복)에 빠지지 않고 조건부 구조를 실제로 학습했다는 점입니다. 고정-t(0.15) top-1 accuracy가 0.717까지 오르고, 생성 토큰 분포가 코퍼스 유니그램과 뚜렷이 다른(KL 0.78) 상태가 그 증거입니다.
+이 거칠기는 모델이 잘못 학습됐다는 신호가 아닙니다. \textbf{같은 규모에서 diffusion이 autoregressive보다 거친 건 정상} 입니다. 양방향 병렬 채움이라는 더 어려운 과제를, 더 희박한 감독으로, 작은 본체로 풀고 있기 때문입니다. 중요한 건 이 모델이 유니그램 collapse(“. the the.. was” 같은 고빈도 토큰 반복)에 빠지지 않고 조건부 구조를 실제로 학습했다는 점입니다. 고정-t(0.15) top-1 accuracy가 0.717까지 오르고, 생성 토큰 분포가 코퍼스 유니그램과 뚜렷이 다른(KL 0.78) 상태가 그 증거입니다.
 
 \subsection{정리}
 
@@ -1085,7 +934,7 @@ loss = loss.mean()
 \item
   vocab을 30522에서 2048로 줄였더니 임베딩이 차지하던 파라미터 비중이 70\%에서 13.9\%로 떨어졌습니다. 본체 hidden/layer 수는 그대로 두었는데도 생성 품질이 살아난 까닭을 “용량 배분” 관점에서 설명해 보세요.
 \item
-  carry-over 샘플러는 한 번 확정한 토큰을 다시 \texttt{{[}MASK{]}}로 되돌리지 않습니다. 32장의 기본 샘플러(“저신뢰 재마스킹”)는 방금 채운 토큰을 도로 지웠습니다. 이 둘 중 어느 쪽이 디코딩을 비단조로 만들고, 그것이 왜 붕괴를 부추기는지 말해 보세요.
+  carry-over 샘플러는 한 번 확정한 토큰을 다시 \texttt{{[}MASK{]}}로 되돌리지 않습니다. 32장의 기본 샘플러(“저신뢰 재마스킹”)는 방금 채운 토큰을 도로 지웠습니다. 이 둘 중 어느 쪽이 디코딩을 비단조로 만들고, 그것이 왜 collapse를 부추기는지 말해 보세요.
 \item
   같은 3.7M급, 같은 TinyStories인데 AR(\ref{ch:24}장)은 1500 step, 이번 diffusion은 30000 step이 필요했습니다. 학습 신호가 매 자리에 들어오는지 마스크 자리에만 들어오는지의 차이로 이 20배 격차를 설명해 보세요.
 \end{enumerate}
@@ -1094,30 +943,19 @@ loss = loss.mean()
 
 \section{FAQ}
 
-\textbf{Q1. 왜 큰 vocab(30522)이면 붕괴하고 작은 vocab(2048)이면 괜찮나요? 단어를 적게 아는 모델이 더 잘 쓴다는 게 직관에 안 맞습니다.}
+\begin{faqBox}{Q1. 왜 큰 vocab(30522)이면 collapse하고 작은 vocab(2048)이면 괜찮나요? 단어를 적게 아는 모델이 더 잘 쓴다는 게 직관에 안 맞습니다.}
 
-붕괴의 핵심은 어휘량이 아니라 파라미터 배분입니다. vocab 30522짜리 11M 모델은 그중 약 70\%가 임베딩 테이블(30522 \(\times\) hidden)에 묶입니다. 정작 문맥을 읽고 다음 토큰을 추론하는 트랜스포머 본체에 쓸 용량이 거의 남지 않았던 셈입니다. vocab을 2048로 줄이면 임베딩 비중이 13.9\%로 내려가고, 같은 예산을 본체가 가져가 조건부 구조를 학습할 여력이 생깁니다. TinyStories는 어휘가 단순한 동화 코퍼스라 2048개로도 표현력이 충분하다는 점도 맞물립니다. 즉 “단어를 적게 안다”가 아니라 “아낀 용량을 문맥 추론에 돌렸다”가 정확한 그림입니다.
+collapse의 핵심은 어휘량이 아니라 파라미터 배분입니다. vocab 30522짜리 11M 모델은 그중 약 70\%가 임베딩 테이블(30522 \(\times\) hidden)에 묶입니다. 정작 문맥을 읽고 다음 토큰을 추론하는 트랜스포머 본체에 쓸 용량이 거의 남지 않았던 셈입니다. vocab을 2048로 줄이면 임베딩 비중이 13.9\%로 내려가고, 같은 예산을 본체가 가져가 조건부 구조를 학습할 여력이 생깁니다. TinyStories는 어휘가 단순한 동화 코퍼스라 2048개로도 표현력이 충분하다는 점도 맞물립니다. 즉 “단어를 적게 안다”가 아니라 “아낀 용량을 문맥 추론에 돌렸다”가 정확한 그림입니다.
 
-\textbf{Q2. 그러면 본체(hidden/layer)는 왜 같이 안 키웠나요? 용량이 핵심이라면 본체도 키우면 더 좋지 않나요?}
+\end{faqBox}
 
-좋아지긴 하겠지만 T4의 30분 예산을 지킬 수 없습니다. 본체를 키우면 step당 연산이 늘어 같은 step 수를 도는 데 시간이 폭증합니다. 이번 교정의 전략은 “본체는 \ref{ch:24}장와 동급(3.79M)으로 유지하되, 임베딩에서 빼낸 용량을 본체가 충분히 활용하도록 학습량을 늘리는 것”이었습니다. 실제로 본체는 그대로 두고 max\_steps를 (ablation의) 1500이 아닌 30000으로 두어 18.5분에 train\_loss 3.59까지 내렸습니다. 같은 예산 안에서는 본체 확대보다 학습량 확보가 더 큰 레버였습니다.
-
-\textbf{Q3. 왜 diffusion이 AR보다 20배나 많은 step이 필요한가요?}
+\begin{faqBox}{Q3. 왜 diffusion이 AR보다 20배나 많은 step이 필요한가요?}
 
 학습 신호의 밀도가 다릅니다. AR(\ref{ch:24}장)은 한 문장을 한 번 넣으면 모든 위치에서 “왼쪽 전체 문맥으로 다음 토큰 맞히기” 감독이 동시에 걸립니다. 매 자리가 매번 학습됩니다. 반면 흡수형 diffusion은 매 배치 확률 \(t\)로 일부 토큰만 \texttt{{[}MASK{]}}로 덮고, 그 마스크 자리에서만 손실을 받습니다. 마스킹 비율 \(t\)도 배치마다 달라져서, 같은 문장이라도 어느 자리가 감독될지가 매번 바뀝니다. 결과적으로 자리당 받는 신호가 희박해 같은 수준에 도달하려면 더 많은 step이 필요합니다. \ref{ch:24}장가 1500 step, 이번 장이 30000 step이었던 약 20배 격차가 이 차이를 보여줍니다.
 
-\textbf{Q4. carry-over가 32장의 저신뢰 재마스킹과 구체적으로 뭐가 다른가요?}
+\end{faqBox}
 
-방향이 정반대입니다. 저신뢰 재마스킹은 매 step “확신이 약한 자리”를 도로 \texttt{{[}MASK{]}}로 지우고 다시 예측합니다. 방금 그럴듯하게 채운 토큰이 다음 step에 다시 빈칸이 되는, 비단조(채웠다 지웠다) 디코딩이라 작은 모델에서는 안정점을 못 찾고 고빈도 토큰으로 무너지기 쉽습니다. carry-over는 반대로 한 번 reveal한 토큰을 끝까지 고정합니다. 블록 안에서 고신뢰부터 차례로 확정하고, 확정된 토큰은 이후 step의 입력에서 불변으로 남습니다(carry-over). 디코딩이 단조롭게 한 방향으로만 진행돼 안정적입니다.
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-logits[..., mask_id] = float("-inf")
-revealed[pos] = True
-x[pos] = chosen_id
-\end{lstlisting}
-
-\textbf{Q5. 손실의 \(1/t\) 시간가중은 왜 필요한가요? 빼면 안 되나요?}
+\begin{faqBox}{Q5. 손실의 \(1/t\) 시간가중은 왜 필요한가요? 빼면 안 되나요?}
 
 흡수형 NELBO를 제대로 근사하려면 필요합니다. 마스킹 비율이 작을 때(\(t\)가 작을 때)는 가려진 토큰이 몇 개 안 되지만, 그 적은 자리를 맞히는 일이 ELBO에서 차지하는 가중치는 큽니다. 선형 schedule \(\alpha_t = 1 - t\)에서 이 가중치가 정확히 \(1/t\)로 나옵니다. 구현은 마스크 자리 CE 합을 길이 \(L\)로 나눈 뒤 다시 \(t\)로 나누는 형태입니다.
 
@@ -1128,24 +966,13 @@ loss = ((mask_ce_sum / seq_len) / t).mean()
 
 \(1/t\)를 빼면 마스킹이 많은(쉬운 신호가 많은) step에 학습이 쏠려 적게 가려진 어려운 경우를 덜 배우게 됩니다. 참고로 \inlinecode{/L}은 ELBO를 상수배한 surrogate라 gradient 방향은 그대로지만, \(1/t\)는 step별 가중 자체를 바꾸므로 성질이 다릅니다.
 
-\textbf{Q6. 학습 때 \(t\)의 하한(0.02)만 자르고 상한은 1로 그대로 둔 이유가 있나요?}
+\end{faqBox}
 
-train과 infer의 조건을 맞추기 위해서입니다. 하한 0.02로 절단하는 건 \(t \to 0\)에서 \(1/t\) 가중이 폭발해 학습이 불안정해지는 것을 막으려는 수치적 안전장치입니다. 반대로 상한을 자르지 않는 이유는, 생성이 전부 \texttt{{[}MASK{]}}인 상태(\(t = 1\)에 해당)에서 시작하기 때문입니다. 만약 학습에서 \(t\) 상한을 0.9 같은 값으로 잘라버리면 모델은 “거의 다 가려진 입력”을 본 적이 없는데 추론에서는 바로 그 상황을 마주합니다. train에서 안 본 분포를 infer에서 요구하면 또 무너지기 쉽습니다. 그래서 상한은 1로 열어 둡니다.
+\compactFAQMore{4}
 
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-t = torch.rand(batch).clamp_min(0.02)
-\end{lstlisting}
+\section{오류 실험 --- “조용한 collapse” 재현하기}
 
-\textbf{Q7. 생성 결과에 “big collar tree”, “an noise” 같은 잔흠이 남는데, 더 키워야 하나요?}
-
-이건 붕괴가 아니라 작은 모델의 한계입니다. 3.79M급에 vocab 2048이면 인물(Lily, Timmy)과 대화, 배경이 있는 동화를 만들어 내는 것 자체가 성공 신호입니다. 실제로 고정-\(t\)(0.15) top-1 정확도가 8000 step의 0.262에서 30000 step의 0.717까지 올랐고, 반복억제 샘플러로 4-gram 반복률이 0.177에서 0.000으로 떨어졌으며, 생성 토큰 분포와 코퍼스 유니그램의 KL이 0.78로(붕괴면 0에 가깝습니다) 모델이 단순 빈도 모사를 넘어섰음을 보여줍니다. 자잘한 흠은 모델·데이터 규모를 키우면 줄지만, 그건 T4 30분 예산 밖의 이야기입니다. 이 장의 목표는 “작은 diffusion LM이 coherent하게 생성되게 만든다”이고, 그 선은 넘었습니다.
-
-
-
-\section{오류 실험 --- “조용한 붕괴” 재현하기}
-
-이 레시피(작은 vocab·충분한 학습)가 정말 효과의 핵심인지 확인하려면, 일부러 되돌려 보면 됩니다. 두 가지만 건드려도 붕괴가 그대로 돌아옵니다.
+이 레시피(작은 vocab·충분한 학습)가 정말 효과의 핵심인지 확인하려면, 일부러 되돌려 보면 됩니다. 두 가지만 건드려도 collapse가 그대로 돌아옵니다.
 
 \textbf{되돌리기 1 vocab을 30522로}
 
@@ -1166,11 +993,11 @@ max_steps = 1500
 
 vocab을 줄였더라도 학습량이 절대적으로 부족하면 조건부 구조를 다 배우지 못합니다. 고정-\(t\) top-1 정확도가 30000 step의 0.717에 한참 못 미치는 수준(8000 step에서도 0.262)에 머물러, 유니그램 marginal만 익힌 밋밋한 출력이 나옵니다.
 
-이 붕괴가 “조용한” 이유는 에러가 안 나기 때문입니다. 코드는 멀쩡히 돌고 loss도 줄어드는 듯 보이지만, 모델은 빈도표만 외운 상태입니다. loss 절대값을 유니그램 엔트로피와 비교하고, 고정-\(t\) top-1 정확도와 생성 KL을 함께 봐야 이 조용한 실패를 잡아낼 수 있습니다.
+이 collapse가 “조용한” 이유는 에러가 안 나기 때문입니다. 코드는 멀쩡히 돌고 loss도 줄어드는 듯 보이지만, 모델은 빈도표만 외운 상태입니다. loss 절대값을 유니그램 엔트로피와 비교하고, 고정-\(t\) top-1 정확도와 생성 KL을 함께 봐야 이 조용한 실패를 잡아낼 수 있습니다.
 
 
 
 \begin{previewBox}{미리보기: 다음 장}
 
-이번 장에서 작은 diffusion LM을 손수 살려냈다면, 다음 장에서는 시야를 넓힙니다. 34장에서는 diffusion 계열이 더 큰 규모에서 어떻게 동작하는지 살펴보고, 지금까지 쌓아 온 AR 계열(\ref{ch:24}장-)과 diffusion 계열을 같은 잣대로 나란히 비교합니다(다룰 모델은 확정되는 대로 정리합니다). 같은 규모에서 AR이 1500 step, diffusion이 30000 step이 필요했던 학습 측 차이에 더해, 생성 측에서 AR이 KV-cache로 한 번에 흐르는 것과 diffusion이 길이만큼 반복(NFE)하며 채우는 방식의 속도·품질 트레이드오프를 실측으로 마주하게 됩니다.
+이번 장에서 작은 diffusion LM을 영어로 손수 살려냈다면, 다음 장에서는 같은 레시피를 \textbf{한국어}로 옮깁니다. 34장는 33장과 같은 본체(\inlinecode{BertForMaskedLM}, hidden 256/4L)·같은 샘플러를 그대로 두고 학습 언어만 한국어(TinyStories-Korean)로 바꿉니다. 그런데 영어에서 100\% \texttt{{[}MASK{]}}로도 버티던 레시피가 한국어에서는 무너집니다(train\_loss 7.0대, 고정-\(t\) acc 0.081). 한국어는 조사·어미를 빈도만으로 그럴듯하게 채울 수 있어 “주변을 안 봐도 되는” 지름길이 열리기 때문입니다. 그래서 34장의 단 한 가지 변화는 \textbf{BERT가 원래 쓰던 80/10/10 마스킹}(80\% \texttt{{[}MASK{]}} / 10\% 랜덤 토큰 / 10\% 원본 유지)으로, 이 지름길을 막아 train\_loss 4.13 · acc 0.652로 생성을 회복시킵니다. 같은 코퍼스(\ref{ch:26}장 한국어 AR과 동일)에서 \emph{AR은 되는데 diffusion은 왜 무너졌나}를 나란히 대조하며 Phase 5를 마무리합니다.
 \end{previewBox}

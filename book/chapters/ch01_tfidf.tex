@@ -134,130 +134,13 @@ Ch & 모델 & 토크나이저 & Output Head & Activation & Loss \\
 
 
 
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-!pip install -q datasets scikit-learn pandas matplotlib
-\end{lstlisting}
-
-\begin{codeRead}
-\textbf{1행}의 \inlinecode{!pip install -q datasets...}에서는 Colab 실행에 필요한 패키지를 설치합니다.
-\end{codeRead}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-from datasets import load_dataset
-from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-
-import matplotlib.font_manager as fm, subprocess, os
-_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
-if not os.path.exists(_fp):
-    subprocess.run(
-        "apt-get -qq -y install fonts-nanum",
-        shell=True,
-    )
-fm.fontManager.addfont(_fp)
-plt.rcParams["font.family"] = "NanumGothic"
-plt.rcParams["axes.unicode_minus"] = False
-\end{lstlisting}
-
-\begin{codeRead}
-\inlinecode{numpy, pandas, matplotlib, datasets, scikit-learn} 같은 주요 패키지를 불러옵니다.
-\end{codeRead}
-
-
-
 \section{실습: Yelp 리뷰 데이터 살펴보기}
 
 \inlinecode{yelp\_review\_full}은 Yelp 식당 리뷰 65만 건에 1-5점 별점이 달린 데이터셋입니다 (라벨은 0-4로 저장됨). 학습 흐름을 가볍게 유지하기 위해 \textbf{5,000건만 무작위 샘플링} 합니다.
 
 
 
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-dataset = load_dataset("Yelp/yelp_review_full")
-print(dataset)
-\end{lstlisting}
-
-\begin{codeRead}
-\textbf{1행}의 \inlinecode{dataset = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
-\end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-If the error persists, please let us know by opening an issue on GitHub (ht...
-DatasetDict({
-    train: Dataset({
-        features: ['label', 'text'],
-        num_rows: 650000
-    })
-    test: Dataset({
-        features: ['label', 'text'],
-        num_rows: 50000
-    })
-})
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
-\Needspace{8\baselineskip}
-\begin{lstlisting}
-SAMPLE_SIZE = 5000
-ds = dataset["train"].shuffle(seed=42).select(range(SAMPLE_SIZE))
-df = ds.to_pandas()
-
-print(f"Sample count: {len(df)}")
-df.head(3)
-\end{lstlisting}
-
-\begin{codeRead}
-\textbf{1행}의 \inlinecode{SAMPLE\_SIZE = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{2행}의 \inlinecode{ds = ...}에서는 전체 데이터에서 실습에 사용할 샘플만 추립니다. \textbf{3행}의 \inlinecode{df = ...}에서는 데이터셋을 표 형태로 바꿔 이후 셀에서 다루기 쉽게 합니다. \textbf{6행}의 \inlinecode{df.head(...)}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
-\end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Sample count: 5000
-   label  text
--  -----  ------------------------
-0  4      I stalk this truck. I...
-1  2      who really knows if t...
-2  4      I LOVE Bloom Salon......
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
-\Needspace{9\baselineskip}
-\begin{lstlisting}
-counts = df["label"].value_counts().sort_index()
-labels = [f"{i+1}점" for i in counts.index]
-plt.bar(labels, counts.values)
-plt.title("별점 분포 (5,000건 샘플)")
-plt.ylabel("리뷰 수")
-plt.show()
-print(counts)
-\end{lstlisting}
-
-\begin{codeRead}
-\textbf{1행}의 \inlinecode{counts = ...}에서는 라벨별 샘플 개수를 집계합니다. \textbf{2행}의 \inlinecode{labels = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
-\end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-label
-0    1017
-1    1027
-2     960
-3    1021
-4     975
-Name: count, dtype: int64
-\end{bookoutputbox}
-\par\vspace{0.9em}
+\compactCodeOmitted{숫자 결과를 그림으로 확인하는 단계}
 
 \begin{bookfigurelabel}[H]{Yelp 5,000건 샘플의 별점 분포}{fig:ch01-star-distribution}
 \centering
@@ -277,20 +160,6 @@ df[["len_words"]].describe()
 \begin{codeRead}
 \textbf{1행}의 \inlinecode{df["len\_words"] = df["tex...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{2행}의 \inlinecode{df[["len\_words"]].describe()}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-len_words
-count  5000.000000
-mean    133.811400
-std     119.787704
-min       1.000000
-25%      53.000000
-50%     100.000000
-75%     177.000000
-max     977.000000
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -376,44 +245,6 @@ Tokenized: ['love', 'using', 'hugging', 'face']
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-vocab = cv.get_feature_names_out()
-print(f"Vocab size: {len(vocab):,}")
-print(f"First 20: {list(vocab[:20])}")
-
-word_counts = np.asarray(X_count.sum(axis=0)).flatten()
-top = np.argsort(word_counts)[::-1][:10]
-print("\nTop 10 most frequent words")
-for i in top:
-    print(f"  {vocab[i]:>15}  {word_counts[i]:>6,}")
-\end{lstlisting}
-
-\begin{codeRead}
-\textbf{1행}의 \inlinecode{vocab = ...}에서는 벡터라이저가 학습한 어휘 목록을 가져옵니다. \textbf{5행}의 \inlinecode{word\_counts = ...}에서는 열 방향으로 값을 더해 특성별 합계를 계산합니다. \textbf{6행}의 \inlinecode{top = ...}에서는 값이 큰 항목부터 볼 수 있도록 인덱스를 정렬합니다.
-\end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Vocab size: 10,000
-First 20: ['00', '000', '00am', '00pm', '05', '05nparfrm9annokwdi3bbq', '08...
-
-Top 10 most frequent words
-              the  33,748
-              and  21,311
-               to  16,702
-              was  12,295
-               it  10,682
-               of  10,226
-              for   7,839
-               is   7,760
-               in   7,593
-             that   6,756
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
 \section{변형: TfidfVectorizer --- 흔한 단어의 영향력 줄이기}
 
 \inlinecode{CountVectorizer}의 한계: \inlinecode{"the"}, \inlinecode{"and"} 같은 단어가 모든 리뷰에 많이 등장하니 횟수만으로는 문서 사이 차이를 잘 드러내지 못합니다.
@@ -449,56 +280,6 @@ print(f"shape: {X_tfidf.shape}")
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 shape: (5000, 10000)
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-doc_id = 0
-review = df["text"].iloc[doc_id]
-print("Review preview (200 chars):")
-print(f"{review[:200]}...\n")
-
-vocab_tf = tfidf.get_feature_names_out()
-cv_row = np.asarray(X_count[doc_id].todense()).flatten()
-tfidf_row = np.asarray(X_tfidf[doc_id].todense()).flatten()
-
-top = np.argsort(tfidf_row)[::-1][:10]
-
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{9\baselineskip}
-\begin{lstlisting}[firstnumber=12]
-print(f"{'word':>15}  {'count':>6}  {'tfidf':>8}")
-print("-" * 35)
-for i in top:
-    print(
-        f"{vocab_tf[i]:>15}  {cv_row[i]:>6}  "
-        f"{tfidf_row[i]:>8.4f}"
-    )
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Review preview (200 chars):
-I stalk this truck. I've been to industrial parks where I pretend to be a t...
-
-           word   count     tfidf
------------------------------------
-          stalk       1    0.2418
-        pretend       1    0.2252
-          parks       1    0.2212
-     industrial       1    0.2212
-         farmer       1    0.2212
-         divine       1    0.2092
-           tech       1    0.2068
-          pride       1    0.2046
-          bowls       1    0.1988
-          gotta       1    0.1898
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -550,27 +331,6 @@ I stalk this truck. I've been to industrial parks where I pretend to be a t...
 
 \section{FAQ}
 
-\begin{faqBox}{Q1. (실무) Yelp 데이터가 너무 커서 메모리에 안 올라가는데 어떻게 하나요?}
-
-\inlinecode{datasets}는 Apache Arrow 메모리맵을 사용해서 65만 건 전체를 RAM에 올리지 않습니다. 인덱싱 시점에만 디스크에서 읽어 옵니다. 그래서 위 셀에서 \texttt{dataset{[}“train”{]}}을 가져와도 메모리는 거의 늘어나지 않습니다.
-
-그래도 다운스트림(예: pandas 변환, sklearn fit) 단계에서 메모리가 부담되면 두 가지를 씁니다.
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-ds = dataset["train"].shuffle(seed=42).select(range(5000))
-
-stream = load_dataset(
-    "Yelp/yelp_review_full",
-    split="train",
-    streaming=True,
-)
-for i, ex in enumerate(stream):
-    if i >= 5000: break
-    ...
-\end{lstlisting}
-
-\end{faqBox}
 
 \begin{faqBox}{Q2. (실무) \inlinecode{CountVectorizer}와 \inlinecode{TfidfVectorizer} 중 뭘 써야 하나요?}
 
@@ -613,53 +373,7 @@ IDF(Inverse Document Frequency)는 \textbf{“이 단어가 얼마나 희귀한�
 
 \end{faqBox}
 
-\begin{faqBox}{Q4. (이론) 어휘 수는 무엇을 기준으로 정해야 하나요? \inlinecode{max\_features=10000}은 어떻게 정한 값인가요?}
 
-세 가지 트레이드오프가 있습니다.
-
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  \textbf{너무 작으면}: 정보 손실. 핵심 단어가 어휘에서 잘려나감.
-\item
-  \textbf{너무 크면}: sparsity↑, 노이즈(오타·해시태그·고유명사 1회 등장 단어)도 같이 학습.
-\item
-  \textbf{모델 학습 시간/메모리}: V가 커지면 선형 모델 가중치도 V만큼 커짐.
-\end{enumerate}
-
-실무에선 보통 두 가지를 조합합니다.
-
-\Needspace{7\baselineskip}
-\begin{lstlisting}
-TfidfVectorizer(
-    max_features=10000,
-    min_df=5,
-    max_df=0.9,
-)
-\end{lstlisting}
-
-5,000건짜리 영어 문서 데이터에선 5K-30K가 흔한 출발점입니다. \inlinecode{10000}은 학습 흐름을 빠르게 가져가기 위한 보수적 설정이고, 실험으로 조정하면 됩니다.
-
-\end{faqBox}
-
-\begin{faqBox}{Q5. (실무) sklearn에서 한국어도 처리되나요? 다음 장에서도 그대로 동작할까요?}
-
-\textbf{기본 정규식 토크나이저로도 동작은 합니다} (한국어도 영숫자 패턴으로 잡힘). 다만 한국어는 조사 때문에 같은 어근이 다른 토큰으로 쪼개져 어휘가 폭증합니다 --- 예: \inlinecode{학교}, \inlinecode{학교는}, \inlinecode{학교가}, \inlinecode{학교를}이 전부 다른 토큰.
-
-실무에선 형태소 분석기를 토크나이저로 끼워 넣습니다.
-
-\Needspace{6\baselineskip}
-\begin{lstlisting}
-from konlpy.tag import Mecab
-tokenizer = Mecab().morphs
-
-TfidfVectorizer(tokenizer=tokenizer, token_pattern=None)
-\end{lstlisting}
-
-이 커리큘럼에서는 Phase 2(\ref{ch:15}--\ref{ch:18}장, 한국어)에서 \inlinecode{klue/bert-base}의 한국어 WordPiece 토크나이저를, Phase 3(\ref{ch:19}장부터)에서 형태소 기반 워드레벨 토크나이저를 직접 다룹니다.
-
-\end{faqBox}
 
 \begin{faqBox}{Q6. (이론) sparse 행렬이 dense 행렬보다 메모리에 유리한 이유는 무엇인가요? \inlinecode{.toarray()}로 바꾸면 왜 메모리가 폭발할 수 있나요?}
 
@@ -683,6 +397,8 @@ print(
 \end{faqBox}
 
 
+
+\compactFAQMore{3}
 
 \section{오류 실험 (선택)}
 

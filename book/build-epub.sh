@@ -36,8 +36,6 @@ from pathlib import Path
 
 def draft_source(compact: bool = False) -> str:
     source = Path("ebook-main.tex").read_text(encoding="utf-8")
-    if compact:
-        source = source.replace("\\input{chapters/", "\\input{chapters_compact/")
     source = source.replace(
     "{\\Large EPUB 미리보기 샘플\\par}",
     "{\\Large EPUB 출판 검토용 초안\\par}",

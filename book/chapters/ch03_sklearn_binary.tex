@@ -97,7 +97,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 \end{adjustbox}
 \end{booktable}
 
-전체 \ref{ch:20}장 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
+전체 장 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
 
 
 
@@ -179,135 +179,8 @@ model.fit(X, y)
 이 장의 토크나이저는 \textbf{\ref{ch:01}·\ref{ch:02}장과 동일한 \inlinecode{TfidfVectorizer}} 입니다. 입력 표현은 그대로고, 변화는 모델 출력단·loss·라벨에서만 일어납니다.
 
 \begin{previewBox}{미리보기}
-\textbf{다음 장(\ref{ch:04}장)}: 같은 TF-IDF 그대로. 변하는 건 출력이 5차원으로 늘어나고 sigmoid가 softmax로 바뀌는 것뿐.
+\textbf{다음 장(\ref{ch:04}장)}: 같은 TF-IDF 그대로, 같은 이진화 데이터 그대로. 변하는 건 출력이 2차원으로 늘어나고 sigmoid가 softmax로 바뀌는 것뿐 --- 같은 이진 분류를 softmax+CE로 다시 풀어 두 방식이 동등함을 확인합니다.
 \end{previewBox}
-
-
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-!pip install -q datasets scikit-learn pandas matplotlib
-\end{lstlisting}
-
-\begin{codeRead}
-\textbf{1행}의 \inlinecode{!pip install -q datasets...}에서는 Colab 실행에 필요한 패키지를 설치합니다.
-\end{codeRead}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-from datasets import load_dataset
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import (
-    accuracy_score, classification_report, confusion_matrix,
-    log_loss, precision_recall_fscore_support,
-)
-
-plt.rcParams["axes.unicode_minus"] = False
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 데이터를 불러오고 학습에 맞는 형태로 정리하는 단계로 넘어갑니다.}
-
-\Needspace{9\baselineskip}
-\begin{lstlisting}[firstnumber=15]
-dataset = load_dataset("Yelp/yelp_review_full")
-SAMPLE_SIZE = 5000
-ds = dataset["train"].shuffle(seed=42).select(range(SAMPLE_SIZE))
-df = ds.to_pandas()
-df["star"] = df["label"] + 1   # 0-4 -> 1-5
-print(f"Total samples: {len(df)}")
-print(df["star"].value_counts().sort_index())
-\end{lstlisting}
-
-\begin{codeRead}
-\inlinecode{numpy, pandas, matplotlib, datasets, scikit-learn} 같은 주요 패키지를 불러옵니다.
-\end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-If the error persists, please let us know by opening an issue on GitHub (ht...
-Total samples: 5000
-star
-1    1017
-2    1027
-3     960
-4    1021
-5     975
-Name: count, dtype: int64
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-df_bin = df[df["star"] != 3].copy()
-df_bin["y"] = (df_bin["star"] >= 4).astype(int)
-
-print(
-    f"Binarized samples: "
-    f"{len(df_bin)}  (3-star excluded)"
-)
-print(
-    f"Class distribution:\n"
-    f"{df_bin['y'].value_counts().sort_index()}"
-)
-print(f"Positive rate: {df_bin['y'].mean():.1%}")
-\end{lstlisting}
-
-\begin{codeRead}
-\textbf{1행}의 \inlinecode{df\_bin = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{2행}의 \inlinecode{df\_bin["y"] = (df\_bin["st...}에서는 이후 분석에서 사용할 값을 준비합니다.
-\end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Binarized samples: 4040  (3-star excluded)
-Class distribution:
-y
-0    2044
-1    1996
-Name: count, dtype: int64
-Positive rate: 49.4%
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-X_text_train, X_text_test, y_train, y_test = train_test_split(
-    df_bin["text"], df_bin["y"],
-    test_size=0.2, random_state=42, stratify=df_bin["y"],
-)
-
-tfidf = TfidfVectorizer(max_features=10000)
-X_train = tfidf.fit_transform(X_text_train)
-X_test = tfidf.transform(X_text_test)
-
-print(
-    f"X_train: {X_train.shape}, y_train: "
-    f"{y_train.shape}"
-)
-print(f"X_test:  {X_test.shape}, y_test:  {y_test.shape}")
-\end{lstlisting}
-
-\begin{codeRead}
-\textbf{1--4행}의 \inlinecode{X\_text\_train, X\_text\_test...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{6행}의 \inlinecode{tfidf = ...}에서는 TF-IDF 기반 벡터라이저를 만듭니다. \textbf{7행}의 \inlinecode{X\_train = ...}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다. \textbf{8행}의 \inlinecode{X\_test = ...}에서는 텍스트나 라벨을 모델이 처리할 수 있는 수치 표현으로 변환합니다.
-\end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-X_train: (3232, 10000), y_train: (3232,)
-X_test:  (808, 10000), y_test:  (808,)
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -400,105 +273,6 @@ Row sums (should be 1): [1. 1. 1. 1. 1.]
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-logits = X_test @ model.coef_.T + model.intercept_   # shape: (
-    N,
-    1,
-)
-logits = logits.flatten()
-
-proba_manual = 1 / (1 + np.exp(-logits))
-proba_sklearn = y_proba[:, 1]   # P(y=1)
-
-diff = np.abs(proba_manual - proba_sklearn).max()
-print(f"Max diff (manual vs sklearn): {diff:.2e}")
-
-print(f"\nManual first 5:  {proba_manual[:5].round(4)}")
-print(f"sklearn first 5: {proba_sklearn[:5].round(4)}")
-\end{lstlisting}
-
-\begin{codeRead}
-\textbf{1--4행}의 \inlinecode{logits = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{logits = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{7행}의 \inlinecode{proba\_manual = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{8행}의 \inlinecode{proba\_sklearn = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{10행}의 \inlinecode{diff = ...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다.
-\end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Max diff (manual vs sklearn): 1.11e-16
-
-Manual first 5:  [0.4477 0.1001 0.1591 0.6653 0.758 ]
-sklearn first 5: [0.4477 0.1001 0.1591 0.6653 0.758 ]
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
-\Needspace{10\baselineskip}
-\begin{lstlisting}
-y_test_arr = y_test.values
-p = proba_sklearn
-manual_bce = -(y_test_arr * np.log(p) + (1 - y_test_arr) * np.log(1 - p)).mean()
-sklearn_bce = log_loss(y_test, y_proba)
-
-print(f"Manual BCE:  {manual_bce:.6f}")
-print(f"sklearn BCE: {sklearn_bce:.6f}")
-print(f"Diff:        {abs(manual_bce - sklearn_bce):.2e}")
-\end{lstlisting}
-
-\begin{codeRead}
-\textbf{1행}의 \inlinecode{y\_test\_arr = ...}에서는 계산에 바로 쓸 수 있도록 배열 형태로 변환합니다. \textbf{2행}의 \inlinecode{p = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{manual\_bce = ...}에서는 두 계산 결과가 얼마나 다른지 확인할 값을 만듭니다. \textbf{4행}의 \inlinecode{sklearn\_bce = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
-\end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Manual BCE:  0.383569
-sklearn BCE: 0.383569
-Diff:        0.00e+00
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-print(
-    classification_report(y_test, y_pred, target_names=["negative", "positive"])
-)
-
-cm = confusion_matrix(y_test, y_pred)
-print(f"\nconfusion matrix:\n{cm}")
-print(
-    f"  TN={cm[0,0]}, FP={cm[0,1]}\n  FN={cm[1,0]}, TP="
-    f"{cm[1,1]}"
-)
-\end{lstlisting}
-
-\begin{codeRead}
-\textbf{5행}의 \inlinecode{cm = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
-\end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-precision    recall  f1-score   support
-
-    negative       0.87      0.86      0.86       409
-    positive       0.86      0.87      0.86       399
-
-    accuracy                           0.86       808
-   macro avg       0.86      0.86      0.86       808
-weighted avg       0.86      0.86      0.86       808
-
-
-confusion matrix:
-[[352  57]
- [ 53 346]]
-  TN=352, FP=57
-  FN=53, TP=346
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
 \section{변형: 임계값(threshold)을 옮기면}
 
 \inlinecode{predict()}는 기본적으로 \(\hat p \geq 0.5\)를 기준으로 0/1을 자릅니다. 이 임계값을 다른 값으로 옮기면 precision과 recall이 정반대로 움직입니다.
@@ -515,37 +289,6 @@ confusion matrix:
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-thresholds = [0.3, 0.4, 0.5, 0.6, 0.7]
-proba_pos = y_proba[:, 1]
-
-rows = []
-for t in thresholds:
-    y_pred_t = (proba_pos >= t).astype(int)
-    p, r, f1, _ = precision_recall_fscore_support(
-        y_test, y_pred_t, average="binary", zero_division=0
-    )
-    acc = accuracy_score(y_test, y_pred_t)
-    rows.append({"threshold": t, "accuracy": acc, "precision": p, "recall": r, "f1": f1})
-
-df_t = pd.DataFrame(rows).round(4)
-print(df_t.to_string(index=False))
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-threshold  accuracy  precision  recall     f1
-       0.3    0.7686     0.6840  0.9875 0.8082
-       0.4    0.8527     0.7929  0.9499 0.8643
-       0.5    0.8639     0.8586  0.8672 0.8628
-       0.6    0.8366     0.9159  0.7368 0.8167
-       0.7    0.7772     0.9700  0.5664 0.7152
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
 \section{이 장에 등장한 라이브러리}
 
 \begin{booktable}{3장 새로 등장한 라이브러리}{tab:ch03-04}
@@ -555,7 +298,7 @@ threshold  accuracy  precision  recall     f1
 이름 & 한 줄 설명 & 다음 장에서 \\
 \midrule
 
-\inlinecode{sklearn.linear\_model.LogisticRegression} & sigmoid + BCE 내장 이진/다중 분류 & \ref{ch:04}장에서 multi-class로 확장 \\
+\inlinecode{sklearn.linear\_model.LogisticRegression} & sigmoid + BCE 내장 이진/다중 분류 & \ref{ch:05}장에서 multi-class로 확장 \\
 \inlinecode{sklearn.metrics.classification\_report} & accuracy/precision/recall/F1 한 번에 & 분류 장마다 계속 사용 \\
 \inlinecode{sklearn.metrics.confusion\_matrix} & 혼동 행렬 & 다중 분류에서도 활용 \\
 \inlinecode{sklearn.metrics.log\_loss} & BCE 평가 & \ref{ch:09}장 이후 BERT binary에서도 \\
@@ -586,35 +329,7 @@ threshold  accuracy  precision  recall     f1
 
 \section{FAQ}
 
-\begin{faqBox}{Q1. (이론) 왜 binary classification에서 MSE를 쓰면 안 되나요?}
 
-작동은 하지만 두 가지 문제가 있습니다.
-
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\item
-  \textbf{sigmoid + MSE는 비볼록(non-convex)}: 손실면이 매끈한 그릇 모양이 아니라 평탄한 구간이 생깁니다. local minima에 빠질 수 있고 학습이 불안정합니다. 반면 sigmoid + BCE는 볼록(convex)이라 전역 최적해로 수렴이 보장됩니다.
-\item
-  \textbf{gradient 소실(saturation)}: sigmoid 양 극단(출력이 0이나 1 근처)에서 도함수가 거의 0이 됩니다. MSE의 gradient는 그 도함수에 곱해지므로 함께 0으로 중단될 수 있습니다. BCE는 sigmoid와 결합되었을 때 gradient가 단순히 \(\hat p - y\)로 떨어져 saturation이 사라집니다.
-\end{enumerate}
-
-참고로 통계학에선 0/1 라벨을 그대로 \inlinecode{LinearRegression}으로 푸는 \textbf{Linear Probability Model(LPM)} 이 있긴 합니다. 단순 분석엔 쓰지만 출력이 {[}0, 1{]}을 안 지키고 BCE보다 학습 안정성이 떨어져 ML에선 거의 안 씁니다.
-
-\end{faqBox}
-
-\begin{faqBox}{Q2. (이론) sigmoid 대신 다른 활성화 함수(tanh, softmax)를 쓰면 어떻게 되나요?}
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{tanh}: 출력 범위가 \([-1, 1]\)입니다. 라벨을 -1/+1로 매핑하고 hinge loss 등을 쓰면 SVM과 비슷한 모델이 됩니다. 수학적으로는 \(\tanh(z) = 2\sigma(2z) - 1\)이라 sigmoid의 단순 변환이지만 라벨 컨벤션이 다릅니다.
-\item
-  \textbf{softmax}: 다중 클래스용 일반화. binary에 softmax를 쓰려면 출력 차원을 2로 늘리고 라벨도 one-hot으로 바꿔야 합니다 \(\to\) 이게 정확히 \ref{ch:09}장에서 다룰 “방식 B”입니다 (방식 A=sigmoid 1차원, 방식 B=softmax 2차원이 수학적으로 동등).
-\item
-  \textbf{ReLU/identity}: 출력이 {[}0, 1{]} 보장이 안 됩니다 --- 음수도 1 초과도 가능 \(\to\) BCE의 \(\log\)가 정의되지 않습니다.
-\end{itemize}
-
-\end{faqBox}
 
 \begin{faqBox}{Q3. (실무) 클래스 불균형이 있으면 어떻게 하나요?}
 
@@ -684,24 +399,14 @@ print(f"Youden's J 기준 최적 임계값: {best_thr:.3f}")
   \textbf{F1} (precision·recall의 조화 평균): 둘 다 중요할 때의 균형 지표. 어느 한 쪽이 0이면 F1도 0.
 \end{itemize}
 
-이 장의 Yelp 이진화는 클래스 불균형이 크지 않아(긍정 \(\approx\) 60\%) accuracy도 의미 있지만, 실무에선 항상 classification\_report 전체를 보는 습관이 안전합니다.
+이 장의 Yelp 이진화는 클래스 불균형이 크지 않아(긍정 \(\approx\) 49\%, 거의 반반) accuracy도 의미 있지만, 실무에선 항상 classification\_report 전체를 보는 습관이 안전합니다.
 
 \end{faqBox}
 
-\begin{faqBox}{Q6. (실무) sklearn \inlinecode{LogisticRegression}은 정규화(L2)가 기본인데 끄려면?}
-
-\inlinecode{penalty=None}(0.22 이상) 또는 \inlinecode{C} 값을 매우 크게 설정합니다.
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-LogisticRegression(penalty=None, max_iter=1000)
-LogisticRegression(C=1e10, max_iter=1000)
-\end{lstlisting}
-
-기본값은 \inlinecode{C=1.0}(L2 정규화)이고, 텍스트 분류처럼 feature가 많은 경우 정규화가 있어야 일반화 성능이 안정적입니다. 실무에선 거의 끄지 않습니다.
-\end{faqBox}
 
 
+
+\compactFAQMore{3}
 
 \section{오류 실험 (선택)}
 
@@ -742,17 +447,17 @@ print(
 
 \begin{previewBox}{미리보기: 다음 장}
 
-\textbf{\ref{ch:04}장. sigmoid와 softmax의 동등성 (Binary Classification) --- 같은 문제, 다른 표현}
+\textbf{\ref{ch:04}장. sklearn Softmax Binary --- 같은 이진 데이터를 2차원 softmax+CE로}
 
 \begin{itemize}
 \tightlist
 \item
-  별점 1-5 를 5개 독립 클래스로 보고 \inlinecode{LogisticRegression()} 한 줄로 분류 (sklearn 이 multi-class 데이터에 자동으로 multinomial+softmax 적용)
+  \ref{ch:03}장과 \textbf{완전히 같은 이진화 데이터} 를 출력 차원 2로 늘리고 softmax + \inlinecode{CrossEntropyLoss} 로 다시 풉니다.
 \item
-  출력이 1차원에서 \textbf{5차원} 으로 늘어나고, sigmoid 대신 \textbf{softmax} 가 붙음 (합 = 1 강제)
+  출력이 1차원에서 \textbf{2차원} 으로 늘어나고, sigmoid 대신 \textbf{softmax} 가 붙음 (두 열의 합 = 1 강제)
 \item
-  Loss 는 BCE 에서 \textbf{\inlinecode{CrossEntropyLoss}} (sklearn: multinomial log loss) 로 일반화
+  \(\sigma(z) = \text{softmax}([z_0, z_1])_1 = \sigma(z_1 - z_0)\) --- 방식 A(sigmoid+BCE)와 방식 B(softmax+CE)가 \textbf{수학적으로 동등} 함을 식과 코드로 직접 확인
 \item
-  multinomial(softmax+CE) vs OvR(One-vs-Rest, K개 독립 binary) 비교 --- OvR 이 \ref{ch:06}장 multi-label 로 가는 다리
+  이 동등성 직관은 \ref{ch:10}·\ref{ch:11}장에서 BERT binary의 두 방식을 비교할 때 그대로 재활용됩니다.
 \end{itemize}
 \end{previewBox}

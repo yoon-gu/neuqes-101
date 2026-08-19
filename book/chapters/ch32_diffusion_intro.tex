@@ -300,97 +300,6 @@ BPE (GPT-2) & 50,257 & 없음 & 별도 추가 필요 \\
 
 
 
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-%pip install -q -U transformers tokenizers datasets accelerate
-\end{lstlisting}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-import warnings
-warnings.filterwarnings("ignore")
-
-import math
-import os
-import random
-import time
-
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=16]
-if torch.cuda.is_available():
-    device = torch.device("cuda")
-    device_name = torch.cuda.get_device_name(0)
-    vram_gib = torch.cuda.get_device_properties(0).total_memory / 1024**3
-    print(f"device     : cuda  ({device_name})")
-    print(f"VRAM total : {vram_gib:.2f} GiB")
-elif torch.backends.mps.is_available():
-    device = torch.device("mps")
-    print("device     : mps  (Apple Silicon)")
-else:
-    device = torch.device("cpu")
-    print(
-        "device     : cpu  (training will be very slow - "
-        "Colab T4 recommended)"
-    )
-
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=32]
-print(f"torch      : {torch.__version__}")
-
-SEED = 0
-torch.manual_seed(SEED)
-np.random.seed(SEED)
-random.seed(SEED)
-
-USE_FP16 = (device.type == "cuda")
-print(f"use fp16   : {USE_FP16}")
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 필요한 라이브러리와 기본 설정을 준비하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=42]
-import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
-_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
-if not os.path.exists(_fp):
-    subprocess.run(
-        "apt-get -qq -y install fonts-nanum",
-        shell=True,
-    )
-fm.fontManager.addfont(_fp)
-plt.rcParams["font.family"] = "NanumGothic"
-plt.rcParams["axes.unicode_minus"] = False
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-device     : cuda  (Tesla T4)
-VRAM total : 14.56 GiB
-torch      : 2.11.0+cu128
-use fp16   : True
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
 \section{TinyStories 데이터 로드}
 
 \ref{ch:24}장 (GPT) 와 \emph{완전히 같은 데이터} --- \inlinecode{roneneldan/TinyStories} (Eldan \& Li 2023, arXiv:2305.07759). GPT-3.5 / GPT-4 가 \emph{4세 어린이 어휘} 로 생성한 짧은 영어 동화. 어휘·문법이 단순해 작은 모델로도 의미 있는 생성이 가능합니다.
@@ -398,55 +307,6 @@ use fp16   : True
 \emph{데이터를 \ref{ch:24}장과 동일} 하게 둔 이유: 나중에 \emph{같은 데이터에서 AR (\ref{ch:24}장) vs Diffusion (본 장) 생성 방식만 다른} 비교를 하기 위함입니다.
 
 학습 split 의 처음 \textbf{30,000 stories} 만 사용 (T4 30분 룰 안).
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-from datasets import load_dataset
-
-N_TRAIN = 100_000
-N_VAL   = 500
-
-raw_train = load_dataset(
-    "roneneldan/TinyStories",
-    split=f"train[:{N_TRAIN}]",
-)
-raw_val   = load_dataset(
-    "roneneldan/TinyStories",
-    split=f"validation[:{N_VAL}]",
-)
-print("train:", raw_train)
-print("val  :", raw_val)
-print("\n=== sample story ===")
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-print(raw_train[0]["text"][:400])
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-train: Dataset({
-    features: ['text'],
-    num_rows: 100000
-})
-val  : Dataset({
-    features: ['text'],
-    num_rows: 500
-})
-
-=== sample story ===
-One day, a little girl named Lily found a needle in her room. She knew it w...
-
-Lily went to her mom and said, "Mom, I found this needle. Can you share it...
-
-To
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -713,20 +573,6 @@ for trial in range(3):
     print()
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-=== diffusion collator demo (same 2 chunks, masking ratio varies each call)...
-trial 0 | sample 0: t=0.885  ->  masked 111/128 ( 86.7%)
-trial 0 | sample 1: t=0.917  ->  masked 119/128 ( 93.0%)
-
-trial 1 | sample 0: t=0.756  ->  masked  98/128 ( 76.6%)
-trial 1 | sample 1: t=0.732  ->  masked  98/128 ( 76.6%)
-
-trial 2 | sample 0: t=0.937  ->  masked 121/128 ( 94.5%)
-trial 2 | sample 1: t=0.046  ->  masked   9/128 (  7.0%)
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \textbf{관전 포인트} --- \ref{ch:20}장 MLM collator 가 \emph{항상 약 15\%} 를 가렸다면, 이 collator 는 \emph{호출마다 0-100\% 사이 아무 값} 으로 가립니다. 같은 chunk 가 어떤 step 엔 5\% 만, 다른 step 엔 90\% 가려진 채 학습됩니다 \(\to\) 모델이 \emph{모든 난이도의 복원} 을 골고루 학습 \(\to\) 생성 시 \emph{어떤 마스킹 비율에서도} denoise 가능.
@@ -942,35 +788,6 @@ def diffusion_generate(active_model, length=64, steps=16, temperature=1.0, top_k
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-torch.manual_seed(SEED)
-print("=" * 70)
-print(
-    "UNTRAINED model - parallel denoise from all-[MASK]"
-)
-print("=" * 70)
-for i in range(3):
-    text = diffusion_generate(model, length=48, steps=16)
-    print(f"\n[sample {i}] {text}")
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-======================================================================
-UNTRAINED model - parallel denoise from all-[MASK]
-======================================================================
-
-[sample 0] together block mommy smo mommyblem warely? picturesndergetheranc...
-
-[sample 1] him pret birthday smoow Jimmy belie You birthday mommy pictures...
-
-[sample 2] aduched mommy smo explainedriesdayelyely gre mommypblem sk goodb...
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
 \textbf{관전 포인트} - 학습 전엔 \emph{영어 문장과 거리가 먼 토큰 나열}. logits 가 random 이라 confidence 순서도 무의미. 학습 후 같은 함수로 다시 생성해 비교하면 \emph{diffusion 학습이 본체에 무엇을 새겼는가} 가 드러납니다.
 
 
@@ -991,207 +808,7 @@ BERT/GPT 장들과 같은 \inlinecode{Trainer} 패턴이지만, \emph{loss 를 �
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-from transformers import Trainer, TrainingArguments, TrainerCallback
-
-class DiffusionTrainer(Trainer):
-    '''masked-diffusion loss: 가려진 자리 CE 를 샘플별로 1/t 재가중.'''
-
-    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
-        t = inputs["t"]
-        # (B,)
-        labels = inputs["labels"]                               # (
-            B,
-            L,
-        )
-        outputs = model(input_ids=inputs["input_ids"],
-                        attention_mask=inputs["attention_mask"])
-        logits = outputs.logits                                 # (
-            B,
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 모델 출력을 확률이나 예측값으로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-            L,
-            V,
-        )
-        B, L, V = logits.shape
-
-        per_tok = F.cross_entropy(
-            logits.view(-1, V), labels.view(-1),
-            ignore_index=-100, reduction="none",
-        ).view(B, L)
-
-        per_ex = per_tok.sum(dim=1) / L
-        loss = (per_ex / t.to(per_ex.dtype)).mean()
-        return (loss, outputs) if return_outputs else loss
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 모델 출력을 확률이나 예측값으로 바꾸는 단계입니다. 이어지는 블록에서는 학습 설정을 만들고 학습 루프를 실행하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=31]
-args = TrainingArguments(
-    output_dir="./out_diffusion_intro",
-    max_steps=30000,
-    per_device_train_batch_size=64,
-    per_device_eval_batch_size=64,
-    learning_rate=3e-4,
-    weight_decay=0.01,
-    warmup_steps=500,
-    lr_scheduler_type="cosine",
-    max_grad_norm=1.0,
-    fp16=USE_FP16,
-    logging_steps=50,
-    eval_strategy="steps",
-    eval_steps=150,
-    save_strategy="no",
-    report_to="none",
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=47]
-    label_names=["labels"],
-    remove_unused_columns=False,
-    seed=SEED,
-)
-
-class VRAMCallback(TrainerCallback):
-    def __init__(self):
-        self.steps, self.peak_MiB = [], []
-
-    def on_train_begin(self, args, state, control, **kwargs):
-        if torch.cuda.is_available():
-            torch.cuda.reset_peak_memory_stats()
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=60]
-    def on_log(self, args, state, control, logs=None, **kwargs):
-        if torch.cuda.is_available():
-            self.steps.append(state.global_step)
-            self.peak_MiB.append(torch.cuda.max_memory_allocated() / 1024**2)
-            torch.cuda.reset_peak_memory_stats()
-
-vram_cb = VRAMCallback()
-
-trainer = DiffusionTrainer(
-    model=model,
-    args=args,
-    train_dataset=lm_train,
-    eval_dataset=lm_val,
-    data_collator=diff_collator,
-    callbacks=[vram_cb],
-)
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=76]
-t0 = time.time()
-train_out = trainer.train()
-elapsed = time.time() - t0
-
-print(f"\n=== training summary ===")
-print(f"elapsed       : {elapsed/60:.2f} min")
-print(f"global_step   : {train_out.global_step}")
-print(f"train_loss    : {train_out.training_loss:.4f}")
-print(
-    f"random baseline (ln vocab): "
-    f"{math.log(tokenizer.vocab_size):.4f}"
-)
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{7\baselineskip}
-\begin{lstlisting}[firstnumber=88]
-if torch.cuda.is_available():
-    print(
-        f"final peak    : "
-        f"{torch.cuda.max_memory_allocated()/1024**2:.0f} MiB"
-    )
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Step  Training Loss  Validation Loss
-----  -------------  ---------------
-150   6.318974       6.076561
-300   6.000884       5.984904
-450   6.034770       5.940513
-600   6.037456       5.983530
-750   6.035674       5.911528
-900   6.002484       5.959517
-1050  6.016628       5.933353
-1200  6.004080       5.960937
-1350  6.006253       5.986746
-1500  5.993685       5.939088
-1650  5.955823       5.892183
-1800  5.893921       5.856411
-...
-
-...
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-# loss curve + VRAM trace
-log = trainer.state.log_history
-train_pts = [(r["step"], r["loss"]) for r in log if "loss" in r and "eval_loss" not in r]
-eval_pts  = [(r["step"], r["eval_loss"]) for r in log if "eval_loss" in r]
-
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 4))
-
-ax1.plot([s for s, _ in train_pts], [l for _, l in train_pts], "-",
-         color="tab:blue", alpha=0.6, label="train")
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{10\baselineskip}
-\begin{lstlisting}[firstnumber=10]
-if eval_pts:
-    ax1.plot([s for s, _ in eval_pts], [l for _, l in eval_pts], "s-",
-             color="tab:red", label="eval")
-ax1.axhline(math.log(tokenizer.vocab_size), ls=":", color="gray",
-            label=f"uniform baseline = ln({tokenizer.vocab_size}) approx. {math.log(tokenizer.vocab_size):.2f}")
-ax1.set_xlabel("step"); ax1.set_ylabel("diffusion denoising loss (1/t reweighted)")
-ax1.set_title("작은 mask-diffusion LM on TinyStories - loss")
-ax1.grid(True, alpha=0.3); ax1.legend()
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=19]
-if vram_cb.steps:
-    ax2.plot(vram_cb.steps, vram_cb.peak_MiB, "o-", color="tab:green",
-             label="peak VRAM (per log window)")
-    ax2.set_title(f"VRAM trace  (bs=32, fp16, L={BLOCK_SIZE})")
-else:
-    ax2.text(0.5, 0.5, "VRAM trace 는 CUDA 에서만 제공",
-             ha="center", va="center", transform=ax2.transAxes)
-    ax2.set_title("VRAM trace - CUDA 에서만")
-ax2.set_xlabel("step"); ax2.set_ylabel("VRAM (MiB)")
-ax2.grid(True, alpha=0.3); ax2.legend()
-
-plt.tight_layout(); plt.show()
-\end{lstlisting}
+\compactCodeOmitted{텍스트를 모델 입력 텐서로 바꾸는 단계}
 
 \begin{bookfigurelabel}[H]{32장 diffusion LM 학습 loss와 VRAM 추적}{fig:ch32-training-trace}
 \centering
@@ -1209,40 +826,6 @@ plt.tight_layout(); plt.show()
 \section{\texorpdfstring{학습 \emph{후} denoise + 궤적 시각화}{학습 후 denoise + 궤적 시각화}}
 
 같은 \inlinecode{diffusion\_generate} 로 학습 후 생성하고, \textbf{denoise 궤적} (각 step 의 시퀀스) 을 출력해 \emph{마스크가 단어로 채워지는 과정} 을 직접 봅니다. 이게 이 장의 하이라이트 --- GPT 의 왼\(\to\)오 순차와 달리, \emph{문장 전체가 동시에 흐릿하게 떠오르다 선명해지는} 모습.
-
-
-
-\Needspace{9\baselineskip}
-\begin{lstlisting}
-torch.manual_seed(SEED)
-print("=" * 70)
-print("TRAINED model - parallel denoise from all-[MASK]")
-print("=" * 70)
-for i in range(3):
-    text = diffusion_generate(model, length=48, steps=16)
-    print(f"\n[sample {i}] {text}")
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-======================================================================
-TRAINED model - parallel denoise from all-[MASK]
-======================================================================
-
-[sample 0] and go in their house. Sam are scared. They want to play Tim and...
-
-"See, Sam, Sam, Sam!" Tom says.
-
-"Oh you!" Tom and Sam
-
-[sample 1] him angry. He did not like the boy. He did not listen. He. He wa...
-
-The boy was very sad. He. He wanted to help the boy. He did not
-
-[sample 2] . They are good other and hug. They
-They are happy. They. They smile. They hug each other. They hug each other....
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -1405,44 +988,6 @@ prompt (fixed): Once upon a time
 \section{변형 2 - denoise step 수 비교 (속도 - 품질 trade-off)}
 
 diffusion 만의 자유도: \emph{생성 step 수} 를 바꿀 수 있습니다. GPT 는 토큰 수 = step 수로 고정이지만, diffusion 은 \emph{적은 step (빠르지만 거침) \(\leftrightarrow\) 많은 step (느리지만 정교)} 을 조절합니다.
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-torch.manual_seed(SEED)
-for steps in [1, 4, 16, 32]:
-    torch.manual_seed(SEED)
-    text = diffusion_generate(
-        model,
-        length=48,
-        steps=steps,
-    )
-    print(f"[steps={steps:>2d}] {text}\n")
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-[steps= 1] ." very to "
- her She to
-. said the with." big day his
- mom
-s! and. said a The with " on
- a, his happy very, thes to I the They He in in and it
-
-[steps= 4]  and asked,. They ran to the park. Maybe the other people was gone.
-
-
-The end and. It was not friendly..
-Finally, the, said, the child said, the bird!" The person and Sam
-[steps=16] and go in their house. Sam are scared. They want to play Tim and...
-
-"See, Sam, Sam, Sam!" Tom says.
-
-"Oh you!" Tom and Sam
-[steps=32] and eat each other. They are very happy. They are happy and happ...
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -1620,39 +1165,7 @@ mask = torch.rand(B, L) < t.unsqueeze(1)
 
 \end{faqBox}
 
-\begin{faqBox}{Q3. (실무) 생성 결과가 GPT (\ref{ch:24}장) 보다 거친데 정상인가요?}
 
-\textbf{정상이고, 작은 from-scratch diffusion 의 \emph{구조적} 한계입니다.} 두 가지를 구분하세요.
-
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  \textbf{greedy collapse} --- 전부 \texttt{{[}MASK{]}} 에서 greedy(argmax) 로 뽑으면 문맥 없는 첫 step 에서 최빈 토큰(\inlinecode{.})이 모든 자리 최고 confidence 라 \emph{마침표만 반복} 됩니다. 그래서 \inlinecode{diffusion\_generate} 의 기본은 sampling (\inlinecode{temperature=1.0,\ top\_k=50}). greedy 는 진단·비교용으로만.
-\item
-  \textbf{규모 한계} --- sampling 으로 바꿔도 작은 모델의 unconditional 생성은 거칩니다. 이건 \emph{알고리즘이 아니라 규모} 문제예요: 같은 작은 규모에서 \emph{표준 BERT MLM(고정 15\%) 도 복원이 비슷하게 약하고}, \inlinecode{1/t} 재가중 유무도 차이가 없습니다. loss 가 \inlinecode{ln(vocab)} 에서 잘 내려간 것 자체가 학습은 정상이라는 뜻.
-\end{enumerate}
-
-품질을 올리려면 규모를 키우거나(아래) --- 더 현실적으로는 \emph{사전학습된 작은 모델} 을 쓰면 됩니다 (33장).
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-args.max_steps = 3000
-config.num_hidden_layers = 6; config.hidden_size = 384
-diffusion_generate(model, length=64, steps=32)
-\end{lstlisting}
-
-\emph{제대로 된 diffusion 생성} 은 33장에서 --- \textbf{MDLM (170M) / DiffuGPT (124M)} 같은 사전학습 모델이 \emph{같은 알고리즘, 충분한 규모} 로 얼마나 달라지는지 직접 봅니다.
-
-\end{faqBox}
-
-\begin{faqBox}{Q4. (실무) \inlinecode{steps} 를 늘리면 무조건 좋아지나요?}
-
-\textbf{어느 지점까지는 좋아지고, 그 뒤로는 포화} 됩니다. 적은 step (\inlinecode{steps=1}) 은 모든 자리를 독립적으로 한 번에 확정해 \emph{서로 안 맞는 단어} 가 섞이기 쉽고, step 을 늘리면 \emph{이미 확정한 단어가 다음 자리의 문맥} 이 되어 일관성이 오릅니다. 하지만 step 수가 시퀀스 길이를 넘어가면 \emph{더 줄일 \texttt{{[}MASK{]}} 가 없어} 이득이 사라집니다.
-
-trade-off: \inlinecode{steps} ↑ \(\to\) 품질 ↑, 속도 \(\downarrow\). 실전에선 \emph{길이의 절반 정도} 가 흔한 출발점 (예: length=64 \(\to\) steps=32). diffusion 의 매력은 \emph{이 값을 추론 시점에 자유롭게} 정할 수 있다는 것 --- autoregressive 는 불가능.
-
-\end{faqBox}
 
 \begin{faqBox}{Q5. (이론) diffusion 이 autoregressive 보다 빠를 수 있다는데 왜 본 장은 안 빨라 보이나요?}
 
@@ -1662,28 +1175,11 @@ trade-off: \inlinecode{steps} ↑ \(\to\) 품질 ↑, 속도 \(\downarrow\). 실
 
 \end{faqBox}
 
-\begin{faqBox}{Q6. (실무) BPE 2048 을 직접 학습하면서 \texttt{{[}MASK{]}} 토큰은 어떻게 마련했나요?}
-
-\textbf{BPE 를 학습할 때 \inlinecode{special\_tokens} 로 함께 등록} 했습니다. diffusion 의 forward/reverse 모두 \texttt{{[}MASK{]}} 가 핵심인데, 일반 BPE/WordPiece 어휘에는 \texttt{{[}MASK{]}} 가 없을 수 있습니다. 이 장은 작은 from-scratch 모델에 맞춰 \emph{vocab 을 작게} 가져가려고 \inlinecode{bert-base-uncased} 의 WordPiece(30,522) 를 그대로 쓰지 않고, TinyStories 코퍼스에 ByteLevel BPE 를 vocab 2,048 으로 직접 학습합니다. 이때 \texttt{BpeTrainer(special\_tokens={[}“{[}PAD{]}”,\ “{[}UNK{]}”,\ “{[}MASK{]}”{]})} 로 세 특수 토큰을 어휘 맨 앞에 고정 배정해 \texttt{{[}MASK{]}} 가 id 2 에 자리 잡습니다.
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-trainer = trainers.BpeTrainer(vocab_size=2048,
-                              special_tokens=["[PAD]", "[UNK]", "[MASK]"])
-\end{lstlisting}
-
-모델은 \inlinecode{BertForMaskedLM} 을 \emph{random init} 으로 띄우므로 임베딩도 처음부터 함께 학습됩니다 --- \texttt{{[}MASK{]}} 임베딩이 별도 부담이 아니라 본체와 같이 자라납니다. bidirectional encoder (\inlinecode{BertForMaskedLM}) 와 \texttt{{[}MASK{]}} 기반 denoising 이 자연스럽게 짝을 이룹니다.
-
-\end{faqBox}
-
-\begin{faqBox}{Q7. (이론) 그럼 앞으로 autoregressive 는 사라지나요?}
-
-\textbf{가까운 미래엔 아닙니다.} autoregressive 는 \emph{성숙도 (KV-cache, 방대한 인프라·최적화), 안정적 품질, 검증된 스케일링} 에서 여전히 표준입니다. diffusion LM 은 \emph{병렬 생성·infilling·step 조절} 이라는 차별점으로 \emph{특정 용도} (빠른 생성, 편집, 제약 만족) 에서 주목받는 \emph{대안} 입니다.
-
-둘은 \emph{대체} 라기보다 \emph{공존·융합} 으로 가는 중 (일부 연구는 둘을 섞음). 본 커리큘럼이 \emph{둘 다 직접 구현} (\ref{ch:24}장 GPT, 32장 diffusion) 해 본 이유 --- \emph{생성 패러다임의 지형} 을 손으로 익혀 두면 어느 쪽이 발전하든 따라갈 수 있습니다.
-\end{faqBox}
 
 
+
+
+\compactFAQMore{4}
 
 \begin{previewBox}{미리보기: 다음 장}
 

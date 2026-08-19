@@ -129,7 +129,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 \midrule
 
 \textbf{이 장의 task} & 토크나이저 학습 (모델 없음) & \textbf{모델 사전학습 (MLM)} \(\leftarrow\) \emph{유일한 변화} \\
-모델 & 없음 & \textbf{작은 \inlinecode{BertForMaskedLM} (random init, 약 11M params)} \\
+모델 & 없음 & \textbf{작은 \inlinecode{BertForMaskedLM} (random init, 약 10M params)} \\
 토크나이저 & WordPiece + WordLevel \emph{직접 학습} & \textbf{\inlinecode{bert-base-uncased} \emph{가져옴}} (vocab 30,522) \\
 데이터 & Yelp text + NSMC text (vocab 학습용) & \textbf{Wikitext-103 paragraphs (일반 도메인 MLM 학습용)} \\
 Loss & 없음 (vocab + merge rules 가 산출물) & \textbf{\inlinecode{CrossEntropyLoss} (masked token 위치만)} \\
@@ -192,10 +192,8 @@ L_{\text{MLM}} = -\frac{1}{\vert{}M\vert{}} \sum_{i \in M} \log P(x_i \mid x_{\s
 \midrule
 
 균등 추측 (random init 초기) & \(1/30522 \approx 3.28 \times 10^{-5}\) & \textbf{10.33} \(\leftarrow\) random baseline \\
-unigram --- 빈도만 아는 단계 & 코퍼스 빈도 그대로 & \textbf{7.25} \(\leftarrow\) 이 장가 넘어서야 할 기준선 \\
-\textbf{이 장도달점} (5K paragraphs \(\times\) 2 epoch) & --- & \textbf{7.06 - 7.13} \(\leftarrow\) 실측 (train 7.07 / eval 7.06-7.13) \\
 약하게 학습 (정답 확률 0.01) & \(0.01\) & 4.61 \\
-잘 학습된 작은 BERT (정답 확률 0.05-0.1) & \(0.05\) - \(0.1\) & 2.3 - 3.0 (이 셋업의 사정거리 밖) \\
+잘 학습된 작은 BERT (정답 확률 0.05-0.1) & \(0.05\) - \(0.1\) & \textbf{2.3 - 3.0} \(\leftarrow\) 이 장 목표 영역 \\
 큰 사전학습 BERT (정답 확률 0.3+) & \(0.3\) & 1.20 \\
 완벽 (정답 확률 1.0) & \(1.0\) & 0.00 \\
 \bottomrule
@@ -210,11 +208,7 @@ unigram --- 빈도만 아는 단계 & 코퍼스 빈도 그대로 & \textbf{7.25}
 \item
   학습 첫 step 의 loss 가 약 10 부근이면 random init 직후 \emph{균등 추측} 상태. 첫 100 step 안에 빠르게 떨어지면 vocab 정상.
 \item
-  \textbf{이 장의 목표는 \inlinecode{unigram\ 기준선\ (7.25)} 을 넘어서는 데까지} 입니다. 실제로 2 epoch 뒤 train loss 약 7.07, eval loss 약 7.06-7.13 에 도달합니다 --- \emph{“어떤 토큰이 흔한가”} 를 막 새긴 단계. 표의 loss 는 train/eval 공통 척도이고, 이 장에선 두 값이 거의 붙어 있습니다. 모델 생성 직전에 \inlinecode{set\_seed(SEED)} 를 걸어 두었으므로, 직접 돌려도 위 값이 소수점 둘째 자리까지 그대로 재현됩니다.
-\item
-  \emph{vocab 의 일부 후보를 추려내는} 단계 (2.5-4.0) 는 \textbf{이 셋업으로는 도달하지 않습니다.} 부록 \inlinecode{20\_en\_bert\_pretrain\_scaling} 에서 16 epoch 까지 늘려도 loss 는 약 6.5 (ppl 697) 에서 평탄해집니다 --- 더 내리려면 epoch 이 아니라 \textbf{데이터} 를 늘려야 합니다 ( 변형 참조).
-\item
-  작은 모델 + 5K paragraphs + 2 epoch 으로 \emph{완벽} 은 불가능 --- 그러나 \ref{ch:21}장의 fine-tune 출발점으로는 충분.
+  목표는 \emph{vocab 의 일부 후보를 추려내는} 단계 (약 2.5-4.0). 작은 모델 + 5K paragraphs + 2 epoch 으로 \emph{완벽} 은 불가능 --- 그러나 \ref{ch:21}장의 fine-tune 출발점으로는 충분.
 \end{itemize}
 
 \subsection{Perplexity}
@@ -229,9 +223,6 @@ MLM loss & PPL & 해석 \\
 \midrule
 
 10.33 & 30,522 & 균등 (전체 vocab) \\
-7.25 & 1,412 & unigram --- 빈도만 아는 단계 \\
-\textbf{7.13} & \textbf{1,253} & \(\leftarrow\) \textbf{이 장 2 epoch 실측} \\
-6.55 & 697 & 부록에서 16 epoch 까지 늘린 결과 \\
 5.0 & 148 & vocab 의 일부로 좁혀짐 \\
 3.0 & 20 & 20 개 후보 중에서 결정 \\
 1.0 & 2.7 & 거의 결정적 \\
@@ -290,118 +281,6 @@ MLM loss & PPL & 해석 \\
 
 \section{환경 준비}
 
-설치가 끝나면 \textbf{라이브러리 버전을 먼저 찍습니다.} 같은 \inlinecode{seed} 로 돌려도 \inlinecode{transformers}·\inlinecode{datasets} 가 올라가면 수치가 미세하게 달라질 수 있어서, 아래 출력이 이 장에 실린 값과 다르다면 \emph{버전 차이} 를 먼저 의심하면 됩니다.
-
-
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-%pip install -q -U transformers datasets accelerate
-\end{lstlisting}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-import warnings
-warnings.filterwarnings("ignore")
-
-import math
-import time
-
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-import torch
-
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=13]
-import accelerate
-import datasets
-import transformers
-from datasets import load_dataset
-from transformers import (
-    AutoTokenizer,
-    BertConfig,
-    BertForMaskedLM,
-    DataCollatorForLanguageModeling,
-    Trainer,
-    TrainingArguments,
-    set_seed,
-)
-
-plt.rcParams["axes.unicode_minus"] = False
-
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=29]
-import matplotlib.font_manager as fm, subprocess, os
-_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
-if not os.path.exists(_fp):
-    subprocess.run(
-        "apt-get -qq -y install fonts-nanum",
-        shell=True,
-    )
-fm.fontManager.addfont(_fp)
-plt.rcParams["font.family"] = "NanumGothic"
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=39]
-if torch.cuda.is_available():
-    DEVICE = "cuda"
-elif getattr(torch.backends, "mps", None) is not None and torch.backends.mps.is_available():
-    DEVICE = "mps"
-else:
-    DEVICE = "cpu"
-
-print(f"PyTorch:        {torch.__version__}")
-print(f"transformers:   {transformers.__version__}")
-print(f"datasets:       {datasets.__version__}")
-print(f"accelerate:     {accelerate.__version__}")
-print(f"CUDA available: {torch.cuda.is_available()}")
-print(f"Device:         {DEVICE}")
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=52]
-if DEVICE == "cuda":
-    print(
-        f"GPU:             "
-        f"{torch.cuda.get_device_name(0)}"
-    )
-elif DEVICE == "cpu":
-    print(
-        "Warning: CPU runtime — MLM training will be "
-        "very slow. Switch to T4 recommended."
-    )
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-PyTorch:        2.11.0+cu128
-transformers:   5.15.0
-datasets:       5.0.1
-accelerate:     1.14.0
-CUDA available: True
-Device:         cuda
-GPU:             Tesla T4
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \textbf{baseline VRAM} (CUDA 환경에서만 의미 있는 출력 --- Colab T4 기준):
@@ -412,15 +291,6 @@ GPU:             Tesla T4
 \begin{lstlisting}
 !nvidia-smi
 \end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Aug 17 09:01:01 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 53C P8 14W / 70W | 3MiB / 15360MiB | 0% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -459,7 +329,7 @@ print(f"ids:    {enc['input_ids'][0].tolist()}")
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{TOKENIZER\_NAME = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{2행}의 \inlinecode{tokenizer = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\textbf{1행}의 \inlinecode{TOKENIZER\_NAME = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{2행}의 \inlinecode{tokenizer = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{8행}의 \inlinecode{for name in ("pad\_token",...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -487,101 +357,6 @@ ids: [101, 1996, 3007, 1997, 2605, 2003, 3000, 1010, 2284, 2006, 1996, 1647...
 원본 BERT 가 영어 Wikipedia + BookCorpus 라는 \emph{일반 도메인} 코퍼스로 사전학습한 정신을 따라, 본 장도 \textbf{Wikitext-103} 본문으로 MLM 사전학습합니다 --- \emph{task 도메인 (Yelp 리뷰(식당·업체)) 으로 사전학습하면 domain-adaptive pretraining 에 가까워져 사전학습의 진짜 메시지 (일반 표상 학습 \(\to\) 다른 task 로 transfer) 가 흐려지기 때문}.
 
 \textbf{원본}: \inlinecode{Salesforce/wikitext}, config \inlinecode{wikitext-103-raw-v1} (CC-BY-SA, 정제된 영문 위키 paragraphs). HF Hub 정제본 --- line 단위로 이미 정리되어 있어 빈 줄 / 너무 짧은 줄 / 너무 긴 줄만 제외하면 바로 사용 가능. \ref{ch:21}장의 분류 fine-tune (Yelp 이진) 은 \emph{완전히 다른 도메인} --- 사전학습 \(\to\) fine-tune transfer 메시지가 정직해집니다. \ref{ch:22}장의 한국어 (한국어 Wikipedia paragraphs) 와 \emph{대칭} 패턴.
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-SEED = 42
-N_TRAIN_TEXT = 5000
-N_EVAL_TEXT  = 500
-
-print(
-    "downloading Wikitext-103 (Salesforce/wikitext, "
-    "wikitext-103-raw-v1)..."
-)
-raw_train = load_dataset(
-    "Salesforce/wikitext",
-    "wikitext-103-raw-v1",
-    split="train",
-)
-raw_eval  = load_dataset(
-    "Salesforce/wikitext",
-    "wikitext-103-raw-v1",
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 데이터를 불러오고 학습에 맞는 형태로 정리하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-    split="validation",
-)
-print(f"  raw train lines: {len(raw_train):,}")
-print(f"  raw eval  lines: {len(raw_eval):,}")
-
-def is_good(ex, min_len=50, max_len=2000):
-    t = ex["text"].strip()
-    return min_len <= len(t) <= max_len
-
-train_filtered = raw_train.filter(is_good).shuffle(seed=SEED).select(range(N_TRAIN_TEXT))
-eval_filtered  = raw_eval.filter(is_good).shuffle(seed=SEED).select(range(N_EVAL_TEXT))
-
-ds_train_raw = train_filtered.remove_columns([c for c in train_filtered.column_names if c != "text"])
-ds_eval_raw  = eval_filtered.remove_columns([c for c in eval_filtered.column_names if c != "text"])
-
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=32]
-print(
-    f"\nsampled train: "
-    f"{len(ds_train_raw):,} paragraphs"
-)
-print(f"sampled eval:  {len(ds_eval_raw):,} paragraphs")
-print()
-print(f"sample text length stats (chars):")
-lens = [len(t) for t in ds_train_raw["text"]]
-print(
-    f"  mean: {np.mean(lens):.1f}, median: {np.median(lens):.0f}, max: "
-    f"{max(lens)}"
-)
-print()
-print(f"first sample previews:")
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}[firstnumber=46]
-for i in range(3):
-    t = ds_train_raw[i]["text"]
-    print(f"  Sample {i}: {t[:120]}")
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-downloading Wikitext-103 (Salesforce/wikitext, wikitext-103-raw-v1)...
-wikitext-103-raw-v1/test-00000-of-00001.(…): downloading bytes: | 0.00B
-wikitext-103-raw-v1/train-00000-of-00002(…): downloading bytes: | 0.00B
-wikitext-103-raw-v1/train-00001-of-00002(…): downloading bytes: | 0.00B
-wikitext-103-raw-v1/validation-00000-of-(…): downloading bytes: | 0.00B
-  raw train lines: 1,801,350
-  raw eval  lines: 3,760
-
-sampled train: 5,000 paragraphs
-sampled eval:  500 paragraphs
-
-sample text length stats (chars):
-  mean: 650.0, median: 614, max: 2002
-
-first sample previews:
-Sample 0: Balinor Buckhannah , the Crown Prince of the country of Callahorn...
-Sample 1: Bellomont was Member of Parliament for Droitwich from 1688 to 169...
-Sample 2: Paulet was promoted to full lieutenant in 1791 and appointed to H...
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -740,7 +515,7 @@ hyperparam & 표준 \inlinecode{bert-base-uncased} & 이 장 (작은 BERT) \\
 \inlinecode{num\_attention\_heads} & 12 & \textbf{4} \\
 \inlinecode{intermediate\_size} & 3072 & \textbf{1024} \\
 \inlinecode{max\_position\_embeddings} & 512 & \textbf{128} (BLOCK\_SIZE 와 같음) \\
-총 파라미터 & 약 110M & \textbf{약 11M} (toy 규모) \\
+총 파라미터 & 약 110M & \textbf{약 10M} (toy 규모) \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -774,8 +549,6 @@ config = BertConfig(
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=17]
-set_seed(SEED)
-
 model = BertForMaskedLM(config)
 
 total = sum(p.numel() for p in model.parameters())
@@ -790,15 +563,14 @@ encoder = sum(
 )
 head = sum(
     p.numel() for n,
+    p in model.named_parameters() if "cls" in n,
+)
 \end{lstlisting}
 
 \noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=33]
-    p in model.named_parameters() if "cls" in n,
-)
-
 print(f"Config: hidden={HIDDEN_SIZE}, layer={NUM_HIDDEN_LAYERS}, "
       f"head={NUM_ATTENTION_HEADS}, intermediate={INTERMEDIATE_SIZE}")
 print(f"max_position_embeddings: {MAX_POS_EMBED}")
@@ -812,15 +584,15 @@ print(
     f"  embeddings:        {emb:>13,}  ("
     f"{emb/total:.1%})  ← vocab 30522 x hidden 256"
 )
+print(
+    f"  encoder (4 layer): {encoder:>13,}  ("
+    f"{encoder/total:.1%})"
 \end{lstlisting}
 
 \noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
-\Needspace{10\baselineskip}
+\Needspace{7\baselineskip}
 \begin{lstlisting}[firstnumber=49]
-print(
-    f"  encoder (4 layer): {encoder:>13,}  ("
-    f"{encoder/total:.1%})"
 )
 print(
     f"  MLM head:          {head:>13,}  ("
@@ -843,7 +615,7 @@ Trainable:              11,103,290
 
 
 
-\textbf{관찰} --- 작은 BERT 의 파라미터는 \emph{임베딩 테이블이 70\% 넘게} 차지합니다 (vocab 30522 \(\times\) hidden 256 \(\approx\) 7.8M). encoder body (4개 층) 자체는 약 3.2M 뿐입니다. 이게 \emph{vocab 큰데 모델이 작은} 셋업의 특징 --- 표준 BERT (vocab 30K \(\times\) hidden 768 \(\approx\) 23M / 110M = 21\%) 와 비율이 매우 다릅니다.
+\textbf{관찰} --- 작은 BERT 의 파라미터는 \emph{임베딩 테이블이 절반 이상} 차지합니다 (vocab 30522 \(\times\) hidden 256 \(\approx\) 7.8M). encoder body 자체는 약 2M. 이게 \emph{vocab 큰데 모델이 작은} 셋업의 특징 --- 표준 BERT (vocab 30K \(\times\) hidden 768 \(\approx\) 23M / 110M = 21\%) 와 비율이 매우 다릅니다.
 
 \begin{quote}
 MLM head 의 weight 는 입력 임베딩과 \emph{tied} (공유) --- \inlinecode{BertForMaskedLM} 기본 동작. vocab 차원 출력 layer 가 임베딩 테이블과 같아 파라미터 절약.
@@ -904,7 +676,7 @@ data_collator = DataCollatorForLanguageModeling(
 \textbf{나머지 85\%} 의 토큰은 \inlinecode{labels\ =\ -100} 으로 두어 \emph{loss 계산에서 제외} 됩니다 (PyTorch CE 의 \inlinecode{ignore\_index} 기본값). 즉 한 step 의 MLM loss 는 \emph{선택된 15\% 자리만} 모아 평균한 값.
 
 \begin{quote}
-이 \inlinecode{labels\ =\ -100} 트릭은 BERT-만의 것이 아닙니다 --- Phase 4 GPT 사전학습은 \emph{거의 모든 토큰} 을 학습 (\inlinecode{labels\ =\ input\_ids}), SFT (\ref{ch:28}장) 는 \emph{prompt 만 -100, 답변만 학습}. 같은 트릭, 정반대 자리. \ref{ch:21}장에서 더 자세히.
+이 \inlinecode{labels\ =\ -100} 트릭은 BERT-만의 것이 아닙니다 --- Phase 4 GPT 사전학습은 \emph{거의 모든 토큰} 을 학습 (\inlinecode{labels\ =\ input\_ids}), SFT (\ref{ch:27}장) 는 \emph{prompt 만 -100, 답변만 학습}. 같은 트릭, 정반대 자리. \ref{ch:21}장에서 더 자세히.
 \end{quote}
 
 
@@ -1072,75 +844,6 @@ Target: 선택 15% / 그 중 80-10-10 으로 [MASK]-random-kept. 표본 크면 �
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-USE_FP16 = (DEVICE == "cuda")
-NUM_EPOCHS = 2
-
-training_args = TrainingArguments(
-    output_dir="./ch20_output",
-    num_train_epochs=NUM_EPOCHS,
-    per_device_train_batch_size=32,
-    per_device_eval_batch_size=64,
-    learning_rate=5e-4,
-    weight_decay=0.01,
-    warmup_steps=0.06,
-    fp16=USE_FP16,
-    eval_strategy="epoch",
-    logging_steps=20,
-    save_strategy="no",
-    report_to="none",
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-    seed=SEED,
-)
-
-trainer = Trainer(
-    model=model,
-    args=training_args,
-    train_dataset=lm_train,
-    eval_dataset=lm_eval,
-    data_collator=data_collator,
-    processing_class=tokenizer,
-)
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=29]
-print(f"epochs:        {NUM_EPOCHS}")
-print(
-    f"batch size:    "
-    f"{training_args.per_device_train_batch_size}"
-)
-print(f"learning rate: {training_args.learning_rate}")
-print(f"fp16:          {USE_FP16}")
-print(f"train blocks:  {len(lm_train):,}")
-print(
-    f"steps / epoch: "
-    f"{len(lm_train) // training_args.per_device_train_batch_size}"
-)
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-epochs:        2
-batch size:    32
-learning rate: 0.0005
-fp16:          True
-train blocks:  5,352
-steps / epoch: 167
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
 \subsection{사전학습 전 기준선}
 
 \inlinecode{trainer.train()} 을 호출하기 \emph{전} 의 모델 상태 (\inlinecode{BertForMaskedLM(config)} random init) 로 두 가지를 측정해 둡니다 --- \emph{학습 후와 나란히} 보면 \emph{사전학습이 본체에 무엇을 새겼는지} 가 한 화면에 드러납니다.
@@ -1151,7 +854,7 @@ steps / epoch: 167
 \item
   \textbf{\inlinecode{eval\_loss} / \inlinecode{perplexity}} --- random init 이므로 vocab 30,522 균등 분포 (\inlinecode{ln\ V} \(\approx\) 10.33) 근처가 기대치.
 \item
-  \textbf{같은 문장의 \texttt{{[}MASK{]}} top-5} --- random init 의 logits 는 \emph{아무 학습 신호도 담기지 않은 난수} 입니다. 따라서 \textbf{빈도 순위와 무관한 토큰들이 무작위로 뽑힙니다} --- 조각 토큰 (\inlinecode{\#\#…})이나 희귀어가 섞이기도 하고, 평범한 중간 빈도 단어가 나오기도 합니다 (\inlinecode{set\_seed(SEED)} 로 시드를 고정했으므로 다시 돌려도 같은 목록이 나옵니다 --- \inlinecode{SEED} 를 바꾸면 완전히 달라집니다). \emph{어떤 토큰이 흔한지조차 아직 반영되지 않은} 상태라는 점을 기억해 두세요 --- 학습 후와 대비되는 지점입니다.
+  \textbf{같은 문장의 \texttt{{[}MASK{]}} top-5} --- random init 의 logits 는 거의 균등이라 \emph{문맥과 무관한 토큰} (자주 등장하는 관사·전치사·특수문자 등) 이 뽑힙니다.
 \end{enumerate}
 
 학습이 끝난 뒤 6-1 셀에서 \emph{완전히 같은 문장} 으로 다시 측정해 \emph{직접 비교} 합니다.
@@ -1247,20 +950,20 @@ for sent in test_sentences:
 \begin{bookoutputbox}
 Training Loss  Validation Loss  Epoch
 -------------  ---------------  -----
-No log         10.372110        0
+No log         10.383417        0
 ==============================================================================
 BEFORE pretraining  (random init body)
 ==============================================================================
-  eval_loss       : 10.3721   (random baseline ln V = 10.3262)
-  eval_perplexity : 31,956     (random baseline V    = 30,522)
+  eval_loss       : 10.3834   (random baseline ln V = 10.3262)
+  eval_perplexity : 32,319     (random baseline V    = 30,522)
 input: The capital of France is [MASK].
-top-5 before pretraining: ['76', 'fragments', 'community', 'plea', 'temporal']
+top-5 before pretraining: ['broadband', '##eti', 'weights', 'smack', '##umen']
 
 input: Water freezes at [MASK] degrees Celsius.
-top-5 before pretraining: ['[unused556]', 'fragments', 'buildings', 'shovin...
+top-5 before pretraining: ['##hp', 'damages', 'slogan', '##ssion', '[unused...
 
 input: The food at this restaurant was absolutely [MASK].
-top-5 before pretraining: ['plea', 'turnout', 'siegfried', 'harta', 'roared']
+top-5 before pretraining: ['languages', 'sampling', '##pic', 'libretto', '#...
 ...
 \end{bookoutputbox}
 \par\vspace{0.9em}
@@ -1283,34 +986,12 @@ print(
 )
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Epoch  Training Loss  Validation Loss
------  -------------  ---------------
-1      7.239586       7.226577
-2      7.072258       7.064893
-
-MLM pretraining done in 0.4 min
-mean train loss: 7.4361
-random baseline loss (uniform over vocab): 10.3262
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \Needspace{5\baselineskip}
 \begin{lstlisting}
 !nvidia-smi
 \end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Aug 17 09:02:00 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 67C P0 64W / 70W | 3335MiB / 15360MiB | 66% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -1331,61 +1012,7 @@ N/A 67C P0 64W / 70W | 3335MiB / 15360MiB | 66% Default
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-log_history = trainer.state.log_history
-train_logs = [(e["step"], e["loss"]) for e in log_history if "loss" in e and "eval_loss" not in e]
-
-if train_logs:
-    steps, losses = zip(*train_logs)
-    random_baseline = math.log(tokenizer.vocab_size)
-
-    sns.set_theme(
-        style="whitegrid",
-        context="talk",
-        font="NanumGothic",
-        rc={"axes.unicode_minus": False},
-    )
-    fig, ax = plt.subplots(figsize=(9, 5))
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=15]
-    ax.plot(
-        steps,
-        losses,
-        "o-",
-        color="#4878D0",
-        label="학습 MLM loss",
-    )
-    ax.axhline(
-        random_baseline,
-        color="black",
-        lw=1.0,
-        ls=":",
-        label=f"랜덤 기준선 (ln V = {random_baseline:.2f})",
-    )
-    ax.set_xlabel("학습 step")
-    ax.set_ylabel("MLM loss (CrossEntropy)")
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
-
-\Needspace{8\baselineskip}
-\begin{lstlisting}[firstnumber=31]
-    ax.set_title("MLM 학습 loss — Wikitext-103 위에서 처음부터 학습한 small BERT")
-    ax.legend()
-    plt.tight_layout()
-    plt.show()
-else:
-    print("No train loss logs found.")
-\end{lstlisting}
-
-\begin{codeRead}
-\textbf{1행}의 \inlinecode{log\_history = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{2행}의 \inlinecode{train\_logs = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{4행}의 \inlinecode{if train\_logs:}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{5행}의 \inlinecode{steps, losses = zip(*trai...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{random\_baseline = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{8--13행}의 \inlinecode{sns.set\_theme(...)}에서는 이후 분석에서 사용할 값을 준비합니다.
-\end{codeRead}
+\compactCodeOmitted{텍스트를 모델 입력 텐서로 바꾸는 단계}
 
 \begin{bookfigurelabel}[H]{작은 BERT의 MLM 사전학습 loss 곡선}{fig:ch20-mlm-training-loss}
 \centering
@@ -1425,21 +1052,21 @@ print(
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{eval\_metrics = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{2행}의 \inlinecode{eval\_loss = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{eval\_ppl = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{for k, v in eval\_metrics....}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{6행}의 \inlinecode{if isinstance(v, float):}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
+\textbf{1행}의 \inlinecode{eval\_metrics = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{2행}의 \inlinecode{eval\_loss = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{eval\_ppl = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 Training Loss  Validation Loss  Epoch
 -------------  ---------------  -----
-7.072258       7.133166         2
+7.062257       7.120223         2
 === eval (held-out Wikitext-103 paragraphs) ===
-               eval_loss: 7.1332
+               eval_loss: 7.1202
 
-  MLM loss:               7.1332
-  perplexity (exp loss):  1252.84
+  MLM loss:               7.1202
+  perplexity (exp loss):  1236.73
   random baseline PPL:    30,522  (uniform over vocab)
-  -> model narrowed vocab to approx. 1253 candidates per masked position
+  -> model narrowed vocab to approx. 1237 candidates per masked position
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1448,73 +1075,6 @@ Training Loss  Validation Loss  Epoch
 \subsection{사전학습 전후 비교}
 
 학습 직전 (5번 마지막 셀에서 측정해 둔 \inlinecode{pre\_eval\_loss} / \inlinecode{pre\_top5\_records}) 와 \emph{완전히 같은 문장·같은 평가 셋} 에 학습 후 모델을 적용해 두 결과를 나란히 봅니다. \emph{사전학습이 본체에 무엇을 새겼는가} 의 가장 직접적인 증거.
-
-\begin{quote}
-학습 후 \inlinecode{eval\_loss} 는 \textbf{6 절에서 잰 값을 그대로} 씁니다. MLM 평가는 \inlinecode{DataCollatorForLanguageModeling} 이 호출할 때마다 \emph{다른 자리} 를 마스킹하므로, \inlinecode{trainer.evaluate()} 를 두 번 부르면 같은 모델·같은 평가셋인데도 값이 미세하게 달라집니다 --- 비교의 기준을 하나로 고정하기 위해 재측정하지 않습니다. 같은 이유로 \textbf{학습 로그에 찍히는 epoch 별 \inlinecode{Validation\ Loss} 도 6 절의 값과 조금씩 다릅니다} --- 오탈자가 아니라 MLM 평가가 매번 다른 자리를 마스킹하는 데서 오는 정상적인 편차입니다.
-\end{quote}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-post_eval_loss = eval_loss
-post_eval_ppl  = eval_ppl
-
-print("=" * 78)
-print("AFTER pretraining  (2 epoch MLM on Wikitext-103)")
-print("=" * 78)
-print(
-    f"  eval_loss       : {post_eval_loss:.4f}   (before: "
-    f"{pre_eval_loss:.4f})"
-)
-print(
-    f"  eval_perplexity : {post_eval_ppl:,.2f}        (before: "
-    f"{pre_eval_ppl:,.0f})"
-)
-print(
-    f"  -> narrowed vocab to approx. "
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 모델 출력을 확률이나 예측값으로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-    f"{post_eval_ppl:.0f} candidates per masked position"
-)
-print()
-
-post_top5_records = []
-for sent in test_sentences:
-    results = predict_mask(sent, top_k=5)
-    top5_tokens = [tok for tok, _ in results[0][1]] if results else []
-    post_top5_records.append({"sentence": sent, "top5_after": top5_tokens})
-    print(f"input: {sent}")
-    print(f"  top-5 after pretraining: {top5_tokens}")
-    print()
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-==============================================================================
-AFTER pretraining  (2 epoch MLM on Wikitext-103)
-==============================================================================
-  eval_loss       : 7.1332   (before: 10.3721)
-  eval_perplexity : 1,252.84        (before: 31,956)
-  -> narrowed vocab to approx. 1253 candidates per masked position
-
-input: The capital of France is [MASK].
-  top-5 after pretraining: ['the', ',', '.', 'and', 'in']
-
-input: Water freezes at [MASK] degrees Celsius.
-  top-5 after pretraining: ['the', ',', '.', 'and', 'in']
-
-input: The food at this restaurant was absolutely [MASK].
-  top-5 after pretraining: ['the', ',', '.', 'and', 'of']
-
-input: I would [MASK] recommend this place.
-  top-5 after pretraining: ['the', ',', '.', 'and', 'in']
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -1540,64 +1100,14 @@ print(metric_compare.round(4).to_string(index=False))
 \begin{bookoutputbox}
 Before vs After -- eval metrics
          metric  before (random)  after (2 epoch)  random baseline
-      eval_loss          10.3721           7.1332          10.3262
-eval_perplexity       31955.8444        1252.8376       30522.0000
+      eval_loss          10.3834           7.1278          10.3262
+eval_perplexity       32319.2119        1246.1431       30522.0000
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-sns.set_theme(
-    style="whitegrid",
-    context="talk",
-    font="NanumGothic",
-    rc={"axes.unicode_minus": False},
-)
-fig, axes = plt.subplots(1, 2, figsize=(12, 5))
-
-loss_values = [pre_eval_loss, post_eval_loss]
-loss_labels = ["학습 전 (랜덤)", "학습 후 (2 epoch)"]
-axes[0].bar(
-    loss_labels,
-    loss_values,
-    color=["#999999", "#4878D0"],
-)
-axes[0].axhline(random_baseline_loss, color="black", lw=1.0, ls=":",
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 숫자 결과를 그림으로 확인하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-                label=f"랜덤 기준선 ln V = {random_baseline_loss:.2f}")
-axes[0].set_ylabel("eval_loss")
-axes[0].set_title("MLM eval_loss")
-axes[0].legend(loc="upper right", fontsize=10)
-
-ppl_values = [pre_eval_ppl, post_eval_ppl]
-axes[1].bar(
-    loss_labels,
-    ppl_values,
-    color=["#999999", "#4878D0"],
-)
-axes[1].set_yscale("log")
-axes[1].axhline(tokenizer.vocab_size, color="black", lw=1.0, ls=":",
-                label=f"랜덤 기준선 V = {tokenizer.vocab_size:,}")
-axes[1].set_ylabel("perplexity (log scale)")
-axes[1].set_title("MLM perplexity")
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
-
-\Needspace{6\baselineskip}
-\begin{lstlisting}[firstnumber=33]
-axes[1].legend(loc="upper right", fontsize=10)
-
-plt.tight_layout()
-plt.show()
-\end{lstlisting}
+\compactCodeOmitted{텍스트를 모델 입력 텐서로 바꾸는 단계}
 
 \begin{bookfigurelabel}[H]{사전학습 전후 MLM eval loss와 perplexity 비교}{fig:ch20-eval-loss-ppl}
 \centering
@@ -1608,153 +1118,11 @@ plt.show()
 
 
 
-\subsection{unigram 기준선 --- 우리 모델은 지금 무엇을 배운 상태인가}
-
-학습 후 top-5 를 보면 \emph{어떤 문장을 넣어도 거의 같은 답} (\inlinecode{the}, \inlinecode{,}, \inlinecode{.}, \inlinecode{and} \ldots) 이 나옵니다. 버그처럼 보이지만 아닙니다 --- \textbf{문맥을 전혀 쓰지 않는 모델에게는 그게 최선의 답} 이기 때문입니다. 입력이 무엇이든 \emph{코퍼스에서 가장 흔한 토큰} 을 찍는 것이 기대 loss 를 최소화합니다.
-
-그렇다면 “문맥은 전혀 못 쓰고 \textbf{빈도만} 아는 모델” 의 loss 는 정확히 얼마일까요? 학습 코퍼스의 \textbf{unigram 분포} 로 직접 계산해, 우리 모델이 \inlinecode{ln\ V} (균등) 와 그 사이 \emph{어디쯤} 서 있는지 확인합니다. 이 한 줄이 \emph{2 epoch 학습이 무엇을 새겼고 무엇을 아직 못 새겼는지} 를 확정해 줍니다.
-
-\begin{quote}
-엄밀히는 두 값의 측정 범위가 조금 다릅니다 --- unigram 기준선은 eval 셋 \emph{전체 토큰} 으로 계산하고, 모델의 \inlinecode{eval\_loss} 는 collator 가 고른 \emph{마스킹된 15\% 자리} 에서만 계산됩니다. 마스크 위치가 무작위 균일 표본이라 비교 자체는 타당하지만, 80/10/10 중 \emph{원본 그대로 유지되는 10\%} 에서 모델이 입력을 그대로 베껴 얻는 이득이 섞여 있어 아래 출력의 \textquotesingle 문맥으로 벌어들인 이득\textquotesingle{} 은 실제보다 조금 후하게 잡힙니다. 즉 문맥을 거의 못 배웠다는 결론은 이 보정을 감안하면 오히려 더 강해집니다.
-\end{quote}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-from collections import Counter
-
-counter = Counter()
-for ids in lm_train["input_ids"]:
-    counter.update(ids)
-total_tok = sum(counter.values())
-V = tokenizer.vocab_size
-
-unigram_ce = -np.mean([
-    math.log((counter[i] + 1) / (total_tok + V))
-    for ids in lm_eval["input_ids"] for i in ids
-])
-unigram_ppl = math.exp(unigram_ce)
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=15]
-print("=" * 78)
-print("MLM loss 사다리 — 우리 모델은 지금 어디에 있나")
-print("=" * 78)
-print(
-    f"  1) 균등 분포 (random init) : {random_baseline_loss:7.4f}   ppl "
-    f"{V:>9,.0f}"
-)
-print(
-    f"  2) unigram (빈도만, 문맥 X): {unigram_ce:7.4f}   ppl "
-    f"{unigram_ppl:>9,.0f}"
-)
-print(
-    f"  3) 우리 작은 BERT (2 epoch): {post_eval_loss:7.4f}   ppl "
-    f"{post_eval_ppl:>9,.0f}"
-)
-print()
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=31]
-print(
-    f"  1) -> 2) : "
-    f"{random_baseline_loss - unigram_ce:+.4f} nats   <- 빈도만 배워도 이만큼 내려감"
-)
-print(
-    f"  2) vs 3) : "
-    f"{unigram_ce - post_eval_loss:+.4f} nats   <- 문맥으로 벌어들인 이득 (양수면 unigram 보다 나음)"
-)
-print()
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=41]
-corpus_top5 = [tokenizer.convert_ids_to_tokens(i) for i, _ in counter.most_common(5)]
-shared = set.intersection(*[set(r["top5_after"]) for r in post_top5_records])
-shared_ordered = [t for t in post_top5_records[0]["top5_after"] if t in shared]
-print(f"  학습 코퍼스 top-5 unigram : {corpus_top5}")
-print(
-    f"  우리 모델의 top-5         : "
-    f"{post_top5_records[0]['top5_after']}"
-)
-print(
-    f"  문장 4개가 공유하는 토큰  : {len(shared)}/5 개 — "
-    f"{shared_ordered}"
-)
-print(
-     "                              (입력이 달라져도 답이 거의 안 바뀜 = 문맥을 아직 안 읽음)"
-)
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-==============================================================================
-MLM loss 사다리 -- 우리 모델은 지금 어디에 있나
-==============================================================================
-  1) 균등 분포 (random init) : 10.3262   ppl    30,522
-  2) unigram (빈도만, 문맥 X):  7.2525   ppl     1,412
-  3) 우리 작은 BERT (2 epoch):  7.1332   ppl     1,253
-
-  1) -> 2) : +3.0737 nats   <- 빈도만 배워도 이만큼 내려감
-2) vs 3) : +0.1193 nats <- 문맥으로 벌어들인 이득 (양수면 unigram 보다 나음)
-
-  학습 코퍼스 top-5 unigram : ['the', ',', '.', 'of', 'and']
-  우리 모델의 top-5         : ['the', ',', '.', 'and', 'in']
-  문장 4개가 공유하는 토큰  : 4/5 개 -- ['the', ',', '.', 'and']
-(입력이 달라져도 답이 거의 안 바뀜 = 문맥을 아직 안 읽음)
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
 \subsection{\texorpdfstring{표준 BERT 기준점}{표준 BERT 기준점}}
 
-우리 작은 BERT (약 11M, 5K paragraphs \(\times\) 2 epoch) 는 방금 확인했듯 \emph{unigram 분포까지} 도달한 상태 --- 문맥은 아직 거의 못 씁니다. 이유는 단순합니다: \textbf{학습 데이터·모델 크기·학습 시간 모두 부족}. \emph{그럼 사다리의 끝, 문맥을 제대로 배운 모델은 같은 자리에 무엇을 놓나?} 를 표준 \inlinecode{bert-base-uncased} (110M, 위키+BookCorpus 약 33억 토큰) 로 직접 봅니다.
+우리 작은 BERT (10M, 5K paragraphs \(\times\) 2 epoch) 의 top-5 가 \emph{방향성은 맞지만 정답이 잘 안 보이는} 이유는 단순합니다 --- \textbf{학습 데이터·모델 크기·학습 시간 모두 부족}. \emph{그럼 학습이 충분히 잘 되면 어떤 결과가 나오나?} 의 답을 같은 문장에 표준 \inlinecode{bert-base-uncased} (110M, 위키+BookCorpus 약 33억 토큰) 를 적용해 직접 봅니다.
 
 같은 토크나이저 (\inlinecode{bert-base-uncased}) 를 쓰고 있으므로 \emph{모델만 바꿔} 두 결과를 나란히.
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-from transformers import AutoModelForMaskedLM
-
-ref_model = AutoModelForMaskedLM.from_pretrained("bert-base-uncased")
-ref_model.to(model.device)
-ref_model.eval()
-
-ref_param_count = sum(p.numel() for p in ref_model.parameters())
-our_param_count = sum(p.numel() for p in model.parameters())
-print(
-    f"Our small BERT params: "
-    f"{our_param_count/1e6:.1f}M"
-)
-print(
-    f"Reference BERT params: {ref_param_count/1e6:.1f}M  ("
-    f"{ref_param_count/our_param_count:.0f}x larger)"
-)
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-model.safetensors: downloading bytes:           |  0.00B
-----------------------------+------------+--+-
-
-Our small BERT params: 11.1M
-Reference BERT params: 109.5M  (10x larger)
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -1813,108 +1181,33 @@ if torch.cuda.is_available():
 
 
 
-\Needspace{10\baselineskip}
-\begin{lstlisting}
-rows = []
-for pre, post, ref in zip(pre_top5_records, post_top5_records, ref_top5_records):
-    rows.append({
-        "sentence":          pre["sentence"],
-        "top5_before":       ", ".join(pre["top5_before"]),
-        "top5_ours":         ", ".join(post["top5_after"]),
-        "top5_ref_bert":     ", ".join(ref["top5_ref"]),
-    })
-
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=10]
-top5_compare = pd.DataFrame(rows)
-print(
-    "Before (random) vs Ours (small BERT, 5K paragraphs) "
-    "vs Reference (bert-base-uncased, approx. 3.3B "
-    "tokens)"
-)
-print("=" * 100)
-for _, row in top5_compare.iterrows():
-    print(f"input: {row['sentence']}")
-    print(
-        f"  before (random)        : "
-        f"{row['top5_before']}"
-    )
-    print(
-        f"  ours  (small, 5K para) : "
-        f"{row['top5_ours']}"
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{8\baselineskip}
-\begin{lstlisting}[firstnumber=26]
-    )
-    print(
-        f"  ref   (bert-base)      : "
-        f"{row['top5_ref_bert']}"
-    )
-    print()
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Before (random) vs Ours (small BERT, 5K paragraphs) vs Reference (bert-base...
-===========================================================================...
-input: The capital of France is [MASK].
-  before (random)        : 76, fragments, community, plea, temporal
-  ours  (small, 5K para) : the, ,, ., and, in
-  ref   (bert-base)      : paris, lille, lyon, marseille, tours
-
-input: Water freezes at [MASK] degrees Celsius.
-  before (random)        : [unused556], fragments, buildings, shoving, turnout
-  ours  (small, 5K para) : the, ,, ., and, in
-  ref   (bert-base)      : 100, 60, 50, 30, 90
-
-input: The food at this restaurant was absolutely [MASK].
-  before (random)        : plea, turnout, siegfried, harta, roared
-  ours  (small, 5K para) : the, ,, ., and, of
-  ref   (bert-base)      : delicious, amazing, fabulous, fantastic, incredible
-...
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
 \textbf{해석 가이드 --- 사전학습이 만든 차이}
 
 \begin{itemize}
 \tightlist
 \item
-  \textbf{\inlinecode{eval\_loss}}: 균등 분포 \texttt{ln\ V\ \$\textbackslash{}approx\$\ 10.33} 에서 약 7.1 까지 내려왔습니다. 다만 6-3 에서 확인했듯 그 값은 \textbf{unigram 기준선 바로 위} --- 즉 2 epoch 이 새긴 것은 대부분 \emph{“어떤 토큰이 흔한가”} 라는 \textbf{빈도 통계} 이고, \emph{“앞뒤 문맥상 무엇이 와야 하는가”} 는 아직 거의 못 배웠습니다.
+  \textbf{\inlinecode{eval\_loss}}: random baseline \texttt{ln\ V\ \$\textbackslash{}approx\$\ 10.33} 에서 약 7 부근까지 떨어졌으면 본체가 \emph{언어 구조 일부} 를 학습. \emph{완전한} BERT 수준은 아니어도 표준 BERT 가 학습한 것의 \emph{방향} 은 맞춤.
 \item
-  \textbf{\inlinecode{perplexity}}: 30,522 (vocab 전체) 에서 약 1,250 부근으로. \emph{마스크 자리마다 후보를 약 1,250 개로 좁힌 상태} 라는 직관적 해석. 이 역시 unigram 모델이 도달하는 수준과 거의 같습니다.
+  \textbf{\inlinecode{perplexity}}: 30,522 (vocab 전체) 에서 약 1,200 부근으로. \emph{마스크 자리마다 후보를 약 1,200 개로 좁힌 상태} 라는 직관적 해석.
 \item
   \textbf{top-5 토큰} (3-way 비교):
 
   \begin{itemize}
   \tightlist
   \item
-    \emph{before (random)}: \textbf{빈도 순위와도 문맥과도 무관한 난수 토큰} --- 조각 토큰 (\inlinecode{\#\#…})이나 희귀어가 섞이기도 하고, 평범한 중간 빈도 단어가 나오기도 합니다 (\inlinecode{SEED} 를 바꾸면 달라집니다). logits 가 순수한 난수라 \emph{어떤 토큰도 특별히 유리하지 않습니다}.
+    \emph{before (random)}: 자주 등장하는 \emph{관사·전치사·특수문자} (\inlinecode{the}, \inlinecode{a}, \inlinecode{,}, \inlinecode{.}, \inlinecode{of}) --- random init 이지만 logits 가 미세하게 흔들려 \emph{통계적 빈도} 높은 토큰만 뽑힘.
   \item
-    \emph{ours (small BERT, 5K paragraphs \(\times\) 2 epoch)}: 입력 문장이 무엇이든 \textbf{거의 똑같은 top-5} (\inlinecode{the}, \inlinecode{,}, \inlinecode{.}, \inlinecode{and} \ldots) --- 6-3 에서 계산한 \emph{코퍼스 최상위 unigram 과 사실상 같은 목록} 입니다. 끝자리가 \inlinecode{of}/\inlinecode{in} 처럼 \textbf{빈도가 엇비슷한 토큰 사이에서만 흔들릴 뿐}, 입력이 바뀌어도 답이 사실상 그대로라는 것은 \textbf{모델이 아직 문맥을 읽지 않는다} 는 뜻입니다. 실패가 아니라 \emph{MLM 학습이 반드시 거치는 첫 계단} --- 문맥을 배우기 전에 주변 분포부터 배웁니다.
+    \emph{ours (small BERT, 5K paragraphs \(\times\) 2 epoch)}: 위키 도메인은 \emph{방향성이 보이기 시작} --- 일반 부사·형용사, 위키 어휘 일부. 다만 정답 토큰 (\inlinecode{paris}, \inlinecode{0} 등) 이 top-5 안에 \emph{안정적으로} 들어오지는 못함. \textbf{데이터·모델 크기 부족의 한계}.
   \item
-    \emph{ref (bert-base-uncased, 약 33억 토큰 \(\times\) 40 epoch)}: 입력마다 \textbf{답이 달라집니다} --- \texttt{The\ capital\ of\ France\ is\ {[}MASK{]}} 에는 \inlinecode{paris}, \inlinecode{lille}, \inlinecode{lyon} 처럼 \emph{프랑스 도시} 가, Yelp 문장에는 \inlinecode{delicious}, \inlinecode{amazing}, \inlinecode{highly} 같은 \emph{감성 표현} 이 옵니다. \textbf{문맥을 읽는다는 것의 관찰 가능한 증거} 가 바로 이 “입력이 바뀌면 답도 바뀐다” 입니다.
+    \emph{ref (bert-base-uncased, 약 33억 토큰 \(\times\) 40 epoch)}: 위키 도메인은 \emph{정답이 top-1} --- \inlinecode{paris}, \inlinecode{zero} 같은 자연스러운 답. Yelp 도메인 (다른 도메인) 도 \emph{감성 형용사} (\inlinecode{amazing}, \inlinecode{delicious}, \inlinecode{highly}) 가 자연스럽게 top-5 에 들어옴. \textbf{이게 사전학습이 충분히 잘 됐을 때의 모습}.
   \end{itemize}
 \end{itemize}
 
 \begin{quote}
-주의 \textbf{ref 의 답이 곧 \textquotesingle 정답\textquotesingle{} 은 아닙니다.} \texttt{Water\ freezes\ at\ {[}MASK{]}\ degrees\ Celsius.} 에 \inlinecode{bert-base-uncased} 는 \inlinecode{100}, \inlinecode{60}, \inlinecode{50} \ldots{} 을 내놓습니다 --- 물이 어는 온도는 0 인데 말이죠. MLM 이 배우는 것은 \emph{세상의 사실} 이 아니라 \textbf{“이 자리에 올 법한 토큰의 분포”} 입니다. 위키 문서에서 \inlinecode{...\ degrees\ Celsius} 앞에 가장 자주 오는 숫자가 \inlinecode{100} 이기 때문에 그렇게 답하는 것. 사전학습 모델을 \emph{지식 베이스} 로 착각하면 안 되는 이유이고, 그래서 downstream task 마다 \textbf{fine-tune} 이 필요합니다.
+\textbf{세 모델의 격차가 정확히 \emph{데이터 규모 + 모델 크기 + 학습 시간} 의 격차} --- 우리 작은 BERT (10M, 5K paragraphs, 2 epoch) \(\to\) reference (110M, 3.3B tokens, 40 epoch) 사이에 \emph{데이터 약 5,000배, 파라미터 11배, epoch 20배}. 그 격차가 top-5 의 \emph{질적 차이} 로 정확히 드러납니다.
 \end{quote}
 
-\begin{quote}
-\textbf{세 모델의 격차 = 데이터 규모 + 모델 크기 + 학습 시간의 격차} --- 우리 작은 BERT (약 11M, 5K paragraphs, 2 epoch) \(\to\) reference (110M, 3.3B tokens, 40 epoch) 사이에 \emph{데이터 약 5,000배, 파라미터 약 10배, epoch 20배}. 그 격차가 “빈도만 아는 단계” 와 “문맥을 읽는 단계” 의 질적 차이로 드러납니다.
-\end{quote}
-
-이 장의 작은 BERT 는 \emph{Wikitext-103 5K paragraphs \(\times\) 2 epoch} 로 학습한 \emph{일반 도메인 mini BERT} --- \textbf{빈도 통계까지 새겨진 본체} 입니다. \ref{ch:21}장에서 Yelp 이진 분류로 fine-tune 하며 \emph{그 정도 본체라도 random init 보다 나은가} 를 직접 측정합니다 --- \emph{우리가 직접 만든 작은 영어 BERT (일반 위키 5K, 약 11M)} vs \emph{\ref{ch:10}장의 DistilBERT (대규모 Wikipedia+BookCorpus, 약 66M)} vs \emph{random init baseline}.
+이 장의 작은 BERT 는 \emph{Wikitext-103 5K paragraphs \(\times\) 2 epoch} 로 학습한 \emph{일반 도메인 mini BERT}. 위키 도메인은 직접 본 분포라 향상이 빠르지만, Yelp 리뷰(식당·업체) 영역은 \emph{다른 도메인} 이라 fine-tune 단계에서 적응이 필요합니다 --- 이게 \emph{진짜 사전학습 \(\to\) fine-tune 패러다임} 의 핵심. \ref{ch:21}장에서 Yelp 이진 분류로 fine-tune 할 때 진짜 transfer 비교 --- \emph{우리가 직접 만든 작은 영어 BERT (일반 위키 5K, 약 10M)} vs \emph{\ref{ch:10}장의 DistilBERT (대규모 Wikipedia+BookCorpus, 약 66M)} vs \emph{random init baseline}.
 
 
 
@@ -1941,17 +1234,6 @@ for f in sorted(os.listdir(SAVE_DIR)):
         size_str = f"{size / 1024:.1f} KB"
     print(f"  {f:>30s}  {size_str}")
 \end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Saved to: ./ch20_small_bert_mlm
-Files:
-                     config.json  0.7 KB
-               model.safetensors  42.4 MB
-                  tokenizer.json  694.7 KB
-           tokenizer_config.json  0.3 KB
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -1990,10 +1272,10 @@ Files:
 변형 축 & 이 장 (기본) & 변형 예 & 예상 효과 \\
 \midrule
 
-\inlinecode{num\_train\_epochs} & 2 & 5 & eval loss 소폭 하락 --- 부록 실측으로 ppl 1,173 \(\to\) 928 (약 20\% 감소, epoch 4 부터 평탄) \\
+\inlinecode{num\_train\_epochs} & 2 & 5 & eval loss 하락, perplexity 완만히 하락(8-10 epoch 이후 평탄) \\
 \inlinecode{BLOCK\_SIZE} & 128 & 64 & 블록 수 약 2배, 한 블록 짧아져 \emph{문맥} 줄음 \(\to\) loss 약간 상승 \\
 \inlinecode{BLOCK\_SIZE} & 128 & 256 & 블록 수 절반, 한 블록 길어 \emph{문맥} 풍부 \(\to\) loss 하락 가능, VRAM 약 4배 (attention \(O(n^2)\)) \\
-\inlinecode{N\_TRAIN\_TEXT} & 5,000 paragraphs & 30,000 paragraphs & loss 큰 폭 하락, 학습 step 약 6배 (본편 2 epoch 이 336 step / 20-25초이므로 약 2 분) --- 30분 룰 안에서 2 epoch 이상 여유 \\
+\inlinecode{N\_TRAIN\_TEXT} & 5,000 paragraphs & 30,000 paragraphs & loss 큰 폭 하락, 시간 약 6배 증가 (T4 30분 룰 안에선 1 epoch 만 가능) \\
 \inlinecode{mlm\_probability} & 0.15 & 0.30 & 더 어려운 task \(\to\) loss 상승, 학습 신호 증가 (논문 BERT 는 15\% 가 sweet spot) \\
 \bottomrule
 \end{tabular}
@@ -2001,14 +1283,14 @@ Files:
 \end{booktable}
 
 \begin{quote}
-\textbf{T4 30분 룰 안에서 가능한 가장 큰 개선} --- 본편은 batch 32 기준 한 epoch 이 \textbf{167 step}, 2 epoch 336 step 이 \textbf{20-25초} (준비 포함 0.4분) 로 끝납니다. 같은 batch 로 5K \(\to\) 20K (약 4배) 로 늘려도 한 epoch 은 668 step \(\approx\) \textbf{1분 안팎}. 즉 30분 룰의 병목은 학습 step 이 아니라 \textbf{데이터 준비} (다운로드·토크나이즈·\inlinecode{group\_texts}) 쪽이니, 그쪽에 여유를 크게 잡고 \emph{epoch 보다 데이터} 를 늘리는 편이 이득입니다. 이 장의 \emph{짧고 빠른} 실험 이후 직접 변형해 보세요.
+\textbf{T4 30분 룰 안에서 가능한 가장 큰 개선} --- Wikitext-103 paragraphs 를 5K \(\to\) 20K (약 4배) 로 늘리고 batch 32 유지하면 한 epoch 약 20-25분, 1 epoch 로 마무리. 이 장의 \emph{짧고 빠른} 실험 이후 직접 변형해 보세요.
 \end{quote}
 
 
 
 \subsection{사전학습을 더 돌리면? --- 부록 곡선 (이슈 \#19)}
 
-본편은 \textbf{2 epoch} 데모라 perplexity 가 높습니다. 부록 \inlinecode{20\_en\_bert\_pretrain\_scaling} 에서 2 \(\to\) 16 epoch 으로 길게 학습하며 측정한 곡선을 보면, perplexity 가 \textbf{영어 1,173 \(\to\) 697, 한국어 1,626 \(\to\) 707 로 \textasciitilde2배} 내려간 뒤 \textbf{epoch 8-10 부터 평탄} 해집니다. (부록의 2 epoch 값 1,173 은 본편 실행본의 1,253 보다 낮습니다 --- 모델도 데이터도 같은데 \textbf{학습률 스케줄의 총 길이가 다르기} 때문입니다. 본편은 2 epoch 에 맞춰 linear decay 가 끝나도록 잡혀 후반부엔 학습률이 거의 0 인 반면, 부록은 16 epoch 짜리 스케줄이라 같은 \emph{2 epoch 지점} 에서는 아직 높은 학습률로 달리는 중입니다. 같은 “2 epoch” 라도 그때까지 겪은 학습률 경로가 다른 것.) 5,000 텍스트로는 모델이 금세 saturate 해 \emph{epoch 만으로는 한계} --- 더 낮추려면 \textbf{데이터 양} 을 늘려야 합니다 (\ref{ch:21}장 부록의 \textquotesingle 데이터가 가장 큰 lever\textquotesingle{} 와 같은 결론). 본편의 높은 perplexity 는 버그가 아니라 \emph{짧은 데모 학습의 정직한 반영} 입니다.
+본편은 \textbf{2 epoch} 데모라 perplexity 가 높습니다. 부록 \inlinecode{20\_en\_bert\_pretrain\_scaling} 에서 2 \(\to\) 16 epoch 으로 길게 학습하며 측정한 곡선을 보면, perplexity 가 \textbf{영어 1,173 \(\to\) 696, 한국어 1,626 \(\to\) 709 로 \textasciitilde2배} 내려간 뒤 \textbf{epoch 8-10 부터 평탄} 해집니다. 5,000 텍스트로는 모델이 금세 saturate 해 \emph{epoch 만으로는 한계} --- 더 낮추려면 \textbf{데이터 양} 을 늘려야 합니다 (\ref{ch:21}장 부록의 \textquotesingle 데이터가 가장 큰 lever\textquotesingle{} 와 같은 결론). 본편의 높은 perplexity 는 버그가 아니라 \emph{짧은 데모 학습의 정직한 반영} 입니다.
 
 
 
@@ -2042,7 +1324,7 @@ Files:
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
 \item
-  MLM 사전학습의 random baseline loss 가 \texttt{ln(30522)\ \$\textbackslash{}approx\$\ 10.33} 인 이유는 무엇이고, 학습 첫 step 의 loss 가 이 값과 \emph{크게} 다르다면 무엇을 의심해야 하나요? 또 학습 후 loss 가 \textbf{unigram 기준선 근처에서 멈춰 있다면} 모델은 무엇을 배웠고 무엇을 아직 못 배운 상태인가요?
+  MLM 사전학습의 random baseline loss 가 \texttt{ln(30522)\ \$\textbackslash{}approx\$\ 10.33} 인 이유는 무엇이고, 학습 첫 step 의 loss 가 이 값과 \emph{크게} 다르다면 무엇을 의심해야 하나요?
 \item
   \inlinecode{DataCollatorForLanguageModeling} 이 매 batch 마다 \emph{다른} 위치를 mask 합니다. 같은 위치를 \emph{고정해서} mask 하면 어떤 문제가 생길까요?
 \item
@@ -2074,25 +1356,6 @@ Files:
 
 \end{faqBox}
 
-\begin{faqBox}{Q2. (실무) \inlinecode{bert-base-uncased} 의 모델 weight 도 같이 가져오면 더 빠르지 않나요?}
-
-맞습니다 --- 그게 \emph{fine-tuning} 흐름 (\ref{ch:07}--\ref{ch:18}장). 이 장는 그 흐름을 \emph{뒤집어}, “사전학습이 어떻게 이뤄지는지” 를 보는 게 목적입니다.
-
-\inlinecode{BertForMaskedLM.from\_pretrained("bert-base-uncased")} 라고 쓰면 110M 사전학습 모델이 로드되어 \emph{이미 잘 작동} 함. 반면 이 장는:
-
-\Needspace{8\baselineskip}
-\begin{lstlisting}
-config = BertConfig(
-    hidden_size=256,
-    num_hidden_layers=4,
-    ...,
-)
-model = BertForMaskedLM(config)
-\end{lstlisting}
-
-\inlinecode{from\_pretrained} 가 아니라 \inlinecode{BertForMaskedLM(config)} 라는 생성자 호출로 \emph{비어 있는} 모델을 만듭니다. 학습이 \emph{0 에서 시작} 하는 것 자체가 핵심.
-
-\end{faqBox}
 
 \begin{faqBox}{Q3. (이론) \inlinecode{mlm\_probability=0.15} 의 15\% 는 어디서 나온 숫자인가요?}
 
@@ -2112,24 +1375,6 @@ BERT 원논문 (Devlin et al., 2018, arXiv:1810.04805) 의 sweet spot:
 
 \end{faqBox}
 
-\begin{faqBox}{Q4. (실무) MLM 학습 중 loss 가 갑자기 \emph{발산} 하면 어떻게 해야 하나요?}
-
-작은 BERT scratch 학습은 fine-tune 보다 \emph{학습률에 민감} 합니다. 발산 (loss \(\to\) NaN 또는 100+) 의 흔한 원인:
-
-\Needspace{9\baselineskip}
-\begin{lstlisting}
-training_args = TrainingArguments(learning_rate=1e-4, ...)
-
-training_args = TrainingArguments(warmup_steps=0.1, ...)
-
-training_args = TrainingArguments(max_grad_norm=0.5, ...)
-
-training_args = TrainingArguments(fp16=False, ...)
-\end{lstlisting}
-
-이 장의 \inlinecode{lr=5e-4,\ warmup=0.06,\ fp16=True} 셋업은 \emph{작은 BERT + 5K 데이터} 에 맞춰 보수적으로 잡았습니다. 모델 키우거나 데이터 늘리면 위 옵션을 조정.
-
-\end{faqBox}
 
 \begin{faqBox}{Q5. (실무) 사전학습이 \emph{얼마나} 도움 되는지 어떻게 확인하나요?}
 
@@ -2157,69 +1402,12 @@ model_scratch = BertForSequenceClassification(config)
 
 \end{faqBox}
 
-\begin{faqBox}{Q6. (이론) \inlinecode{group\_texts} 가 문장 경계를 무시하는데, BERT 가 잘 학습되나요?}
-
-원논문의 BERT 는 NSP (Next Sentence Prediction) 같은 \emph{문장 쌍} task 도 같이 학습했지만, 후속 연구 (RoBERTa, 2019) 가 \emph{NSP 를 빼고 단순히 토큰 스트림으로 학습} 해도 성능이 \emph{더 좋다} 는 걸 보였습니다. 이 장는 그 단순화된 흐름 (MLM only).
-
-토큰 스트림이 \emph{문장 경계 정보를 잃지만} 얻는 게 더 큽니다:
-
-\begin{itemize}
-\tightlist
-\item
-  짧은 문장이 PAD 로 가득 차지 않음 \(\to\) GPU 활용도 ↑
-\item
-  긴 문장이 잘리지 않음 \(\to\) 정보 손실 \(\downarrow\)
-\item
-  학습 신호 (mask 위치) 가 \emph{균등하게 분포}
-\end{itemize}
-
-문장 경계는 분류·NLI 같은 downstream 에서 다시 명시적으로 입력됩니다 ({[}CLS{]} 토큰).
-
-\end{faqBox}
-
-\begin{faqBox}{Q7. (실무) 저장된 체크포인트가 너무 무거우면 어떻게 가볍게 하나요?}
-
-이 장의 작은 BERT 는 약 40MB 정도라 무겁지 않지만, 큰 모델의 경우:
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-model.save_pretrained(
-    "./ch20_small_bert_mlm",
-    safe_serialization=True,
-)
-
-model.half().save_pretrained("./ch20_small_bert_mlm")
-
-# from transformers import BitsAndBytesConfig
-# config = BitsAndBytesConfig(load_in_8bit=True)
-\end{lstlisting}
-
-이 장는 \emph{학습용 체크포인트} 이므로 fp32 그대로 저장 (\ref{ch:21}장 fine-tune 시 정밀도 유지). 배포용이면 inference 단계에서 quantize 고려.
-
-\end{faqBox}
-
-\begin{faqBox}{Q8. (이론) 큰 BERT (110M) 와 비교해 이번 작은 BERT (약 11M) 의 \emph{근본 한계} 는?}
-
-\begin{booktable}{20장 FAQ 표}{tab:ch20-10}
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}llll@{}}
-\toprule
-차원 & 작은 BERT (이 장) & bert-base-uncased & 차이의 영향 \\
-\midrule
-
-hidden\_size & 256 & 768 & 표현 공간 차원이 1/3 \(\to\) 미세한 의미 구분 어려움 \\
-num\_layers & 4 & 12 & \emph{깊은} 추론 (구문 \(\to\) 의미 \(\to\) 문맥) 단계 부족 \\
-학습 데이터 & 5K paragraphs (약 68.5만 토큰 = 5,352 block \(\times\) 128, Wikitext-103) & 33억 토큰 (BERT-base) & 어휘 다양성·문맥 풍부함 격차 약 5000배 \\
-학습 시간 & 약 0.4분 (MLM 2 epoch) & 4 일 (TPU v3-256) & 압축한 \emph{정보량} 자체가 다름 \\
-\bottomrule
-\end{tabular}
-\end{adjustbox}
-\end{booktable}
-
-\textbf{결론}: 이 장의 산출물은 \emph{fine-tune 출발점으로는 random 보다 나음} 정도. \emph{zero-shot} 또는 \emph{복잡한 downstream} 에선 표준 BERT 와 비교 불가. \emph{작은 모델 + 작은 데이터로도 일반 도메인 사전학습이 가능하다는 메커니즘} 을 \emph{경험} 하는 게 이 장의 목적이고, \emph{실용 모델} 은 표준 사전학습품을 가져다 쓰는 게 정답.
-\end{faqBox}
 
 
+
+
+
+\compactFAQMore{5}
 
 \begin{previewBox}{미리보기: 다음 장}
 
@@ -2232,7 +1420,7 @@ num\_layers & 4 & 12 & \emph{깊은} 추론 (구문 \(\to\) 의미 \(\to\) 문�
 \item
   \textbf{Yelp 이진 분류 fine-tune} (\ref{ch:10}·\ref{ch:11}장과 같은 데이터·셋업) --- \emph{완전히 다른 도메인 transfer}. 일반 위키로 사전학습한 본체가 \emph{Yelp 리뷰(식당·업체) 도메인} 에 얼마나 잘 적응하는가 측정
 \item
-  \textbf{핵심 비교}: 이번 작은 사전학습 BERT (약 11M params, Wikitext-103 5K paragraphs MLM) vs \ref{ch:10}장의 DistilBERT (약 66M params, 대규모 Wikipedia + BookCorpus 사전학습). 둘 다 \emph{일반 도메인 \(\to\) Yelp transfer} 라 비교가 \emph{fair} --- \emph{사전학습 규모} 차이만 측정됨
+  \textbf{핵심 비교}: 이번 작은 사전학습 BERT (약 10M params, Wikitext-103 5K paragraphs MLM) vs \ref{ch:10}장의 DistilBERT (약 66M params, 대규모 Wikipedia + BookCorpus 사전학습). 둘 다 \emph{일반 도메인 \(\to\) Yelp transfer} 라 비교가 \emph{fair} --- \emph{사전학습 규모} 차이만 측정됨
 \item
   작은 모델 + 작은 데이터 사전학습이 \emph{얼마나 도움 되는가} 의 정량 측정 --- fine-tune 학습 곡선·최종 accuracy·confusion matrix 모두 나란히
 \item
@@ -2246,392 +1434,15 @@ num\_layers & 4 & 12 & \emph{깊은} 추론 (구문 \(\to\) 의미 \(\to\) 문�
 
 
 
-\section{\ref{ch:20}·\ref{ch:22}장 부록 --- 사전학습량과 perplexity: 더 돌리면 얼마나 내려가나 (이슈 \#19)}
+\Needspace{18\baselineskip}
 
-본편 \ref{ch:20}장(영어)·\ref{ch:22}장(한국어)는 small BERT 를 \textbf{2 epoch} 만 MLM 사전학습해서 perplexity 가 높았습니다 (영어 \textasciitilde1,253, 한국어 \textasciitilde1,833). 짧은 데모 학습의 정직한 반영이지만, \emph{더 돌리면 얼마나 내려가는지} 는 한 점만 봐선 알 수 없습니다.
+\section{온라인 부록: 사전학습량과 perplexity}
 
-이 부록은 같은 small BERT(hidden=256·L=4)를 \textbf{2 \(\to\) 16 epoch 으로 길게 학습} 하며, 체크포인트마다 eval perplexity 를 기록해 곡선으로 봅니다. 학습을 한 번만 돌리고 \inlinecode{eval\_strategy="steps"} 로 중간 perplexity 를 모으므로 효율적입니다.
+\onlineAppendixLink{사전학습량과 perplexity}{영어 perplexity는 1,173에서 696으로, 한국어는 1,626에서 709로 내려가지만 8--10 epoch 이후에는 개선이 평탄해집니다. 같은 5,000개 텍스트를 반복하는 것보다 데이터와 compute를 늘리는 편이 다음 성능 레버라는 결론입니다.}{https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/20_en_bert_pretrain/20_en_bert_pretrain_scaling.ipynb}
 
-\begin{quote}
-영어(wikitext-103)·한국어(ko-wiki) 두 곡선을 epoch 축에서 비교. small 모델이라 T4 에서 가볍습니다.
-\end{quote}
-
-
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-!pip install -q transformers datasets
-\end{lstlisting}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-import warnings; warnings.filterwarnings("ignore")
-import math, numpy as np, pandas as pd
-import matplotlib.pyplot as plt, seaborn as sns, torch
-from datasets import load_dataset, Dataset
-from transformers import AutoTokenizer, BertConfig, BertForMaskedLM, DataCollatorForLanguageModeling, Trainer, TrainingArguments
-
-import matplotlib.font_manager as fm, subprocess, os
-_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
-if not os.path.exists(_fp):
-    subprocess.run(
-        "apt-get -qq -y install fonts-nanum",
-        shell=True,
-    )
-fm.fontManager.addfont(_fp)
-plt.rcParams["font.family"] = "NanumGothic"; plt.rcParams["axes.unicode_minus"] = False
-print(f"CUDA: {torch.cuda.is_available()}")
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-CUDA: True
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
-\subsection{공통 유틸 --- 블록화 / small BERT / 학습+perplexity 곡선}
-
-본편 \ref{ch:20}·\ref{ch:22}장과 같은 파이프라인: \inlinecode{add\_special\_tokens=False} 토큰화 \(\to\) \inlinecode{group\_texts}(128 블록) \(\to\) MLM collator. \inlinecode{train\_curve} 는 \inlinecode{eval\_strategy="steps"} 로 중간 perplexity 를 모아 곡선을 돌려줍니다 (epoch=2 데모점 포함).
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-BLOCK_SIZE = 128; EPOCHS = 16; SEED = 42
-
-def prep_blocks(text_ds, tokenizer):
-    tok = text_ds.map(lambda e: tokenizer(e["text"], add_special_tokens=False, truncation=False),
-                      batched=True, remove_columns=text_ds.column_names)
-    def group(ex):
-        concat = {k: sum(ex[k], []) for k in ex.keys()}
-        total = (len(concat["input_ids"]) // BLOCK_SIZE) * BLOCK_SIZE
-        return {k: [t[i:i+BLOCK_SIZE] for i in range(0, total, BLOCK_SIZE)] for k, t in concat.items()}
-    return tok.map(group, batched=True)
-
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=12]
-def build_small_bert(tokenizer):
-    cfg = BertConfig(vocab_size=tokenizer.vocab_size, hidden_size=256, num_hidden_layers=4,
-                     num_attention_heads=4, intermediate_size=1024,
-                     max_position_embeddings=BLOCK_SIZE, pad_token_id=tokenizer.pad_token_id)
-    return BertForMaskedLM(cfg)
-
-def train_curve(tokenizer, lm_train, lm_eval, label):
-    torch.manual_seed(SEED); np.random.seed(SEED)
-    model = build_small_bert(tokenizer)
-    collator = DataCollatorForLanguageModeling(
-        tokenizer=tokenizer,
-        mlm=True,
-        mlm_probability=0.15,
-    )
-    spe = max(1, len(lm_train) // 32)   # steps per epoch
-    args = TrainingArguments(output_dir=f"./curve_{label}", num_train_epochs=EPOCHS,
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=28]
-        per_device_train_batch_size=32, per_device_eval_batch_size=64, learning_rate=5e-4,
-        weight_decay=0.01, warmup_steps=0.06,
-        fp16=torch.cuda.is_available(),
-        eval_strategy="steps", eval_steps=spe, logging_steps=spe, save_strategy="no",
-        report_to="none", seed=SEED)
-    tr = Trainer(model=model, args=args, train_dataset=lm_train, eval_dataset=lm_eval,
-                 data_collator=collator, processing_class=tokenizer)
-    tr.train()
-    curve = [(e["step"]/spe, math.exp(e["eval_loss"])) for e in tr.state.log_history if "eval_loss" in e]
-    del model, tr; torch.cuda.empty_cache()
-    return curve   # [(epoch, perplexity), ...]
-print("유틸 준비 완료")
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-유틸 준비 완료
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
-\subsection{영어 --- wikitext-103, small BERT MLM 16 epoch}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-raw_tr = load_dataset(
-    "Salesforce/wikitext",
-    "wikitext-103-raw-v1",
-    split="train",
-)
-raw_ev = load_dataset(
-    "Salesforce/wikitext",
-    "wikitext-103-raw-v1",
-    split="validation",
-)
-good = lambda ex: 50 <= len(ex["text"].strip()) <= 2000
-tr_txt = raw_tr.filter(good).shuffle(seed=SEED).select(range(5000))
-ev_txt = raw_ev.filter(good).shuffle(seed=SEED).select(range(500))
-tok_en = AutoTokenizer.from_pretrained("bert-base-uncased")
-lm_tr_en = prep_blocks(
-    tr_txt,
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 데이터를 불러오고 학습에 맞는 형태로 정리하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-    tok_en); lm_ev_en = prep_blocks(ev_txt, tok_en,
-)
-print(
-    f"EN blocks — train {len(lm_tr_en)}, eval {len(lm_ev_en)}, vocab "
-    f"{tok_en.vocab_size}"
-)
-curve_en = train_curve(tok_en, lm_tr_en, lm_ev_en, "en")
-print(
-    "EN (epoch, ppl):", [(round(e,1), round(p,1)) for e,p in curve_en]
-)
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-wikitext-103-raw-v1/test-00000-of-00001.(…): downloading bytes: | 0.00B
-wikitext-103-raw-v1/train-00000-of-00002(…): downloading bytes: | 0.00B
-wikitext-103-raw-v1/train-00001-of-00002(…): downloading bytes: | 0.00B
-wikitext-103-raw-v1/validation-00000-of-(…): downloading bytes: | 0.00B
-EN blocks -- train 5352, eval 535, vocab 30522
-Step  Training Loss  Validation Loss
-----  -------------  ---------------
-167   8.343121       7.316820
-334   7.136372       7.067544
-501   6.943708       6.930294
-668   6.833707       6.825957
-835   6.789280       6.832632
-1002  6.719531       6.780964
-1169  6.674949       6.762733
-1336  6.623808       6.684711
-1503  6.611356       6.680601
-...
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
-\subsection{한국어 --- ko-wiki, small BERT MLM 16 epoch}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-ds_ko = load_dataset(
-    "wikimedia/wikipedia",
-    "20231101.ko",
-    split="train",
-)
-def collect_paragraphs(ds, target, min_len=50, max_len=2000):
-    out = []
-    for ex in ds:
-        for para in ex["text"].split("\n\n"):
-            para = para.strip()
-            if min_len <= len(para) <= max_len:
-                out.append(para)
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 데이터를 불러오고 학습에 맞는 형태로 정리하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=13]
-                if len(out) >= target: return out
-    return out
-paras = collect_paragraphs(
-    ds_ko.shuffle(seed=SEED),
-    target=5500,
-)
-tr_ko = Dataset.from_dict({"text": paras[:5000]}); ev_ko = Dataset.from_dict({"text": paras[5000:5500]})
-tok_ko = AutoTokenizer.from_pretrained("klue/bert-base")
-lm_tr_ko = prep_blocks(
-    tr_ko,
-    tok_ko); lm_ev_ko = prep_blocks(ev_ko, tok_ko,
-)
-print(
-    f"KO blocks — train {len(lm_tr_ko)}, eval {len(lm_ev_ko)}, vocab "
-    f"{tok_ko.vocab_size}"
-)
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{6\baselineskip}
-\begin{lstlisting}[firstnumber=29]
-curve_ko = train_curve(tok_ko, lm_tr_ko, lm_ev_ko, "ko")
-print(
-    "KO (epoch, ppl):", [(round(e,1), round(p,1)) for e,p in curve_ko]
-)
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-20231101.ko/train-00000-of-00003.parquet: downloading bytes: | 0.00B
-20231101.ko/train-00001-of-00003.parquet: downloading bytes: | 0.00B
-20231101.ko/train-00002-of-00003.parquet: downloading bytes: | 0.00B
-[transformers] Token indices sequence length is longer than the specified m...
-KO blocks -- train 3924, eval 429, vocab 32000
-Step  Training Loss  Validation Loss
-----  -------------  ---------------
-122   8.756504       7.745499
-244   7.447506       7.394058
-366   7.200113       7.198878
-488   7.008336       7.047162
-610   6.870553       6.984996
-732   6.762624       6.882943
-854   6.695641       6.859433
-976   6.609315       6.847979
-1098  6.532805       6.873027
-...
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
-\subsection{곡선 --- eval perplexity vs 사전학습 epoch}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-def at_epoch(curve, ep):
-    return min(curve, key=lambda x: abs(x[0]-ep))[1]
-en_ep, en_pp = zip(
-    *curve_en); ko_ep,
-    ko_pp = zip(*curve_ko,
-)
-sns.set_theme(
-    style="whitegrid",
-    context="talk",
-    font="NanumGothic",
-    rc={"axes.unicode_minus": False},
-)
-fig, ax = plt.subplots(figsize=(9.5, 5.5))
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 숫자 결과를 그림으로 확인하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=14]
-ax.plot(
-    en_ep,
-    en_pp,
-    "o-",
-    color="#5B8DEF",
-    lw=2,
-    label="영어 (wikitext, vocab 30K)",
-)
-ax.plot(
-    ko_ep,
-    ko_pp,
-    "s-",
-    color="#F47272",
-    lw=2,
-    label="한국어 (ko-wiki, vocab 32K)",
-)
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=30]
-ax.scatter(
-    [2],
-    [at_epoch(curve_en,2)],
-    s=200,
-    facecolors="none",
-    edgecolors="#1B3A8A",
-    lw=2.5,
-    zorder=5,
-)
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=39]
-ax.scatter(
-    [2],
-    [at_epoch(curve_ko,2)],
-    s=200,
-    facecolors="none",
-    edgecolors="#8A1B1B",
-    lw=2.5,
-    zorder=5,
-)
-ax.annotate("본편 데모 (2 epoch)", (2, at_epoch(curve_ko,2)), xytext=(3.2, at_epoch(curve_ko,2)*1.3),
-            fontsize=11, arrowprops=dict(
-                arrowstyle="->",
-                color="#555"),
-            )
-ax.set_yscale("log"); ax.set_xlabel("사전학습 epoch"); ax.set_ylabel("eval perplexity (log)")
-ax.set_title("사전학습량에 따른 perplexity")
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
-
-\Needspace{10\baselineskip}
-\begin{lstlisting}[firstnumber=55]
-ax.legend(fontsize=11); plt.tight_layout(); plt.show()
-
-for name, c in [("영어", curve_en), ("한국어", curve_ko)]:
-    p2, pf = at_epoch(c,2), c[-1][1]
-    print(
-        f"{name}: 2 epoch ppl={p2:.0f} -> {EPOCHS} epoch ppl={pf:.0f}  ("
-        f"{p2/pf:.1f}배 감소)"
-    )
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-영어: 2 epoch ppl=1173 → 16 epoch ppl=697  (1.7배 감소)
-한국어: 2 epoch ppl=1626 → 16 epoch ppl=707  (2.3배 감소)
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-\begin{bookfigurelabel}[H]{사전학습 epoch에 따른 영어와 한국어 MLM perplexity 곡선}{fig:ch20-pretrain-scaling-curve}
+\begin{bookfigurelabel}[H]{사전학습 epoch에 따른 영어와 한국어 MLM perplexity}{fig:ch20-pretrain-scaling-curve}
 \centering
-\includegraphics[width=0.86\linewidth]{assets/figures/ch20_pretrain_scaling_curve.png}
+\includegraphics[width=0.72\linewidth]{assets/figures/ch20_pretrain_scaling_curve.png}
 \end{bookfigurelabel}
 
-\textbf{그림 읽기} --- 그림~\ref{fig:ch20-pretrain-scaling-curve}에서 다음 내용을 확인합니다: 사전학습 epoch에 따른 영어와 한국어 MLM perplexity 곡선. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
-
-
-
-\subsection{해석}
-
-\textbf{더 학습하면 perplexity 는 분명히 내려갑니다 --- 다만 곧 평탄해집니다.}
-
-\begin{booktable}{20장 해석 표}{tab:ch20-11}
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}llll@{}}
-\toprule
-& 2 epoch (본편 데모) & 16 epoch & 감소 \\
-\midrule
-
-영어 (wikitext) & 1,173 & 697 & 1.7배 \\
-한국어 (ko-wiki) & 1,626 & 707 & 2.3배 \\
-\bottomrule
-\end{tabular}
-\end{adjustbox}
-\end{booktable}
-
-곡선을 보면 두 언어 모두 처음 몇 epoch 에서 가파르게 떨어지다가 \textbf{epoch 8-10 부터 평탄} 해집니다. 8배 더 돌려도(2\(\to\)16 epoch) perplexity 는 \textasciitilde2배 낮아질 뿐이고, 마지막 6 epoch 은 거의 움직이지 않습니다.
-
-\textbf{왜 평탄해지나 --- 데이터가 병목입니다.} 5,000 텍스트는 small BERT 가 금세 다 외울 만큼 적어, epoch 을 늘리면 train loss 는 계속 떨어져도 \emph{새 패턴} 을 못 봐 eval perplexity 가 saturate 합니다 (overfitting 영역 진입). 잘 학습된 BERT 의 perplexity 가 두 자리-수십 수준인 것과의 큰 격차는 \textbf{epoch 이 아니라 데이터·compute 규모} 의 문제입니다 --- 원본 BERT 는 수십억 토큰으로 학습했습니다.
-
-\textbf{그래서 본편의 높은 perplexity 는 버그가 아닙니다.} “데모용 짧은 학습이라 빈도까지만 익힌 단계” 가 맞고, 더 돌리면 \textasciitilde2배까지는 내려가지만 그 이상은 \emph{데이터 양} 을 늘려야 합니다. 이는 \ref{ch:21}장 부록(데이터 스케일링)에서 본 \emph{데이터가 가장 큰 lever} 라는 교훈, 그리고 \ref{ch:21}·\ref{ch:23}장의 사전학습 분류 천장과 같은 뿌리입니다.
+\textbf{그림 읽기} --- 그림~\ref{fig:ch20-pretrain-scaling-curve}에서 다음 내용을 확인합니다: 사전학습 epoch에 따른 영어와 한국어 MLM perplexity. 실행된 노트북에서 저장된 최신 plot 출력이므로, 코드에서 계산한 값이 어떤 평가 지점으로 이어지는지 바로 확인할 수 있습니다.
