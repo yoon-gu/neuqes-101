@@ -161,88 +161,6 @@ NSMC 영화 리뷰는 보통 \emph{짧은 한 줄} (약 20 토큰), KLUE-YNAT �
 
 
 
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-!pip install -q transformers datasets
-\end{lstlisting}
-
-\begin{codeRead}
-\textbf{1행}의 \inlinecode{!pip install -q transform...}에서는 Colab 실행에 필요한 패키지를 설치합니다.
-\end{codeRead}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-import warnings
-warnings.filterwarnings("ignore")
-
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-import torch
-from datasets import load_dataset
-from transformers import (
-    AutoTokenizer, AutoModelForSequenceClassification,
-    Trainer, TrainingArguments,
-)
-from sklearn.metrics import (
-    accuracy_score, precision_recall_fscore_support,
-    classification_report, roc_auc_score, confusion_matrix,
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-)
-
-import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
-_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
-if not os.path.exists(_fp):
-    subprocess.run(
-        "apt-get -qq -y install fonts-nanum",
-        shell=True,
-    )
-fm.fontManager.addfont(_fp)
-plt.rcParams["font.family"] = "NanumGothic"
-plt.rcParams["axes.unicode_minus"] = False
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=30]
-print(f"PyTorch:        {torch.__version__}")
-print(f"CUDA available: {torch.cuda.is_available()}")
-if torch.cuda.is_available():
-    print(
-        f"GPU:             "
-        f"{torch.cuda.get_device_name(0)}"
-    )
-else:
-    print(
-        "Warning: CPU runtime — training will be very "
-        "slow. Switch to T4 recommended."
-    )
-\end{lstlisting}
-
-\begin{codeRead}
-\inlinecode{numpy, pandas, matplotlib, PyTorch, datasets} 같은 주요 패키지를 불러옵니다.
-\end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-PyTorch:        2.11.0+cu128
-CUDA available: True
-GPU:             Tesla T4
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
 \textbf{baseline VRAM}:
 
 
@@ -255,15 +173,6 @@ GPU:             Tesla T4
 \begin{codeRead}
 \textbf{1행}의 \inlinecode{!nvidia-smi}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 03:58:31 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 45C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -296,70 +205,6 @@ N/A 45C P8 10W / 70W | 3MiB / 15360MiB | 0% Default
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
-ds = load_dataset("klue/klue", "ynat")
-print(f"splits: {list(ds.keys())}")
-print(f"sizes: {[(k, len(v)) for k, v in ds.items()]}")
-print(
-    f"label names: "
-    f"{ds['train'].features['label'].names}"
-)
-
-import collections
-cnt = collections.Counter(ds["train"]["label"])
-LABEL_NAMES = ds["train"].features["label"].names
-
-_KO2EN = {"IT과학": "IT/Science", "경제": "Economy", "사회": "Society",
-          "생활문화": "Life&Culture", "세계": "World", "스포츠": "Sports", "정치": "Politics"}
-LABEL_NAMES_EN = [_KO2EN.get(n, n) for n in LABEL_NAMES]
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-print(f"\nClass distribution (train):")
-for k in range(len(LABEL_NAMES_EN)):
-    n = cnt[k]
-    print(
-        f"  {LABEL_NAMES_EN[k]:>13}  (label {k}): {n:>5}  ("
-        f"{n / len(ds['train']):.1%})"
-    )
-
-print(f"\nfirst 3 samples:")
-for ex in ds["train"].select(range(3)):
-    print(
-        f"  label={ex['label']} ({LABEL_NAMES_EN[ex['label']]:>13})  title="
-        f"{ex['title']!r}"
-    )
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-splits: ['train', 'validation']
-sizes: [('train', 45678), ('validation', 9107)]
-label names: ['IT과학', '경제', '사회', '생활문화', '세계', '스포츠', '정치']
-
-Class distribution (train):
-     IT/Science  (label 0):  5235  (11.5%)
-        Economy  (label 1):  6118  (13.4%)
-        Society  (label 2):  5133  (11.2%)
-   Life&Culture  (label 3):  5751  (12.6%)
-          World  (label 4):  8320  (18.2%)
-         Sports  (label 5):  7742  (16.9%)
-       Politics  (label 6):  7379  (16.2%)
-
-first 3 samples:
-label=3 ( Life&Culture) title='유튜브 내달 2일까지 크리에이터 지원 공간 운영'
-  label=3 ( Life&Culture)  title='어버이날 맑다가 흐려져…남부지방 옅은 황사'
-label=2 ( Society) title='내년부터 국가RD 평가 때 논문건수는 반영 않는다'
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
 SEED = 42
 train_full = ds["train"].shuffle(seed=SEED).select(range(5000))
 eval_full  = ds["validation"].shuffle(seed=SEED).select(range(1000))
@@ -377,15 +222,6 @@ print(
     f"{max(sample_lens)}"
 )
 \end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-sampled train: 5000
-sampled eval:  1000
-
-Token length (sample 200): mean=15.8, median=16, max=27
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -522,15 +358,6 @@ classifier \inlinecode{Linear(768,\ K)} & 1,538 & \textbf{5,383} \\
 !nvidia-smi
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 03:58:51 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 46C P8 14W / 70W | 3MiB / 15360MiB | 0% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \section{학습}
@@ -576,108 +403,16 @@ def compute_metrics(eval_pred):
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-training_args = TrainingArguments(
-    output_dir="./ch16_output",
-    num_train_epochs=2,
-    per_device_train_batch_size=16,
-    per_device_eval_batch_size=32,
-    learning_rate=2e-5,
-    fp16=True,
-    eval_strategy="epoch",
-    logging_steps=50,
-    save_strategy="no",
-    report_to="none",
-    seed=SEED,
-)
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=15]
-trainer = Trainer(
-    model=model,
-    args=training_args,
-    train_dataset=train_tok,
-    eval_dataset=eval_tok,
-    processing_class=tokenizer,
-    compute_metrics=compute_metrics,
-)
-
-train_result = trainer.train()
-print(
-    f"\nTraining done — mean train loss: "
-    f"{train_result.training_loss:.4f}"
-)
-print(f"random baseline loss (K=7): {np.log(7):.4f}")
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Epoch  Train...  Valid...  Accuracy  Macro...  Macro...  Macro F1  Auc Ovr
------  --------  --------  --------  --------  --------  --------  --------
-1      0.441529  0.465393  0.856000  0.838248  0.881824  0.856753  0.978641
-2      0.286288  0.402871  0.856000  0.849702  0.873584  0.860287  0.982976
-
-Training done -- mean train loss: 0.4626
-random baseline loss (K=7): 1.9459
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
 \Needspace{5\baselineskip}
 \begin{lstlisting}
 !nvidia-smi
 \end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 03:59:33 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 65C P0 72W / 70W | 2195MiB / 15360MiB | 64% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
 \section{평가}
 
 \ref{ch:12}장의 평가 패턴을 한국어 환경에서 재현. 7클래스라 혼동 행렬이 7\(\times\)7 --- \emph{어떤 카테고리가 어떤 카테고리와 혼동하는지} 보는 데 핵심.
-
-
-
-\Needspace{7\baselineskip}
-\begin{lstlisting}
-eval_metrics = trainer.evaluate()
-print("klue/bert-base KLUE-YNAT — evaluation:")
-for k, v in eval_metrics.items():
-    if k.startswith("eval_") and isinstance(v, float):
-        print(f"  {k:>20}: {v:.4f}")
-\end{lstlisting}
-
-\begin{codeRead}
-\textbf{1행}의 \inlinecode{eval\_metrics = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{for k, v in eval\_metrics....}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{4행}의 \inlinecode{if k.startswith("eval\_")...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
-\end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Train...  Valid...  Epoch  Accuracy  Macro...  Macro...  Macro F1  Auc Ovr
---------  --------  -----  --------  --------  --------  --------  --------
-0.286288  0.402871  2      0.856000  0.849702  0.873584  0.860287  0.982976
-klue/bert-base KLUE-YNAT -- evaluation:
-             eval_loss: 0.4029
-         eval_accuracy: 0.8560
-  eval_macro_precision: 0.8497
-     eval_macro_recall: 0.8736
-         eval_macro_f1: 0.8603
-          eval_auc_ovr: 0.9830
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -712,16 +447,8 @@ print(
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{preds\_output = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{2행}의 \inlinecode{logits = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{labels = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{exp = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{probs\_full = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{7행}의 \inlinecode{preds = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\textbf{1행}의 \inlinecode{preds\_output = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{2행}의 \inlinecode{logits = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{labels = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-logits shape:    (1000, 7)
-top-1 prob range: [0.2669, 0.9909]
-top-1 prob mean: correct=0.9033, wrong=0.7097
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -760,41 +487,7 @@ weighted avg     0.8582    0.8560    0.8562      1000
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-sns.set_theme(
-    style="white",
-    context="talk",
-    font="NanumGothic",
-    rc={"axes.unicode_minus": False},
-)
-cm = confusion_matrix(
-    labels,
-    preds,
-    labels=list(range(len(LABEL_NAMES))),
-)
-cm_norm = cm / cm.sum(axis=1, keepdims=True)
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=14]
-fig, ax = plt.subplots(figsize=(8.5, 7))
-sns.heatmap(
-    cm_norm, annot=cm, fmt="d",
-    cmap="Blues", vmin=0, vmax=1,
-    xticklabels=LABEL_NAMES_EN,
-    yticklabels=LABEL_NAMES_EN,
-    cbar_kws={"label": "행 정규화 (recall)"}, ax=ax,
-)
-ax.set_xlabel("예측 카테고리")
-ax.set_ylabel("실제 카테고리")
-ax.set_title("혼동 행렬 — KLUE-YNAT (7개 카테고리)")
-plt.tight_layout()
-plt.show()
-\end{lstlisting}
+\compactCodeOmitted{예측 결과를 지표와 표로 요약하는 단계}
 
 \begin{bookfigurelabel}[H]{KLUE-YNAT 7분류 혼동 행렬}{fig:ch16-confusion-matrix}
 \centering
@@ -835,53 +528,7 @@ K=7 에선 \emph{어느 한 클래스에 압도적 자신} 있는 경우 vs \emp
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-sns.set_theme(
-    style="whitegrid",
-    context="talk",
-    font="NanumGothic",
-    rc={"axes.unicode_minus": False},
-)
-df_top = pd.DataFrame({
-    "top1_prob": top1_prob,
-    "outcome":   np.where(correct, "맞음", "틀림"),
-})
-
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=12]
-fig, ax = plt.subplots(figsize=(9, 5))
-sns.kdeplot(
-    data=df_top, x="top1_prob", hue="outcome",
-    fill=True, common_norm=False, alpha=0.5,
-    palette={"맞음": "#5BD17F", "틀림": "#E55050"},
-    clip=(1/7, 1.0), ax=ax,
-)
-ax.axvline(1/7, color="black", lw=1.0, ls=":", alpha=0.5)
-ax.text(
-    1/7,
-    ax.get_ylim()[1]*0.95,
-    "  균등분포 = 1/K",
-    va="top",
-    fontsize=10,
-    alpha=0.6,
-)
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{7\baselineskip}
-\begin{lstlisting}[firstnumber=28]
-ax.set_title("top-1 확률 — 정답 여부별 분포 (K=7)")
-ax.set_xlabel("top-1 예측 확률  max_k P(y=k)")
-ax.set_ylabel("밀도")
-plt.tight_layout()
-plt.show()
-\end{lstlisting}
+\compactCodeOmitted{숫자 결과를 그림으로 확인하는 단계}
 
 \begin{bookfigurelabel}[H]{정답 여부에 따른 KLUE-YNAT 최상위 확률 분포}{fig:ch16-top1-probability}
 \centering
@@ -964,28 +611,6 @@ for label_str, idx in samples:
         )
     print()
 \end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-==============================================================================
-sample #131  (most confident overall)
-==============================================================================
-text:        U+7F8E 시리아 북동부에 다국적 감시군 추진…미군 400명 잔류
-true label:  4  (세계)
-prediction:  4  (세계)  match: OK
-top-1 prob:  0.9909
-top-3 distribution:
-        세계: 0.9909
-        정치: 0.0024
-      IT과학: 0.0014
-
-==============================================================================
-sample #929  (most uncertain (~2/K))
-==============================================================================
-text:        수능 작년보다 쉬워…1등급 컷 국어·수학가 92점·수학나 88점
-...
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -1088,69 +713,8 @@ KLUE-YNAT 가 \emph{입문에 편한 이유} --- datasets.load\_dataset 한 줄,
 
 \end{faqBox}
 
-\begin{faqBox}{Q3. (실무) \inlinecode{class\_weight} 를 multi-class CE 에 적용하려면?}
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-import torch
-from torch import nn
 
-class_counts = np.bincount(
-    train_full["label"],
-    minlength=len(LABEL_NAMES),
-)
-class_weights = len(train_full) / (len(LABEL_NAMES) * class_counts)
-class_weights = torch.tensor(
-    class_weights,
-    dtype=torch.float,
-)
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 학습 설정을 만들고 학습 루프를 실행하는 단계로 넘어갑니다.}
-
-\Needspace{9\baselineskip}
-\begin{lstlisting}[firstnumber=14]
-class WeightedTrainer(Trainer):
-    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
-        labels = inputs.pop("labels")
-        outputs = model(**inputs)
-        loss_fn = nn.CrossEntropyLoss(weight=class_weights.to(outputs.logits.device))
-        loss = loss_fn(outputs.logits, labels)
-        return (loss, outputs) if return_outputs else loss
-\end{lstlisting}
-
-KLUE-YNAT 는 \emph{심한} 불균형이 아니라 (5K-8K 범위) class\_weight 효과가 \emph{작은 폭} --- 완전 균형이 아닌 데이터에서도 보통 +1-2\%p macro F1 정도 개선. 사용 결정은 \emph{macro F1 vs accuracy} 의 격차로.
-
-\end{faqBox}
-
-\begin{faqBox}{Q4. (이론) 헤드라인 한 줄 (\textasciitilde30 토큰) 이 분류에 \emph{충분} 한가요?}
-
-대부분의 경우 충분합니다 --- \emph{카테고리} 라는 task 가 \emph{키워드 + 표현 스타일} 로 풀리고, 그 신호가 헤드라인에 \emph{압축} 되어 들어 있어요. 예: “월드컵 한국 vs 일본 16강전 시작” \(\to\) 스포츠 신호 명확.
-
-부족한 경우:
-
-\begin{itemize}
-\tightlist
-\item
-  \emph{제목과 본문이 정반대} 인 풍자 기사 (드뭄)
-\item
-  \emph{정치/경제 처럼 경계가 모호} 한 카테고리 (위 Q2)
-\item
-  \emph{지나치게 일반적} 인 헤드라인 (“어제 뉴스 정리”)
-\end{itemize}
-
-이런 케이스엔 \emph{기사 본문} 까지 같이 입력하면 정확도 +5-8\%p 가능. 단 max\_length 가 길어져 학습 비용 ↑.
-
-\end{faqBox}
-
-\begin{faqBox}{Q5. (실무) 한국어 BERT 가 \emph{짧은 헤드라인} 에 \emph{왜 그렇게} 잘 동작하나요?}
-
-\inlinecode{klue/bert-base} 의 사전학습 코퍼스에 \emph{뉴스 + 위키} 가 큰 비중을 차지합니다. 이미 모델 weight 가 한국어 뉴스 텍스트의 \emph{언어 분포} 를 학습한 상태에서 fine-tune 하니, \emph{적은 데이터·짧은 학습} 으로도 좋은 성능.
-
-영어 BERT 가 NLI 같은 \emph{추론 task} 에서 사전학습 효과가 큰 것과 같은 원리 --- \emph{task 의 도메인이 사전학습 코퍼스와 가까울수록} fine-tune 효과가 큼.
-
-\end{faqBox}
 
 \begin{faqBox}{Q6. (실무) 클래스 수가 50, 100 으로 늘면 같은 코드가 동작하나요?}
 
@@ -1176,6 +740,8 @@ K 가 50+ 가 되면 \emph{클래스당 학습 샘플} 이 핵심 --- 클래스�
 \end{faqBox}
 
 
+
+\compactFAQMore{3}
 
 \section{오류 실험 (선택)}
 

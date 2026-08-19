@@ -460,101 +460,6 @@ DPO 데이터는 \emph{세 개의 텍스트} 로 구성됩니다 (\inlinecode{pr
 
 
 
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-%pip install -q -U trl transformers tokenizers datasets accelerate
-\end{lstlisting}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-import warnings
-warnings.filterwarnings("ignore")
-
-import copy
-import math
-import os
-import random
-import time
-
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import torch
-import torch.nn.functional as F
-
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=16]
-import trl
-print(f"trl          : {trl.__version__}")
-
-if torch.cuda.is_available():
-    device = torch.device("cuda")
-    device_name = torch.cuda.get_device_name(0)
-    vram_gib = torch.cuda.get_device_properties(0).total_memory / 1024**3
-    print(f"device       : cuda  ({device_name})")
-    print(f"VRAM total   : {vram_gib:.2f} GiB")
-elif torch.backends.mps.is_available():
-    device = torch.device("mps")
-    print("device       : mps  (Apple Silicon)")
-else:
-    device = torch.device("cpu")
-    print(
-        "device       : cpu  (training will be very slow "
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=32]
-        "- Colab T4 recommended)"
-    )
-
-print(f"torch        : {torch.__version__}")
-
-SEED = 0
-torch.manual_seed(SEED)
-np.random.seed(SEED)
-random.seed(SEED)
-
-USE_FP16 = (device.type == "cuda")
-print(f"use fp16     : {USE_FP16}")
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 필요한 라이브러리와 기본 설정을 준비하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=45]
-import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
-_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
-if not os.path.exists(_fp):
-    subprocess.run(
-        "apt-get -qq -y install fonts-nanum",
-        shell=True,
-    )
-fm.fontManager.addfont(_fp)
-plt.rcParams["font.family"] = "NanumGothic"
-plt.rcParams["axes.unicode_minus"] = False
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-trl          : 1.6.0
-device       : cuda  (Tesla T4)
-VRAM total   : 14.56 GiB
-torch        : 2.11.0+cu128
-use fp16     : True
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
 \section{\texorpdfstring{preference 데이터 로드 --- \inlinecode{prompt} / \inlinecode{chosen} / \inlinecode{rejected}}{preference 데이터 로드 --- prompt / chosen / rejected}}
 
 \textbf{\inlinecode{maywell/ko\_Ultrafeedback\_binarized}} --- 한국어 preference 데이터셋. 각 샘플은 \emph{같은 \inlinecode{prompt} 에 대한 \inlinecode{chosen} (선호되는 답) 과 \inlinecode{rejected} (덜 선호되는 답)} 을 가집니다. 이게 DPO 의 표준 데이터 형식 (\inlinecode{prompt} / \inlinecode{chosen} / \inlinecode{rejected} 세 컬럼).
@@ -606,121 +511,9 @@ use fp16     : True
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-from datasets import load_dataset
-
-N_DPO = 1500
-MAX_PROMPT_CHARS = 300
-MAX_RESP_CHARS = 400
-
-raw = load_dataset(
-    "maywell/ko_Ultrafeedback_binarized",
-    split="train",
-)
-print("raw dataset:", raw)
-print("\nfields:", raw.column_names)
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=14]
-def keep(ex):
-    p, c, r = ex["prompt"], ex["chosen"], ex["rejected"]
-    return (
-        bool(p.strip()) and bool(c.strip()) and bool(r.strip())
-        and c.strip() != r.strip()
-        and len(p) <= MAX_PROMPT_CHARS
-    )
-
-raw = raw.filter(keep)
-raw = raw.shuffle(seed=SEED).select(range(min(N_DPO, len(raw))))
-print(f"\nafter filter + subset: {len(raw):,} samples")
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-raw dataset: Dataset({
-    features: ['prompt', 'chosen', 'rejected'],
-    num_rows: 61966
-})
-
-fields: ['prompt', 'chosen', 'rejected']
-
-after filter + subset: 1,500 samples
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
 \subsection{prompt 포맷 + 답변 길이 통제}
 
 \ref{ch:28}장 SFT 와 \emph{같은 instruction 포맷} (\texttt{\#\#\#\ 명령어:\textbackslash{}n...\textbackslash{}n\textbackslash{}n\#\#\#\ 응답:\textbackslash{}n}) 으로 prompt 를 감쌉니다 --- SFT 와 추론·학습 포맷을 일치시켜야 정렬이 제대로 됩니다. chosen / rejected 답변은 너무 길면 잘라 시퀀스 길이를 통제합니다.
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-RESPONSE_TEMPLATE = "### 응답:\n"
-
-def build_prompt(instruction: str) -> str:
-    '''28장 SFT 와 동일한 instruction 포맷. 학습·추론 포맷을 일치시켜야 정렬이 됨.'''
-    return f"### 명령어:\n{instruction}\n\n{RESPONSE_TEMPLATE}"
-
-def to_preference(ex):
-    chosen = ex["chosen"].strip()[:MAX_RESP_CHARS]
-    rejected = ex["rejected"].strip()[:MAX_RESP_CHARS]
-    return {
-        "prompt": build_prompt(ex["prompt"].strip()),
-        "chosen": chosen,
-        "rejected": rejected,
-    }
-
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=16]
-dpo_ds = raw.map(
-    to_preference,
-    remove_columns=raw.column_names,
-    desc="format",
-)
-print("formatted dataset:", dpo_ds)
-print("\n=== preference sample 0 ===")
-ex0 = dpo_ds[0]
-print("--- prompt ---")
-print(ex0["prompt"])
-print("--- chosen (선호) ---")
-print(ex0["chosen"][:200])
-print("\n--- rejected (덜 선호) ---")
-print(ex0["rejected"][:200])
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-formatted dataset: Dataset({
-    features: ['prompt', 'chosen', 'rejected'],
-    num_rows: 1500
-})
-
-=== preference sample 0 ===
---- prompt ---
-### 명령어:
-다음 숫자 배열 [1, 2, 3, 4, 5]의 표준 편차를 계산합니다.[1, 2, 3, 4, 5]
-
-### 응답:
-
---- chosen (선호) ---
-숫자 집합의 표준 편차를 계산하려면 다음 단계를 따르세요:1. 숫자의 평균(평균...
-
---- rejected (덜 선호) ---
-배열 [1, 2, 3, 4, 5]의 표준 편차를 구하려면 먼저 배열의 평균을 계산해야 합...
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -795,32 +588,6 @@ DPO 는 \emph{policy + frozen reference 두 모델} 을 씁니다. reference 는
 \begin{quote}
 \inlinecode{trl} 1.x 의 \inlinecode{DPOTrainer} 는 \textbf{\inlinecode{ref\_model=None} 으로 주면 reference 를 자동 생성} 합니다 (policy 의 복사본을 freeze, 또는 PEFT 사용 시 adapter 를 끈 base 를 reference 로). 우리는 \emph{명시적으로 어떻게 동작하는지} 보이기 위해 §3 에서 reference 를 직접 복사·freeze 해 margin 을 손으로 계산하고, §4 의 실제 학습에서는 \inlinecode{ref\_model=None} 으로 \inlinecode{DPOTrainer} 에 맡깁니다.
 \end{quote}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-ref_model = copy.deepcopy(policy).to(device)
-ref_model.eval()
-for p in ref_model.parameters():
-    p.requires_grad_(False)
-
-n_trainable_ref = sum(p.requires_grad for p in ref_model.parameters())
-print(
-    f"reference model: frozen  (trainable params = "
-    f"{n_trainable_ref})"
-)
-print("policy   : 학습 대상 (gradient 흐름)")
-print("reference: 고정 (gradient 안 흐름) - KL 제약의 닻")
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-reference model: frozen  (trainable params = 0)
-policy   : 학습 대상 (gradient 흐름)
-reference: 고정 (gradient 안 흐름) - KL 제약의 닻
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -974,37 +741,7 @@ DPO loss = -log sigmoid(beta*margin) =   0.6931   (beta=0.1)
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-margins = np.linspace(-30, 30, 200)
-fig, ax = plt.subplots(figsize=(8, 4.5))
-for b in [0.05, 0.1, 0.5]:
-    losses = -np.log(1.0 / (1.0 + np.exp(-b * margins)))
-    ax.plot(margins, losses, label=f"beta = {b}")
-
-ax.scatter([margin], [loss], color="red", zorder=5,
-           label=f"이번 샘플 (margin={margin:.1f})")
-ax.axvline(0, color="gray", ls="--", alpha=0.5)
-ax.axhline(
-    -math.log(0.5),
-    color="gray",
-    ls=":",
-    alpha=0.5,
-)
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{9\baselineskip}
-\begin{lstlisting}[firstnumber=16]
-ax.text(0.5, -math.log(0.5) + 0.05, "margin=0 에서의 loss  (-log 0.5)",
-        fontsize=8, color="gray")
-ax.set_xlabel("margin = r(chosen) - r(rejected)")
-ax.set_ylabel("DPO loss = -log sigmoid(beta * margin)")
-ax.set_title("DPO loss vs 선호 margin - chosen 우위가 클수록 loss 가 낮아짐")
-ax.legend(); ax.grid(True, alpha=0.3)
-plt.tight_layout(); plt.show()
-\end{lstlisting}
+\compactCodeOmitted{숫자 결과를 그림으로 확인하는 단계}
 
 \begin{bookfigurelabel}[H]{DPO loss와 preference margin의 관계}{fig:ch30-dpo-loss-margin}
 \centering
@@ -1098,120 +835,6 @@ reward accuracy : 0.500 (ratio of margin>0; policy=ref 라 margin=0 → 무승..
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-dpo_config = DPOConfig(
-    output_dir="./out_kogpt2_dpo",
-    num_train_epochs=1,
-    per_device_train_batch_size=2,
-    gradient_accumulation_steps=8,
-    # effective batch = 16
-    learning_rate=5e-6,
-    weight_decay=0.0,
-    warmup_ratio=0.1,
-    lr_scheduler_type="cosine",
-    max_grad_norm=1.0,
-    beta=BETA,
-    max_length=512,
-    fp16=USE_FP16,
-    logging_steps=10,
-    save_strategy="no",
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 학습 설정을 만들고 학습 루프를 실행하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-    report_to="none",
-    dataloader_num_workers=2,
-    seed=SEED,
-)
-
-class VRAMCallback(__import__("transformers").TrainerCallback):
-    '''step 별 peak VRAM 기록 (로깅 윈도우 단위 reset). CUDA 에서만 유효.'''
-
-    def __init__(self):
-        self.steps, self.peak_MiB = [], []
-
-    def on_train_begin(self, args, state, control, **kwargs):
-        if torch.cuda.is_available():
-            torch.cuda.reset_peak_memory_stats()
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{10\baselineskip}
-\begin{lstlisting}[firstnumber=32]
-    def on_log(self, args, state, control, logs=None, **kwargs):
-        if torch.cuda.is_available():
-            peak = torch.cuda.max_memory_allocated() / 1024**2
-            self.steps.append(state.global_step)
-            self.peak_MiB.append(peak)
-            torch.cuda.reset_peak_memory_stats()
-
-vram_cb = VRAMCallback()
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=41]
-trainer = DPOTrainer(
-    model=policy,
-    ref_model=None,
-    args=dpo_config,
-    train_dataset=dpo_ds,
-    processing_class=tokenizer,
-    callbacks=[vram_cb],
-)
-
-t0 = time.time()
-train_out = trainer.train()
-elapsed = time.time() - t0
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=54]
-print(f"\n=== DPO summary ===")
-print(f"elapsed     : {elapsed/60:.2f} min")
-print(f"global_step : {train_out.global_step}")
-print(f"train_loss  : {train_out.training_loss:.4f}")
-if torch.cuda.is_available():
-    print(
-        f"final peak  : "
-        f"{torch.cuda.max_memory_allocated()/1024**2:.0f} MiB"
-    )
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-[transformers] warmup_ratio is deprecated and will be removed in v5.2. Use...
-Key                                     | Status     |  | 
-----------------------------------------+------------+--+-
-
-[transformers] The tokenizer has new PAD/BOS/EOS tokens that differ from th...
-Step  Training Loss
-----  -------------
-10    0.688411
-20    0.710073
-30    0.678711
-40    0.817179
-50    0.708727
-60    0.683510
-70    0.762712
-80    0.680615
-90    0.670623
-...
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
 \section{\texorpdfstring{DPO 전·후 reward margin 비교 --- \emph{선호가 정렬됐는가}}{DPO 전·후 reward margin 비교 --- 선호가 정렬됐는가}}
 
 본 장의 핵심 데모. \emph{같은 preference 샘플들} 에 대해 \emph{DPO 전} 과 \emph{DPO 후} 의 \textbf{reward margin (chosen - rejected 의 implicit reward)} 분포를 비교합니다.
@@ -1232,73 +855,7 @@ margin 분포가 \emph{오른쪽 (양수) 으로 밀려났다면} 정렬이 일�
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-after_margins = reward_margins(
-    policy,
-    ref_model,
-    dpo_ds,
-    n=64,
-)
-acc_after = float((after_margins > 0).mean() + 0.5 * (after_margins == 0).mean())
-
-print(
-    f"AFTER DPO - reward margin (n="
-    f"{len(after_margins)})"
-)
-print(
-    f"  mean margin     : {after_margins.mean():.3f}  (before: "
-    f"{before_margins.mean():.3f})"
-)
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-print(
-    f"  reward accuracy : {acc_after:.3f}  (before: "
-    f"{acc_before:.3f})"
-)
-
-fig, ax = plt.subplots(figsize=(8, 4.5))
-bins = np.linspace(min(before_margins.min(), after_margins.min()),
-                   max(
-                       before_margins.max(),
-                       after_margins.max()),
-                       30,
-                   )
-ax.hist(before_margins, bins=bins, alpha=0.6, color="tab:gray",
-        label=f"DPO 전 (acc={acc_before:.2f})")
-ax.hist(after_margins, bins=bins, alpha=0.6, color="tab:green",
-        label=f"DPO 후 (acc={acc_after:.2f})")
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=33]
-ax.axvline(
-    0,
-    color="red",
-    ls="--",
-    alpha=0.7,
-    label="margin = 0",
-)
-ax.set_xlabel("reward margin = r(chosen) - r(rejected)")
-ax.set_ylabel("개수")
-ax.set_title("DPO 전 vs 후 - margin 이 양수 쪽으로 이동 (chosen 선호)")
-ax.legend(); ax.grid(True, alpha=0.3)
-plt.tight_layout(); plt.show()
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-AFTER DPO - reward margin (n=64)
-  mean margin     : 12.712  (before: 0.000)
-  reward accuracy : 0.844  (before: 0.500)
-\end{bookoutputbox}
-\par\vspace{0.9em}
+\compactCodeOmitted{숫자 결과를 그림으로 확인하는 단계}
 
 \begin{bookfigurelabel}[H]{DPO 전후 reward margin 분포 비교}{fig:ch30-dpo-margin-shift}
 \centering
@@ -1335,79 +892,7 @@ AFTER DPO - reward margin (n=64)
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-log = trainer.state.log_history
-steps = [r["step"] for r in log if "loss" in r]
-losses = [r["loss"] for r in log if "loss" in r]
-
-acc_key = "rewards/accuracies"
-mgn_key = "rewards/margins"
-accs = [(r["step"], r[acc_key]) for r in log if acc_key in r]
-mgns = [(r["step"], r[mgn_key]) for r in log if mgn_key in r]
-
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 4))
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=12]
-ax1.plot(
-    steps,
-    losses,
-    "-",
-    color="tab:blue",
-    alpha=0.8,
-    label="DPO loss",
-)
-ax1.set_xlabel("step"); ax1.set_ylabel("DPO sigmoid loss")
-ax1.set_title("KoGPT2 DPO - loss")
-ax1.grid(True, alpha=0.3); ax1.legend()
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=24]
-if accs:
-    ax2.plot([s for s, _ in accs], [a for _, a in accs], "o-",
-             color="tab:green", label="reward accuracy")
-if mgns:
-    ax2b = ax2.twinx()
-    ax2b.plot([s for s, _ in mgns], [m for _, m in mgns], "s--",
-              color="tab:orange", alpha=0.7, label="reward margin")
-    ax2b.set_ylabel("reward margin", color="tab:orange")
-ax2.axhline(0.5, color="gray", ls=":", alpha=0.6)
-ax2.set_xlabel("step"); ax2.set_ylabel("reward accuracy", color="tab:green")
-ax2.set_title("DPO reward accuracy / margin  (chosen > rejected 비율)")
-ax2.grid(True, alpha=0.3)
-
-plt.tight_layout(); plt.show()
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 숫자 결과를 그림으로 확인하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{10\baselineskip}
-\begin{lstlisting}[firstnumber=39]
-if torch.cuda.is_available() and vram_cb.steps:
-    print(f"peak VRAM (max over training): {max(vram_cb.peak_MiB):.0f} MiB"
-          f"  (
-              policy + reference,
-              bs=2,
-              grad_accum=8,
-              fp16)",
-          )
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-peak VRAM (max over training): 4332 MiB (policy + reference, bs=2, grad_acc...
-\end{bookoutputbox}
-\par\vspace{0.9em}
+\compactCodeOmitted{학습 설정을 만들고 학습 루프를 실행하는 단계}
 
 \begin{bookfigurelabel}[H]{KoGPT2 DPO 학습 곡선과 reward 지표}{fig:ch30-dpo-training-curves}
 \centering
@@ -1527,29 +1012,6 @@ DPO 의 통찰은 \emph{“reward model 의 최적 정책을 닫힌 형태로 �
 
 \end{faqBox}
 
-\begin{faqBox}{Q2. (실무) reference 모델 없이 DPO 를 할 수 있나요?}
-
-\inlinecode{DPOTrainer(ref\_model=None)} 은 \emph{reference 가 없는 게 아니라}, \emph{policy 의 복사본을 자동으로 reference 로 freeze} 하는 것입니다 (또는 PEFT 사용 시 adapter 를 끈 base 가 reference). 즉 reference 는 \emph{항상} 있습니다.
-
-\emph{진짜로 reference 를 빼면} (\inlinecode{reference\_free} 류 옵션 또는 ORPO):
-
-\begin{itemize}
-\tightlist
-\item
-  KL 제약이 사라져 \emph{원본에서 멀어지는 것을 막을 닻이 없어집니다}
-\item
-  chosen 확률만 무한정 키우다 \emph{모델이 collapse (한 패턴 반복, 문법 collapse)} 할 위험
-\item
-  ORPO 는 \emph{reference 없이도} 작동하도록 \emph{loss 를 다르게 설계} 한 변종 (SFT 와 preference 를 한 번에)
-\end{itemize}
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-trainer = DPOTrainer(model=policy, ref_model=None, args=cfg,
-                     train_dataset=dpo_ds, processing_class=tokenizer)
-\end{lstlisting}
-
-\end{faqBox}
 
 \begin{faqBox}{Q3. (이론) \(\beta\) 가 너무 크면 / 너무 작으면 어떻게 되나요?}
 
@@ -1598,85 +1060,12 @@ dpo_config.beta = 0.1
 
 \end{faqBox}
 
-\begin{faqBox}{Q5. (이론) DPO 변종 (IPO, KTO, ORPO) 은 무엇인가요?}
-
-모두 \emph{preference 정렬} 의 변주입니다 --- \emph{loss 형태·데이터 요구} 만 다릅니다:
-
-\begin{booktable}{30장 FAQ 표}{tab:ch30-11}
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}lll@{}}
-\toprule
-변종 & 핵심 차이 & 언제 \\
-\midrule
-
-\textbf{IPO} & sigmoid 대신 \emph{squared loss} & DPO 의 \emph{overfitting} 완화 \\
-\textbf{KTO} & \emph{쌍이 아닌} 개별 좋음/나쁨 라벨 & preference \emph{쌍을 만들기 어려울} 때 \\
-\textbf{ORPO} & \emph{reference 없이} SFT + preference 동시 & reference 메모리 절약 + 단계 합치기 \\
-\bottomrule
-\end{tabular}
-\end{adjustbox}
-\end{booktable}
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-dpo_config.loss_type = "ipo"        # IPO
-\end{lstlisting}
-
-\begin{quote}
-본 장은 \emph{원조 DPO (sigmoid loss)} 로 \emph{원리} 에 집중합니다. 변종들은 \emph{같은 목표 (chosen 선호 ↑), 다른 수단}.
-\end{quote}
-
-\end{faqBox}
-
-\begin{faqBox}{Q6. (실무) 작은 모델 (KoGPT2 125M) DPO 의 한계는?}
-
-DPO 의 효과는 \emph{출발 모델의 능력} 에 크게 의존합니다:
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{base 에서 출발 (본 노트북)}: 모델이 아직 \emph{지시를 잘 못 따르므로} preference 정렬 효과가 \emph{미묘}. 정석은 \emph{SFT 모델에서 출발}
-\item
-  \textbf{작은 모델}: chosen/rejected 의 log-prob 차이를 \emph{섬세하게} 다루기 어려워 margin 이동 폭이 작음
-\item
-  \textbf{짧은 학습}: 1 epoch / 1.5K 샘플은 \emph{방향} 을 보기엔 충분하지만 \emph{극적 변화} 는 어려움
-\end{itemize}
-
-\begin{quote}
-본 장의 목표는 \emph{완성된 정렬 모델} 이 아니라 \emph{\textbf{DPO 가 무엇을 최적화하는가 (reward margin) 를 눈으로 확인}} 하는 것입니다. §3 의 손계산과 §5 의 margin 이동이 핵심. 실전 품질은 \emph{SFT 모델 + 큰 모델 + 많은 preference + LoRA} 의 영역.
-\end{quote}
-
-\end{faqBox}
-
-\begin{faqBox}{Q7. (이론) 다음 단계 GRPO (\ref{ch:31}장) 는 DPO 와 뭐가 다른가요?}
-
-둘 다 alignment (단계 4) 지만, \emph{선호의 출처} 가 다릅니다:
-
-\begin{booktable}{30장 FAQ 표}{tab:ch30-12}
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}lll@{}}
-\toprule
-단계 & 선호의 출처 & 데이터 \\
-\midrule
-
-\textbf{DPO (\ref{ch:30}장)} & \emph{사람이 비교} 한 preference 쌍 & \inlinecode{(prompt,\ chosen,\ rejected)} \\
-\textbf{GRPO (\ref{ch:31}장)} & \emph{verifier 가 자동 채점} 한 reward & verifiable-reward prompts (수학·코드) \\
-\bottomrule
-\end{tabular}
-\end{adjustbox}
-\end{booktable}
-
-\begin{quote}
-DPO 는 \emph{주관적 선호} (어느 답이 더 좋은가 --- 사람 판단) 를, GRPO 는 \emph{객관적 정답} (수학 답이 맞나, 코드가 돌아가나 --- 자동 검증) 을 신호로 씁니다. GRPO 는 \emph{같은 prompt 에 여러 답을 rollout} 해 \emph{그룹 안에서 상대 비교} (group relative advantage) 합니다 --- \ref{ch:31}장에서 본격.
-\end{quote}
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-# from trl import GRPOTrainer, GRPOConfig
-\end{lstlisting}
-\end{faqBox}
 
 
+
+
+
+\compactFAQMore{4}
 
 \begin{previewBox}{미리보기: 다음 장}
 

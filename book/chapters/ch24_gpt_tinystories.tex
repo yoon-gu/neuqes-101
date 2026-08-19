@@ -499,149 +499,11 @@ GPT-2 는 특수 토큰을 \emph{최소화} 합니다 - \texttt{\textless{}\text
 
 
 
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-%pip install -q -U transformers tokenizers datasets accelerate
-\end{lstlisting}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-import warnings
-warnings.filterwarnings("ignore")
-
-import math
-import os
-import random
-import time
-
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import torch
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=14]
-if torch.cuda.is_available():
-    device = torch.device("cuda")
-    device_name = torch.cuda.get_device_name(0)
-    vram_gib = torch.cuda.get_device_properties(0).total_memory / 1024**3
-    print(f"device     : cuda  ({device_name})")
-    print(f"VRAM total : {vram_gib:.2f} GiB")
-elif torch.backends.mps.is_available():
-    device = torch.device("mps")
-    print("device     : mps  (Apple Silicon)")
-else:
-    device = torch.device("cpu")
-    print(
-        "device     : cpu  (training will be very slow - "
-        "Colab T4 recommended)"
-    )
-
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=30]
-print(f"torch      : {torch.__version__}")
-
-SEED = 0
-torch.manual_seed(SEED)
-np.random.seed(SEED)
-random.seed(SEED)
-
-USE_FP16 = (device.type == "cuda")
-print(f"use fp16   : {USE_FP16}")
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 필요한 라이브러리와 기본 설정을 준비하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=40]
-import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
-_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
-if not os.path.exists(_fp):
-    subprocess.run(
-        "apt-get -qq -y install fonts-nanum",
-        shell=True,
-    )
-fm.fontManager.addfont(_fp)
-plt.rcParams["font.family"] = "NanumGothic"
-plt.rcParams["axes.unicode_minus"] = False
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-device     : cuda  (Tesla T4)
-VRAM total : 14.56 GiB
-torch      : 2.11.0+cu128
-use fp16   : True
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
 \section{TinyStories 데이터 로드}
 
 \inlinecode{roneneldan/TinyStories} 는 GPT-3.5 / GPT-4 가 \emph{4세 어린이가 이해할 단어만} 으로 생성한 짧은 영어 동화 약 2.1M 편 (Eldan \& Li 2023, arXiv:2305.07759). 어휘·문법이 단순해 \textbf{3-5M 파라미터} 짜리 작은 모델로도 grammatical 한 생성이 가능합니다.
 
 학습 split 의 처음 \textbf{30,000 stories} 만 사용 (T4 30분 룰 안).
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-from datasets import load_dataset
-
-N_TRAIN = 30_000
-N_VAL   = 500
-
-raw_train = load_dataset(
-    "roneneldan/TinyStories",
-    split=f"train[:{N_TRAIN}]",
-)
-raw_val   = load_dataset(
-    "roneneldan/TinyStories",
-    split=f"validation[:{N_VAL}]",
-)
-print("train:", raw_train)
-print("val  :", raw_val)
-print("\n=== sample story ===")
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-print(raw_train[0]["text"][:400])
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-train: Dataset({
-    features: ['text'],
-    num_rows: 30000
-})
-val  : Dataset({
-    features: ['text'],
-    num_rows: 500
-})
-
-=== sample story ===
-One day, a little girl named Lily found a needle in her room. She knew it w...
-
-Lily went to her mom and said, "Mom, I found this needle. Can you share it...
-
-To
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -736,7 +598,7 @@ print(
 \end{lstlisting}
 
 \begin{codeRead}
-\inlinecode{tokenizers, transformers} 같은 주요 패키지를 불러옵니다.
+\inlinecode{tokenizers, transformers} 같은 주요 패키지를 불러옵니다. \textbf{8행}의 \inlinecode{VOCAB\_SIZE = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{9행}의 \inlinecode{EOS = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -1194,185 +1056,7 @@ BERT 장들 (\ref{ch:20}·\ref{ch:22}장) 과 \emph{완전히 같은} Trainer �
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-from transformers import (DataCollatorForLanguageModeling, Trainer,
-                          TrainingArguments, TrainerCallback)
-
-collator = DataCollatorForLanguageModeling(
-    tokenizer=tokenizer,
-    mlm=False,
-)
-
-args = TrainingArguments(
-    output_dir="./out_gpt_tinystories",
-    max_steps=1500,
-    per_device_train_batch_size=32,
-    per_device_eval_batch_size=32,
-    learning_rate=3e-4,
-    weight_decay=0.1,
-    adam_beta1=0.9, adam_beta2=0.95,
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-    warmup_steps=100,
-    lr_scheduler_type="cosine",
-    max_grad_norm=1.0,
-    fp16=USE_FP16,
-    logging_steps=50,
-    eval_strategy="steps",
-    eval_steps=150,
-    save_strategy="no",
-    report_to="none",
-    dataloader_num_workers=2,
-    dataloader_pin_memory=True,
-    seed=SEED,
-)
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 학습 설정을 만들고 학습 루프를 실행하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=31]
-class VRAMCallback(TrainerCallback):
-    '''step 별 peak VRAM 기록 (로깅 윈도우 단위로 reset). CUDA 에서만 유효.'''
-
-    def __init__(self):
-        self.steps, self.peak_MiB = [], []
-
-    def on_train_begin(self, args, state, control, **kwargs):
-        if torch.cuda.is_available():
-            torch.cuda.reset_peak_memory_stats()
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{10\baselineskip}
-\begin{lstlisting}[firstnumber=41]
-    def on_log(self, args, state, control, logs=None, **kwargs):
-        if torch.cuda.is_available():
-            peak = torch.cuda.max_memory_allocated() / 1024**2
-            self.steps.append(state.global_step)
-            self.peak_MiB.append(peak)
-            torch.cuda.reset_peak_memory_stats()
-
-vram_cb = VRAMCallback()
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=50]
-trainer = Trainer(
-    model=model,
-    args=args,
-    train_dataset=lm_train,
-    eval_dataset=lm_val,
-    data_collator=collator,
-    callbacks=[vram_cb],
-)
-
-t0 = time.time()
-train_out = trainer.train()
-elapsed = time.time() - t0
-
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=63]
-print(f"\n=== training summary ===")
-print(f"elapsed       : {elapsed/60:.2f} min")
-print(f"global_step   : {train_out.global_step}")
-print(f"train_loss    : {train_out.training_loss:.4f}")
-print(
-    f"random baseline (ln vocab): "
-    f"{math.log(tokenizer.vocab_size):.4f}"
-)
-if torch.cuda.is_available():
-    print(
-        f"final peak    : "
-        f"{torch.cuda.max_memory_allocated()/1024**2:.0f} MiB"
-    )
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-[transformers] `loss_type=None` was set in the config but it is unrecognize...
-Step  Training Loss  Validation Loss
-----  -------------  ---------------
-150   4.943553       4.512319
-300   4.164156       3.928088
-450   3.859346       3.635721
-600   3.661513       3.438943
-750   3.525258       3.297616
-900   3.410508       3.207347
-1050  3.381458       3.144733
-1200  3.332278       3.108168
-1350  3.313862       3.091538
-1500  3.305599       3.088617
-
-=== training summary ===
-elapsed       : 0.87 min
-...
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-# loss curve + VRAM trace
-log = trainer.state.log_history
-train_pts = [(r["step"], r["loss"]) for r in log if "loss" in r and "eval_loss" not in r]
-eval_pts  = [(r["step"], r["eval_loss"]) for r in log if "eval_loss" in r]
-
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 4))
-
-# loss
-ax1.plot([s for s, _ in train_pts], [l for _, l in train_pts], "-",
-         color="tab:blue", alpha=0.6, label="train")
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{10\baselineskip}
-\begin{lstlisting}[firstnumber=11]
-if eval_pts:
-    ax1.plot([s for s, _ in eval_pts], [l for _, l in eval_pts], "s-",
-             color="tab:red", label="eval")
-ax1.axhline(math.log(tokenizer.vocab_size), ls=":", color="gray",
-            label=f"무작위 추측 기준선 = ln({tokenizer.vocab_size}) approx. {math.log(tokenizer.vocab_size):.2f}")
-ax1.set_xlabel("step"); ax1.set_ylabel("cross-entropy loss")
-ax1.set_title("TinyStories 로 학습한 TinyGPT-2 - loss")
-ax1.grid(True, alpha=0.3); ax1.legend()
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=20]
-if vram_cb.steps:
-    ax2.plot(vram_cb.steps, vram_cb.peak_MiB, "o-", color="tab:green",
-             label="최대 VRAM (로그 구간별)")
-    ax2.set_title(f"VRAM trace  (bs=32, fp16, n_pos={BLOCK_SIZE})")
-else:
-    ax2.text(0.5, 0.5, "VRAM 추적은 CUDA 에서만 가능",
-             ha="center", va="center", transform=ax2.transAxes)
-    ax2.set_title("VRAM 추적 - CUDA 전용")
-ax2.set_xlabel("step"); ax2.set_ylabel("VRAM (MiB)")
-ax2.grid(True, alpha=0.3); ax2.legend()
-
-plt.tight_layout(); plt.show()
-\end{lstlisting}
+\compactCodeOmitted{텍스트를 모델 입력 텐서로 바꾸는 단계}
 
 \begin{bookfigurelabel}[H]{작은 GPT 사전학습 손실과 VRAM 추적}{fig:ch24-loss-vram-trace}
 \centering
@@ -1390,85 +1074,6 @@ plt.tight_layout(); plt.show()
 \section{\texorpdfstring{학습 \emph{후} generation + before/after 비교}{학습 후 generation + before/after 비교}}
 
 같은 \inlinecode{PROMPTS\ /\ GEN\_KWARGS} 로 학습 후 모델에서 다시 생성하고, §5 의 학습 전 결과와 나란히 비교합니다. \textbf{이 장의 합격 기준}: 학습 후 텍스트가 \emph{전} 보다 명확히 \emph{영어 문장} 에 가까워졌는가 - \ref{ch:20}·\ref{ch:22}장의 \emph{사전·사후 {[}MASK{]} top-5} 비교의 \emph{generation 판}.
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-torch.manual_seed(SEED)
-model.eval()
-after_outputs = []
-print("=" * 70)
-print("TRAINED model - generation after Trainer.train()")
-print("=" * 70)
-for p in PROMPTS:
-    text = generate_text(model, p, **GEN_KWARGS)
-    after_outputs.append(text)
-    print(f"\n[prompt] {p}")
-    print(text)
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-======================================================================
-TRAINED model - generation after Trainer.train()
-======================================================================
-
-[prompt] Once upon a time,
-Once upon a time, there was a girl named Lily. She loved to play with her f...
-
-One day, Lily saw a small house, a boy named Timmy. He was so happy because...
-
-[prompt] The little girl
-The little girl had been a wonderful time. It was so happy to see the park....
-
-[prompt] A big dog
-A big dog, but they could go in the park. They ran away and the truck. The...
-
-"But we can't get my mouth. I can play with you."
-
-"It's okay, it is not very curious. He is not
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-print("=" * 78)
-print(
-    "BEFORE (random init) vs AFTER (trained on "
-    "TinyStories 30K)"
-)
-print("=" * 78)
-for p, before, after in zip(PROMPTS, before_outputs, after_outputs):
-    print(f"\nPROMPT  : {p}")
-    print("-" * 78)
-    print(f"BEFORE  : {before[len(p):].strip()[:280]}")
-    print(f"AFTER   : {after[len(p):].strip()[:280]}")
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-==============================================================================
-BEFORE (random init) vs AFTER (trained on TinyStories 30K)
-==============================================================================
-
-PROMPT  : Once upon a time,
-------------------------------------------------------------------------------
-BEFORE : ushinkush min is wondered5 cruallyked bed farmer smo wonder smo dr...
-AFTER : there was a girl named Lily. She loved to play with her friends. Sh...
-
-One day, Lily saw a small house, a boy named Timmy. He was so happy because...
-
-PROMPT  : The little girl
-------------------------------------------------------------------------------
-BEFORE : akak everyush Sarahgged:un't different different# gl keepner Graie...
-AFTER : had been a wonderful time. It was so happy to see the park. She tha...
-
-...
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -1573,46 +1178,6 @@ My new book -- the Making of a Better World Order:
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-print("=" * 78)
-print(
-    "3-way comparison: BEFORE (random) / OURS (3M, "
-    "TinyStories 30K) / REF (gpt2 124M, WebText)"
-)
-print("=" * 78)
-for p, before, after, ref in zip(PROMPTS, before_outputs, after_outputs, ref_outputs):
-    print(f"\nPROMPT : {p}")
-    print("-" * 78)
-    print(f"BEFORE : {before[len(p):].strip()[:240]}")
-    print(f"OURS   : {after[len(p):].strip()[:240]}")
-    print(f"REF    : {ref[len(p):].strip()[:240]}")
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-==============================================================================
-3-way comparison: BEFORE (random) / OURS (3M, TinyStories 30K) / REF (gpt2...
-==============================================================================
-
-PROMPT : Once upon a time,
-------------------------------------------------------------------------------
-BEFORE : ushinkush min is wondered5 cruallyked bed farmer smo wonder smo dr...
-OURS : there was a girl named Lily. She loved to play with her friends. She...
-
-One day, Lily saw a small house, a boy named Timmy. He was so happy because...
-REF : if you don't know what your country's government is doing, you can fi...
-
-In the last few months, I've traveled to dozens of countries around the wor...
-
-My new book -- the Making of a Better World Orde
-
-...
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
 \textbf{해석 가이드 - 데이터·파라미터 규모가 만든 격차}
 
 \begin{itemize}
@@ -1638,48 +1203,6 @@ My new book -- the Making of a Better World Orde
 \section{변형 - sampling hyperparam 비교}
 
 같은 prompt 에 \inlinecode{temperature\ /\ top\_k\ /\ top\_p} 만 바꿔 generation 스타일 변화 관찰. \emph{학습된 본체는 그대로} - 변하는 건 \emph{sampling 분포} 뿐.
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-prompt = "Once upon a time, a little rabbit"
-configs = [
-    {"label": "T=0.3, top_k=20  (conservative)", "temperature": 0.3, "top_k": 20,  "top_p": None},
-    {"label": "T=0.8, top_k=50  (balanced)",    "temperature": 0.8, "top_k": 50,  "top_p": None},
-    {"label": "T=1.0, top_p=0.9 (nucleus)",     "temperature": 1.0, "top_k": 0,   "top_p": 0.9},
-    {"label": "T=1.2, top_k=100 (diverse)",     "temperature": 1.2, "top_k": 100, "top_p": None},
-]
-for c in configs:
-    torch.manual_seed(SEED)
-    print("=" * 70)
-    print(f"[{c['label']}]")
-    print(generate_text(model, prompt, max_new_tokens=60, do_sample=True,
-                        temperature=c["temperature"], top_k=c["top_k"], top_p=c["top_p"]))
-    print()
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-======================================================================
-[T=0.3, top_k=20  (conservative)]
-Once upon a time, a little rabbit named Lily. She loved to play with her to...
-
-Lily was sad
-
-======================================================================
-[T=0.8, top_k=50  (balanced)]
-Once upon a time, a little rabbit who liked to play in the park. One day, h...
-
-One day, Timmy saw a small house, Timmy's mom a shiny tree in a big tree. T...
-
-======================================================================
-[T=1.0, top_p=0.9 (nucleus)]
-Once upon a time, a little rabbit who liked to read water to play the squir...
-
-...
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -1769,13 +1292,6 @@ DataCollatorForLanguageModeling(tokenizer, mlm=False)
 
 \end{faqBox}
 
-\begin{faqBox}{Q2. (이론) TinyStories 는 \emph{일반 도메인} 인가요 \emph{task corpus} 인가요? 왜 일반 위키 (Wikitext-103) 가 아닌가요?}
-
-\textbf{TinyStories 는 \emph{합성된 simple 스토리} 라 \emph{generation 시연 가치} 가 우선} 인 데이터입니다. \emph{진정한 일반 도메인 사전학습} 의 의미에서는 Wikitext-103 보다 약하지만, 본 장의 목적은 \emph{작은 모델로 generation 이 어떻게 동작하는지를 직접 보는 것} - 일반 위키 (Wikitext-103) 로 같은 셋업을 돌리면 3M 모델이 \emph{문장 구조를 학습하기 전에 학습이 끝남}. TinyStories 의 단순한 어휘·문법 덕분에 \emph{작은 모델로도 grammatical 한 생성이 가능} 합니다.
-
-\ref{ch:25}장 가 그 \emph{trade-off 의 반대편} 을 다룹니다 - \emph{큰 모델 (gpt2 124M) + 대규모 일반 코퍼스 (WebText)} 의 사전학습된 본체를 TinyStories 로 \textbf{continual pretraining}. \emph{작은 + 합성 도메인 from-scratch} vs \emph{큰 + 일반 도메인 사전학습 후 continual pretraining} 의 generation 품질 격차가 핵심 비교.
-
-\end{faqBox}
 
 \begin{faqBox}{Q3. (이론) BPE 토크나이저는 \ref{ch:19}장의 WordPiece / WordLevel 과 어떻게 다른가요?}
 
@@ -1810,28 +1326,6 @@ bpe.train_from_iterator(text_iter, trainer)
 
 \end{faqBox}
 
-\begin{faqBox}{Q4. (이론) \inlinecode{tie\_word\_embeddings=True} (weight tying) 가 정확히 무엇을 공유하나요?}
-
-\textbf{Input embedding (\inlinecode{wte}) 의 weight 와 LM head (\inlinecode{Linear(H,\ V)}) 의 weight 가 \emph{같은 텐서를 공유}} 합니다.
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-model.lm_head.weight = model.transformer.wte.weight
-\end{lstlisting}
-
-직관: input embedding 은 \emph{vocab token \(\to\) hidden} 변환, LM head 는 \emph{hidden \(\to\) vocab logit} 변환. 둘이 \emph{transpose 관계} 라 같은 weight 를 공유해도 의미가 통합니다. 효과:
-
-\begin{itemize}
-\tightlist
-\item
-  \textbf{파라미터 절약}: \texttt{vocab\_size\ \$\textbackslash{}times\$\ hidden\_size} 만큼 (본 장: 2,048 \(\times\) 256 = 524,288 = 약 0.5M params). 전체 3M 모델의 약 17\% - 작은 모델에선 비중이 큼.
-\item
-  \textbf{학습 안정}: input 과 output 이 \emph{같은 임베딩 공간} 을 공유 \(\to\) 일관성 ↑.
-\end{itemize}
-
-GPT-2 의 기본값. 우리 모델도 자동으로 적용됩니다 (\inlinecode{config.tie\_word\_embeddings=True}).
-
-\end{faqBox}
 
 \begin{faqBox}{Q5. (실무) temperature / top\_k / top\_p sampling 의 의미는?}
 
@@ -1864,55 +1358,11 @@ model.generate(
 
 \end{faqBox}
 
-\begin{faqBox}{Q6. (실무) \inlinecode{labels\ =\ -100} 트릭이 CausalLM 사전학습에서 거의 안 쓰이는데, 그럼 언제 쓰이나요?}
-
-본 장의 collator 출력에서 봤듯 CausalLM 사전학습은 \emph{pad 토큰 자리만} \inlinecode{-100} (그것도 \inlinecode{group\_texts} 로 chunk 길이가 모두 같으면 pad 도 없음). 거의 안 쓰임.
-
-하지만 같은 트릭이 \textbf{\ref{ch:28}장 (SFT, Instruction Tuning)} 에서 \emph{결정적 한 줄} 로 부활합니다:
-
-\Needspace{9\baselineskip}
-\begin{lstlisting}
-prompt = "### 질문: 한국의 수도는?\n### 답변: "
-response = "서울입니다."
-
-input_ids = tokenizer(prompt + response)["input_ids"]
-labels = input_ids.copy()
-prompt_len = len(tokenizer(prompt)["input_ids"])
-labels[:prompt_len] = [-100] * prompt_len
-\end{lstlisting}
-
-이 한 줄로 모델은 \emph{prompt 토큰을 외우지 않고 response 만 학습} - 같은 instruction 에 대한 \emph{다양한 response} 가 학습 가능하고, 추론 시에는 \emph{주어진 instruction 에 대해 response 를 생성} 하게 됩니다. \emph{모델이 instruction 을 따라간다} 는 게 이 한 줄의 효과.
-
-본 장의 collator 출력 (거의 모든 자리 = 학습 신호) 을 손에 익혀 두면 \ref{ch:28}장의 \texttt{labels{[}:prompt\_len{]}\ =\ -100} 가 단번에 이해됩니다.
-
-\end{faqBox}
-
-\begin{faqBox}{Q7. (실무) 다음 장 (\ref{ch:25}장 --- continual pretraining) 와의 비교는 어떻게 되나요?}
-
-\ref{ch:25}장 = \emph{OpenAI 가 사전학습한 \inlinecode{gpt2} (124M params, WebText 약 40GB) 를 TinyStories 로} \textbf{continual pretraining} (같은 CausalLM task, 같은 LM head --- \emph{task adaptation 의미의 fine-tune 이 아님}). 본 장의 \emph{작은 from-scratch 모델} 과 \emph{완전 반대 출발점}:
-
-\begin{booktable}{24장 FAQ 표}{tab:ch24-14}
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}lll@{}}
-\toprule
-축 & \ref{ch:24}장 (본 장) & \ref{ch:25}장 (다음) \\
-\midrule
-
-모델 크기 & 약 3M params & \textbf{약 124M (40배)} \\
-사전학습 & from scratch (random init) & \textbf{OpenAI WebText 약 40GB 사전학습} \\
-TinyStories 학습 & 사전학습 그 자체 (1500 steps) & \textbf{continual pretraining} (1 epoch, 약 3,200 steps) \\
-토크나이저 & 직접 학습 BPE vocab 2,048 & \textbf{gpt2 BPE vocab 50,257 (그대로)} \\
-Generation 품질 & grammatical 한 동화 풍 영어 & \textbf{자연스러운 동화 + 일반 도메인 폭} \\
-학습 시간 & 약 1분 (사전학습) & \textbf{약 19분} (124M 본체 continual pretraining) \\
-\bottomrule
-\end{tabular}
-\end{adjustbox}
-\end{booktable}
-
-\textbf{핵심 메시지}: \emph{대규모 일반 사전학습된 본체} + \emph{작은 도메인 continual pretraining} 이 \emph{작은 from-scratch 모델} 보다 \emph{낮은 loss 에서 출발해 더 좋게} 도달합니다 (학습 시간은 124M 본체라 오히려 더 깁니다). \emph{왜 실무는 보통 from-scratch 가 아니라 사전학습 모델을 가져와 새 데이터로 계속 학습하거나 SFT 하는가} 의 답. (단계 3 SFT 는 \ref{ch:28}장에서 본격.)
-\end{faqBox}
 
 
+
+
+\compactFAQMore{4}
 
 \begin{previewBox}{미리보기: 다음 장}
 
