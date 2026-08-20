@@ -31,7 +31,7 @@ self-contained 노트북: Wikitext-103 MLM 학습을 2K × 3 epoch 압축 재현
 같은 토크나이저 (`bert-base-uncased`) 가 두 도메인의 텍스트를 처리. `block_size=128` `group_texts` 패턴으로 MLM 3 epoch + Yelp 분류 fine-tune 2 epoch.
 
 ## 환경
-Google Colab T4 GPU (fp16). 약 3-5분 — 대부분이 데이터 다운로드입니다 (실행본 `executed/21_en_bert_classify.ipynb` 기준 전체 2분 9초: 다운로드·전처리 약 1분 30초 + MLM 3 epoch 약 13초 + 분류 fine-tune 2 epoch 약 13초 + 평가·시각화 수 초).
+Google Colab T4 GPU (fp16). 약 3-5분 — 대부분이 데이터 다운로드입니다 (실행본 `executed/21_en_bert_classify.ipynb` 기준 전체 2분 13초: 다운로드·전처리 약 1분 40초 + MLM 3 epoch 약 15초 + 분류 fine-tune 2 epoch 약 15초 + 평가·시각화 수 초).
 
 ## 변화 추적
 
@@ -51,7 +51,7 @@ Google Colab T4 GPU (fp16). 약 3-5분 — 대부분이 데이터 다운로드�
 |---|---|---|---|
 | 본체 파라미터 | 약 66M | 약 10M | Ch 21 은 1/6 작음 |
 | 사전학습 코퍼스 | Wikipedia + BookCorpus (약 33억 토큰, 일반 도메인) | Wikitext-103 paragraphs 2K (약 27만 토큰, 일반 도메인) | 약 1.2만배 격차, **둘 다 일반 위키** |
-| 사전학습 시간 | TPU 수일 | T4 약 13초 (2K × 3 epoch = 198 step) | |
+| 사전학습 시간 | TPU 수일 | T4 약 15초 (2K × 3 epoch = 198 step) | |
 | Fine-tune 도메인 | Yelp 이진 (다른 도메인) | Yelp 이진 (다른 도메인) | **둘 다 위키 -> Yelp transfer** |
 | 분류 fine-tune 셋업 | (같음 — 5K/1K, batch 16, lr 2e-5, 2 epoch, fp16) | | 본체 외 통제 |
 | 실측 accuracy | 약 0.90 | random (0.50) 과 Ch 10 의 중간쯤 | 실행마다 흔들려 단일 값으로 적지 않음 — 값은 실행본 `executed/21_en_bert_classify.ipynb` |
