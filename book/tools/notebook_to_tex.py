@@ -5783,9 +5783,14 @@ def main() -> None:
         help="prefer notebooks under executed/ so saved outputs and plot images are reflected",
     )
     parser.add_argument(
+        "--full",
+        action="store_true",
+        help="generate the long edition; the compact edition is the default",
+    )
+    parser.add_argument(
         "--compact-code",
         action="store_true",
-        help="keep only concept-critical code cells and replace routine cells with a Colab/QR note",
+        help=argparse.SUPPRESS,  # 압축본이 기본이 되기 전의 이름. 지금은 아무 동작 안 함
     )
     parser.add_argument(
         "--output-dir",
@@ -5794,6 +5799,8 @@ def main() -> None:
         help="directory for generated chapter .tex files; defaults to book/chapters",
     )
     args = parser.parse_args()
+    # 정본 원고가 압축본이라 그쪽을 기본으로 둔다. 긴 판본은 --full 로 명시한다.
+    compact_code = not args.full
 
     selected = set(args.chapters or [chapter.number for chapter in CHAPTERS])
     output_dir = args.output_dir
@@ -5811,7 +5818,7 @@ def main() -> None:
                 chapter,
                 execute=args.execute,
                 use_executed=args.use_executed,
-                compact_code=args.compact_code,
+                compact_code=compact_code,
             ),
             encoding="utf-8",
         )
