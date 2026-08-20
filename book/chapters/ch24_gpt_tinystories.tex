@@ -280,7 +280,7 @@ Loss & \inlinecode{CrossEntropyLoss} (분류, K=2) & \textbf{\inlinecode{CrossEn
 \end{booktable}
 
 \begin{quote}
-\textbf{변경점이 한꺼번에 많은 이유} --- Phase 가 바뀌는 \emph{전환 장} 라 \emph{축 자체} 가 새로 정의됩니다. \ref{ch:25}장 부터는 다시 \emph{한 가지 축} 만 바뀝니다 (\ref{ch:25}장: 본체 출발점 = scratch \(\to\) 사전학습 모델, 같은 \emph{continual pretraining} task / \ref{ch:26}장: 언어 (한국어 scratch) / \ref{ch:27}장: 한국어 continual pretraining / \ref{ch:28}장: 학습 단계 = pretraining \(\to\) SFT, \texttt{labels{[}prompt{]}\ =\ -100}).
+\textbf{변경점이 한꺼번에 많은 이유} --- Phase 가 바뀌는 \emph{전환 장} 라 \emph{축 자체} 가 새로 정의됩니다. \ref{ch:25}장부터는 다시 \emph{한 가지 축} 만 바뀝니다 (\ref{ch:25}장: 본체 출발점 = scratch \(\to\) 사전학습 모델, 같은 \emph{continual pretraining} task / \ref{ch:26}장: 언어 (한국어 scratch) / \ref{ch:27}장: 한국어 continual pretraining / \ref{ch:28}장: 학습 단계 = pretraining \(\to\) SFT, \texttt{labels{[}prompt{]}\ =\ -100}).
 \end{quote}
 
 
@@ -843,7 +843,7 @@ total positions      : 256
   ignored (-100)     :     1  ( 0.39%)
   train signal       :   255  (99.61%)
 
-[MLM (Ch 20/22)]     approx. 85% = -100, 15% = train signal
+[MLM (20장/22)]     approx. 85% = -100, 15% = train signal
 [CausalLM (this ch)] 0.39% = -100, 99.61% = train signal <- almost every po...
 
 => a single step's token-learning efficiency: GPT pretrain is approx. 5-6x...
@@ -1195,7 +1195,7 @@ My new book -- the Making of a Better World Order:
 \end{quote}
 
 \begin{quote}
-\ref{ch:25}장 가 이 격차를 \emph{데이터 축을 통제하고} 좁히는 장입니다 - \inlinecode{gpt2} (124M) 의 사전학습 \emph{위에} 같은 TinyStories 30K 로 \textbf{continual pretraining}. \emph{대규모 일반 사전학습 모델을 작은 도메인 데이터로 적응} 시킬 때의 generation 품질이, 우리 from-scratch 작은 GPT 와 어떻게 다른지 직접 비교.
+\ref{ch:25}장이 이 격차를 \emph{데이터 축을 통제하고} 좁히는 장입니다 - \inlinecode{gpt2} (124M) 의 사전학습 \emph{위에} 같은 TinyStories 30K 로 \textbf{continual pretraining}. \emph{대규모 일반 사전학습 모델을 작은 도메인 데이터로 적응} 시킬 때의 generation 품질이, 우리 from-scratch 작은 GPT 와 어떻게 다른지 직접 비교.
 \end{quote}
 
 
@@ -1373,7 +1373,7 @@ model.generate(
 \item
   \inlinecode{AutoModelForCausalLM.from\_pretrained("gpt2")} - OpenAI WebText 약 40GB 로 사전학습된 124M params 모델 로드
 \item
-  \textbf{같은 TinyStories 30K} 데이터 (본 장와 동일) 로 \textbf{continual pretraining} (계속 사전학습 / continual learning --- \emph{같은 CausalLM task, 새 데이터, head 그대로}. \emph{task adaptation 의미의 fine-tune 이 아니라 단계 2})
+  \textbf{같은 TinyStories 30K} 데이터 (본 장과 동일) 로 \textbf{continual pretraining} (계속 사전학습 / continual learning --- \emph{같은 CausalLM task, 새 데이터, head 그대로}. \emph{task adaptation 의미의 fine-tune 이 아니라 단계 2})
 \item
   \textbf{핵심 비교}: 본 장 (3M, from scratch, 약 1분) vs \ref{ch:25}장 (124M, continual pretraining, 약 19분) 의 generation 품질·학습 곡선 격차
 \item

@@ -123,7 +123,7 @@ Output Head & (2차원) & \textbf{(5차원)} \\
 
 \section{손실 노트 --- 같은 교차 엔트로피, K=5 수치 예시}
 
-Loss는 \ref{ch:04}장와 동일한 \inlinecode{CrossEntropyLoss}. K가 늘어나도 식은 그대로:
+Loss는 \ref{ch:04}장과 동일한 \inlinecode{CrossEntropyLoss}. K가 늘어나도 식은 그대로:
 
 \begin{equation}
 \label{eq:ch05-01}
@@ -155,7 +155,7 @@ L = -\frac{1}{N}\sum_{i=1}^{N} \log \hat p_{i,\, y_i}
 
 \section{토크나이저 노트}
 
-\textbf{\ref{ch:01}--\ref{ch:04}장와 동일한 \inlinecode{TfidfVectorizer}}. 입력 표현, 모델, loss 모두 그대로 --- 변하는 건 데이터의 클래스 수와 출력 차원뿐.
+\textbf{\ref{ch:01}--\ref{ch:04}장과 동일한 \inlinecode{TfidfVectorizer}}. 입력 표현, 모델, loss 모두 그대로 --- 변하는 건 데이터의 클래스 수와 출력 차원뿐.
 
 \begin{previewBox}{미리보기}
 \textbf{다음 장(\ref{ch:06}장)}: 같은 TF-IDF. 변화는 활성화 함수가 softmax(합=1)에서 \textbf{K개 독립 sigmoid}(라벨 간 독립)로 일반화되어 multi-label로 확장.
@@ -184,6 +184,12 @@ print(
 \begin{codeRead}
 \textbf{1행}의 \inlinecode{y\_5class = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3--5행}의 \inlinecode{X\_text\_train, X\_text\_test...}에서는 학습용 데이터와 평가용 데이터를 분리합니다. \textbf{7행}의 \inlinecode{tfidf = ...}에서는 TF-IDF 기반 벡터라이저를 만듭니다.
 \end{codeRead}
+
+\noindent\textbf{출력.}
+\begin{bookoutputbox}
+X_train: (4000, 10000), y_train distribution: [813, 822, 768, 817, 780]
+\end{bookoutputbox}
+\par\vspace{0.9em}
 
 
 

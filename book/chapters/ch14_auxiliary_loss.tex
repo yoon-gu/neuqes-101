@@ -196,7 +196,7 @@ BERT는 12-24 layer로 \emph{그리} 깊지 않아 이 목적은 약합니다. C
 추론 시점에 \emph{두 task 결과가 모두 필요} 한 경우 --- 한 번의 forward로 항목 분류 + 별점 예측을 동시에 받기. 엄밀히 말하면 \emph{auxiliary} 가 아니라 \emph{joint training} 이 됩니다.
 
 \begin{quote}
-\ref{ch:14}장는 \emph{auxiliary} 패턴이라 추론 시 보조 헤드를 \emph{호출하지 않습니다}. 별점 회귀는 학습 정규화 용도로만 사용. 운영에서 별점 예측이 필요하면 \emph{auxiliary} 가 아니라 \emph{joint multi-task} 를 의도적으로 설계.
+\ref{ch:14}장은 \emph{auxiliary} 패턴이라 추론 시 보조 헤드를 \emph{호출하지 않습니다}. 별점 회귀는 학습 정규화 용도로만 사용. 운영에서 별점 예측이 필요하면 \emph{auxiliary} 가 아니라 \emph{joint multi-task} 를 의도적으로 설계.
 \end{quote}
 
 \begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
@@ -1082,7 +1082,7 @@ trainer.train()
 \end{itemize}
 
 \begin{quote}
-\textbf{Phase 1 마무리} --- \ref{ch:07}--\ref{ch:14}장를 통해 BERT 분류·회귀·multi-label·auxiliary loss의 기본 5가지를 다 익혔습니다. Phase 2는 같은 패턴을 \emph{한국어 데이터} 위에서 압축적으로 재방문 --- 토크나이저가 어떻게 다른지, 한국어 특유의 학습 어려움이 무엇인지 확인.
+\textbf{Phase 1 마무리} --- \ref{ch:07}--\ref{ch:14}장을 통해 BERT 분류·회귀·multi-label·auxiliary loss의 기본 5가지를 다 익혔습니다. Phase 2는 같은 패턴을 \emph{한국어 데이터} 위에서 압축적으로 재방문 --- 토크나이저가 어떻게 다른지, 한국어 특유의 학습 어려움이 무엇인지 확인.
 \end{quote}
 \end{previewBox}
 

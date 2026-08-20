@@ -175,7 +175,7 @@ Generation 품질 & grammatical 한 동화 풍 & \textbf{자연스러운 동화 
 \end{booktable}
 
 \begin{quote}
-\textbf{핵심}: \emph{\ref{ch:24}장 \(\leftrightarrow\) \ref{ch:25}장 는 데이터·trainer·collator·loss 모두 같고 본체 출발점·토크나이저·lr 만 다름}. \textbf{trainer 코드 차이가 극단적으로 적음} --- 그게 GPT 시대 학습 단계 2 (continual pretraining) 의 본질. \emph{task adaptation 의미의 fine-tune 이 아닙니다} --- head 바뀌지 않고, task (next-token 예측) 바뀌지 않습니다. 데이터만 바뀝니다.
+\textbf{핵심}: \emph{\ref{ch:24}장 \(\leftrightarrow\) \ref{ch:25}장은 데이터·trainer·collator·loss 모두 같고 본체 출발점·토크나이저·lr 만 다름}. \textbf{trainer 코드 차이가 극단적으로 적음} --- 그게 GPT 시대 학습 단계 2 (continual pretraining) 의 본질. \emph{task adaptation 의미의 fine-tune 이 아닙니다} --- head 바뀌지 않고, task (next-token 예측) 바뀌지 않습니다. 데이터만 바뀝니다.
 \end{quote}
 
 
@@ -200,9 +200,9 @@ Generation 품질 & grammatical 한 동화 풍 & \textbf{자연스러운 동화 
 \end{adjustbox}
 \end{booktable}
 
-\subsection{\texorpdfstring{\ref{ch:25}장 는 \emph{SFT 가 아닙니다}}{\ref{ch:25}장 는 SFT 가 아닙니다}}
+\subsection{\texorpdfstring{\ref{ch:25}장은 \emph{SFT 가 아닙니다}}{\ref{ch:25}장은 SFT 가 아닙니다}}
 
-본 장를 \emph{fine-tune} 으로 부르면 \emph{단계 2 / 3 / 4} 가 모두 섞여 혼동이 생깁니다. \ref{ch:25}장의 정확한 위치는:
+본 장을 \emph{fine-tune} 으로 부르면 \emph{단계 2 / 3 / 4} 가 모두 섞여 혼동이 생깁니다. \ref{ch:25}장의 정확한 위치는:
 
 \begin{itemize}
 \tightlist
@@ -262,7 +262,7 @@ Reference: 학습 길게 했을 때 & \(0.25\)+ & 약 1.4 \\
 \end{booktable}
 
 \begin{quote}
-\ref{ch:24}장의 시작 loss \inlinecode{약\ 7.6} (random baseline) 와 \ref{ch:25}장의 시작 loss \inlinecode{약\ 2.5-3.0} (사전학습된 본체의 평가 loss) 의 차이가 \emph{대규모 사전학습이 본체에 미리 새겨둔 next-token 분포} 의 정량적 가치. \emph{\ref{ch:25}장 는 random 에서 시작하지 않습니다}.
+\ref{ch:24}장의 시작 loss \inlinecode{약\ 7.6} (random baseline) 와 \ref{ch:25}장의 시작 loss \inlinecode{약\ 2.5-3.0} (사전학습된 본체의 평가 loss) 의 차이가 \emph{대규모 사전학습이 본체에 미리 새겨둔 next-token 분포} 의 정량적 가치. \emph{\ref{ch:25}장은 random 에서 시작하지 않습니다}.
 \end{quote}
 
 \subsection{Perplexity 환산}
@@ -278,7 +278,7 @@ CLM loss & PPL & 해석 \\
 
 10.82 & 50,257 & 균등 추측 (50K vocab 전체) \\
 3.0 & 20 & 약 20 개 후보 \(\leftarrow\) \ref{ch:25}장 시작 영역 \\
-2.0 & 7.4 & 약 7 개 후보 \(\leftarrow\) \ref{ch:25}장도달 영역 \\
+2.0 & 7.4 & 약 7 개 후보 \(\leftarrow\) \ref{ch:25}장 도달 영역 \\
 1.4 & 4.1 & 거의 결정적 \\
 \bottomrule
 \end{tabular}
@@ -343,7 +343,7 @@ tokenizer.pad_token = tokenizer.eos_token
 EOS 토큰을 pad 로 재활용. \inlinecode{group\_texts} 패턴에서 chunk 길이가 모두 같으면 pad 가 거의 없어 실용적으로는 영향 없음.
 
 \begin{quote}
-\ref{ch:26}장 (한국어 GPT scratch) 에서는 다시 \emph{직접 학습} 으로 돌아갑니다 --- 한국어는 gpt2 BPE 로 표현하면 \emph{byte 단위로 잘게 쪼개져 UNK 폭증} 이라 한국어 코퍼스 위에 새 토크나이저를 학습해야 합니다. 그게 \ref{ch:26}장 가 \emph{scratch} 인 이유.
+\ref{ch:26}장 (한국어 GPT scratch) 에서는 다시 \emph{직접 학습} 으로 돌아갑니다 --- 한국어는 gpt2 BPE 로 표현하면 \emph{byte 단위로 잘게 쪼개져 UNK 폭증} 이라 한국어 코퍼스 위에 새 토크나이저를 학습해야 합니다. 그게 \ref{ch:26}장이 \emph{scratch} 인 이유.
 \end{quote}
 
 
@@ -440,8 +440,8 @@ print(
 load done: 15.8s
 
 === model ===
-#params : 124.44 M (Ch 24 was approx. 3M; Ch 25 is approx. 41x larger)
-vocab_size        : 50,257  (Ch 24 was 2,048; Ch 25 is approx. 25x larger)
+#params : 124.44 M (24장 was approx. 3M; 25장 is approx. 41x larger)
+vocab_size        : 50,257  (24장 was 2,048; 25장 is approx. 25x larger)
 weight tying      : True  (lm_head <-> wte shared)
 fp32 weight size  : 474.7 MiB
 
@@ -708,7 +708,7 @@ A big dog is a dog that loves to eat, but is also a dog that's afraid to do...
 \end{itemize}
 
 \begin{quote}
-이 차이가 \emph{학습 시작점의 차이}. \ref{ch:25}장 는 \emph{random 에서 시작하지 않습니다} --- \emph{이미 잘 만들어진 본체} 에서 시작해 \emph{TinyStories 풍 적응} 만 더하는 게 학습 단계 2 (continual pretraining) 의 본질.
+이 차이가 \emph{학습 시작점의 차이}. \ref{ch:25}장은 \emph{random 에서 시작하지 않습니다} --- \emph{이미 잘 만들어진 본체} 에서 시작해 \emph{TinyStories 풍 적응} 만 더하는 게 학습 단계 2 (continual pretraining) 의 본질.
 \end{quote}
 
 
@@ -800,7 +800,7 @@ A big dog is a dog that loves to eat, but is also a dog that's afraid to do...
 \end{itemize}
 
 \begin{quote}
-\textbf{세 셋업의 비교가 던지는 질문} --- \ref{ch:25}장 AFTER 가 \ref{ch:24}장 보다 \emph{훨씬 좋아 보인다면}, 이게 \emph{모델 크기 (3M \(\to\) 124M, 약 40배) 의 위력인가, 사전학습 (WebText 약 40GB) 의 위력인가?} --- 본 장의 셋업으로는 \emph{분리 불가능}. 두 요인이 \emph{함께 변함}. FAQ Q3 에서 더 자세히.
+\textbf{세 셋업의 비교가 던지는 질문} --- \ref{ch:25}장 AFTER 가 \ref{ch:24}장보다 \emph{훨씬 좋아 보인다면}, 이게 \emph{모델 크기 (3M \(\to\) 124M, 약 40배) 의 위력인가, 사전학습 (WebText 약 40GB) 의 위력인가?} --- 본 장의 셋업으로는 \emph{분리 불가능}. 두 요인이 \emph{함께 변함}. FAQ Q3 에서 더 자세히.
 \end{quote}
 
 
@@ -809,7 +809,7 @@ A big dog is a dog that loves to eat, but is also a dog that's afraid to do...
 
 \emph{같은 데이터 (TinyStories 30K)} 에 대한 \emph{random init vs 사전학습 본체} 의 학습 효율 격차를 표로 정리.
 
-\begin{booktable}{25장 학습 곡선 비교 - 24장 vs 25장 의 학습 효율 표}{tab:ch25-10}
+\begin{booktable}{25장 학습 곡선 비교 - 24장 vs 25장의 학습 효율 표}{tab:ch25-10}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -828,7 +828,7 @@ Generation 품질 & grammatical 한 동화 & \textbf{자연스러운 동화 + �
 \end{booktable}
 
 \begin{quote}
-\textbf{요점}: \ref{ch:25}장 는 \emph{시작부터 낮은 loss} 에서 출발해 더 낮은 지점까지 내려갑니다 --- 사전학습된 본체의 \emph{시작 이점}. step·시간은 \ref{ch:24}장 보다 오히려 더 큽니다 (124M 본체 + chunk 수가 많아 1 epoch 이 길어짐). 다만 \emph{loss 의 절대값} 은 vocab 단위가 달라 직접 비교 어려움 (vocab 25배 차이). \emph{Generation 품질} 로는 §7 의 3-way 비교가 정성적 차이를 보여줍니다.
+\textbf{요점}: \ref{ch:25}장은 \emph{시작부터 낮은 loss} 에서 출발해 더 낮은 지점까지 내려갑니다 --- 사전학습된 본체의 \emph{시작 이점}. step·시간은 \ref{ch:24}장보다 오히려 더 큽니다 (124M 본체 + chunk 수가 많아 1 epoch 이 길어짐). 다만 \emph{loss 의 절대값} 은 vocab 단위가 달라 직접 비교 어려움 (vocab 25배 차이). \emph{Generation 품질} 로는 §7 의 3-way 비교가 정성적 차이를 보여줍니다.
 \end{quote}
 
 \begin{quote}
@@ -882,16 +882,16 @@ Generation 품질 & grammatical 한 동화 & \textbf{자연스러운 동화 + �
 이름 & 한 줄 설명 & \ref{ch:24}장과 공유? \\
 \midrule
 
-\inlinecode{AutoModelForCausalLM.from\_pretrained("gpt2")} & OpenAI gpt2 (124M, WebText 사전학습) 본체 로드 & \textbf{새로 등장} (\ref{ch:24}장 는 \inlinecode{GPT2LMHeadModel(config)} random init) \\
-\inlinecode{AutoTokenizer.from\_pretrained("gpt2")} & gpt2 BPE 토크나이저 (vocab 50,257) 로드 & \textbf{새로 등장} (\ref{ch:24}장 는 직접 학습 BPE) \\
-\inlinecode{tokenizer.pad\_token\ =\ tokenizer.eos\_token} & gpt2 의 pad 컨벤션 (EOS 재활용) & \textbf{새로 등장} (\ref{ch:24}장 는 PreTrainedTokenizerFast 인자로 직접 지정) \\
+\inlinecode{AutoModelForCausalLM.from\_pretrained("gpt2")} & OpenAI gpt2 (124M, WebText 사전학습) 본체 로드 & \textbf{새로 등장} (\ref{ch:24}장은 \inlinecode{GPT2LMHeadModel(config)} random init) \\
+\inlinecode{AutoTokenizer.from\_pretrained("gpt2")} & gpt2 BPE 토크나이저 (vocab 50,257) 로드 & \textbf{새로 등장} (\ref{ch:24}장은 직접 학습 BPE) \\
+\inlinecode{tokenizer.pad\_token\ =\ tokenizer.eos\_token} & gpt2 의 pad 컨벤션 (EOS 재활용) & \textbf{새로 등장} (\ref{ch:24}장은 PreTrainedTokenizerFast 인자로 직접 지정) \\
 \inlinecode{transformers.Trainer} & HuggingFace 표준 학습 루프 & \textbf{공유} (\ref{ch:24}장과 동일 클래스, 동일 인자 구조) \\
 \inlinecode{DataCollatorForLanguageModeling(mlm=False)} & CausalLM collator (\inlinecode{labels\ =\ input\_ids.clone()} 자동) & \textbf{공유} (\ref{ch:24}장과 정확히 같음) \\
 \inlinecode{group\_texts} 패턴 (HF run\_clm.py 표준) & 가변 길이 텍스트 \(\to\) 고정 길이 블록 스트림 & \textbf{공유} \\
 \inlinecode{model.generate(do\_sample=True,\ ...)} & sampling-based text generation & \textbf{공유} \\
-\inlinecode{warmup\_ratio} (vs \inlinecode{warmup\_steps}) & epoch 비율 기반 warmup (continual pretraining 표준) & \textbf{약간 다름} (\ref{ch:24}장 는 \inlinecode{warmup\_steps=100}) \\
-\inlinecode{num\_train\_epochs} (vs \inlinecode{max\_steps}) & epoch 수 기반 학습 (continual pretraining 1 epoch 충분) & \textbf{약간 다름} (\ref{ch:24}장 는 \inlinecode{max\_steps=1500}) \\
-\inlinecode{gradient\_accumulation\_steps} & 작은 배치를 누적해 큰 effective batch (T4 + 124M 메모리 제약) & \textbf{새로 등장} (\ref{ch:24}장 는 3M 이라 불필요) \\
+\inlinecode{warmup\_ratio} (vs \inlinecode{warmup\_steps}) & epoch 비율 기반 warmup (continual pretraining 표준) & \textbf{약간 다름} (\ref{ch:24}장은 \inlinecode{warmup\_steps=100}) \\
+\inlinecode{num\_train\_epochs} (vs \inlinecode{max\_steps}) & epoch 수 기반 학습 (continual pretraining 1 epoch 충분) & \textbf{약간 다름} (\ref{ch:24}장은 \inlinecode{max\_steps=1500}) \\
+\inlinecode{gradient\_accumulation\_steps} & 작은 배치를 누적해 큰 effective batch (T4 + 124M 메모리 제약) & \textbf{새로 등장} (\ref{ch:24}장은 3M 이라 불필요) \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -905,13 +905,13 @@ Generation 품질 & grammatical 한 동화 & \textbf{자연스러운 동화 + �
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
 \item
-  \ref{ch:24}장의 학습 첫 step loss 는 약 \texttt{ln(2048)\ \$\textbackslash{}approx\$\ 7.62} 에서 시작했습니다. \ref{ch:25}장 는 random baseline 이 \texttt{ln(50257)\ \$\textbackslash{}approx\$\ 10.82} 인데 \emph{시작 loss 가 약 3.0-4.0} 입니다. 두 장의 \emph{시작 loss 차이} 가 의미하는 바는 무엇인가요? (랜덤 추측 / 사전학습된 본체 / vocab 차원의 관계)
+  \ref{ch:24}장의 학습 첫 step loss 는 약 \texttt{ln(2048)\ \$\textbackslash{}approx\$\ 7.62} 에서 시작했습니다. \ref{ch:25}장은 random baseline 이 \texttt{ln(50257)\ \$\textbackslash{}approx\$\ 10.82} 인데 \emph{시작 loss 가 약 3.0-4.0} 입니다. 두 장의 \emph{시작 loss 차이} 가 의미하는 바는 무엇인가요? (랜덤 추측 / 사전학습된 본체 / vocab 차원의 관계)
 \item
   본 장의 lr (\inlinecode{2e-5}) 가 \ref{ch:24}장의 lr (\inlinecode{3e-4}) 보다 \emph{약 15배 작은} 이유를 \emph{catastrophic forgetting} 키워드로 설명해 보세요. 만약 \ref{ch:25}장에서도 \inlinecode{3e-4} 를 썼다면 무슨 일이 일어날까요?
 \item
   \emph{Continual pretraining} (단계 2, 본 장) 과 \emph{SFT} (단계 3, \ref{ch:28}장) 의 가장 큰 차이는 \emph{\inlinecode{labels\ =\ -100} 자리} 입니다. 본 장의 collator 가 만드는 \inlinecode{labels} 패턴과, \ref{ch:28}장에서 등장할 \texttt{labels{[}:prompt\_len{]}\ =\ -100} 한 줄의 차이를 직접 비교해 설명해 보세요.
 \item
-  \ref{ch:25}장 AFTER 의 generation 이 \ref{ch:24}장 보다 좋아 보인다면, \emph{모델 크기 (3M \(\to\) 124M)} 의 효과인가 \emph{사전학습 데이터 (없음 \(\to\) WebText 40GB)} 의 효과인가? 본 장의 실험 셋업으로는 둘을 분리할 수 있나요? (분리하려면 어떤 추가 실험이 필요할까요?)
+  \ref{ch:25}장 AFTER 의 generation 이 \ref{ch:24}장보다 좋아 보인다면, \emph{모델 크기 (3M \(\to\) 124M)} 의 효과인가 \emph{사전학습 데이터 (없음 \(\to\) WebText 40GB)} 의 효과인가? 본 장의 실험 셋업으로는 둘을 분리할 수 있나요? (분리하려면 어떤 추가 실험이 필요할까요?)
 \end{enumerate}
 
 

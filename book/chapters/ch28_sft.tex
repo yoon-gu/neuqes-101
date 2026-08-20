@@ -188,7 +188,7 @@ lr & 2e-5 & 2e-5 (SFT 표준, 동일 범위) \\
 \end{booktable}
 
 \begin{quote}
-\textbf{핵심}: \emph{본체·토크나이저·loss 종류는 그대로}. 바뀌는 건 \emph{데이터 형식 + trainer + 마스킹 자리} 세 가지. 그중에서도 \textbf{\inlinecode{labels} 마스킹 자리} 가 \emph{왜 모델이 instruction 을 따라가게 되는가} 의 진짜 원인입니다. \ref{ch:27}장의 collator 가 \emph{거의 모든 자리} 를 학습했다면, \ref{ch:28}장 은 \emph{prompt 를 전부 가리고 답변만} 학습합니다 --- \emph{정확히 정반대 자리}.
+\textbf{핵심}: \emph{본체·토크나이저·loss 종류는 그대로}. 바뀌는 건 \emph{데이터 형식 + trainer + 마스킹 자리} 세 가지. 그중에서도 \textbf{\inlinecode{labels} 마스킹 자리} 가 \emph{왜 모델이 instruction 을 따라가게 되는가} 의 진짜 원인입니다. \ref{ch:27}장의 collator 가 \emph{거의 모든 자리} 를 학습했다면, \ref{ch:28}장은 \emph{prompt 를 전부 가리고 답변만} 학습합니다 --- \emph{정확히 정반대 자리}.
 \end{quote}
 
 
@@ -236,7 +236,7 @@ labels:           -100  -100   -100  -100  -100   -100   피보나치는  수열
 
 \section{\texorpdfstring{“파인튜닝” 의미 변화의 완성 --- task head \(\to\) behavior alignment}{“파인튜닝” 의미 변화의 완성 --- task head \textbackslash to behavior alignment}}
 
-커리큘럼 전체에서 \emph{fine-tune} 이라는 단어는 \emph{세 의미} 로 쓰였습니다. \ref{ch:28}장 이 그 세 번째 의미 (\emph{행동 정렬}) 의 도착점입니다.
+커리큘럼 전체에서 \emph{fine-tune} 이라는 단어는 \emph{세 의미} 로 쓰였습니다. \ref{ch:28}장이 그 세 번째 의미 (\emph{행동 정렬}) 의 도착점입니다.
 
 \begin{booktable}{28장 “파인튜닝” 의미 변화의 완성 - task head \textbackslash to behavior alignment 표}{tab:ch28-05}
 \begin{adjustbox}{max width=\textwidth}
@@ -473,7 +473,7 @@ load done: 7.2s
 roundtrip check: '옛날 옛날에 작은 소녀가'  (OK)
 
 === model ===
-#params      : 125.16 M  (same body as Ch 27)
+#params      : 125.16 M  (same body as 27장)
 vocab_size   : 51,200
 tokenizer    : TokenizersBackend
   eos_token  : </s>  id=1
@@ -835,11 +835,11 @@ BEFORE SFT - raw KoGPT2 (no instruction tuning yet)
 이름 & 한 줄 설명 & \ref{ch:27}장과 차이 \\
 \midrule
 
-\inlinecode{trl.SFTTrainer} & SFT 특화 trainer (prompt/completion 전처리 + completion 마스킹 자동) & \textbf{새로 등장} (\ref{ch:27}장 은 \inlinecode{transformers.Trainer}) \\
+\inlinecode{trl.SFTTrainer} & SFT 특화 trainer (prompt/completion 전처리 + completion 마스킹 자동) & \textbf{새로 등장} (\ref{ch:27}장은 \inlinecode{transformers.Trainer}) \\
 \inlinecode{trl.SFTConfig} & \inlinecode{SFTTrainer} 설정 (\inlinecode{TrainingArguments} 상속 + SFT 옵션) & \textbf{새로 등장} \\
 \inlinecode{SFTConfig(completion\_only\_loss=True)} & \emph{답변 부분만} loss (prompt = \inlinecode{-100}) --- SFT 의 핵심 옵션 & \textbf{새로 등장} \\
-\inlinecode{trl} 의 SFT collator (\inlinecode{DataCollatorForLanguageModeling}) & \inlinecode{completion\_mask} 로 prompt 를 \inlinecode{-100} 마스킹 & \textbf{새로 등장} (\ref{ch:27}장 은 \inlinecode{transformers.DataCollatorForLanguageModeling(mlm=False)}) \\
-\inlinecode{prompt} / \inlinecode{completion} 데이터 형식 & instruction-response 쌍 표준 형식 & \textbf{새로 등장} (\ref{ch:27}장 은 단일 \inlinecode{text} 컬럼) \\
+\inlinecode{trl} 의 SFT collator (\inlinecode{DataCollatorForLanguageModeling}) & \inlinecode{completion\_mask} 로 prompt 를 \inlinecode{-100} 마스킹 & \textbf{새로 등장} (\ref{ch:27}장은 \inlinecode{transformers.DataCollatorForLanguageModeling(mlm=False)}) \\
+\inlinecode{prompt} / \inlinecode{completion} 데이터 형식 & instruction-response 쌍 표준 형식 & \textbf{새로 등장} (\ref{ch:27}장은 단일 \inlinecode{text} 컬럼) \\
 \inlinecode{AutoModelForCausalLM.from\_pretrained("skt/kogpt2-base-v2")} & KoGPT2 본체 로드 & \textbf{공유} (\ref{ch:27}장과 같은 본체) \\
 \inlinecode{PreTrainedTokenizerFast.from\_pretrained("skt/kogpt2-base-v2",\ ...)} & KoGPT2 BBPE 토크나이저 (AutoTokenizer 함정 회피) & \textbf{공유} (\ref{ch:27}장과 동일) \\
 \inlinecode{model.generate(repetition\_penalty=...)} & 반복 억제 sampling (작은 모델의 반복 완화) & \textbf{약간 다름} (반복 페널티 추가) \\

@@ -134,13 +134,13 @@ Loss & \inlinecode{CrossEntropyLoss} (masked token, vocab 30,522 logits) & \text
 
 \ref{ch:19}장의 cross-language 실험에서 \emph{영어 토크나이저로 한국어를 토큰화하면 UNK 비율이 폭증} 한다는 걸 봤습니다. 그 위에서 모델을 사전학습하면 \emph{언어 정보 자체가 사라진 {[}UNK{]} 자리} 가 대부분이라 학습 신호가 거의 없습니다.
 
-이 장는 그 결론의 자연스러운 다음 단계: \textbf{언어 데이터에 맞는 vocab 으로 토크나이저를 가져온 뒤 모델을 사전학습}. 토크나이저까지 \emph{직접 학습} 하지 않은 이유는 \ref{ch:20}장과 같습니다 --- \inlinecode{klue/bert-base} 의 vocab 은 한국어 위키 + 뉴스 + 댓글 등 대규모 코퍼스로 학습되어 \emph{어휘 커버리지가 검증된} 출발점.
+이 장은 그 결론의 자연스러운 다음 단계: \textbf{언어 데이터에 맞는 vocab 으로 토크나이저를 가져온 뒤 모델을 사전학습}. 토크나이저까지 \emph{직접 학습} 하지 않은 이유는 \ref{ch:20}장과 같습니다 --- \inlinecode{klue/bert-base} 의 vocab 은 한국어 위키 + 뉴스 + 댓글 등 대규모 코퍼스로 학습되어 \emph{어휘 커버리지가 검증된} 출발점.
 
 
 
 \section{\texorpdfstring{Loss 함수의 변화 --- \emph{없음}. \ref{ch:20}장과 같은 MLM CE}{Loss 함수의 변화 --- 없음. \ref{ch:20}장과 같은 MLM CE}}
 
-이 장는 \emph{언어만 바뀌고} loss 함수는 \ref{ch:20}장과 동일한 MLM CrossEntropyLoss. 가려진 위치의 \emph{원래 토큰} 을 vocab 차원 softmax 로 예측. 다만 vocab 크기가 살짝 달라 random baseline 이 미세하게 이동합니다.
+이 장은 \emph{언어만 바뀌고} loss 함수는 \ref{ch:20}장과 동일한 MLM CrossEntropyLoss. 가려진 위치의 \emph{원래 토큰} 을 vocab 차원 softmax 로 예측. 다만 vocab 크기가 살짝 달라 random baseline 이 미세하게 이동합니다.
 
 \subsection{수식 (\ref{ch:20}장과 동일)}
 
@@ -183,7 +183,7 @@ L_{\text{MLM}} = -\frac{1}{\vert{}M\vert{}} \sum_{i \in M} \log P(x_i \mid x_{\s
 
 \subsection{학습 목표 영역 (\ref{ch:20}장과 같음)}
 
-\begin{booktable}{22장 학습 목표 영역 (20장 과 같음) 표}{tab:ch22-04}
+\begin{booktable}{22장 학습 목표 영역 (20장과 같음) 표}{tab:ch22-04}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -430,7 +430,7 @@ klue/bert-base (KO) ( 7 tokens, UNK 0): ['별로', '##였', '##어요', '.', '�
 \end{itemize}
 
 \begin{quote}
-\textbf{결론} --- 한국어 데이터로 BERT 를 사전학습하려면 한국어 토크나이저가 필수. \ref{ch:20}장의 영어 패턴을 한국어로 옮길 때 \emph{토크나이저만 바꿔도} 같은 학습 동역학이 가능합니다. \ref{ch:19}장 §5-4 가 \emph{문제 제기} 였다면, 이 장는 \emph{해결책의 첫 단계}.
+\textbf{결론} --- 한국어 데이터로 BERT 를 사전학습하려면 한국어 토크나이저가 필수. \ref{ch:20}장의 영어 패턴을 한국어로 옮길 때 \emph{토크나이저만 바꿔도} 같은 학습 동역학이 가능합니다. \ref{ch:19}장 §5-4 가 \emph{문제 제기} 였다면, 이 장은 \emph{해결책의 첫 단계}.
 \end{quote}
 
 
@@ -1351,7 +1351,7 @@ for f in sorted(os.listdir(SAVE_DIR)):
 
 \textbf{저장된 파일 구조} --- \ref{ch:20}장과 동일한 HF 표준 레이아웃:
 
-\begin{booktable}{22장 모델 저장 - 23장 에서 재사용 표}{tab:ch22-06}
+\begin{booktable}{22장 모델 저장 - 23장에서 재사용 표}{tab:ch22-06}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}ll@{}}
 \toprule

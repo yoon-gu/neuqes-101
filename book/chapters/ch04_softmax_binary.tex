@@ -108,7 +108,7 @@ Loss & \inlinecode{BCEWithLogitsLoss} & \textbf{\inlinecode{CrossEntropyLoss}} \
 \end{adjustbox}
 \end{booktable}
 
-\textbf{왜 같은 데이터에 같은 task인데 따로 장로 다루나?} 두 방식은 출력 차원·activation·loss가 모두 바뀌어 보이지만 \emph{수학적으로 동등} 합니다. 이 동등성을 가장 단순한 sklearn 환경에서 미리 체험해두면, \ref{ch:10}·\ref{ch:11}장에서 BERT binary가 두 방식 중 어느 쪽을 골라도 같다는 사실을 자연스럽게 받아들일 수 있습니다.
+\textbf{왜 같은 데이터에 같은 task인데 따로 장으로 다루나?} 두 방식은 출력 차원·activation·loss가 모두 바뀌어 보이지만 \emph{수학적으로 동등} 합니다. 이 동등성을 가장 단순한 sklearn 환경에서 미리 체험해두면, \ref{ch:10}·\ref{ch:11}장에서 BERT binary가 두 방식 중 어느 쪽을 골라도 같다는 사실을 자연스럽게 받아들일 수 있습니다.
 
 또 K=2를 통과하면 같은 식이 K=5(다음 장)로 자연스럽게 일반화됩니다 --- softmax/CE는 K가 무엇이든 작동합니다.
 

@@ -189,7 +189,7 @@ Loss & \inlinecode{CrossEntropyLoss} (next-token, vocab 2,048 logits) & \textbf{
 
 \subsection{\texorpdfstring{왜 한국어는 토크나이저를 \emph{직접} 학습하나 --- \ref{ch:25}장의 결론 잇기}{왜 한국어는 토크나이저를 직접 학습하나 --- \ref{ch:25}장의 결론 잇기}}
 
-\ref{ch:25}장에서 \inlinecode{gpt2} (영어 WebText) 의 BPE 를 \emph{그대로} 가져와 continual pretraining 했습니다. 영어는 그게 자연스럽습니다 --- gpt2 BPE 가 영어 어휘를 잘 커버하니까요. 하지만 \emph{영어 gpt2 BPE 로 한국어를 토큰화하면 한글이 byte 단위로 잘게 쪼개져 토큰 수가 폭증} 합니다 (\ref{ch:25}장 Q4 / \ref{ch:19}장 §5-4 의 cross-language 결론). 그래서 한국어는 \emph{한국어 코퍼스 위에 새 토크나이저를 학습} 하는 게 정공법 --- 그게 \ref{ch:26}장 가 다시 \emph{scratch} 인 이유. \emph{토크나이저는 본체와 운명공동체} 원칙이 한국어에서 직접 학습을 강제합니다.
+\ref{ch:25}장에서 \inlinecode{gpt2} (영어 WebText) 의 BPE 를 \emph{그대로} 가져와 continual pretraining 했습니다. 영어는 그게 자연스럽습니다 --- gpt2 BPE 가 영어 어휘를 잘 커버하니까요. 하지만 \emph{영어 gpt2 BPE 로 한국어를 토큰화하면 한글이 byte 단위로 잘게 쪼개져 토큰 수가 폭증} 합니다 (\ref{ch:25}장 Q4 / \ref{ch:19}장 §5-4 의 cross-language 결론). 그래서 한국어는 \emph{한국어 코퍼스 위에 새 토크나이저를 학습} 하는 게 정공법 --- 그게 \ref{ch:26}장이 다시 \emph{scratch} 인 이유. \emph{토크나이저는 본체와 운명공동체} 원칙이 한국어에서 직접 학습을 강제합니다.
 
 
 
@@ -263,7 +263,7 @@ SFT / Instruction Tuning & \ref{ch:28}장 (한국어 SFT) & \textbf{prompt 부�
 
 \section{\texorpdfstring{Loss --- \inlinecode{CrossEntropyLoss} (next-token), \ref{ch:24}장과 동일}{Loss --- CrossEntropyLoss (next-token), \ref{ch:24}장과 동일}}
 
-이 장는 \emph{언어만 바뀌고} loss 함수는 \ref{ch:24}장과 동일한 next-token CrossEntropyLoss. 다만 vocab 크기가 달라 random baseline \inlinecode{ln\ V} 가 미세하게 이동합니다.
+이 장은 \emph{언어만 바뀌고} loss 함수는 \ref{ch:24}장과 동일한 next-token CrossEntropyLoss. 다만 vocab 크기가 달라 random baseline \inlinecode{ln\ V} 가 미세하게 이동합니다.
 
 \subsection{수식 (\ref{ch:24}장과 동일)}
 
@@ -331,7 +331,7 @@ BBPE (\ref{ch:26}장, 한국어) & 약 4,000 & \textbf{약 8.29} & 약 4,000 \\
 \end{itemize}
 
 \begin{quote}
-\ref{ch:24}장의 \texttt{ln(2048)\ \$\textbackslash{}approx\$\ 7.62} 와 같은 직관. \emph{vocab 차원} 만 약간 커진 것 (약 4,000) --- 학습 동역학에는 영향 없고, \emph{학습 종료 loss 의 절대값} 을 영어 장와 비교할 때만 미세 보정.
+\ref{ch:24}장의 \texttt{ln(2048)\ \$\textbackslash{}approx\$\ 7.62} 와 같은 직관. \emph{vocab 차원} 만 약간 커진 것 (약 4,000) --- 학습 동역학에는 영향 없고, \emph{학습 종료 loss 의 절대값} 을 영어 장과 비교할 때만 미세 보정.
 \end{quote}
 
 
@@ -798,7 +798,7 @@ total positions      : 256
   ignored (-100)     :     1  ( 0.39%)
   train signal       :   255  (99.61%)
 
-[MLM (Ch 20/22)]     approx. 85% = -100, 15% = train signal
+[MLM (20장/22)]     approx. 85% = -100, 15% = train signal
 [CausalLM (this ch)] 0.39% = -100, 99.61% = train signal <- almost every po...
 
 => a single step's token-learning efficiency: GPT pretrain is approx. 5-6x...
@@ -1082,7 +1082,7 @@ prompt: 어느 날,
 
 \section{(선택) Reference 비교 - KoGPT2 의 같은 prompt generation}
 
-\emph{학습이 충분히 잘 된} 기준점으로 \inlinecode{skt/kogpt2-base-v2} (125M, 대규모 한국어 사전학습) 에 같은 한국어 prompt 를 넣어 \emph{우리 작은 GPT (약 3M, 한국어 TinyStories 30K)} 와 격차를 봅니다. \textbf{\ref{ch:27}장 이 KoGPT2 본격 장} 이므로 여기서는 \emph{간단히 한 번만} --- T4 시간을 아끼려면 이 셀은 건너뛰어도 됩니다.
+\emph{학습이 충분히 잘 된} 기준점으로 \inlinecode{skt/kogpt2-base-v2} (125M, 대규모 한국어 사전학습) 에 같은 한국어 prompt 를 넣어 \emph{우리 작은 GPT (약 3M, 한국어 TinyStories 30K)} 와 격차를 봅니다. \textbf{\ref{ch:27}장이 KoGPT2 본격 장} 이므로 여기서는 \emph{간단히 한 번만} --- T4 시간을 아끼려면 이 셀은 건너뛰어도 됩니다.
 
 
 
@@ -1186,7 +1186,7 @@ prompt: 작은 소녀가
 \end{itemize}
 
 \begin{quote}
-\ref{ch:27}장 이 이 격차를 \emph{데이터 축을 통제하고} 다룹니다 - KoGPT2 (125M) 의 사전학습 \emph{위에} 같은 한국어 TinyStories 로 \textbf{continual pretraining}. \emph{대규모 한국어 사전학습 모델을 작은 도메인 데이터로 적응} 시킬 때의 generation 품질이, 우리 from-scratch 작은 GPT 와 어떻게 다른지 직접 비교 (\ref{ch:24}장\(\to\)25 의 한국어 짝).
+\ref{ch:27}장이 이 격차를 \emph{데이터 축을 통제하고} 다룹니다 - KoGPT2 (125M) 의 사전학습 \emph{위에} 같은 한국어 TinyStories 로 \textbf{continual pretraining}. \emph{대규모 한국어 사전학습 모델을 작은 도메인 데이터로 적응} 시킬 때의 generation 품질이, 우리 from-scratch 작은 GPT 와 어떻게 다른지 직접 비교 (\ref{ch:24}장\(\to\)25 의 한국어 짝).
 \end{quote}
 
 
@@ -1223,7 +1223,7 @@ prompt: 작은 소녀가
 \item
   영어 gpt2 BPE 로 한국어를 토큰화하면 토큰 수가 폭증합니다 (셀 비교 표). \emph{byte-level} 이라 UNK 는 없는데, 왜 그래도 \emph{직접 학습한 BBPE} 가 한국어 학습에 유리할까요? (의미 단위 보존 vs byte 조각 분해 관점)
 \item
-  random baseline 이 \ref{ch:24}장 (vocab 2,048) 의 \texttt{ln(2048)\ \$\textbackslash{}approx\$\ 7.62} 에서 \ref{ch:26}장 (vocab 약 4,000) 의 \texttt{ln(4000)\ \$\textbackslash{}approx\$\ 8.29} 로 바뀝니다. 이 차이가 \emph{학습 동역학} 에 의미 있는 영향을 주나요? \emph{학습 종료 loss 의 절대값} 을 영어 장와 비교할 때는요?
+  random baseline 이 \ref{ch:24}장 (vocab 2,048) 의 \texttt{ln(2048)\ \$\textbackslash{}approx\$\ 7.62} 에서 \ref{ch:26}장 (vocab 약 4,000) 의 \texttt{ln(4000)\ \$\textbackslash{}approx\$\ 8.29} 로 바뀝니다. 이 차이가 \emph{학습 동역학} 에 의미 있는 영향을 주나요? \emph{학습 종료 loss 의 절대값} 을 영어 장과 비교할 때는요?
 \item
   본 장의 collator 가 만드는 \inlinecode{labels} 는 \emph{거의 모든 자리} 가 학습 신호입니다. \ref{ch:28}장 (한국어 SFT) 에서는 \texttt{labels{[}:prompt\_len{]}\ =\ -100} 한 줄로 \emph{prompt 부분만 제외} 합니다. \emph{왜 이 한 줄이 모델이 한국어 instruction 을 따라가게 만드는지} 설명해 보세요.
 \item
@@ -1331,7 +1331,7 @@ print(
 \item
   \inlinecode{AutoModelForCausalLM.from\_pretrained("skt/kogpt2-base-v2")} - 대규모 한국어 코퍼스로 사전학습된 125M params KoGPT2 로드
 \item
-  \textbf{같은 한국어 TinyStories} 데이터 (본 장와 동일) 로 \textbf{continual pretraining} (계속 사전학습 --- \emph{같은 CausalLM task, 새 데이터, head 그대로}. \emph{task adaptation 의미의 fine-tune 이 아니라 단계 2})
+  \textbf{같은 한국어 TinyStories} 데이터 (본 장과 동일) 로 \textbf{continual pretraining} (계속 사전학습 --- \emph{같은 CausalLM task, 새 데이터, head 그대로}. \emph{task adaptation 의미의 fine-tune 이 아니라 단계 2})
 \item
   \textbf{핵심 비교}: 본 장 (약 3M, from scratch) vs \ref{ch:27}장 (125M, continual pretraining) 의 한국어 generation 품질·학습 곡선 격차
 \item

@@ -168,7 +168,7 @@ Task (메인) & 7라벨 multi-label & (그대로) \\
 \end{enumerate}
 
 \begin{quote}
-\textbf{\ref{ch:14}장의 별점 vs \ref{ch:18}장의 활성 개수} --- \ref{ch:14}장 별점은 메인 (항목) 과 \emph{부분} 상관 (긍정 리뷰가 음식 라벨일 가능성 높음 정도). \ref{ch:18}장 활성 개수는 메인 (multi-label 벡터) 의 \emph{직접 함수} (합). 따라서 \ref{ch:18}장 이 \emph{원리적으로} auxiliary 효과가 더 명확하게 나타날 수 있는 셋업.
+\textbf{\ref{ch:14}장의 별점 vs \ref{ch:18}장의 활성 개수} --- \ref{ch:14}장 별점은 메인 (항목) 과 \emph{부분} 상관 (긍정 리뷰가 음식 라벨일 가능성 높음 정도). \ref{ch:18}장 활성 개수는 메인 (multi-label 벡터) 의 \emph{직접 함수} (합). 따라서 \ref{ch:18}장이 \emph{원리적으로} auxiliary 효과가 더 명확하게 나타날 수 있는 셋업.
 \end{quote}
 
 
@@ -227,7 +227,7 @@ L = \underbrace{\frac{1}{N \cdot K}\sum_{i,k}\text{BCE}(z_{i,k}^\text{main}, y_{
 \ref{ch:17}장과 \emph{완전히 동일} --- \inlinecode{klue/bert-base} 한국어 WordPiece, \inlinecode{max\_length=128}, 두 헤드라인을 \texttt{“\ {[}SEP{]}\ ”} 로 이어붙인 결합 텍스트. \textbf{토크나이저는 라벨에 무관} 하므로 보조 라벨 (\inlinecode{n\_active}) 추가로 인한 변화 없음.
 
 \begin{previewBox}{미리보기}
-\textbf{다음 장 (\ref{ch:19}장, Phase 3 시작)}: 토크나이저를 \emph{직접 학습}. 사전학습 모델에 의존하지 않고 코퍼스에서 워드레벨 어휘를 직접 만들어 봅니다 --- \ref{ch:01}장 부터 따라온 “토크나이저 시각” 의 클라이맥스. 본 장까지는 \emph{기성품 KLUE WordPiece 를 그대로 썼지만} 다음 장부터는 \emph{어휘 구성 자체가 학습 대상}.
+\textbf{다음 장 (\ref{ch:19}장, Phase 3 시작)}: 토크나이저를 \emph{직접 학습}. 사전학습 모델에 의존하지 않고 코퍼스에서 워드레벨 어휘를 직접 만들어 봅니다 --- \ref{ch:01}장부터 따라온 “토크나이저 시각” 의 클라이맥스. 본 장까지는 \emph{기성품 KLUE WordPiece 를 그대로 썼지만} 다음 장부터는 \emph{어휘 구성 자체가 학습 대상}.
 \end{previewBox}
 
 
@@ -418,7 +418,7 @@ for k, v in batch.items():
 
 \section{\texorpdfstring{모델 정의}{모델 정의}}
 
-\ref{ch:14}장 는 \inlinecode{AutoModelForSequenceClassification} 의 자동 매핑을 \emph{그대로} 쓰면서 \inlinecode{model.aux\_head\ =\ nn.Linear(...)} 한 줄로 보조 헤드를 attach 했습니다. \ref{ch:18}장도 같은 패턴이 가능하지만, \emph{두 헤드를 명시적으로 한 클래스에서 관리} 하는 패턴이 multi-task 의 정통 --- 이번엔 \textbf{\inlinecode{nn.Module} 을 직접 정의} 해 두 헤드를 같은 곳에 둡니다.
+\ref{ch:14}장은 \inlinecode{AutoModelForSequenceClassification} 의 자동 매핑을 \emph{그대로} 쓰면서 \inlinecode{model.aux\_head\ =\ nn.Linear(...)} 한 줄로 보조 헤드를 attach 했습니다. \ref{ch:18}장도 같은 패턴이 가능하지만, \emph{두 헤드를 명시적으로 한 클래스에서 관리} 하는 패턴이 multi-task 의 정통 --- 이번엔 \textbf{\inlinecode{nn.Module} 을 직접 정의} 해 두 헤드를 같은 곳에 둡니다.
 
 두 패턴 모두 결과는 같습니다. 명시 정의가 \emph{디버깅·확장} (e.g. 헤드를 더 추가하거나 layer-wise lr 차등) 에 유리.
 
@@ -579,7 +579,7 @@ loss = l_main + $\lambda$ · l_aux
 # l_main: BCE per-label, l_aux: MSE on n_active
 \end{lstlisting}
 
-\ref{ch:14}장과의 차이 --- \ref{ch:14}장 는 \inlinecode{outputs.loss} (자동 매핑 메인 BCE) 를 그대로 받고 보조만 직접 계산. \ref{ch:18}장 은 모델 forward 가 \emph{이미} combined loss 를 계산해 반환하므로 \inlinecode{compute\_loss} 는 forward 결과를 그대로 돌려주기만 하면 됩니다. \(\lambda\) 만 trainer 에서 model forward 로 넘김.
+\ref{ch:14}장과의 차이 --- \ref{ch:14}장은 \inlinecode{outputs.loss} (자동 매핑 메인 BCE) 를 그대로 받고 보조만 직접 계산. \ref{ch:18}장은 모델 forward 가 \emph{이미} combined loss 를 계산해 반환하므로 \inlinecode{compute\_loss} 는 forward 결과를 그대로 돌려주기만 하면 됩니다. \(\lambda\) 만 trainer 에서 model forward 로 넘김.
 
 
 
@@ -924,7 +924,7 @@ weighted avg     0.8592    0.8487    0.8524      1758
 
 §8 비교에서 \textbf{\(\lambda\)=0.05 보조가 \(\lambda\)=0 baseline 을 micro·macro-F1 모두에서 앞섰습니다} (각 +0.003, +0.004). \inlinecode{n\_active} 라는 \emph{약한} 보조 신호도 작은 \(\lambda\) 에서는 공유 KLUE-BERT 본체에 간단한 정규화로 작용해 메인 분류를 살짝 끌어올립니다.
 
-다만 그 효과는 \textbf{\ref{ch:14}장(영어, 별점 보조)보다 작습니다.} 부록 \inlinecode{18\_ko\_auxiliary\_lambda\_sweep} 의 \(\lambda\) 곡선과 \ref{ch:14}장 를 나란히 두면:
+다만 그 효과는 \textbf{\ref{ch:14}장(영어, 별점 보조)보다 작습니다.} 부록 \inlinecode{18\_ko\_auxiliary\_lambda\_sweep} 의 \(\lambda\) 곡선과 \ref{ch:14}장을 나란히 두면:
 
 \begin{booktable}{18장 결과 해석 - sweet spot 에서는 약한 보조도 메인을 (살짝) 돕는다 표}{tab:ch18-05}
 \begin{adjustbox}{max width=\textwidth}
@@ -965,7 +965,7 @@ weighted avg     0.8592    0.8487    0.8524      1758
 이름 & 한 줄 설명 & 다음 장에서 \\
 \midrule
 
-\inlinecode{AutoModel.from\_pretrained(...)} & 분류 헤드 없이 BERT 본체만 로드 --- 메인·보조 헤드를 직접 부착 & Phase 3 토크나이저 학습엔 등장 안 함 (\ref{ch:19}장 부터는 본체보다 어휘 자체에 집중) \\
+\inlinecode{AutoModel.from\_pretrained(...)} & 분류 헤드 없이 BERT 본체만 로드 --- 메인·보조 헤드를 직접 부착 & Phase 3 토크나이저 학습엔 등장 안 함 (\ref{ch:19}장부터는 본체보다 어휘 자체에 집중) \\
 커스텀 \inlinecode{nn.Module} (KoBertMultiTask) & 본체 공유 + 두 헤드 명시 정의 --- multi-task 정통 패턴 & GPT 장 (\ref{ch:21}장) 의 task-specific head 패턴과 연결 \\
 \inlinecode{Trainer.compute\_loss} 오버라이드 + \inlinecode{lambda\_aux} 인자 & 자동 매핑이 못 다루는 \emph{복합 loss} + \(\lambda\) 동적 주입 & \(\lambda\) grid search 패턴 \\
 커스텀 \inlinecode{AuxCollator} & input\_ids 외 \emph{추가 라벨} (n\_active) 도 batch 에 같이 담기 & \ref{ch:14}장과 같은 패턴, 보조 신호 변형마다 재사용 \\
@@ -1118,15 +1118,15 @@ return SequenceClassifierOutput(loss=loss, logits=main_logits)
 \begin{itemize}
 \tightlist
 \item
-  Phase 1-2 영어·한국어 모두 \emph{사전학습 토크나이저} 를 그대로 썼습니다. \ref{ch:19}장 는 그 의존을 끊고 \emph{어휘를 코퍼스에서 직접 학습}.
+  Phase 1-2 영어·한국어 모두 \emph{사전학습 토크나이저} 를 그대로 썼습니다. \ref{ch:19}장은 그 의존을 끊고 \emph{어휘를 코퍼스에서 직접 학습}.
 \item
   \inlinecode{tokenizers} 라이브러리로 BPE, WordPiece, Unigram 세 알고리즘을 같은 코퍼스에 적용해 \emph{어휘 차이} 비교.
 \item
-  한국어 vs 영어 코퍼스에서 학습한 토크나이저의 \emph{토큰 길이 분포} 가 어떻게 다른지 --- \ref{ch:01}장 부터 추적해 온 토크나이저 시각의 완성.
+  한국어 vs 영어 코퍼스에서 학습한 토크나이저의 \emph{토큰 길이 분포} 가 어떻게 다른지 --- \ref{ch:01}장부터 추적해 온 토크나이저 시각의 완성.
 \end{itemize}
 
 \begin{quote}
-\textbf{Phase 2 마무리} --- \ref{ch:15}--\ref{ch:18}장 을 통해 한국어 BERT 의 binary·multi-class·multi-label·auxiliary 4 가지를 다 익혔습니다. Phase 3 는 한 발 더 내려가 \emph{어휘 구성} 자체에 도전 --- 사전학습 모델에 \emph{완전히 의존하지 않는} 경험.
+\textbf{Phase 2 마무리} --- \ref{ch:15}--\ref{ch:18}장을 통해 한국어 BERT 의 binary·multi-class·multi-label·auxiliary 4 가지를 다 익혔습니다. Phase 3 는 한 발 더 내려가 \emph{어휘 구성} 자체에 도전 --- 사전학습 모델에 \emph{완전히 의존하지 않는} 경험.
 \end{quote}
 
 \begin{quote}

@@ -864,7 +864,7 @@ Task & 모델 클래스 & 예시 \\
 토큰 분류 (NER) & \inlinecode{AutoModelForTokenClassification} & “\emph{Bob} 가 \emph{Apple} 에서 \emph{iPhone} 을 샀다” \(\to\) 사람/회사/제품 추출 \\
 질의응답 & \inlinecode{AutoModelForQuestionAnswering} & “이 리뷰의 만족도는?” 답: “음식은 좋지만 서비스가” \\
 텍스트 생성 & \inlinecode{AutoModelForCausalLM} & 자동 답변 생성 \\
-임베딩 & \inlinecode{AutoModel} (CLS hidden state) & 문장의미 벡터 \\
+임베딩 & \inlinecode{AutoModel} (CLS hidden state) & 문장 의미 벡터 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -874,7 +874,7 @@ sklearn LogReg는 \emph{분류 한 가지} 만. 다른 task는 모델 자체가 
 
 \textbf{(4) 임베딩 기반 의미 검색·중복 제거}
 
-BERT {[}CLS{]} 임베딩은 \emph{문장의미를 768-dim 벡터} 로 만듭니다. 단어가 달라도 \emph{의미가 비슷하면 가까운 벡터}. TF-IDF는 \emph{같은 단어} 가 있어야 매칭 --- “맛있다” 와 “delicious” 는 거리 1, BERT는 거의 거리 0.
+BERT {[}CLS{]} 임베딩은 \emph{문장 의미를 768-dim 벡터} 로 만듭니다. 단어가 달라도 \emph{의미가 비슷하면 가까운 벡터}. TF-IDF는 \emph{같은 단어} 가 있어야 매칭 --- “맛있다” 와 “delicious” 는 거리 1, BERT는 거의 거리 0.
 
 \Needspace{6\baselineskip}
 \begin{lstlisting}
@@ -960,7 +960,7 @@ def tokenize_wrong(batch):
 \end{itemize}
 
 \begin{quote}
-\textbf{변하는 축}: \ref{ch:12}장 \(\to\) \ref{ch:13}장 은 \emph{Loss 축} (CE \(\to\) BCE per-label)이 변합니다 --- task가 \emph{single-label} 에서 \emph{multi-label} 로 바뀌는 것이 본질이고 그에 맞춰 loss/activation/라벨 형식이 동시에 따라옵니다.
+\textbf{변하는 축}: \ref{ch:12}장 \(\to\) \ref{ch:13}장은 \emph{Loss 축} (CE \(\to\) BCE per-label)이 변합니다 --- task가 \emph{single-label} 에서 \emph{multi-label} 로 바뀌는 것이 본질이고 그에 맞춰 loss/activation/라벨 형식이 동시에 따라옵니다.
 \end{quote}
 \end{previewBox}
 

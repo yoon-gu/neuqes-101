@@ -42,7 +42,7 @@
 
 \section{작은 mask-diffusion LM 직접 만들기 --- 가변 마스킹과 병렬 denoise}
 
-Phase 5 의 첫 장. \ref{ch:24}--\ref{ch:31}장 까지 다룬 \textbf{GPT (decoder, autoregressive, 왼\(\to\)오 순차 생성)} 패러다임에서, 이번엔 \textbf{Diffusion LM (encoder/bidirectional, masked-denoise, 문장 전체를 병렬로 생성)} 패러다임으로 전환합니다.
+Phase 5 의 첫 장. \ref{ch:24}--\ref{ch:31}장까지 다룬 \textbf{GPT (decoder, autoregressive, 왼\(\to\)오 순차 생성)} 패러다임에서, 이번엔 \textbf{Diffusion LM (encoder/bidirectional, masked-denoise, 문장 전체를 병렬로 생성)} 패러다임으로 전환합니다.
 
 학습이 끝나면 전부 \texttt{{[}MASK{]}} 인 빈 캔버스에서 시작해, 왼\(\to\)오가 아니라 \textbf{병렬로} 토큰을 채워가며 영어 동화를 만들어냅니다.
 
@@ -50,7 +50,7 @@ Phase 5 의 첫 장. \ref{ch:24}--\ref{ch:31}장 까지 다룬 \textbf{GPT (deco
 \emph{“Once upon a time, there was a boy named Timmy. He had found a big toy ball in the park. He went to a big house with his toys. He liked to play with him.”}
 \end{quote}
 
-핵심 한 줄: \textbf{BERT MLM (\ref{ch:20}--\ref{ch:23}장) 의 \emph{고정 15\% 마스킹} 을 \emph{0-100\% 가변 마스킹} 으로 일반화하고, 한 번에 복원하는 대신 \emph{여러 번 반복 denoise} 하면 그게 generation 입니다.} \ref{ch:01}장 부터 추적해 온 \emph{마스킹 + 토크나이저} 시각이 여기서 클라이맥스에 도달합니다 --- 가려서 맞히던 BERT 가, 가리는 비율을 끝까지 밀어붙이면 \emph{무에서 문장을 만들어내는 생성 모델} 이 됩니다.
+핵심 한 줄: \textbf{BERT MLM (\ref{ch:20}--\ref{ch:23}장) 의 \emph{고정 15\% 마스킹} 을 \emph{0-100\% 가변 마스킹} 으로 일반화하고, 한 번에 복원하는 대신 \emph{여러 번 반복 denoise} 하면 그게 generation 입니다.} \ref{ch:01}장부터 추적해 온 \emph{마스킹 + 토크나이저} 시각이 여기서 클라이맥스에 도달합니다 --- 가려서 맞히던 BERT 가, 가리는 비율을 끝까지 밀어붙이면 \emph{무에서 문장을 만들어내는 생성 모델} 이 됩니다.
 
 작은 BERT-style 모델을 \emph{random init} 으로 from scratch 띄우고, \textbf{TinyStories} 로 \emph{가변 마스킹 denoising} 목표로 학습 \(\to\) reverse process (전부 \texttt{{[}MASK{]}} 에서 시작해 반복 denoise) 로 텍스트를 \emph{왼\(\to\)오가 아닌 병렬} 로 생성하는 과정을 직접 눈으로 봅니다.
 
@@ -240,7 +240,7 @@ random init 직후 모델은 가려진 자리를 \emph{균등 추측} \(\to\) �
 
 \section{\texorpdfstring{마스킹 thread 클라이맥스 --- \emph{고정 15\%} (BERT) \(\to\) \emph{가변 0-100\%} (diffusion)}{마스킹 thread 클라이맥스 --- 고정 15\% (BERT) \textbackslash to 가변 0-100\% (diffusion)}}
 
-\ref{ch:01}장 부터 \emph{토크나이저와 마스킹} 을 일관되게 추적해 왔습니다. 그 흐름이 여기서 정점에 닿습니다.
+\ref{ch:01}장부터 \emph{토크나이저와 마스킹} 을 일관되게 추적해 왔습니다. 그 흐름이 여기서 정점에 닿습니다.
 
 \begin{booktable}{32장 마스킹 thread 클라이맥스 - 고정 15\% (BERT) \textbackslash to 가변 0-100\% (diffusion) 표}{tab:ch32-05}
 \begin{adjustbox}{max width=\textwidth}
@@ -271,7 +271,7 @@ GPT CausalLM & \ref{ch:24}--\ref{ch:31}장 & 마스킹 없음 (causal mask) & --
 
 Diffusion LM 의 주인공 토큰은 \textbf{\texttt{{[}MASK{]}}} 입니다. 전부 \texttt{{[}MASK{]}} 인 빈 캔버스에서 시작해 토큰을 채우는 게 곧 생성이니까요.
 
-그런데 작은 from-scratch 모델에는 \textbf{작은 vocab} 이 중요합니다. \inlinecode{bert-base-uncased} 의 WordPiece 는 vocab 이 30,522 개라, hidden 256 짜리 작은 모델에 그대로 붙이면 임베딩 테이블이 파라미터의 대부분을 잡아먹어 정작 문맥을 배우는 본체에 쓸 용량이 없습니다. 그래서 이 장은 \ref{ch:19}·\ref{ch:24}장 처럼 \textbf{TinyStories 코퍼스에 ByteLevel BPE 2048 을 직접 학습} 하고, 거기에 \texttt{{[}PAD{]}}·\texttt{{[}UNK{]}}·\texttt{{[}MASK{]}} 특수 토큰을 더해 씁니다.
+그런데 작은 from-scratch 모델에는 \textbf{작은 vocab} 이 중요합니다. \inlinecode{bert-base-uncased} 의 WordPiece 는 vocab 이 30,522 개라, hidden 256 짜리 작은 모델에 그대로 붙이면 임베딩 테이블이 파라미터의 대부분을 잡아먹어 정작 문맥을 배우는 본체에 쓸 용량이 없습니다. 그래서 이 장은 \ref{ch:19}·\ref{ch:24}장처럼 \textbf{TinyStories 코퍼스에 ByteLevel BPE 2048 을 직접 학습} 하고, 거기에 \texttt{{[}PAD{]}}·\texttt{{[}UNK{]}}·\texttt{{[}MASK{]}} 특수 토큰을 더해 씁니다.
 
 \begin{booktable}{32장 토크나이저 노트 표}{tab:ch32-06}
 \begin{adjustbox}{max width=\textwidth}
@@ -291,7 +291,7 @@ BPE (GPT-2) & 50,257 & 없음 & 별도 추가 필요 \\
 \texttt{{[}MASK{]}} 토큰이 \emph{forward process (가리기)} 와 \emph{reverse process (복원/생성)} 양쪽의 핵심입니다.
 
 \begin{quote}
-\ref{ch:01}장 부터 추적한 \emph{토크나이저 시각} 의 클라이맥스 --- \emph{같은 문장이 어떻게 토큰화되는가} 를 넘어, 이제 \emph{\texttt{{[}MASK{]}} 토큰 자체가 생성의 캔버스} 가 됩니다.
+\ref{ch:01}장부터 추적한 \emph{토크나이저 시각} 의 클라이맥스 --- \emph{같은 문장이 어떻게 토큰화되는가} 를 넘어, 이제 \emph{\texttt{{[}MASK{]}} 토큰 자체가 생성의 캔버스} 가 됩니다.
 \end{quote}
 
 
@@ -312,7 +312,7 @@ BPE (GPT-2) & 50,257 & 없음 & 별도 추가 필요 \\
 
 \section{\texorpdfstring{ByteLevel BPE 2048 직접 학습 + \texttt{{[}MASK{]}} 추가}{ByteLevel BPE 2048 직접 학습 + {[}MASK{]} 추가}}
 
-\ref{ch:19}·\ref{ch:24}장 처럼 TinyStories 코퍼스에 ByteLevel BPE 를 vocab 2,048 으로 직접 학습하고, \texttt{{[}PAD{]}}·\texttt{{[}UNK{]}}·\texttt{{[}MASK{]}} 특수 토큰을 더해 씁니다. 핵심은 \texttt{{[}MASK{]}} 토큰의 존재 (직접 학습이라 \inlinecode{special\_tokens} 로 명시 추가).
+\ref{ch:19}·\ref{ch:24}장처럼 TinyStories 코퍼스에 ByteLevel BPE 를 vocab 2,048 으로 직접 학습하고, \texttt{{[}PAD{]}}·\texttt{{[}UNK{]}}·\texttt{{[}MASK{]}} 특수 토큰을 더해 씁니다. 핵심은 \texttt{{[}MASK{]}} 토큰의 존재 (직접 학습이라 \inlinecode{special\_tokens} 로 명시 추가).
 
 
 
@@ -465,7 +465,7 @@ One day, a little girl named Lily found a needle in her room. She knew it w...
 
 \section{\texorpdfstring{Diffusion collator --- \emph{가변 비율} 마스킹 직접 구현}{Diffusion collator --- 가변 비율 마스킹 직접 구현}}
 
-여기가 BERT MLM 과 갈리는 지점입니다. \ref{ch:20}장 은 \inlinecode{DataCollatorForLanguageModeling(mlm\_probability=0.15)} 로 \emph{고정 15\%} 를 가렸지만, diffusion 은 \textbf{매 샘플마다 \(t \sim U(\epsilon, 1)\) 을 뽑아 그 비율로} 가립니다.
+여기가 BERT MLM 과 갈리는 지점입니다. \ref{ch:20}장은 \inlinecode{DataCollatorForLanguageModeling(mlm\_probability=0.15)} 로 \emph{고정 15\%} 를 가렸지만, diffusion 은 \textbf{매 샘플마다 \(t \sim U(\epsilon, 1)\) 을 뽑아 그 비율로} 가립니다.
 
 \begin{itemize}
 \tightlist
@@ -935,7 +935,7 @@ step  9/11  ([MASK] remaining:  7)
 \end{itemize}
 
 \begin{quote}
-그래서 \textbf{다음 33장 은 모델은 그대로 두고 샘플러만 바꿉니다} --- carry-over semi-AR + 반복 억제(temperature·top-p·repetition penalty·인접 중복 금지)로 이 반복을 잡아 한결 깔끔한 생성을 얻습니다. 이 장에서 “diffusion 이 글을 만든다”를 확인했다면, 다음 장는 “그 글을 더 잘 뽑아낸다”입니다.
+그래서 \textbf{다음 33장은 모델은 그대로 두고 샘플러만 바꿉니다} --- carry-over semi-AR + 반복 억제(temperature·top-p·repetition penalty·인접 중복 금지)로 이 반복을 잡아 한결 깔끔한 생성을 얻습니다. 이 장에서 “diffusion 이 글을 만든다”를 확인했다면, 다음 장은 “그 글을 더 잘 뽑아낸다”입니다.
 \end{quote}
 
 
@@ -1040,7 +1040,7 @@ infilling (중간 채우기) & 구조적으로 어려움 & \textbf{자연스럽�
 
 본 장에서 \emph{직접 구현} 한 세 요소는 아래 논문들의 방법을 \emph{교육용으로 단순화} 해 옮긴 것입니다. 어느 요소가 어느 논문의 무엇에 대응하는지 정리합니다.
 
-\begin{booktable}{32장 이 장 알고리즘의 논문 계보 표}{tab:ch32-08}
+\begin{booktable}{32장이 장 알고리즘의 논문 계보 표}{tab:ch32-08}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -1075,11 +1075,11 @@ low-confidence remasking 생성 (전부 \texttt{{[}MASK{]}} 시작 \(\to\) confi
 \end{enumerate}
 
 \begin{quote}
-주의 \textbf{혼동 주의} --- \textbf{Diffusion-LM} (Li et al. 2022, \href{https://arxiv.org/abs/2205.14217}{arXiv:2205.14217}) 은 이름은 비슷하지만 \emph{연속 임베딩 공간} 에서 Gaussian noise 를 더하는 diffusion 이라 본 장의 \emph{이산 mask-diffusion} 과 \textbf{다른 계열} 입니다. 33장 (MDLM/DiffuGPT)·34 는 본 장와 같은 이산 mask-diffusion.
+주의 \textbf{혼동 주의} --- \textbf{Diffusion-LM} (Li et al. 2022, \href{https://arxiv.org/abs/2205.14217}{arXiv:2205.14217}) 은 이름은 비슷하지만 \emph{연속 임베딩 공간} 에서 Gaussian noise 를 더하는 diffusion 이라 본 장의 \emph{이산 mask-diffusion} 과 \textbf{다른 계열} 입니다. 33장 (MDLM/DiffuGPT)·34 는 본 장과 같은 이산 mask-diffusion.
 \end{quote}
 
 \begin{quote}
-본 장은 \emph{단순화판} 입니다 --- 실제 LLaDA 는 semi-autoregressive remasking 등 변형, 대규모 사전학습, 정교한 스케줄을 더합니다. 하지만 \emph{핵심 메커니즘 (가변 마스킹 + \inlinecode{1/t} loss + confidence 병렬 denoise)} 은 동일하므로, 본 장를 손으로 구현해 보면 위 논문들의 알고리즘 절을 그대로 읽어낼 수 있습니다.
+본 장은 \emph{단순화판} 입니다 --- 실제 LLaDA 는 semi-autoregressive remasking 등 변형, 대규모 사전학습, 정교한 스케줄을 더합니다. 하지만 \emph{핵심 메커니즘 (가변 마스킹 + \inlinecode{1/t} loss + confidence 병렬 denoise)} 은 동일하므로, 본 장을 손으로 구현해 보면 위 논문들의 알고리즘 절을 그대로 읽어낼 수 있습니다.
 \end{quote}
 
 

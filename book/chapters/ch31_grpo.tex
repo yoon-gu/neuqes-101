@@ -802,7 +802,7 @@ def reward_code(completions, test_cases, **kwargs):
 이름 & 한 줄 설명 & \ref{ch:30}장과 차이 \\
 \midrule
 
-\inlinecode{trl.GRPOTrainer} & GRPO 특화 trainer (rollout \(\to\) verifier 채점 \(\to\) group advantage \(\to\) 정책 갱신 자동) & \textbf{새로 등장} (\ref{ch:30}장 은 \inlinecode{DPOTrainer}) \\
+\inlinecode{trl.GRPOTrainer} & GRPO 특화 trainer (rollout \(\to\) verifier 채점 \(\to\) group advantage \(\to\) 정책 갱신 자동) & \textbf{새로 등장} (\ref{ch:30}장은 \inlinecode{DPOTrainer}) \\
 \inlinecode{trl.GRPOConfig} & \inlinecode{GRPOTrainer} 설정 (\inlinecode{TrainingArguments} 상속 + \inlinecode{num\_generations}·\inlinecode{max\_completion\_length}·\inlinecode{beta} 등) & \textbf{새로 등장} \\
 \inlinecode{reward\_funcs} (verifier) & 생성 답을 채점하는 callable (또는 list). \inlinecode{(completions,\ **kwargs)} \(\to\) \texttt{list{[}float{]}} & \textbf{새로 등장} (DPO 는 preference 데이터, reward 함수 없음) \\
 \inlinecode{GRPOConfig(num\_generations=4)} & group size --- 한 prompt 당 생성 답 개수 (rollout) & \textbf{새로 등장} \\
