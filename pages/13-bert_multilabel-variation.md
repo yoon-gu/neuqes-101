@@ -2,7 +2,7 @@
 
 Ch 6의 sklearn 셋업을 *이 노트북 안에서* 다시 학습해 라벨별로 BERT와 비교합니다. **multi-label에서도 BERT의 67M이 sklearn 대비 어디서 이기는가?**
 
-Ch 6의 sklearn 셋업(TF-IDF + 라벨마다 독립 LogisticRegression)을 같은 데이터로 재현해 BERT와 비교할 baseline을 만듭니다. `OneVsRestClassifier`는 5개 라벨을 *완전히 분리된* 5개 이진 분류기로 학습합니다.
+Ch 6와 같은 계열의 sklearn 셋업(TF-IDF + 라벨마다 독립 LogisticRegression)을 다시 학습해 BERT와 비교할 baseline을 만듭니다. `OneVsRestClassifier`는 5개 라벨을 *완전히 분리된* 5개 이진 분류기로 학습합니다.
 
 ```python
 # Ch 6 셋업 재현 — TF-IDF + OneVsRestClassifier(LogisticRegression)
