@@ -21,7 +21,7 @@ Ch 11(BERT binary) 셋업을 그대로 두고 **클래스 개수만 K=2 → K=5*
 Yelp 5,000건 → 별점 1-5를 *그대로* 5클래스로 (Ch 3-4·10-11처럼 이진화 안 함). 라벨은 0-4 int 인덱스.
 
 ## 환경
-Google Colab **T4 GPU 필수**. 약 12분 (BERT 학습 ~10분 + sklearn 비교 ~30초 + 평가/시각화).
+Google Colab **T4 GPU 필수**. 약 3분 (BERT 학습 약 40초 + sklearn 비교 baseline 약 30초 + 다운로드·평가·시각화).
 
 **Self-contained**: 다른 챕터 / 다른 세션 결과에 의존하지 않습니다. 5장 비교용 sklearn baseline은 같은 노트북에서 inline 학습.
 
