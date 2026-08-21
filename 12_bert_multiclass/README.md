@@ -1,6 +1,7 @@
 # 12_bert_multiclass — BERT Multi-class (Yelp 5클래스)
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/12_bert_multiclass/12_bert_multiclass.ipynb)
+[![부록: 데이터 스케일링](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/12_bert_multiclass/12_bert_multiclass_data_scaling.ipynb)
 
 ## 한 줄 목표
 Ch 11(BERT binary) 셋업을 그대로 두고 **클래스 개수만 K=2 → K=5** 로 일반화. Yelp 별점 1-5를 5클래스 분류로 풀고, Ch 5(sklearn multinomial LogReg)의 BERT 버전과 직접 비교합니다.
