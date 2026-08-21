@@ -33,7 +33,7 @@ BERT multi-label evaluation:
 
 **결과 해석**
 
-micro F1 0.7977, macro F1 0.7239로 micro가 더 높습니다 — 흔한 food·service가 점수를 끌어올리고 드문 라벨이 macro를 깎는 전형적 패턴입니다. precision(0.91)이 recall(0.71)보다 크게 높아 모델이 *확신할 때만 활성* 하는 보수적 경향을 보입니다.
+micro F1이 macro F1보다 높습니다 — 흔한 food·service가 점수를 끌어올리고 드문 라벨이 macro를 깎는 전형적 패턴입니다. precision이 recall보다 크게 높아 모델이 *확신할 때만 활성* 하는 보수적 경향을 보입니다.
 
 평가셋 전체를 예측해 라벨별 확률 범위와 실제 활성률(true rate) 대비 예측 활성률(pred rate)을 비교합니다. 두 비율이 가까우면 calibration이 좋고, pred rate가 true rate보다 크게 낮으면 모델이 그 라벨을 잘 안 켜는 것입니다.
 
@@ -96,7 +96,7 @@ weighted avg     0.9072    0.7127    0.7667      1723
 
 **결과 해석**
 
-모든 라벨이 precision 0.88 이상으로 *틀린 활성은 거의 안 함* 을 보입니다. 문제는 recall — price는 recall 0.2336으로 정답의 4분의 1만 잡아 F1이 0.3708까지 떨어지고, ambiance(recall 0.494)도 절반을 놓칩니다. 드문 라벨에서 recall이 무너지는 것이 0.5 임계값의 보수성에서 비롯됨을 보여줍니다(FAQ Q1).
+모든 라벨에서 precision이 높게 나와 *틀린 활성은 거의 안 함* 을 보입니다. 문제는 recall — 활성률이 가장 낮은 price는 정답의 절반도 못 잡아 F1이 다섯 라벨 중 가장 낮고, ambiance도 절반 가까이 놓칩니다. 드문 라벨에서 recall이 무너지는 것이 0.5 임계값의 보수성에서 비롯됨을 보여줍니다(FAQ Q1).
 
 ### 샘플 단위 해석 — 모델 출력을 읽어내는 법
 
