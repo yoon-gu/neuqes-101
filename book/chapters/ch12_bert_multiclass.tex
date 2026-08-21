@@ -1095,7 +1095,7 @@ plt.show()
 
 \section{결과 해석 --- \textquotesingle 근소 우위\textquotesingle 의 정체: 데이터가 정한다}
 
-§5 에서 BERT 67M 파라미터가 sklearn 을 \textbf{근소하게만}(약 +0.02-0.04) 앞섰습니다. 이진(\ref{ch:10}장, BERT 0.90)·회귀(\ref{ch:09}장, R² 0.67)에서 BERT 가 압도하던 것과 비교하면 5클래스에서 유독 격차가 작아 \emph{실망스럽게} 느껴질 수 있습니다. 하지만 이건 버그가 아니라 \textbf{데이터 양과 task 난이도의 함수} 입니다.
+§5 에서 BERT 67M 파라미터가 sklearn 을 \textbf{근소하게만}(약 +0.02-0.04) 앞섰습니다. 이진(\ref{ch:10}장, BERT 약 0.90)·회귀(\ref{ch:09}장, R² 약 0.66)에서 BERT 가 압도하던 것과 비교하면 5클래스에서 유독 격차가 작아 \emph{실망스럽게} 느껴질 수 있습니다. 하지만 이건 버그가 아니라 \textbf{데이터 양과 task 난이도의 함수} 입니다.
 
 부록 \inlinecode{12\_bert\_multiclass\_data\_scaling} 에서 학습 데이터를 100 \(\to\) 30,000 으로 키우며 두 곡선을 그리면 (고정 eval · nested subsample · epoch 2 고정):
 
