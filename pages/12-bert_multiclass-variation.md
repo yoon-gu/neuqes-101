@@ -1,6 +1,15 @@
 ## 클라이맥스 — sklearn TF-IDF + LogReg 와의 비교
 
-같은 데이터에 Ch 5 셋업(TF-IDF + multinomial LogReg)을 *이 노트북 안에서* 다시 학습해 비교합니다. **BERT 67M 파라미터가 진짜로 도움이 되는가?** 가 이 비교의 핵심 질문 — sklearn은 GPU 없이도 몇 초 만에 끝나기 때문에 self-contained로 부담 없이 포함됩니다.
+Ch 5와 *같은 계열* 의 모델(TF-IDF + multinomial LogReg)을 *이 노트북 안에서* 다시 학습해 비교합니다. **BERT 67M 파라미터가 진짜로 도움이 되는가?** 가 이 비교의 핵심 질문 — sklearn은 GPU 없이도 몇 초 만에 끝나기 때문에 self-contained로 부담 없이 포함됩니다.
+
+> ⚠️ **Ch 5의 숫자를 재현하는 게 아닙니다.** 설정이 다릅니다.
+>
+> | | Ch 5 | 여기 (Ch 12 §5) |
+> |---|---|---|
+> | vectorizer | `max_features=10000`, unigram | `max_features=20000`, **bigram 포함** |
+> | 평가 셋 | 5,000을 80/20으로 나눈 test 1,000 | BERT와 같은 `ds["test"]` 1,000 |
+>
+> **일부러 더 강한 baseline을 씁니다.** 이 비교의 목적은 Ch 5 재현이 아니라 *BERT와 똑같은 split에서의 공정한 대조군* 을 세우는 것이기 때문입니다. baseline을 약하게 잡으면 BERT와의 격차가 인위적으로 벌어지는데, 이 챕터가 가르치려는 건 정확히 "BERT가 근소하게만 이긴다" 입니다. 대조군을 약화시켜 격차를 키우면 교훈이 반대 방향으로 갑니다.
 
 ```python
 # Ch 5와 같은 계열 — TF-IDF + multinomial LogReg
@@ -72,11 +81,11 @@ print(cmp.round(4).to_string(index=False))
 
 ```text
          metric  sklearn (TF-IDF)   BERT  BERT - sklearn
-       accuracy            0.5420 0.5580          0.0160
-macro_precision            0.5377 0.5555          0.0177
-   macro_recall            0.5410 0.5595          0.0185
-       macro_f1            0.5380 0.5561          0.0181
-        auc_ovr            0.8420 0.8657          0.0236
+       accuracy            0.5420 0.5770          0.0350
+macro_precision            0.5377 0.5746          0.0369
+   macro_recall            0.5410 0.5802          0.0392
+       macro_f1            0.5380 0.5768          0.0389
+        auc_ovr            0.8420 0.8644          0.0224
 ```
 
 ### 5-2. 두 모델의 혼동 행렬 비교
@@ -110,7 +119,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/12-bert_multiclass-out3-1.png)
+![output](../assets/12-bert_multiclass-out3-2.png)
 
 **해석 가이드**
 
@@ -137,5 +146,7 @@ plt.show()
 - **작은 데이터(100-300)선 sklearn 이 크게 이깁니다.** DistilBERT 는 6,700만 파라미터를 100 샘플로 적응시킬 수 없어 분류 헤드가 거의 random(0.229 ≈ 1/5). *큰 모델이 늘 이기는 게 아니라, 적응할 데이터가 있어야* 이깁니다.
 - **교차점은 N≈1,000.** 그 위로 BERT 가 줄곧 앞섭니다.
 - **30K 까지 키워도 격차는 +0.04 안팎.** 본편(5,000)의 근소 우위는 *이 데이터 규모에서 정상* 이고, 이진만큼 극적이지 않은 건 **별점 5클래스가 본질적으로 어려운**(인접 별점 경계가 모호한 ordinal) task 이기 때문입니다.
+
+> 📌 **본편 한 점을 이 곡선에 얹어 읽을 때의 주의**: 부록의 sklearn 은 `TfidfVectorizer()` 기본값(제한 없음·unigram)이고 §5 는 20K + bigram 이라 **설정이 다릅니다.** 따라서 본편의 두 점은 이 곡선 *위의 점* 이 아니라 *같은 추세대에 놓인 별도의 측정* 으로 읽어야 합니다. 곡선에서 가져올 결론은 "교차점이 N≈1,000 근처이고, 그 위에서 격차가 완만하다" 는 **추세** 이지 특정 좌표가 아닙니다.
 
 > 데이터를 더 부으면 BERT 가 더 벌리지만, 정확도를 크게 끌어올리려면 데이터 외에 *더 강한 모델·HPO·LLM distill* 같은 다른 lever 도 필요합니다 — 부록의 **보너스 — BERT 성능을 끌어올리는 5가지 lever** 절 참조.
