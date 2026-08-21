@@ -2,7 +2,7 @@
 
 **환경**: Google Colab **T4 GPU 필수**.
 
-**예상 소요 시간**: 약 12분 (BERT 학습 ~10분 + sklearn 비교 baseline ~30초 + 평가/시각화)
+**예상 소요 시간**: 약 3분 (BERT 학습 약 40초 + sklearn 비교 baseline 약 30초 + 다운로드·평가·시각화)
 
 ## 학습 흐름
 
