@@ -2,12 +2,9 @@
 
 ### 변형 1. group size (`num_generations`)
 
-group 크기는 baseline (group 평균) 추정의 안정성과 rollout 비용을 동시에 좌우합니다. 키우면 advantage 가 정밀해지지만 T4 시간이 그만큼 늘어납니다. 한 줄만 바꿔 가며 출발점을 잡아 보세요.
-
 ```python
-# grpo_config.num_generations = 8   # group 키우면 baseline (group 평균) 추정이 안정 -> advantage 정밀
-# # 단 rollout 비용 = group size 에 비례 (T4 시간 증가)
-# 4 가 T4 출발점. group 안에 정답·오답이 섞이려면 너무 작지 않아야 함 (2 는 비교가 빈약).
+# grpo_config.num_generations = 4   # group 줄이면 rollout 비용 감소, 대신 baseline(group 평균) 추정이 불안정
+# # 8 이 본 노트북 기본값. group 안에 정답·오답이 섞이려면 너무 작지 않아야 함 (2 는 비교가 빈약).
 ```
 
 ### 변형 2. format reward 추가 — 여러 verifier 조합
