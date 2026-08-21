@@ -833,7 +833,7 @@ class WeightedTrainer(Trainer):
 
 영어 일반 리뷰로 학습한 BERT를 \emph{의료 환자 리뷰} 100-500건만으로 fine-tune해 즉시 도메인 모델을 얻을 수 있습니다. sklearn은 도메인이 바뀌면 \emph{어휘 통계가 처음부터 다시} --- 의료 용어 빈도가 일반 리뷰와 달라 TF-IDF가 새 분포에서 학습돼야 하고, 100건은 통계적으로 너무 적습니다.
 
-\Needspace{5\baselineskip}
+\Needspace{7\baselineskip}
 \begin{lstlisting}
 # Yelp 지식이 들어 있는 상태에서 출발해 의료 도메인으로 이어 학습
 model = AutoModelForSequenceClassification.from_pretrained("yelp-finetuned-bert")
@@ -846,7 +846,7 @@ med_trainer.train()
 
 \inlinecode{xlm-roberta-base} 같은 다국어 BERT는 \emph{동일 모델 + 동일 코드} 로 100+ 언어 동작. 영어 Yelp로 학습한 모델이 \emph{한국어 리뷰에도 그대로 generalize} 합니다 (zero-shot cross-lingual transfer). sklearn은 언어마다 토크나이저(형태소 분석기), 불용어 사전, TF-IDF vocabulary를 \emph{각각} 만들어야 합니다.
 
-\Needspace{5\baselineskip}
+\Needspace{8\baselineskip}
 \begin{lstlisting}
 tok   = AutoTokenizer.from_pretrained("xlm-roberta-base")   # 100+ 언어 공통
 model = AutoModelForSequenceClassification.from_pretrained(
