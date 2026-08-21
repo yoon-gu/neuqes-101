@@ -1,8 +1,8 @@
 **목표**: Phase 4 의 *마지막 챕터*. Ch 30 에서 **DPO** 로 *사람/AI 가 비교한 preference 쌍 (chosen / rejected)* 으로 정렬했다면, 본 챕터는 alignment 의 *두 번째 방식* — **GRPO (Group Relative Policy Optimization)** 입니다. GRPO 는 정반대 접근으로, *정답을 자동 검증(verifier) 할 수 있는 task (수학·코드)* 에서 모델이 *여러 답을 생성(rollout)* 하고 *verifier 가 채점* 해 *잘한 답 방향* 으로 강화학습 합니다. **DeepSeek-R1 이 순수 RL 로 reasoning 능력을 끌어낸 방법** 이 바로 이것입니다. 바뀌는 건 **신호 출처 (preference 쌍 → verifier reward)** + **trainer (`DPOTrainer` → `trl.GRPOTrainer`)** + **데이터 (chosen/rejected → prompt + 정답)** + **rollout (한 prompt 에 여러 답 생성)** 입니다.
 
-**환경**: Google Colab **T4 GPU 필수**. GRPO 는 *매 step 여러 답을 생성(rollout)* 하므로 무겁습니다 — group size 를 작게 (4) + 짧은 generation + 작은 step 으로 시간을 통제합니다.
+**환경**: Google Colab **T4 GPU 필수**. GRPO 는 *매 step 여러 답을 생성(rollout)* 하므로 무겁습니다 — group size 를 작게 (8) + 짧은 generation + 작은 step 으로 시간을 통제합니다.
 
-**예상 소요 시간**: 약 22-30분 (verifiable 데이터 준비 약 1분 + SFT 모델 로드 약 2분 + verifier·group advantage 손계산 시연 약 2분 + `GRPOTrainer` 학습 약 15-22분 + GRPO 전·후 정확도(verifier pass rate) 비교 약 3분)
+**예상 소요 시간**: 약 4-6분 (환경 셋업·데이터 약 1분 + **SFT 워밍스타트 약 1분** + **난이도 필터 약 1분** + `GRPOTrainer` 학습 약 1분 + GRPO 전·후 정확도 비교 약 1분). GRPO 자체는 짧지만, *rollout 이 무거운* 실제 학습은 step·group 을 키우면 그만큼 늘어납니다.
 
 ## 학습 흐름
 
@@ -12,9 +12,10 @@
 4. 📐 **GRPO 메커니즘** — rollout group → verifier reward → group relative advantage 수식 + 수치 예시
 5. 🔬 **verifiable reward 의 의미** — 정답 있는 task 는 사람 채점 없이 무한 RL 신호. DeepSeek-R1 의 reasoning
 6. 🔤 **토크나이저 노트** — KoGPT2 `PreTrainedTokenizerFast` (Ch 27 이후 고정)
-7. 🚀 **실습**: verifiable 데이터 → SFT 모델 → **verifier + group advantage 손계산** → `GRPOTrainer` 학습 → GRPO 전·후 정확도 비교
-8. 📦 **등장 라이브러리** (`trl.GRPOTrainer`·`GRPOConfig`·`reward_funcs` 첫 등장) / 🎯 **체크포인트** / ❓ **FAQ** (답변 포함)
-9. 🎓 **Phase 4 회고 + Phase 5 (Diffusion LM) 예고**
+7. 🚀 **실습**: verifiable 데이터(train/eval 분리) → **SFT 워밍스타트** → verifier·group advantage 손계산 → **난이도 필터** → `GRPOTrainer` 학습 → GRPO 전·후 정확도 비교
+8. 🔍 **왜 reward 가 잘 안 올랐는가** — GRPO 의 전제조건 (SFT 워밍스타트·난이도 필터가 왜 필요한지)
+9. 📦 **등장 라이브러리** (`trl.GRPOTrainer`·`GRPOConfig`·`reward_funcs` 첫 등장) / 🎯 **체크포인트** / ❓ **FAQ** (답변 포함)
+10. 🎓 **Phase 4 회고 + Phase 5 (Diffusion LM) 예고**
 
 > 📒 **사전 학습 자료**: Ch 30 (DPO — alignment 의 첫 방식), Ch 28 (KoGPT2 SFT — 본 챕터의 *출발 모델*), Ch 29 (벤치마크 평가 — 특히 부록의 *pass@1·cons@64* 가 verifiable reward 와 직접 연결). 본 챕터는 *alignment 의 두 방식 비교* 를 완성합니다: **DPO (주관적 선호, 사람/AI 비교) vs GRPO (객관적 정답, 자동 검증)**.
 
@@ -23,7 +24,7 @@
 | Ch | 모델 | 데이터 | 학습 신호 | Loss | Trainer |
 |---|---|---|---|---|---|
 | 28 | KoGPT2 (125M, SFT) | KoAlpaca instruction-response 쌍 | response 토큰 (답변만) | `CrossEntropyLoss` (response-only) - SFT | `SFTTrainer` |
-| 29 | Ch 28 SFT 모델 (평가) | 분야별 벤치마크 | - (평가만) | - (`lm-evaluation-harness`) | - |
+| 29 | Qwen2.5-0.5B-Instruct (+ Ch 28 SFT 모델 대조) | KoBEST/산술 subset | - (평가만) | - (`lm-evaluation-harness`) | - |
 | 30 | SFT 모델 (policy) + frozen reference | preference 쌍 (chosen / rejected) | chosen 선호 ↑ / rejected 선호 ↓ | DPO sigmoid loss (β=0.1) | `DPOTrainer` |
 | **31 ← 여기** | **SFT 모델 (policy) + verifier** | **prompt + 정답 (검증 가능, 수학)** | **group relative advantage** | **GRPO loss (group baseline)** | **`GRPOTrainer`** |
 
@@ -52,7 +53,7 @@ Ch 24 에서 도입한 GPT 시대 학습 4단계 표. 본 챕터는 *단계 4 (A
 | 축 | Ch 30 (DPO) | Ch 31 (본 챕터, GRPO) |
 |---|---|---|
 | 본체 | SFT 모델 (policy) + frozen reference | **SFT 모델 (policy)** ← *reference 는 옵션* (β=0 이면 불필요) |
-| 토크나이저 | `PreTrainedTokenizerFast` (KoGPT2 BBPE) | **(동일)** ← 고정 |
+| 토크나이저 | `PreTrainedTokenizerFast` (KoGPT2 Character BPE) | **(동일)** ← 고정 |
 | **신호 출처** | preference 쌍 (사람/AI 가 비교) | **verifier reward (정답 자동 검증)** ← *변화 1* |
 | **Trainer** | `trl.DPOTrainer` | **`trl.GRPOTrainer`** ← *변화 2* (새 클래스, 첫 등장) |
 | **데이터** | `(prompt, chosen, rejected)` 쌍 | **`(prompt, 정답)`** ← *변화 3* (검증 가능한 task) |
@@ -70,7 +71,7 @@ alignment 의 세 방법을 *신호 출처·필요 모델·데이터* 로 정리
 |---|---|---|---|---|
 | **PPO** (전통 RLHF) | reward model 점수 | actor + critic + reward model + reference (**4개**) | prompt + 학습된 RM | ✗ (메모리 초과) |
 | **DPO** (Ch 30) | preference 쌍 (사람/AI 비교) | policy + frozen reference (**2개**) | `(prompt, chosen, rejected)` | ✓ |
-| **GRPO** (Ch 31, 본 챕터) | **verifier (정답 자동 검증)** | **policy 만** (+ 옵션 reference) | **`(prompt, 정답)` — 검증 가능** | ✓ |
+| **GRPO** (Ch 31, 본 챕터) | **verifier (정답 자동 검증)** | **policy** (+ reference; β>0 이면 필수) | **`(prompt, 정답)` — 검증 가능** | ✓ |
 
 ### 왜 GRPO 는 critic 도 reward model 도 없이 되나 — *group 평균이 baseline*
 
@@ -82,7 +83,7 @@ GRPO 의 통찰: **같은 prompt 에 답을 여러 개 (group) 생성하면, *�
 |---|---|---|
 | baseline (advantage 기준) | **critic (value model)** 이 예측 | **group 평균 reward** (동료 비교) |
 | reward 출처 | **reward model** (별도 학습) | **verifier** (정답 자동 검증, 학습 불필요) |
-| 필요 모델 | actor + critic + RM + ref (4) | **policy** (+ 옵션 ref) |
+| 필요 모델 | actor + critic + RM + ref (4) | **policy** (+ reference; 본 노트북은 β=0.04 라 2개) |
 
 > **GRPO 는 PPO 의 또 다른 간소화** 입니다. DPO 가 *reward model + RL 루프* 를 *지도학습 한 단계* 로 줄였다면, GRPO 는 *critic 을 group 평균* 으로, *reward model 을 verifier* 로 대체합니다. 둘 다 *PPO 의 4 모델* 을 덜어내는 길이지만, GRPO 는 *RL 루프(rollout)는 유지* 하면서 *critic 과 RM 만* 없앤 점이 다릅니다 — 그래서 *정답이 있는 task* 에서 강력합니다.
 
@@ -106,20 +107,20 @@ $$A_i = \frac{r_i - \text{mean}(r_1, \dots, r_G)}{\text{std}(r_1, \dots, r_G) + 
 
 | 답 | reward $r_i$ | $r_i - \text{mean}$ | advantage $A_i = (r_i - \text{mean}) / \text{std}$ | 정책 갱신 |
 |---|---|---|---|---|
-| $y_1$ | 1 | +0.5 | **+1.0** | 확률 ↑ (잘함) |
-| $y_2$ | 0 | −0.5 | **−1.0** | 확률 ↓ (못함) |
-| $y_3$ | 1 | +0.5 | **+1.0** | 확률 ↑ (잘함) |
-| $y_4$ | 0 | −0.5 | **−1.0** | 확률 ↓ (못함) |
+| $y_1$ | 1 | +0.5 | **+0.87** | 확률 ↑ (잘함) |
+| $y_2$ | 0 | −0.5 | **−0.87** | 확률 ↓ (못함) |
+| $y_3$ | 1 | +0.5 | **+0.87** | 확률 ↑ (잘함) |
+| $y_4$ | 0 | −0.5 | **−0.87** | 확률 ↓ (못함) |
 
-(mean = 0.5, std = 0.5) → 정답인 답은 *advantage +1* 로 강화, 오답은 *−1* 로 억제. **reward 자체가 아니라 *그룹 평균 대비 상대값* 으로 학습** 한다는 점이 핵심입니다.
+(mean = 0.5, 표본std ≈ 0.58) → 정답인 답은 *advantage ≈ +0.87* 로 강화, 오답은 *≈ −0.87* 로 억제. **reward 자체가 아니라 *그룹 평균 대비 상대값* 으로 학습** 한다는 점이 핵심입니다. (std 는 *표본표준편차 ddof=1* — trl 이 쓰는 값과 같게 맞췄습니다.)
 
-다른 group $[1, 1, 1, 0]$ (3개 정답, 1개 오답) 이라면: mean=0.75, std≈0.43 → 정답 advantage ≈ **+0.58**, 오답 ≈ **−1.73**. *동료 대부분이 맞힌 상황에서 혼자 틀린 답* 이 더 크게 억제됩니다.
+다른 group $[1, 1, 1, 0]$ (3개 정답, 1개 오답) 이라면: mean=0.75, 표본std=0.5 → 정답 advantage = **+0.5**, 오답 = **−1.5**. *동료 대부분이 맞힌 상황에서 혼자 틀린 답* 이 더 크게 억제됩니다.
 
 ### 모든 답이 같으면 — 학습 신호 0
 
 group 전체가 정답 $[1,1,1,1]$ 이거나 전체 오답 $[0,0,0,0]$ 이면 std = 0 → **advantage 가 전부 0** → 그 prompt 에서는 학습 신호가 없습니다. *그룹 안에 잘한 답과 못한 답이 섞여 있어야* 비교가 생깁니다. (그래서 group size 와 temperature 로 *답의 다양성* 을 확보하는 게 중요 — §의 변형.)
 
-> **§3 에서 실제 verifier 와 group advantage 를 손으로 계산** 해 위 표를 재현합니다. `GRPOTrainer` 가 매 step·매 prompt 내부에서 하는 일이 정확히 이것입니다.
+> **§3 에서 실제 verifier 와 group advantage 를 손으로 계산** 해 위 표를 재현합니다. `GRPOTrainer` 가 매 step·매 prompt 내부에서 하는 일이 정확히 이것입니다 — 본 노트북은 `scale_rewards="group"`(std 정규화) + 표본std(ddof=1) 라 위 수식·수치가 trainer 내부 계산과 그대로 일치합니다.
 
 ## verifiable reward 의 의미 — 정답 있는 task 는 무한 RL 신호
 
@@ -154,7 +155,7 @@ verifiable reward 의 강점은 *검증 가능한 task* 에서만 성립합니�
 
 ## 토크나이저 노트 — KoGPT2 `PreTrainedTokenizerFast` (Ch 27 이후 고정)
 
-본 챕터의 토크나이저는 *Ch 27·28·30 과 완전히 동일*. KoGPT2 BBPE (vocab 51,200) 를 그대로 가져옵니다. **KoGPT2 는 `AutoTokenizer` 가 영어 GPT2 로 잘못 fallback 하는 함정** 이 있어 (Ch 27 §토크나이저 노트), `PreTrainedTokenizerFast` + special token 명시로 로드합니다.
+본 챕터의 토크나이저는 *Ch 27·28·30 과 완전히 동일*. KoGPT2 Character BPE (vocab 51,200) 를 그대로 가져옵니다. **KoGPT2 는 `AutoTokenizer` 가 영어 GPT2 로 잘못 fallback 하는 함정** 이 있어 (Ch 27 §토크나이저 노트), `PreTrainedTokenizerFast` + special token 명시로 로드합니다.
 
 ```python
 from transformers import PreTrainedTokenizerFast
