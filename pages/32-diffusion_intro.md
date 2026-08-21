@@ -31,7 +31,7 @@ Phase 5 의 첫 챕터. Ch 24-31 까지 다룬 **GPT (decoder, autoregressive, �
 |---|---|---|---|---|---|---|
 | 20 | 작은 BERT (영어, scratch) | `bert-base-uncased` (가져옴) | Wikitext-103 | MLM head | 고정 15% 마스킹-복원 | `CrossEntropyLoss` (masked 15%) |
 | 24 | 작은 GPT2 (직접, scratch) | BPE (직접 학습) | TinyStories | `Linear(H, V)` | autoregressive (왼→오 순차) | `CrossEntropyLoss` (next-token) |
-| 31 | SFT base + GRPO | BBPE | verifiable-reward | `Linear(H, V)` + group adv. | autoregressive + RL | `GRPO loss` |
+| 31 | SFT base + GRPO | Character BPE | verifiable-reward | `Linear(H, V)` + group adv. | autoregressive + RL | `GRPO loss` |
 | **32 ← 여기** | **작은 BERT-style (직접, scratch)** | **ByteLevel BPE 2048 (직접 학습 + `[MASK]`)** | **TinyStories** | **`Linear(H, V)`** | **parallel denoise (가변 마스킹 + 반복 복원)** | **masked-diffusion denoising loss (`1/t` 재가중)** |
 | 33 (다음) | MDLM (170M) / DiffuGPT (124M) 사전학습 | (각 모델 토크나이저) | 영어 사전학습 추론 시연 | `Linear(H, V)` | parallel denoise (추론만) | — |
 

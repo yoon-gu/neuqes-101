@@ -59,7 +59,7 @@ device 자동 감지 (CUDA / MPS / CPU) - 로컬 Mac MPS 에서도 실행 가능
 | Ch | 모델 | 토크나이저 | 데이터 | 생성/학습 방식 | Loss |
 |---|---|---|---|---|---|
 | 24 | 작은 GPT2 (직접, scratch) | BPE (직접 학습) | TinyStories | autoregressive (왼→오) | CE (next-token) |
-| 31 | SFT base + GRPO | BBPE | verifiable-reward | autoregressive + RL | GRPO loss |
+| 31 | SFT base + GRPO | Character BPE | verifiable-reward | autoregressive + RL | GRPO loss |
 | **32** | **작은 BERT-style (직접, scratch)** | **WordPiece (`bert-base-uncased`)** | **TinyStories** | **parallel denoise (가변 마스킹 + 반복)** | **masked-diffusion loss (`1/t` 재가중)** |
 | 33 (다음) | MDLM (170M) / DiffuGPT (124M) 사전학습 | (각 모델 토크나이저) | 영어 사전학습 추론 시연 | parallel denoise (추론만) | — |
 
