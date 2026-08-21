@@ -102,10 +102,14 @@ Loss에는 결합 항이 없지만 *gradient가 BERT 본체를 거쳐 흐를 때
 기본적으론 그렇습니다. 분류 헤드의 weight shape이 `(K, 768)` 이라 K가 바뀌면 헤드가 호환 안 됨. 단, BERT 본체는 그대로 재사용 가능.
 
 ```python
+# 이 노트북은 save_strategy="no" 이므로 먼저 저장합니다
+trainer.save_model("./ch13_output")
+
 # 새 라벨 1개 추가 (K=5 → K=6)
 old_model = AutoModelForSequenceClassification.from_pretrained("./ch13_output")
 new_model = AutoModelForSequenceClassification.from_pretrained(
-    "distilbert-base-uncased", num_labels=6, problem_type="multi_label_classification",
+    "./ch13_output", num_labels=6, problem_type="multi_label_classification",
+    ignore_mismatched_sizes=True,   # 크기가 달라진 classifier 만 새로 초기화
 )
 # 기존 5라벨 weight를 새 모델에 복사
 new_model.classifier.weight.data[:5] = old_model.classifier.weight.data
