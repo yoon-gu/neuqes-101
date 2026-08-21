@@ -135,7 +135,9 @@ def tokenize_wrong(batch):
     return out
 ```
 
-힌트: `BCEWithLogitsLoss` 는 *logits 와 같은 shape의 float 텐서* 를 라벨로 받는데, 위 코드는 *(B,) int* 를 넘깁니다. shape mismatch + dtype mismatch 두 가지 에러가 동시에 날 수 있어 메시지가 길어집니다.
+힌트: `BCEWithLogitsLoss` 는 *logits 와 같은 shape 의 float 텐서* 를 라벨로 받는데, 위 코드는 *(B,) int* 를 넘깁니다. **크기가 먼저 어긋나므로 한 줄짜리 `ValueError` 로 끊깁니다.**
+
+    ValueError: Target size (torch.Size([16])) must be the same as input size (torch.Size([16, 5]))
 
 ## 다음 챕터 예고
 
