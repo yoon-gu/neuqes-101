@@ -1,5 +1,7 @@
 ## 12-3. 부록 — 데이터 스케일링 곡선
 
+**환경**: Google Colab **T4 GPU 필수**.
+
 > ▶ **[Google Colab에서 데이터 스케일링 부록 열기](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/12_bert_multiclass/12_bert_multiclass_data_scaling.ipynb)** — Ch 12 본편의 “BERT가 sklearn보다 근소하게만 앞선다”는 결과를 학습 데이터 규모 축에서 재검증합니다.
 
 ## 질문
