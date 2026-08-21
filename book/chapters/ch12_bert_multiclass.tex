@@ -699,7 +699,7 @@ sklearn TF-IDF + LogReg:
 \end{itemize}
 
 \begin{quote}
-데이터를 더 부으면 BERT 가 더 벌리지만, 정확도를 크게 끌어올리려면 데이터 외에 \emph{더 강한 모델·HPO·LLM distill} 같은 다른 lever 도 필요합니다 --- 부록 §6 의 5가지 lever 카드 참조.
+데이터를 더 부으면 BERT 가 더 벌리지만, 정확도를 크게 끌어올리려면 데이터 외에 \emph{더 강한 모델·HPO·LLM distill} 같은 다른 lever 도 필요합니다 --- 부록의 \textbf{보너스 --- BERT 성능을 끌어올리는 5가지 lever} 절 참조.
 \end{quote}
 
 
@@ -835,8 +835,11 @@ class WeightedTrainer(Trainer):
 
 \Needspace{5\baselineskip}
 \begin{lstlisting}
+# Yelp 지식이 들어 있는 상태에서 출발해 의료 도메인으로 이어 학습
 model = AutoModelForSequenceClassification.from_pretrained("yelp-finetuned-bert")
-model.train_on(medical_reviews_500)
+med_trainer = Trainer(model=model, args=med_args,
+                      train_dataset=medical_tok, processing_class=tokenizer)
+med_trainer.train()
 \end{lstlisting}
 
 \textbf{(2) 다국어 / cross-lingual --- 같은 코드로 한국어·일본어·영어}
@@ -845,8 +848,12 @@ model.train_on(medical_reviews_500)
 
 \Needspace{5\baselineskip}
 \begin{lstlisting}
-tok = AutoTokenizer.from_pretrained("xlm-roberta-base")
-model.predict(tok("이 식당 음식이 정말 별로였어요"))
+tok   = AutoTokenizer.from_pretrained("xlm-roberta-base")   # 100+ 언어 공통
+model = AutoModelForSequenceClassification.from_pretrained(
+    "xlm-roberta-base", num_labels=5)
+batch = tok("이 식당 음식이 정말 별로였어요", return_tensors="pt")
+with torch.no_grad():
+    print(model(**batch).logits.softmax(-1))   # (1, 5)
 \end{lstlisting}
 
 \textbf{(3) 분류 너머의 task로 확장 --- 같은 백본, 다른 헤드}

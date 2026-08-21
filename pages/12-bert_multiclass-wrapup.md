@@ -96,7 +96,12 @@ $$\mathrm{softmax}(z + c \cdot \mathbf 1)_k = \dfrac{e^{z_k + c}}{\sum_j e^{z_j 
 ```python
 # 일반 리뷰 BERT 체크포인트를 의료 도메인으로 추가 학습
 model = AutoModelForSequenceClassification.from_pretrained("yelp-finetuned-bert")
-model.train_on(medical_reviews_500)   # ← 적은 데이터로도 잘 됨 (사전학습+yelp 지식 보존)
+med_trainer = Trainer(          # ← 사전학습 + Yelp 지식이 들어 있는 상태에서 출발
+    model=model, args=med_args,
+    train_dataset=medical_tok,  # 의료 리뷰 500건을 같은 tokenize_fn 으로
+    processing_class=tokenizer,
+)
+med_trainer.train()             # ← 적은 데이터로도 잘 됩니다
 ```
 
 **(2) 다국어 / cross-lingual — 같은 코드로 한국어·일본어·영어**
@@ -104,9 +109,15 @@ model.train_on(medical_reviews_500)   # ← 적은 데이터로도 잘 됨 (사�
 `xlm-roberta-base` 같은 다국어 BERT는 *동일 모델 + 동일 코드* 로 100+ 언어 동작. 영어 Yelp로 학습한 모델이 *한국어 리뷰에도 그대로 generalize* 합니다 (zero-shot cross-lingual transfer). sklearn은 언어마다 토크나이저(형태소 분석기), 불용어 사전, TF-IDF vocabulary를 *각각* 만들어야 합니다.
 
 ```python
-# 영어로 학습한 모델을 한국어 평가 셋에 그대로
-tok = AutoTokenizer.from_pretrained("xlm-roberta-base")     # 100+ 언어 공통
-model.predict(tok("이 식당 음식이 정말 별로였어요"))     # ← 한 번도 한국어 학습 안 했지만 동작
+# 한국어 문장이 같은 API·같은 코드로 그대로 들어갑니다
+tok   = AutoTokenizer.from_pretrained("xlm-roberta-base")   # 100+ 언어 공통
+model = AutoModelForSequenceClassification.from_pretrained(
+    "xlm-roberta-base", num_labels=5,
+)
+batch = tok("이 식당 음식이 정말 별로였어요", return_tensors="pt")
+with torch.no_grad():
+    print(model(**batch).logits.softmax(-1))   # (1, 5)
+# ※ 파인튜닝 전이라 출력값 자체는 무의미 — 요점은 코드가 그대로 통한다는 것
 ```
 
 **(3) 분류 너머의 task로 확장 — 같은 백본, 다른 헤드**
