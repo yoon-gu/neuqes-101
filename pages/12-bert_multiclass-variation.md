@@ -1,9 +1,10 @@
-## 클라이맥스 — sklearn TF-IDF + LogReg 와의 비교 (Ch 5의 BERT 검증)
+## 클라이맥스 — sklearn TF-IDF + LogReg 와의 비교
 
 같은 데이터에 Ch 5 셋업(TF-IDF + multinomial LogReg)을 *이 노트북 안에서* 다시 학습해 비교합니다. **BERT 67M 파라미터가 진짜로 도움이 되는가?** 가 이 비교의 핵심 질문 — sklearn은 GPU 없이도 몇 초 만에 끝나기 때문에 self-contained로 부담 없이 포함됩니다.
 
 ```python
-# Ch 5 셋업 재현 — TF-IDF + multinomial LogReg
+# Ch 5와 같은 계열 — TF-IDF + multinomial LogReg
+# (Ch 5 재현이 아님: Ch 5는 10K unigram, 여기는 20K + bigram — BERT와 같은 split의 강한 대조군)
 texts_train  = list(train_full["text"])
 labels_train = list(train_full["label"])
 texts_eval   = list(eval_full["text"])
