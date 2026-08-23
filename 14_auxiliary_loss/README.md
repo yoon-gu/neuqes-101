@@ -21,7 +21,7 @@ Ch 13(BERT multi-label 항목 분류)에 **별점 회귀 보조 헤드** 를 추
 Ch 13의 항목 합성 라벨(food/service/price/ambiance/location, multi-hot 5차원) **+** 별점 보조 회귀 라벨(0-1 스케일, `label / 4`, 1★→0.0, 5★→1.0).
 
 ## 환경
-Google Colab **T4 GPU 필수**. 약 22분 (보조 ON 학습 ~9분 + λ=0 baseline 학습 ~9분 + 평가/시각화).
+Google Colab **T4 GPU 필수**. 약 3분 (보조 ON 학습 약 1분 + λ=0 baseline 학습 약 1분 + 다운로드·평가/시각화).
 
 **Self-contained**: 다른 챕터 결과에 의존하지 않습니다. 비교용 baseline (λ=0) 도 같은 노트북 안에서 inline 학습.
 
