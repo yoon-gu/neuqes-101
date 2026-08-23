@@ -3,7 +3,7 @@
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/20_en_bert_pretrain/20_en_bert_pretrain.ipynb)
 
 ## 한 줄 목표
-Phase 3 의 두 번째 챕터. Ch 19 에서 *토크나이저* 를 직접 학습해 봤다면, 이번엔 **모델 본체를 random init 해 일반 도메인 MLM 사전학습** 합니다. 표준 BERT (110M) 의 1/10 크기 작은 BERT (약 10M, hidden=256/layer=4) 를 `BertConfig` 로 직접 설계, `bert-base-uncased` 의 WordPiece 토크나이저는 그대로 가져와 **Wikitext-103 paragraphs 5,000** (일반 도메인) 으로 MLM 사전학습 → 체크포인트 저장 → Ch 21 에서 *완전히 다른 도메인 (Yelp 영화 리뷰)* 이진 분류 fine-tune.
+Phase 3 의 두 번째 챕터. Ch 19 에서 *토크나이저* 를 직접 학습해 봤다면, 이번엔 **모델 본체를 random init 해 일반 도메인 MLM 사전학습** 합니다. 표준 BERT (110M) 의 1/10 크기 작은 BERT (약 11M, hidden=256/layer=4) 를 `BertConfig` 로 직접 설계, `bert-base-uncased` 의 WordPiece 토크나이저는 그대로 가져와 **Wikitext-103 paragraphs 5,000** (일반 도메인) 으로 MLM 사전학습 → 체크포인트 저장 → Ch 21 에서 *완전히 다른 도메인 (Yelp 영화 리뷰)* 이진 분류 fine-tune.
 
 ## 다루는 핵심 개념
 - **MLM (Masked Language Modeling)** — 입력 토큰의 15% 를 `[MASK]` 로 가리고 원래 토큰을 맞추는 self-supervised task
@@ -46,4 +46,4 @@ Google Colab T4 GPU (fp16). 약 20-25분 (`bert-base-uncased` 토크나이저 �
 `./ch20_small_bert_mlm/` 폴더에 `config.json + model.safetensors + tokenizer.json + vocab.txt + ...` 저장. Ch 21 에서 `AutoModelForSequenceClassification.from_pretrained("./ch20_small_bert_mlm", num_labels=2)` 한 줄로 *encoder body* 를 가져와 새 분류 헤드를 부착해 fine-tune.
 
 ## 다음 챕터
-[21_en_bert_classify](../21_en_bert_classify/) — 이번 챕터 사전학습 모델을 *완전히 다른 도메인 (Yelp 영화 리뷰)* 이진 분류로 fine-tune. **Ch 10 (DistilBERT 대규모 Wikipedia + BookCorpus 사전학습 모델 fine-tune) 과 직접 비교** — 둘 다 *일반 도메인 → Yelp transfer* 라 비교가 fair, 작은 사전학습 BERT (약 10M, Wikitext-103 5K paragraphs MLM) vs 표준 사전학습 BERT (약 66M, 대규모 corpus) 의 정량 격차가 *사전학습 규모 차이만* 측정. random init baseline 도 함께 학습해 *사전학습의 순 효과* 분리.
+[21_en_bert_classify](../21_en_bert_classify/) — 이번 챕터 사전학습 모델을 *완전히 다른 도메인 (Yelp 영화 리뷰)* 이진 분류로 fine-tune. **Ch 10 (DistilBERT 대규모 Wikipedia + BookCorpus 사전학습 모델 fine-tune) 과 직접 비교** — 둘 다 *일반 도메인 → Yelp transfer* 라 비교가 fair, 작은 사전학습 BERT (약 11M, Wikitext-103 5K paragraphs MLM) vs 표준 사전학습 BERT (약 66M, 대규모 corpus) 의 정량 격차가 *사전학습 규모 차이만* 측정. random init baseline 도 함께 학습해 *사전학습의 순 효과* 분리.

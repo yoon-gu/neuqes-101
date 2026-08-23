@@ -162,88 +162,6 @@ logits \((z_0, z_1)\) & softmax \(\to\) \((p_0, p_1)\) & 정답=1일 때 손실 
 
 
 
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-!pip install -q transformers datasets
-\end{lstlisting}
-
-\begin{codeRead}
-\textbf{1행}의 \inlinecode{!pip install -q transform...}에서는 Colab 실행에 필요한 패키지를 설치합니다.
-\end{codeRead}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-import warnings
-warnings.filterwarnings("ignore")
-
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-import torch
-from datasets import load_dataset
-from transformers import (
-    AutoTokenizer, AutoModelForSequenceClassification,
-    Trainer, TrainingArguments,
-)
-from sklearn.metrics import (
-    accuracy_score, precision_recall_fscore_support,
-    classification_report, roc_auc_score,
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-)
-
-import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
-_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
-if not os.path.exists(_fp):
-    subprocess.run(
-        "apt-get -qq -y install fonts-nanum",
-        shell=True,
-    )
-fm.fontManager.addfont(_fp)
-plt.rcParams["font.family"] = "NanumGothic"
-plt.rcParams["axes.unicode_minus"] = False
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=30]
-print(f"PyTorch:        {torch.__version__}")
-print(f"CUDA available: {torch.cuda.is_available()}")
-if torch.cuda.is_available():
-    print(
-        f"GPU:             "
-        f"{torch.cuda.get_device_name(0)}"
-    )
-else:
-    print(
-        "Warning: CPU runtime — training will be very "
-        "slow. Switch to T4 recommended."
-    )
-\end{lstlisting}
-
-\begin{codeRead}
-\inlinecode{numpy, pandas, matplotlib, PyTorch, datasets} 같은 주요 패키지를 불러옵니다.
-\end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-PyTorch:        2.11.0+cu128
-CUDA available: True
-GPU:             Tesla T4
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
 \textbf{baseline VRAM}:
 
 
@@ -257,63 +175,11 @@ GPU:             Tesla T4
 \textbf{1행}의 \inlinecode{!nvidia-smi}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
 \end{codeRead}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 03:44:42 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 43C P8 11W / 70W | 3MiB / 15360MiB | 0% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \section{데이터 준비}
 
 같은 seed, 같은 5,000/1,000 샘플, 같은 별점 3 제외 + 4-5 \(\to\) 1, 1-2 \(\to\) 0 룰. \textbf{마지막 비교가 의미를 가지려면 데이터가 동일해야 합니다.}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
-
-ds = load_dataset("Yelp/yelp_review_full")
-train_full = ds["train"].shuffle(seed=42).select(range(5000))
-eval_full  = ds["test"].shuffle(seed=42).select(range(1000))
-
-def add_binary(batch):
-    bins = []
-    for lbl in batch["label"]:
-        star = lbl + 1
-        bins.append(1 if star >= 4 else 0)
-    batch["binary"] = bins
-    return batch
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 데이터를 불러오고 학습에 맞는 형태로 정리하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=15]
-train_bin = train_full.filter(lambda x: (x["label"] + 1) != 3).map(add_binary, batched=True)
-eval_bin  = eval_full.filter(lambda x:  (x["label"] + 1) != 3).map(add_binary, batched=True)
-
-print(f"train (after excluding 3-star): {len(train_bin)}")
-print(f"eval  (after excluding 3-star): {len(eval_bin)}")
-print(
-    f"train positive rate: "
-    f"{sum(train_bin['binary']) / len(train_bin):.1%}"
-)
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-train (after excluding 3-star): 4040
-eval  (after excluding 3-star): 804
-train positive rate: 49.4%
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -347,17 +213,6 @@ print(
     f"{train_tok[0]['labels']}  (int scalar)"
 )
 \end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Dataset({
-    features: ['input_ids', 'token_type_ids', 'attention_mask', 'labels'],
-    num_rows: 4040
-})
-
-First sample label: 1  (int scalar)
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -452,15 +307,6 @@ classifier (\texttt{Linear(768\$\textbackslash{}to\$K)}) & \textbf{769} (=768+1)
 !nvidia-smi
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 03:45:15 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 43C P8 13W / 70W | 3MiB / 15360MiB | 0% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \section{학습}
@@ -505,106 +351,16 @@ def compute_metrics(eval_pred):
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-training_args = TrainingArguments(
-    output_dir="./ch11_output",
-    num_train_epochs=2,
-    per_device_train_batch_size=16,
-    per_device_eval_batch_size=32,
-    learning_rate=2e-5,
-    fp16=True,
-    eval_strategy="epoch",
-    logging_steps=50,
-    save_strategy="no",
-    report_to="none",
-    seed=42,
-)
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=15]
-trainer = Trainer(
-    model=model,
-    args=training_args,
-    train_dataset=train_tok,
-    eval_dataset=eval_tok,
-    processing_class=tokenizer,
-    compute_metrics=compute_metrics,
-)
-
-train_result = trainer.train()
-print(
-    f"\nTraining done — mean train loss: "
-    f"{train_result.training_loss:.4f}"
-)
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Epoch  Train...  Valid...  Accuracy  Preci...  Recall    F1        Auc
------  --------  --------  --------  --------  --------  --------  --------
-1      0.234228  0.246899  0.902985  0.886544  0.905660  0.896000  0.968299
-2      0.153909  0.265578  0.910448  0.902965  0.902965  0.902965  0.968875
-
-Training done -- mean train loss: 0.2582
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
 \Needspace{5\baselineskip}
 \begin{lstlisting}
 !nvidia-smi
 \end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 03:45:47 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 57C P0 65W / 70W | 1579MiB / 15360MiB | 56% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
 \section{평가}
 
 \ref{ch:10}장과 같은 패턴 --- \ref{ch:10}장에서는 sigmoid로 1차원 logit을 확률로 바꿨다면, 여기서는 \emph{2차원 logit에 softmax} 를 적용해 클래스 1의 확률을 뽑습니다.
-
-
-
-\Needspace{7\baselineskip}
-\begin{lstlisting}
-eval_metrics = trainer.evaluate()
-print("BERT method B evaluation:")
-for k, v in eval_metrics.items():
-    if k.startswith("eval_") and isinstance(v, float):
-        print(f"  {k:>20}: {v:.4f}")
-\end{lstlisting}
-
-\begin{codeRead}
-\textbf{1행}의 \inlinecode{eval\_metrics = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{for k, v in eval\_metrics....}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{4행}의 \inlinecode{if k.startswith("eval\_")...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
-\end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Train...  Valid...  Epoch  Accuracy  Preci...  Recall    F1        Auc
---------  --------  -----  --------  --------  --------  --------  --------
-0.153909  0.265578  2      0.910448  0.902965  0.902965  0.902965  0.968875
-BERT method B evaluation:
-             eval_loss: 0.2656
-         eval_accuracy: 0.9104
-        eval_precision: 0.9030
-           eval_recall: 0.9030
-               eval_f1: 0.9030
-              eval_auc: 0.9689
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -657,25 +413,8 @@ print(pd.DataFrame({
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{preds\_output = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{2행}의 \inlinecode{logits2 = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{labels = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{exp = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{probs\_full = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{7행}의 \inlinecode{probs = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\textbf{1행}의 \inlinecode{preds\_output = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{2행}의 \inlinecode{logits2 = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{labels = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-logits2 (raw)  shape: (804, 2)
-logit z = z1-z0 range: [-5.10, 4.88]
-Prob range:            [0.0061, 0.9925]
-Positive prediction rate (prob >= 0.5): 46.1%
-
-First 5 samples:
- label    z0    z1  z=z1-z0  prob_B  pred
-     1 -1.81  2.26     4.08  0.9833     1
-     0  1.47 -1.55    -3.02  0.0466     0
-     1 -2.05  2.60     4.65  0.9905     1
-     1 -1.69  2.29     3.99  0.9818     1
-     1 -2.13  2.64     4.77  0.9916     1
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -685,37 +424,7 @@ First 5 samples:
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-sns.set_theme(
-    style="whitegrid",
-    context="talk",
-    font="NanumGothic",
-    rc={"axes.unicode_minus": False},
-)
-
-df = pd.DataFrame({"prob": probs, "logit": logits, "label": labels})
-PAL = {0: "#5B8DEF", 1: "#F47272"}
-
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=11]
-fig, ax = plt.subplots(figsize=(9, 5))
-sns.kdeplot(
-    data=df, x="prob", hue="label",
-    fill=True, common_norm=False, alpha=0.5,
-    palette=PAL, clip=(0, 1), ax=ax,
-)
-ax.axvline(0.5, color="black", lw=1.2, ls="--", alpha=0.7)
-ax.set_title("방식 B — 실제 라벨별 확률 분포")
-ax.set_xlabel("예측 확률  P(y=1) = softmax(logits)[1]")
-ax.set_ylabel("밀도")
-plt.tight_layout()
-plt.show()
-\end{lstlisting}
+\compactCodeOmitted{숫자 결과를 그림으로 확인하는 단계}
 
 \begin{bookfigurelabel}[H]{방식 B의 softmax 확률 분포}{fig:ch11-probability-kde}
 \centering
@@ -732,21 +441,7 @@ plt.show()
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-fig, ax = plt.subplots(figsize=(9, 5))
-sns.kdeplot(
-    data=df, x="logit", hue="label",
-    fill=True, common_norm=False, alpha=0.5,
-    palette=PAL, ax=ax,
-)
-ax.axvline(0.0, color="black", lw=1.2, ls="--", alpha=0.7)
-ax.set_title("방식 B — logit 분포  (z = z1 - z0)")
-ax.set_xlabel("logit  z = z1 - z0")
-ax.set_ylabel("밀도")
-plt.tight_layout()
-plt.show()
-\end{lstlisting}
+\compactCodeOmitted{숫자 결과를 그림으로 확인하는 단계}
 
 \begin{bookfigurelabel}[H]{방식 B를 1차원 logit 차이로 환산한 분포}{fig:ch11-logit-kde}
 \centering
@@ -909,57 +604,6 @@ Method A problem_type:  multi_label_classification
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
-training_args_A = TrainingArguments(
-    output_dir="./ch11_method_a_output",
-    num_train_epochs=2,
-    per_device_train_batch_size=16,
-    per_device_eval_batch_size=32,
-    learning_rate=2e-5,
-    fp16=True,
-    eval_strategy="epoch",
-    logging_steps=50,
-    save_strategy="no",
-    report_to="none",
-    seed=42,
-)
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=15]
-trainer_A = Trainer(
-    model=model_A,
-    args=training_args_A,
-    train_dataset=train_tok_A,
-    eval_dataset=eval_tok_A,
-    processing_class=tokenizer,
-    compute_metrics=compute_metrics_A,
-)
-
-train_result_A = trainer_A.train()
-print(
-    f"\nMethod A training done — train loss: "
-    f"{train_result_A.training_loss:.4f}"
-)
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Epoch  Train...  Valid...  Accuracy  Preci...  Recall    F1        Auc
------  --------  --------  --------  --------  --------  --------  --------
-1      0.245630  0.248752  0.906716  0.893617  0.905660  0.899598  0.968371
-2      0.162265  0.281090  0.905473  0.904110  0.889488  0.896739  0.966261
-
-Method A training done -- train loss: 0.2588
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
 preds_A_out = trainer_A.predict(eval_tok_A)
 logits_A    = preds_A_out.predictions.flatten()
 probs_A     = 1.0 / (1.0 + np.exp(-logits_A))
@@ -1050,50 +694,7 @@ x축 = 방식 A의 \(p_A\), y축 = 방식 B의 \(p_B\). 점 색은 정답 라벨
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-df_cmp = pd.DataFrame({
-    "prob_A": probs_A,
-    "prob_B": probs,
-    "label":  labels.astype(int),
-})
-
-fig, ax = plt.subplots(figsize=(7, 7))
-sns.scatterplot(
-    data=df_cmp, x="prob_A", y="prob_B", hue="label",
-    palette={0: "#5B8DEF", 1: "#F47272"}, alpha=0.55, s=35, ax=ax,
-)
-ax.plot([0, 1], [0, 1], color="black", lw=1.3, ls="--", alpha=0.7,
-        label="y = x (완전 일치)")
-ax.set_xlim(-0.02, 1.02); ax.set_ylim(-0.02, 1.02)
-ax.set_xlabel("방식 A — P(y=1) = sigmoid(z_A)")
-ax.set_ylabel("방식 B — P(y=1) = softmax(z_0, z_1)[1]")
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-ax.set_title("방식 A vs 방식 B — 샘플별 확률 일치도")
-ax.legend(loc="upper left")
-plt.tight_layout()
-plt.show()
-
-corr = float(np.corrcoef(probs_A, probs)[0, 1])
-mae  = float(np.abs(probs_A - probs).mean())
-print(
-    f"Pearson corr:        "
-    f"{corr:.4f}  (1.0 = perfect equivalence)"
-)
-print(f"Mean abs diff |A-B|: {mae:.4f}")
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Pearson corr:        0.9883  (1.0 = perfect equivalence)
-Mean abs diff |A-B|: 0.0239
-\end{bookoutputbox}
-\par\vspace{0.9em}
+\compactCodeOmitted{숫자 결과를 그림으로 확인하는 단계}
 
 \begin{bookfigurelabel}[H]{방식 A와 방식 B의 샘플별 확률 일치도}{fig:ch11-probability-scatter}
 \centering
@@ -1244,19 +845,6 @@ model = AutoModelForSequenceClassification.from_pretrained(
 
 \end{faqBox}
 
-\begin{faqBox}{Q3. (실무) \inlinecode{compute\_metrics} 안의 softmax를 직접 구현하지 말고 \inlinecode{torch.softmax} 쓰면 안 되나요?}
-
-써도 됩니다. 단, \inlinecode{compute\_metrics} 가 받는 \inlinecode{logits} 는 \emph{numpy 배열} 이라 \inlinecode{torch.from\_numpy} 로 한 번 감싸야 합니다.
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-import torch
-probs_full = torch.softmax(torch.from_numpy(logits), dim=-1).numpy()
-\end{lstlisting}
-
-이 장에선 \emph{softmax가 어떻게 동작하는지} 노출하기 위해 \inlinecode{np.exp\ /\ sum} 으로 직접 짰습니다 --- \inlinecode{max} 빼서 안정화하는 부분이 곧 PyTorch 내부 구현과 동일한 트릭입니다.
-
-\end{faqBox}
 
 \begin{faqBox}{Q4. (이론) 방식 A·B 가 sklearn 안에선 사실상 같은 모델이라고 했는데, 그러면 BERT 에서도 두 학습 결과가 같아야 하지 않나요?}
 
@@ -1279,56 +867,11 @@ sklearn에서는 두 \emph{방식} 의 차이가 BERT보다 훨씬 작습니다.
 
 \end{faqBox}
 
-\begin{faqBox}{Q5. (실무) 학습된 모델을 저장·로드할 때 두 방식 모델은 호환되나요?}
-
-\textbf{아니요, 분류 헤드 shape이 달라서 직접 호환되지 않습니다.}
-
-\begin{itemize}
-\tightlist
-\item
-  방식 A: \inlinecode{classifier.weight.shape\ =\ (1,\ 768)}, \inlinecode{classifier.bias.shape\ =\ (1,)}
-\item
-  방식 B: \inlinecode{classifier.weight.shape\ =\ (2,\ 768)}, \inlinecode{classifier.bias.shape\ =\ (2,)}
-\end{itemize}
-
-\inlinecode{from\_pretrained} 로 다른 방식의 체크포인트를 로드하면 분류 헤드를 \emph{새로 초기화} 한다는 경고가 뜹니다 (DistilBERT body는 그대로 로드됨). 따라서 두 방식 사이의 변환은 \emph{처음부터 다시 학습} 이 정확합니다.
-
-만약 \textbf{같은 표현력을 유지하면서} 변환하고 싶다면, 방식 A의 \(w_A, b_A\) 로부터 방식 B의 헤드를 다음과 같이 만들 수 있습니다 --- 한쪽 클래스 logit을 0으로 고정하면 됩니다.
-
-\Needspace{10\baselineskip}
-\begin{lstlisting}
-W_A = model_A.classifier.weight    # shape (1, 768)
-b_A = model_A.classifier.bias      # shape (1,)
-
-W_B = torch.cat([torch.zeros_like(W_A), W_A], dim=0)
-b_B = torch.cat(
-    [torch.zeros_like(b_A), b_A],
-    dim=0)  # (2,,
-)
-\end{lstlisting}
-
-이러면 \(z_1 - z_0 = (W_A x + b_A) - 0 = z_A\) 가 정확히 일치합니다. 실무에선 거의 안 쓰지만 \emph{수학적 동등성} 의 구체적 모습을 보여주는 좋은 예시.
-
-\end{faqBox}
-
-\begin{faqBox}{Q6. (실무) \inlinecode{id2label} / \inlinecode{label2id} 는 꼭 등록해야 하나요?}
-
-학습·평가 자체에는 영향 없지만 \textbf{추론 시 편리} 합니다.
-
-\Needspace{8\baselineskip}
-\begin{lstlisting}
-pipe = pipeline(
-    "text-classification",
-    model=model,
-    tokenizer=tokenizer,
-)
-pipe("Great food!")
-\end{lstlisting}
-
-또 \inlinecode{model.config.id2label} 이 huggingface hub에 모델을 올릴 때 widget 라벨 표시용으로 쓰입니다. 한 줄 추가로 큰 이득이라 항상 등록하는 게 좋습니다.
-\end{faqBox}
 
 
+
+
+\compactFAQMore{3}
 
 \section{오류 실험 (선택)}
 

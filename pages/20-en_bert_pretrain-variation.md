@@ -2,14 +2,14 @@
 
 | 변형 축 | 이번 챕터 (기본) | 변형 예 | 예상 효과 |
 |---|---|---|---|
-| `num_train_epochs` | 2 | 5 | eval loss 하락, perplexity 약 2-3 감소 |
+| `num_train_epochs` | 2 | 5 | eval loss 소폭 하락 — 부록 실측으로 ppl 1,173 → 928 (약 20% 감소, epoch 4 부터 평탄) |
 | `BLOCK_SIZE` | 128 | 64 | 블록 수 약 2배, 한 블록 짧아져 *문맥* 줄음 → loss 약간 상승 |
 | `BLOCK_SIZE` | 128 | 256 | 블록 수 절반, 한 블록 길어 *문맥* 풍부 → loss 하락 가능, VRAM 약 4배 (attention $O(n^2)$) |
-| `N_TRAIN_TEXT` | 5,000 paragraphs | 30,000 paragraphs | loss 큰 폭 하락, 시간 약 6배 증가 (T4 30분 룰 안에선 1 epoch 만 가능) |
+| `N_TRAIN_TEXT` | 5,000 paragraphs | 30,000 paragraphs | loss 큰 폭 하락, 학습 step 약 6배 (본편 2 epoch 이 336 step / 20-25초이므로 약 2 분) — 30분 룰 안에서 2 epoch 이상 여유 |
 | `mlm_probability` | 0.15 | 0.30 | 더 어려운 task → loss 상승, 학습 신호 증가 (논문 BERT 는 15% 가 sweet spot) |
 
-> **T4 30분 룰 안에서 가능한 가장 큰 개선** — Wikitext-103 paragraphs 를 5K → 20K (약 4배) 로 늘리고 batch 32 유지하면 한 epoch 약 20-25분, 1 epoch 로 마무리. 이번 챕터의 *짧고 빠른* 실험 이후 직접 변형해 보세요.
+> **T4 30분 룰 안에서 가능한 가장 큰 개선** — 본편은 batch 32 기준 한 epoch 이 **167 step**, 2 epoch 336 step 이 **20-25초** (준비 포함 0.4분) 로 끝납니다. 같은 batch 로 5K → 20K (약 4배) 로 늘려도 한 epoch 은 668 step ≈ **1분 안팎**. 즉 30분 룰의 병목은 학습 step 이 아니라 **데이터 준비** (다운로드·토크나이즈·`group_texts`) 쪽이니, 그쪽에 여유를 크게 잡고 *epoch 보다 데이터* 를 늘리는 편이 이득입니다. 이번 챕터의 *짧고 빠른* 실험 이후 직접 변형해 보세요.
 
 ### 사전학습을 더 돌리면? — 부록 곡선 (이슈 #19)
 
-본편은 **2 epoch** 데모라 perplexity 가 높습니다. 부록 `20_en_bert_pretrain_scaling` 에서 2 → 16 epoch 으로 길게 학습하며 측정한 곡선을 보면, perplexity 가 **영어 1,173 → 696, 한국어 1,626 → 709 로 ~2배** 내려간 뒤 **epoch 8-10 부터 평탄** 해집니다. 5,000 텍스트로는 모델이 금세 saturate 해 *epoch 만으로는 한계* — 더 낮추려면 **데이터 양** 을 늘려야 합니다 (Ch 21 부록의 '데이터가 가장 큰 lever' 와 같은 결론). 본편의 높은 perplexity 는 버그가 아니라 *짧은 데모 학습의 정직한 반영* 입니다.
+본편은 **2 epoch** 데모라 perplexity 가 높습니다. 부록 `20_en_bert_pretrain_scaling` 에서 2 → 16 epoch 으로 길게 학습하며 측정한 곡선을 보면, perplexity 가 **영어 1,173 → 697, 한국어 1,626 → 707 로 ~2배** 내려간 뒤 **epoch 8-10 부터 평탄** 해집니다. (부록의 2 epoch 값 1,173 은 본편 실행본의 1,253 보다 낮습니다 — 모델도 데이터도 같은데 **학습률 스케줄의 총 길이가 다르기** 때문입니다. 본편은 2 epoch 에 맞춰 linear decay 가 끝나도록 잡혀 후반부엔 학습률이 거의 0 인 반면, 부록은 16 epoch 짜리 스케줄이라 같은 *2 epoch 지점* 에서는 아직 높은 학습률로 달리는 중입니다. 같은 "2 epoch" 라도 그때까지 겪은 학습률 경로가 다른 것.) 5,000 텍스트로는 모델이 금세 saturate 해 *epoch 만으로는 한계* — 더 낮추려면 **데이터 양** 을 늘려야 합니다 (Ch 21 부록의 '데이터가 가장 큰 lever' 와 같은 결론). 본편의 높은 perplexity 는 버그가 아니라 *짧은 데모 학습의 정직한 반영* 입니다.

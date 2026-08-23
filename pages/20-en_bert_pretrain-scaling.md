@@ -1,4 +1,4 @@
-## 20-4. 부록 — 사전학습량과 perplexity 곡선
+## 부록 — 사전학습량과 perplexity 곡선
 
 > ▶ **[Google Colab에서 사전학습량 부록 열기](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/20_en_bert_pretrain/20_en_bert_pretrain_scaling.ipynb)** — Ch 20·22 본편의 높은 perplexity가 버그인지, 짧은 데모 학습의 한계인지 직접 확인합니다.
 
@@ -23,14 +23,14 @@ Ch 20과 Ch 22의 작은 BERT는 **5,000개 텍스트, 2 epoch**만 학습합니
 
 | 언어 | 2 epoch perplexity | 16 epoch perplexity | 감소 폭 |
 |---|---:|---:|---:|
-| 영어 Wikitext | 1,173 | 696 | 1.7배 |
-| 한국어 Wikipedia | 1,626 | 709 | 2.3배 |
+| 영어 Wikitext | 1,173 | 697 | 1.7배 |
+| 한국어 Wikipedia | 1,626 | 707 | 2.3배 |
 
 ![사전학습 epoch에 따른 영어와 한국어 MLM perplexity 곡선](../assets/20-en_bert_pretrain-scaling.png)
 
 ## 결과 해석
 
-1. **더 돌리면 내려가긴 합니다.** 영어는 1,173에서 696으로, 한국어는 1,626에서 709로 내려갑니다. 본편의 2 epoch 결과가 학습 실패는 아니라는 뜻입니다.
+1. **더 돌리면 내려가긴 합니다.** 영어는 1,173에서 697로, 한국어는 1,626에서 707로 내려갑니다. 본편의 2 epoch 결과가 학습 실패는 아니라는 뜻입니다.
 2. **하지만 epoch 8-10 이후부터 평탄해집니다.** 같은 5,000개 텍스트를 반복해서 보는 것만으로는 추가 개선이 빠르게 줄어듭니다.
 3. **병목은 epoch보다 데이터·compute입니다.** 더 낮은 perplexity를 원하면 단순히 epoch를 늘리기보다 데이터 수, 모델 크기, 학습 시간 전체를 함께 키워야 합니다.
 

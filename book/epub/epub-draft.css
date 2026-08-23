@@ -1,0 +1,51 @@
+body::before {
+  content: "출판 검토용 초안\A무단 복제 및 배포 금지";
+  white-space: pre;
+  position: fixed;
+  top: 43%;
+  left: 50%;
+  z-index: 1000;
+  width: 20em;
+  margin-left: -10em;
+  transform: rotate(-32deg);
+  transform-origin: 50% 50%;
+  text-align: center;
+  font-family: sans-serif;
+  font-size: 2.15em;
+  font-weight: 800;
+  line-height: 1.35;
+  color: rgba(31, 43, 55, 0.105);
+  pointer-events: none;
+}
+
+body::after {
+  content: "Hugging Face로 시작하는 텍스트 분석 입문 · 출판 검토용 초안 · 무단 복제 및 배포 금지";
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0.35em;
+  z-index: 1001;
+  text-align: center;
+  font-family: sans-serif;
+  font-size: 0.64em;
+  color: rgba(91, 102, 112, 0.62);
+  pointer-events: none;
+}
+
+.draft-notice {
+  margin: 1.2em 0 1.6em;
+  padding: 1em 1.1em;
+  border: 1px solid rgb(111, 135, 157);
+  border-left: 0.35em solid rgb(245, 177, 66);
+  background: rgb(247, 249, 250);
+  color: rgb(31, 43, 55);
+}
+
+.draft-notice h1 {
+  margin: 0 0 0.4em;
+  font-size: 1.25em;
+}
+
+.draft-notice p {
+  margin: 0.35em 0;
+}

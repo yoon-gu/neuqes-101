@@ -385,212 +385,11 @@ GPT 계열은 특수 토큰을 \emph{최소화} --- \texttt{\textless{}\textbar{
 
 
 
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-%pip install -q -U transformers tokenizers datasets accelerate
-\end{lstlisting}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-import warnings
-warnings.filterwarnings("ignore")
-
-import math
-import os
-import random
-import time
-
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import torch
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=14]
-if torch.cuda.is_available():
-    device = torch.device("cuda")
-    device_name = torch.cuda.get_device_name(0)
-    vram_gib = torch.cuda.get_device_properties(0).total_memory / 1024**3
-    print(f"device     : cuda  ({device_name})")
-    print(f"VRAM total : {vram_gib:.2f} GiB")
-elif torch.backends.mps.is_available():
-    device = torch.device("mps")
-    print("device     : mps  (Apple Silicon)")
-else:
-    device = torch.device("cpu")
-    print(
-        "device     : cpu  (training will be very slow - "
-        "Colab T4 recommended)"
-    )
-
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=30]
-print(f"torch      : {torch.__version__}")
-
-SEED = 0
-torch.manual_seed(SEED)
-np.random.seed(SEED)
-random.seed(SEED)
-
-USE_FP16 = (device.type == "cuda")
-print(f"use fp16   : {USE_FP16}")
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 필요한 라이브러리와 기본 설정을 준비하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=40]
-import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
-_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
-if not os.path.exists(_fp):
-    subprocess.run(
-        "apt-get -qq -y install fonts-nanum",
-        shell=True,
-    )
-fm.fontManager.addfont(_fp)
-plt.rcParams["font.family"] = "NanumGothic"
-plt.rcParams["axes.unicode_minus"] = False
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-device     : cuda  (Tesla T4)
-VRAM total : 14.56 GiB
-torch      : 2.11.0+cu128
-use fp16   : True
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
 \section{한국어 TinyStories 데이터 로드 + story 복원}
 
 \inlinecode{g0ster/TinyStories-Korean} 은 영어 \inlinecode{roneneldan/TinyStories} 를 한국어로 번역한 동화 데이터셋 (Dohoon Kim, 2024, MIT 라이선스). 어휘·문법이 단순해 \textbf{3-5M 파라미터} 짜리 작은 모델로도 한국어 문장 생성을 시연할 수 있습니다.
 
 \textbf{데이터 구조 주의} --- 이 데이터셋은 \emph{story 단위가 아니라 줄(line) 단위} 로 저장되어 있습니다. 한 story 가 여러 줄로 나뉘어 있고, story 끝마다 \texttt{\textless{}\textbar{}endoftext\textbar{}\textgreater{}} 줄이 들어가며, 사이에 빈 줄도 섞여 있습니다. 그래서 \emph{\texttt{\textless{}\textbar{}endoftext\textbar{}\textgreater{}} 를 만날 때까지 줄을 이어 붙여} 한 story 로 복원합니다. 그렇게 복원한 처음 \textbf{30,000 stories} 만 사용 (\ref{ch:24}장과 같은 규모, T4 30분 룰 안).
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-from datasets import load_dataset
-
-EOT_MARK = "<|endoftext|>"
-N_TRAIN  = 30_000
-N_VAL    = 500
-
-MAX_LINES_TO_SCAN = 800_000
-
-def rebuild_stories(split, n_stories, max_lines):
-    '''줄 단위 데이터를 <|endoftext|> 기준으로 이어 붙여 story 리스트로 복원.'''
-    stories, buf = [], []
-    stream = load_dataset(
-        "g0ster/TinyStories-Korean",
-        split=split,
-        streaming=True,
-    )
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-    for i, ex in enumerate(stream):
-        if i >= max_lines or len(stories) >= n_stories:
-            break
-        line = (ex["text"] or "").strip()
-        if line == EOT_MARK:
-            story = " ".join(buf).strip()
-            if story:
-                stories.append(story)
-            buf = []
-        elif line:
-            buf.append(line)
-
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=29]
-    if buf and len(stories) < n_stories:
-        tail = " ".join(buf).strip()
-        if tail:
-            stories.append(tail)
-    return stories[:n_stories]
-
-t0 = time.time()
-train_stories = rebuild_stories(
-    "train",
-    N_TRAIN,
-    MAX_LINES_TO_SCAN,
-)
-val_stories   = rebuild_stories(
-    "validation",
-    N_VAL,
-    50_000,
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 필요한 라이브러리와 기본 설정을 준비하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=45]
-)
-print(
-    f"rebuilt stories: train={len(train_stories):,}, val={len(val_stories):,}  ("
-    f"{time.time()-t0:.1f}s)"
-)
-
-from datasets import Dataset
-raw_train = Dataset.from_dict({"text": train_stories})
-raw_val   = Dataset.from_dict({"text": val_stories})
-print("train:", raw_train)
-print("val  :", raw_val)
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{9\baselineskip}
-\begin{lstlisting}[firstnumber=57]
-lens = [len(s) for s in train_stories]
-print(
-    f"\nstory length (chars): mean={np.mean(lens):.0f}, median={np.median(lens):.0f}, max="
-    f"{max(lens)}"
-)
-print("\n=== sample story ===")
-print(raw_train[0]["text"][:400])
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-rebuilt stories: train=30,000, val=500  (19.1s)
-train: Dataset({
-    features: ['text'],
-    num_rows: 30000
-})
-val  : Dataset({
-    features: ['text'],
-    num_rows: 500
-})
-
-story length (chars): mean=468, median=420, max=2754
-
-=== sample story ===
-한때 벤이라는 이름의 어린 소년이 있었어요. 벤은 주변 세계를 탐험하는 것을...
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -682,7 +481,7 @@ print(
 \end{lstlisting}
 
 \begin{codeRead}
-\inlinecode{tokenizers, transformers} 같은 주요 패키지를 불러옵니다.
+\inlinecode{tokenizers, transformers} 같은 주요 패키지를 불러옵니다. \textbf{8행}의 \inlinecode{VOCAB\_SIZE = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{9행}의 \inlinecode{EOS = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -1204,185 +1003,7 @@ prompt: 어느 날,
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-from transformers import (DataCollatorForLanguageModeling, Trainer,
-                          TrainingArguments, TrainerCallback)
-
-collator = DataCollatorForLanguageModeling(
-    tokenizer=tokenizer,
-    mlm=False,
-)
-
-args = TrainingArguments(
-    output_dir="./out_ko_tiny_gpt",
-    max_steps=1500,
-    per_device_train_batch_size=32,
-    per_device_eval_batch_size=32,
-    learning_rate=5e-4,
-    weight_decay=0.1,
-    adam_beta1=0.9, adam_beta2=0.95,
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-    warmup_steps=100,
-    lr_scheduler_type="cosine",
-    max_grad_norm=1.0,
-    fp16=USE_FP16,
-    logging_steps=50,
-    eval_strategy="steps",
-    eval_steps=150,
-    save_strategy="no",
-    report_to="none",
-    dataloader_num_workers=2,
-    dataloader_pin_memory=True,
-    seed=SEED,
-)
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 학습 설정을 만들고 학습 루프를 실행하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=31]
-class VRAMCallback(TrainerCallback):
-    '''step 별 peak VRAM 기록 (로깅 윈도우 단위로 reset). CUDA 에서만 유효.'''
-
-    def __init__(self):
-        self.steps, self.peak_MiB = [], []
-
-    def on_train_begin(self, args, state, control, **kwargs):
-        if torch.cuda.is_available():
-            torch.cuda.reset_peak_memory_stats()
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{10\baselineskip}
-\begin{lstlisting}[firstnumber=41]
-    def on_log(self, args, state, control, logs=None, **kwargs):
-        if torch.cuda.is_available():
-            peak = torch.cuda.max_memory_allocated() / 1024**2
-            self.steps.append(state.global_step)
-            self.peak_MiB.append(peak)
-            torch.cuda.reset_peak_memory_stats()
-
-vram_cb = VRAMCallback()
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=50]
-trainer = Trainer(
-    model=model,
-    args=args,
-    train_dataset=lm_train,
-    eval_dataset=lm_val,
-    data_collator=collator,
-    callbacks=[vram_cb],
-)
-
-t0 = time.time()
-train_out = trainer.train()
-elapsed = time.time() - t0
-
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=63]
-print(f"\n=== training summary ===")
-print(f"elapsed       : {elapsed/60:.2f} min")
-print(f"global_step   : {train_out.global_step}")
-print(f"train_loss    : {train_out.training_loss:.4f}")
-print(
-    f"random baseline (ln vocab): "
-    f"{math.log(tokenizer.vocab_size):.4f}"
-)
-if torch.cuda.is_available():
-    print(
-        f"final peak    : "
-        f"{torch.cuda.max_memory_allocated()/1024**2:.0f} MiB"
-    )
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-[transformers] `loss_type=None` was set in the config but it is unrecognize...
-Step  Training Loss  Validation Loss
-----  -------------  ---------------
-150   6.099236       5.745915
-300   5.041654       4.868237
-450   4.596394       4.463939
-600   4.358889       4.229672
-750   4.192318       4.064077
-900   4.076734       3.951416
-1050  3.997099       3.871891
-1200  3.952390       3.828786
-1350  3.926925       3.807920
-1500  3.892811       3.804397
-
-=== training summary ===
-elapsed       : 0.91 min
-...
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-# loss curve + VRAM trace
-log = trainer.state.log_history
-train_pts = [(r["step"], r["loss"]) for r in log if "loss" in r and "eval_loss" not in r]
-eval_pts  = [(r["step"], r["eval_loss"]) for r in log if "eval_loss" in r]
-
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 4))
-
-# loss
-ax1.plot([s for s, _ in train_pts], [l for _, l in train_pts], "-",
-         color="tab:blue", alpha=0.6, label="train")
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{10\baselineskip}
-\begin{lstlisting}[firstnumber=11]
-if eval_pts:
-    ax1.plot([s for s, _ in eval_pts], [l for _, l in eval_pts], "s-",
-             color="tab:red", label="eval")
-ax1.axhline(math.log(tokenizer.vocab_size), ls=":", color="gray",
-            label=f"무작위 추측 기준선 = ln({tokenizer.vocab_size}) approx. {math.log(tokenizer.vocab_size):.2f}")
-ax1.set_xlabel("step"); ax1.set_ylabel("cross-entropy loss")
-ax1.set_title("한국어 TinyGPT-2 (TinyStories-Korean) - loss")
-ax1.grid(True, alpha=0.3); ax1.legend()
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=20]
-if vram_cb.steps:
-    ax2.plot(vram_cb.steps, vram_cb.peak_MiB, "o-", color="tab:green",
-             label="최대 VRAM (로그 구간별)")
-    ax2.set_title(f"VRAM trace  (bs=32, fp16, n_pos={BLOCK_SIZE})")
-else:
-    ax2.text(0.5, 0.5, "VRAM 추적은 CUDA 에서만 가능",
-             ha="center", va="center", transform=ax2.transAxes)
-    ax2.set_title("VRAM 추적 - CUDA 전용")
-ax2.set_xlabel("step"); ax2.set_ylabel("VRAM (MiB)")
-ax2.grid(True, alpha=0.3); ax2.legend()
-
-plt.tight_layout(); plt.show()
-\end{lstlisting}
+\compactCodeOmitted{텍스트를 모델 입력 텐서로 바꾸는 단계}
 
 \begin{bookfigurelabel}[H]{한국어 작은 GPT의 TinyStories-Korean 학습 손실과 VRAM 추적}{fig:ch26-loss-vram-trace}
 \centering
@@ -1400,82 +1021,6 @@ plt.tight_layout(); plt.show()
 \section{\texorpdfstring{학습 \emph{후} generation + before/after 비교}{학습 후 generation + before/after 비교}}
 
 같은 \inlinecode{PROMPTS\ /\ GEN\_KWARGS} 로 학습 후 모델에서 다시 생성하고, §5 의 학습 전 결과와 나란히 비교합니다. \textbf{이 장의 합격 기준}: 학습 후 텍스트가 \emph{전} 보다 명확히 \emph{한국어 문장 (동화 풍)} 에 가까워졌는가 --- \ref{ch:24}장 (영어) 의 \emph{사전·사후 비교} 의 한국어판.
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-torch.manual_seed(SEED)
-model.eval()
-after_outputs = []
-print("=" * 70)
-print("TRAINED model - generation after Trainer.train()")
-print("=" * 70)
-for p in PROMPTS:
-    text = generate_text(model, p, **GEN_KWARGS)
-    after_outputs.append(text)
-    print(f"\nprompt: {p}")
-    print(text)
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-======================================================================
-TRAINED model - generation after Trainer.train()
-======================================================================
-
-prompt: 옛날 옛날에
-옛날 옛날에 잭이라는 작은 소녀가 있었습니다. 그녀는 가장 좋아하는 책도 있었...
-
-prompt: 작은 소녀가
-작은 소녀가 공원에 갔어요. 그녀는 땅에 있는 작은 집에서 살고 있었지요. 그녀...
-
-prompt: 큰 개가
-큰 개가 자신의 친구를 보여주었다. 그는 그 개는 기분이 좋았어요. 개는 새 말...
-
-prompt: 어느 날,
-어느 날, 팀이라는 소년이 땅에 앉아 있는 것을 봤어요. 그는 "안녕?" 팀은 말했...
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-print("=" * 78)
-print(
-    "BEFORE (random init) vs AFTER (trained on "
-    "TinyStories-Korean 30K)"
-)
-print("=" * 78)
-for p, before, after in zip(PROMPTS, before_outputs, after_outputs):
-    print(f"\nPROMPT  : {p}")
-    print("-" * 78)
-    print(f"BEFORE  : {before[len(p):].strip()[:280]}")
-    print(f"AFTER   : {after[len(p):].strip()[:280]}")
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-==============================================================================
-BEFORE (random init) vs AFTER (trained on TinyStories-Korean 30K)
-==============================================================================
-
-PROMPT  : 옛날 옛날에
-------------------------------------------------------------------------------
-BEFORE : 도와줄게 미소지으며 플러피 친절하고 있었거든요 농? 시작한?? 올려...
-AFTER : 잭이라는 작은 소녀가 있었습니다. 그녀는 가장 좋아하는 책도 있었어요...
-
-PROMPT  : 작은 소녀가
-------------------------------------------------------------------------------
-BEFORE : 산 즐거워 사라가 엄마는 과일을 기쁨었다 ? 샘을상 놀라운 물속에서...
-AFTER : 공원에 갔어요. 그녀는 땅에 있는 작은 집에서 살고 있었지요. 그녀는...
-
-PROMPT  : 큰 개가
-------------------------------------------------------------------------------
-...
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -1498,46 +1043,6 @@ PROMPT  : 큰 개가
 \section{변형 - sampling hyperparam / 더 큰 모델 / 더 많은 stories}
 
 같은 한국어 prompt 에 \inlinecode{temperature\ /\ top\_k\ /\ top\_p} 만 바꿔 generation 스타일 변화 관찰. \emph{학습된 본체는 그대로} - 변하는 건 \emph{sampling 분포} 뿐.
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-prompt = "옛날 옛날에 작은 토끼가"
-configs = [
-    {"label": "T=0.3, top_k=20  (conservative)", "temperature": 0.3, "top_k": 20,  "top_p": None},
-    {"label": "T=0.8, top_k=50  (balanced)",    "temperature": 0.8, "top_k": 50,  "top_p": None},
-    {"label": "T=1.0, top_p=0.9 (nucleus)",     "temperature": 1.0, "top_k": 0,   "top_p": 0.9},
-    {"label": "T=1.2, top_k=100 (diverse)",     "temperature": 1.2, "top_k": 100, "top_p": None},
-]
-for c in configs:
-    torch.manual_seed(SEED)
-    print("=" * 70)
-    print(f"[{c['label']}]")
-    print(generate_text(model, prompt, max_new_tokens=60, do_sample=True,
-                        temperature=c["temperature"], top_k=c["top_k"], top_p=c["top_p"]))
-    print()
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-======================================================================
-[T=0.3, top_k=20  (conservative)]
-옛날 옛날에 작은 토끼가 있었어요. 그 새는 매우 좋아했지요. 어느 날, 새는 큰...
-
-======================================================================
-[T=0.8, top_k=50  (balanced)]
-옛날 옛날에 작은 토끼가 있었어요. 그 새는 매우 좋아했지요. 어느 날, 새는 큰...
-
-======================================================================
-[T=1.0, top_p=0.9 (nucleus)]
-옛날 옛날에 작은 토끼가 있었어요. 그 친구들은 뛰는 것을 매우 좋아했죠. 그들...
-
-======================================================================
-[T=1.2, top_k=100 (diverse)]
-옛날 옛날에 작은 토끼가 있었어요. 그 친구들은 하늘을 올려다보았고, 나무를...
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -1754,74 +1259,8 @@ len(tokenizer(sent, add_special_tokens=False)["input_ids"])
 
 \end{faqBox}
 
-\begin{faqBox}{Q2. (이론) 왜 한국어도 \emph{scratch} 부터 학습하나요? \ref{ch:24}장 (영어 scratch) 를 이미 했는데.}
 
-\textbf{같은 시연 가치 + 한국어 특유의 필요성} 때문입니다.
 
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  \emph{시연 가치} --- 사전학습이 본체에 \emph{next-token 분포} 를 새기는 과정을 \emph{한국어로} 직접 봅니다 (\ref{ch:20}장\(\to\)22 가 BERT 에서 한 것의 GPT 판).
-\item
-  \emph{한국어 특유의 필요성} --- 영어는 gpt2 BPE 를 그대로 가져다 continual pretraining (\ref{ch:25}장) 이 가능했지만, \emph{영어 BPE 는 한국어를 byte 조각으로 쪼개} 사실상 못 씁니다. 그래서 한국어는 \emph{토크나이저부터 새로} --- 자연스럽게 \emph{scratch} 가 됩니다.
-\end{enumerate}
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-bbpe = Tokenizer(BPE(unk_token=None))
-model = GPT2LMHeadModel(config)
-\end{lstlisting}
-
-\emph{토크나이저는 본체와 운명공동체} --- 토크나이저가 한국어를 못 다루면 본체 weight 도 유효한 신호를 받지 못합니다.
-
-\end{faqBox}
-
-\begin{faqBox}{Q3. (실무) 다음 장 (\ref{ch:27}장 KoGPT2 continual pretraining) 와의 관계는?}
-
-\ref{ch:27}장 = \emph{대규모 한국어 사전학습 모델 KoGPT2 (\inlinecode{skt/kogpt2-base-v2}, 125M) 를 같은 한국어 TinyStories 로} \textbf{continual pretraining}. 본 장의 \emph{작은 from-scratch 모델} 과 \emph{완전 반대 출발점} --- \ref{ch:24}장\(\to\)25 (영어) 의 한국어 짝:
-
-\begin{booktable}{26장 FAQ 표}{tab:ch26-12}
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}lll@{}}
-\toprule
-축 & \ref{ch:26}장 (본 장) & \ref{ch:27}장 (다음) \\
-\midrule
-
-모델 크기 & 약 3M params & \textbf{약 125M (40배)} \\
-사전학습 & from scratch (random init) & \textbf{대규모 한국어 코퍼스 사전학습} \\
-토크나이저 & 직접 학습 BBPE vocab 약 4,000 & \textbf{KoGPT2 BBPE (그대로)} \\
-한국어 TinyStories 학습 & 사전학습 그 자체 (1500 steps) & \textbf{continual pretraining} (수백 steps) \\
-Generation 품질 & 동화 풍 단순 한국어 & \textbf{자연스러운 동화 + 일반 도메인 폭} \\
-\bottomrule
-\end{tabular}
-\end{adjustbox}
-\end{booktable}
-
-\textbf{핵심 메시지}: \emph{대규모 한국어 사전학습 본체} + \emph{작은 도메인 continual pretraining} 이 \emph{작은 from-scratch 모델} 보다 \emph{빠르게, 좋게} 도달합니다. \emph{왜 실무는 from-scratch 가 아니라 사전학습 모델을 가져와 계속 학습하는가} 의 한국어 답.
-
-\end{faqBox}
-
-\begin{faqBox}{Q4. (이론) 한국어 CausalLM 사전학습도 \inlinecode{labels\ =\ -100} 트릭을 쓰나요?}
-
-\textbf{거의 안 씁니다 --- pad 자리만}. \ref{ch:24}장 (영어) 와 동일하게, 본 장 collator 출력은 \emph{거의 모든 자리} 가 학습 신호 (\inlinecode{labels\ =\ input\_ids.clone()}). \inlinecode{group\_texts} 로 chunk 길이가 모두 같으면 pad 도 없어 \inlinecode{-100} 이 0개일 수 있습니다.
-
-같은 트릭이 \textbf{\ref{ch:28}장 (한국어 SFT)} 에서 \emph{결정적 한 줄} 로 부활합니다:
-
-\Needspace{9\baselineskip}
-\begin{lstlisting}
-prompt = "### 질문: 한국의 수도는?\n### 답변: "
-response = "서울입니다."
-
-input_ids = tokenizer(prompt + response)["input_ids"]
-labels = input_ids.copy()
-prompt_len = len(tokenizer(prompt)["input_ids"])
-labels[:prompt_len] = [-100] * prompt_len
-\end{lstlisting}
-
-이 한 줄로 모델은 \emph{prompt 를 외우지 않고 response 만 학습} \(\to\) \emph{주어진 instruction 에 response 를 생성} 하게 됩니다. 본 장의 collator 출력 (거의 모든 자리 = 학습 신호) 을 손에 익혀 두면 \ref{ch:28}장의 그 한 줄이 단번에 이해됩니다.
-
-\end{faqBox}
 
 \begin{faqBox}{Q5. (실무) 한국어 generation 품질이 영어 (\ref{ch:24}장) 보다 낮아 보이면 무엇을 의심하나요?}
 
@@ -1855,23 +1294,6 @@ print(f"n_stories: {len(raw_train):,}")
 
 \end{faqBox}
 
-\begin{faqBox}{Q6. (이론) \ref{ch:24}장 (영어) 와 \ref{ch:26}장 (한국어) 의 학습 곡선을 비교하려면?}
-
-같은 hyperparam·같은 BLOCK\_SIZE·같은 step 수로 학습된 두 모델의 \emph{상대} 비교가 의미 있습니다.
-
-\Needspace{8\baselineskip}
-\begin{lstlisting}
-metrics = {
-    "language":          ["EN (24장)",  "KO (26장)"],
-    "vocab_size":        [2048,          4000],
-    "random_baseline":   [7.62,          8.29],
-    "final_train_loss":  ["measure",     "measure"],
-}
-\end{lstlisting}
-
-vocab 크기가 다르므로 \emph{random baseline (\inlinecode{ln\ V}) 이 다릅니다}. 절대 loss 를 직접 비교하기보다 \emph{random baseline 대비 얼마나 떨어졌는가} (상대 하락폭) 로 비교해야 공정합니다. 또 \emph{번역체 한국어} 는 원문 영어보다 \emph{반복·패턴} 이 적을 수 있어 같은 step 에서 loss 가 약간 높게 나올 수 있습니다 --- \emph{언어 난도} 보다 \emph{데이터 특성} 차이가 더 큽니다.
-
-\end{faqBox}
 
 \begin{faqBox}{Q7. (실무) 학습 첫 step loss 가 \texttt{ln(4000)\ \$\textbackslash{}approx\$\ 8.29} 가 아니라 \emph{5.0} 이라면? \emph{15.0} 이라면?}
 
@@ -1897,6 +1319,8 @@ print(
 \end{faqBox}
 
 
+
+\compactFAQMore{4}
 
 \begin{previewBox}{미리보기: 다음 장}
 

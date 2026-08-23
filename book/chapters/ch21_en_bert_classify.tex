@@ -317,112 +317,6 @@ MLM head (\inlinecode{cls.predictions}) & vocab 위 분류 헤드 & \textbf{버�
 
 
 
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-%pip install -q -U transformers datasets accelerate
-\end{lstlisting}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-import warnings
-warnings.filterwarnings("ignore")
-
-import math
-import time
-
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-import torch
-
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=13]
-from datasets import load_dataset
-from transformers import (
-    AutoTokenizer,
-    BertConfig,
-    BertForMaskedLM,
-    BertForSequenceClassification,
-    DataCollatorForLanguageModeling,
-    Trainer,
-    TrainingArguments,
-)
-from sklearn.metrics import (
-    accuracy_score, precision_recall_fscore_support,
-    classification_report, roc_auc_score, confusion_matrix,
-)
-
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=28]
-plt.rcParams["axes.unicode_minus"] = False
-
-import matplotlib.font_manager as fm, subprocess, os
-_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
-if not os.path.exists(_fp):
-    subprocess.run(
-        "apt-get -qq -y install fonts-nanum",
-        shell=True,
-    )
-fm.fontManager.addfont(_fp)
-plt.rcParams["font.family"] = "NanumGothic"
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 필요한 라이브러리와 기본 설정을 준비하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=40]
-if torch.cuda.is_available():
-    DEVICE = "cuda"
-elif getattr(torch.backends, "mps", None) is not None and torch.backends.mps.is_available():
-    DEVICE = "mps"
-else:
-    DEVICE = "cpu"
-
-print(f"PyTorch:        {torch.__version__}")
-print(f"CUDA available: {torch.cuda.is_available()}")
-print(f"Device:         {DEVICE}")
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=50]
-if DEVICE == "cuda":
-    print(
-        f"GPU:             "
-        f"{torch.cuda.get_device_name(0)}"
-    )
-elif DEVICE == "cpu":
-    print(
-        "Warning: CPU runtime — both MLM and "
-        "classification will be very slow. Switch to T4 "
-        "recommended."
-    )
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-PyTorch:        2.11.0+cu128
-CUDA available: True
-Device:         cuda
-GPU:             Tesla T4
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
 \textbf{baseline VRAM} (CUDA 환경에서만 의미 있는 출력 --- Colab T4 기준):
 
 
@@ -432,91 +326,11 @@ GPU:             Tesla T4
 !nvidia-smi
 \end{lstlisting}
 
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 12:16:39 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 34C P8 9W / 70W | 3MiB / 15360MiB | 0% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
 
 
 \section{Yelp 이진 분류 데이터 로드 --- \ref{ch:10}장과 같은 split}
 
 \inlinecode{fancyzhx/yelp\_polarity} 는 \emph{이미 이진화된} (긍정/부정) 5점 척도 yelp 리뷰 데이터셋. \ref{ch:10}장의 \inlinecode{Yelp/yelp\_review\_full} + 별점 이진화 와 \emph{완전히 같은 형태} 의 결과가 나오도록 같은 seed·같은 sample 수를 적용. \textbf{5,000 train / 1,000 eval, seed 42}.
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-SEED = 42
-N_TRAIN = 5000
-N_EVAL = 1000
-
-ds_raw = load_dataset("fancyzhx/yelp_polarity")
-print(f"splits: {list(ds_raw.keys())}")
-print(f"train size: {len(ds_raw['train']):,}")
-print(f"test size:  {len(ds_raw['test']):,}")
-print(
-    f"label names: "
-    f"{ds_raw['train'].features['label'].names}"
-)
-
-ds_train_full = ds_raw["train"].shuffle(seed=SEED).select(range(N_TRAIN))
-ds_eval_full  = ds_raw["test"].shuffle(seed=SEED).select(range(N_EVAL))
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 데이터를 불러오고 학습에 맞는 형태로 정리하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-train_labels = np.array(ds_train_full["label"])
-eval_labels  = np.array(ds_eval_full["label"])
-print(f"\nsampled train: {len(ds_train_full):,}")
-print(
-    f"  positive rate: "
-    f"{train_labels.mean():.1%}  (label 1)"
-)
-print(f"sampled eval:  {len(ds_eval_full):,}")
-print(
-    f"  positive rate: "
-    f"{eval_labels.mean():.1%}  (label 1)"
-)
-
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{8\baselineskip}
-\begin{lstlisting}[firstnumber=30]
-print(f"\nfirst train sample:")
-print(
-    f"  label: {ds_train_full[0]['label']} ("
-    f"{ds_raw['train'].features['label'].names[ds_train_full[0]['label']]})"
-)
-print(f"  text:  {ds_train_full[0]['text'][:200]}...")
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-splits: ['train', 'test']
-train size: 560,000
-test size:  38,000
-label names: ['1', '2']
-
-sampled train: 5,000
-  positive rate: 50.7%  (label 1)
-sampled eval:  1,000
-  positive rate: 48.4%  (label 1)
-
-first train sample:
-  label: 1 (2)
-text: Decent size, decent selection, decent staff.\n\nI guess that can whol...
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -620,136 +434,6 @@ print(
 \begin{bookoutputbox}
 Small BERT config: hidden=256, layer=4, head=4
 Total parameters:  11,103,290  (11.10 M)
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-N_MLM_TRAIN = 2000
-N_MLM_EVAL  = 400
-
-print(
-    "downloading Wikitext-103 (Salesforce/wikitext, "
-    "wikitext-103-raw-v1)..."
-)
-raw_train = load_dataset(
-    "Salesforce/wikitext",
-    "wikitext-103-raw-v1",
-    split="train",
-)
-raw_eval  = load_dataset(
-    "Salesforce/wikitext",
-    "wikitext-103-raw-v1",
-    split="validation",
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 데이터를 불러오고 학습에 맞는 형태로 정리하는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-)
-
-def is_good(ex, min_len=50, max_len=2000):
-    t = ex["text"].strip()
-    return min_len <= len(t) <= max_len
-
-mlm_train_raw = (
-    raw_train.filter(is_good).shuffle(seed=SEED).select(range(N_MLM_TRAIN))
-    .remove_columns([c for c in raw_train.column_names if c != "text"])
-)
-mlm_eval_raw = (
-    raw_eval.filter(is_good).shuffle(seed=SEED).select(range(N_MLM_EVAL))
-    .remove_columns([c for c in raw_eval.column_names if c != "text"])
-)
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=32]
-print(
-    f"MLM train paragraphs: "
-    f"{len(mlm_train_raw):,}  (wikitext-103)"
-)
-print(f"MLM eval paragraphs:  {len(mlm_eval_raw):,}")
-print(
-    f"first MLM sample: "
-    f"{mlm_train_raw[0]['text'][:120]}..."
-)
-
-def mlm_tokenize(examples):
-    return tokenizer(examples["text"], add_special_tokens=False, truncation=False)
-
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=45]
-mlm_tokenized_train = mlm_train_raw.map(
-    mlm_tokenize,
-    batched=True,
-    remove_columns=["text"],
-)
-mlm_tokenized_eval  = mlm_eval_raw.map(
-    mlm_tokenize,
-    batched=True,
-    remove_columns=["text"],
-)
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=56]
-def group_texts(examples):
-    concatenated = {k: sum(examples[k], []) for k in examples.keys()}
-    total_length = len(concatenated[list(examples.keys())[0]])
-    total_length = (total_length // BLOCK_SIZE) * BLOCK_SIZE
-    result = {
-        k: [t[i : i + BLOCK_SIZE] for i in range(0, total_length, BLOCK_SIZE)]
-        for k, t in concatenated.items()
-    }
-    result["labels"] = [ids.copy() for ids in result["input_ids"]]
-    return result
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=67]
-lm_train = mlm_tokenized_train.map(
-    group_texts,
-    batched=True,
-    batch_size=1000,
-)
-lm_eval  = mlm_tokenized_eval.map(
-    group_texts,
-    batched=True,
-    batch_size=1000,
-)
-
-print(
-    f"\nMLM train blocks: {len(lm_train):,}  (block_size="
-    f"{BLOCK_SIZE})"
-)
-print(f"MLM eval blocks:  {len(lm_eval):,}")
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-downloading Wikitext-103 (Salesforce/wikitext, wikitext-103-raw-v1)...
-MLM train paragraphs: 2,000  (wikitext-103)
-MLM eval paragraphs:  400
-first MLM sample: Balinor Buckhannah , the Crown Prince of the country of C...
-
-MLM train blocks: 2,100  (block_size=128)
-MLM eval blocks:  428
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1016,74 +700,6 @@ GPT 시대 (Phase 4 \ref{ch:24}장 이후) 부터는 같은 단어가 \emph{살�
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
-USE_FP16 = (DEVICE == "cuda")
-MLM_EPOCHS = 3
-
-mlm_args = TrainingArguments(
-    output_dir="./ch21_mlm_output",
-    num_train_epochs=MLM_EPOCHS,
-    per_device_train_batch_size=32,
-    per_device_eval_batch_size=64,
-    learning_rate=5e-4,
-    weight_decay=0.01,
-    warmup_ratio=0.06,
-    fp16=USE_FP16,
-    eval_strategy="epoch",
-    logging_steps=20,
-    save_strategy="no",
-    report_to="none",
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-    seed=SEED,
-)
-
-mlm_trainer = Trainer(
-    model=mlm_model,
-    args=mlm_args,
-    train_dataset=lm_train,
-    eval_dataset=lm_eval,
-    data_collator=mlm_collator,
-    processing_class=tokenizer,
-)
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=29]
-print(f"MLM epochs:     {MLM_EPOCHS}")
-print(
-    f"MLM batch size: "
-    f"{mlm_args.per_device_train_batch_size}"
-)
-print(f"MLM learning rate: {mlm_args.learning_rate}")
-print(f"MLM fp16:       {USE_FP16}")
-print(
-    f"MLM steps:      "
-    f"{len(lm_train) // mlm_args.per_device_train_batch_size * MLM_EPOCHS}"
-)
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-[transformers] warmup_ratio is deprecated and will be removed in v5.2. Use...
-MLM epochs:     3
-MLM batch size: 32
-MLM learning rate: 0.0005
-MLM fp16:       True
-MLM steps:      195
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
 t0 = time.time()
 mlm_result = mlm_trainer.train()
 mlm_elapsed = time.time() - t0
@@ -1097,20 +713,6 @@ print(
     f"{math.log(tokenizer.vocab_size):.4f}"
 )
 \end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Epoch  Training Loss  Validation Loss
------  -------------  ---------------
-1      7.424748       7.483847
-2      7.332835       7.229390
-3      7.165433       7.272982
-
-MLM pretraining done in 0.3 min
-mean train loss: 7.6027
-random baseline (ln vocab): 10.3262
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -1338,121 +940,16 @@ def compute_metrics(eval_pred):
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-cls_args = TrainingArguments(
-    output_dir="./ch21_cls_output",
-    num_train_epochs=2,
-    per_device_train_batch_size=16,
-    per_device_eval_batch_size=32,
-    learning_rate=2e-5,
-    fp16=USE_FP16,
-    eval_strategy="epoch",
-    logging_steps=50,
-    save_strategy="no",
-    report_to="none",
-    seed=SEED,
-)
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
-
-\Needspace{10\baselineskip}
-\begin{lstlisting}[firstnumber=15]
-cls_trainer = Trainer(
-    model=cls_model,
-    args=cls_args,
-    train_dataset=cls_train,
-    eval_dataset=cls_eval,
-    processing_class=tokenizer,
-    compute_metrics=compute_metrics,
-)
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 학습 설정을 만들고 학습 루프를 실행하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=24]
-t0 = time.time()
-cls_result = cls_trainer.train()
-cls_elapsed = time.time() - t0
-print(
-    f"\nClassification fine-tune done in "
-    f"{cls_elapsed/60:.1f} min"
-)
-print(f"mean train loss: {cls_result.training_loss:.4f}")
-print(f"random baseline (ln 2): {math.log(2):.4f}")
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Epoch  Train...  Valid...  Accuracy  Preci...  Recall    F1        Auc
------  --------  --------  --------  --------  --------  --------  --------
-1      0.688090  0.690499  0.484000  0.484000  1.000000  0.652291  0.664244
-2      0.671505  0.667989  0.626000  0.594828  0.712810  0.648496  0.682084
-
-Classification fine-tune done in 0.3 min
-mean train loss: 0.6860
-random baseline (ln 2): 0.6931
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
 \Needspace{5\baselineskip}
 \begin{lstlisting}
 !nvidia-smi
 \end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Mon Jun 22 12:17:59 2026
-NVIDIA-SMI 580.82.07 Driver Version: 580.82.07 CUDA Version: 13.0
-0 Tesla T4 Off | 00000000:00:04.0 Off | 0
-N/A 48C P0 34W / 70W | 797MiB / 15360MiB | 14% Default
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
 \section{평가}
 
 \inlinecode{accuracy\ /\ precision\ /\ recall\ /\ F1\ /\ AUC} 전부 같은 정의. 마지막에 confusion matrix 와 학습 곡선을 같이 그려 \emph{본체 출발점 변화가 학습 동역학에 어떻게 드러나는지} 시각화.
-
-
-
-\Needspace{10\baselineskip}
-\begin{lstlisting}
-cls_eval_metrics = cls_trainer.evaluate()
-print(
-    "21장 small BERT (scratch MLM 3 epoch + "
-    "classification fine-tune) — eval:"
-)
-for k, v in cls_eval_metrics.items():
-    if k.startswith("eval_") and isinstance(v, float):
-        print(f"  {k:>20}: {v:.4f}")
-\end{lstlisting}
-
-\begin{codeRead}
-\textbf{1행}의 \inlinecode{cls\_eval\_metrics = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{for k, v in cls\_eval\_metr...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다. \textbf{7행}의 \inlinecode{if k.startswith("eval\_")...}에서는 앞 단계에서 만든 값을 바탕으로 다음 계산을 수행합니다.
-\end{codeRead}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Train...  Valid...  Epoch  Accuracy  Preci...  Recall    F1        Auc
---------  --------  -----  --------  --------  --------  --------  --------
-0.671505  0.667989  2      0.626000  0.594828  0.712810  0.648496  0.682084
-Ch 21 small BERT (scratch MLM 3 epoch + classification fine-tune) -- eval:
-             eval_loss: 0.6680
-         eval_accuracy: 0.6260
-        eval_precision: 0.5948
-           eval_recall: 0.7128
-               eval_f1: 0.6485
-              eval_auc: 0.6821
-\end{bookoutputbox}
-\par\vspace{0.9em}
 
 
 
@@ -1489,7 +986,7 @@ print(classification_report(
 \end{lstlisting}
 
 \begin{codeRead}
-\textbf{1행}의 \inlinecode{preds\_output = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{2행}의 \inlinecode{cls\_logits = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{cls\_labels = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{5행}의 \inlinecode{exp = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{6행}의 \inlinecode{cls\_probs\_full = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{7행}의 \inlinecode{cls\_preds = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
+\textbf{1행}의 \inlinecode{preds\_output = ...}에서는 학습된 모델로 최종 예측값을 만듭니다. \textbf{2행}의 \inlinecode{cls\_logits = ...}에서는 이후 분석에서 사용할 값을 준비합니다. \textbf{3행}의 \inlinecode{cls\_labels = ...}에서는 이후 분석에서 사용할 값을 준비합니다.
 \end{codeRead}
 
 \noindent\textbf{출력.}
@@ -1517,52 +1014,7 @@ weighted avg     0.6331    0.6260    0.6237      1000
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-log_history = cls_trainer.state.log_history
-train_logs = [(e["step"], e["loss"]) for e in log_history if "loss" in e and "eval_loss" not in e]
-
-if train_logs:
-    steps, losses = zip(*train_logs)
-    random_baseline = math.log(2)
-
-    sns.set_theme(
-        style="whitegrid",
-        context="talk",
-        font="NanumGothic",
-        rc={"axes.unicode_minus": False},
-    )
-    fig, ax = plt.subplots(figsize=(9, 5))
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 학습 설정을 만들고 학습 루프를 실행하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=15]
-    ax.plot(
-        steps,
-        losses,
-        "o-",
-        color="#4878D0",
-        label="학습 CE loss (small BERT)",
-    )
-    ax.axhline(random_baseline, color="black", lw=1.0, ls=":",
-               label=f"랜덤 기준선 (ln 2 = {random_baseline:.3f})")
-    ax.set_xlabel("학습 step")
-    ax.set_ylabel("CE loss (binary)")
-    ax.set_title("Yelp 분류 fine-tune loss — small BERT (Wikitext-103 MLM body)")
-    ax.legend()
-    plt.tight_layout()
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 숫자 결과를 그림으로 확인하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}[firstnumber=29]
-    plt.show()
-else:
-    print("No train loss logs found.")
-\end{lstlisting}
+\compactCodeOmitted{학습 설정을 만들고 학습 루프를 실행하는 단계}
 
 \begin{bookfigurelabel}[H]{작은 BERT의 Yelp 이진 분류 fine-tune loss 곡선}{fig:ch21-finetune-loss}
 \centering
@@ -1577,41 +1029,7 @@ else:
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-sns.set_theme(
-    style="white",
-    context="talk",
-    font="NanumGothic",
-    rc={"axes.unicode_minus": False},
-)
-cm = confusion_matrix(
-    cls_labels,
-    cls_preds,
-    labels=[0, 1],
-)
-cm_norm = cm / cm.sum(axis=1, keepdims=True)
-
-\end{lstlisting}
-
-\noindent\emph{앞 블록은 예측 결과를 지표와 표로 요약하는 단계입니다. 이어지는 블록에서는 숫자 결과를 그림으로 확인하는 단계로 넘어갑니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=14]
-fig, ax = plt.subplots(figsize=(6, 5))
-sns.heatmap(
-    cm_norm, annot=cm, fmt="d",
-    cmap="Blues", vmin=0, vmax=1,
-    xticklabels=["부정", "긍정"],
-    yticklabels=["부정", "긍정"],
-    cbar_kws={"label": "행 기준 정규화 (recall)"}, ax=ax,
-)
-ax.set_xlabel("예측값")
-ax.set_ylabel("실제값")
-ax.set_title("21장 small BERT — 혼동 행렬")
-plt.tight_layout()
-plt.show()
-\end{lstlisting}
+\compactCodeOmitted{예측 결과를 지표와 표로 요약하는 단계}
 
 \begin{bookfigurelabel}[H]{작은 BERT의 Yelp 이진 분류 혼동 행렬}{fig:ch21-confusion-matrix}
 \centering
@@ -1645,88 +1063,7 @@ Fine-tune 도메인 & Yelp 이진 (사전학습과 다른 도메인) & Yelp 이�
 
 
 
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-CH10_REFERENCE = {
-    "accuracy":  0.93,
-    "precision": 0.93,
-    "recall":    0.93,
-    "f1":        0.93,
-    "auc":       0.98,
-}
-
-ch21_metrics = {k.replace(
-    "eval_",
-    ""): v for k,
-    v in cls_eval_metrics.items(,
-)
-                if k.startswith("eval_") and isinstance(v, float)
-                and k.replace("eval_", "") in CH10_REFERENCE}
-
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 예측 결과를 지표와 표로 요약하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{10\baselineskip}
-\begin{lstlisting}[firstnumber=17]
-comparison = pd.DataFrame({
-    "metric":              list(CH10_REFERENCE.keys()),
-    "10장 DistilBERT (ref)": [CH10_REFERENCE[k] for k in CH10_REFERENCE.keys()],
-    "21장 small BERT":     [ch21_metrics.get(k, float("nan")) for k in CH10_REFERENCE.keys()],
-})
-comparison["delta (21장 - 10장)"] = comparison["21장 small BERT"] - comparison["10장 DistilBERT (ref)"]
-print("10장 vs 21장 — classification metrics")
-print(comparison.round(4).to_string(index=False))
-\end{lstlisting}
-
-\noindent\textbf{출력.}
-\begin{bookoutputbox}
-Ch10 vs Ch21 -- classification metrics
-   metric  Ch10 DistilBERT (ref)  Ch21 small BERT  delta (Ch21 - Ch10)
- accuracy                   0.93           0.6260              -0.3040
-precision                   0.93           0.5948              -0.3352
-   recall                   0.93           0.7128              -0.2172
-       f1                   0.93           0.6485              -0.2815
-      auc                   0.98           0.6821              -0.2979
-\end{bookoutputbox}
-\par\vspace{0.9em}
-
-
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}
-sns.set_theme(
-    style="whitegrid",
-    context="talk",
-    font="NanumGothic",
-    rc={"axes.unicode_minus": False},
-)
-plot_df = comparison.melt(
-    id_vars=["metric"],
-    value_vars=["10장 DistilBERT (ref)", "21장 small BERT"],
-    var_name="model", value_name="score",
-)
-
-\end{lstlisting}
-
-\noindent\emph{앞뒤 블록은 모두 예측 결과를 지표와 표로 요약하는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
-
-\Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=13]
-fig, ax = plt.subplots(figsize=(9, 5))
-sns.barplot(
-    data=plot_df, x="metric", y="score", hue="model",
-    palette={"10장 DistilBERT (ref)": "#4878D0", "21장 small BERT": "#EE854A"},
-    ax=ax,
-)
-ax.set_ylim(0, 1.05)
-ax.set_title("Yelp 이진 분류 — 10장 vs 21장")
-ax.set_xlabel("지표")
-ax.set_ylabel("점수")
-ax.legend(loc="lower right", fontsize=11)
-plt.tight_layout()
-plt.show()
-\end{lstlisting}
+\compactCodeOmitted{예측 결과를 지표와 표로 요약하는 단계}
 
 \begin{bookfigurelabel}[H]{Yelp 이진 분류에서 DistilBERT와 작은 BERT 비교}{fig:ch21-ch10-compare}
 \centering
@@ -1810,27 +1147,6 @@ plt.show()
 
 \section{FAQ}
 
-\begin{faqBox}{Q1. (실무) \ref{ch:20}장의 체크포인트를 디스크에 저장해두고 \ref{ch:21}장에서 \inlinecode{from\_pretrained} 로 로드하면 안 되나요?}
-
-가능합니다 --- 그게 \emph{프로덕션 흐름} 입니다. Colab 의 단일 세션에서 \ref{ch:20}장 \(\to\) \ref{ch:21}장 이어 돌리거나, 또는:
-
-\Needspace{10\baselineskip}
-\begin{lstlisting}
-mlm_model.save_pretrained("./ch20_small_bert_mlm")
-tokenizer.save_pretrained("./ch20_small_bert_mlm")
-
-from transformers import AutoModelForSequenceClassification
-model = AutoModelForSequenceClassification.from_pretrained(
-    "./ch20_small_bert_mlm",
-    num_labels=2,
-)
-\end{lstlisting}
-
-\inlinecode{from\_pretrained} 가 \inlinecode{BertForMaskedLM} 체크포인트를 자동으로 분류 모델로 \emph{헤드 변환} 합니다 --- MLM head 는 버려지고 분류 head 가 random init 으로 부착됨 (warning 메시지가 \emph{그 일이 일어났음} 을 알려줌).
-
-이 장가 \emph{MLM 학습 코드를 직접 재현} 한 이유는 \textbf{노트북 self-contained} --- Colab 세션이 끊겨도 노트북 하나만으로 끝까지 돌릴 수 있게.
-
-\end{faqBox}
 
 \begin{faqBox}{Q2. (이론) 왜 \emph{task 도메인 (Yelp) 자체로} 사전학습하지 않고 일반 위키 (Wikitext-103) 로 사전학습하나요? 같은 도메인에서 학습한 게 transfer 가 더 유리하지 않나요?}
 
@@ -1882,84 +1198,13 @@ MLM_EPOCHS = 20
 
 \end{faqBox}
 
-\begin{faqBox}{Q5. (이론) \ref{ch:20}장의 \emph{작은 사전학습 모델} 을 \ref{ch:21}장의 \emph{한국어 분류} (\ref{ch:23}장 예고) 에 쓰면 어떻게 되나요?}
-
-거의 동작 안 합니다 --- 토크나이저가 \emph{영어 WordPiece} 라 한국어 문장의 대부분이 \texttt{{[}UNK{]}} 가 되거나 자모 단위로 쪼개집니다. \emph{임베딩 자체} 가 한국어 의미를 모르는 상태.
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-en_tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-korean_text = "이 영화 정말 재밌었어요"
-print(en_tokenizer.tokenize(korean_text))
-\end{lstlisting}
-
-그래서 \ref{ch:22}--\ref{ch:23}장에서는 \emph{한국어 토크나이저} (\inlinecode{klue/bert-base} WordPiece) 로 처음부터 다시 사전학습 + fine-tune. 토크나이저와 사전학습은 \emph{언어 단위로 매칭} 되어야 함.
-
-\end{faqBox}
-
-\begin{faqBox}{Q6. (실무) 학습 곡선을 보면 fine-tune 후반에 loss 가 \emph{다시 올라가는} 경우가 있는데 정상인가요?}
-
-자주 보이는 현상입니다. 원인 셋:
-
-\Needspace{5\baselineskip}
-\begin{lstlisting}
-
-\end{lstlisting}
-
-이 장의 짧은 학습 (2 epoch \(\approx\) 600 step) 에서는 (1) 이 흔합니다. \emph{eval\_loss} 가 \emph{epoch 별로} 어떻게 움직이는지 (Trainer 가 \inlinecode{eval\_strategy="epoch"} 으로 자동 측정) 가 진짜 신호.
-
-\end{faqBox}
-
-\begin{faqBox}{Q7. (이론) DistilBERT (\ref{ch:10}장) 가 BERT 의 \emph{distilled} 버전인데 왜 \ref{ch:21}장의 \emph{작은 BERT} (scratch) 와 정확도가 차이 나나요? 둘 다 작지 않나요?}
-
-DistilBERT 와 \ref{ch:21}장의 작은 BERT 는 \emph{축약 방법론} 이 전혀 다릅니다.
-
-\begin{booktable}{21장 FAQ 표}{tab:ch21-13}
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}lll@{}}
-\toprule
-차원 & DistilBERT & \ref{ch:21}장 small BERT \\
-\midrule
-
-출발점 & \emph{이미 학습된} BERT-base 의 \emph{지식 증류} (teacher \(\to\) student) & random init 부터 시작 \\
-사전학습 & MLM + \emph{teacher 의 soft label} + \emph{hidden state 정합} & MLM only (이 장 3 epoch) \\
-학습 코퍼스 & BERT-base 와 같음 (약 33억 토큰, 일반 도메인) & Wikitext-103 2K paragraphs \(\times\) 3 epoch (약 30만-50만 토큰 효과적, 일반 도메인) \\
-파라미터 & 66M (BERT-base 110M 의 \emph{60\%}) & 10M (BERT-base 의 \emph{9\%}) \\
-사전학습 시간 & TPU 수일 & T4 10분 \\
-\bottomrule
-\end{tabular}
-\end{adjustbox}
-\end{booktable}
-
-DistilBERT 가 \emph{이미 똑똑한 큰 BERT 가 만든 답} 을 학습 신호로 받기 때문에 \emph{훨씬 작은 데이터로도 같은 수준} 으로 학습됩니다. 우리는 \emph{teacher 없이 처음부터} 학습하는 셋업 --- \emph{맨바닥에서 작은 모델로 사전학습이 어디까지 가능한가} 의 한계 실험.
-
-\end{faqBox}
-
-\begin{faqBox}{Q8. (실무) \ref{ch:21}장의 모델을 더 키우면 (예: hidden=512, layer=8) 어떻게 되나요?}
-
-T4 메모리 안에서는 가능합니다. 정확도 변화 추정:
-
-\begin{booktable}{21장 FAQ 표}{tab:ch21-14}
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}llll@{}}
-\toprule
-모델 크기 & 파라미터 & T4 학습 시간 (MLM 3 epoch + cls 2 epoch) & 예상 accuracy \\
-\midrule
-
-hidden=128, layer=2 & 약 5M & 약 5분 & 65-72\% \\
-\textbf{hidden=256, layer=4 (이 장)} & \textbf{약 10M} & \textbf{약 1분} & \textbf{약 65\% (실측 0.6490)} \\
-hidden=384, layer=6 & 약 20M & 약 30분 & 78-88\% (T4 30분 한계) \\
-hidden=512, layer=8 & 약 35M & 약 45분 & 80-90\% (T4 30분 룰 위반) \\
-hidden=768, layer=12 (BERT-base) & 약 110M & 수일 & 90\%+ (대규모 사전학습 데이터 필요) \\
-\bottomrule
-\end{tabular}
-\end{adjustbox}
-\end{booktable}
-
-데이터 양을 안 늘리면 모델만 키워도 \emph{정확도 한계} 가 빨리 옵니다. \emph{모델 키움 + 데이터 키움} 이 같이 가야 하고, 그 정점이 \emph{DistilBERT/BERT} 의 \emph{대규모 사전학습}. \ref{ch:21}장의 \emph{작은 모델 + 작은 데이터} 는 \emph{원리 학습용 toy 셋업} 의 정의.
-\end{faqBox}
 
 
+
+
+
+
+\compactFAQMore{5}
 
 \begin{previewBox}{미리보기: 다음 장}
 
