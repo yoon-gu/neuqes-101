@@ -1,4 +1,4 @@
-## 14-3. 부록 — λ 스윕으로 sweet spot 찾기
+## 부록 — λ 스윕으로 sweet spot 찾기
 
 > ▶ **[Google Colab에서 λ 스윕 부록 열기](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/14_auxiliary_loss/14_auxiliary_loss_lambda_sweep.ipynb)** — Ch 14 본편의 `lambda_aux=0.05` 선택 근거를 직접 재현합니다.
 
