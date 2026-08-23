@@ -548,7 +548,7 @@ loss = outputs.loss + $\lambda$ · MSE(
 from transformers.modeling_outputs import SequenceClassifierOutput
 
 class AuxTrainer(Trainer):
-    def __init__(self, *args, lambda_aux: float = 1.0, **kwargs):
+    def __init__(self, *args, lambda_aux: float = 0.05, **kwargs):   # 기본값은 sweet spot (부록 λ 스윕)
         super().__init__(*args, **kwargs)
         self.lambda_aux = lambda_aux
 
