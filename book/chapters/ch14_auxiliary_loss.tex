@@ -527,7 +527,7 @@ Aux head:             Linear(in_features=768, out_features=1, bias=True)
 
 \Needspace{6\baselineskip}
 \begin{lstlisting}
-loss = outputs.loss + $\lambda$ · MSE(
+loss = outputs.loss + λ · MSE(
     aux_head(CLS),
     aux_labels,
 )
