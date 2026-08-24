@@ -15,7 +15,7 @@
 
 1. `BertForMaskedLM` 과 `BertForSequenceClassification` 둘 다 *내부에 같은 `BertModel`* 을 갖습니다. 두 모델 사이에서 *어떤 파라미터* 가 이어지고 *어떤 파라미터* 가 새로 학습되나요?
 2. MLM 학습 첫 step 의 loss 가 약 10.33 인 반면, 분류 fine-tune 첫 step 의 loss 는 약 0.693 입니다. 이 *4 배 차이* 가 모델의 학습 어려움 차이를 의미하나요? (힌트: K=vocab_size vs K=2)
-3. Ch 21 의 작은 BERT 가 Ch 10 의 DistilBERT 보다 *낮은 정확도* 를 보입니다. 이 격차가 (a) *모델 크기* 차이 (약 10M vs 약 66M), (b) *사전학습 데이터 양* 차이 (약 70만-100만 토큰 vs 약 33억 토큰) 중 어느 쪽 영향이 클까요? 둘 다 *위키 일반 도메인 → Yelp transfer* 의 같은 패턴이라 *도메인 정합* 변수는 통제됨. 추가 실험으로 어떻게 (a) 와 (b) 를 분리할 수 있나요?
+3. Ch 21 의 작은 BERT 가 Ch 10 의 DistilBERT 보다 *낮은 정확도* 를 보입니다. 이 격차가 (a) *모델 크기* 차이 (약 10M vs 약 66M), (b) *사전학습 데이터 양* 차이 (약 27만 토큰 vs 약 33억 토큰) 중 어느 쪽 영향이 클까요? 둘 다 *위키 일반 도메인 → Yelp transfer* 의 같은 패턴이라 *도메인 정합* 변수는 통제됨. 추가 실험으로 어떻게 (a) 와 (b) 를 분리할 수 있나요?
 4. *MLM 3 epoch* 와 *random init* baseline 의 정확도 차이가 매우 작거나 (예: 1-2%p) 거꾸로 *random 이 더 높게* 나올 가능성이 있나요? 어떤 상황에서 그럴 수 있을까요? (힌트: 한국어 Ch 23 부록 참조)
 
 ## FAQ
@@ -56,25 +56,24 @@ model = AutoModelForSequenceClassification.from_pretrained(
 # -> Ch 10 (DistilBERT, Wiki+BookCorpus 사전학습 → Yelp 분류) 과의 비교가 unfair
 ```
 
-본 챕터의 *Ch 10 vs Ch 21* 비교가 *공정* 한 이유 — 둘 다 *일반 도메인 위키 사전학습 → Yelp 분류* 의 같은 패턴이라 *사전학습 규모* (3000-5000배) 와 *모델 크기* (6배) 만 변수. 만약 Ch 21 이 Yelp 사전학습이었다면 *어느 효과가 격차를 만들었는지* 분리할 수 없었을 것.
+본 챕터의 *Ch 10 vs Ch 21* 비교가 *공정* 한 이유 — 둘 다 *일반 도메인 위키 사전학습 → Yelp 분류* 의 같은 패턴이라 *사전학습 규모* (약 1.2만배) 와 *모델 크기* (약 6배) 만 변수. 만약 Ch 21 이 Yelp 사전학습이었다면 *어느 효과가 격차를 만들었는지* 분리할 수 없었을 것.
 
 > Ch 22-23 (한국어 위키 → NSMC 영화 리뷰) 도 *같은 대칭 패턴*. *일반 도메인 → 다른 도메인 transfer* 가 사전학습-fine-tune 패러다임의 *진짜 메시지*.
 
 ### Q3. (이론) MLM 본체 가중치를 *완전히 같은* hyperparams 에 옮겼는데 왜 분류 정확도가 *작은 폭* 만 개선되나요?
 
-**작은 데이터의 한계** — 사전학습 코퍼스 (Wikitext-103 paragraphs 5K = 약 70만-100만 토큰) 자체가 *학습할 언어 분포* 가 좁습니다. DistilBERT 의 사전학습 코퍼스 (약 33억 토큰) 와 비교하면 약 3000-5000배 작은 데이터로 같은 일을 한 것.
+**작은 데이터의 한계** — 사전학습 코퍼스 (Wikitext-103 paragraphs 2K = 약 27만 토큰) 자체가 *학습할 언어 분포* 가 좁습니다. DistilBERT 의 사전학습 코퍼스 (약 33억 토큰) 와 비교하면 약 1.2만배 작은 데이터로 같은 일을 한 것.
 
 ```python
-# 더 많은 사전학습으로 격차 줄이기 (T4 30분 룰 안에서)
-MLM_EPOCHS = 3                     # 1 -> 3
-# 또는 데이터 늘리기 — N_MLM_TRAIN 만 늘려도 효과 큼
+# 더 많은 사전학습으로 격차 줄이기
+# epoch 은 이 챕터가 이미 3 입니다 (MLM_EPOCHS = 3) — 다음으로 늘릴 축은 *데이터 양*
 mlm_train_raw = (
     raw_train.filter(is_good).shuffle(seed=SEED).select(range(20000))
     .remove_columns([c for c in raw_train.column_names if c != "text"])
 )
 ```
 
-`N_MLM_TRAIN = 20000` + `MLM_EPOCHS = 1` 정도가 T4 30분 룰 안에서 최대치. 그래도 *대규모 사전학습* 의 격차는 메우기 어렵습니다 — *데이터 규모 자체의 가치* 가 진짜 BERT 의 비밀.
+실측 기준 2K × 3 epoch 학습이 약 15초이므로, `N_MLM_TRAIN` 을 열 배 늘려도 학습 자체는 2-3분 수준입니다 (T4 30분 룰에 먼저 걸리는 쪽은 학습이 아니라 *다운로드·전처리*). 그래도 *대규모 사전학습* 의 격차는 메우기 어렵습니다 — *데이터 규모 자체의 가치* 가 진짜 BERT 의 비밀.
 
 ### Q4. (실무) MLM 사전학습이 fine-tune 정확도에 *해가 되는* 경우가 있나요?
 
@@ -82,7 +81,7 @@ mlm_train_raw = (
 
 ```python
 # (1) 사전학습이 *과도* — 작은 데이터에 너무 오래 학습해 본체가 overfitting
-MLM_EPOCHS = 20   # 5K paragraphs 에 20 epoch -> 데이터에 과적합
+MLM_EPOCHS = 20   # 2K paragraphs 에 20 epoch -> 데이터에 과적합
 
 # (2) downstream 과 *분포가 너무 동떨어진* 사전학습 — 본 챕터는 위키 -> Yelp 라 어느 정도 차이는 있어도 같은 영어
 # 다른 경우: Wikipedia 영어로 MLM 사전학습한 모델로 한국어 분류 fine-tune (Q5 참고)
@@ -130,9 +129,9 @@ DistilBERT 와 Ch 21 의 작은 BERT 는 *축약 방법론* 이 전혀 다릅니
 |---|---|---|
 | 출발점 | *이미 학습된* BERT-base 의 *지식 증류* (teacher → student) | random init 부터 시작 |
 | 사전학습 | MLM + *teacher 의 soft label* + *hidden state 정합* | MLM only (이번 챕터 3 epoch) |
-| 학습 코퍼스 | BERT-base 와 같음 (약 33억 토큰, 일반 도메인) | Wikitext-103 2K paragraphs × 3 epoch (약 30만-50만 토큰 효과적, 일반 도메인) |
+| 학습 코퍼스 | BERT-base 와 같음 (약 33억 토큰, 일반 도메인) | Wikitext-103 2K paragraphs × 3 epoch (약 27만 토큰 × 3 epoch, 일반 도메인) |
 | 파라미터 | 66M (BERT-base 110M 의 *60%*) | 10M (BERT-base 의 *9%*) |
-| 사전학습 시간 | TPU 수일 | T4 10분 |
+| 사전학습 시간 | TPU 수일 | **T4 약 15초** (2K × 3 epoch) |
 
 DistilBERT 가 *이미 똑똑한 큰 BERT 가 만든 답* 을 학습 신호로 받기 때문에 *훨씬 작은 데이터로도 같은 수준* 으로 학습됩니다. 우리는 *teacher 없이 처음부터* 학습하는 셋업 — *맨바닥에서 작은 모델로 사전학습이 어디까지 가능한가* 의 한계 실험.
 
@@ -140,15 +139,17 @@ DistilBERT 가 *이미 똑똑한 큰 BERT 가 만든 답* 을 학습 신호로 �
 
 T4 메모리 안에서는 가능합니다. 정확도 변화 추정:
 
-| 모델 크기 | 파라미터 | T4 학습 시간 (MLM 3 epoch + cls 2 epoch) | 예상 accuracy |
+| 모델 크기 | 파라미터 | T4 학습 시간 (MLM 3 epoch + cls 2 epoch, *이 챕터 데이터 기준*) | 예상 accuracy |
 |---|---|---|---|
-| hidden=128, layer=2 | 약 5M | 약 5분 | 65-72% |
-| **hidden=256, layer=4 (이번 챕터)** | **약 10M** | **약 1분** | **약 65% (실측 0.6490)** |
-| hidden=384, layer=6 | 약 20M | 약 30분 | 78-88% (T4 30분 한계) |
-| hidden=512, layer=8 | 약 35M | 약 45분 | 80-90% (T4 30분 룰 위반) |
-| hidden=768, layer=12 (BERT-base) | 약 110M | 수일 | 90%+ (대규모 사전학습 데이터 필요) |
+| hidden=128, layer=2 | 약 5M | 약 20초 | 이번 챕터보다 낮음 |
+| **hidden=256, layer=4 (이번 챕터)** | **약 10M** | **약 30초** (실측 — MLM 약 15초 + 분류 약 15초) | **실행본 참조 (§6)** |
+| hidden=384, layer=6 | 약 20M | 약 1분 | 조금 높음 |
+| hidden=512, layer=8 | 약 35M | 약 2분 | 더 높지만 *데이터* 가 먼저 한계 |
+| hidden=768, layer=12 (BERT-base) | 약 110M | 약 6분 | 대규모 사전학습 데이터가 있어야 의미 |
 
 데이터 양을 안 늘리면 모델만 키워도 *정확도 한계* 가 빨리 옵니다. *모델 키움 + 데이터 키움* 이 같이 가야 하고, 그 정점이 *DistilBERT/BERT* 의 *대규모 사전학습*. Ch 21 의 *작은 모델 + 작은 데이터* 는 *원리 학습용 toy 셋업* 의 정의.
+
+> 위 시간은 *이 챕터의 데이터 크기* (MLM 2K / 분류 5K) 기준입니다. T4 30분 룰은 모델 크기보다 **데이터 양** 을 키울 때 먼저 걸립니다.
 
 ## 다음 챕터 예고
 

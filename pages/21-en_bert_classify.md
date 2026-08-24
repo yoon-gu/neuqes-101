@@ -6,13 +6,13 @@ self-contained 노트북: Ch 20 의 MLM 학습을 압축 (2K × 3 epoch) 재현 
 
 **환경**: Google Colab **T4 GPU 필수**.
 
-**예상 소요 시간**: 약 25-28분 (Wikitext-103 다운로드·필터링 약 2분 + MLM 3 epoch 약 8-10분 + 분류 fine-tune 2 epoch 약 8-10분 + 평가 약 2분)
+**예상 소요 시간**: 약 3-5분 — 대부분이 데이터 다운로드입니다 (실행본 `executed/21_en_bert_classify.ipynb` 기준 전체 2분 13초: Wikitext-103·Yelp 다운로드·전처리 약 1분 40초 + MLM 3 epoch 약 15초 + 분류 fine-tune 2 epoch 약 15초 + 평가·시각화 수 초). 다운로드 속도에 따라 달라집니다.
 
 ## 학습 흐름
 
 1. 🚀 **분류 데이터**: `fancyzhx/yelp_polarity` 이진 분류 (Ch 10 과 같은 5K/1K split, seed 42)
 2. 🔤 **토크나이저**: `bert-base-uncased` (Ch 20 과 동일)
-3. 📥 **MLM 사전학습 데이터**: `Salesforce/wikitext` config `wikitext-103-raw-v1` paragraphs 5K (일반 도메인 — *분류용 Yelp 와 별도*)
+3. 📥 **MLM 사전학습 데이터**: `Salesforce/wikitext` config `wikitext-103-raw-v1` paragraphs 2K (일반 도메인 — *분류용 Yelp 와 별도*)
 4. 🏗️ **MLM 사전학습 재현 (Ch 20 압축본)**: 같은 작은 BertConfig 로 2K paragraphs × 3 epoch (한국어 Ch 23 와 동일)
 5. 🔀 **헤드 교체**: `BertForMaskedLM` → `BertForSequenceClassification(num_labels=2)`. 본체는 그대로, MLM head 떼고 분류 head 부착
 6. 🚀 **분류 fine-tune**: Trainer fp16, 2 epoch
@@ -69,15 +69,15 @@ self-contained 노트북: Ch 20 의 MLM 학습을 압축 (2K × 3 epoch) 재현 
 | 차원 | Ch 10 (DistilBERT) | Ch 21 (이 챕터) | 비고 |
 |---|---|---|---|
 | 본체 파라미터 | 약 66M | **약 10M** | Ch 21 은 1/6 작음 |
-| 사전학습 코퍼스 | Wikipedia + BookCorpus (약 33억 토큰, 일반 도메인) | **Wikitext-103 paragraphs 5K (약 70만-100만 토큰, 일반 도메인)** | 약 3000-5000배 격차, **둘 다 일반 위키** |
-| 사전학습 시간 | TPU 수일 (대규모 인프라) | **T4 약 10분** | |
+| 사전학습 코퍼스 | Wikipedia + BookCorpus (약 33억 토큰, 일반 도메인) | **Wikitext-103 paragraphs 2K (약 27만 토큰, 일반 도메인)** | 약 1.2만배 격차, **둘 다 일반 위키** |
+| 사전학습 시간 | TPU 수일 (대규모 인프라) | **T4 약 15초** (2K × 3 epoch = 198 step) | |
 | Fine-tune 도메인 | Yelp 이진 (사전학습과 다른 도메인) | Yelp 이진 (사전학습과 다른 도메인) | **둘 다 일반 → Yelp transfer 라 fair** |
 | 분류 fine-tune 셋업 | Ch 10 = 이번 챕터 동일 (같은 데이터, 같은 hyperparams) | | 변하는 건 *본체 출발점* 뿐 |
-| 실측 accuracy | 약 0.90 | **약 0.65** | 실행본 기준 (Ch 10=0.9030, Ch 21=0.6490) |
+| 실측 accuracy | 약 0.90 | **random (0.50) 과 Ch 10 의 중간쯤** | 실행마다 흔들려 본문에 못 박지 않습니다 — 값은 §6 의 비교 셀 출력 |
 
-비교가 *공정* 한 이유 — Ch 10 도 본 챕터도 둘 다 *일반 도메인 위키 사전학습 → Yelp 분류 transfer* 의 같은 패턴. *사전학습 규모* (3000-5000배) 와 *모델 크기* (6배) 만 차이. 만약 Ch 21 이 Yelp text 로 사전학습했다면 비교가 unfair 했을 것 — domain-adaptive pretraining 우위 때문.
+비교가 *공정* 한 이유 — Ch 10 도 본 챕터도 둘 다 *일반 도메인 위키 사전학습 → Yelp 분류 transfer* 의 같은 패턴. *사전학습 규모* (약 1.2만배) 와 *모델 크기* (약 6배) 만 차이. 만약 Ch 21 이 Yelp text 로 사전학습했다면 비교가 unfair 했을 것 — domain-adaptive pretraining 우위 때문.
 
-이 격차가 *사전학습 규모의 가치* 를 정량으로 보여줍니다. *작은 일반 도메인 사전학습도 random init 보다는 낫다* 는 것, 그리고 *같은 GPU compute 를 fine-tune 에 모두 쏟아도 사전학습 효과를 메우기 어렵다* 는 것은 부록 노트북 [`appendix_compute_budget.ipynb`](./appendix_compute_budget.ipynb) 에서 fair-compute 관점으로 다룹니다.
+이 격차가 *사전학습 규모의 가치* 를 정량으로 보여줍니다. 한편 *작은 일반 도메인 사전학습이 random init 보다 나은가*, *같은 GPU compute 를 fine-tune 에 모두 쏟으면 그 차이가 메워지는가* 는 이 노트북에서 측정하지 않습니다 — 부록 노트북 [`appendix_compute_budget.ipynb`](./appendix_compute_budget.ipynb) 이 그 비교를 위한 셋업입니다. **부록의 답은 이 규모에서 '메워진다' 입니다** — random init 대비 순 효과는 수 %p 로 실재하지만, 같은 GPU 예산을 분류 fine-tune 에 쓰는 쪽이 더 크게 이깁니다. *사전학습의 가치는 규모에서 나온다* 는 이 챕터의 메시지를 반대쪽에서 받쳐 줍니다.
 
 ## Loss 함수의 변화 — MLM CE (vocab=30,522) → 분류 CE (K=2)
 
@@ -105,11 +105,11 @@ $$L_{\text{cls}} = -\frac{1}{N}\sum_{i=1}^{N} \log \hat p_{i, y_i}$$
 
 | 셋업 | 학습 첫 step loss | 학습 종료 loss (epoch 2) | 메모 |
 |---|---|---|---|
-| random init + 분류 (부록) | 약 0.693 | 약 0.5-0.6 | 본체도 분류 헤드도 random — 학습이 *느림* |
-| Wikitext-103 MLM 사전학습 본체 + 분류 (메인) | 약 0.693 | **약 0.3-0.5** | 본체에 *일반 위키 어휘·문맥 구조* 가 들어 있어 헤드가 Yelp 분류로 비교적 빠르게 적응 |
-| Ch 10 DistilBERT 사전학습 본체 + 분류 | 약 0.693 | **약 0.15-0.25** | 대규모 일반 도메인 사전학습이 만든 표상의 위력 |
+| random init + 분류 (부록) | 약 0.693 | **약 0.69** (`executed/appendix_compute_budget.ipynb` 셋업 C 기록) | 본체도 분류 헤드도 random — 2 epoch 으로는 기준선을 거의 못 벗어남 |
+| Wikitext-103 MLM 사전학습 본체 + 분류 (메인) | 약 0.693 | **랜덤 기준선 바로 아래** — 값은 §5-1 학습 곡선 셀 출력 | 2K × 3 epoch 은 아주 얕은 사전학습이라, 2 epoch fine-tune 으로 기준선에서 크게 내려가지 못합니다 |
+| Ch 10 DistilBERT 사전학습 본체 + 분류 | 약 0.693 | **약 0.16** (`executed/10_bert_binary_sigmoid.ipynb`, 커밋 `d9fc77c` 기록) | 대규모 일반 도메인 사전학습이 만든 표상의 위력 |
 
-random baseline 은 *세 셋업 모두 같음* — 사전학습이 *학습 속도* 와 *수렴점* 에 영향. 학습 첫 step loss 가 같다고 사전학습이 의미 없는 게 아닙니다. *위키 사전학습 본체* 가 Yelp 도메인에서 *완벽한 성능* 을 내지는 못해도, random 보다 일관되게 빠르고 낮게 수렴.
+random baseline 은 *세 셋업 모두 같음* — 사전학습은 *학습 속도* 와 *수렴점* 에 영향을 줍니다. 다만 이 챕터의 사전학습은 *2K paragraphs × 3 epoch* 으로 아주 얕아서, 종료 loss 가 랜덤 기준선(0.693)을 크게 밑돌지는 못합니다. *얼마나 내려가는지* 는 실행마다 흔들리므로 본문에서 숫자를 못 박지 않고 §5-1 의 곡선과 §6 의 셀 출력을 단일 출처로 둡니다. random init 과의 직접 비교는 부록에서 다룹니다 — 부록 실측에서 메인 조건(A)이 random init(C)보다 조금 앞섰지만, 같은 GPU 예산을 fine-tune 에 더 쓴 셋업(B)에는 뒤졌습니다.
 
 > **숫자로 감 잡기** (K=2, 정답 = 클래스 1):
 > | logits $(z_0, z_1)$ | softmax → $\hat p_1$ | 손실 |
