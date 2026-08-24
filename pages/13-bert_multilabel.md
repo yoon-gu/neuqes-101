@@ -4,11 +4,13 @@
 
 **예상 소요 시간**: 약 5분 (BERT 학습 약 1분 + sklearn 비교 약 30초 + 평가/시각화)
 
+
 ## 학습 흐름
 
 1. 🚀 **실습**: Ch 6에서 만들었던 *항목 키워드 합성 라벨* (food/service/price/ambiance/location)을 그대로 BERT로 학습. `num_labels=5` + `problem_type="multi_label_classification"` 로 BCE per-label 자동 매핑.
 2. 🔬 **해부**: 라벨별 sigmoid 확률 분포 (5 패널 KDE) + 라벨 간 공동 활성 패턴 (correlation heatmap).
-3. 🛠️ **클라이맥스**: 같은 노트북 안에서 Ch 6의 sklearn `OneVsRestClassifier(LogisticRegression)` baseline 재현 → 라벨별 metric 비교.
+3. 🛠️ **클라이맥스**: 같은 노트북 안에서 Ch 6와 *같은 계열* 의 sklearn `OneVsRestClassifier(LogisticRegression)` baseline 을 다시 학습해 라벨별 metric 비교.
+
 
 > 📒 **사전 학습 자료**: Ch 6 (sklearn multi-label, OvR), Ch 10 (BERT `num_labels=1` + `multi_label_classification` 트릭 — Ch 13은 그 트릭을 K=5 로 확장한 형태), Ch 12 (BERT multi-class). 이번 챕터는 self-contained.
 
@@ -53,7 +55,7 @@ softmax는 출력의 *합 = 1* 을 강제합니다 ($\sum_k \mathrm{softmax}(z)_
 
 K개 라벨 각각에 *독립적* BCE를 적용한 뒤 평균:
 
-$$L = \frac{1}{N \cdot K}\sum_{i=1}^{N}\sum_{k=1}^{K}\left[ y_{i,k} \log \sigma(z_{i,k}) + (1-y_{i,k}) \log(1-\sigma(z_{i,k})) \right]$$
+$$L = \frac{1}{N \cdot K}\sum_{i=1}^{N}\sum_{k=1}^{K}\left[ -y_{i,k} \log \sigma(z_{i,k}) - (1-y_{i,k}) \log(1-\sigma(z_{i,k})) \right]$$
 
 각 $z_{i,k}$ 는 *독립 logit* — 라벨 k가 *얼마나 활성될지* 의 점수, 다른 라벨과 무관. PyTorch `BCEWithLogitsLoss` 가 5개 위치를 한 번에 처리하지만 수식적으론 K개의 binary BCE 평균.
 

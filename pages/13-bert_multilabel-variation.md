@@ -1,11 +1,19 @@
-## 클라이맥스 — Ch 6 sklearn `OneVsRestClassifier(LogisticRegression)` 와 비교
+## 클라이맥스 — sklearn `OneVsRestClassifier(LogisticRegression)` 와 비교
 
-Ch 6의 sklearn 셋업을 *이 노트북 안에서* 다시 학습해 라벨별로 BERT와 비교합니다. **multi-label에서도 BERT의 67M이 sklearn 대비 어디서 이기는가?**
+Ch 6와 *같은 계열* 의 모델(TF-IDF + 라벨마다 독립 LogisticRegression)을 *이 노트북 안에서* 다시 학습해 라벨별로 BERT와 비교합니다. **multi-label에서도 BERT의 67M이 sklearn 대비 어디서 이기는가?**
 
-Ch 6와 같은 계열의 sklearn 셋업(TF-IDF + 라벨마다 독립 LogisticRegression)을 다시 학습해 BERT와 비교할 baseline을 만듭니다. `OneVsRestClassifier`는 5개 라벨을 *완전히 분리된* 5개 이진 분류기로 학습합니다.
+> ⚠️ **Ch 6의 숫자를 재현하는 게 아닙니다.** 설정이 다릅니다.
+>
+> | | Ch 6 | 여기 (Ch 13 §5) |
+> |---|---|---|
+> | vectorizer | `max_features=10000`, unigram | `max_features=20000`, **bigram 포함** |
+> | 평가 셋 | 5,000을 80/20으로 나눈 test 1,000 | BERT와 같은 `ds["test"]` 1,000 |
+>
+> **일부러 더 강한 baseline을 씁니다.** 목적이 Ch 6 재현이 아니라 *BERT와 똑같은 split에서의 공정한 대조군* 이기 때문입니다. 이 챕터에서는 특히 중요한데 — 이렇게 강하게 잡아도 **macro AUC는 sklearn이 이깁니다**(§5-1). 키워드로 합성한 라벨에서 TF-IDF가 만만치 않다는 이 챕터의 결론이 바로 그 대조군에서 나옵니다.
 
 ```python
-# Ch 6 셋업 재현 — TF-IDF + OneVsRestClassifier(LogisticRegression)
+# Ch 6와 같은 계열 — TF-IDF + OneVsRestClassifier(LogisticRegression)
+# (Ch 6 재현이 아님: Ch 6는 10K unigram, 여기는 20K + bigram — BERT와 같은 split의 강한 대조군)
 texts_train = list(train_full["text"])
 texts_eval  = list(eval_full["text"])
 Y_train_bin = np.array(train_full["aspects"]).astype(int)
@@ -80,23 +88,17 @@ print(cmp.round(4).to_string(index=False))
 
 ```text
          metric  sklearn (OvR)  BERT (this chapter)  BERT - sklearn
-   hamming_loss         0.1426               0.1246         -0.0180
-       micro_f1         0.7634               0.7977          0.0343
-micro_precision         0.8915               0.9056          0.0141
-   micro_recall         0.6674               0.7127          0.0453
-       macro_f1         0.6141               0.7239          0.1099
-macro_precision         0.9036               0.9155          0.0119
-   macro_recall         0.5307               0.6447          0.1140
-      macro_auc         0.9387               0.8994         -0.0393
+   hamming_loss         0.1426               0.1020         -0.0406
+       micro_f1         0.7634               0.8399          0.0766
+micro_precision         0.8915               0.9146          0.0231
+   micro_recall         0.6674               0.7766          0.1091
+       macro_f1         0.6141               0.8023          0.1882
+macro_precision         0.9036               0.9328          0.0292
+   macro_recall         0.5307               0.7206          0.1900
+      macro_auc         0.9387               0.9179         -0.0207
 ```
 
-**결과 해석**
-
-BERT가 macro F1에서 가장 크게 앞서고, 이득의 대부분은 macro recall에서 옵니다 — 드문 라벨을 BERT가 더 잘 잡습니다. 다만 macro AUC는 sklearn이 오히려 높아, 키워드가 본질 신호인 합성 라벨에서는 TF-IDF의 확률 정렬력도 만만치 않음을 보여줍니다.
-
 ### 5-2. 라벨별 F1 비교 — 어디서 BERT가 이기나
-
-라벨별 F1을 두 모델에 대해 따로 계산해 표와 막대그래프로 비교합니다. 어떤 항목에서 BERT가 이기고 어디서 sklearn이 이기는지가 합성 라벨의 성격을 드러냅니다.
 
 ```python
 def per_label_f1(Y_true, Y_pred):
@@ -139,18 +141,14 @@ plt.show()
 
 ```text
   aspect  sklearn F1  BERT F1  BERT - sklearn
-    food      0.9057   0.9203          0.0146
- service      0.8833   0.8545         -0.0288
-   price      0.5271   0.3708         -0.1563
-ambiance      0.3333   0.6510          0.3176
-location      0.4211   0.8232          0.4022
+    food      0.9057   0.9242          0.0185
+ service      0.8833   0.8453         -0.0380
+   price      0.5271   0.7360          0.2089
+ambiance      0.3333   0.6848          0.3515
+location      0.4211   0.8212          0.4002
 ```
 
-![output](../assets/13-bert_multilabel-out3-1.png)
-
-**결과 해석**
-
-BERT는 드문 라벨에서 압도적입니다 — location +0.40, ambiance +0.32로, 키워드만으로 안 잡히는 신호까지 학습한 결과입니다. 반대로 price는 sklearn이 +0.16 앞서는데, 0.5 임계값에서 BERT의 recall이 무너진 탓이라 임계값 조정으로 회복 가능한 손실입니다.
+![output](../assets/13-bert_multilabel-out3-2.png)
 
 **해석**
 

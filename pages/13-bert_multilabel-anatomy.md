@@ -15,27 +15,21 @@ for k, v in eval_metrics.items():
 
 ```text
 Training Loss  Validation Loss  Epoch  Hamming Loss  Micro F1  Micro Precision  Micro Recall  Macro F1  Macro Precision  Macro Recall  Macro Auc  Runtime   Samples Per Second  Steps Per Second
-0.313462       0.320437         2      0.124600      0.797662  0.905605         0.712710      0.723947  0.915523         0.644669      0.899381   0.915700  1092.112000         34.948000
+0.286978       0.293115         2      0.102000      0.839925  0.914559         0.776553      0.802303  0.932820         0.720649      0.917939   1.099000  909.899000          29.117000
 BERT multi-label evaluation:
-               eval_loss: 0.3204
-       eval_hamming_loss: 0.1246
-           eval_micro_f1: 0.7977
-    eval_micro_precision: 0.9056
-       eval_micro_recall: 0.7127
-           eval_macro_f1: 0.7239
-    eval_macro_precision: 0.9155
-       eval_macro_recall: 0.6447
-          eval_macro_auc: 0.8994
-            eval_runtime: 0.9157
-  eval_samples_per_second: 1092.1120
-   eval_steps_per_second: 34.9480
+               eval_loss: 0.2931
+       eval_hamming_loss: 0.1020
+           eval_micro_f1: 0.8399
+    eval_micro_precision: 0.9146
+       eval_micro_recall: 0.7766
+           eval_macro_f1: 0.8023
+    eval_macro_precision: 0.9328
+       eval_macro_recall: 0.7206
+          eval_macro_auc: 0.9179
+            eval_runtime: 1.0990
+  eval_samples_per_second: 909.8990
+   eval_steps_per_second: 29.1170
 ```
-
-**결과 해석**
-
-micro F1이 macro F1보다 높습니다 — 흔한 food·service가 점수를 끌어올리고 드문 라벨이 macro를 깎는 전형적 패턴입니다. precision이 recall보다 크게 높아 모델이 *확신할 때만 활성* 하는 보수적 경향을 보입니다.
-
-평가셋 전체를 예측해 라벨별 확률 범위와 실제 활성률(true rate) 대비 예측 활성률(pred rate)을 비교합니다. 두 비율이 가까우면 calibration이 좋고, pred rate가 true rate보다 크게 낮으면 모델이 그 라벨을 잘 안 켜는 것입니다.
 
 ```python
 # logits → per-label sigmoid → multi-hot 예측
@@ -57,16 +51,12 @@ for k, a in enumerate(ASPECTS):
 ```text
 logits shape: (1000, 5)
 prob ranges per label:
-       food: [0.0280, 0.9871]  true rate=55.2%, pred rate=56.5%
-    service: [0.0412, 0.9794]  true rate=49.7%, pred rate=46.5%
-      price: [0.0873, 0.7026]  true rate=30.4%, pred rate=7.9%
-   ambiance: [0.0253, 0.8920]  true rate=16.8%, pred rate=8.7%
-   location: [0.0310, 0.9285]  true rate=20.2%, pred rate=16.0%
+       food: [0.0327, 0.9897]  true rate=55.2%, pred rate=55.6%
+    service: [0.0526, 0.9815]  true rate=49.7%, pred rate=46.6%
+      price: [0.0667, 0.9140]  true rate=30.4%, pred rate=19.6%
+   ambiance: [0.0281, 0.8961]  true rate=16.8%, pred rate=8.9%
+   location: [0.0312, 0.9280]  true rate=20.2%, pred rate=15.6%
 ```
-
-**결과 해석**
-
-price가 가장 심각합니다 — 최대 확률이 0.70에 그쳐 0.5를 넘는 샘플이 적고, pred rate 7.9%로 true rate 30.4%의 1/4 수준만 활성합니다. food·service는 두 비율이 거의 일치해 잘 학습됐고, 드문 라벨일수록 모델이 보수적으로 눌러두는 경향이 확인됩니다.
 
 ```python
 # Per-label classification report
@@ -82,27 +72,21 @@ print(classification_report(
 ```text
               precision    recall  f1-score   support
 
-        food     0.9097    0.9312    0.9203       552
-     service     0.8839    0.8270    0.8545       497
-       price     0.8987    0.2336    0.3708       304
-    ambiance     0.9540    0.4940    0.6510       168
-    location     0.9313    0.7376    0.8232       202
+        food     0.9209    0.9275    0.9242       552
+     service     0.8734    0.8189    0.8453       497
+       price     0.9388    0.6053    0.7360       304
+    ambiance     0.9888    0.5238    0.6848       168
+    location     0.9423    0.7277    0.8212       202
 
-   micro avg     0.9056    0.7127    0.7977      1723
-   macro avg     0.9155    0.6447    0.7239      1723
-weighted avg     0.9072    0.7127    0.7667      1723
- samples avg     0.7343    0.6316    0.6586      1723
+   micro avg     0.9146    0.7766    0.8399      1723
+   macro avg     0.9328    0.7206    0.8023      1723
+weighted avg     0.9195    0.7766    0.8328      1723
+ samples avg     0.7618    0.6878    0.7048      1723
 ```
-
-**결과 해석**
-
-모든 라벨에서 precision이 높게 나와 *틀린 활성은 거의 안 함* 을 보입니다. 문제는 recall — 활성률이 가장 낮은 price는 정답의 절반도 못 잡아 F1이 다섯 라벨 중 가장 낮고, ambiance도 절반 가까이 놓칩니다. 드문 라벨에서 recall이 무너지는 것이 0.5 임계값의 보수성에서 비롯됨을 보여줍니다(FAQ Q1).
 
 ### 샘플 단위 해석 — 모델 출력을 읽어내는 법
 
 평가 metric (F1·hamming·AUC) 은 *전체 평균* 이라 모델이 *한 리뷰를 보고 어떻게 판단했는지* 직관이 안 옵니다. 본격 시각화로 가기 전에, 5차원 출력을 *문장 단위* 로 어떻게 해석하는지 두 샘플로 짚어 보겠습니다.
-
-평균 metric만으로는 모델이 한 리뷰를 어떻게 판단했는지 감이 안 오므로, 정답 항목이 가장 많은 샘플과 가장 적은 샘플을 골라 항목별 true·prob·pred를 한 줄씩 읽어봅니다.
 
 ```python
 # 평가 셋에서 항목 활성이 가장 *많은* 샘플 1개 + 가장 *적은* 샘플 1개 골라 읽어보기
@@ -145,11 +129,11 @@ sample #29  (many active labels)
 text (truncated): It's hard to complain about this place given the price I got it for! \n**Warning** This is a long review, there is a lot t …(뒤 201자 생략)
 
     aspect    true      prob    pred (>=0.5)  match
-       food       1    0.2910               0    ✗
-    service       1    0.3436               0    ✗
-      price       1    0.5005               1    ✓
-   ambiance       1    0.3828               0    ✗
-   location       1    0.8549               1    ✓
+       food       1    0.2942               0    ✗
+    service       1    0.3481               0    ✗
+      price       1    0.8292               1    ✓
+   ambiance       1    0.3188               0    ✗
+   location       1    0.6720               1    ✓
 
   predicted: ['price', 'location']
   true:      ['food', 'service', 'price', 'ambiance', 'location']
@@ -160,19 +144,15 @@ sample #4  (few active labels)
 text (truncated): I don't quite get this place or why Asians love it, but it is very good :)
 
     aspect    true      prob    pred (>=0.5)  match
-       food       0    0.0792               0    ✓
-    service       0    0.0725               0    ✓
-      price       0    0.1344               0    ✓
-   ambiance       0    0.0440               0    ✓
-   location       0    0.0682               0    ✓
+       food       0    0.0876               0    ✓
+    service       0    0.1027               0    ✓
+      price       0    0.0957               0    ✓
+   ambiance       0    0.0563               0    ✓
+   location       0    0.0551               0    ✓
 
   predicted: []
   true:      []
 ```
-
-**결과 해석**
-
-5개 전부 정답인 샘플 #29에서 모델은 price·location만 맞히고 food·service·ambiance는 prob 0.29~0.38로 눌러 놓쳤습니다 — recall이 낮은 보수적 경향이 한 샘플에서 그대로 드러납니다. 반대로 활성 라벨이 0개인 샘플 #4는 모든 prob가 0.13 이하로 깔끔하게 전부 0을 맞혔습니다.
 
 **읽는 법 — 표를 한 줄씩**
 
@@ -192,8 +172,6 @@ text (truncated): I don't quite get this place or why Asians love it, but it is 
 ### 4-1. 메인 그림 — 라벨별 sigmoid 확률 KDE (5 패널)
 
 Ch 10에서 봤던 *확률 공간 KDE* 를 5개 라벨에 대해 *각각* 그립니다. 라벨이 *독립* 이라는 multi-label의 본질이 시각적으로 드러나는 그림입니다 — 라벨마다 학습 난이도와 분리도가 *다를 수* 있습니다.
-
-라벨 5개의 sigmoid 확률 분포를 실제 라벨(0/1)별로 나눠 5패널 KDE로 그립니다. label=0과 label=1 곡선이 0.5를 기준으로 깨끗이 갈라질수록 그 라벨이 잘 분리된 것입니다.
 
 ```python
 sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
@@ -225,7 +203,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/13-bert_multilabel-out1-1.png)
+![output](../assets/13-bert_multilabel-out1-2.png)
 
 **해석**
 
@@ -276,7 +254,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/13-bert_multilabel-out2-1.png)
+![output](../assets/13-bert_multilabel-out2-2.png)
 
 **해석**
 

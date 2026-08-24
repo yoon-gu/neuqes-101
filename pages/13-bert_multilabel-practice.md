@@ -64,7 +64,7 @@ GPU:             Tesla T4
 **▶ 실행 결과**
 
 ```text
-Mon Jun 22 03:49:55 2026       
+Mon Aug 24 00:16:12 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -73,7 +73,7 @@ Mon Jun 22 03:49:55 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   46C    P8             11W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   47C    P8             13W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -99,8 +99,6 @@ Yelp 리뷰엔 multi-label 정답이 없습니다. Ch 6에서처럼 5개 항목(
 | `location` | 위치/주차 | location, parking, area, neighborhood, ... |
 
 > **합성의 한계** — 키워드 매칭은 *언급한 항목* 만 잡고 *언급한 항목이 긍정인지 부정인지* 는 알 수 없습니다. 또 *키워드 없이* 항목이 표현된 경우(예: "10 minutes wait" → service)도 놓칩니다. 이 한계는 챕터 끝에서 솔직히 짚습니다.
-
-Ch 6과 동일하게 5개 항목(aspect)별 키워드 사전을 정의합니다. `extract_aspects`는 텍스트를 소문자화한 뒤 각 항목의 키워드가 단어 경계(`\b`)로 하나라도 매칭되면 1.0, 아니면 0.0을 채워 길이 5의 multi-hot float 벡터를 만듭니다. 정답이 없는 Yelp에 라벨을 합성하는 단계입니다.
 
 ```python
 ASPECT_KEYWORDS = {
@@ -137,8 +135,6 @@ K (number of aspects): 5
 aspects: ['food', 'service', 'price', 'ambiance', 'location']
 ```
 
-Yelp 리뷰 train 5,000건·eval 1,000건을 샘플링한 뒤, 각 텍스트에 `extract_aspects`로 만든 5차원 multi-hot 벡터를 `aspects` 컬럼으로 부착합니다. 첫 샘플의 활성 항목을 출력해 합성 라벨이 제대로 붙었는지 눈으로 확인합니다.
-
 ```python
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
 
@@ -164,6 +160,8 @@ print(f"  active aspects: {[a for a, v in zip(ASPECTS, train_full[0]['aspects'])
 **▶ 실행 결과**
 
 ```text
+yelp_review_full/train-00000-of-00001.pa(…): downloading bytes:           |  0.00B            
+yelp_review_full/test-00000-of-00001.par(…): downloading bytes:           |  0.00B            
 train: 5000, eval: 1000
 
 First sample:
@@ -171,8 +169,6 @@ First sample:
   aspects (multi-hot): [0.0, 1.0, 0.0, 0.0, 1.0]
   active aspects: ['service', 'location']
 ```
-
-항목별 활성률과 샘플당 평균 활성 라벨 수를 집계해 데이터의 불균형 구조를 파악합니다. 활성률이 낮은 항목일수록 학습이 어렵고, 한 샘플에 몇 개 라벨이 동시에 켜지는지가 multi-label의 핵심 성격입니다.
 
 ```python
 # 항목별 활성률
@@ -212,10 +208,6 @@ Active label distribution (train):
   5 labels active: 55 samples (1.1%)
 ```
 
-**결과 해석**
-
-food(55.6%)·service(49.6%)가 흔하고 ambiance(18.1%)·location(21.9%)·price(29.4%)는 드뭅니다. 샘플당 평균 1.75개 라벨이 활성되며 2개 활성이 30.1%로 가장 많아, 라벨이 서로 배타적이지 않은 전형적 multi-label 분포임이 드러납니다.
-
 **Ch 12와의 한 줄 차이**: `out["labels"] = [int(l) for l in batch["label"]]` → `out["labels"] = [list(map(float, a)) for a in batch["aspects"]]`. 라벨이 *int 스칼라* 가 아니라 *길이 5 multi-hot float 벡터*. 이 형식 + `problem_type="multi_label_classification"` 두 가지가 BCE per-label 자동 매핑의 트리거.
 
 ```python
@@ -224,19 +216,13 @@ def tokenize_fn(batch):
     # multi-hot 5차원 float 벡터 (BCEWithLogitsLoss가 받는 형식)
     out["labels"] = [list(map(float, a)) for a in batch["aspects"]]
     return out
-```
 
-**위 코드 읽기** — 토큰화한 결과의 `out["labels"]`에 `aspects`를 `float`로 변환한 길이 5 multi-hot 벡터를 그대로 넣습니다. Ch 12의 `int` 스칼라 라벨과 달리 *벡터·float* 형식이어야 `BCEWithLogitsLoss`가 받을 수 있습니다 — 이 한 줄이 multi-label로 가는 핵심 변경점입니다.
-
-```python
 train_tok = train_full.map(tokenize_fn, batched=True).remove_columns(["text", "label", "aspects"])
 eval_tok  = eval_full.map(tokenize_fn,  batched=True).remove_columns(["text", "label", "aspects"])
 
 print(train_tok)
 print(f"\nFirst sample label: {train_tok[0]['labels']}  (length-5 multi-hot float vector)")
 ```
-
-**위 코드 읽기** — `map`으로 전체에 적용한 뒤 `text`·`label`·`aspects` 원본 컬럼을 제거해 `input_ids`·`attention_mask`·`labels`만 남깁니다. 첫 샘플 라벨이 `[0.0, 1.0, 0.0, 0.0, 1.0]`처럼 길이 5 float 벡터로 찍히는지 확인합니다.
 
 **▶ 실행 결과**
 
@@ -253,9 +239,9 @@ First sample label: [0.0, 1.0, 0.0, 0.0, 1.0]  (length-5 multi-hot float vector)
 
 Ch 12와 *모델 아키텍처는 동일* (`Linear(H, 5)` 분류 헤드). 변하는 한 가지 — `problem_type="multi_label_classification"` — 가 자동 매핑되는 loss를 BCE per-label 로 바꿉니다.
 
-모델을 `num_labels=5`로 로드하되 `problem_type="multi_label_classification"`을 지정해 loss를 BCE per-label로 자동 매핑합니다. 헤드 구조(`Linear(768, 5)`)와 파라미터 수는 Ch 12와 동일하고, 바뀌는 것은 이 한 줄과 라벨 형식뿐임을 출력으로 확인합니다.
-
 ```python
+torch.manual_seed(42); np.random.seed(42)   # 분류 헤드 초기화 고정 (Ch 12 부록 train_bert 와 동일)
+
 model = AutoModelForSequenceClassification.from_pretrained(
     "distilbert-base-uncased",
     num_labels=K,
@@ -280,16 +266,17 @@ print(f"id2label:             {model.config.id2label}")
 **▶ 실행 결과**
 
 ```text
+model.safetensors: downloading bytes:           |  0.00B            
 [transformers] DistilBertForSequenceClassification LOAD REPORT from: distilbert-base-uncased
 Key                     | Status     | 
 ------------------------+------------+-
-vocab_projector.bias    | UNEXPECTED | 
-vocab_transform.bias    | UNEXPECTED | 
 vocab_layer_norm.weight | UNEXPECTED | 
 vocab_layer_norm.bias   | UNEXPECTED | 
+vocab_transform.bias    | UNEXPECTED | 
+vocab_projector.bias    | UNEXPECTED | 
 vocab_transform.weight  | UNEXPECTED | 
-classifier.weight       | MISSING    | 
 classifier.bias         | MISSING    | 
+classifier.weight       | MISSING    | 
 pre_classifier.bias     | MISSING    | 
 pre_classifier.weight   | MISSING    | 
 
@@ -312,7 +299,7 @@ id2label:             {0: 'food', 1: 'service', 2: 'price', 3: 'ambiance', 4: 'l
 **▶ 실행 결과**
 
 ```text
-Mon Jun 22 03:50:22 2026       
+Mon Aug 24 00:16:50 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -321,7 +308,7 @@ Mon Jun 22 03:50:22 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   47C    P8             14W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   47C    P8             16W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -338,8 +325,6 @@ Mon Jun 22 03:50:22 2026
 
 Ch 12와 *완전히 같은* learning rate, batch size, epoch 수, seed. 평가 metric만 multi-label용으로 새로 짭니다.
 
-multi-label용 평가 함수를 정의합니다. logits를 라벨마다 독립 sigmoid로 확률화하고 0.5 임계값으로 0/1을 정한 뒤, Hamming loss와 micro/macro F1, macro AUC를 계산합니다.
-
 ```python
 def compute_metrics(eval_pred):
     logits, labels = eval_pred                      # logits: (N, K), labels: (N, K) float
@@ -349,11 +334,7 @@ def compute_metrics(eval_pred):
     out = {}
     # Hamming loss — 전체 라벨 위치 중 틀린 비율 (낮을수록 좋음)
     out["hamming_loss"] = float(hamming_loss(labels, preds))
-```
 
-**위 코드 읽기** — softmax가 아니라 `1/(1+exp(-logits))`로 *라벨마다 독립* sigmoid를 적용하는 것이 multi-label의 본질입니다. `probs >= 0.5`로 multi-hot 예측을 만들고, `hamming_loss`는 전체 (샘플 × 라벨) 위치 중 틀린 비율을 잽니다.
-
-```python
     # Micro F1 — 전체 라벨을 한꺼번에 (TP/FP/FN 합산 후 F1)
     p_mi, r_mi, f1_mi, _ = precision_recall_fscore_support(
         labels, preds, average="micro", zero_division=0,
@@ -369,11 +350,7 @@ def compute_metrics(eval_pred):
     out["macro_f1"] = float(f1_ma)
     out["macro_precision"] = float(p_ma)
     out["macro_recall"]    = float(r_ma)
-```
 
-**위 코드 읽기** — `average="micro"`는 모든 라벨의 TP/FP/FN을 합산 후 F1을 내므로 흔한 라벨이 점수를 지배하고, `average="macro"`는 라벨별 F1을 *동일 가중치로 평균* 해 드문 라벨도 똑같이 반영합니다. 두 값의 차이가 클수록 라벨 불균형이 심하다는 신호입니다.
-
-```python
     # Per-label AUC (One-vs-Rest 자체)
     try:
         out["macro_auc"] = float(roc_auc_score(labels, probs, average="macro"))
@@ -381,10 +358,6 @@ def compute_metrics(eval_pred):
         out["macro_auc"] = float("nan")
     return out
 ```
-
-**위 코드 읽기** — AUC는 임계값과 무관하게 *확률 자체의 분리력* 을 재는 지표라, 0.5 임계값으로 손해 본 F1과 별개로 모델이 양/음을 얼마나 잘 정렬하는지 보여줍니다.
-
-Ch 12와 동일한 learning rate·batch size·epoch·seed로 `Trainer`를 구성하고 학습합니다. 바뀐 건 라벨 형식과 `problem_type`, 그리고 위에서 정의한 multi-label용 `compute_metrics`뿐입니다.
 
 ```python
 training_args = TrainingArguments(
@@ -418,9 +391,9 @@ print(f"\nTraining done — mean train loss: {train_result.training_loss:.4f}")
 
 ```text
 Epoch  Training Loss  Validation Loss  Hamming Loss  Micro F1  Micro Precision  Micro Recall  Macro F1  Macro Precision  Macro Recall  Macro Auc  Runtime   Samples Per Second  Steps Per Second
-1      0.391352       0.375564         0.158200      0.730494  0.884488         0.622171      0.579077  0.712338         0.516885      0.858364   0.964200  1037.144000         33.189000
-2      0.313462       0.320437         0.124600      0.797662  0.905605         0.712710      0.723947  0.915523         0.644669      0.899381   0.919700  1087.355000         34.795000
-Training done — mean train loss: 0.4126
+1      0.386839       0.360188         0.140600      0.764962  0.902208         0.663958      0.665433  0.926159         0.567284      0.887096   0.954300  1047.853000         33.531000
+2      0.286978       0.293115         0.102000      0.839925  0.914559         0.776553      0.802303  0.932820         0.720649      0.917939   1.097500  911.172000          29.157000
+Training done — mean train loss: 0.4010
 ```
 
 ```python
@@ -430,7 +403,7 @@ Training done — mean train loss: 0.4126
 **▶ 실행 결과**
 
 ```text
-Mon Jun 22 03:51:02 2026       
+Mon Aug 24 00:17:30 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -439,7 +412,7 @@ Mon Jun 22 03:51:02 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   63C    P0             34W /   70W |    1577MiB /  15360MiB |     72%      Default |
+| N/A   62C    P0             62W /   70W |    1577MiB /  15360MiB |     45%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -448,6 +421,6 @@ Mon Jun 22 03:51:02 2026
 |  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
 |        ID   ID                                                               Usage      |
 |=========================================================================================|
-|    0   N/A  N/A            1283      C   /usr/bin/python3                       1574MiB |
+|    0   N/A  N/A             779      C   /usr/bin/python3                       1574MiB |
 +-----------------------------------------------------------------------------------------+
 ```
