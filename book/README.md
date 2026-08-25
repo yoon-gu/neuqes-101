@@ -7,9 +7,20 @@
 레포 루트에서 실행합니다.
 
 ```bash
-python3 book/tools/notebook_to_tex.py --execute
+python3 book/tools/notebook_to_tex.py --use-executed
 latexmk -xelatex book/main.tex
 ```
+
+원고 변환에는 **pandoc 2.19.2** 가 필요합니다. 3.x 로 돌리면 표 구조와 `\label`
+처리가 달라져 장마다 수백 줄씩 무관한 차이가 생깁니다.
+
+`--use-executed` 는 `executed/` 실행본의 저장된 출력과 그림을 싣습니다. 노트북을
+직접 돌려 출력을 새로 만들려면 대신 `--execute` 를 씁니다.
+
+`book/chapters/` 는 **압축본** 이고 이것이 기본값입니다. 코드 셀은 개념상 핵심만
+남고 나머지는 Colab/QR 안내로 대체되며 FAQ도 추려집니다. 압축하지 않은 긴
+판본이 필요하면 `--full` 을 주되, 정본을 덮어쓰지 않도록 `--output-dir` 도 함께
+지정합니다. `--output-dir` 은 `book/` 기준 상대 경로입니다.
 
 PDF는 `book/build/neuqes-101-ch01-34-manuscript.pdf`에 생성됩니다.
 

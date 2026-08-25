@@ -106,7 +106,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 
 전체 장 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
 
-\textbf{Phase 3 안에서의 위치} --- \ref{ch:19}장 (토크나이저 학습) \(\to\) \ref{ch:20}장 (모델 사전학습) \(\to\) \textbf{\ref{ch:21}장 (분류 fine-tune)} \(\to\) \ref{ch:22}장 (한국어 사전학습) \(\to\) \ref{ch:23}장 (한국어 분류). \ref{ch:21}장 이 Phase 3 의 \emph{영어 절반 마무리} --- \ref{ch:10}장 비교가 클라이맥스.
+\textbf{Phase 3 안에서의 위치} --- \ref{ch:19}장 (토크나이저 학습) \(\to\) \ref{ch:20}장 (모델 사전학습) \(\to\) \textbf{\ref{ch:21}장 (분류 fine-tune)} \(\to\) \ref{ch:22}장 (한국어 사전학습) \(\to\) \ref{ch:23}장 (한국어 분류). \ref{ch:21}장이 Phase 3 의 \emph{영어 절반 마무리} --- \ref{ch:10}장 비교가 클라이맥스.
 
 
 
@@ -165,7 +165,7 @@ Loss & \inlinecode{CrossEntropyLoss} (vocab 30,522 logits) & \textbf{\inlinecode
 차원 & \ref{ch:10}장 (DistilBERT) & \ref{ch:21}장 (이 장) & 비고 \\
 \midrule
 
-본체 파라미터 & 약 66M & \textbf{약 10M} & \ref{ch:21}장 은 1/6 작음 \\
+본체 파라미터 & 약 66M & \textbf{약 10M} & \ref{ch:21}장은 1/6 작음 \\
 사전학습 코퍼스 & Wikipedia + BookCorpus (약 33억 토큰, 일반 도메인) & \textbf{Wikitext-103 paragraphs 5K (약 70만-100만 토큰, 일반 도메인)} & 약 3000-5000배 격차, \textbf{둘 다 일반 위키} \\
 사전학습 시간 & TPU 수일 (대규모 인프라) & \textbf{T4 약 10분} & \\
 Fine-tune 도메인 & Yelp 이진 (사전학습과 다른 도메인) & Yelp 이진 (사전학습과 다른 도메인) & \textbf{둘 다 일반 \(\to\) Yelp transfer 라 fair} \\
@@ -176,7 +176,7 @@ Fine-tune 도메인 & Yelp 이진 (사전학습과 다른 도메인) & Yelp 이�
 \end{adjustbox}
 \end{booktable}
 
-비교가 \emph{공정} 한 이유 --- \ref{ch:10}장도 본 장도 둘 다 \emph{일반 도메인 위키 사전학습 \(\to\) Yelp 분류 transfer} 의 같은 패턴. \emph{사전학습 규모} (3000-5000배) 와 \emph{모델 크기} (6배) 만 차이. 만약 \ref{ch:21}장 이 Yelp text 로 사전학습했다면 비교가 unfair 했을 것 --- domain-adaptive pretraining 우위 때문.
+비교가 \emph{공정} 한 이유 --- \ref{ch:10}장도 본 장도 둘 다 \emph{일반 도메인 위키 사전학습 \(\to\) Yelp 분류 transfer} 의 같은 패턴. \emph{사전학습 규모} (3000-5000배) 와 \emph{모델 크기} (6배) 만 차이. 만약 \ref{ch:21}장이 Yelp text 로 사전학습했다면 비교가 unfair 했을 것 --- domain-adaptive pretraining 우위 때문.
 
 이 격차가 \emph{사전학습 규모의 가치} 를 정량으로 보여줍니다. \emph{작은 일반 도메인 사전학습도 random init 보다는 낫다} 는 것, 그리고 \emph{같은 GPU compute 를 fine-tune 에 모두 쏟아도 사전학습 효과를 메우기 어렵다} 는 것은 부록 노트북 \href{./appendix_compute_budget.ipynb}{\inlinecode{appendix\_compute\_budget.ipynb}} 에서 fair-compute 관점으로 다룹니다.
 
@@ -184,7 +184,7 @@ Fine-tune 도메인 & Yelp 이진 (사전학습과 다른 도메인) & Yelp 이�
 
 \section{\texorpdfstring{Loss 함수의 변화 --- MLM CE (vocab=30,522) \(\to\) 분류 CE (K=2)}{Loss 함수의 변화 --- MLM CE (vocab=30,522) \textbackslash to 분류 CE (K=2)}}
 
-\ref{ch:20}장의 MLM 도 본질은 \emph{vocab 위에서의 다중 분류} 였습니다. 다만 K = vocab\_size = 30,522 라 어려운 task. 이 장는 K = 2 의 \emph{훨씬 쉬운} 분류 task.
+\ref{ch:20}장의 MLM 도 본질은 \emph{vocab 위에서의 다중 분류} 였습니다. 다만 K = vocab\_size = 30,522 라 어려운 task. 이 장은 K = 2 의 \emph{훨씬 쉬운} 분류 task.
 
 \subsection{수식}
 
@@ -744,7 +744,7 @@ MLM eval perplexity:  1356.19
 \textbf{관전 포인트} --- Wikitext-103 paragraphs 에서 MLM loss 가 \emph{random baseline 10.33} 에서 시작해 약 7 부근까지 떨어졌다면 본체가 \emph{일반 위키 어휘·문맥 구조의 일부} 를 학습한 상태. perplexity 로 환산하면 vocab 30,522 중 \emph{약 1,300 개 후보} 로 좁혀진 정도. \ref{ch:20}장의 2 epoch 와 비슷한 수준이지만, \emph{Yelp 분류 fine-tune 출발점} 으로는 충분합니다 --- 본체가 \emph{일반 영어 구조} 를 가지면 \emph{Yelp 리뷰(식당·업체) 도메인} 도 fine-tune 으로 빠르게 적응.
 
 \begin{quote}
-\textbf{체크포인트 저장은 생략} --- 노트북 안에서 바로 본체 가중치를 분류 모델로 옮기기 때문. \ref{ch:20}장 처럼 디스크에 저장하려면 \inlinecode{mlm\_model.save\_pretrained("./ch21\_mlm\_ckpt")} 한 줄.
+\textbf{체크포인트 저장은 생략} --- 노트북 안에서 바로 본체 가중치를 분류 모델로 옮기기 때문. \ref{ch:20}장처럼 디스크에 저장하려면 \inlinecode{mlm\_model.save\_pretrained("./ch21\_mlm\_ckpt")} 한 줄.
 \end{quote}
 
 
@@ -1042,7 +1042,7 @@ weighted avg     0.6331    0.6260    0.6237      1000
 
 \section{\ref{ch:10}장 (DistilBERT) vs \ref{ch:21}장 (작은 BERT scratch) --- 본 장의 핵심 결과}
 
-\emph{같은 데이터·같은 hyperparams} 에 \emph{본체 출발점만 다른} 두 셋업의 정확도 비교. 둘 다 \emph{일반 도메인 위키 사전학습 \(\to\) Yelp 분류 transfer} 의 같은 패턴이라 비교가 \emph{fair}. \ref{ch:10}장의 수치는 본 장를 작성하는 시점에 \emph{해당 노트북의 README/실행 결과} 를 참고해 인용 --- 학습자가 노트북을 돌려 본인 수치로 갱신해 보면 더 좋습니다.
+\emph{같은 데이터·같은 hyperparams} 에 \emph{본체 출발점만 다른} 두 셋업의 정확도 비교. 둘 다 \emph{일반 도메인 위키 사전학습 \(\to\) Yelp 분류 transfer} 의 같은 패턴이라 비교가 \emph{fair}. \ref{ch:10}장의 수치는 본 장을 작성하는 시점에 \emph{해당 노트북의 README/실행 결과} 를 참고해 인용 --- 학습자가 노트북을 돌려 본인 수치로 갱신해 보면 더 좋습니다.
 
 \begin{booktable}{21장 10장 (DistilBERT) vs 21장 (작은 BERT scratch) - 본 장의 핵심 결과 표}{tab:ch21-11}
 \begin{adjustbox}{max width=\textwidth}
@@ -1051,7 +1051,7 @@ weighted avg     0.6331    0.6260    0.6237      1000
 차원 & \ref{ch:10}장 (DistilBERT pretrained) & \ref{ch:21}장 (작은 BERT scratch + 2K \(\times\) 3 epoch MLM) & 비고 \\
 \midrule
 
-본체 파라미터 & 약 66M & 약 10M & \ref{ch:21}장 은 1/6 크기 \\
+본체 파라미터 & 약 66M & 약 10M & \ref{ch:21}장은 1/6 크기 \\
 사전학습 코퍼스 & Wikipedia + BookCorpus (약 33억 토큰, 일반 도메인) & Wikitext-103 paragraphs 5K (약 70만-100만 토큰, 일반 도메인) & 약 3000-5000배 격차, \textbf{둘 다 일반 위키} \\
 사전학습 시간 & TPU 수일 & T4 약 10-12분 & \\
 Fine-tune 도메인 & Yelp 이진 (사전학습과 다른 도메인) & Yelp 이진 (사전학습과 다른 도메인) & \textbf{둘 다 일반 \(\to\) Yelp transfer} \\
@@ -1157,7 +1157,7 @@ Fine-tune 도메인 & Yelp 이진 (사전학습과 다른 도메인) & Yelp 이�
 
 \end{lstlisting}
 
-본 장의 \emph{\ref{ch:10}장 vs \ref{ch:21}장} 비교가 \emph{공정} 한 이유 --- 둘 다 \emph{일반 도메인 위키 사전학습 \(\to\) Yelp 분류} 의 같은 패턴이라 \emph{사전학습 규모} (3000-5000배) 와 \emph{모델 크기} (6배) 만 변수. 만약 \ref{ch:21}장 이 Yelp 사전학습이었다면 \emph{어느 효과가 격차를 만들었는지} 분리할 수 없었을 것.
+본 장의 \emph{\ref{ch:10}장 vs \ref{ch:21}장} 비교가 \emph{공정} 한 이유 --- 둘 다 \emph{일반 도메인 위키 사전학습 \(\to\) Yelp 분류} 의 같은 패턴이라 \emph{사전학습 규모} (3000-5000배) 와 \emph{모델 크기} (6배) 만 변수. 만약 \ref{ch:21}장이 Yelp 사전학습이었다면 \emph{어느 효과가 격차를 만들었는지} 분리할 수 없었을 것.
 
 \begin{quote}
 \ref{ch:22}--\ref{ch:23}장 (한국어 위키 \(\to\) NSMC 영화 리뷰) 도 \emph{같은 대칭 패턴}. \emph{일반 도메인 \(\to\) 다른 도메인 transfer} 가 사전학습-fine-tune 패러다임의 \emph{진짜 메시지}.

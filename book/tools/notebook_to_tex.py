@@ -17,6 +17,7 @@ import io
 import textwrap
 import tokenize
 import unicodedata
+from collections.abc import Callable
 from dataclasses import dataclass
 from html import unescape
 from html.parser import HTMLParser
@@ -2471,8 +2472,87 @@ def normalize_prose_quotes(latex: str) -> str:
     return "\n".join(normalized)
 
 
-def polish_book_prose(latex: str) -> str:
-    """Normalize notebook-style shorthand and informal wording for book prose."""
+# "챕터"(받침 없음) 를 "장"(받침 있음) 으로 바꾸면 뒤따르는 조사의 이형태가 달라진다.
+# 개별 문구를 치환 사전에 계속 추가하는 대신, 조사 대응표로 한 번에 처리한다.
+JOSA_AFTER_JANG = {
+    "가": "이",
+    "는": "은",
+    "를": "을",
+    "와": "과",
+    "로": "으로",
+    "라": "이라",
+    "란": "이란",
+    "랑": "이랑",
+    "나": "이나",
+    "며": "이며",
+    "와의": "과의",
+    "와는": "과는",
+    "와도": "과도",
+    "로의": "으로의",
+    "로만": "으로만",
+    "로는": "으로는",
+    "로도": "으로도",
+    "로서": "으로서",
+    "로써": "으로써",
+    "로부터": "으로부터",
+    "라는": "이라는",
+    "라도": "이라도",
+    "라서": "이라서",
+    "라면": "이라면",
+    "라도록": "이라도록",
+}
+
+# 받침 유무와 무관하게 형태가 같아 그대로 붙는 조사·어미.
+JOSA_INVARIANT_AFTER_JANG = (
+    "은", "이", "을", "과", "으로", "의", "에", "에는", "에도", "에서",
+    "에서는", "에서도", "에선", "엔", "부터", "부터는", "까지", "까지는", "도", "만",
+    "보다", "처럼", "마다", "조차", "밖에", "이라", "이란", "이라는",
+    "이라도", "이라서", "이라면", "이며", "이나", "이랑", "이면", "이고",
+    "이지만", "이므로",
+    # 조사가 겹친 형태. 뒤에 한글이 이어지므로 낱개 목록만으로는 안 잡힌다.
+    "과의", "과는", "과도", "의의", "에서의", "에의", "부터의", "까지의",
+    "으로의", "으로만", "만의", "도의",
+)
+
+_JANG_JOSA_ALTS = sorted(
+    set(JOSA_AFTER_JANG) | set(JOSA_INVARIANT_AFTER_JANG), key=len, reverse=True
+)
+
+# "챕터" 바로 뒤에 붙은 조사. 긴 형태부터 시도해야 "와의" 가 "와" 로 잘리지 않는다.
+CHAPTER_JOSA_PATTERN = re.compile(
+    "챕터(" + "|".join(sorted(JOSA_AFTER_JANG, key=len, reverse=True)) + ")(?![가-힣])"
+)
+
+# "이번 챕터" 는 "이 장" 으로 다듬는다. 조사까지 한 패턴에 넣어야 순서 문제가 없고,
+# 원고가 처음부터 "이번 장" 이라고 쓴 곳은 건드리지 않는다.
+THIS_CHAPTER_PATTERN = re.compile(
+    "이번 챕터(" + "|".join(_JANG_JOSA_ALTS) + ")?(?![가-힣])"
+)
+
+# "\ref{ch:04}장와" (이형태 오류) 와 "20장 에서" (조사 띄어쓰기) 를 함께 잡는다.
+# 앞이 숫자나 닫는 중괄호일 때만 적용해, 장(場)·장(章) 이 아닌 일반 명사는 건드리지 않는다.
+JANG_JOSA_PATTERN = re.compile(
+    r"(?<=[0-9}])장 ?(" + "|".join(_JANG_JOSA_ALTS) + r")(?![가-힣])"
+)
+
+
+def fix_chapter_josa(text: str) -> str:
+    """'챕터'+조사를 '장'+맞는 이형태로 바꾼다 (챕터를 -> 장을)."""
+    text = THIS_CHAPTER_PATTERN.sub(
+        lambda m: "이 장" + JOSA_AFTER_JANG.get(m.group(1), m.group(1) or ""), text
+    )
+    return CHAPTER_JOSA_PATTERN.sub(lambda m: "장" + JOSA_AFTER_JANG[m.group(1)], text)
+
+
+def fix_jang_josa(text: str) -> str:
+    """장 번호 뒤 조사의 띄어쓰기와 이형태를 바로잡는다 (20장 에서 -> 20장에서)."""
+    return JANG_JOSA_PATTERN.sub(
+        lambda m: "장" + JOSA_AFTER_JANG.get(m.group(1), m.group(1)), text
+    )
+
+
+def polish_prose_line(latex: str) -> str:
+    """Normalize notebook-style shorthand and informal wording for one prose line."""
 
     # Chapter references.
     latex = re.sub(r"\bChapter\s+([0-9]+)", r"\1장", latex)
@@ -2480,16 +2560,14 @@ def polish_book_prose(latex: str) -> str:
     latex = re.sub(r"\bCh\s*([0-9]+)\s*·\s*([0-9]+)", r"\1·\2장", latex)
     latex = re.sub(r"\bCh\s*([0-9]+)", r"\1장", latex)
 
+    # 조사는 사전이 아니라 규칙으로 처리한다. 이형태가 없는 조사(의/에/에서/마다 …)
+    # 는 아래 "챕터" -> "장" 이 그대로 넘겨주므로 여기서 다룰 필요가 없다.
+    latex = fix_chapter_josa(latex)
+    latex = fix_jang_josa(latex)
+
     replacements = {
-        "이번 챕터": "이 장",
-        "다음 챕터": "다음 장",
-        "이전 챕터": "이전 장",
-        "챕터가": "장이",
-        "챕터는": "장은",
-        "챕터의": "장의",
-        "챕터에": "장에",
-        "챕터에서": "장에서",
-        "챕터마다": "장마다",
+        # 조사가 붙은 "챕터" 는 위 fix_chapter_josa 가 이미 처리했다.
+        # 여기 남는 것은 조사 없이 쓰인 "챕터" 와 "챕터별/챕터들" 같은 파생형이다.
         "챕터": "장",
         "삽질 코너": "오류 실험",
         "떡밥": "후속 논점",
@@ -2542,11 +2620,6 @@ def polish_book_prose(latex: str) -> str:
         "성공? coef_ shape": "학습 성공: coef_ shape",
         "OvR fit 성공!": "OvR 학습 성공",
         "실제 별점": "정답 별점",
-        "다음 장를": "다음 장을",
-        "평가 장라": "평가 장이라",
-        "30장 부터": "30장부터",
-        "1·2장와": "1·2장과",
-        "2장와": "2장과",
         "2장. sklearn Regression --- 시작점": "2장. 회귀 분석 (Regression \\& MSE) --- 첫 모델과 손실",
         "3장. sklearn Binary --- 출력에 sigmoid가 붙다": "3장. 이진 분류 (Binary Classification \\& BCE) --- 출력에 sigmoid가 붙다",
         "4장. sklearn Multi-class --- sigmoid가 softmax로": "4장. sigmoid와 softmax의 동등성 (Binary Classification) --- 같은 문제, 다른 표현",
@@ -2597,8 +2670,42 @@ def polish_book_prose(latex: str) -> str:
     latex = latex.replace("전체 18장 표", "전체 18개 장의 표")
     latex = latex.replace("전체 19장 표", "전체 19개 장의 표")
     latex = latex.replace(r"\#장별-변화추적표", r"\#챕터별-변화추적표")
-    latex = normalize_heading_titles(latex)
     return latex
+
+
+# 코드 리스팅과 실행 출력은 원문 그대로 두어야 한다. 산문용 치환이 안까지 들어가면
+# 코드에는 "18장", 그 출력에는 "Ch 18" 이 찍히는 식으로 둘이 어긋난다.
+VERBATIM_BEGINS = (
+    r"\begin{lstlisting}",
+    r"\begin{verbatim}",
+    r"\begin{bookoutputbox}",
+)
+VERBATIM_ENDS = (
+    r"\end{lstlisting}",
+    r"\end{verbatim}",
+    r"\end{bookoutputbox}",
+)
+
+
+def polish_book_prose(latex: str) -> str:
+    """Apply prose polishing to every line outside code and output blocks."""
+
+    polished: list[str] = []
+    in_verbatim = False
+    for line in latex.splitlines():
+        stripped = line.strip()
+        if stripped.startswith(VERBATIM_BEGINS):
+            in_verbatim = True
+            polished.append(line)
+            continue
+        if stripped.startswith(VERBATIM_ENDS):
+            in_verbatim = False
+            polished.append(line)
+            continue
+        # 코드 블록 안에서는 장 번호 표기만 통일하고 표현은 손대지 않는다.
+        polished.append(polish_chapter_refs(line) if in_verbatim else polish_prose_line(line))
+    joined = "\n".join(polished) + ("\n" if latex.endswith("\n") else "")
+    return normalize_heading_titles(joined)
 
 
 def split_latex_group(text: str, start: int) -> tuple[str, int] | None:
@@ -3019,27 +3126,93 @@ def normalize_heading_titles(latex: str) -> str:
     return "\n".join(normalized)
 
 
+CODE_COMMENT_REPLACEMENTS = {
+    "그냥": "직접",
+    "뱉는": "출력하는",
+    "뱉을": "출력할",
+    "뱉습니다": "출력합니다",
+    "뱉은": "출력한",
+    "어휘 크기": "어휘 수",
+    "전체 칸 수": "전체 원소 수",
+    "비어있는 칸": "0인 원소",
+    "처음 20개": "어휘 앞 20개",
+    "가장 자주 등장한 단어 top 10": "등장 빈도 상위 10개 단어",
+    "앞 3개": "첫 3개",
+    "앞 5개": "첫 5개",
+    "성공? coef_ shape": "학습 성공: coef_ shape",
+    "OvR fit 성공!": "OvR 학습 성공",
+    "실제 별점": "정답 별점",
+}
+
+
+def polish_chapter_refs(text: str) -> str:
+    """Ch 12 -> 12장. 장 번호 표기는 책 전체에서 한국어로 통일한다.
+
+    코드 문자열과 그 실행 출력 양쪽에 똑같이 적용해야 한다. 한쪽만 바꾸면
+    코드에는 "18장", 바로 아래 출력에는 "Ch 18" 이 찍혀 둘이 어긋난다.
+    """
+    text = re.sub(r"\bChapter\s+([0-9]+)", r"\1장", text)
+    text = re.sub(r"\bCh\s*([0-9]+)\s*-\s*([0-9]+)", r"\1-\2장", text)
+    text = re.sub(r"\bCh\s*([0-9]+)", r"\1장", text)
+    # "Ch 4와" -> "4장와" 처럼 어긋난 조사와 "Ch 18 의" 식 띄어쓰기를 바로잡는다.
+    return fix_jang_josa(text)
+
+
+def polish_comment_text(comment: str) -> str:
+    """Rewrite one Python comment into book wording.
+
+    표현 다듬기는 주석에만 적용한다. 문자열 리터럴에 걸면 그 문구가 그대로
+    실행 출력·그림 라벨이 되는데, 저장된 출력은 함께 바뀌지 않아 어긋난다.
+    주석 안의 "챕터" 는 예전부터 그대로 두었으므로 여기서도 건드리지 않는다.
+    """
+    for before, after in CODE_COMMENT_REPLACEMENTS.items():
+        comment = comment.replace(before, after)
+    return comment
+
+
+def apply_to_python_comments(source: str, transform: Callable[[str], str]) -> str:
+    """Run a text transform over Python comments only.
+
+    문자열 리터럴은 건드리지 않는다. 리터럴을 고치면 그대로 실행 출력이 되는데,
+    저장된 출력은 함께 바뀌지 않아 코드에는 "18장", 출력에는 "Ch 18" 이 남는다.
+    """
+    lines = source.splitlines()
+    if not lines:
+        return source
+
+    edited = lines[:]
+    try:
+        for tok in tokenize.generate_tokens(io.StringIO(source).readline):
+            if tok.type != tokenize.COMMENT:
+                continue
+            row, col = tok.start
+            line = edited[row - 1]
+            edited[row - 1] = line[:col] + transform(line[col:])
+    except (tokenize.TokenError, IndentationError, SyntaxError):
+        # 토큰화가 안 되는 셀(매직 명령 등)은 줄 단위 어림짐작으로 처리한다.
+        edited = []
+        for line in lines:
+            stripped = line.lstrip()
+            if stripped.startswith("#"):
+                indent = len(line) - len(stripped)
+                edited.append(line[:indent] + transform(stripped))
+            elif "  # " in line:
+                code, comment = line.split("  # ", 1)
+                edited.append(code + "  # " + transform(comment))
+            else:
+                edited.append(line)
+    return "\n".join(edited)
+
+
 def polish_code_comments(source: str) -> str:
-    source = re.sub(r"\bChapter\s+([0-9]+)", r"\1장", source)
-    source = re.sub(r"\bCh\s*([0-9]+)\s*-\s*([0-9]+)", r"\1-\2장", source)
-    source = re.sub(r"\bCh\s*([0-9]+)", r"\1장", source)
+    """Polish Korean wording in code comments, leaving executable code untouched."""
+    # 장 번호는 코드 전체(문자열 리터럴 포함)에 적용한다. 같은 변환을
+    # output_to_latex 가 실행 출력에도 걸어 주므로 둘이 어긋나지 않는다.
+    source = polish_chapter_refs(source)
+    source = apply_to_python_comments(source, polish_comment_text)
+    # 아래 두 가지는 표현 다듬기가 아니라 코드 자체의 정리라 주석 밖에도 적용한다.
     source = source.replace('multi_class="multinomial", ', "")
-    source = source.replace(", multi_class=\"multinomial\"", "")
-    source = source.replace("그냥", "직접")
-    source = source.replace("뱉는", "출력하는")
-    source = source.replace("뱉을", "출력할")
-    source = source.replace("뱉습니다", "출력합니다")
-    source = source.replace("뱉은", "출력한")
-    source = source.replace("어휘 크기", "어휘 수")
-    source = source.replace("전체 칸 수", "전체 원소 수")
-    source = source.replace("비어있는 칸", "0인 원소")
-    source = source.replace("처음 20개", "어휘 앞 20개")
-    source = source.replace("가장 자주 등장한 단어 top 10", "등장 빈도 상위 10개 단어")
-    source = source.replace("앞 3개", "첫 3개")
-    source = source.replace("앞 5개", "첫 5개")
-    source = source.replace("성공? coef_ shape", "학습 성공: coef_ shape")
-    source = source.replace("OvR fit 성공!", "OvR 학습 성공")
-    source = source.replace("실제 별점", "정답 별점")
+    source = source.replace(', multi_class="multinomial"', "")
     source = source.replace("−", "-")
     return source
 
@@ -3283,30 +3456,35 @@ def link_chapter_references(latex: str) -> str:
         return rf"\ref{{ch:{int(number):02d}}}"
 
     def convert(line: str) -> str:
-        if line.startswith("\\begin{booktable}{"):
-            return line
-        if line.startswith("\\chapter") or line.startswith("\\chaptermeta"):
-            return line
-        line = range_pat.sub(lambda m: f"{ch_ref(m.group(1))}--{ch_ref(m.group(2))}장", line)
-        line = dot_pat.sub(lambda m: f"{ch_ref(m.group(1))}·{ch_ref(m.group(2))}장", line)
-        line = single_pat.sub(lambda m: f"{ch_ref(m.group(1))}장", line)
-        line = re.sub(r"\\href\{[^{}]+\}\{(\\ref\{ch:[0-9]{2}\}장[^{}]*)\}", r"\1", line)
-        line = line.replace("장 와", "장과")
-        line = line.replace("장 과", "장과")
-        line = line.replace("장 의", "장의")
-        line = line.replace("장 에서", "장에서")
-        line = line.replace("장 도", "장도")
-        return line
+        # 표 캡션과 장 제목 줄에는 \ref 를 넣지 않는다 (목차·표목차가 깨진다).
+        # 다만 조사 정리는 이 줄들에도 적용해야 한다 — 예전에는 통째로 건너뛰어서
+        # "20장 모델 저장 - 21장 에서 재사용" 같은 캡션이 그대로 남았다.
+        linkable = not line.startswith(
+            ("\\begin{booktable}{", "\\chapter", "\\chaptermeta")
+        )
+        if linkable:
+            line = range_pat.sub(
+                lambda m: f"{ch_ref(m.group(1))}--{ch_ref(m.group(2))}장", line
+            )
+            line = dot_pat.sub(
+                lambda m: f"{ch_ref(m.group(1))}·{ch_ref(m.group(2))}장", line
+            )
+            line = single_pat.sub(lambda m: f"{ch_ref(m.group(1))}장", line)
+            line = re.sub(
+                r"\\href\{[^{}]+\}\{(\\ref\{ch:[0-9]{2}\}장[^{}]*)\}", r"\1", line
+            )
+        return fix_jang_josa(line)
 
     linked: list[str] = []
     in_listing = False
     for line in latex.splitlines():
         stripped = line.strip()
-        if stripped.startswith("\\begin{lstlisting}") or stripped.startswith("\\begin{verbatim}"):
+        # 출력 블록도 verbatim 이라 \ref 가 들어가면 명령이 그대로 인쇄된다.
+        if stripped.startswith(VERBATIM_BEGINS):
             in_listing = True
             linked.append(line)
             continue
-        if stripped.startswith("\\end{lstlisting}") or stripped.startswith("\\end{verbatim}"):
+        if stripped.startswith(VERBATIM_ENDS):
             in_listing = False
             linked.append(line)
             continue
@@ -3503,7 +3681,11 @@ def code_walkthrough(source: str, compact: bool = False) -> str:
     import_note_added = False
     major_imports = imported_modules()
     note_limit = 3 if compact else 6
-    for start_line, end_line, content in statements:
+    # 본편은 예전처럼 "앞 note_limit 개 문장" 만 훑는다. print 문도 자리를 차지해서,
+    # 셀 앞머리가 print 로 채워져 있으면 설명이 짧게 끝난다 (원고가 기대하는 모양).
+    # 압축판은 1454ac0 에서 정한 대로 "노트 note_limit 개" 를 채울 때까지 계속 본다.
+    candidates = statements if compact else statements[:note_limit]
+    for start_line, end_line, content in candidates:
         if len(notes) >= note_limit:
             break
         text = " ".join(line.strip() for line in content)
@@ -4286,10 +4468,12 @@ def output_to_latex(source: str, outputs: list[dict], compact: bool = False) -> 
         return ""
     tables = output_tables(outputs) if RENDER_DATAFRAME_TABLES else []
     if tables:
-        return "\n\n".join(tables)
+        return polish_chapter_refs("\n\n".join(tables))
     text = output_text(outputs)
     if not text:
         return ""
+    # 코드 쪽과 같은 장 번호 표기를 쓴다 (polish_code_comments 참고).
+    text = polish_chapter_refs(text)
     if re.search(r"(?m)^\s*!nvidia-smi\s*$", source):
         text = compact_nvidia_smi_output(text)
     return (
@@ -5599,9 +5783,14 @@ def main() -> None:
         help="prefer notebooks under executed/ so saved outputs and plot images are reflected",
     )
     parser.add_argument(
+        "--full",
+        action="store_true",
+        help="generate the long edition; the compact edition is the default",
+    )
+    parser.add_argument(
         "--compact-code",
         action="store_true",
-        help="keep only concept-critical code cells and replace routine cells with a Colab/QR note",
+        help=argparse.SUPPRESS,  # 압축본이 기본이 되기 전의 이름. 지금은 아무 동작 안 함
     )
     parser.add_argument(
         "--output-dir",
@@ -5610,6 +5799,8 @@ def main() -> None:
         help="directory for generated chapter .tex files; defaults to book/chapters",
     )
     args = parser.parse_args()
+    # 정본 원고가 압축본이라 그쪽을 기본으로 둔다. 긴 판본은 --full 로 명시한다.
+    compact_code = not args.full
 
     selected = set(args.chapters or [chapter.number for chapter in CHAPTERS])
     output_dir = args.output_dir
@@ -5627,7 +5818,7 @@ def main() -> None:
                 chapter,
                 execute=args.execute,
                 use_executed=args.use_executed,
-                compact_code=args.compact_code,
+                compact_code=compact_code,
             ),
             encoding="utf-8",
         )

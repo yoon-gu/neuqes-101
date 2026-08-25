@@ -124,7 +124,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output & Loss \\
 
 전체 장 표는 \href{https://github.com/yoon-gu/neuqes-101\#챕터별-변화추적표}{루트 README.md}를 참고하세요.
 
-\textbf{Phase 3 의 위치} --- \ref{ch:19}장 가 토크나이저 토대, \ref{ch:20}--\ref{ch:23}장 은 그 위에 올린 작은 BERT 의 사전학습 + 분류. 단, \ref{ch:20}장 부터는 \emph{학습 안정성} 을 위해 표준 사전학습 토크나이저 (\inlinecode{bert-base-uncased}, \inlinecode{klue/bert-base}) 를 그대로 가져와 씁니다. \ref{ch:19}장 는 “토크나이저가 어떻게 학습되나” 를 \emph{경험} 하는 장.
+\textbf{Phase 3 의 위치} --- \ref{ch:19}장이 토크나이저 토대, \ref{ch:20}--\ref{ch:23}장은 그 위에 올린 작은 BERT 의 사전학습 + 분류. 단, \ref{ch:20}장부터는 \emph{학습 안정성} 을 위해 표준 사전학습 토크나이저 (\inlinecode{bert-base-uncased}, \inlinecode{klue/bert-base}) 를 그대로 가져와 씁니다. \ref{ch:19}장은 “토크나이저가 어떻게 학습되나” 를 \emph{경험} 하는 장.
 
 
 
@@ -245,7 +245,7 @@ Output / Loss & 메인 + 보조 + \(\lambda\) & 없음 (vocab + merge rules 가 
 
 \section{영어 코퍼스}
 
-\inlinecode{yelp\_polarity} 의 train split 에서 5,000 문장만 sample. \emph{라벨은 무시} --- 이 장는 \emph{문장 자체} 만 필요.
+\inlinecode{yelp\_polarity} 의 train split 에서 5,000 문장만 sample. \emph{라벨은 무시} --- 이 장은 \emph{문장 자체} 만 필요.
 
 
 
@@ -722,7 +722,7 @@ decoded : [CLS] the food was unforgettable and the service was excellent. [...
 
 
 \begin{previewBox}{미리보기}
-\textbf{다음 장의 다리} --- \ref{ch:20}장 부터는 이 wrap 패턴으로 토크나이저를 모델에 연결합니다. 단, \emph{학습 안정성} 을 위해 \ref{ch:20}장+ 는 \emph{직접 학습한 토크나이저 대신} 표준 사전학습 토크나이저 (\inlinecode{bert-base-uncased}, \inlinecode{klue/bert-base}) 를 가져옴 --- \ref{ch:19}장의 \emph{경험} 위에 표준 도구의 신뢰성을 얹는 구조.
+\textbf{다음 장의 다리} --- \ref{ch:20}장부터는 이 wrap 패턴으로 토크나이저를 모델에 연결합니다. 단, \emph{학습 안정성} 을 위해 \ref{ch:20}장+ 는 \emph{직접 학습한 토크나이저 대신} 표준 사전학습 토크나이저 (\inlinecode{bert-base-uncased}, \inlinecode{klue/bert-base}) 를 가져옴 --- \ref{ch:19}장의 \emph{경험} 위에 표준 도구의 신뢰성을 얹는 구조.
 \end{previewBox}
 
 
@@ -824,7 +824,7 @@ decoded : [CLS] the food was unforgettable and the service was excellent. [...
 
 vocab 이 작으면 \emph{한 단어가 여러 조각} 으로 더 잘게 쪼개져 sequence 길이가 길어집니다. 길어진 sequence 는 attention 비용 (\(O(n^2)\)) 을 늘려 학습이 \emph{느려짐}. 반대로 vocab 이 크면 \emph{임베딩 테이블} 자체가 커져 모델 파라미터가 늘어남 (\(V \times H\), BERT-base 면 \(30000 \times 768 \approx 23M\)).
 
-실무 trade-off --- 모델이 작을수록 (이 장 다음 \ref{ch:20}장 처럼 \emph{scratch} 작은 BERT) 작은 vocab (8K-16K) 이 합리적, 큰 모델은 큰 vocab (30K-50K) 이 안정적.
+실무 trade-off --- 모델이 작을수록 (이 장 다음 \ref{ch:20}장처럼 \emph{scratch} 작은 BERT) 작은 vocab (8K-16K) 이 합리적, 큰 모델은 큰 vocab (30K-50K) 이 안정적.
 
 \Needspace{5\baselineskip}
 \begin{lstlisting}

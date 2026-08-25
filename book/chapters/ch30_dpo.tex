@@ -483,7 +483,7 @@ DPO 데이터는 \emph{세 개의 텍스트} 로 구성됩니다 (\inlinecode{pr
   \textbf{GPT-4 가 각 답변을 \emph{네 가지 축} 으로 채점} --- 이 네 축이 곧 \emph{지향하는 LLM 의 가치}:
 \end{enumerate}
 
-\begin{booktable}{30장 이 데이터는 무엇이고, 어떤 LLM 을 지향하는가 (가장 중요) 표}{tab:ch30-08}
+\begin{booktable}{30장이 데이터는 무엇이고, 어떤 LLM 을 지향하는가 (가장 중요) 표}{tab:ch30-08}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -945,11 +945,11 @@ IPO 는 \emph{DPO 의 overfitting} 을, KTO 는 \emph{쌍이 아닌 개별 좋�
 이름 & 한 줄 설명 & \ref{ch:28}장과 차이 \\
 \midrule
 
-\inlinecode{trl.DPOTrainer} & DPO 특화 trainer (response-only log-prob \(\to\) margin \(\to\) sigmoid loss 자동) & \textbf{새로 등장} (\ref{ch:28}장 은 \inlinecode{SFTTrainer}) \\
+\inlinecode{trl.DPOTrainer} & DPO 특화 trainer (response-only log-prob \(\to\) margin \(\to\) sigmoid loss 자동) & \textbf{새로 등장} (\ref{ch:28}장은 \inlinecode{SFTTrainer}) \\
 \inlinecode{trl.DPOConfig} & \inlinecode{DPOTrainer} 설정 (\inlinecode{TrainingArguments} 상속 + \inlinecode{beta}·\inlinecode{max\_length} 등) & \textbf{새로 등장} \\
 \inlinecode{DPOConfig(beta=0.1)} & reference 제약 강도 (KL) --- DPO 의 핵심 하이퍼파라미터 & \textbf{새로 등장} \\
 \inlinecode{DPOTrainer(ref\_model=None)} & reference 자동 복사·freeze (명시 지정도 가능) & \textbf{새로 등장} (frozen reference 개념) \\
-\inlinecode{prompt} / \inlinecode{chosen} / \inlinecode{rejected} 데이터 형식 & preference 쌍 표준 형식 & \textbf{새로 등장} (\ref{ch:28}장 은 \inlinecode{prompt}/\inlinecode{completion}) \\
+\inlinecode{prompt} / \inlinecode{chosen} / \inlinecode{rejected} 데이터 형식 & preference 쌍 표준 형식 & \textbf{새로 등장} (\ref{ch:28}장은 \inlinecode{prompt}/\inlinecode{completion}) \\
 \inlinecode{torch.nn.functional.log\_softmax} + \inlinecode{gather} & response 토큰의 log-prob 합 (§3 손계산) & \textbf{공유} (개념은 CausalLM loss 와 동일) \\
 \inlinecode{copy.deepcopy(policy)} + \inlinecode{requires\_grad\_(False)} & frozen reference 직접 생성 (§3 시연용) & \textbf{새로 등장} \\
 \inlinecode{PreTrainedTokenizerFast.from\_pretrained("skt/kogpt2-base-v2",\ ...)} & KoGPT2 BBPE (AutoTokenizer 함정 회피) & \textbf{공유} (\ref{ch:27}장 이후 고정) \\

@@ -76,7 +76,7 @@ Phase 구분:
 
 ## 출판용 LaTeX 원고 규칙 (`book/`)
 
-현재까지 작성된 노트북을 대중서 원고로 묶을 때는 `book/` 아래 LaTeX 프로젝트를 유지합니다. 원천은 챕터 노트북이며, `book/tools/notebook_to_tex.py --execute`로 `book/chapters/`의 장 원고를 재생성합니다. 새 챕터를 추가한 뒤에는 스크립트의 `CHAPTERS` 목록과 `book/main.tex`의 `\input{...}`를 함께 갱신하고, `latexmk -xelatex book/main.tex`로 PDF 빌드를 확인합니다. 출력이 필요 없는 빠른 점검만 할 때는 `--execute` 없이 변환할 수 있지만, 최종 원고는 출력과 해석이 포함되도록 `--execute`를 사용합니다.
+현재까지 작성된 노트북을 대중서 원고로 묶을 때는 `book/` 아래 LaTeX 프로젝트를 유지합니다. 원천은 챕터 노트북이며, `book/tools/notebook_to_tex.py --use-executed`로 `book/chapters/`의 장 원고를 재생성합니다. 변환에는 pandoc 2.19.2가 필요합니다. 새 챕터를 추가한 뒤에는 스크립트의 `CHAPTERS` 목록과 `book/main.tex`의 `\input{...}`를 함께 갱신하고, `latexmk -xelatex book/main.tex`로 PDF 빌드를 확인합니다. 출력이 필요 없는 빠른 점검만 할 때는 `--use-executed` 없이 변환할 수 있지만, 최종 원고는 출력과 해석이 포함되도록 `--use-executed`(저장된 실행본) 또는 `--execute`(직접 실행)를 사용합니다. `book/chapters/`는 압축본이 정본이며 그것이 기본값입니다. 긴 판본은 `--full`에 `--output-dir`을 함께 주어 정본을 덮어쓰지 않게 합니다.
 
 조판과 문체는 다음 원칙을 지킵니다.
 - 본문 폰트는 `NanumGothic`, 코드 폰트는 `NanumGothicCoding`, 빌드는 XeLaTeX 기준입니다.

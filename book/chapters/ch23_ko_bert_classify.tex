@@ -161,7 +161,7 @@ Loss & \inlinecode{CrossEntropyLoss} (vocab 약 32,000 logits) & \textbf{\inline
 차원 & \ref{ch:15}장 (klue/bert-base) & \ref{ch:23}장 (이 장) & 비고 \\
 \midrule
 
-본체 파라미터 & 약 110M & \textbf{약 10M} & \ref{ch:23}장 은 1/11 작음 \\
+본체 파라미터 & 약 110M & \textbf{약 10M} & \ref{ch:23}장은 1/11 작음 \\
 사전학습 코퍼스 & 한국어 위키 + 모두의 말뭉치 + 뉴스 + 댓글 (약 8.4B 토큰, 일반 도메인) & \textbf{한국어 Wikipedia paragraphs 5K (약 50만-80만 토큰, 일반 도메인)} & 약 10,000배 격차, \textbf{둘 다 일반 한국어 코퍼스} \\
 사전학습 시간 & TPU 수일 & \textbf{T4 약 8-10분} & \\
 Fine-tune 도메인 & NSMC 이진 (사전학습과 다른 도메인) & NSMC 이진 (사전학습과 다른 도메인) & \textbf{둘 다 일반 한국어 \(\to\) NSMC transfer 라 fair} \\
@@ -172,7 +172,7 @@ Fine-tune 도메인 & NSMC 이진 (사전학습과 다른 도메인) & NSMC 이�
 \end{adjustbox}
 \end{booktable}
 
-비교가 \emph{공정} 한 이유 --- \ref{ch:15}장도 본 장도 둘 다 \emph{일반 도메인 한국어 사전학습 \(\to\) NSMC 분류 transfer} 의 같은 패턴. \emph{사전학습 규모} (약 10,000배) 와 \emph{모델 크기} (11배) 만 차이. 만약 \ref{ch:23}장 이 NSMC text 로 사전학습했다면 비교가 unfair 했을 것 --- domain-adaptive pretraining 우위 때문.
+비교가 \emph{공정} 한 이유 --- \ref{ch:15}장도 본 장도 둘 다 \emph{일반 도메인 한국어 사전학습 \(\to\) NSMC 분류 transfer} 의 같은 패턴. \emph{사전학습 규모} (약 10,000배) 와 \emph{모델 크기} (11배) 만 차이. 만약 \ref{ch:23}장이 NSMC text 로 사전학습했다면 비교가 unfair 했을 것 --- domain-adaptive pretraining 우위 때문.
 
 \subsection{\texorpdfstring{\ref{ch:21}장 (영어) \(\to\) \ref{ch:23}장 (한국어) 대칭}{\ref{ch:21}장 (영어) \textbackslash to \ref{ch:23}장 (한국어) 대칭}}
 
@@ -199,7 +199,7 @@ Fine-tune 도메인 & NSMC 이진 (사전학습과 다른 도메인) & NSMC 이�
 
 \section{\texorpdfstring{손실 함수의 변화: MLM에서 분류 CE로}{Loss 함수의 변화 --- MLM CE (vocab 약 32,000) \textbackslash to 분류 CE (K=2)}}
 
-\ref{ch:22}장의 MLM 도 본질은 \emph{vocab 위에서의 다중 분류} 였습니다. 다만 K = vocab\_size 약 32,000 이라 어려운 task. 이 장는 K = 2 의 \emph{훨씬 쉬운} 분류 task.
+\ref{ch:22}장의 MLM 도 본질은 \emph{vocab 위에서의 다중 분류} 였습니다. 다만 K = vocab\_size 약 32,000 이라 어려운 task. 이 장은 K = 2 의 \emph{훨씬 쉬운} 분류 task.
 
 \subsection{수식}
 
@@ -516,7 +516,7 @@ MLM eval perplexity:  2463.13
 \textbf{관전 포인트} --- 한국어 Wikipedia paragraphs 에서 MLM loss 가 \emph{random baseline 10.37} 에서 시작해 5-7 부근까지 떨어졌다면 본체가 \emph{일반 한국어 어휘·문맥 구조의 일부} 를 학습한 상태. perplexity 로 환산하면 vocab 약 32,000 중 \emph{수백-수천 개 후보} 로 좁혀진 정도. \ref{ch:22}장의 2 epoch 보다는 약간 얕지만, \emph{NSMC 분류 fine-tune 출발점} 으로는 충분합니다 --- 본체가 \emph{일반 한국어 구조} 를 가지면 \emph{영화 리뷰 비격식 도메인} 도 fine-tune 으로 빠르게 적응.
 
 \begin{quote}
-\textbf{체크포인트 저장은 생략} --- 노트북 안에서 바로 본체 가중치를 분류 모델로 옮기기 때문. \ref{ch:22}장 처럼 디스크에 저장하려면 \inlinecode{mlm\_model.save\_pretrained("./ch23\_mlm\_ckpt")} 한 줄.
+\textbf{체크포인트 저장은 생략} --- 노트북 안에서 바로 본체 가중치를 분류 모델로 옮기기 때문. \ref{ch:22}장처럼 디스크에 저장하려면 \inlinecode{mlm\_model.save\_pretrained("./ch23\_mlm\_ckpt")} 한 줄.
 \end{quote}
 
 
@@ -912,7 +912,7 @@ NSMC 는 \emph{짧은 한 줄 리뷰} 이고 \emph{반어·맞춤법 흔들림·
 \item
   MLM 학습 첫 step 의 loss 가 약 10.37 인 반면, 분류 fine-tune 첫 step 의 loss 는 약 0.693 입니다. 이 차이가 모델의 학습 어려움 차이를 의미하나요? (힌트: K=vocab\_size 약 32,000 vs K=2)
 \item
-  \ref{ch:23}장 ours 가 \ref{ch:15}장 보다 \emph{낮은 정확도} 를 보입니다. 이 격차가 (a) \emph{모델 크기} 차이 (약 10M vs 약 110M), (b) \emph{사전학습 데이터 양·도메인 다양성} 차이 (약 50만-80만 토큰 위키 vs 약 8.4B 토큰 위키+뉴스+댓글) 중 어느 쪽 영향이 클까요? 둘 다 \emph{한국어 일반 도메인 \(\to\) NSMC transfer} 의 같은 패턴이라 \emph{도메인 정합} 변수는 통제됨. 추가 실험으로 어떻게 (a) 와 (b) 를 분리할 수 있나요?
+  \ref{ch:23}장 ours 가 \ref{ch:15}장보다 \emph{낮은 정확도} 를 보입니다. 이 격차가 (a) \emph{모델 크기} 차이 (약 10M vs 약 110M), (b) \emph{사전학습 데이터 양·도메인 다양성} 차이 (약 50만-80만 토큰 위키 vs 약 8.4B 토큰 위키+뉴스+댓글) 중 어느 쪽 영향이 클까요? 둘 다 \emph{한국어 일반 도메인 \(\to\) NSMC transfer} 의 같은 패턴이라 \emph{도메인 정합} 변수는 통제됨. 추가 실험으로 어떻게 (a) 와 (b) 를 분리할 수 있나요?
 \item
   \emph{사전학습 효과의 순 측정} --- 한국어 환경에서는 \emph{얕은 일반 도메인 사전학습} 이 \emph{random init} 보다 우위인지 \emph{비슷한지} 또는 \emph{역전 (negative transfer)} 인지를 직접 확인하려면 어떤 실험이 필요할까요? 영어 \ref{ch:21}장의 패턴 (위키 \(\to\) Yelp transfer) 과 비교해 한국어 NSMC 환경의 특수성은 무엇인가요? (부록 \href{./appendix_random_baseline.ipynb}{\inlinecode{appendix\_random\_baseline.ipynb}} 에서 직접 측정·분석)
 \end{enumerate}
@@ -1013,7 +1013,7 @@ def cls_tokenize(batch):
 \end{booktable}
 
 \begin{quote}
-\textbf{BERT 파인튜닝은 \emph{task 적응}, GPT 파인튜닝은 \emph{행동 정렬}.} \ref{ch:24}장 부터 시작되는 Phase 4 에서 이 의미 변화를 직접 경험합니다. 풀버전 표는 \ref{ch:21}장 §3 \emph{파인튜닝 의미 변화} 마크다운 참조.
+\textbf{BERT 파인튜닝은 \emph{task 적응}, GPT 파인튜닝은 \emph{행동 정렬}.} \ref{ch:24}장부터 시작되는 Phase 4 에서 이 의미 변화를 직접 경험합니다. 풀버전 표는 \ref{ch:21}장 §3 \emph{파인튜닝 의미 변화} 마크다운 참조.
 \end{quote}
 
 \end{faqBox}
@@ -1035,7 +1035,7 @@ def cls_tokenize(batch):
 \item
   \emph{MLM} (가려진 토큰 양방향 예측) \(\to\) \emph{\textbf{Causal LM}} (앞 토큰만으로 다음 토큰 예측)
 \item
-  \emph{task별 head 부착} \(\to\) \emph{\textbf{LM head 그대로 next-token CE}} --- \ref{ch:23}장 까지의 분류 head 부착 패러다임은 여기서 막을 내림
+  \emph{task별 head 부착} \(\to\) \emph{\textbf{LM head 그대로 next-token CE}} --- \ref{ch:23}장까지의 분류 head 부착 패러다임은 여기서 막을 내림
 \item
   데이터: TinyStories 영어 동화 --- GPT-4 가 4세 어린이 어휘로 생성한 짧은 영문 동화 약 2.1M 편
 \item

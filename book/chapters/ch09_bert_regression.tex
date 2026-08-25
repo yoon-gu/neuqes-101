@@ -168,7 +168,7 @@ Hugging Face \inlinecode{Trainer} 는 \inlinecode{problem\_type="regression"} �
 
 \section{토크나이저 노트}
 
-\ref{ch:07}·\ref{ch:08}장과 동일한 \inlinecode{distilbert-base-uncased} WordPiece 토크나이저를 그대로 사용합니다. 이 장는 모델·loss·학습 루프에 집중하므로 토크나이저 파이프라인은 \ref{ch:08}장에서 익힌 그대로 (\inlinecode{map(batched=True)} + \inlinecode{DataCollatorWithPadding}).
+\ref{ch:07}·\ref{ch:08}장과 동일한 \inlinecode{distilbert-base-uncased} WordPiece 토크나이저를 그대로 사용합니다. 이 장은 모델·loss·학습 루프에 집중하므로 토크나이저 파이프라인은 \ref{ch:08}장에서 익힌 그대로 (\inlinecode{map(batched=True)} + \inlinecode{DataCollatorWithPadding}).
 
 \begin{previewBox}{미리보기}
 \textbf{다음 장(\ref{ch:10}·\ref{ch:11}장)}: 같은 토크나이저, 같은 데이터지만 task가 binary 분류로 바뀝니다. \ref{ch:10}장에서 sigmoid+BCE 방식, \ref{ch:11}장에서 softmax+CE 방식을 \emph{별도 학습} 해 두 방식을 비교합니다.
@@ -340,7 +340,7 @@ Tradeoff: BERT body cannot adapt to the task -- usually train the body too...
   \textbf{모든 파라미터 학습 (default)}: 데이터 충분 (수천 건+), 본체도 task에 맞게 적응.
 \end{itemize}
 
-이 장는 4,000건이라 default(전체 학습)이 가장 좋은 선택입니다.
+이 장은 4,000건이라 default(전체 학습)이 가장 좋은 선택입니다.
 
 
 
@@ -779,7 +779,7 @@ trainer.train(resume_from_checkpoint="./output/checkpoint-500")
 trainer.train(resume_from_checkpoint=True)
 \end{lstlisting}
 
-이 장는 학습이 짧아 \inlinecode{save\_strategy="no"} 로 두었습니다. \ref{ch:14}장 같은 긴 학습이나 실무 프로젝트에선 \inlinecode{save\_strategy="epoch"} + \inlinecode{save\_total\_limit=2} 가 표준 패턴입니다.
+이 장은 학습이 짧아 \inlinecode{save\_strategy="no"} 로 두었습니다. \ref{ch:14}장 같은 긴 학습이나 실무 프로젝트에선 \inlinecode{save\_strategy="epoch"} + \inlinecode{save\_total\_limit=2} 가 표준 패턴입니다.
 
 \end{faqBox}
 
