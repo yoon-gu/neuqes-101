@@ -251,6 +251,6 @@ plt.show()
 
 ## 부록 — fair-compute 비교 (사전학습 없이 같은 GPU compute 로 분류만)
 
-*MLM 사전학습 없이 random init 으로 바로 분류 fine-tune*, 그리고 *같은 GPU compute budget (MLM 시간 + fine-tune 시간 합)* 으로 *분류 fine-tune 만 더 길게* 돌렸을 때 어떻게 되는지는 부록 노트북 [`appendix_compute_budget.ipynb`](./appendix_compute_budget.ipynb) 에서 다룹니다.
+*MLM 사전학습 없이 random init 으로 바로 분류 fine-tune*, 그리고 *같은 GPU compute budget (MLM 시간 + fine-tune 시간 합)* 으로 *분류 fine-tune 만 더 길게* 돌렸을 때 어떻게 되는지는 부록 노트북 [`appendix_compute_budget.ipynb`](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/21_en_bert_classify/appendix_compute_budget.ipynb) 에서 다룹니다.
 
 > 부록의 핵심 질문 — *"사전학습에 쓰는 compute 를 그냥 fine-tune 에 더 쓰면 안 되나?"* 에 대한 정량 답. **이 규모에서는 '그래도 된다' 가 답입니다** — 부록 실측에서 fair-compute 셋업이 사전학습 셋업을 앞섭니다. 사전학습이 이기려면 Ch 10 급 *규모* 가 필요하다는 것을 반대편에서 보여 줍니다.

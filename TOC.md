@@ -105,6 +105,7 @@
   * [21-1. 실습: 환경 셋업](pages/21-en_bert_classify-practice.md)
   * [21-2. 해부: 평가 — Ch 10 과 같은 5종 metric + 학습 곡선](pages/21-en_bert_classify-anatomy.md)
   * [21-3. 정리와 FAQ](pages/21-en_bert_classify-wrapup.md)
+  * [21-4. 부록 — fair-compute 비교 (일반 도메인 사전학습 vs 더 긴 분류 fine-tune)](pages/21-en_bert_classify-compute_budget.md)
 * [22. 작은 BERT 사전학습 (Korean MLM Pretraining)](pages/22-ko_bert_pretrain.md)
   * [22-1. 실습: 환경 셋업](pages/22-ko_bert_pretrain-practice.md)
   * [22-2. 해부: 학습 결과 — Loss / Perplexity 곡선](pages/22-ko_bert_pretrain-anatomy.md)

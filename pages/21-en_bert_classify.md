@@ -2,7 +2,7 @@
 
 본 챕터의 강점: *위키 사전학습 → Yelp 분류 transfer* 가 **진짜 transfer**. *task corpus 로 사전학습 → 같은 task fine-tune* 의 domain-adaptive pretraining 함정을 피해 원본 BERT 의 *일반 표상 학습 → downstream 전이* 메시지를 그대로 재현합니다. **두 데이터셋이 노트북 안에 공존** — MLM 용 Wikitext-103 (2K paragraphs × 3 epoch) + 분류용 Yelp 이진 (5K/1K).
 
-self-contained 노트북: Ch 20 의 MLM 학습을 압축 (2K × 3 epoch) 재현 → 같은 본체로 분류 fine-tune → Ch 10 결과와 비교. **한국어 Ch 23 self-contained 와 동일한 hyperparams** 로 영어/한국어 챕터 짝의 일관성 유지. 본문은 *사전학습 → 분류 fine-tune* 메인 흐름에 집중. *사전학습 없이 같은 GPU compute 로 분류 fine-tune* 만 했을 때의 fair-compute 비교는 부록 노트북 [`appendix_compute_budget.ipynb`](./appendix_compute_budget.ipynb) 에서 분리해 다룹니다.
+self-contained 노트북: Ch 20 의 MLM 학습을 압축 (2K × 3 epoch) 재현 → 같은 본체로 분류 fine-tune → Ch 10 결과와 비교. **한국어 Ch 23 self-contained 와 동일한 hyperparams** 로 영어/한국어 챕터 짝의 일관성 유지. 본문은 *사전학습 → 분류 fine-tune* 메인 흐름에 집중. *사전학습 없이 같은 GPU compute 로 분류 fine-tune* 만 했을 때의 fair-compute 비교는 부록 노트북 [`appendix_compute_budget.ipynb`](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/21_en_bert_classify/appendix_compute_budget.ipynb) 에서 분리해 다룹니다.
 
 **환경**: Google Colab **T4 GPU 필수**.
 
@@ -19,7 +19,7 @@ self-contained 노트북: Ch 20 의 MLM 학습을 압축 (2K × 3 epoch) 재현 
 7. 🔬 **평가**: accuracy / precision / recall / F1 / AUC (Ch 10 과 같은 5종)
 8. 🆚 **Ch 10 vs Ch 21 비교 표**: 정확도, 모델 크기, 사전학습 토큰량
 
-📒 **부록**: [`appendix_compute_budget.ipynb`](./appendix_compute_budget.ipynb) — 같은 GPU compute budget 으로 *사전학습 없이* 분류 fine-tune 만 했을 때의 fair-compute 비교
+📒 **부록**: [`appendix_compute_budget.ipynb`](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/21_en_bert_classify/appendix_compute_budget.ipynb) — 같은 GPU compute budget 으로 *사전학습 없이* 분류 fine-tune 만 했을 때의 fair-compute 비교
 
 > 📒 **사전 학습 자료**: Ch 20 (작은 BERT scratch MLM, Wikitext-103), Ch 10 (DistilBERT 사전학습 + Yelp 이진 분류). Ch 21 은 두 챕터를 *합쳐서* — Ch 20 의 일반 도메인 사전학습 흐름 그대로 + Ch 10 의 fine-tune 평가 그대로. Ch 22-23 (한국어 위키 → NSMC) 의 *대칭 패턴*.
 
@@ -77,7 +77,7 @@ self-contained 노트북: Ch 20 의 MLM 학습을 압축 (2K × 3 epoch) 재현 
 
 비교가 *공정* 한 이유 — Ch 10 도 본 챕터도 둘 다 *일반 도메인 위키 사전학습 → Yelp 분류 transfer* 의 같은 패턴. *사전학습 규모* (약 1.2만배) 와 *모델 크기* (약 6배) 만 차이. 만약 Ch 21 이 Yelp text 로 사전학습했다면 비교가 unfair 했을 것 — domain-adaptive pretraining 우위 때문.
 
-이 격차가 *사전학습 규모의 가치* 를 정량으로 보여줍니다. 한편 *작은 일반 도메인 사전학습이 random init 보다 나은가*, *같은 GPU compute 를 fine-tune 에 모두 쏟으면 그 차이가 메워지는가* 는 이 노트북에서 측정하지 않습니다 — 부록 노트북 [`appendix_compute_budget.ipynb`](./appendix_compute_budget.ipynb) 이 그 비교를 위한 셋업입니다. **부록의 답은 이 규모에서 '메워진다' 입니다** — random init 대비 순 효과는 수 %p 로 실재하지만, 같은 GPU 예산을 분류 fine-tune 에 쓰는 쪽이 더 크게 이깁니다. *사전학습의 가치는 규모에서 나온다* 는 이 챕터의 메시지를 반대쪽에서 받쳐 줍니다.
+이 격차가 *사전학습 규모의 가치* 를 정량으로 보여줍니다. 한편 *작은 일반 도메인 사전학습이 random init 보다 나은가*, *같은 GPU compute 를 fine-tune 에 모두 쏟으면 그 차이가 메워지는가* 는 이 노트북에서 측정하지 않습니다 — 부록 노트북 [`appendix_compute_budget.ipynb`](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/21_en_bert_classify/appendix_compute_budget.ipynb) 이 그 비교를 위한 셋업입니다. **부록의 답은 이 규모에서 '메워진다' 입니다** — random init 대비 순 효과는 수 %p 로 실재하지만, 같은 GPU 예산을 분류 fine-tune 에 쓰는 쪽이 더 크게 이깁니다. *사전학습의 가치는 규모에서 나온다* 는 이 챕터의 메시지를 반대쪽에서 받쳐 줍니다.
 
 ## Loss 함수의 변화 — MLM CE (vocab=30,522) → 분류 CE (K=2)
 

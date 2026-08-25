@@ -47,8 +47,8 @@ model = AutoModelForSequenceClassification.from_pretrained(
 
 ```python
 # 본 챕터 (Ch 21) 흐름 — 원본 BERT 와 같은 정신
-# 일반 위키 (Wikitext-103) 로 MLM 사전학습  ← 다른 도메인
-# Yelp 리뷰(식당·업체) 로 분류 fine-tune    ← task 도메인
+# 1. 일반 위키 (Wikitext-103) 로 MLM 사전학습  ← 다른 도메인
+# 2. Yelp 리뷰(식당·업체) 로 분류 fine-tune    ← task 도메인
 # -> "일반 표상이 다른 도메인에도 적용되는가?" 의 시험 (= 원본 BERT 의 GLUE/SQuAD 흐름)
 
 # 만약 Yelp text MLM 사전학습 → Yelp 분류였다면
