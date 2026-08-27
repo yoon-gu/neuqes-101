@@ -178,7 +178,7 @@ Fine-tune 도메인 & Yelp 이진 (사전학습과 다른 도메인) & Yelp 이�
 
 비교가 \emph{공정} 한 이유 --- \ref{ch:10}장도 본 장도 둘 다 \emph{일반 도메인 위키 사전학습 \(\to\) Yelp 분류 transfer} 의 같은 패턴. \emph{사전학습 규모} (약 1.2만배) 와 \emph{모델 크기} (약 6배) 만 차이. 만약 \ref{ch:21}장이 Yelp text 로 사전학습했다면 비교가 unfair 했을 것 --- domain-adaptive pretraining 우위 때문.
 
-이 격차가 \emph{사전학습 규모의 가치} 를 정량으로 보여줍니다. 한편 \emph{작은 일반 도메인 사전학습이 random init 보다 나은가}, \emph{같은 GPU compute 를 fine-tune 에 모두 쏟으면 그 차이가 메워지는가} 는 이 노트북에서 측정하지 않습니다 --- 부록 노트북 \href{./appendix_compute_budget.ipynb}{\inlinecode{appendix\_compute\_budget.ipynb}} 이 그 비교를 위한 셋업입니다. \textbf{부록의 답은 이 규모에서 \textquotesingle 메워진다\textquotesingle{} 입니다} --- random init 대비 순 효과는 수 \%p 로 실재하지만, 같은 GPU 예산을 분류 fine-tune 에 쓰는 쪽이 더 크게 이깁니다. \emph{사전학습의 가치는 규모에서 나온다} 는 이 장의 메시지를 반대쪽에서 받쳐 줍니다.
+이 격차가 \emph{사전학습 규모의 가치} 를 정량으로 보여줍니다. 한편 \emph{작은 일반 도메인 사전학습이 random init 보다 나은가}, \emph{같은 GPU compute 를 fine-tune 에 모두 쏟으면 그 차이가 메워지는가} 는 이 노트북에서 측정하지 않습니다 --- 부록 노트북 \href{https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/21_en_bert_classify/appendix_compute_budget.ipynb}{\inlinecode{appendix\_compute\_budget.ipynb}} 이 그 비교를 위한 셋업입니다. \textbf{부록의 답은 이 규모에서 \textquotesingle 메워진다\textquotesingle{} 입니다} --- random init 대비 순 효과는 수 \%p 로 실재하지만, 같은 GPU 예산을 분류 fine-tune 에 쓰는 쪽이 더 크게 이깁니다. \emph{사전학습의 가치는 규모에서 나온다} 는 이 장의 메시지를 반대쪽에서 받쳐 줍니다.
 
 
 
@@ -1114,7 +1114,7 @@ Fine-tune 도메인 & Yelp 이진 (사전학습과 다른 도메인) & Yelp 이�
 
 \section{참고: fair-compute 비교}
 
-\emph{MLM 사전학습 없이 random init 으로 바로 분류 fine-tune}, 그리고 \emph{같은 GPU compute budget (MLM 시간 + fine-tune 시간 합)} 으로 \emph{분류 fine-tune 만 더 길게} 돌렸을 때 어떻게 되는지는 부록 노트북 \href{./appendix_compute_budget.ipynb}{\inlinecode{appendix\_compute\_budget.ipynb}} 에서 다룹니다.
+\emph{MLM 사전학습 없이 random init 으로 바로 분류 fine-tune}, 그리고 \emph{같은 GPU compute budget (MLM 시간 + fine-tune 시간 합)} 으로 \emph{분류 fine-tune 만 더 길게} 돌렸을 때 어떻게 되는지는 부록 노트북 \href{https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/21_en_bert_classify/appendix_compute_budget.ipynb}{\inlinecode{appendix\_compute\_budget.ipynb}} 에서 다룹니다.
 
 \begin{quote}
 부록의 핵심 질문 --- \emph{“사전학습에 쓰는 compute 를 단순히 fine-tune 에 더 쓰면 안 되나?”} 에 대한 정량 답. \textbf{이 규모에서는 \textquotesingle 그래도 된다\textquotesingle{} 가 답입니다} --- 부록 실측에서 fair-compute 셋업이 사전학습 셋업을 앞섭니다. 사전학습이 이기려면 \ref{ch:10}장 급 \emph{규모} 가 필요하다는 것을 반대편에서 보여 줍니다.
