@@ -9,13 +9,12 @@
 **▶ 실행 결과**
 
 ```text
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 114.2 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 36.9 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.2/389.2 kB 38.2 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 0.0/48.9 MB ? eta -:--:--
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 164.3 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 164.3 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 17.3 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.7/11.7 MB 103.9 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 559.1/559.1 kB 32.0 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 252.4 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 252.4 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 252.4 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 50.1/50.1 MB 19.4 MB/s eta 0:00:00
 ```
 
 ```python
@@ -40,6 +39,7 @@ from transformers import (
     DataCollatorForLanguageModeling,
     Trainer,
     TrainingArguments,
+    set_seed,
 )
 from sklearn.metrics import (
     accuracy_score, precision_recall_fscore_support,
@@ -91,7 +91,7 @@ GPU:             Tesla T4
 **▶ 실행 결과**
 
 ```text
-Mon Jun 22 12:16:39 2026       
+Thu Aug 20 12:43:52 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -100,7 +100,7 @@ Mon Jun 22 12:16:39 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   34C    P8              9W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   36C    P8             10W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -156,6 +156,8 @@ print(f"  text:  {ds_train_full[0]['text'][:200]}...")
 **▶ 실행 결과**
 
 ```text
+plain_text/train-00000-of-00001.parquet: downloading bytes:           |  0.00B            
+plain_text/test-00000-of-00001.parquet: downloading bytes:           |  0.00B            
 splits: ['train', 'test']
 train size: 560,000
 test size:  38,000
@@ -217,13 +219,13 @@ tokens (15): ['[CLS]', 'the', 'food', 'was', 'un', '##for', '##get', '##table', 
 
 ## MLM 사전학습 — Ch 20 패턴 압축 재현 (Wikitext-103, 2K × 3 epoch)
 
-이 노트북을 *self-contained* 로 만들기 위해 Ch 20 의 MLM 사전학습을 여기서 압축 재현합니다. Ch 20 (5K × 2 epoch) 보다 *데이터를 줄이고 (2K) epoch 를 늘려 (3)* 시간을 보존 — 한국어 Ch 23 self-contained 와 동일한 hyperparams. 같은 도메인 (위키) 표상의 *정렬 깊이* 가 충분해 fine-tune 시 random init 보다 분명히 우위.
+이 노트북을 *self-contained* 로 만들기 위해 Ch 20 의 MLM 사전학습을 여기서 압축 재현합니다. Ch 20 (5K × 2 epoch) 보다 *데이터를 줄이고 (2K) epoch 를 늘려 (3)* 시간을 보존 — 한국어 Ch 23 self-contained 와 동일한 hyperparams. 같은 도메인 (위키) 표상을 *얕게라도* 새겨 fine-tune 의 출발점을 만듭니다 — random init 대비 우위가 실제로 얼마나 되는지는 부록의 A/C 비교가 실측으로 보여줍니다 — 순 효과는 실재하지만 수 %p 수준입니다 (`executed/appendix_compute_budget.ipynb` §5 표).
 
-**MLM 사전학습 데이터는 *분류용 Yelp 와 별도*** — `Salesforce/wikitext`, config `wikitext-103-raw-v1` paragraphs 5K 를 *새로 로드*. 본 챕터의 *진짜 transfer 메시지* — *일반 위키 사전학습 → Yelp 분류 transfer* 가 노트북 한 구조에 자연스럽게 들어맞도록 *두 데이터셋이 공존*. 같은 토크나이저 (`bert-base-uncased`) 가 두 도메인을 모두 처리.
+**MLM 사전학습 데이터는 *분류용 Yelp 와 별도*** — `Salesforce/wikitext`, config `wikitext-103-raw-v1` paragraphs 2K 를 *새로 로드*. 본 챕터의 *진짜 transfer 메시지* — *일반 위키 사전학습 → Yelp 분류 transfer* 가 노트북 한 구조에 자연스럽게 들어맞도록 *두 데이터셋이 공존*. 같은 토크나이저 (`bert-base-uncased`) 가 두 도메인을 모두 처리.
 
 같은 작은 `BertConfig` (hidden=256, layer=4, head=4, intermediate=1024) → `BertForMaskedLM(config)` random init → Wikitext-103 paragraphs 2K MLM 3 epoch.
 
-Ch 20 과 동일한 작은 `BertConfig` (hidden 256, 4층, head 4, intermediate 1024) 로 `BertForMaskedLM` 을 random init 합니다. 사전학습된 가중치를 받아오는 게 아니라 *맨바닥에서* 시작하는 것이 이 챕터의 핵심이라, 처음 만든 본체의 파라미터 수를 함께 확인해 둡니다.
+> **사전학습 코퍼스가 얼마나 작은가** — 2K paragraphs 를 `block_size=128` 로 이어 붙이면 아래 셀에서 *2,100 block* 이 나옵니다. 토큰으로는 `2,100 × 128 = 268,800` — **약 27만 토큰** 입니다. DistilBERT 가 본 약 33억 토큰의 *약 1/12,000*. 이 숫자는 설정에서 결정되므로 재실행해도 같습니다.
 
 ```python
 # Ch 20 과 같은 작은 BERT 설정
@@ -244,13 +246,17 @@ mlm_config = BertConfig(
     pad_token_id=tokenizer.pad_token_id,
 )
 
+# 모델 가중치에도 시드를 겁니다 — TrainingArguments(seed=) 는 Trainer 단계부터 적용되므로
+# 이 줄이 없으면 random init 이 매 실행 달라져 loss·accuracy 가 실행마다 흔들립니다.
+set_seed(SEED)
+
 mlm_model = BertForMaskedLM(mlm_config)  # random init
 total = sum(p.numel() for p in mlm_model.parameters())
 print(f"Small BERT config: hidden={HIDDEN_SIZE}, layer={NUM_HIDDEN_LAYERS}, head={NUM_ATTENTION_HEADS}")
 print(f"Total parameters:  {total:,}  ({total/1e6:.2f} M)")
 ```
 
-**위 코드 읽기** — `BertForMaskedLM(mlm_config)` 는 사전학습 체크포인트를 받지 않으므로 모든 가중치가 random 입니다. `vocab_size=tokenizer.vocab_size` 로 vocab 을 토크나이저와 묶어 둔 점이 중요한데, 임베딩 행렬 크기가 곧 30,522 × 256 이 되어 전체 파라미터의 큰 비중을 차지합니다.
+**위 코드 읽기** — `BertForMaskedLM(mlm_config)` 는 사전학습 체크포인트를 받지 않으므로 모든 가중치가 random 입니다. `vocab_size=tokenizer.vocab_size` 로 vocab 을 토크나이저와 묶어 둔 점이 중요한데, 임베딩 행렬 크기가 곧 30,522 × 256 이 되어 전체 파라미터의 큰 비중을 차지합니다. 바로 위 `set_seed(SEED)` 는 이 random init 자체를 고정해, 같은 환경에서는 아래 학습 수치까지 재현되게 합니다.
 
 **▶ 실행 결과**
 
@@ -331,6 +337,10 @@ print(f"MLM eval blocks:  {len(lm_eval):,}")
 
 ```text
 downloading Wikitext-103 (Salesforce/wikitext, wikitext-103-raw-v1)...
+wikitext-103-raw-v1/test-00000-of-00001.(…): downloading bytes:           |  0.00B            
+wikitext-103-raw-v1/train-00000-of-00002(…): downloading bytes:           |  0.00B            
+wikitext-103-raw-v1/train-00001-of-00002(…): downloading bytes:           |  0.00B            
+wikitext-103-raw-v1/validation-00000-of-(…): downloading bytes:           |  0.00B            
 MLM train paragraphs: 2,000  (wikitext-103)
 MLM eval paragraphs:  400
 first MLM sample:  Balinor Buckhannah , the Crown Prince of the country of Callahorn and the " charismatic commander of [ the ] Border Leg...
@@ -501,11 +511,11 @@ PyTorch `CrossEntropyLoss` 의 `ignore_index=-100` 은 *어느 토큰 자리의 
 |---|---|---|---|
 | **MLM 사전학습** (이 챕터·Ch 20) | 선택된 약 15% 만 원본 token id, 나머지 = `-100` | 가려진 자리 | 주변 문맥으로 *가려진 토큰 복원* |
 | **GPT CausalLM 사전학습** (Ch 24-26) | `input_ids.clone()` — *거의 모든 토큰* | (pad 만 `-100`) 사실상 *전 자리* | 모든 자리에서 *다음 토큰 예측* — 언어 분포 자체 |
-| **SFT / Instruction Tuning** (Ch 27) | **prompt 부분 = `-100`**, *답변 토큰만* 원본 id | *답변 부분만* | "질문을 외우지 말고 답변하는 법" 만 학습 |
+| **SFT / Instruction Tuning** (Ch 28) | **prompt 부분 = `-100`**, *답변 토큰만* 원본 id | *답변 부분만* | "질문을 외우지 말고 답변하는 법" 만 학습 |
 
-> **세 곳 모두 같은 `-100` 트릭, 적용 자리만 정반대.** MLM 은 *대부분을 가리고 일부만 학습*, GPT 사전학습은 *거의 가리지 않음*, SFT 는 *prompt 만 가림*. Phase 4 (특히 Ch 27 SFT, `SFTTrainer` 의 `response-only mask` 옵션) 에서 이 차이를 *코드 라인 한 줄 — `labels[prompt_mask] = -100`* 으로 직접 보게 될 겁니다.
+> **세 곳 모두 같은 `-100` 트릭, 적용 자리만 정반대.** MLM 은 *대부분을 가리고 일부만 학습*, GPT 사전학습은 *거의 가리지 않음*, SFT 는 *prompt 만 가림*. Phase 4 (특히 Ch 28 SFT, `SFTTrainer` 의 `response-only mask` 옵션) 에서 이 차이를 *코드 라인 한 줄 — `labels[prompt_mask] = -100`* 으로 직접 보게 될 겁니다.
 
-지금 위 셀에서 본 `label_id = -100` 의 의미를 기억해 두면, Ch 27 의 *왜 모델이 instruction 을 따라가게 되는가* 가 한 줄로 이해됩니다.
+지금 위 셀에서 본 `label_id = -100` 의 의미를 기억해 두면, Ch 28 의 *왜 모델이 instruction 을 따라가게 되는가* 가 한 줄로 이해됩니다.
 
 ### 같은 단어 "파인튜닝", BERT 시대와 GPT 시대의 의미가 살짝 다릅니다
 
@@ -513,7 +523,7 @@ PyTorch `CrossEntropyLoss` 의 `ignore_index=-100` 은 *어느 토큰 자리의 
 
 GPT 시대 (Phase 4 Ch 24 이후) 부터는 같은 단어가 *살짝 다른 의미* 를 가집니다.
 
-| 축 | **BERT 파인튜닝** (이 챕터, Ch 9-18, Ch 23) | **GPT 파인튜닝 = SFT** (Ch 25, Ch 27) |
+| 축 | **BERT 파인튜닝** (이 챕터, Ch 9-18, Ch 23) | **GPT 파인튜닝 = SFT** (Ch 28) |
 |---|---|---|
 | 무엇을 바꾸나 | 본체 + **새 head** (task별 부착) | 본체 + **기존 LM head 그대로** |
 | 출력 형식 | task별 다름 (class id / score / multi-hot) | *항상 토큰 시퀀스* — 형식 통일 |
@@ -523,7 +533,7 @@ GPT 시대 (Phase 4 Ch 24 이후) 부터는 같은 단어가 *살짝 다른 의�
 
 > **BERT 파인튜닝은 *task 적응*, GPT 파인튜닝은 *행동 정렬*.** GPT 는 head 가 바뀌지 않으므로 "파인튜닝" 이 *동일한 next-token 예측 task 안에서 데이터만 바뀌는* 일이 됩니다 (사전학습 = 웹 텍스트, SFT = 모범 응답 쌍). 그래서 Phase 4 부터는 "fine-tuning ≈ SFT ≈ instruction tuning ≈ behavior alignment" 가 거의 동의어로 섞여 쓰입니다.
 
-이 의미 차이는 *왜 GPT 모델 하나가 모든 task 를 해내는가* 의 핵심 이유 — head 가 task 별로 분기하지 않으니 *입력 프롬프트* 만 바꾸면 *같은 모델* 이 다른 일을 합니다. Ch 27 에서 직접 확인.
+이 의미 차이는 *왜 GPT 모델 하나가 모든 task 를 해내는가* 의 핵심 이유 — head 가 task 별로 분기하지 않으니 *입력 프롬프트* 만 바꾸면 *같은 모델* 이 다른 일을 합니다. Ch 28 에서 직접 확인.
 
 MLM 사전학습용 `Trainer` 를 구성합니다. scratch 사전학습이라 fine-tune 보다 큰 학습률 (5e-4) 을 쓰고, T4 미지원인 bf16 대신 `fp16=True` 를 적용합니다.
 
@@ -538,7 +548,7 @@ mlm_args = TrainingArguments(
     per_device_eval_batch_size=64,
     learning_rate=5e-4,
     weight_decay=0.01,
-    warmup_ratio=0.06,
+    warmup_steps=0.06,             # 1 미만이면 전체 step 대비 *비율* 로 해석 (구 warmup_ratio)
     fp16=USE_FP16,
     eval_strategy="epoch",
     logging_steps=20,
@@ -572,7 +582,6 @@ print(f"MLM steps:      {len(lm_train) // mlm_args.per_device_train_batch_size *
 **▶ 실행 결과**
 
 ```text
-[transformers] warmup_ratio is deprecated and will be removed in v5.2. Use `warmup_steps` instead.
 MLM epochs:     3
 MLM batch size: 32
 MLM learning rate: 0.0005
@@ -595,11 +604,11 @@ print(f"random baseline (ln vocab): {math.log(tokenizer.vocab_size):.4f}")
 
 ```text
 Epoch  Training Loss  Validation Loss
-1      7.424748       7.483847
-2      7.332835       7.229390
-3      7.165433       7.272982
+1      7.427901       7.483476
+2      7.335162       7.241530
+3      7.174193       7.277164
 MLM pretraining done in 0.3 min
-mean train loss: 7.6027
+mean train loss: 7.6013
 random baseline (ln vocab): 10.3262
 ```
 
@@ -619,17 +628,17 @@ print(f"(random baseline PPL: {tokenizer.vocab_size:,})")
 
 ```text
 Training Loss  Validation Loss  Epoch
-7.165433       7.212437         3
-MLM eval loss:        7.2124
-MLM eval perplexity:  1356.19
+7.174193       7.221408         3
+MLM eval loss:        7.2214
+MLM eval perplexity:  1368.41
 (random baseline PPL: 30,522)
 ```
 
 **결과 해석**
 
-eval perplexity 1356 은 random baseline 30,522 의 약 1/22 로, 가려진 자리에서 vocab 전체가 아니라 약 1,300 개 후보로 좁혀진 정도를 뜻합니다. 완벽한 언어모델과는 멀지만 Yelp 분류 fine-tune 의 출발점으로는 충분한 표상입니다.
+eval perplexity 1368 은 random baseline 30,522 의 약 1/22 로, 가려진 자리에서 vocab 전체가 아니라 1,300여 개 후보로 좁혀진 정도를 뜻합니다. 완벽한 언어모델과는 멀지만 Yelp 분류 fine-tune 의 출발점으로는 충분한 표상입니다.
 
-**관전 포인트** — Wikitext-103 paragraphs 에서 MLM loss 가 *random baseline 10.33* 에서 시작해 약 7 부근까지 떨어졌다면 본체가 *일반 위키 어휘·문맥 구조의 일부* 를 학습한 상태. perplexity 로 환산하면 vocab 30,522 중 *약 1,300 개 후보* 로 좁혀진 정도. Ch 20 의 2 epoch 와 비슷한 수준이지만, *Yelp 분류 fine-tune 출발점* 으로는 충분합니다 — 본체가 *일반 영어 구조* 를 가지면 *Yelp 리뷰(식당·업체) 도메인* 도 fine-tune 으로 빠르게 적응.
+**관전 포인트** — Wikitext-103 paragraphs 에서 MLM loss 가 *random baseline 10.33* 에서 시작해 약 7 부근까지 떨어졌다면 본체가 *일반 위키 어휘·문맥 구조의 일부* 를 학습한 상태. perplexity 로 환산하면 vocab 30,522 중 *약 1,300 개 후보* 로 좁혀진 정도. Ch 20 의 2 epoch 와 비슷한 수준입니다. 다만 Ch 20 이 같은 Wikitext-103 에서 잰 *unigram (빈도만, 문맥 없음) 기준선* 이 **7.2525** 였으니, 이 정도 loss 는 *빈도 통계를 갓 넘어선* 단계로 읽는 편이 정확합니다 — 본체가 *일반 영어의 얕은 구조* 를 가진 채 Yelp 분류 fine-tune 에 들어갑니다.
 
 > **체크포인트 저장은 생략** — 노트북 안에서 바로 본체 가중치를 분류 모델로 옮기기 때문. Ch 20 처럼 디스크에 저장하려면 `mlm_model.save_pretrained("./ch21_mlm_ckpt")` 한 줄.
 
@@ -658,22 +667,17 @@ cls_config = BertConfig(
     label2id={"negative": 0, "positive": 1},
 )
 
+# 분류 헤드도 새로 random init 되므로 같은 이유로 시드를 겁니다.
+set_seed(SEED)
+
 cls_model = BertForSequenceClassification(cls_config)
-```
 
-**위 코드 읽기** — 본체 구조는 MLM 과 똑같이 두되 `num_labels=2` 와 `problem_type="single_label_classification"` 만 추가합니다. 이 `problem_type` 이 `CrossEntropyLoss` 를 자동으로 고르게 하고, `id2label` 로 0/1 이 부정/긍정으로 매핑됩니다.
-
-```python
 # MLM 본체 (embeddings + encoder) 를 분류 모델로 *복사* — pooler 까지 같이
 missing, unexpected = cls_model.bert.load_state_dict(mlm_model.bert.state_dict(), strict=False)
 print(f"본체 가중치 복사 완료")
 print(f"  missing keys (분류 측에만 있는 부분): {len(missing)}  e.g. {missing[:3] if missing else []}")
 print(f"  unexpected keys (MLM 측 잉여):       {len(unexpected)}  e.g. {unexpected[:3] if unexpected else []}")
-```
 
-**위 코드 읽기** — `cls_model.bert.load_state_dict(mlm_model.bert.state_dict(), strict=False)` 가 핵심 한 줄입니다. 두 모델 모두 내부에 같은 이름의 `self.bert` (`BertModel`) 를 갖기 때문에 사전학습된 임베딩+인코더를 통째로 옮길 수 있고, `strict=False` 라 분류 측에만 있는 `pooler` 같은 키는 missing 으로 넘어갑니다. MLM head 와 분류 head 는 본체 바깥의 다른 자리라 자동으로 분리됩니다.
-
-```python
 # 파라미터 수 비교
 total_cls = sum(p.numel() for p in cls_model.parameters())
 total_body = sum(p.numel() for n, p in cls_model.named_parameters() if "classifier" not in n)
@@ -683,6 +687,8 @@ print(f"  body (embeddings + encoder + pooler): {total_body:>10,}  ({total_body/
 print(f"  classifier head Linear(256, 2):       {total_head:>10,}  ({total_head/total_cls:.1%})")
 print(f"  total:                                 {total_cls:>10,}  ({total_cls/1e6:.2f} M)")
 ```
+
+**위 코드 읽기** — 본체 구조는 MLM 과 똑같이 두되 `num_labels=2` 와 `problem_type="single_label_classification"` 만 추가합니다. 이 `problem_type` 이 `CrossEntropyLoss` 를 자동으로 고르게 하고, `id2label` 로 0/1 이 부정/긍정으로 매핑됩니다.
 
 **▶ 실행 결과**
 
@@ -699,7 +705,7 @@ Classification model parameters:
 
 **결과 해석**
 
-missing 은 `pooler` 가중치 2 개뿐이고 unexpected 는 0 으로, 사전학습 본체가 깔끔하게 옮겨졌습니다. 분류 head `Linear(256, 2)` 는 514 개로 전체의 0.0% 에 불과해, *대부분의 지식은 사전학습 본체에 있고 새 head 는 아주 얇게* 얹힌다는 fine-tune 패러다임을 그대로 보여줍니다.
+missing 은 `pooler` 가중치 2 개뿐이고 unexpected 는 0 으로, 사전학습 본체가 깔끔하게 옮겨졌습니다. 분류 head `Linear(256, 2)` 는 514 개로 전체의 0.0% 에 불과해, *대부분의 지식은 본체에 있고 head 는 얇은 어댑터* 라는 구조가 수치로 확인됩니다.
 
 **`bert.load_state_dict` 가 한 일** — `BertForMaskedLM` 과 `BertForSequenceClassification` 둘 다 *내부에 같은 `BertModel`* (이름 `self.bert`) 을 갖습니다. 그 본체만 통째로 옮긴 셈. MLM head (`cls.predictions`) 와 분류 head (`classifier`) 는 *모델 객체의 다른 자리* 라 자동으로 분리됩니다.
 
@@ -808,16 +814,16 @@ print(f"random baseline (ln 2): {math.log(2):.4f}")
 
 ```text
 Epoch  Training Loss  Validation Loss  Accuracy  Precision  Recall    F1        Auc
-1      0.688090       0.690499         0.484000  0.484000   1.000000  0.652291  0.664244
-2      0.671505       0.667989         0.626000  0.594828   0.712810  0.648496  0.682084
-Classification fine-tune done in 0.3 min
-mean train loss: 0.6860
+1      0.689457       0.687375         0.495000  0.489318   0.993802  0.655760  0.666635
+2      0.667249       0.661020         0.631000  0.605505   0.681818  0.641399  0.680821
+Classification fine-tune done in 0.2 min
+mean train loss: 0.6835
 random baseline (ln 2): 0.6931
 ```
 
 **결과 해석**
 
-평균 train loss 0.686 으로 random baseline 0.693 에서 아주 조금만 내려왔습니다. 작은 본체 + 작은 사전학습 + 2 epoch 라는 toy 셋업에서 분류 경계가 *겨우 잡히기 시작한* 정도임을 시사합니다.
+평균 train loss 0.6835 로 random baseline 0.6931 에서 아주 조금만 내려왔습니다. 작은 본체 + 작은 사전학습 + 2 epoch 라는 toy 셋업에서 분류 경계가 *겨우 잡히기 시작한* 정도임을 시사합니다.
 
 ```python
 !nvidia-smi
@@ -826,7 +832,7 @@ random baseline (ln 2): 0.6931
 **▶ 실행 결과**
 
 ```text
-Mon Jun 22 12:17:59 2026       
+Thu Aug 20 12:45:10 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -835,7 +841,7 @@ Mon Jun 22 12:17:59 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   48C    P0             34W /   70W |     797MiB /  15360MiB |     14%      Default |
+| N/A   50C    P0             58W /   70W |     797MiB /  15360MiB |     31%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -844,6 +850,6 @@ Mon Jun 22 12:17:59 2026
 |  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
 |        ID   ID                                                               Usage      |
 |=========================================================================================|
-|    0   N/A  N/A            1329      C   /usr/bin/python3                        794MiB |
+|    0   N/A  N/A             573      C   /usr/bin/python3                        794MiB |
 +-----------------------------------------------------------------------------------------+
 ```

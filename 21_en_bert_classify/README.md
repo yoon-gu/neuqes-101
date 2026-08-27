@@ -25,13 +25,13 @@ self-contained 노트북: Wikitext-103 MLM 학습을 2K × 3 epoch 압축 재현
 
 | 단계 | 데이터셋 | 용도 |
 |---|---|---|
-| MLM 사전학습 | `Salesforce/wikitext`, `wikitext-103-raw-v1` 5K paragraphs (eval 500) | self-supervised MLM, 일반 위키 본문 |
+| MLM 사전학습 | `Salesforce/wikitext`, `wikitext-103-raw-v1` 2K paragraphs (eval 400) | self-supervised MLM, 일반 위키 본문 |
 | 분류 fine-tune | `fancyzhx/yelp_polarity` 5K train / 1K eval, seed 42 | supervised 이진 분류 (긍정/부정 라벨) |
 
-같은 토크나이저 (`bert-base-uncased`) 가 두 도메인의 텍스트를 처리. `block_size=128` `group_texts` 패턴으로 MLM 1 epoch + Yelp 분류 fine-tune 2 epoch.
+같은 토크나이저 (`bert-base-uncased`) 가 두 도메인의 텍스트를 처리. `block_size=128` `group_texts` 패턴으로 MLM 3 epoch + Yelp 분류 fine-tune 2 epoch.
 
 ## 환경
-Google Colab T4 GPU (fp16). 약 25-28분 (Wikitext-103 다운로드·필터링 약 2분 + MLM 1 epoch 약 10-12분 + 분류 fine-tune 2 epoch 약 8-10분 + 평가/시각화 약 2분).
+Google Colab T4 GPU (fp16). 약 3-5분 — 대부분이 데이터 다운로드입니다 (실행본 `executed/21_en_bert_classify.ipynb` 기준 전체 2분 13초: 다운로드·전처리 약 1분 40초 + MLM 3 epoch 약 15초 + 분류 fine-tune 2 epoch 약 15초 + 평가·시각화 수 초).
 
 ## 변화 추적
 
@@ -50,13 +50,13 @@ Google Colab T4 GPU (fp16). 약 25-28분 (Wikitext-103 다운로드·필터링 �
 | 차원 | Ch 10 (DistilBERT) | Ch 21 (small BERT scratch) | 비고 |
 |---|---|---|---|
 | 본체 파라미터 | 약 66M | 약 10M | Ch 21 은 1/6 작음 |
-| 사전학습 코퍼스 | Wikipedia + BookCorpus (약 33억 토큰, 일반 도메인) | Wikitext-103 paragraphs 5K (약 70만-100만 토큰, 일반 도메인) | 약 3000-5000배 격차, **둘 다 일반 위키** |
-| 사전학습 시간 | TPU 수일 | T4 약 10-12분 | |
+| 사전학습 코퍼스 | Wikipedia + BookCorpus (약 33억 토큰, 일반 도메인) | Wikitext-103 paragraphs 2K (약 27만 토큰, 일반 도메인) | 약 1.2만배 격차, **둘 다 일반 위키** |
+| 사전학습 시간 | TPU 수일 | T4 약 15초 (2K × 3 epoch = 198 step) | |
 | Fine-tune 도메인 | Yelp 이진 (다른 도메인) | Yelp 이진 (다른 도메인) | **둘 다 위키 -> Yelp transfer** |
 | 분류 fine-tune 셋업 | (같음 — 5K/1K, batch 16, lr 2e-5, 2 epoch, fp16) | | 본체 외 통제 |
-| 기대 accuracy | 약 92-95% | 약 75-85% | 비교는 실측치로 |
+| 실측 accuracy | 약 0.90 | random (0.50) 과 Ch 10 의 중간쯤 | 실행마다 흔들려 단일 값으로 적지 않음 — 값은 실행본 `executed/21_en_bert_classify.ipynb` |
 
-비교가 *공정* 한 이유 — 둘 다 *일반 도메인 위키 사전학습 → Yelp 분류 transfer* 의 같은 패턴이라 *사전학습 규모* (3000-5000배) 와 *모델 크기* (6배) 만 변수. 격차가 *사전학습 규모의 가치* 를 정량으로 보여줍니다. *작은 일반 도메인 사전학습도 random init 보다는 분명히 낫다* 는 것, 그리고 *fair-compute (사전학습 compute 를 fine-tune 으로 옮겨도)* 격차가 메워지지 않는다는 것은 부록 [`appendix_compute_budget.ipynb`](./appendix_compute_budget.ipynb) 참조.
+비교가 *공정* 한 이유 — 둘 다 *일반 도메인 위키 사전학습 → Yelp 분류 transfer* 의 같은 패턴이라 *사전학습 규모* (약 1.2만배) 와 *모델 크기* (약 6배) 만 변수. 격차가 *사전학습 규모의 가치* 를 정량으로 보여줍니다. *작은 일반 도메인 사전학습도 random init 보다는 분명히 낫다* 는 것, 그리고 *fair-compute (사전학습 compute 를 fine-tune 으로 옮겨도)* 격차가 메워지지 않는다는 것은 부록 [`appendix_compute_budget.ipynb`](./appendix_compute_budget.ipynb) 참조.
 
 ## 다음 챕터
 [22_ko_bert_pretrain](../22_ko_bert_pretrain/) — Ch 20 의 영어 사전학습 패턴을 한국어로 재현. 같은 작은 BertConfig + `klue/bert-base` 토크나이저 + **한국어 Wikipedia paragraphs MLM** (일반 도메인). Ch 22 → Ch 23 (한국어 NSMC 분류) 가 이번 챕터 (Ch 20 → Ch 21, 영어) 와 *대칭* — 둘 다 *일반 위키 사전학습 → 영화 리뷰 분류 transfer*.

@@ -66,14 +66,22 @@ def _github_repo() -> str:
 GITHUB_REPO = _github_repo()
 
 
-def _colab_button(folder: str) -> str:
-    """실습 페이지 맨 위에 넣을 Colab '바로 열기' 링크.
-    배지 이미지(외부 SVG)는 EPUB/PDF에서 깨지므로 전자책 안전한 텍스트 링크로 둔다(린터 E4 회피).
-    repo 를 못 찾으면 빈 문자열 → 링크 생략."""
+def _colab_url(nb_rel: str) -> str:
+    """레포 상대 노트북 경로(`21_en_bert_classify/appendix_compute_budget.ipynb`) → Colab URL.
+    repo 를 못 찾으면 빈 문자열."""
     if not GITHUB_REPO:
         return ""
-    url = f"https://colab.research.google.com/github/{GITHUB_REPO}/blob/master/{folder}/{folder}.ipynb"
-    return f"> ▶ **[Google Colab에서 이 장 실습 열기]({url})** — 브라우저에서 바로 실행해 볼 수 있습니다."
+    return f"https://colab.research.google.com/github/{GITHUB_REPO}/blob/master/{nb_rel}"
+
+
+def _colab_button(nb_rel: str, label: str = "이 장 실습") -> str:
+    """페이지 맨 위에 넣을 Colab '바로 열기' 링크.
+    배지 이미지(외부 SVG)는 EPUB/PDF에서 깨지므로 전자책 안전한 텍스트 링크로 둔다(린터 E4 회피).
+    repo 를 못 찾으면 빈 문자열 → 링크 생략."""
+    url = _colab_url(nb_rel)
+    if not url:
+        return ""
+    return f"> ▶ **[Google Colab에서 {label} 열기]({url})** — 브라우저에서 바로 실행해 볼 수 있습니다."
 
 
 COLAB_BADGE_RE = re.compile(r"^\s*\[!\[.*?Colab.*?\]\(.*?\)\]\(.*?\)\s*$", re.IGNORECASE)
@@ -82,6 +90,12 @@ EMOJI_RE = re.compile(r"^[\s←-⇿⌀-➿⬀-⯿️\U0001F000-\U0001FAFF]+")
 ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
 CHAPTER_FOLDER_RE = re.compile(r"^(\d{2})_(.+)$")
 H1_CHAPTER_PREFIX_RE = re.compile(r"^\s*Chapter\s+\d+\s*[.．]\s*")
+
+# 부록 노트북 H1 의 장 접두 — `Chapter 21 부록 — …` / `Ch 7 부록 — …` / `Ch 20·22 부록 — …`
+APPENDIX_H1_PREFIX_RE = re.compile(r"^\s*(?:Chapter|Ch)\s*\d+(?:\s*[·,]\s*\d+)*\s*[.．]?\s*")
+# 제목 말미의 내부 이슈 참조 — 목차에 노출할 정보가 아니라 떼어낸다.
+ISSUE_REF_RE = re.compile(r"\s*\(\s*이슈\s*#\d+\s*\)\s*$")
+APPENDIX_PREFIX = "appendix_"   # `appendix_<suffix>.ipynb` 명명의 접두
 
 SKIP_PATTERNS = (
     "TqdmWarning:",
@@ -318,13 +332,41 @@ def _wrap_win_paths(ln: str, stats: dict) -> str:
     return re.sub(r"\x00(\d+)\x00", lambda m: spans[int(m.group(1))], masked)
 
 
-def _sanitize_md_cell(md: str, stem: str, stats: dict) -> str:
+NB_RELLINK_RE = re.compile(r"\]\(\s*\.?/?([A-Za-z0-9_.-]+\.ipynb)\s*\)")
+
+
+def _rewrite_notebook_links(ln: str, folder: str, stats: dict) -> str:
+    """`](./appendix_x.ipynb)` 류 노트북 상대 링크 → Colab 절대 URL (이슈 #143).
+
+    WikiDocs 는 이 상대 링크를 `https://wikidocs.net/appendix_x.ipynb` 로 풀어 독자를
+    **책 밖(위키독스 홈)으로 내보낸다**. 페이지 id 는 빌드 시점에 알 수 없고 책 안에는
+    페이지 간 상대 링크 규약도 없으므로(페이지 목록은 `[[SubPages]]` 매크로가 담당),
+    GitHub·WikiDocs·PDF·EPUB 어디서나 살아 있는 Colab URL 로 바꾼다.
+
+    바꾸는 대상은 **그 챕터 폴더에 실제로 있는 노트북**뿐이다. 없는 파일명은 오타이거나
+    다른 뜻일 수 있어 손대지 않고 남겨 둔다(린터·검수에서 드러나도록).
+    """
+    def _sub(m: re.Match) -> str:
+        name = m.group(1)
+        if not (ROOT / folder / name).exists():
+            return m.group(0)
+        url = _colab_url(f"{folder}/{name}")
+        if not url:
+            return m.group(0)
+        stats["nb_links"] += 1
+        return f"]({url})"
+
+    return NB_RELLINK_RE.sub(_sub, ln)
+
+
+def _sanitize_md_cell(md: str, stem: str, stats: dict, folder: str = "") -> str:
     """마크다운 셀을 전자책 규칙([wikidocs 전자책 작성시 주의할 점](https://wikidocs.net/198723))에 맞게 방어 정리한다. 코드펜스 안은 손대지 않음.
 
     - [11] 코드펜스 밖 수평선(---/***/___) 제거 (앞이 빈 줄일 때만 — setext 헤딩 오인 방지).
     - [1]  2번째 이후 H1(#) → H2(##) 강등 (본문 H1 금지; 첫 제목 H1은 convert 가 따로 제거).
     - [10] 각주 이름에 챕터 stem 접두 → 전자책이 전 페이지를 한 문서로 통합할 때 충돌 방지.
     - [6]/[3] raw HTML·외부 이미지는 자동 수정이 어려워 stats 에 경고만 모은다(인라인 코드는 제외).
+    - `folder` 를 주면 노트북 상대 링크(`](./appendix_x.ipynb)`)를 Colab URL 로 바꾼다(이슈 #143).
     """
     out: list[str] = []
     fence = False
@@ -354,6 +396,8 @@ def _sanitize_md_cell(md: str, stem: str, stats: dict) -> str:
                 out.append("")
                 stats["heading_blanks"] += 1
             pending_blank = True
+        if folder and ".ipynb)" in ln:  # 노트북 상대 링크 → Colab URL (이슈 #143)
+            ln = _rewrite_notebook_links(ln, folder, stats)
         if ":\\" in ln:  # [W1] 코드/수식 밖 윈도우 경로 → 인라인 코드
             ln = _wrap_win_paths(ln, stats)
         if "[^" in ln:
@@ -716,15 +760,20 @@ def chapter_h1_title(nb: dict) -> str:
 # --------------------------------------------------------------------------- #
 # 변환
 # --------------------------------------------------------------------------- #
+def _new_stats() -> dict:
+    return {"code_cells": 0, "code_with_output": 0, "synthetic": 0, "images": 0,
+            "hr_removed": 0, "h1_demoted": 0, "footnotes": 0, "heading_blanks": 0,
+            "win_paths": 0, "nb_links": 0, "html_warn": [], "extimg_warn": []}
+
+
 def convert(nb: dict, num: int, slug: str, title: str,
             pages_dir: Path, assets_dir: Path | None,
             style: str = DEFAULT_OUTPUT_STYLE) -> tuple[list[tuple[str, str]], dict]:
     stem = f"{num:02d}-{slug}"
-    truncate = f"{num:02d}_{slug}" not in NO_TRUNCATE_CHAPTERS  # 토큰화 챕터는 원본 길이 유지
+    folder = f"{num:02d}_{slug}"
+    truncate = folder not in NO_TRUNCATE_CHAPTERS  # 토큰화 챕터는 원본 길이 유지
     img_counter = [0]
-    stats = {"code_cells": 0, "code_with_output": 0, "synthetic": 0, "images": 0,
-             "hr_removed": 0, "h1_demoted": 0, "footnotes": 0, "heading_blanks": 0, "win_paths": 0,
-             "html_warn": [], "extimg_warn": []}
+    stats = _new_stats()
 
     groups: dict[str, list[str]] = {
         "overview": [], "practice": [], "anatomy": [], "variation": [], "wrapup": []
@@ -750,9 +799,9 @@ def convert(nb: dict, num: int, slug: str, title: str,
                 seen_h1 = True
                 body = "\n".join(md.splitlines()[1:]).strip("\n")
                 if body.strip():
-                    overview_intro.append(_sanitize_md_cell(body, stem, stats))
+                    overview_intro.append(_sanitize_md_cell(body, stem, stats, folder))
                 continue
-            cell_md = _strip_header_emoji(_sanitize_md_cell(md, stem, stats))
+            cell_md = _strip_header_emoji(_sanitize_md_cell(md, stem, stats, folder))
             if hdr and hdr[0] == 2:
                 setup_mode = False   # 본문/정리 헤더가 나오면 환경 준비 영역 종료
                 htext = hdr[1]
@@ -824,7 +873,7 @@ def convert(nb: dict, num: int, slug: str, title: str,
         parts: list[str] = []
         body_blocks = list(groups[g])
         if g == "practice":
-            btn = _colab_button(f"{num:02d}_{slug}")
+            btn = _colab_button(f"{folder}/{folder}.ipynb")
             if btn:
                 parts.append(btn)
         if g == "practice" and setup_code:
@@ -855,22 +904,126 @@ def convert(nb: dict, num: int, slug: str, title: str,
 
 
 # --------------------------------------------------------------------------- #
+# 부록 (이슈 #143)
+# --------------------------------------------------------------------------- #
+def discover_appendices(folder: str) -> list[tuple[str, str, Path]]:
+    """챕터 폴더의 부록 노트북 → `[(stem, suffix, path)]` (파일명 순).
+
+    레포에 **두 가지 명명이 섞여 있다** — `executed/colab_cli_exec.py` 가 89a4754 에서
+    둘 다 잡도록 고친 것과 같은 규약을 변환 쪽에도 적용한다.
+
+      `<폴더>_<suffix>.ipynb`   — 12·14·18·20·31·34
+      `appendix_<suffix>.ipynb` — 07·09·10·21·23·27·29·31
+
+    `suffix` 는 접두를 뗀 나머지라, 어느 명명이든 페이지는 `NN-slug-<suffix>.md` 한
+    형식으로 나온다(`appendix_compute_budget` → `21-en_bert_classify-compute_budget.md`).
+    이미 있는 4개 부록 페이지의 이름을 그대로 유지하면서 파일 이동 없이 규약을 맞추는
+    방식이다(이슈 #143 案 1).
+    """
+    d = ROOT / folder
+    found: dict[str, tuple[str, str, Path]] = {}
+    for p in sorted(d.glob(f"{folder}_*.ipynb")) + sorted(d.glob(f"{APPENDIX_PREFIX}*.ipynb")):
+        stem = p.stem
+        suffix = stem[len(folder) + 1:] if stem.startswith(folder + "_") else stem[len(APPENDIX_PREFIX):]
+        if not suffix or suffix in found:   # 접미사 충돌은 stem 을 그대로 써 구분
+            suffix = stem
+        found[suffix] = (stem, suffix, p)
+    return [found[k] for k in sorted(found)]
+
+
+def appendix_title(nb: dict, suffix: str) -> str:
+    """부록 노트북 H1 → 목차 제목. 항상 `부록 — …` 한 형식으로 맞춘다.
+
+    H1 은 `Chapter 21 부록 — fair-compute 비교 (…)` / `Ch 20·22 부록 — …` 처럼 장 접두가
+    제각각이라 접두를 떼고, 말미의 내부 이슈 참조(`(이슈 #19)`)도 뗀다. `부록` 으로
+    시작하지 않는 제목에는 `부록 — ` 를 붙인다.
+    """
+    h1 = ""
+    for cell in nb.get("cells", []):
+        if cell.get("cell_type") != "markdown":
+            continue
+        m = _first_header(_cell_text(cell))
+        if m and m[0] == 1:
+            h1 = m[1].strip()
+            break
+    t = ISSUE_REF_RE.sub("", APPENDIX_H1_PREFIX_RE.sub("", h1)).strip()
+    if not t:
+        return f"부록 — {suffix.replace('_', ' ')}"
+    return t if t.startswith("부록") else f"부록 — {t}"
+
+
+def convert_appendix(nb: dict, num: int, slug: str, folder: str, ap_stem: str, suffix: str,
+                     pages_dir: Path, assets_dir: Path | None,
+                     style: str = DEFAULT_OUTPUT_STYLE) -> tuple[str, str, dict]:
+    """부록 노트북 1권 → 페이지 1장. `(목차제목, 페이지경로, stats)`.
+
+    본편과 달리 실습/해부/변형으로 쪼개지 않는다 — 부록은 한 가지 실험을 처음부터 끝까지
+    따라가는 글이라 절 분할이 오히려 흐름을 끊고, 기존 부록 페이지 4장도 모두 단일 페이지다.
+    첫 H1 은 제거한다(페이지 제목은 `TOC.md` 담당 — 본편 페이지와 같은 규칙, 린터 E1).
+    """
+    stem = f"{num:02d}-{slug}-{suffix}"
+    truncate = folder not in NO_TRUNCATE_CHAPTERS
+    img_counter = [0]
+    stats = _new_stats()
+
+    parts: list[str] = []
+    btn = _colab_button(f"{folder}/{ap_stem}.ipynb", label="이 부록")
+    if btn:
+        parts.append(btn)
+
+    seen_h1 = False
+    for cell in nb.get("cells", []):
+        ctype = cell.get("cell_type")
+        if ctype == "markdown":
+            md = _strip_colab_badge(_cell_text(cell))
+            if not md.strip():
+                continue
+            hdr = _first_header(md)
+            if hdr and hdr[0] == 1 and not seen_h1:
+                seen_h1 = True
+                md = "\n".join(md.splitlines()[1:]).strip("\n")
+                if not md.strip():
+                    continue
+            parts.append(_strip_header_emoji(_sanitize_md_cell(md, stem, stats, folder)))
+        elif ctype == "code":
+            code = _cell_text(cell).rstrip("\n")
+            if not code.strip():
+                continue
+            stats["code_cells"] += 1
+            outs = _render_outputs(cell, assets_dir, stem, img_counter, style, truncate)
+            if outs:
+                stats["code_with_output"] += 1
+            else:
+                syn = _synthetic_block(code, style)
+                if syn:
+                    outs = syn
+                    stats["synthetic"] += 1
+            parts.append("```python\n" + code + "\n```" + ("\n\n" + outs if outs else ""))
+
+    stats["images"] = img_counter[0]
+    pages_dir.mkdir(parents=True, exist_ok=True)
+    (pages_dir / f"{stem}.md").write_text(
+        "\n\n".join(p for p in parts if p).strip() + "\n", encoding="utf-8")
+    return appendix_title(nb, suffix), f"pages/{stem}.md", stats
+
+
+# --------------------------------------------------------------------------- #
 # TOC
 # --------------------------------------------------------------------------- #
 def upsert_toc(toc_path: Path, book_title: str, num: int, stem: str,
                entries: list[tuple[str, str]]) -> None:
     """TOC.md에서 이 장(NN. / NN-N.) 블록만 교체하거나 추가. 다른 장은 보존.
 
-    이 장 블록 안에는 이번 실행이 새로 찍어낸 표준 5페이지(개요 + practice/anatomy/
-    variation/wrapup) 항목 외에, `-data_scaling`·`-lambda_sweep` 같은 **부록** 항목이
-    섞여 있을 수 있다. 부록은 별도 노트북에서 만든 페이지라 이번 `entries` 에는 전혀
-    안 잡히는데, 번호 접두사만으로 블록을 통째로 교체하면 페이지 파일은 멀쩡히 있는데도
-    TOC 링크만 조용히 사라진다(고아 페이지). 표준 경로가 아닌 기존 항목은 그대로
-    보존해 이 문제를 막는다.
+    이 장 블록 안에 **이번 실행이 만들지 않은** 항목(손으로 넣은 페이지, 노트북이 사라진
+    옛 부록 등)이 섞여 있을 수 있다. 번호 접두사만으로 블록을 통째로 교체하면 페이지
+    파일은 멀쩡히 있는데도 TOC 링크만 조용히 사라진다(고아 페이지). 그래서 **이번
+    `entries` 가 가리키는 경로만** 새로 쓰고, 나머지 기존 항목은 그대로 보존한다.
+
+    부록도 이제 `entries` 에 담겨 오므로(이슈 #143) 보존이 아니라 정상 갱신 대상이다 —
+    제목이 바뀌면 반영되고, 중복 항목이 생기지 않는다.
     """
     nn = f"{num:02d}"
-    standard_paths = {f"pages/{stem}.md"} | {
-        f"pages/{stem}-{suf}.md" for suf in ("practice", "anatomy", "variation", "wrapup")}
+    standard_paths = {path for _, path in entries}
     new_lines = []
     for title, path in entries:
         indent = "" if re.match(r"^\d+\.\s", title) else "  "
@@ -986,6 +1139,42 @@ def pick_source_notebook(folder: str, slug: str, nb_path: Path,
     return json.loads(nb_path.read_text(encoding="utf-8")), "clean(출력없음 가능)"
 
 
+def build_appendices(num: int, slug: str, folder: str, executed_dir: Path, pages_dir: Path,
+                     assets_dir: Path | None, args, entries: list[tuple[str, str]],
+                     stats: dict) -> list[str]:
+    """이 장의 부록 노트북들을 페이지로 만들고 `entries` 뒤에 목차 항목을 붙인다.
+
+    절 번호는 표준 절 다음 번호로 이어진다 — 표준 절이 3개면 부록은 `NN-4.` 가 된다.
+
+    **실행본이 없으면 만들지 않는다.** 부록도 GPU 챕터라 clean 노트북으로 찍으면 출력이
+    빈 페이지가 나오고, 그건 "가짜 출력 금지"와 같은 이유로 페이지를 안 만드느니만 못하다
+    (이슈 #143: "어느 안이든 부록 페이지 생성에는 실행본이 선행"). 대신 어떻게 만드는지를
+    화면에 알려 준다. `--execute` 를 준 경우에만 그 자리에서 실행한다.
+    """
+    lines: list[str] = []
+    for ap_stem, suffix, ap_path in discover_appendices(folder):
+        archived = executed_dir / f"{ap_stem}.ipynb"
+        if archived.exists():
+            nb, source = json.loads(archived.read_text(encoding="utf-8")), f"executed/{archived.name}"
+        elif args.execute:
+            nb, source = execute_notebook(ap_path, args.timeout), "live --execute"
+        else:
+            lines.append(f"     ⚠ 부록 {ap_stem} — 실행본 없음 → 페이지 생략 "
+                         f"(만들려면: ./executed/run_via_cli.sh {ap_stem})")
+            continue
+        ap_title, ap_page, ap_stats = convert_appendix(
+            nb, num, slug, folder, ap_stem, suffix, pages_dir, assets_dir, args.output_style)
+        entries.append((f"{num:02d}-{len(entries)}. {ap_title}", ap_page))
+        stats["nb_links"] += ap_stats["nb_links"]
+        stats["html_warn"].extend(ap_stats["html_warn"])
+        stats["extimg_warn"].extend(ap_stats["extimg_warn"])
+        lines.append(f"     부록 {ap_page.split('/')[-1]}  원천={source}  "
+                     f"코드셀 {ap_stats['code_cells']}개 "
+                     f"(실제출력 {ap_stats['code_with_output']} / 합성 {ap_stats['synthetic']}) "
+                     f"이미지 {ap_stats['images']}")
+    return lines
+
+
 # --------------------------------------------------------------------------- #
 # main
 # --------------------------------------------------------------------------- #
@@ -1049,6 +1238,8 @@ def main() -> None:
             title = resolve_title(num, slug, nb, registry)
             entries, stats = convert(nb, num, slug, title, pages_dir, assets_dir,
                                      args.output_style)
+            ap_lines = build_appendices(num, slug, folder, executed_dir, pages_dir,
+                                        assets_dir, args, entries, stats)
             upsert_toc(toc_path, args.book_title, num, f"{num:02d}-{slug}", entries)
             print(f"[{num:02d}] {title}")
             print(f"     원천={source}  코드셀 {stats['code_cells']}개 "
@@ -1065,6 +1256,8 @@ def main() -> None:
                 fixes.append(f"헤딩 빈 줄 {stats['heading_blanks']}")
             if stats.get("win_paths"):
                 fixes.append(f"윈도우 경로 {stats['win_paths']} 코드화")
+            if stats.get("nb_links"):
+                fixes.append(f"노트북 상대링크 {stats['nb_links']} → Colab URL")
             if fixes:
                 print("     방어(전자책 규칙):", " / ".join(fixes))
             if stats["html_warn"]:
@@ -1073,6 +1266,8 @@ def main() -> None:
             if stats["extimg_warn"]:
                 print(f"     ⚠ 외부 이미지 {len(stats['extimg_warn'])}건(PDF 누락 위험, 위키독스 업로드 필요): "
                       f"{stats['extimg_warn'][:3]}")
+            for line in ap_lines:
+                print(line)
             ok.append(num)
         except Exception as e:  # 챕터별 실패 격리
             failed.append((num, e))
