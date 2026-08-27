@@ -16,7 +16,7 @@ A vs C 는 *사전학습의 순 효과*, A vs B 는 *일반 도메인 사전학�
 
 **환경**: Google Colab T4 GPU 필수. 세 셋업(A/B/C)을 한 노트북에서 돌리므로 메인 챕터(전체 2분 13초)보다 오래 걸립니다 — **5분 안팎** 예상.
 
-**메인 챕터와의 관계** — MLM 설정(3 epoch)은 메인 챕터와 같고, 다른 것은 *데이터 크기* 와 *셋업 B·C 추가* 입니다. 분류 데이터는 메인과 같은 5K/1K (`N_TRAIN_TEXT=5000, N_EVAL_TEXT=1000`), MLM 코퍼스도 메인과 같은 2K paragraphs (`N_MLM_TEXT=2000`) 입니다. 부록은 *부록만으로 self-contained* — 메인 노트북을 먼저 돌릴 필요 없음.
+**메인 챕터와의 관계** — MLM 설정(3 epoch)도 데이터도 메인 챕터와 같고, 다른 것은 *셋업 B·C 추가* 뿐입니다. 분류 데이터는 메인과 같은 5K/1K (`N_TRAIN_TEXT=5000, N_EVAL_TEXT=1000`), MLM 코퍼스도 메인과 같은 2K paragraphs (`N_MLM_TEXT=2000`) 입니다. 부록은 *부록만으로 self-contained* — 메인 노트북을 먼저 돌릴 필요 없음.
 
 ## 셋업 비교 — A / B / C
 
@@ -115,7 +115,7 @@ GPU:             Tesla T4
 
 ### 데이터·모델 hyperparams — 메인과 통일
 
-MLM 은 메인 챕터와 **같은 3 epoch** 입니다 — 부록이 메인과 다른 점은 *데이터 크기* 와 *셋업 B·C 추가* 뿐입니다. 데이터도 메인과 같습니다 — 분류 Yelp 5K/1K (`N_TRAIN_TEXT=5000, N_EVAL_TEXT=1000`), MLM 코퍼스 Wikitext-103 2K paragraphs (`N_MLM_TEXT=2000`). 앞선 판에서 분류 데이터를 2K/400 으로 줄였더니 A·C 가 2 epoch 안에 학습을 시작하지 못해 비교가 성립하지 않았고, 메인과 같은 크기로 되돌렸습니다. 작은 BERT 본체 구조 (hidden=256, layer=4, head=4) 와 학습률은 메인과 완전히 같음.
+MLM 은 메인 챕터와 **같은 3 epoch** 입니다 — 부록이 메인과 다른 점은 *셋업 B·C 추가* 뿐입니다. 데이터도 메인과 같습니다 — 분류 Yelp 5K/1K (`N_TRAIN_TEXT=5000, N_EVAL_TEXT=1000`), MLM 코퍼스 Wikitext-103 2K paragraphs (`N_MLM_TEXT=2000`). 앞선 판에서 분류 데이터를 2K/400 으로 줄였더니 A·C 가 2 epoch 안에 학습을 시작하지 못해 비교가 성립하지 않았고, 메인과 같은 크기로 되돌렸습니다. 작은 BERT 본체 구조 (hidden=256, layer=4, head=4) 와 학습률은 메인과 완전히 같음.
 
 ```python
 SEED = 42
