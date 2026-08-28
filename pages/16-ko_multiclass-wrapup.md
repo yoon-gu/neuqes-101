@@ -22,12 +22,11 @@
 | 데이터셋 | 도메인 | 클래스 수 | 크기 |
 |---|---|---|---|
 | **KLUE-YNAT** (이번 챕터) | 뉴스 헤드라인 | 7 | 45K train |
-| KLUE-TC (KLUE Topic Classification) | 짧은 문서 토픽 | 7 | 같은 KLUE 시리즈 |
 | AI Hub 뉴스 분류 | 뉴스 본문 | 50+ | 100K+ (가입 필요) |
 | 모두의 말뭉치 신문 코퍼스 | 신문 기사 | 다양 | 매우 큼 (라이선스 확인 필요) |
 | Naver shopping 카테고리 분류 | 상품 설명 | 100+ | 1M+ (실무에선 흔히 다룸) |
 
-KLUE-YNAT 가 *입문에 편한 이유* — datasets.load_dataset 한 줄, 깔끔한 라벨, 균형 분포에 가까움, 헤드라인 한 줄이라 max_length 짧음.
+KLUE 벤치마크의 TC(Topic Classification) task 가 곧 YNAT 입니다 — 별도 데이터셋이 아닙니다. KLUE-YNAT 가 *입문에 편한 이유* — datasets.load_dataset 한 줄, 깔끔한 라벨, 균형 분포에 가까움, 헤드라인 한 줄이라 max_length 짧음.
 
 ### Q2. (이론) 혼동 행렬에서 *대칭* 인 혼동과 *비대칭* 인 혼동은 무슨 차이인가요?
 
