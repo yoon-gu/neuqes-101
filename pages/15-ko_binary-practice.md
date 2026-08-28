@@ -100,7 +100,7 @@ samples = [
 ]
 ```
 
-**위 코드 읽기** — `klue/bert-base` 는 한국어 위키·뉴스·댓글로 사전학습된 한국어 WordPiece 토크나이저, `distilbert-base-uncased` 는 영어용입니다. 두 토크나이저는 vocab 규모는 비슷해도 *담긴 어휘* 가 완전히 다릅니다. `samples` 에는 양쪽에 통과시킬 짧은 한국어 리뷰 세 개를 둡니다.
+**위 코드 읽기** — `klue/bert-base` 는 모두의 말뭉치·뉴스·나무위키·국민청원·웹 크롤로 사전학습된 한국어 WordPiece 토크나이저, `distilbert-base-uncased` 는 영어용입니다. 두 토크나이저는 vocab 규모는 비슷해도 *담긴 어휘* 가 완전히 다릅니다. `samples` 에는 양쪽에 통과시킬 짧은 한국어 리뷰 세 개를 둡니다.
 
 ```python
 for sent in samples:
