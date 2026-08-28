@@ -794,7 +794,7 @@ logit z:     -5.71
 
 KLUE 사전학습 코퍼스(약 62GB)에 뉴스·모두의 말뭉치 같은 격식 문어뿐 아니라 \emph{나무위키·국민청원·구어 대화·웹 크롤} 같은 \textbf{비격식 문체} 가 섞여 있어, NSMC 의 \emph{짧고 구어체} 인 문장도 BERT 에게 낯설지 않습니다. 형태소 기반 32K vocab 이 \inlinecode{\#\#었}·\inlinecode{\#\#어요} 같은 구어 어미를 온전한 토큰으로 담는 것도 한몫합니다. (영화 리뷰 자체는 코퍼스에 없고, 벤치마크 데이터와 겹치는 문장은 오히려 제거했습니다.) 위키만으로 사전학습된 한국어 모델은 NSMC 같은 \emph{비-격식} 텍스트에 약함.
 
-도메인이 \emph{격식체 문서} (법률·특허·논문) 면 \inlinecode{kpfbert/bert-base-korean-legal-news} 같은 도메인 특화 모델이 더 나을 수 있음.
+도메인이 \emph{격식체 문서} (뉴스·법률·특허) 면 그 도메인 코퍼스로 사전학습한 모델이 더 나을 수 있음 --- 예: 한국언론진흥재단 \textbf{KPF-BERT} (뉴스 기사 특화, GitHub \inlinecode{KPFBERT/kpfbert} 공개).
 
 \end{faqBox}
 
