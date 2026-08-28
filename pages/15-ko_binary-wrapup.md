@@ -55,7 +55,7 @@ BERT 의 트랜스포머 인코더는 *언어 가정* 을 거의 안 합니다 �
 | **NSMC** (이번 챕터) | 영화 리뷰 | 긍정/부정 | 200K (15만 train, 5만 test) |
 | **KOSAC** | 다양 (뉴스/리뷰/SNS) | 긍정/부정 + sentiment intensity | 7K |
 | **steam-korean-review** | 게임 리뷰 | 긍정/부정 | 100K+ |
-| **AI Hub 감성대화** | 대화 | 7가지 감성 (binary 변환 가능) | 70K |
+| **AI Hub 감성대화** | 대화 | 6가지 감성 (binary 변환 가능) | 70K |
 
 **주의**: 위 데이터셋들은 라이선스가 다양 (CC-BY, MIT, AI Hub 가입 필요 등). 상업 이용 전엔 라이선스 확인 필수.
 
