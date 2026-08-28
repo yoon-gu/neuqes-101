@@ -111,7 +111,7 @@ Activation / Loss & softmax / CE & (그대로) \\
 
 \subsection{\texorpdfstring{왜 한국어가 영어 BERT 와 \emph{그렇게} 다른가}{왜 한국어가 영어 BERT 와 그렇게 다른가}}
 
-영어 distilbert-base-uncased 토크나이저로 한국어를 처리하면 \emph{처참한} 토큰화가 나옵니다. 영어 vocab 에 한국어 글자가 없어서 \emph{바이트 단위} (\texttt{{[}UNK{]}} 또는 \inlinecode{\#\#} prefix 부스러기) 로 깨집니다. 모델이 학습한 단어 임베딩이 한국어를 못 받아내요.
+영어 distilbert-base-uncased 토크나이저로 한국어를 처리하면 \emph{처참한} 토큰화가 나옵니다. 영어 vocab 에 한국어 글자가 없어서 \emph{자모(초·중·종성) 단위} (\inlinecode{U+110B}, \inlinecode{\#\#U+1175} 같은 부스러기 또는 \texttt{{[}UNK{]}}) 로 깨집니다. 모델이 학습한 단어 임베딩이 한국어를 못 받아내요.
 
 \textbf{해결}: \emph{한국어 텍스트로 사전학습된} BERT 와 그 토크나이저를 사용. 이 장은 KLUE 연구팀의 \inlinecode{klue/bert-base} --- 모두의 말뭉치 + 뉴스 + 나무위키 + 국민청원 + 웹 크롤 (약 62GB) 로 사전학습.
 
@@ -154,7 +154,7 @@ L = -\frac{1}{N}\sum_{i=1}^{N}\log \hat p_{i, y_i} \quad\text{where}\quad \hat p
 \end{adjustbox}
 \end{booktable}
 
-영어 토크나이저는 한국어를 \emph{낯선 문자열} 로 보고 글자 단위까지 쪼갭니다. 한국어 토크나이저는 \emph{재미있·었·어요} 를 어휘적 의미 단위로 분할 --- 모델이 임베딩을 통해 \emph{의미} 를 잡을 수 있는 형태.
+영어 토크나이저는 한국어를 \emph{낯선 문자열} 로 보고 자모 단위까지 쪼갭니다. 한국어 토크나이저는 \emph{재미있·었·어요} 를 어휘적 의미 단위로 분할 --- 모델이 임베딩을 통해 \emph{의미} 를 잡을 수 있는 형태.
 
 이 비교는 §실습 직전에 \emph{코드로 직접} 확인합니다.
 
@@ -278,7 +278,7 @@ distilbert-base-uncased vocab:    30,522
 \item
   한국어 토크나이저는 \emph{어휘적 의미 단위} 로 분할 --- \inlinecode{재미있} + \inlinecode{\#\#었} + \inlinecode{\#\#어요} 처럼 어간·어미를 살림
 \item
-  영어 토크나이저는 한국어를 \emph{글자 단위} 로 쪼개거나 (\inlinecode{이}, \inlinecode{영}, \inlinecode{\#\#화}) \texttt{{[}UNK{]}} 로 처리 --- 의미를 못 잡음
+  영어 토크나이저는 한국어를 \emph{자모 단위} 로 쪼개거나 (\inlinecode{U+110B}, \inlinecode{\#\#U+1175}, \inlinecode{U+110B}, \inlinecode{\#\#U+1167}, \inlinecode{\#\#U+11BC}) \texttt{{[}UNK{]}} 로 처리 --- 의미를 못 잡음. \inlinecode{uncased} 토크나이저가 NFD 정규화로 한글 음절을 자모로 분해한 뒤 vocab 에 있는 자모만 남기기 때문
 \item
   vocab 크기는 비슷 (32K vs 30K) 지만 \emph{내용물이 완전히 다름} --- 한국어 vocab 은 한국어 빈도 어휘 32K, 영어 vocab 은 영어 빈도 어휘 30K
 \item
