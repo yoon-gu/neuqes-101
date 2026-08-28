@@ -231,7 +231,7 @@ L_{\text{MLM}} = -\frac{1}{\vert{}M\vert{}} \sum_{i \in M} \log P(x_i \mid x_{\s
 
 \subsection{\texorpdfstring{\inlinecode{labels\ =\ -100} 한 줄 환기}{labels = -100 한 줄 환기}}
 
-\inlinecode{DataCollatorForLanguageModeling} 이 가려지지 않은 자리에 \inlinecode{labels\ =\ -100} 을 채워 \emph{해당 위치의 CE loss 를 무시} 합니다 (PyTorch \inlinecode{CrossEntropyLoss} 의 \inlinecode{ignore\_index} 기본값). 같은 트릭이 Phase 4 의 SFT (\ref{ch:27}장) 에서 \emph{prompt 자리를 가리는} 방식으로 다시 등장합니다 --- \emph{적용 자리만 정반대}. 한국어 MLM 에서도 트릭 자체는 \emph{완전히 동일}.
+\inlinecode{DataCollatorForLanguageModeling} 이 가려지지 않은 자리에 \inlinecode{labels\ =\ -100} 을 채워 \emph{해당 위치의 CE loss 를 무시} 합니다 (PyTorch \inlinecode{CrossEntropyLoss} 의 \inlinecode{ignore\_index} 기본값). 같은 트릭이 Phase 4 의 SFT (\ref{ch:28}장) 에서 \emph{prompt 자리를 가리는} 방식으로 다시 등장합니다 --- \emph{적용 자리만 정반대}. 한국어 MLM 에서도 트릭 자체는 \emph{완전히 동일}.
 
 
 
@@ -606,6 +606,8 @@ config = BertConfig(
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=17]
+set_seed(SEED)
+
 model = BertForMaskedLM(config)
 
 total = sum(p.numel() for p in model.parameters())
@@ -620,14 +622,15 @@ encoder = sum(
 )
 head = sum(
     p.numel() for n,
-    p in model.named_parameters() if "cls" in n,
-)
 \end{lstlisting}
 
 \noindent\emph{앞 블록은 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 이어지는 블록에서는 텍스트를 모델 입력 텐서로 바꾸는 단계로 넘어갑니다.}
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=33]
+    p in model.named_parameters() if "cls" in n,
+)
+
 print(f"Config: hidden={HIDDEN_SIZE}, layer={NUM_HIDDEN_LAYERS}, "
       f"head={NUM_ATTENTION_HEADS}, intermediate={INTERMEDIATE_SIZE}")
 print(f"max_position_embeddings: {MAX_POS_EMBED}")
@@ -641,15 +644,15 @@ print(
     f"{total/1e6:.2f} M)"
 )
 print(f"Trainable:           {trainable:>13,}")
-print(
-    f"  embeddings:        {emb:>13,}  ({emb/total:.1%})  (vocab {tokenizer.vocab_size} x hidden "
-    f"{HIDDEN_SIZE})"
 \end{lstlisting}
 
-\noindent\emph{앞 블록은 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 이어지는 블록에서는 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계로 넘어갑니다.}
+\noindent\emph{앞뒤 블록은 모두 텍스트를 모델 입력 텐서로 바꾸는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=49]
+print(
+    f"  embeddings:        {emb:>13,}  ({emb/total:.1%})  (vocab {tokenizer.vocab_size} x hidden "
+    f"{HIDDEN_SIZE})"
 )
 print(
     f"  encoder (4 layer): {encoder:>13,}  ("
@@ -749,9 +752,9 @@ print(f"loss positions:        {n_loss_pos:>4} / {total_tokens}  "
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 batch shape: input_ids=(2, 128), labels=(2, 128)
-masked tokens (call 1):   35 / 256  (13.67%)
-masked tokens (call 2):   26 / 256  (10.16%)
-loss positions:          45 / 256  (17.58%)  (labels != -100)
+masked tokens (call 1):   30 / 256  (11.72%)
+masked tokens (call 2):   27 / 256  (10.55%)
+loss positions:          35 / 256  (13.67%)  (labels != -100)
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -779,7 +782,7 @@ loss positions:          45 / 256  (17.58%)  (labels != -100)
 \textbf{나머지 85\%} 의 토큰은 \inlinecode{labels\ =\ -100} 으로 두어 \emph{loss 계산에서 제외} 됩니다 (PyTorch CE 의 \inlinecode{ignore\_index} 기본값). 즉 한 step 의 MLM loss 는 \emph{선택된 15\% 자리만} 모아 평균한 값.
 
 \begin{quote}
-이 \inlinecode{labels\ =\ -100} 트릭은 BERT-만의 것이 아닙니다 --- Phase 4 GPT 사전학습은 \emph{거의 모든 토큰} 을 학습 (\inlinecode{labels\ =\ input\_ids}), SFT (\ref{ch:27}장) 는 \emph{prompt 만 -100, 답변만 학습}. 같은 트릭, 정반대 자리. \ref{ch:21}장 / 영어 짝과 동일한 풀버전 시각화로 한국어 환경에서도 직접 확인.
+이 \inlinecode{labels\ =\ -100} 트릭은 BERT-만의 것이 아닙니다 --- Phase 4 GPT 사전학습은 \emph{거의 모든 토큰} 을 학습 (\inlinecode{labels\ =\ input\_ids}), SFT (\ref{ch:28}장) 는 \emph{prompt 만 -100, 답변만 학습}. 같은 트릭, 정반대 자리. \ref{ch:21}장 / 영어 짝과 동일한 풀버전 시각화로 한국어 환경에서도 직접 확인.
 \end{quote}
 
 
@@ -1061,20 +1064,20 @@ for sent in test_sentences:
 \begin{bookoutputbox}
 Training Loss  Validation Loss  Epoch
 -------------  ---------------  -----
-No log         10.425517        0
+No log         10.421567        0
 ==============================================================================
 BEFORE pretraining  (random init body)
 ==============================================================================
-  eval_loss       : 10.4255   (random baseline ln V = 10.3735)
-  eval_perplexity : 33,709     (random baseline V    = 32,000)
+  eval_loss       : 10.4216   (random baseline ln V = 10.3735)
+  eval_perplexity : 33,576     (random baseline V    = 32,000)
 input: 대한민국의 수도는 [MASK]이다.
-  top-5 before pretraining: ['##희정', '해석', '찬성', '전한', 'par']
+  top-5 before pretraining: ['만지', '기구', '등', '자산운용', '청약']
 
 input: 태양계에는 행성이 [MASK] 개 있다.
-  top-5 before pretraining: ['이씨', '저지른', '1958', '몰입', '끄집어내']
+  top-5 before pretraining: ['놀림', '한입', '여전히', '뒤졌', '강판']
 
 input: 이 영화 정말 [MASK].
-top-5 before pretraining: ['계약서', '서귀', '스페인어', '드세요', 'William']
+  top-5 before pretraining: ['U+4EE5', '야경', '영남대', '##다랗', '학살']
 ...
 \end{bookoutputbox}
 \par\vspace{0.9em}
@@ -1171,14 +1174,14 @@ print(
 \begin{bookoutputbox}
 Training Loss  Validation Loss  Epoch
 -------------  ---------------  -----
-7.385564       7.513839         2
+7.368665       7.493273         2
 === eval (held-out Korean Wikipedia paragraphs) ===
-               eval_loss: 7.5138
+               eval_loss: 7.4933
 
-  MLM loss:               7.5138
-  perplexity (exp loss):  1833.24
+  MLM loss:               7.4933
+  perplexity (exp loss):  1795.92
   random baseline PPL:    32,000  (uniform over vocab)
-  -> model narrowed vocab to approx. 1833 candidates per masked position
+  -> model narrowed vocab to approx. 1796 candidates per masked position
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1212,8 +1215,8 @@ print(metric_compare.round(4).to_string(index=False))
 \begin{bookoutputbox}
 Before vs After -- eval metrics
          metric  before (random)  after (2 epoch)  random baseline
-      eval_loss          10.4255           7.5249          10.3735
-eval_perplexity       33708.8968        1853.5880       32000.0000
+      eval_loss          10.4216           7.5036          10.3735
+eval_perplexity       33576.0053        1814.5088       32000.0000
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1232,7 +1235,7 @@ eval_perplexity       33708.8968        1853.5880       32000.0000
 
 \subsection{\texorpdfstring{표준 KLUE-BERT 기준점}{표준 KLUE-BERT 기준점}}
 
-우리 작은 BERT (10M, 한국어 위키 5K paragraphs \(\times\) 2 epoch) 의 top-5 가 \emph{방향성은 맞지만 정답이 잘 안 보이는} 이유는 단순합니다 --- \textbf{학습 데이터·모델 크기·학습 시간 모두 부족}. \emph{그럼 학습이 충분히 잘 되면 어떤 결과가 나오나?} 의 답을 같은 한국어 문장에 표준 \inlinecode{klue/bert-base} (110M, 약 8.4B 토큰 대규모 한국어 코퍼스) 를 적용해 직접 봅니다.
+우리 작은 BERT (10M, 한국어 위키 5K paragraphs \(\times\) 2 epoch) 의 top-5 가 \emph{고빈도 기능 토큰에 머무는} 이유는 단순합니다 --- \textbf{학습 데이터·모델 크기·학습 시간 모두 부족}. \emph{그럼 학습이 충분히 잘 되면 어떤 결과가 나오나?} 의 답을 같은 한국어 문장에 표준 \inlinecode{klue/bert-base} (110M, 약 8.4B 토큰 대규모 한국어 코퍼스) 를 적용해 직접 봅니다.
 
 같은 토크나이저 (\inlinecode{klue/bert-base}) 를 쓰고 있으므로 \emph{모델만 바꿔} 두 결과를 나란히.
 
@@ -1298,25 +1301,25 @@ if torch.cuda.is_available():
 \begin{itemize}
 \tightlist
 \item
-  \textbf{\inlinecode{eval\_loss}}: random baseline \texttt{ln\ V\ \$\textbackslash{}approx\$\ 10.37} 에서 약 5-7 부근까지 떨어졌으면 본체가 \emph{언어 구조 일부} 를 학습. \emph{완전한} 한국어 표상은 아니어도 \inlinecode{klue/bert-base} 가 학습한 것의 \emph{방향} 은 맞춤.
+  \textbf{\inlinecode{eval\_loss}}: random baseline \texttt{ln\ V\ \$\textbackslash{}approx\$\ 10.37} 에서 \textbf{약 7.5 부근} 까지 내려옵니다 --- \emph{어떤 토큰이 흔한가} 를 막 새긴 단계 (정확값은 위 §7-1 셀 출력이 단일 출처). \emph{완전한} 한국어 표상에는 한참 못 미치지만, \inlinecode{klue/bert-base} 가 학습한 것의 \emph{방향} 은 맞춥니다.
 \item
-  \textbf{\inlinecode{perplexity}}: 32,000 (vocab 전체) 에서 수십-수백 부근으로. \emph{마스크 자리마다 후보를 약 50-500 개로 좁힌 상태} 라는 직관적 해석.
+  \textbf{\inlinecode{perplexity}}: 33,000 안팎 (\(\approx\) vocab 전체) 에서 \textbf{2,000 안팎} 으로. \emph{마스크 자리마다 후보를 32,000 개에서 약 2,000 개 수준으로 좁힌 상태} 라는 직관적 해석 --- 아직 \emph{흔한 토큰들} 의 범위를 크게 벗어나지 못한 수준입니다.
 \item
   \textbf{top-5 토큰} (3-way 비교):
 
   \begin{itemize}
   \tightlist
   \item
-    \emph{before (random)}: 자주 등장하는 \emph{조사·어미·특수문자} (\inlinecode{\#\#요}, \inlinecode{\#\#어}, \inlinecode{.}, \inlinecode{는}, \inlinecode{이}) --- random init 이지만 logits 가 미세하게 흔들려 \emph{통계적 빈도} 높은 토큰만 뽑힘.
+    \emph{before (random)}: random init 의 logits 는 학습 신호가 없는 난수라 \textbf{빈도와 무관한 토큰들이 무작위로} 뽑힙니다 --- 희귀 명사·조각 토큰·한자 등이 뒤섞인 목록 (\inlinecode{set\_seed(SEED)} 로 고정했으므로 다시 돌리면 같은 목록, 시드를 바꾸면 완전히 달라집니다).
   \item
-    \emph{ours (small BERT, 위키 5K paragraphs \(\times\) 2 epoch)}: 한국어 어미·내용어 일부가 섞이기 시작 --- 위키 도메인은 \emph{방향성이 보이지만} 정답 (\inlinecode{서울}, \inlinecode{8} 등) 이 top-5 안에 \emph{안정적으로} 들어오지는 못함. \textbf{데이터·모델 크기 부족의 한계}.
+    \emph{ours (small BERT, 위키 5K paragraphs \(\times\) 2 epoch)}: 네 문장 모두 \inlinecode{.}·\inlinecode{\#\#의}·\inlinecode{,} 같은 \textbf{구두점·조사 계열 고빈도 토큰} 이 top-5 를 채웁니다 --- \emph{어떤 토큰이 흔한가} 를 막 배운 단계로, 내용어·정답 (\inlinecode{서울}, \inlinecode{8} 등) 은 아직 보이지 않습니다. \textbf{빈도 통계는 새겼지만 문맥·내용은 아직} --- 이게 데이터·모델 크기 부족의 정직한 모습.
   \item
-    \emph{ref (klue/bert-base, 약 8.4B 토큰)}: 위키 도메인은 \emph{정답이 top-1} --- \inlinecode{서울}, \inlinecode{여덟} 같은 자연스러운 답. NSMC 도메인 (다른 도메인) 도 \emph{감성 형용사·부사} (\inlinecode{재미있}, \inlinecode{정말}, \inlinecode{너무}) 가 자연스럽게 top-5 에 들어옴. \textbf{이게 사전학습이 충분히 잘 됐을 때의 모습}.
+    \emph{ref (klue/bert-base, 약 8.4B 토큰)}: \emph{수도} 문장은 정답 \inlinecode{서울} 이 top-1. 다만 \emph{행성 개수} 문장은 \inlinecode{여러}·\inlinecode{몇} 같은 수 관형사가 나올 뿐 정답 \inlinecode{여덟} 은 top-5 에 없습니다 --- 대규모 사전학습도 \emph{세상 지식 회상} 까지 보장하지는 않습니다. NSMC 도메인은 \inlinecode{너무}·\inlinecode{정말} 같은 감성 부사가 자연스럽게 top-5 에 들어옵니다. \textbf{이게 사전학습이 충분히 잘 됐을 때의 모습}.
   \end{itemize}
 \end{itemize}
 
 \begin{quote}
-\textbf{세 모델의 격차가 정확히 \emph{데이터 규모 + 모델 크기 + 학습 시간} 의 격차} --- 우리 작은 BERT (10M, 위키 5K paragraphs, 2 epoch) \(\to\) reference (110M, 약 8.4B tokens) 사이에 \emph{데이터 수천 배, 파라미터 11배}. 그 격차가 top-5 의 \emph{질적 차이} 로 정확히 드러납니다.
+\textbf{세 모델의 격차가 정확히 \emph{데이터 규모 + 모델 크기 + 학습 시간} 의 격차} --- 우리 작은 BERT (10M, 위키 5K paragraphs, 2 epoch) \(\to\) reference (110M, 약 8.4B tokens) 사이에 \emph{데이터 약 1.7만 배 (약 50만 \(\to\) 8.4B 토큰), 파라미터 11배}. 그 격차가 top-5 의 \emph{질적 차이} 로 정확히 드러납니다.
 \end{quote}
 
 이 장의 작은 BERT 는 \emph{한국어 위키 paragraphs 5K \(\times\) 2 epoch} 로 학습한 \emph{일반 도메인 mini BERT}. 위키 도메인은 직접 본 분포라 향상이 빠르지만, NSMC 영화 리뷰는 \emph{다른 도메인} 이라 fine-tune 단계에서 적응이 필요합니다 --- 이게 \emph{진짜 사전학습 \(\to\) fine-tune 패러다임} 의 핵심. \ref{ch:23}장에서 NSMC 이진 분류로 fine-tune 할 때 진짜 비교 --- \emph{우리가 직접 만든 작은 한국어 BERT (일반 도메인 5K, 약 10M)} vs \emph{\ref{ch:15}장의 \inlinecode{klue/bert-base} (대규모 일반 코퍼스, 약 110M)}.
@@ -1384,8 +1387,8 @@ for f in sorted(os.listdir(SAVE_DIR)):
 변형 축 & 이 장 (기본) & 변형 예 & 예상 효과 \\
 \midrule
 
-\inlinecode{N\_TRAIN\_TEXT} & 5,000 & 30,000 & 한 epoch 시간 약 6배, loss 하락폭 큼. 30분 안엔 1 epoch 만 가능 \\
-\inlinecode{num\_train\_epochs} & 2 & 3 & eval loss 약간 하락, perplexity 완만히 하락(8-10 epoch 이후 평탄) \\
+\inlinecode{N\_TRAIN\_TEXT} & 5,000 & 30,000 & loss 하락폭 큼. 학습 자체는 1 epoch 약 1분 수준 (실측 5K 2 epoch 0.3분 \(\times\) 약 6배) --- 30분 룰의 상한은 학습이 아니라 다운로드·토큰화 \\
+\inlinecode{num\_train\_epochs} & 2 & 3 & eval loss 소폭 하락 --- 작은 코퍼스라 과적합 주의, 효과는 셀 출력으로 확인 \\
 \inlinecode{BLOCK\_SIZE} & 128 & 64 & 블록 수 약 2배 증가, 한 블록 짧아져 \emph{문맥} 줄음 \\
 \inlinecode{mlm\_probability} & 0.15 & 0.20-0.25 & 한국어는 형태소 풍부해 \emph{가릴 자리} 가 많음. 학습 신호 약간 늘지만 trade-off 있음 (FAQ Q2 참고) \\
 데이터 출처 & 한국어 Wikipedia (5K paragraphs) & 더 많은 위키 + 모두의 말뭉치 + 뉴스 & klue/bert-base 의 약 8.4B 토큰에 더 가까이 --- 단, 토큰 수 늘리면 학습 시간 비례 증가 \\
@@ -1395,7 +1398,7 @@ for f in sorted(os.listdir(SAVE_DIR)):
 \end{booktable}
 
 \begin{quote}
-\textbf{T4 30분 룰 안에서 가능한 가장 큰 개선} --- \inlinecode{N\_TRAIN\_TEXT\ =\ 20000}, 1 epoch 정도가 한계. \ref{ch:23}장에서 \emph{얼마나 도움 됐는지} 가 진짜 검증.
+\textbf{T4 30분 룰 안에서 가능한 가장 큰 개선} --- 학습 시간만 보면 \inlinecode{N\_TRAIN\_TEXT} 를 수만 단위로 늘려도 여유가 큽니다 (상한은 다운로드·토큰화와 메모리). \ref{ch:23}장에서 \emph{얼마나 도움 됐는지} 가 진짜 검증.
 \end{quote}
 
 
@@ -1490,9 +1493,9 @@ loss = loss_fn(logits, labels)
 \begin{itemize}
 \tightlist
 \item
-  \textbf{GPT 사전학습} (\ref{ch:24}--\ref{ch:26}장): \inlinecode{labels\ =\ input\_ids.clone()} \(\to\) 사실상 \emph{모든 자리} 학습 (pad 만 -100)
+  \textbf{GPT 사전학습·계속 사전학습} (\ref{ch:24}--\ref{ch:27}장): \inlinecode{labels\ =\ input\_ids.clone()} \(\to\) 사실상 \emph{모든 자리} 학습 (pad 만 -100)
 \item
-  \textbf{SFT / Instruction Tuning} (\ref{ch:27}장): \texttt{labels{[}prompt\_mask{]}\ =\ -100} \(\to\) \emph{답변 부분만} 학습
+  \textbf{SFT / Instruction Tuning} (\ref{ch:28}장): \texttt{labels{[}prompt\_mask{]}\ =\ -100} \(\to\) \emph{답변 부분만} 학습
 \end{itemize}
 
 세 곳 모두 같은 \inlinecode{-100} 트릭, 적용 자리만 다릅니다. \ref{ch:21}장 §3 의 \emph{labels = -100 thread} 마크다운에 풀버전 설명.
