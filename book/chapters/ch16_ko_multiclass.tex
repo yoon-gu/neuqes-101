@@ -639,9 +639,9 @@ for label_str, idx in samples:
 
 \inlinecode{load\_dataset("klue/klue",\ "ynat")} & KLUE 벤치마크 YNAT (한국어 뉴스 7분류) & \ref{ch:17}장에서 같은 데이터로 multi-label 합성 \\
 \texttt{ds{[}“train”{]}.features{[}“label”{]}.names} & datasets.ClassLabel 의 사람-읽는 이름 & id2label 자동 매핑에 사용 \\
-\inlinecode{seaborn.heatmap(...,\ xticklabels=한국어)} & 혼동 행렬 한국어 라벨 표시 & \ref{ch:17}장도 사용 \\
+\inlinecode{seaborn.heatmap(...,\ xticklabels=LABEL\_NAMES\_EN)} & 혼동 행렬 카테고리 라벨 표시 (plot 은 폰트 문제를 피해 영문 이름) & \ref{ch:17}장도 사용 \\
 \inlinecode{sklearn.metrics.precision\_recall\_fscore\_support(...,\ average="macro")} & 클래스별 평균 metric (불균형에 강함) & 분류 장마다 \\
-\inlinecode{roc\_auc\_score(...,\ multi\_class="ovr")} & multi-class AUC (One-vs-Rest) & \ref{ch:17}장 multi-label 평가 \\
+\inlinecode{roc\_auc\_score(...,\ multi\_class="ovr")} & multi-class AUC (One-vs-Rest) & \ref{ch:17}장은 multi-hot 라벨에 \inlinecode{average="macro"} 로 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}

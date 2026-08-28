@@ -4,9 +4,9 @@
 |---|---|---|
 | `load_dataset("klue/klue", "ynat")` | KLUE 벤치마크 YNAT (한국어 뉴스 7분류) | Ch 17 에서 같은 데이터로 multi-label 합성 |
 | `ds["train"].features["label"].names` | datasets.ClassLabel 의 사람-읽는 이름 | id2label 자동 매핑에 사용 |
-| `seaborn.heatmap(..., xticklabels=한국어)` | 혼동 행렬 한국어 라벨 표시 | Ch 17 도 사용 |
+| `seaborn.heatmap(..., xticklabels=LABEL_NAMES_EN)` | 혼동 행렬 카테고리 라벨 표시 (plot 은 폰트 문제를 피해 영문 이름) | Ch 17 도 사용 |
 | `sklearn.metrics.precision_recall_fscore_support(..., average="macro")` | 클래스별 평균 metric (불균형에 강함) | 분류 챕터마다 |
-| `roc_auc_score(..., multi_class="ovr")` | multi-class AUC (One-vs-Rest) | Ch 17 multi-label 평가 |
+| `roc_auc_score(..., multi_class="ovr")` | multi-class AUC (One-vs-Rest) | Ch 17 은 multi-hot 라벨에 `average="macro"` 로 |
 
 ## 체크포인트 질문
 
