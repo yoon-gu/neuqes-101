@@ -38,7 +38,7 @@ toks = tokenizer_en.tokenize(sent)
 **일부 연구는 그런 시도를 했고 결과는 trade-off** 입니다. 한국어는 한 어절 안에 *어간 + 어미 + 조사* 가 결합되어 형태소 정보가 풍부 → 가릴 자리가 많아 *학습 신호 양* 은 늘 수 있습니다. 그러나:
 
 ```python
-# 15 → 0.25 로 올렸을 때
+# 0.15 → 0.25 로 올렸을 때
 data_collator = DataCollatorForLanguageModeling(
     tokenizer=tokenizer,
     mlm=True,
@@ -99,8 +99,8 @@ loss = loss_fn(logits, labels)
 
 `DataCollatorForLanguageModeling` 이 가려지지 않은 자리에 `-100` 을 채우는 게 *전 자리에서 CE 계산 후 마스킹* 보다 효율적입니다. 같은 트릭이:
 
-- **GPT 사전학습** (Ch 24-26): `labels = input_ids.clone()` → 사실상 *모든 자리* 학습 (pad 만 -100)
-- **SFT / Instruction Tuning** (Ch 27): `labels[prompt_mask] = -100` → *답변 부분만* 학습
+- **GPT 사전학습·계속 사전학습** (Ch 24-27): `labels = input_ids.clone()` → 사실상 *모든 자리* 학습 (pad 만 -100)
+- **SFT / Instruction Tuning** (Ch 28): `labels[prompt_mask] = -100` → *답변 부분만* 학습
 
 세 곳 모두 같은 `-100` 트릭, 적용 자리만 다릅니다. Ch 21 §3 의 *labels = -100 thread* 마크다운에 풀버전 설명.
 
@@ -110,7 +110,7 @@ loss = loss_fn(logits, labels)
 
 ```python
 # (1) 데이터 늘리기 — 가장 큰 효과
-N_TRAIN_TEXT = 30000   # 5K -> 30K, T4 30분 안에 1 epoch 가능
+N_TRAIN_TEXT = 30000   # 5K -> 30K — 학습은 1 epoch 약 1분 수준 (실측 5K 2 epoch 0.3분), 상한은 다운로드·토큰화
 
 # (2) epoch 늘리기 (단, 작은 데이터에 과적합 위험)
 NUM_EPOCHS = 3

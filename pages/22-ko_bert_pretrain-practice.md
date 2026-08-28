@@ -9,14 +9,14 @@
 **▶ 실행 결과**
 
 ```text
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 119.5 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 0.0/555.1 kB ? eta -:--:--
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 46.7 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.2/389.2 kB 36.4 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸━━━━━━━━━━ 36.4/48.9 MB 263.3 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 146.2 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 146.2 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 17.0 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.1/12.1 MB 112.1 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 559.1/559.1 kB 43.3 MB/s eta 0:00:00
+   ━━━━━━━━━━━━╸━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.0/50.1 MB 227.0 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 199.2 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 199.2 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 199.2 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 50.1/50.1 MB 18.2 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.3/3.3 MB 113.1 MB/s eta 0:00:00
 ```
 
 ```python
@@ -39,6 +39,7 @@ from transformers import (
     BertForMaskedLM,
     DataCollatorForLanguageModeling,
     Trainer,
+    set_seed,
     TrainingArguments,
 )
 
@@ -87,7 +88,7 @@ GPU:             Tesla T4
 **▶ 실행 결과**
 
 ```text
-Mon Jun 22 12:19:24 2026       
+Fri Aug 28 09:00:35 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -96,7 +97,7 @@ Mon Jun 22 12:19:24 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   45C    P8             11W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   40C    P8              9W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -133,6 +134,9 @@ for i in range(3):
 
 ```text
 downloading Korean Wikipedia (wikimedia/wikipedia, 20231101.ko)...
+20231101.ko/train-00000-of-00003.parquet: downloading bytes:           |  0.00B            
+20231101.ko/train-00001-of-00003.parquet: downloading bytes:           |  0.00B            
+20231101.ko/train-00002-of-00003.parquet: downloading bytes:           |  0.00B            
   total articles: 647,897
 
 first 3 article previews:
@@ -453,6 +457,10 @@ config = BertConfig(
     pad_token_id=tokenizer.pad_token_id,
 )
 
+# 모델 가중치에도 시드를 겁니다 — TrainingArguments(seed=) 는 Trainer 단계부터 적용되므로
+# 이 줄이 없으면 random init 이 매 실행 달라져 loss·perplexity 가 실행마다 흔들립니다.
+set_seed(SEED)
+
 model = BertForMaskedLM(config)  # random init — pretrained weight 없음!
 
 total = sum(p.numel() for p in model.parameters())
@@ -533,9 +541,9 @@ print(f"loss positions:        {n_loss_pos:>4} / {total_tokens}  "
 
 ```text
 batch shape: input_ids=(2, 128), labels=(2, 128)
-masked tokens (call 1):   35 / 256  (13.67%)
-masked tokens (call 2):   26 / 256  (10.16%)
-loss positions:          45 / 256  (17.58%)  (labels != -100)
+masked tokens (call 1):   30 / 256  (11.72%)
+masked tokens (call 2):   27 / 256  (10.55%)
+loss positions:          35 / 256  (13.67%)  (labels != -100)
 ```
 
 ### 5-1. 🔍 [MASK] 가 들어가는 원리 — 한 눈에 보는 80/10/10 (한국어 풀버전)
@@ -550,7 +558,7 @@ loss positions:          45 / 256  (17.58%)  (labels != -100)
 
 **나머지 85%** 의 토큰은 `labels = -100` 으로 두어 *loss 계산에서 제외* 됩니다 (PyTorch CE 의 `ignore_index` 기본값). 즉 한 step 의 MLM loss 는 *선택된 15% 자리만* 모아 평균한 값.
 
-> 이 `labels = -100` 트릭은 BERT-만의 것이 아닙니다 — Phase 4 GPT 사전학습은 *거의 모든 토큰* 을 학습 (`labels = input_ids`), SFT (Ch 27) 는 *prompt 만 -100, 답변만 학습*. 같은 트릭, 정반대 자리. Ch 21 / 영어 짝과 동일한 풀버전 시각화로 한국어 환경에서도 직접 확인.
+> 이 `labels = -100` 트릭은 BERT-만의 것이 아닙니다 — Phase 4 GPT 사전학습은 *거의 모든 토큰* 을 학습 (`labels = input_ids`), SFT (Ch 28) 는 *prompt 만 -100, 답변만 학습*. 같은 트릭, 정반대 자리. Ch 21 / 영어 짝과 동일한 풀버전 시각화로 한국어 환경에서도 직접 확인.
 
 ```python
 # 한국어 예시 문장 한 개에 collator 한 번 적용 — 어떤 자리가 어떻게 바뀌나
@@ -680,7 +688,7 @@ training_args = TrainingArguments(
     per_device_eval_batch_size=64,
     learning_rate=5e-4,            # scratch 학습이라 fine-tune (2e-5) 보다 크게
     weight_decay=0.01,
-    warmup_ratio=0.06,
+    warmup_steps=0.06,             # 1 미만이면 전체 step 대비 *비율* 로 해석 (구 warmup_ratio)
     fp16=USE_FP16,
     eval_strategy="epoch",
     logging_steps=20,
@@ -709,7 +717,6 @@ print(f"steps / epoch: {len(lm_train) // training_args.per_device_train_batch_si
 **▶ 실행 결과**
 
 ```text
-[transformers] warmup_ratio is deprecated and will be removed in v5.2. Use `warmup_steps` instead.
 epochs:        2
 batch size:    32
 learning rate: 0.0005
@@ -788,23 +795,23 @@ for sent in test_sentences:
 
 ```text
 Training Loss  Validation Loss  Epoch
-No log         10.425517        0
+No log         10.421567        0
 ==============================================================================
 BEFORE pretraining  (random init body)
 ==============================================================================
-  eval_loss       : 10.4255   (random baseline ln V = 10.3735)
-  eval_perplexity : 33,709     (random baseline V    = 32,000)
+  eval_loss       : 10.4216   (random baseline ln V = 10.3735)
+  eval_perplexity : 33,576     (random baseline V    = 32,000)
 input: 대한민국의 수도는 [MASK]이다.
-  top-5 before pretraining: ['##희정', '해석', '찬성', '전한', 'par']
+  top-5 before pretraining: ['만지', '기구', '등', '자산운용', '청약']
 
 input: 태양계에는 행성이 [MASK] 개 있다.
-  top-5 before pretraining: ['이씨', '저지른', '1958', '몰입', '끄집어내']
+  top-5 before pretraining: ['놀림', '한입', '여전히', '뒤졌', '강판']
 
 input: 이 영화 정말 [MASK].
-  top-5 before pretraining: ['계약서', '서귀', '스페인어', '드세요', 'William']
+  top-5 before pretraining: ['以', '야경', '영남대', '##다랗', '학살']
 
 input: 배우 연기가 [MASK] 좋았어요.
-  top-5 before pretraining: ['계약서', '서귀', '드세요', '스페인어', 'William']
+  top-5 before pretraining: ['以', '야경', '영남대', '##다랗', 'Tr']
 ```
 
 ```python
@@ -820,10 +827,10 @@ print(f"random baseline loss (uniform over vocab): {math.log(tokenizer.vocab_siz
 
 ```text
 Epoch  Training Loss  Validation Loss
-1      7.636452       7.672749
-2      7.385564       7.539130
+1      7.624340       7.647506
+2      7.368665       7.515355
 Korean MLM pretraining done in 0.3 min
-mean train loss: 7.7967
+mean train loss: 7.7904
 random baseline loss (uniform over vocab): 10.3735
 ```
 
@@ -834,7 +841,7 @@ random baseline loss (uniform over vocab): 10.3735
 **▶ 실행 결과**
 
 ```text
-Mon Jun 22 12:20:24 2026       
+Fri Aug 28 09:01:31 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -843,7 +850,7 @@ Mon Jun 22 12:20:24 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   59C    P0             41W /   70W |    3449MiB /  15360MiB |     54%      Default |
+| N/A   53C    P0             36W /   70W |    3449MiB /  15360MiB |     58%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -852,6 +859,6 @@ Mon Jun 22 12:20:24 2026
 |  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
 |        ID   ID                                                               Usage      |
 |=========================================================================================|
-|    0   N/A  N/A            1984      C   /usr/bin/python3                       3446MiB |
+|    0   N/A  N/A            2682      C   /usr/bin/python3                       3446MiB |
 +-----------------------------------------------------------------------------------------+
 ```
