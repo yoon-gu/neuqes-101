@@ -65,7 +65,7 @@ K=7 의 random baseline loss = $\log 7 = 1.946$. 학습 첫 step 에서 loss 가
 
 Ch 15 와 *완전히 동일* — `klue/bert-base` 한국어 WordPiece. 토크나이저는 K 변화에 무관 (라벨 처리는 모델 측 일).
 
-> **Phase 2 안에서는 토크나이저 고정** — Ch 15·16·17·18 모두 같은 한국어 WordPiece. Phase 3 (Ch 19-23) 에서 비로소 *직접 학습한 워드레벨 토크나이저* 가 등장.
+> **Phase 2 안에서는 토크나이저 고정** — Ch 15·16·17·18 모두 같은 한국어 WordPiece. Phase 3 의 첫 챕터(Ch 19)에서 비로소 *토크나이저를 직접 학습* 해 WordPiece 와 WordLevel 을 비교하고, Ch 20-23 의 사전학습은 다시 기성 WordPiece 토크나이저를 가져와 씁니다.
 
 ### 헤드라인 토큰화 예시
 
