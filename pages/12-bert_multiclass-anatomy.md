@@ -15,14 +15,14 @@ for k, v in eval_metrics.items():
 
 ```text
 Training Loss  Validation Loss  Epoch  Accuracy  Macro Precision  Macro Recall  Macro F1  Auc Ovr
-0.921884       1.000020         2      0.558000  0.555456         0.559534      0.556056  0.865652
+0.914690       0.999308         2      0.577000  0.574600         0.580221      0.576826  0.864402
 BERT 5-class evaluation:
-               eval_loss: 1.0000
-           eval_accuracy: 0.5580
-    eval_macro_precision: 0.5555
-       eval_macro_recall: 0.5595
-           eval_macro_f1: 0.5561
-            eval_auc_ovr: 0.8657
+               eval_loss: 0.9993
+           eval_accuracy: 0.5770
+    eval_macro_precision: 0.5746
+       eval_macro_recall: 0.5802
+           eval_macro_f1: 0.5768
+            eval_auc_ovr: 0.8644
 ```
 
 ```python
@@ -55,16 +55,16 @@ print(pd.DataFrame({
 
 ```text
 logits shape: (1000, 5)
-top-1 prob range: [0.2245, 0.8730]
-top-1 prob mean: correct=0.6279, wrong=0.5414
+top-1 prob range: [0.2241, 0.8908]
+top-1 prob mean: correct=0.6232, wrong=0.5478
 
 First 5 samples:
  label (star-1)  pred (star-1)  top-1 prob  correct?
-              2              4      0.4724     False
-              4              3      0.4351     False
-              1              0      0.7647     False
-              4              4      0.4687      True
-              3              3      0.5864      True
+              2              4      0.5469     False
+              4              3      0.4622     False
+              1              0      0.7502     False
+              4              3      0.4979     False
+              3              3      0.6268      True
 ```
 
 ### 4-1. 메인 그림 — 혼동 행렬 (`seaborn.heatmap`)
@@ -101,7 +101,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/12-bert_multiclass-out1-1.png)
+![output](../assets/12-bert_multiclass-out1-2.png)
 
 **해석 가이드**
 
@@ -137,7 +137,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/12-bert_multiclass-out2-1.png)
+![output](../assets/12-bert_multiclass-out2-2.png)
 
 **해석**
 
@@ -159,13 +159,13 @@ print(classification_report(
 ```text
               precision    recall  f1-score   support
 
-          1★     0.6520    0.7409    0.6936       220
-          2★     0.5056    0.4225    0.4604       213
-          3★     0.5134    0.4898    0.5013       196
-          4★     0.4651    0.4878    0.4762       205
-          5★     0.6412    0.6566    0.6488       166
+          1★     0.6723    0.7182    0.6945       220
+          2★     0.5077    0.4648    0.4853       213
+          3★     0.5202    0.5255    0.5228       196
+          4★     0.5155    0.4878    0.5013       205
+          5★     0.6573    0.7048    0.6802       166
 
-    accuracy                         0.5580      1000
-   macro avg     0.5555    0.5595    0.5561      1000
-weighted avg     0.5535    0.5580    0.5542      1000
+    accuracy                         0.5770      1000
+   macro avg     0.5746    0.5802    0.5768      1000
+weighted avg     0.5728    0.5770    0.5743      1000
 ```

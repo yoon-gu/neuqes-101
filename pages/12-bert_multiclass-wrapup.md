@@ -24,17 +24,32 @@
 1. **`class_weight` 적용** — `Trainer.compute_loss` 를 오버라이드해서 `CrossEntropyLoss(weight=...)` 를 명시적으로 사용. 가중치는 보통 `1 / class_count` 의 정규화 형태.
 
 ```python
+import torch
 from torch import nn
 
-weights = torch.tensor([1.0, 1.5, 3.0, 1.2, 0.8]).to("cuda")  # 클래스별 가중치
-loss_fn = nn.CrossEntropyLoss(weight=weights)
-
 class WeightedTrainer(Trainer):
+    def __init__(self, *args, class_weights=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.class_weights = class_weights
+
     def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
         labels = inputs.pop("labels")
         outputs = model(**inputs)
-        loss = loss_fn(outputs.logits, labels)
+        # 가중치를 logits와 같은 device로 — .to("cuda") 하드코딩보다 안전
+        w = self.class_weights.to(outputs.logits.device)
+        loss = nn.CrossEntropyLoss(weight=w)(outputs.logits, labels)
         return (loss, outputs) if return_outputs else loss
+
+# 클래스별 빈도의 역수를 정규화해 가중치로
+counts = torch.tensor([1017., 1027., 960., 1021., 975.])   # §1에서 센 클래스 분포
+weights = (1.0 / counts) / (1.0 / counts).sum() * len(counts)
+
+trainer_w = WeightedTrainer(
+    model=model, args=training_args,
+    train_dataset=train_tok, eval_dataset=eval_tok,
+    processing_class=tokenizer, compute_metrics=compute_metrics,
+    class_weights=weights,
+)
 ```
 
 2. **데이터 단계 oversampling/undersampling** — `imbalanced-learn` 의 `RandomOverSampler` 같은 도구로 학습 데이터를 균형있게. 단순하고 효과적.
@@ -67,12 +82,12 @@ $$\mathrm{softmax}(z + c \cdot \mathbf 1)_k = \dfrac{e^{z_k + c}}{\sum_j e^{z_j 
 | | 회귀 (Ch 9 방식) | 분류 (Ch 12 방식) |
 |---|---|---|
 | 라벨 의미 | 별점이 *연속* 값 (1.0-5.0) | 별점이 *5개의 명목 클래스* |
-| 손실 | MSE — 4★ vs 5★ 차이 = (1)² = 1 | CE — 4★ vs 5★ 차이도 1★ vs 5★ 차이도 *같은 손실* |
+| 손실 | MSE — 4★ vs 5★ 오차 $(1)^2 = 1$, 1★ vs 5★ 오차 $(4)^2 = 16$ | CE — 4★ vs 5★ 도 1★ vs 5★ 도 *틀린 건 똑같이* 취급 |
 | 출력 | scalar 1.0-5.0 | (5,) 확률 벡터 |
-| ±1 인접 오류 페널티 | 작음 | 크지 않음 (정답 확률이 어느 정도 있으면) |
+| ±1 인접 오류 페널티 | **작음** (거리에 비례) | 먼 오류와 **동일** (거리 개념 없음) |
 | 모델이 *순서* 를 인지? | **자동으로 인지** | 명시적으론 인지 안 함 (학습 데이터 통계로 우회 학습) |
 
-**언제 어느 방식을?** 별점이 *진짜 순서형이고 distance가 의미있다* (1★→5★는 1★→2★보다 4배 더 부정적) 면 회귀가 자연스럽습니다. 별점이 *카테고리에 가까워서 distance 의미가 약하다* (예: 영화 장르 분류) 면 분류가 자연스럽습니다.
+**언제 어느 방식을?** 별점이 *진짜 순서형이고 distance가 의미있다* (1★→5★ 오답이 1★→2★ 오답보다 훨씬 나쁘다) 면 회귀가 자연스럽습니다. 별점이 *카테고리에 가까워서 distance 의미가 약하다* (예: 영화 장르 분류) 면 분류가 자연스럽습니다.
 
 **ordinal regression** 이라는 별도의 분야가 있어 *순서형* 의 특수 구조를 살리는 손실(예: cumulative link)을 씁니다. 입문 수준에선 다루지 않습니다.
 
@@ -82,7 +97,7 @@ $$\mathrm{softmax}(z + c \cdot \mathbf 1)_k = \dfrac{e^{z_k + c}}{\sum_j e^{z_j 
 
 - **inference 비용**: BERT는 GPU 권장 (CPU에선 ~50배 느림). sklearn은 CPU로 충분. 운영 비용 차이 5-10배.
 - **메모리**: BERT 모델 ~250MB 디스크, ~500MB 메모리. sklearn은 ~10MB.
-- **학습 시간**: BERT는 GPU 5-10분. sklearn은 CPU 5-30초. 실험 cycle 100배 차이.
+- **학습 시간**: BERT는 GPU 수십 초-수 분. sklearn은 CPU 수 초-수십 초. 실험 cycle 차이가 큼.
 - **유연성**: BERT는 fine-tune이 가능 (도메인 특화 추가 학습). sklearn은 *처음부터 다시* 학습.
 
 단순 *정확도-vs-비용* 만 보면 **5%p 이내 차이면 sklearn**, **10%p 이상이면 BERT 고려** 같은 룰이 무난합니다. 별점 task처럼 *단어 빈도가 강한 신호* 인 도메인은 sklearn 유리, *부정·반어·다단계 추론* 이 중요한 NLI/감성분석 도메인은 BERT 유리.
@@ -91,22 +106,42 @@ $$\mathrm{softmax}(z + c \cdot \mathbf 1)_k = \dfrac{e^{z_k + c}}{\sum_j e^{z_j 
 
 **(1) 새 도메인으로의 빠른 적응 — *transfer learning***
 
-영어 일반 리뷰로 학습한 BERT를 *의료 환자 리뷰* 100-500건만으로 fine-tune해 즉시 도메인 모델을 얻을 수 있습니다. sklearn은 도메인이 바뀌면 *어휘 통계가 처음부터 다시* — 의료 용어 빈도가 일반 리뷰와 달라 TF-IDF가 새 분포에서 학습돼야 하고, 100건은 통계적으로 너무 적습니다.
+Yelp로 파인튜닝한 이 노트북의 `model` 을 *의료 환자 리뷰* 100-500건만으로 추가 학습해 즉시 도메인 모델을 얻을 수 있습니다. sklearn은 도메인이 바뀌면 *어휘 통계가 처음부터 다시* — 의료 용어 빈도가 일반 리뷰와 달라 TF-IDF가 새 분포에서 학습돼야 하고, 100건은 통계적으로 너무 적습니다.
 
 ```python
-# 일반 리뷰 BERT 체크포인트를 의료 도메인으로 추가 학습
-model = AutoModelForSequenceClassification.from_pretrained("yelp-finetuned-bert")
-model.train_on(medical_reviews_500)   # ← 적은 데이터로도 잘 됨 (사전학습+yelp 지식 보존)
+# §3에서 Yelp로 학습한 model 을 그대로 이어받아 의료 도메인으로 추가 학습
+med_args = TrainingArguments(
+    output_dir="./ch12_medical", num_train_epochs=3,
+    per_device_train_batch_size=16, learning_rate=2e-5,
+    fp16=True, save_strategy="no", report_to="none", seed=42,
+)
+med_trainer = Trainer(
+    model=model,                 # ← 사전학습 + Yelp 지식이 이미 들어 있는 상태에서 출발
+    args=med_args,
+    train_dataset=medical_tok,   # 의료 리뷰 500건을 같은 tokenize_fn 으로 토크나이즈한 것
+    processing_class=tokenizer,
+)
+med_trainer.train()
 ```
 
 **(2) 다국어 / cross-lingual — 같은 코드로 한국어·일본어·영어**
 
-`xlm-roberta-base` 같은 다국어 BERT는 *동일 모델 + 동일 코드* 로 100+ 언어 동작. 영어 Yelp로 학습한 모델이 *한국어 리뷰에도 그대로 generalize* 합니다 (zero-shot cross-lingual transfer). sklearn은 언어마다 토크나이저(형태소 분석기), 불용어 사전, TF-IDF vocabulary를 *각각* 만들어야 합니다.
+`xlm-roberta-base` 같은 다국어 BERT는 *동일 모델 + 동일 코드* 로 100+ 언어를 처리합니다. 영어로 파인튜닝한 모델이 한국어 리뷰에도 상당 부분 전이됩니다 (zero-shot cross-lingual transfer). sklearn은 언어마다 토크나이저(형태소 분석기), 불용어 사전, TF-IDF vocabulary를 *각각* 만들어야 합니다.
 
 ```python
-# 영어로 학습한 모델을 한국어 평가 셋에 그대로
-tok = AutoTokenizer.from_pretrained("xlm-roberta-base")     # 100+ 언어 공통
-model.predict(tok("이 식당 음식이 정말 별로였어요"))     # ← 한 번도 한국어 학습 안 했지만 동작
+import torch
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+
+xlm_tok   = AutoTokenizer.from_pretrained("xlm-roberta-base")   # 100+ 언어 공통
+xlm_model = AutoModelForSequenceClassification.from_pretrained(
+    "xlm-roberta-base", num_labels=5,
+)
+
+batch = xlm_tok("이 식당 음식이 정말 별로였어요", return_tensors="pt")
+with torch.no_grad():
+    print(xlm_model(**batch).logits.softmax(-1))   # (1, 5)
+# ※ 이 xlm_model 은 아직 파인튜닝 전이라 출력 자체는 무의미합니다.
+#    요점은 "한국어 문장이 같은 API·같은 코드로 그대로 들어간다" 는 것.
 ```
 
 **(3) 분류 너머의 task로 확장 — 같은 백본, 다른 헤드**
@@ -125,27 +160,40 @@ sklearn LogReg는 *분류 한 가지* 만. 다른 task는 모델 자체가 달�
 
 **(4) 임베딩 기반 의미 검색·중복 제거**
 
-BERT [CLS] 임베딩은 *문장 의미를 768-dim 벡터* 로 만듭니다. 단어가 달라도 *의미가 비슷하면 가까운 벡터*. TF-IDF는 *같은 단어* 가 있어야 매칭 — "맛있다" 와 "delicious" 는 거리 1, BERT는 거의 거리 0.
+BERT [CLS] 임베딩은 *문장 의미를 768-dim 벡터* 로 만듭니다. 단어가 달라도 *의미가 비슷하면 가까운 벡터*. TF-IDF는 *같은 단어* 가 있어야 매칭되므로 공통 단어가 없으면 유사도가 0에 가깝습니다.
 
 ```python
-# 의미 기반 중복 리뷰 찾기
-emb1 = model(tok("맛있고 친절했어요"))[:, 0, :]        # CLS
-emb2 = model(tok("음식 훌륭하고 직원 좋았음"))[:, 0, :]
-cos_sim(emb1, emb2)   # ≈ 0.92 (의미 유사)
-# TF-IDF로는 cos_sim ≈ 0.0 (공통 단어 없음)
+import torch
+from torch.nn.functional import cosine_similarity
+from transformers import AutoModel
+
+# 분류 헤드가 아닌 *백본* 을 씁니다 — 헤드는 5클래스 logit만 내놓기 때문
+backbone = AutoModel.from_pretrained("distilbert-base-uncased")
+
+def cls_embed(text):
+    batch = tokenizer(text, return_tensors="pt", truncation=True, max_length=128)
+    with torch.no_grad():
+        return backbone(**batch).last_hidden_state[:, 0]      # (1, 768) — [CLS]
+
+emb1 = cls_embed("The food was great and the staff were kind.")
+emb2 = cls_embed("Excellent dishes, and the employees were nice.")
+print(cosine_similarity(emb1, emb2))   # 공통 단어가 거의 없어도 높게 나옵니다
 ```
 
-리뷰 수만 건 중 *의미 중복* 을 제거하거나, 새 리뷰가 들어왔을 때 *비슷한 과거 리뷰* 를 검색하는 시스템 — sklearn으로는 거의 불가능.
+리뷰 수만 건 중 *의미 중복* 을 제거하거나, 새 리뷰가 들어왔을 때 *비슷한 과거 리뷰* 를 검색하는 시스템 — sklearn으로는 거의 불가능. (`distilbert-base-uncased` 는 영어 모델이라 예시도 영어입니다. 한국어라면 `klue/bert-base` 같은 한국어 백본을 쓰세요 — Ch 15에서 등장합니다.)
 
 **(5) Zero-shot 분류 — 학습 데이터 없이도 동작**
 
-NLI(natural language inference)로 fine-tune된 BERT (`facebook/bart-large-mnli` 등)는 *임의의 라벨* 에 대해 학습 *없이* 분류합니다.
+NLI(natural language inference)로 fine-tune된 모델 (`facebook/bart-large-mnli` 등)은 *임의의 라벨* 에 대해 학습 *없이* 분류합니다.
 
 ```python
 from transformers import pipeline
+
 zsc = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
-zsc("음식이 별로였다", candidate_labels=["positive", "negative", "neutral"])
-# {"labels": ["negative", "neutral", "positive"], "scores": [0.91, 0.07, 0.02]}
+print(zsc("The food was terrible.", candidate_labels=["positive", "negative", "neutral"]))
+# → {'sequence': ..., 'labels': [...], 'scores': [...]} 형태로 나옵니다.
+# ※ bart-large-mnli 는 영어 MNLI 모델이라 한국어 입력 결과는 신뢰할 수 없습니다.
+#    한국어가 필요하면 다국어 NLI 모델(예: joeddav/xlm-roberta-large-xnli)을 쓰세요.
 ```
 
 새 라벨 카테고리가 생길 때마다 학습 데이터 라벨링 비용이 없습니다. 빠른 프로토타이핑·콜드스타트에 강력. sklearn은 *학습 데이터 필수*.
@@ -157,10 +205,14 @@ zsc("음식이 별로였다", candidate_labels=["positive", "negative", "neutral
 **multi-task learning** 이라는 패턴으로 가능합니다.
 
 ```python
+import torch
+from torch import nn
+from transformers import AutoModel
+
 class MultiTaskModel(nn.Module):
-    def __init__(self, backbone):
+    def __init__(self, backbone_name="distilbert-base-uncased"):
         super().__init__()
-        self.backbone = backbone
+        self.backbone    = AutoModel.from_pretrained(backbone_name)
         self.head_binary = nn.Linear(768, 2)    # binary head
         self.head_5class = nn.Linear(768, 5)    # 5-class head
 
@@ -168,8 +220,13 @@ class MultiTaskModel(nn.Module):
         h = self.backbone(**inputs).last_hidden_state[:, 0]   # CLS
         return {"binary": self.head_binary(h), "5class": self.head_5class(h)}
 
+mt_model = MultiTaskModel()
+out = mt_model(**tokenizer("The food was great!", return_tensors="pt"))
+print(out["binary"].shape, out["5class"].shape)   # torch.Size([1, 2]) torch.Size([1, 5])
+
 # loss는 두 head의 CE를 *합* (또는 가중합)
-loss = ce(out["binary"], y_binary) + ce(out["5class"], y_5class)
+# ce = nn.CrossEntropyLoss()
+# loss = ce(out["binary"], y_binary) + ce(out["5class"], y_5class)
 ```
 
 DistilBERT body가 *공유* 되어 두 task가 서로의 학습에 도움을 줍니다. Ch 14 (Auxiliary Loss)에서 비슷한 패턴을 본격적으로 다룹니다.

@@ -1,6 +1,7 @@
 # 12_bert_multiclass — BERT Multi-class (Yelp 5클래스)
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/12_bert_multiclass/12_bert_multiclass.ipynb)
+[![부록: 데이터 스케일링](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/12_bert_multiclass/12_bert_multiclass_data_scaling.ipynb)
 
 ## 한 줄 목표
 Ch 11(BERT binary) 셋업을 그대로 두고 **클래스 개수만 K=2 → K=5** 로 일반화. Yelp 별점 1-5를 5클래스 분류로 풀고, Ch 5(sklearn multinomial LogReg)의 BERT 버전과 직접 비교합니다.
@@ -20,7 +21,7 @@ Ch 11(BERT binary) 셋업을 그대로 두고 **클래스 개수만 K=2 → K=5*
 Yelp 5,000건 → 별점 1-5를 *그대로* 5클래스로 (Ch 3-4·10-11처럼 이진화 안 함). 라벨은 0-4 int 인덱스.
 
 ## 환경
-Google Colab **T4 GPU 필수**. 약 12분 (BERT 학습 ~10분 + sklearn 비교 ~30초 + 평가/시각화).
+Google Colab **T4 GPU 필수**. 약 3분 (BERT 학습 약 40초 + sklearn 비교 baseline 약 30초 + 다운로드·평가·시각화).
 
 **Self-contained**: 다른 챕터 / 다른 세션 결과에 의존하지 않습니다. 5장 비교용 sklearn baseline은 같은 노트북에서 inline 학습.
 

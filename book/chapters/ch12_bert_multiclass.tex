@@ -540,15 +540,15 @@ print(classification_report(
 \begin{bookoutputbox}
 precision    recall  f1-score   support
 
-          1     0.6520    0.7409    0.6936       220
-          2     0.5056    0.4225    0.4604       213
-          3     0.5134    0.4898    0.5013       196
-          4     0.4651    0.4878    0.4762       205
-          5     0.6412    0.6566    0.6488       166
+          1     0.6723    0.7182    0.6945       220
+          2     0.5077    0.4648    0.4853       213
+          3     0.5202    0.5255    0.5228       196
+          4     0.5155    0.4878    0.5013       205
+          5     0.6573    0.7048    0.6802       166
 
-    accuracy                         0.5580      1000
-   macro avg     0.5555    0.5595    0.5561      1000
-weighted avg     0.5535    0.5580    0.5542      1000
+    accuracy                         0.5770      1000
+   macro avg     0.5746    0.5802    0.5768      1000
+weighted avg     0.5728    0.5770    0.5743      1000
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -666,7 +666,7 @@ sklearn TF-IDF + LogReg:
 
 \section{결과 해석 --- \textquotesingle 근소 우위\textquotesingle 의 정체: 데이터가 정한다}
 
-§5 에서 BERT 67M 파라미터가 sklearn 을 \textbf{근소하게만}(약 +0.02-0.04) 앞섰습니다. 이진(\ref{ch:10}장, BERT 0.90)·회귀(\ref{ch:09}장, R² 0.67)에서 BERT 가 압도하던 것과 비교하면 5클래스에서 유독 격차가 작아 \emph{실망스럽게} 느껴질 수 있습니다. 하지만 이건 버그가 아니라 \textbf{데이터 양과 task 난이도의 함수} 입니다.
+§5 에서 BERT 67M 파라미터가 sklearn 을 \textbf{근소하게만}(약 +0.02-0.04) 앞섰습니다. 이진(\ref{ch:10}장, BERT 약 0.90)·회귀(\ref{ch:09}장, R² 약 0.66)에서 BERT 가 압도하던 것과 비교하면 5클래스에서 유독 격차가 작아 \emph{실망스럽게} 느껴질 수 있습니다. 하지만 이건 버그가 아니라 \textbf{데이터 양과 task 난이도의 함수} 입니다.
 
 부록 \inlinecode{12\_bert\_multiclass\_data\_scaling} 에서 학습 데이터를 100 \(\to\) 30,000 으로 키우며 두 곡선을 그리면 (고정 eval · nested subsample · epoch 2 고정):
 
@@ -699,7 +699,7 @@ sklearn TF-IDF + LogReg:
 \end{itemize}
 
 \begin{quote}
-데이터를 더 부으면 BERT 가 더 벌리지만, 정확도를 크게 끌어올리려면 데이터 외에 \emph{더 강한 모델·HPO·LLM distill} 같은 다른 lever 도 필요합니다 --- 부록 §6 의 5가지 lever 카드 참조.
+데이터를 더 부으면 BERT 가 더 벌리지만, 정확도를 크게 끌어올리려면 데이터 외에 \emph{더 강한 모델·HPO·LLM distill} 같은 다른 lever 도 필요합니다 --- 부록의 \textbf{보너스 --- BERT 성능을 끌어올리는 5가지 lever} 절 참조.
 \end{quote}
 
 
@@ -833,20 +833,27 @@ class WeightedTrainer(Trainer):
 
 영어 일반 리뷰로 학습한 BERT를 \emph{의료 환자 리뷰} 100-500건만으로 fine-tune해 즉시 도메인 모델을 얻을 수 있습니다. sklearn은 도메인이 바뀌면 \emph{어휘 통계가 처음부터 다시} --- 의료 용어 빈도가 일반 리뷰와 달라 TF-IDF가 새 분포에서 학습돼야 하고, 100건은 통계적으로 너무 적습니다.
 
-\Needspace{5\baselineskip}
+\Needspace{7\baselineskip}
 \begin{lstlisting}
+# Yelp 지식이 들어 있는 상태에서 출발해 의료 도메인으로 이어 학습
 model = AutoModelForSequenceClassification.from_pretrained("yelp-finetuned-bert")
-model.train_on(medical_reviews_500)
+med_trainer = Trainer(model=model, args=med_args,
+                      train_dataset=medical_tok, processing_class=tokenizer)
+med_trainer.train()
 \end{lstlisting}
 
 \textbf{(2) 다국어 / cross-lingual --- 같은 코드로 한국어·일본어·영어}
 
 \inlinecode{xlm-roberta-base} 같은 다국어 BERT는 \emph{동일 모델 + 동일 코드} 로 100+ 언어 동작. 영어 Yelp로 학습한 모델이 \emph{한국어 리뷰에도 그대로 generalize} 합니다 (zero-shot cross-lingual transfer). sklearn은 언어마다 토크나이저(형태소 분석기), 불용어 사전, TF-IDF vocabulary를 \emph{각각} 만들어야 합니다.
 
-\Needspace{5\baselineskip}
+\Needspace{8\baselineskip}
 \begin{lstlisting}
-tok = AutoTokenizer.from_pretrained("xlm-roberta-base")
-model.predict(tok("이 식당 음식이 정말 별로였어요"))
+tok   = AutoTokenizer.from_pretrained("xlm-roberta-base")   # 100+ 언어 공통
+model = AutoModelForSequenceClassification.from_pretrained(
+    "xlm-roberta-base", num_labels=5)
+batch = tok("이 식당 음식이 정말 별로였어요", return_tensors="pt")
+with torch.no_grad():
+    print(model(**batch).logits.softmax(-1))   # (1, 5)
 \end{lstlisting}
 
 \textbf{(3) 분류 너머의 task로 확장 --- 같은 백본, 다른 헤드}
