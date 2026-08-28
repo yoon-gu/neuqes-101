@@ -152,7 +152,7 @@ logits & softmax \(\to\) \(\hat p_5\) & 손실 \\
 \ref{ch:15}장과 \emph{완전히 동일} --- \inlinecode{klue/bert-base} 한국어 WordPiece. 토크나이저는 K 변화에 무관 (라벨 처리는 모델 측 일).
 
 \begin{quote}
-\textbf{Phase 2 안에서는 토크나이저 고정} --- \ref{ch:15}·\ref{ch:16}장·17·18 모두 같은 한국어 WordPiece. Phase 3 의 첫 장(\ref{ch:19}장)에서 비로소 \emph{토크나이저를 직접 학습} 해 WordPiece 와 WordLevel 을 비교하고, \ref{ch:20}--\ref{ch:23}장의 사전학습은 다시 기성 WordPiece 토크나이저를 가져와 씁니다.
+\textbf{Phase 2 안에서는 토크나이저 고정} --- \ref{ch:15}--\ref{ch:18}장 모두 같은 한국어 WordPiece. Phase 3 의 첫 장(\ref{ch:19}장)에서 비로소 \emph{토크나이저를 직접 학습} 해 WordPiece 와 WordLevel 을 비교하고, \ref{ch:20}--\ref{ch:23}장의 사전학습은 다시 기성 WordPiece 토크나이저를 가져와 씁니다.
 \end{quote}
 
 \subsection{헤드라인 토큰화 예시}
