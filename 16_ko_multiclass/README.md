@@ -21,7 +21,7 @@ Ch 15(한국어 binary, NSMC) 에서 *task 차원만* K=2 → K=7 로 일반화.
 KLUE-YNAT (`load_dataset("klue", "ynat")`) — 5K train / 1K eval. 클래스 분포는 약간 불균형 (5K-8K 범위).
 
 ## 환경
-Google Colab **T4 GPU 필수**. 약 13분.
+Google Colab **T4 GPU 필수**. 약 3분.
 
 ## 변화 추적
 
