@@ -31,7 +31,7 @@ else:
 
 **▶ 실행 결과**
 
-![output](../assets/22-ko_bert_pretrain-out1-2.png)
+![output](../assets/22-ko_bert_pretrain-out1-3.png)
 
 ```python
 eval_metrics = trainer.evaluate()
@@ -52,7 +52,7 @@ print(f"  -> model narrowed vocab to approx. {eval_ppl:.0f} candidates per maske
 
 ```text
 Training Loss  Validation Loss  Epoch
-7.368665       7.493273         2
+7.368646       7.493273         2
 === eval (held-out Korean Wikipedia paragraphs) ===
                eval_loss: 7.4933
 
@@ -95,7 +95,7 @@ for sent in test_sentences:
 
 ```text
 Training Loss  Validation Loss  Epoch
-7.368665       7.503570         2
+7.368646       7.503568         2
 ==============================================================================
 AFTER pretraining  (2 epoch MLM)
 ==============================================================================
@@ -138,7 +138,7 @@ print(metric_compare.round(4).to_string(index=False))
 Before vs After — eval metrics
          metric  before (random)  after (2 epoch)  random baseline
       eval_loss          10.4216           7.5036          10.3735
-eval_perplexity       33576.0053        1814.5088       32000.0000
+eval_perplexity       33576.0053        1814.5053       32000.0000
 ```
 
 ```python
@@ -201,9 +201,9 @@ model.safetensors: downloading bytes:           |  0.00B
 [transformers] BertForMaskedLM LOAD REPORT from: klue/bert-base
 Key                         | Status     |  | 
 ----------------------------+------------+--+-
-bert.pooler.dense.bias      | UNEXPECTED |  | 
 cls.seq_relationship.weight | UNEXPECTED |  | 
 bert.pooler.dense.weight    | UNEXPECTED |  | 
+bert.pooler.dense.bias      | UNEXPECTED |  | 
 cls.seq_relationship.bias   | UNEXPECTED |  | 
 
 Notes:

@@ -968,7 +968,7 @@ Target: 선택 15% / 그 중 80-10-10 으로 [MASK]-random-kept. 표본 크면 �
 \item
   \textbf{\inlinecode{eval\_loss} / \inlinecode{perplexity}} --- random init 이므로 vocab 32,000 균등 분포 (\inlinecode{ln\ V} \(\approx\) 10.37) 근처가 기대치.
 \item
-  \textbf{같은 문장의 \texttt{{[}MASK{]}} top-5} --- random init 의 logits 는 거의 균등이라 \emph{문맥과 무관한 토큰} (자주 등장하는 조사·어미·특수문자 등) 이 뽑힙니다.
+  \textbf{같은 문장의 \texttt{{[}MASK{]}} top-5} --- random init 의 logits 는 학습 신호가 없는 난수라 \emph{빈도와 무관한 토큰들이 무작위로} 뽑힙니다 (희귀 명사·조각 토큰이 뒤섞인 목록 --- \inlinecode{set\_seed(SEED)} 로 고정했으므로 재실행해도 같은 목록).
 \end{enumerate}
 
 학습이 끝난 뒤 7번 셀에서 \emph{완전히 같은 문장} 으로 다시 측정해 \emph{직접 비교} 합니다.
@@ -1174,7 +1174,7 @@ print(
 \begin{bookoutputbox}
 Training Loss  Validation Loss  Epoch
 -------------  ---------------  -----
-7.368665       7.493273         2
+7.368646       7.493273         2
 === eval (held-out Korean Wikipedia paragraphs) ===
                eval_loss: 7.4933
 
@@ -1216,7 +1216,7 @@ print(metric_compare.round(4).to_string(index=False))
 Before vs After -- eval metrics
          metric  before (random)  after (2 epoch)  random baseline
       eval_loss          10.4216           7.5036          10.3735
-eval_perplexity       33576.0053        1814.5088       32000.0000
+eval_perplexity       33576.0053        1814.5053       32000.0000
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
