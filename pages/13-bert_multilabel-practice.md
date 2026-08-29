@@ -208,6 +208,10 @@ Active label distribution (train):
   5 labels active: 55 samples (1.1%)
 ```
 
+**결과 해석**
+
+food(55.6%)·service(49.6%)가 흔하고 ambiance(18.1%)·location(21.9%)·price(29.4%)는 드뭅니다. 샘플당 평균 1.75개 라벨이 활성되며 2개 활성이 30.1%로 가장 많아, 라벨이 서로 배타적이지 않은 전형적 multi-label 분포임이 드러납니다.
+
 **Ch 12와의 한 줄 차이**: `out["labels"] = [int(l) for l in batch["label"]]` → `out["labels"] = [list(map(float, a)) for a in batch["aspects"]]`. 라벨이 *int 스칼라* 가 아니라 *길이 5 multi-hot float 벡터*. 이 형식 + `problem_type="multi_label_classification"` 두 가지가 BCE per-label 자동 매핑의 트리거.
 
 ```python

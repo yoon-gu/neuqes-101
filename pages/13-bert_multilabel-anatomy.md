@@ -31,6 +31,10 @@ BERT multi-label evaluation:
    eval_steps_per_second: 29.1170
 ```
 
+**결과 해석**
+
+micro F1 0.84, macro F1 0.80으로 micro가 조금 더 높습니다 — 흔한 food·service가 점수를 끌어올리고 드문 라벨이 macro를 깎는 전형적 패턴이지만, 격차가 0.04 수준이라 라벨 간 편차가 심하지는 않습니다. precision(0.91)이 recall(0.78)보다 높아 모델이 *확신할 때만 활성* 하는 보수적 경향을 보입니다.
+
 ```python
 # logits → per-label sigmoid → multi-hot 예측
 preds_output = trainer.predict(eval_tok)
@@ -58,6 +62,10 @@ prob ranges per label:
    location: [0.0312, 0.9280]  true rate=20.2%, pred rate=15.6%
 ```
 
+**결과 해석**
+
+food는 true rate와 pred rate가 55%대로 거의 일치하고 service도 3%p 차이라 잘 맞습니다. 반면 드문 라벨일수록 예측 활성률이 낮아 price는 정답의 2/3, ambiance는 절반 수준만 활성합니다. 다섯 라벨 모두 최대 확률이 0.89를 넘으므로 확률을 못 올려서가 아니라, 0.5 임계값 아래에 머무는 샘플이 많아 생기는 차이입니다.
+
 ```python
 # Per-label classification report
 print(classification_report(
@@ -83,6 +91,10 @@ print(classification_report(
 weighted avg     0.9195    0.7766    0.8328      1723
  samples avg     0.7618    0.6878    0.7048      1723
 ```
+
+**결과 해석**
+
+모든 라벨이 precision 0.87 이상으로 *틀린 활성은 거의 하지 않습니다*. 격차는 recall에서 벌어집니다 — food가 0.93인 반면 ambiance는 0.52로 정답의 절반만 잡고, price(0.61)·location(0.73)도 precision보다 크게 낮습니다. 드문 라벨에서 recall이 떨어지는 것이 0.5 임계값의 보수성에서 비롯됨을 보여줍니다(FAQ Q1).
 
 ### 샘플 단위 해석 — 모델 출력을 읽어내는 법
 
@@ -153,6 +165,10 @@ text (truncated): I don't quite get this place or why Asians love it, but it is 
   predicted: []
   true:      []
 ```
+
+**결과 해석**
+
+5개 항목이 전부 정답인 샘플 #29에서 모델은 price·location만 맞히고 food·service·ambiance는 prob 0.3 안팎으로 눌러 놓쳤습니다 — recall이 낮은 보수적 경향이 한 샘플에서 그대로 드러납니다. 반대로 활성 라벨이 하나도 없는 샘플 #4는 다섯 확률이 모두 0.11 이하라 전부 0을 깔끔하게 맞혔습니다.
 
 **읽는 법 — 표를 한 줄씩**
 
