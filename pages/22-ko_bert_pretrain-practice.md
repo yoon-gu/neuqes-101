@@ -730,7 +730,7 @@ steps / epoch: 122
 `trainer.train()` 을 호출하기 *전* 의 모델 상태 (`BertForMaskedLM(config)` random init) 로 두 가지를 측정해 둡니다 — *학습 후와 나란히* 보면 *사전학습이 본체에 무엇을 새겼는지* 가 한 화면에 드러납니다.
 
 1. **`eval_loss` / `perplexity`** — random init 이므로 vocab 32,000 균등 분포 (`ln V` ≈ 10.37) 근처가 기대치.
-2. **같은 문장의 `[MASK]` top-5** — random init 의 logits 는 거의 균등이라 *문맥과 무관한 토큰* (자주 등장하는 조사·어미·특수문자 등) 이 뽑힙니다.
+2. **같은 문장의 `[MASK]` top-5** — random init 의 logits 는 학습 신호가 없는 난수라 *빈도와 무관한 토큰들이 무작위로* 뽑힙니다 (희귀 명사·조각 토큰이 뒤섞인 목록 — `set_seed(SEED)` 로 고정했으므로 재실행해도 같은 목록).
 
 학습이 끝난 뒤 7번 셀에서 *완전히 같은 문장* 으로 다시 측정해 *직접 비교* 합니다.
 
