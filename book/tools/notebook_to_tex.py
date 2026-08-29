@@ -2411,6 +2411,26 @@ def clean_table_caption_title(section_title: str) -> str:
     return re.sub(r"\s+", " ", section_title).strip()
 
 
+_CAPTION_MATH_SAFE = {
+    "λ": r"\ensuremath{\lambda}", "α": r"\ensuremath{\alpha}", "β": r"\ensuremath{\beta}",
+    "θ": r"\ensuremath{\theta}", "Δ": r"\ensuremath{\Delta}", "×": r"\ensuremath{\times}",
+    "≈": r"\ensuremath{\approx}", "→": r"\ensuremath{\to}", "≤": r"\ensuremath{\le}",
+    "≥": r"\ensuremath{\ge}", "≠": r"\ensuremath{\ne}",
+}
+
+
+def caption_math_safe(text: str) -> str:
+    """표 캡션을 본문 폰트 안전하게 — 수학 기호를 \ensuremath 로.
+
+    캡션은 \captionof 로 본문 폰트(NanumMyeongjo) 문맥에서 조판되는데, 이
+    폰트에 λ 글리프가 없다 (#137 확인, 307e0fc 가 캡션만 \ensuremath 분리).
+    그 손수정이 tex 재생성 때마다 유실되지 않도록 변환기 층에 고정한다.
+    """
+    for ch, macro in _CAPTION_MATH_SAFE.items():
+        text = text.replace(ch, macro)
+    return text
+
+
 def caption_for_table(chapter_number: int, section_title: str, table_index: int) -> str:
     title = clean_table_caption_title(section_title)
     if "변화추적표" in title:
@@ -2454,7 +2474,7 @@ def wrap_tabular_tables(latex: str, chapter_number: int) -> str:
             block_text = "\n".join(block)
             if r"\begin{tabular}" in block_text or r"\begin{tabularx}" in block_text:
                 table_index += 1
-                caption = caption_for_table(chapter_number, section_title, table_index)
+                caption = caption_math_safe(caption_for_table(chapter_number, section_title, table_index))
                 label = f"tab:ch{chapter_number:02d}-{table_index:02d}"
                 wrapped.append(f"\\begin{{booktable}}{{{caption}}}{{{label}}}")
                 wrapped.extend(block)

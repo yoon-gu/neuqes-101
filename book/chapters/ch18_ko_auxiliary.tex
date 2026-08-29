@@ -198,7 +198,7 @@ L = \underbrace{\frac{1}{N \cdot K}\sum_{i,k}\text{BCE}(z_{i,k}^\text{main}, y_{
 
 활성 개수 정답은 1 또는 2 의 \emph{정수}. 학습 초기 보조 헤드 예측이 평균 1.5 근처면 MSE 는 약 \(0.25\), 무작위 예측이면 \(1-4\)까지 커질 수 있습니다. 메인 BCE 는 K=7 평균이라 학습 초반에도 \(0.3-0.7\) 수준입니다. 따라서 \emph{\(\lambda\)=1} 은 과하고, 부록 스윕에서는 \textbf{\(\lambda\)=0.05} 가 메인 F1 을 가장 끌어올렸습니다.
 
-\begin{booktable}{18장 손실 노트 - Combined loss L = L\_main + λ · L\_aux 표}{tab:ch18-03}
+\begin{booktable}{18장 손실 노트 - Combined loss L = L\_main + \ensuremath{\lambda} · L\_aux 표}{tab:ch18-03}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lllll@{}}
 \toprule

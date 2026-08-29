@@ -266,7 +266,7 @@ L = \underbrace{\frac{1}{N \cdot K}\sum_{i,k}\text{BCE}(z_{i,k}^{main}, y_{i,k}^
 
 \textbf{\(\lambda\) 선택 가이드 --- 숫자로 감 잡기}
 
-\begin{booktable}{14장 손실 노트 - Combined loss L = L\_main + λ · L\_aux 표}{tab:ch14-05}
+\begin{booktable}{14장 손실 노트 - Combined loss L = L\_main + \ensuremath{\lambda} · L\_aux 표}{tab:ch14-05}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -287,7 +287,7 @@ L = \underbrace{\frac{1}{N \cdot K}\sum_{i,k}\text{BCE}(z_{i,k}^{main}, y_{i,k}^
 
 \textbf{숫자로 감 잡기 (단일 샘플)} --- 항목 multi-hot \(\mathbf{y}^\text{main} = [1, 0, 1, 0, 1]\), 별점 보조 라벨 \(y^\text{aux} = 0.75\) (4/4):
 
-\begin{booktable}{14장 손실 노트 - Combined loss L = L\_main + λ · L\_aux 표}{tab:ch14-06}
+\begin{booktable}{14장 손실 노트 - Combined loss L = L\_main + \ensuremath{\lambda} · L\_aux 표}{tab:ch14-06}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}ll@{}}
 \toprule
