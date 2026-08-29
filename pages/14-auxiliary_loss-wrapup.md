@@ -134,7 +134,7 @@ trainer = AuxTrainer(...)
 trainer.train()
 ```
 
-힌트: Trainer 가 `aux_labels` 를 *자동 제거* 한 뒤 우리 `compute_loss` 안에서 `inputs.pop("aux_labels")` 가 KeyError. `aux_labels` 가 어디서 사라지는지 추적해 보면 학습 inputs 가 model.forward 시그니처와 맞춰지는 구조를 이해하게 됩니다.
+힌트: `KeyError: 'aux_labels'` 가 나는데, **`compute_loss` 가 아니라 `AuxCollator.__call__`** 에서 터집니다. `remove_unused_columns` 는 모델 `forward` 시그니처에 없는 컬럼을 *데이터셋 단계* 에서 걷어내므로, collator 가 받는 `features` 에 이미 `aux_labels` 가 없습니다. 배치가 만들어지지 못해 `compute_loss` 는 호출조차 되지 않습니다. `aux_labels` 가 어디서 사라지는지 추적해 보면 학습 inputs 가 model.forward 시그니처와 맞춰지는 구조를 이해하게 됩니다.
 
 ## 다음 챕터 예고 — Phase 2 시작
 
