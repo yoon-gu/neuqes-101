@@ -2008,7 +2008,61 @@ def sanitize_symbols(text: str) -> str:
     return EMOJI_PATTERN.sub("", text)
 
 
+def _github_repo() -> str:
+    """git origin 에서 owner/repo 추출 — build_wikidocs.py 와 동일 규약."""
+    try:
+        url = subprocess.run(
+            ["git", "-C", str(ROOT), "remote", "get-url", "origin"],
+            capture_output=True, text=True,
+        ).stdout.strip()
+        m = re.search(r"github\.com[:/]+(.+?)(?:\.git)?/?$", url)
+        return m.group(1) if m else ""
+    except Exception:
+        return ""
+
+
+_GITHUB_REPO = _github_repo()
+_NB_RELLINK_RE = re.compile(r"\]\(\s*\.?/?([A-Za-z0-9_.-]+\.ipynb)\s*\)")
+
+
+def rewrite_notebook_links(markdown: str, chapter_number: int) -> str:
+    """`](./appendix_x.ipynb)` 류 노트북 상대 링크 → Colab URL.
+
+    원고(PDF·EPUB)에서 상대 링크는 죽은 링크가 된다. WikiDocs 변환기(11f06fb)와
+    같은 정책 — **그 챕터 폴더에 실제로 있는 노트북만** 바꾸고, 없는 파일명은
+    오타일 수 있어 그대로 둬 검수에서 드러나게 한다.
+    """
+    if not _GITHUB_REPO:
+        return markdown
+    dirs = sorted(ROOT.glob(f"{chapter_number:02d}_*"))
+    if not dirs:
+        return markdown
+    folder = dirs[0].name
+
+    def _sub(m: re.Match[str]) -> str:
+        name = m.group(1)
+        if not (ROOT / folder / name).exists():
+            return m.group(0)
+        return f"](https://colab.research.google.com/github/{_GITHUB_REPO}/blob/master/{folder}/{name})"
+
+    return _NB_RELLINK_RE.sub(_sub, markdown)
+
+
+_CODE_REGION_RE = re.compile(r"(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]+`)")
+
+
 def normalize_markdown_math_symbols(text: str) -> str:
+    """수학 기호 → LaTeX 수식. 코드 영역(펜스·인라인 코드)은 건너뛴다.
+
+    인라인 코드 안까지 치환하면 pandoc 이 `$\times$` 를 verbatim 으로
+    이스케이프해 EPUB/PDF 에 raw 매크로가 그대로 노출된다 (이슈 #145).
+    코드 안의 ×·≈·λ 등은 유니코드 문자 그대로 둔다.
+    """
+    parts = _CODE_REGION_RE.split(text)
+    return "".join(seg if i % 2 else _normalize_math_segment(seg) for i, seg in enumerate(parts))
+
+
+def _normalize_math_segment(text: str) -> str:
     return (
         text.replace("λ", r"$\lambda$")
         .replace("β", r"$\beta$")
@@ -3496,6 +3550,7 @@ def markdown_to_latex(markdown: str, chapter_number: int) -> str:
     markdown = sanitize_markdown_unicode(markdown)
     markdown = sanitize_symbols(promote_headings(strip_heading_emoji(markdown)))
     markdown = normalize_markdown_math_symbols(markdown)
+    markdown = rewrite_notebook_links(markdown, chapter_number)
     markdown = escape_table_math_pipes(markdown)
     raw_blocks: list[str] = []
 
