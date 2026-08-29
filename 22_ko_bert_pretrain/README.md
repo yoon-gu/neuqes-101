@@ -23,7 +23,7 @@ Phase 3 의 네 번째 챕터. Ch 20 에서 *영어 작은 BERT* 를 random init
 수식: $L_{\text{MLM}} = -\frac{1}{|M|} \sum_{i \in M} \log P(x_i \mid x_{\setminus M})$
 
 ## 데이터
-한국어 Wikipedia — `wikimedia/wikipedia` config `20231101.ko` (CC-BY-SA, HF Hub 정제본). article 단위로 다운로드 후 paragraph (50-2000자 필터) 단위로 split. train 5,000 / eval 500 paragraphs, seed 42. `block_size=128` `group_texts` 후 약 500-1,500 블록.
+한국어 Wikipedia — `wikimedia/wikipedia` config `20231101.ko` (CC-BY-SA, HF Hub 정제본). article 단위로 다운로드 후 paragraph (50-2000자 필터) 단위로 split. train 5,000 / eval 500 paragraphs, seed 42. `block_size=128` `group_texts` 후 train 3,924 / eval 429 블록 (약 502K / 55K 토큰).
 
 ## 환경
 Google Colab T4 GPU (fp16). 약 2-4분 (토크나이저 로드 + ko 위키 다운로드·paragraph split·토큰화가 대부분을 차지 + MLM 2 epoch 약 0.3분 + 평가/저장 — 전체 실측 약 2분, 네트워크·VM 상태에 따라 늘어날 수 있음). 전체 소요는 데이터 다운로드가 지배합니다.
