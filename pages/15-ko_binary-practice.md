@@ -274,6 +274,7 @@ Ch 11 에서 `distilbert-base-uncased` 였던 자리만 `klue/bert-base` 로 교
 `klue/bert-base` 본체에 `num_labels=2` 분류 헤드를 얹습니다. `problem_type="single_label_classification"` 으로 softmax + `CrossEntropyLoss`(방식 B) 가 자동 선택됩니다 — Ch 11 에서 `distilbert-base-uncased` 였던 자리만 한국어 모델로 교체한 셋업입니다.
 
 ```python
+torch.manual_seed(SEED); np.random.seed(SEED)   # 분류 헤드 초기화까지 고정 — 재현성 확보
 model = AutoModelForSequenceClassification.from_pretrained(
     "klue/bert-base",
     num_labels=2,
