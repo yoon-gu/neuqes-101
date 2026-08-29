@@ -321,8 +321,8 @@ id2label:             {0: '1', 1: '2', 2: '3', 3: '4', 4: '5'}
 \midrule
 
 DistilBERT body & 66,362,880 & 66,362,880 \\
-pre\_classifier (\texttt{Linear(768\$\textbackslash{}to\$768)}) & 590,592 & 590,592 \\
-classifier (\texttt{Linear(768\$\textbackslash{}to\$K)}) & 1,538 & \textbf{3,845} \\
+pre\_classifier (\texttt{Linear(768→768)}) & 590,592 & 590,592 \\
+classifier (\texttt{Linear(768→K)}) & 1,538 & \textbf{3,845} \\
 합계 & 66,955,010 & \textbf{66,957,317} \\
 \bottomrule
 \end{tabular}
@@ -491,7 +491,7 @@ print(pd.DataFrame({
 \item
   숫자는 \emph{원본 카운트} 라 클래스별 표본 크기도 같이 보입니다 --- 어떤 클래스에 모델 평가 표본이 적으면 통계적 노이즈가 큼을 인지.
 \item
-  \texttt{1\ \$\textbackslash{}to\$\ 2} 또는 \texttt{4\ \$\textbackslash{}to\$\ 5} 같은 \emph{±1 이웃 오류} 가 가장 흔할 것 --- 별점 회귀에 가까운 task의 자연스러운 양상. 별점 \emph{3} 이 가장 어려울 가능성이 큰데, 이는 사람도 1/2보다 혼동하는 \emph{중간} 평가이기 때문.
+  \texttt{1\ →\ 2} 또는 \texttt{4\ →\ 5} 같은 \emph{±1 이웃 오류} 가 가장 흔할 것 --- 별점 회귀에 가까운 task의 자연스러운 양상. 별점 \emph{3} 이 가장 어려울 가능성이 큰데, 이는 사람도 1/2보다 혼동하는 \emph{중간} 평가이기 때문.
 \end{itemize}
 
 

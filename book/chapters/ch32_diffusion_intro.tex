@@ -229,7 +229,7 @@ random init 직후 모델은 가려진 자리를 \emph{균등 추측} \(\to\) �
 \begin{itemize}
 \tightlist
 \item
-  \inlinecode{1/t} 재가중 덕분에 \emph{어떤 t 든 baseline loss 가 똑같이 \texttt{ln(vocab)\ \$\textbackslash{}approx\$\ 7.62}} 로 정렬됩니다. 직접 학습한 BPE 2048 의 random baseline \texttt{ln(2048)\ \$\textbackslash{}approx\$\ 7.62} 와 같은 값 --- \emph{마스킹 비율만 일반화} 했지 loss 의 척도는 그대로입니다.
+  \inlinecode{1/t} 재가중 덕분에 \emph{어떤 t 든 baseline loss 가 똑같이 \texttt{ln(vocab)\ ≈\ 7.62}} 로 정렬됩니다. 직접 학습한 BPE 2048 의 random baseline \texttt{ln(2048)\ ≈\ 7.62} 와 같은 값 --- \emph{마스킹 비율만 일반화} 했지 loss 의 척도는 그대로입니다.
 \item
   학습 첫 step loss 가 약 7.6 부근에서 시작해 빠르게 떨어지면 정상. 목표는 약 3.7 부근 (작은 모델 + TinyStories).
 \item

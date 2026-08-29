@@ -94,7 +94,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 \midrule
 
 10 & DistilBERT 파인튜닝 (약 66M) & \inlinecode{bert-base-uncased} WordPiece & Yelp 이진 (4-5 \(\to\) 1, 1-2 \(\to\) 0) & \inlinecode{Linear(H,\ 1)} & sigmoid & \inlinecode{BCEWithLogitsLoss} \\
-18 & klue/bert-base + 보조 & WordPiece (한국어, 사전학습) & KLUE-YNAT 합성 + 보조 라벨 & 메인(7) + 보조 & sigmoid + 태스크별 & \texttt{BCEWithLogitsLoss\ +\ \$\textbackslash{}lambda\$·L\_aux} \\
+18 & klue/bert-base + 보조 & WordPiece (한국어, 사전학습) & KLUE-YNAT 합성 + 보조 라벨 & 메인(7) + 보조 & sigmoid + 태스크별 & \inlinecode{BCEWithLogitsLoss\ +\ λ·L\_aux} \\
 19 & --- (토크나이저 학습 전용) & WordPiece + WordLevel (둘 다 직접 학습) & Yelp text + NSMC text & --- & --- & --- \\
 20 & 작은 BERT (직접, scratch) & \inlinecode{bert-base-uncased} 토크나이저 (가져옴) & Wikitext-103 paragraphs (일반 도메인) & MLM head & softmax (MLM) & \inlinecode{CrossEntropyLoss} (masked token) \\
 \textbf{21 \(\leftarrow\) 여기} & \textbf{\ref{ch:20}장 사전학습 BERT + 분류 헤드 (약 10M)} & (\ref{ch:20}장과 동일) & \textbf{Yelp 이진화 (다른 도메인 transfer)} & \textbf{\inlinecode{Linear(H,\ 2)}} & \textbf{softmax} & \textbf{\inlinecode{CrossEntropyLoss}} \\
@@ -393,7 +393,7 @@ tokens (15): ['[CLS]', 'the', 'food', 'was', 'un', '##for', '##get', '##tab...
 같은 작은 \inlinecode{BertConfig} (hidden=256, layer=4, head=4, intermediate=1024) \(\to\) \inlinecode{BertForMaskedLM(config)} random init \(\to\) Wikitext-103 paragraphs 2K MLM 3 epoch.
 
 \begin{quote}
-\textbf{사전학습 코퍼스가 얼마나 작은가} --- 2K paragraphs 를 \inlinecode{block\_size=128} 로 이어 붙이면 아래 셀에서 \emph{2,100 block} 이 나옵니다. 토큰으로는 \texttt{2,100\ \$\textbackslash{}times\$\ 128\ =\ 268,800} --- \textbf{약 27만 토큰} 입니다. DistilBERT 가 본 약 33억 토큰의 \emph{약 1/12,000}. 이 숫자는 설정에서 결정되므로 재실행해도 같습니다.
+\textbf{사전학습 코퍼스가 얼마나 작은가} --- 2K paragraphs 를 \inlinecode{block\_size=128} 로 이어 붙이면 아래 셀에서 \emph{2,100 block} 이 나옵니다. 토큰으로는 \inlinecode{2,100\ ×\ 128\ =\ 268,800} --- \textbf{약 27만 토큰} 입니다. DistilBERT 가 본 약 33억 토큰의 \emph{약 1/12,000}. 이 숫자는 설정에서 결정되므로 재실행해도 같습니다.
 \end{quote}
 
 
