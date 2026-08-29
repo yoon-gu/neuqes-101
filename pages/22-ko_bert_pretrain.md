@@ -2,7 +2,7 @@
 
 **환경**: Google Colab **T4 GPU 필수**.
 
-**예상 소요 시간**: 약 5-8분 (토크나이저 로드 + ko 위키 다운로드·paragraph split·토큰화가 대부분을 차지 + MLM 2 epoch 약 0.3분 + 평가/저장). 전체 소요는 데이터 다운로드가 지배합니다.
+**예상 소요 시간**: 약 2-4분 (토크나이저 로드 + ko 위키 다운로드·paragraph split·토큰화가 대부분을 차지 + MLM 2 epoch 약 0.3분 + 평가/저장 — 전체 실측 약 2분, 네트워크·VM 상태에 따라 늘어날 수 있음). 전체 소요는 데이터 다운로드가 지배합니다.
 
 ## 학습 흐름
 
@@ -102,7 +102,7 @@ Ch 19 §5-4 의 cross-language 결론을 *실측* 으로 다시 확인합니다.
 
 ### `labels = -100` 한 줄 환기
 
-`DataCollatorForLanguageModeling` 이 가려지지 않은 자리에 `labels = -100` 을 채워 *해당 위치의 CE loss 를 무시* 합니다 (PyTorch `CrossEntropyLoss` 의 `ignore_index` 기본값). 같은 트릭이 Phase 4 의 SFT (Ch 27) 에서 *prompt 자리를 가리는* 방식으로 다시 등장합니다 — *적용 자리만 정반대*. 한국어 MLM 에서도 트릭 자체는 *완전히 동일*.
+`DataCollatorForLanguageModeling` 이 가려지지 않은 자리에 `labels = -100` 을 채워 *해당 위치의 CE loss 를 무시* 합니다 (PyTorch `CrossEntropyLoss` 의 `ignore_index` 기본값). 같은 트릭이 Phase 4 의 SFT (Ch 28) 에서 *prompt 자리를 가리는* 방식으로 다시 등장합니다 — *적용 자리만 정반대*. 한국어 MLM 에서도 트릭 자체는 *완전히 동일*.
 
 ## 이 장의 구성
 
