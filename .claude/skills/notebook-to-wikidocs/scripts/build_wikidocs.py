@@ -359,6 +359,57 @@ def _rewrite_notebook_links(ln: str, folder: str, stats: dict) -> str:
     return NB_RELLINK_RE.sub(_sub, ln)
 
 
+BQ_PREFIX_RE = re.compile(r"^\s{0,3}>\s?")
+TABLE_DELIM_RE = re.compile(r"^\s*\|?\s*:?-{2,}:?\s*(?:\|\s*:?-{2,}:?\s*)+\|?\s*$")
+TABLE_ROW_RE = re.compile(r"^\s*\|.*\|\s*$")
+
+
+def _unquote_tables(md: str, stats: dict) -> str:
+    """인용(>) 블록 안의 파이프 표를 인용 밖으로 꺼낸다.
+
+    WikiDocs 렌더러는 blockquote 안의 표를 표로 파싱하지 못하고 한 문단으로 뭉갠다
+    (`| logits | softmax | 손실 | |---|---|---| | (0,0) | ...` 처럼 파이프째 한 줄로
+    보임). 표가 든 인용 블록은 `>` 를 통째로 떼어 평범한 문단 + 표로 바꾸고, 도입
+    문장과 표 사이에 빈 줄을 넣어 표가 줄 처음에서 시작하도록 한다. 표가 없는 인용은
+    그대로 둔다 — 인용 자체는 WikiDocs 에서 잘 렌더된다.
+    """
+    lines = md.split("\n")
+    out: list[str] = []
+    fence = False
+    i = 0
+    while i < len(lines):
+        ln = lines[i]
+        if ln.lstrip().startswith("```"):
+            fence = not fence
+            out.append(ln)
+            i += 1
+            continue
+        if fence or not BQ_PREFIX_RE.match(ln):
+            out.append(ln)
+            i += 1
+            continue
+        # 연속된 인용 줄을 한 블록으로 모은다
+        block: list[str] = []
+        while i < len(lines) and BQ_PREFIX_RE.match(lines[i]):
+            block.append(BQ_PREFIX_RE.sub("", lines[i]))
+            i += 1
+        if not any(TABLE_DELIM_RE.match(b) for b in block):
+            out.extend("> " + b if b else ">" for b in block)
+            continue
+        stats["quoted_tables"] += 1
+        if out and out[-1].strip() != "":
+            out.append("")
+        for idx, b in enumerate(block):
+            prev = block[idx - 1] if idx else ""
+            # 표의 첫 줄 앞 / 표가 끝난 뒤 첫 줄 앞에 빈 줄을 넣어 블록 경계를 만든다
+            if idx and bool(TABLE_ROW_RE.match(b)) != bool(TABLE_ROW_RE.match(prev)) and prev.strip():
+                out.append("")
+            out.append(b)
+        if i < len(lines) and lines[i].strip() != "":
+            out.append("")
+    return "\n".join(out)
+
+
 def _sanitize_md_cell(md: str, stem: str, stats: dict, folder: str = "") -> str:
     """마크다운 셀을 전자책 규칙([wikidocs 전자책 작성시 주의할 점](https://wikidocs.net/198723))에 맞게 방어 정리한다. 코드펜스 안은 손대지 않음.
 
@@ -367,7 +418,9 @@ def _sanitize_md_cell(md: str, stem: str, stats: dict, folder: str = "") -> str:
     - [10] 각주 이름에 챕터 stem 접두 → 전자책이 전 페이지를 한 문서로 통합할 때 충돌 방지.
     - [6]/[3] raw HTML·외부 이미지는 자동 수정이 어려워 stats 에 경고만 모은다(인라인 코드는 제외).
     - `folder` 를 주면 노트북 상대 링크(`](./appendix_x.ipynb)`)를 Colab URL 로 바꾼다(이슈 #143).
+    - 인용 블록 안의 표는 인용 밖으로 꺼낸다(WikiDocs 가 표로 파싱하지 못함).
     """
+    md = _unquote_tables(md, stats)
     out: list[str] = []
     fence = False
     pending_blank = False  # 직전이 헤딩 → 다음 비공백 줄 앞 빈 줄 보장 [2]
@@ -763,7 +816,8 @@ def chapter_h1_title(nb: dict) -> str:
 def _new_stats() -> dict:
     return {"code_cells": 0, "code_with_output": 0, "synthetic": 0, "images": 0,
             "hr_removed": 0, "h1_demoted": 0, "footnotes": 0, "heading_blanks": 0,
-            "win_paths": 0, "nb_links": 0, "html_warn": [], "extimg_warn": []}
+            "win_paths": 0, "nb_links": 0, "quoted_tables": 0,
+            "html_warn": [], "extimg_warn": []}
 
 
 def convert(nb: dict, num: int, slug: str, title: str,
@@ -1166,6 +1220,7 @@ def build_appendices(num: int, slug: str, folder: str, executed_dir: Path, pages
             nb, num, slug, folder, ap_stem, suffix, pages_dir, assets_dir, args.output_style)
         entries.append((f"{num:02d}-{len(entries)}. {ap_title}", ap_page))
         stats["nb_links"] += ap_stats["nb_links"]
+        stats["quoted_tables"] += ap_stats["quoted_tables"]
         stats["html_warn"].extend(ap_stats["html_warn"])
         stats["extimg_warn"].extend(ap_stats["extimg_warn"])
         lines.append(f"     부록 {ap_page.split('/')[-1]}  원천={source}  "
@@ -1258,6 +1313,8 @@ def main() -> None:
                 fixes.append(f"윈도우 경로 {stats['win_paths']} 코드화")
             if stats.get("nb_links"):
                 fixes.append(f"노트북 상대링크 {stats['nb_links']} → Colab URL")
+            if stats.get("quoted_tables"):
+                fixes.append(f"인용 속 표 {stats['quoted_tables']} 인용 해제")
             if fixes:
                 print("     방어(전자책 규칙):", " / ".join(fixes))
             if stats["html_warn"]:

@@ -777,7 +777,7 @@ AR은 모든 위치를 매 step 감독하고 좌에서 우로 순차적으로 �
 \begin{lstlisting}
 prob = torch.rand(masked_idx.shape, device=device)
 to_mask   = prob < 0.8
-# 80% $\to$ [MASK]
+# 80% → [MASK]
 to_random = (prob >= 0.8) & (prob < 0.9)
 
 input_ids[masked_idx[to_mask]]   = mask_id
@@ -859,7 +859,7 @@ tok.train_from_iterator(
 \begin{lstlisting}
 prob = torch.rand(masked_idx.shape)
 to_mask   = prob < 0.8
-# 80% $\to$ [MASK]
+# 80% → [MASK]
 to_random = (prob >= 0.8) & (prob < 0.9)
 \end{lstlisting}
 

@@ -2008,7 +2008,61 @@ def sanitize_symbols(text: str) -> str:
     return EMOJI_PATTERN.sub("", text)
 
 
+def _github_repo() -> str:
+    """git origin 에서 owner/repo 추출 — build_wikidocs.py 와 동일 규약."""
+    try:
+        url = subprocess.run(
+            ["git", "-C", str(ROOT), "remote", "get-url", "origin"],
+            capture_output=True, text=True,
+        ).stdout.strip()
+        m = re.search(r"github\.com[:/]+(.+?)(?:\.git)?/?$", url)
+        return m.group(1) if m else ""
+    except Exception:
+        return ""
+
+
+_GITHUB_REPO = _github_repo()
+_NB_RELLINK_RE = re.compile(r"\]\(\s*\.?/?([A-Za-z0-9_.-]+\.ipynb)\s*\)")
+
+
+def rewrite_notebook_links(markdown: str, chapter_number: int) -> str:
+    """`](./appendix_x.ipynb)` 류 노트북 상대 링크 → Colab URL.
+
+    원고(PDF·EPUB)에서 상대 링크는 죽은 링크가 된다. WikiDocs 변환기(11f06fb)와
+    같은 정책 — **그 챕터 폴더에 실제로 있는 노트북만** 바꾸고, 없는 파일명은
+    오타일 수 있어 그대로 둬 검수에서 드러나게 한다.
+    """
+    if not _GITHUB_REPO:
+        return markdown
+    dirs = sorted(ROOT.glob(f"{chapter_number:02d}_*"))
+    if not dirs:
+        return markdown
+    folder = dirs[0].name
+
+    def _sub(m: re.Match[str]) -> str:
+        name = m.group(1)
+        if not (ROOT / folder / name).exists():
+            return m.group(0)
+        return f"](https://colab.research.google.com/github/{_GITHUB_REPO}/blob/master/{folder}/{name})"
+
+    return _NB_RELLINK_RE.sub(_sub, markdown)
+
+
+_CODE_REGION_RE = re.compile(r"(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]+`)")
+
+
 def normalize_markdown_math_symbols(text: str) -> str:
+    r"""수학 기호 → LaTeX 수식. 코드 영역(펜스·인라인 코드)은 건너뛴다.
+
+    인라인 코드 안까지 치환하면 pandoc 이 `$\times$` 를 verbatim 으로
+    이스케이프해 EPUB/PDF 에 raw 매크로가 그대로 노출된다 (이슈 #145).
+    코드 안의 ×·≈·λ 등은 유니코드 문자 그대로 둔다.
+    """
+    parts = _CODE_REGION_RE.split(text)
+    return "".join(seg if i % 2 else _normalize_math_segment(seg) for i, seg in enumerate(parts))
+
+
+def _normalize_math_segment(text: str) -> str:
     return (
         text.replace("λ", r"$\lambda$")
         .replace("β", r"$\beta$")
@@ -2357,6 +2411,39 @@ def clean_table_caption_title(section_title: str) -> str:
     return re.sub(r"\s+", " ", section_title).strip()
 
 
+_CAPTION_MATH_MACROS = {
+    "λ": "lambda", "α": "alpha", "β": "beta", "θ": "theta", "Δ": "Delta",
+    "×": "times", "≈": "approx", "≤": "le", "≥": "ge", "≠": "ne",
+    "→": "to", "←": "leftarrow", "↓": "downarrow", "↔": "leftrightarrow",
+}
+
+# 캡션 원본은 `\section{\texorpdfstring{화면용}{북마크용}}` 의 **북마크용** 인자다
+# (clean_table_caption_title). 산문 헤딩의 기호는 그 시점에 이미 pandoc 이
+# 이스케이프한 `\textbackslash to` 꼴이라 유니코드 치환으로는 잡히지 않는다.
+_CAPTION_ESCAPED_MATH_RE = re.compile(
+    r"(?:\\\$)?\\textbackslash(?:\{\})?\s?("
+    + "|".join(sorted(set(_CAPTION_MATH_MACROS.values()), key=len, reverse=True))
+    + r")\b(?:\\\$)?"
+)
+
+
+def caption_math_safe(text: str) -> str:
+    r"""표 캡션을 본문 폰트 안전하게 — 수학 기호를 \ensuremath 로.
+
+    캡션은 \captionof 로 본문 폰트(NanumMyeongjo) 문맥에서 조판되는데, 이
+    폰트에 λ 글리프가 없다 (#137 확인, 307e0fc 가 캡션만 \ensuremath 분리).
+    그 손수정이 tex 재생성 때마다 유실되지 않도록 변환기 층에 고정한다.
+
+    유니코드로 살아 온 기호(인라인 코드 안이라 치환을 건너뛴 경우)와, 이미
+    `\textbackslash to` 로 이스케이프돼 온 기호(산문 헤딩에서 온 경우) 를 함께
+    처리한다. 뒤엣것을 놓치면 EPUB 캡션에 `\to` 가 그대로 찍힌다 (#145 와 동류).
+    """
+    text = _CAPTION_ESCAPED_MATH_RE.sub(r"\\ensuremath{\\\1}", text)
+    for ch, macro in _CAPTION_MATH_MACROS.items():
+        text = text.replace(ch, f"\\ensuremath{{\\{macro}}}")
+    return text
+
+
 def caption_for_table(chapter_number: int, section_title: str, table_index: int) -> str:
     title = clean_table_caption_title(section_title)
     if "변화추적표" in title:
@@ -2400,7 +2487,7 @@ def wrap_tabular_tables(latex: str, chapter_number: int) -> str:
             block_text = "\n".join(block)
             if r"\begin{tabular}" in block_text or r"\begin{tabularx}" in block_text:
                 table_index += 1
-                caption = caption_for_table(chapter_number, section_title, table_index)
+                caption = caption_math_safe(caption_for_table(chapter_number, section_title, table_index))
                 label = f"tab:ch{chapter_number:02d}-{table_index:02d}"
                 wrapped.append(f"\\begin{{booktable}}{{{caption}}}{{{label}}}")
                 wrapped.extend(block)
@@ -3496,6 +3583,7 @@ def markdown_to_latex(markdown: str, chapter_number: int) -> str:
     markdown = sanitize_markdown_unicode(markdown)
     markdown = sanitize_symbols(promote_headings(strip_heading_emoji(markdown)))
     markdown = normalize_markdown_math_symbols(markdown)
+    markdown = rewrite_notebook_links(markdown, chapter_number)
     markdown = escape_table_math_pipes(markdown)
     raw_blocks: list[str] = []
 

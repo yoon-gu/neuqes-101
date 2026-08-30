@@ -310,9 +310,9 @@ First 3 sample probability distributions:
 
 \Needspace{8\baselineskip}
 \begin{lstlisting}
-[입력 x] ──$\to$ Linear(V $\to$ K) ──$\to$ logits [z_1, ..., z_K]
-                            ──$\to$ softmax 한 번
-                            ──$\to$ [p_1, ..., p_K]   (
+[입력 x] ──→ Linear(V → K) ──→ logits [z_1, ..., z_K]
+                            ──→ softmax 한 번
+                            ──→ [p_1, ..., p_K]   (
                                 합 = 1,
                                 클래스끼리 경쟁,
                             )
@@ -322,13 +322,13 @@ First 3 sample probability distributions:
 
 \Needspace{10\baselineskip}
 \begin{lstlisting}
-             ┌──$\to$ 분류기 1:  "1 vs 나머지"  ──$\to$ sigmoid ──$\to$ P_1
-             ├──$\to$ 분류기 2:  "2 vs 나머지"  ──$\to$ sigmoid ──$\to$ P_2
-[입력 x] ──$\to$ ├──$\to$ 분류기 3:  "3 vs 나머지"  ──$\to$ sigmoid ──$\to$ P_3
-             ├──$\to$ 분류기 4:  "4 vs 나머지"  ──$\to$ sigmoid ──$\to$ P_4
-             └──$\to$ 분류기 5:  "5 vs 나머지"  ──$\to$ sigmoid ──$\to$ P_5
+             ┌──→ 분류기 1:  "1 vs 나머지"  ──→ sigmoid ──→ P_1
+             ├──→ 분류기 2:  "2 vs 나머지"  ──→ sigmoid ──→ P_2
+[입력 x] ──→ ├──→ 분류기 3:  "3 vs 나머지"  ──→ sigmoid ──→ P_3
+             ├──→ 분류기 4:  "4 vs 나머지"  ──→ sigmoid ──→ P_4
+             └──→ 분류기 5:  "5 vs 나머지"  ──→ sigmoid ──→ P_5
 
-   각 P_k 는 다른 P_j 와 무관한 독립 sigmoid 출력 (raw 합 $\ne$ 1)
+   각 P_k 는 다른 P_j 와 무관한 독립 sigmoid 출력 (raw 합 ≠ 1)
    예측: argmax(P_k) -- sklearn이 표시할 땐 행을 정규화해 합 1로 보여줌
 \end{lstlisting}
 
@@ -636,7 +636,7 @@ for name, pred in [("회귀 후 round/clip", pred_reg), ("분류", pred_clf)]:
     n_4to3 = ((pred == 2) & mask4).sum()
     n_4to1 = ((pred == 0) & mask4).sum()
     print(
-        f"{name}: 4$\to$3 {n_4to3}건, 4$\to$1 "
+        f"{name}: 4→3 {n_4to3}건, 4→1 "
         f"{n_4to1}건"
     )
 \end{lstlisting}

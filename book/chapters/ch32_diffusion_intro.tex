@@ -120,7 +120,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & 생성/학습 방식 &
 
 \ref{ch:24}--\ref{ch:31}장의 GPT 장들이 \emph{decoder + next-token 예측 + 왼\(\to\)오 순차 생성} 패러다임이라면, Phase 5 (32-34장) 는 \emph{encoder/bidirectional + masked-denoise + 문장 전체 병렬 생성} 패러다임입니다. 본 장이 그 출발점.
 
-\begin{booktable}{32장 Phase 전환 - Autoregressive (GPT) \textbackslash to Diffusion LM 표}{tab:ch32-02}
+\begin{booktable}{32장 Phase 전환 - Autoregressive (GPT) \ensuremath{\to} Diffusion LM 표}{tab:ch32-02}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -229,7 +229,7 @@ random init 직후 모델은 가려진 자리를 \emph{균등 추측} \(\to\) �
 \begin{itemize}
 \tightlist
 \item
-  \inlinecode{1/t} 재가중 덕분에 \emph{어떤 t 든 baseline loss 가 똑같이 \texttt{ln(vocab)\ \$\textbackslash{}approx\$\ 7.62}} 로 정렬됩니다. 직접 학습한 BPE 2048 의 random baseline \texttt{ln(2048)\ \$\textbackslash{}approx\$\ 7.62} 와 같은 값 --- \emph{마스킹 비율만 일반화} 했지 loss 의 척도는 그대로입니다.
+  \inlinecode{1/t} 재가중 덕분에 \emph{어떤 t 든 baseline loss 가 똑같이 \texttt{ln(vocab)\ ≈\ 7.62}} 로 정렬됩니다. 직접 학습한 BPE 2048 의 random baseline \texttt{ln(2048)\ ≈\ 7.62} 와 같은 값 --- \emph{마스킹 비율만 일반화} 했지 loss 의 척도는 그대로입니다.
 \item
   학습 첫 step loss 가 약 7.6 부근에서 시작해 빠르게 떨어지면 정상. 목표는 약 3.7 부근 (작은 모델 + TinyStories).
 \item
@@ -242,7 +242,7 @@ random init 직후 모델은 가려진 자리를 \emph{균등 추측} \(\to\) �
 
 \ref{ch:01}장부터 \emph{토크나이저와 마스킹} 을 일관되게 추적해 왔습니다. 그 흐름이 여기서 정점에 닿습니다.
 
-\begin{booktable}{32장 마스킹 thread 클라이맥스 - 고정 15\% (BERT) \textbackslash to 가변 0-100\% (diffusion) 표}{tab:ch32-05}
+\begin{booktable}{32장 마스킹 thread 클라이맥스 - 고정 15\% (BERT) \ensuremath{\to} 가변 0-100\% (diffusion) 표}{tab:ch32-05}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lllll@{}}
 \toprule
