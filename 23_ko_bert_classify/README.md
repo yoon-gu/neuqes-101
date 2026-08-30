@@ -53,7 +53,7 @@ Google Colab T4 GPU (fp16). 약 2-4분 — 대부분이 데이터 다운로드�
 |---|---|---|
 | 본체 파라미터 | 약 110M | 약 10M |
 | 사전학습 코퍼스 | 한국어 위키 + 모두의 말뭉치 + 뉴스 + 댓글 (약 8.4B 토큰) | 한국어 Wikipedia paragraphs 2K (1,562 블록 ≈ 약 20만 토큰) |
-| 사전학습 시간 | TPU 수일 | T4 약 8-10분 |
+| 사전학습 시간 | TPU 수일 | T4 약 0.2분 (MLM 3 epoch 실측) |
 | Fine-tune 도메인 | NSMC 이진 (다른 도메인) | NSMC 이진 (다른 도메인) |
 | 분류 fine-tune 셋업 | (둘 다 같음 — 5K/1K, batch 16, lr 2e-5, 2 epoch, fp16) | |
 | 기대 accuracy | 약 86% (`executed/15_ko_binary.ipynb`) | 약 55% (T4 실측 — 동전 던지기에 가까운 자리) |
