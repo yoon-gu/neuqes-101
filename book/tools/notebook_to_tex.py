@@ -2052,7 +2052,7 @@ _CODE_REGION_RE = re.compile(r"(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]+`)")
 
 
 def normalize_markdown_math_symbols(text: str) -> str:
-    """수학 기호 → LaTeX 수식. 코드 영역(펜스·인라인 코드)은 건너뛴다.
+    r"""수학 기호 → LaTeX 수식. 코드 영역(펜스·인라인 코드)은 건너뛴다.
 
     인라인 코드 안까지 치환하면 pandoc 이 `$\times$` 를 verbatim 으로
     이스케이프해 EPUB/PDF 에 raw 매크로가 그대로 노출된다 (이슈 #145).
@@ -2411,23 +2411,36 @@ def clean_table_caption_title(section_title: str) -> str:
     return re.sub(r"\s+", " ", section_title).strip()
 
 
-_CAPTION_MATH_SAFE = {
-    "λ": r"\ensuremath{\lambda}", "α": r"\ensuremath{\alpha}", "β": r"\ensuremath{\beta}",
-    "θ": r"\ensuremath{\theta}", "Δ": r"\ensuremath{\Delta}", "×": r"\ensuremath{\times}",
-    "≈": r"\ensuremath{\approx}", "→": r"\ensuremath{\to}", "≤": r"\ensuremath{\le}",
-    "≥": r"\ensuremath{\ge}", "≠": r"\ensuremath{\ne}",
+_CAPTION_MATH_MACROS = {
+    "λ": "lambda", "α": "alpha", "β": "beta", "θ": "theta", "Δ": "Delta",
+    "×": "times", "≈": "approx", "≤": "le", "≥": "ge", "≠": "ne",
+    "→": "to", "←": "leftarrow", "↓": "downarrow", "↔": "leftrightarrow",
 }
+
+# 캡션 원본은 `\section{\texorpdfstring{화면용}{북마크용}}` 의 **북마크용** 인자다
+# (clean_table_caption_title). 산문 헤딩의 기호는 그 시점에 이미 pandoc 이
+# 이스케이프한 `\textbackslash to` 꼴이라 유니코드 치환으로는 잡히지 않는다.
+_CAPTION_ESCAPED_MATH_RE = re.compile(
+    r"(?:\\\$)?\\textbackslash(?:\{\})?\s?("
+    + "|".join(sorted(set(_CAPTION_MATH_MACROS.values()), key=len, reverse=True))
+    + r")\b(?:\\\$)?"
+)
 
 
 def caption_math_safe(text: str) -> str:
-    """표 캡션을 본문 폰트 안전하게 — 수학 기호를 \ensuremath 로.
+    r"""표 캡션을 본문 폰트 안전하게 — 수학 기호를 \ensuremath 로.
 
     캡션은 \captionof 로 본문 폰트(NanumMyeongjo) 문맥에서 조판되는데, 이
     폰트에 λ 글리프가 없다 (#137 확인, 307e0fc 가 캡션만 \ensuremath 분리).
     그 손수정이 tex 재생성 때마다 유실되지 않도록 변환기 층에 고정한다.
+
+    유니코드로 살아 온 기호(인라인 코드 안이라 치환을 건너뛴 경우)와, 이미
+    `\textbackslash to` 로 이스케이프돼 온 기호(산문 헤딩에서 온 경우) 를 함께
+    처리한다. 뒤엣것을 놓치면 EPUB 캡션에 `\to` 가 그대로 찍힌다 (#145 와 동류).
     """
-    for ch, macro in _CAPTION_MATH_SAFE.items():
-        text = text.replace(ch, macro)
+    text = _CAPTION_ESCAPED_MATH_RE.sub(r"\\ensuremath{\\\1}", text)
+    for ch, macro in _CAPTION_MATH_MACROS.items():
+        text = text.replace(ch, f"\\ensuremath{{\\{macro}}}")
     return text
 
 
