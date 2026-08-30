@@ -181,9 +181,9 @@ L_{\text{MLM}} = -\frac{1}{\vert{}M\vert{}} \sum_{i \in M} \log P(x_i \mid x_{\s
 분류 장에서 K (클래스 수) 가 늘 때 random baseline \inlinecode{log\ K} 가 커지듯, MLM 도 vocab 이 커지면 random baseline 이 커집니다. 하지만 vocab 30K vs 32K 정도의 차이는 \emph{학습 동역학에 영향 없음} --- 학습 종료 loss 의 절대값을 비교할 때만 미세 보정.
 \end{quote}
 
-\subsection{학습 목표 영역 (\ref{ch:20}장과 같음)}
+\subsection{숫자로 감 잡기 (vocab 32,000 --- \ref{ch:20}장과 같은 척도)}
 
-\begin{booktable}{22장 학습 목표 영역 (20장과 같음) 표}{tab:ch22-04}
+\begin{booktable}{22장 숫자로 감 잡기 (vocab 32,000 - 20장과 같은 척도) 표}{tab:ch22-04}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -191,15 +191,18 @@ L_{\text{MLM}} = -\frac{1}{\vert{}M\vert{}} \sum_{i \in M} \log P(x_i \mid x_{\s
 \midrule
 
 균등 추측 (random init 직후) & 10.37 & random baseline \\
+\textbf{이 장 도달점} (위키 5K paragraphs \(\times\) 2 epoch) & \textbf{7.49 - 7.50} & \(\leftarrow\) \textbf{실측} (eval loss, \inlinecode{set\_seed} 로 재현) \\
 약하게 학습 (정답 확률 0.01) & 4.61 & \\
-잘 학습된 작은 BERT (정답 확률 0.05-0.1) & 2.3 - 3.0 & 이 장 목표 영역 \\
+잘 학습된 작은 BERT (정답 확률 0.05-0.1) & 2.3 - 3.0 & \textbf{이 셋업의 사정거리 밖} \\
 큰 사전학습 BERT (정답 확률 0.3+) & 1.20 & \inlinecode{klue/bert-base} 본체 수준 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
-\textbf{관전 포인트} --- \ref{ch:20}장의 영어 MLM 과 \emph{비슷한 수렴 곡선} 이 나오는지가 본 장의 핵심 관찰. \emph{언어가 달라도 작은 BERT + 5K 문장 MLM 의 학습 동역학은 비슷하다} 가 검증 가설.
+\textbf{이 장이 도달하는 곳은 약 7.5} --- \emph{어떤 토큰이 흔한가} 를 막 새긴 단계입니다. 2.3-3.0 구간은 데이터·모델 크기가 몇 자릿수 더 필요해 이 셋업으로는 닿지 않습니다. 7.5 가 나왔다면 학습이 실패한 게 아니라 \emph{정상} 입니다.
+
+\textbf{관전 포인트} --- \ref{ch:20}장의 영어 MLM 과 \emph{비슷한 수렴 곡선} 이 나오는지가 본 장의 핵심 관찰. \ref{ch:20}장은 같은 셋업에서 eval loss 약 7.06-7.13 (\inlinecode{executed/20\_en\_bert\_pretrain.ipynb}) --- 한국어도 비슷한 자리에 멈춥니다. \emph{언어가 달라도 작은 BERT + 5K 문장 MLM 의 학습 동역학은 비슷하다} 가 검증 가설.
 
 
 
@@ -439,7 +442,7 @@ klue/bert-base (KO) ( 7 tokens, UNK 0): ['별로', '##였', '##어요', '.', '�
 
 MLM 사전학습 표준 입력 포맷. 모든 문서를 \emph{이어 붙여 토큰 스트림} 으로 만든 뒤 \inlinecode{block\_size=128} 단위로 자릅니다. 문장 경계가 사라지는 trade-off 는 있지만 BERT 사전학습은 \emph{임의 위치의 토큰 예측} 이라 문장 경계가 중요하지 않습니다.
 
-한국어 Wikipedia paragraphs 는 \emph{제한 50-2000자 필터링} 으로 평균 문장 길이가 일정 (수십 자-수백 자). 5,000 paragraphs 이 \inlinecode{block\_size=128} 로 잘리면 약 500-1,500 블록 정도로 정리됩니다. NSMC 한 줄 리뷰보다 길고 Yelp 보다는 짧은 중간 수준 --- 일반 도메인 코퍼스다운 균형.
+한국어 Wikipedia paragraphs 는 \emph{제한 50-2000자 필터링} 으로 평균 문장 길이가 일정 (수십 자-수백 자). 5,000 paragraphs 이 \inlinecode{block\_size=128} 로 잘리면 train 3,924 블록 (약 502K 토큰), eval 500 paragraphs 는 429 블록으로 정리됩니다 --- 바로 아래 셀 출력에서 확인할 수 있고, \inlinecode{seed} 와 길이 필터가 고정이라 재실행해도 같은 값입니다. NSMC 한 줄 리뷰보다 길고 Yelp 보다는 짧은 중간 수준 --- 일반 도메인 코퍼스다운 균형.
 
 
 
@@ -680,7 +683,7 @@ Trainable:              11,483,136
 
 
 
-\textbf{관찰} --- vocab 이 약 32,000 (\ref{ch:20}장의 30,522 보다 약간 큼) 이라 임베딩 테이블이 살짝 더 큽니다. 그래도 본체 구조는 동일 --- encoder body 2M + 임베딩 8M 수준의 작은 BERT.
+\textbf{관찰} --- vocab 이 약 32,000 (\ref{ch:20}장의 30,522 보다 약간 큼) 이라 임베딩 테이블이 살짝 더 큽니다. 그래도 본체 구조는 동일 --- encoder body 약 3.2M + 임베딩 약 8.2M (합계 약 11.5M) 수준의 작은 BERT.
 
 \begin{quote}
 \ref{ch:20}장과 마찬가지로 MLM head 의 weight 는 입력 임베딩과 \emph{tied} (공유). vocab 차원 출력 layer 가 임베딩 테이블과 같아 파라미터 절약.
@@ -1120,7 +1123,7 @@ print(
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
 \item
-  step-by-step train loss 곡선 --- 빠르게 약 10.37 (random baseline) 에서 5 이하로 떨어졌는지
+  step-by-step train loss 곡선 --- 빠르게 약 10.37 (random baseline) 에서 약 7.5 부근으로 떨어졌는지
 \item
   eval set 의 perplexity --- 외부 텍스트에서도 일관된 수준인지
 \item
@@ -1174,12 +1177,12 @@ print(
 \begin{bookoutputbox}
 Training Loss  Validation Loss  Epoch
 -------------  ---------------  -----
-7.368646       7.493273         2
+7.368658       7.493282         2
 === eval (held-out Korean Wikipedia paragraphs) ===
                eval_loss: 7.4933
 
   MLM loss:               7.4933
-  perplexity (exp loss):  1795.92
+  perplexity (exp loss):  1795.94
   random baseline PPL:    32,000  (uniform over vocab)
   -> model narrowed vocab to approx. 1796 candidates per masked position
 \end{bookoutputbox}
@@ -1216,7 +1219,7 @@ print(metric_compare.round(4).to_string(index=False))
 Before vs After -- eval metrics
          metric  before (random)  after (2 epoch)  random baseline
       eval_loss          10.4216           7.5036          10.3735
-eval_perplexity       33576.0053        1814.5053       32000.0000
+eval_perplexity       33576.0053        1814.5573       32000.0000
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1301,9 +1304,9 @@ if torch.cuda.is_available():
 \begin{itemize}
 \tightlist
 \item
-  \textbf{\inlinecode{eval\_loss}}: random baseline \texttt{ln\ V\ \$\textbackslash{}approx\$\ 10.37} 에서 \textbf{약 7.5 부근} 까지 내려옵니다 --- \emph{어떤 토큰이 흔한가} 를 막 새긴 단계 (정확값은 위 §7-1 셀 출력이 단일 출처). \emph{완전한} 한국어 표상에는 한참 못 미치지만, \inlinecode{klue/bert-base} 가 학습한 것의 \emph{방향} 은 맞춥니다.
+  \textbf{\inlinecode{eval\_loss}}: random baseline \inlinecode{ln\ V\ ≈\ 10.37} 에서 \textbf{약 7.5 부근} 까지 내려옵니다 --- \emph{어떤 토큰이 흔한가} 를 막 새긴 단계 (정확값은 위 §7-1 셀 출력이 단일 출처). \emph{완전한} 한국어 표상에는 한참 못 미치지만, \inlinecode{klue/bert-base} 가 학습한 것의 \emph{방향} 은 맞춥니다.
 \item
-  \textbf{\inlinecode{perplexity}}: 33,000 안팎 (\(\approx\) vocab 전체) 에서 \textbf{2,000 안팎} 으로. \emph{마스크 자리마다 후보를 32,000 개에서 약 2,000 개 수준으로 좁힌 상태} 라는 직관적 해석 --- 아직 \emph{흔한 토큰들} 의 범위를 크게 벗어나지 못한 수준입니다.
+  \textbf{\inlinecode{perplexity}}: 33,000 안팎 (\(\approx\) vocab 전체) 에서 \textbf{1,800 안팎} 으로. \emph{마스크 자리마다 후보를 32,000 개에서 약 1,800 개 수준으로 좁힌 상태} 라는 직관적 해석 --- 아직 \emph{흔한 토큰들} 의 범위를 크게 벗어나지 못한 수준입니다.
 \item
   \textbf{top-5 토큰} (3-way 비교):
 
@@ -1319,7 +1322,7 @@ if torch.cuda.is_available():
 \end{itemize}
 
 \begin{quote}
-\textbf{세 모델의 격차가 정확히 \emph{데이터 규모 + 모델 크기 + 학습 시간} 의 격차} --- 우리 작은 BERT (10M, 위키 5K paragraphs, 2 epoch) \(\to\) reference (110M, 약 8.4B tokens) 사이에 \emph{데이터 약 1.7만 배 (약 50만 \(\to\) 8.4B 토큰), 파라미터 11배}. 그 격차가 top-5 의 \emph{질적 차이} 로 정확히 드러납니다.
+\textbf{세 모델의 격차가 정확히 \emph{데이터 규모 + 모델 크기 + 학습 시간} 의 격차} --- 우리 작은 BERT (약 11.5M, 위키 5K paragraphs, 2 epoch) \(\to\) reference (약 110.7M, 약 8.4B tokens) 사이에 \emph{데이터 약 1.7만 배 (약 50만 \(\to\) 8.4B 토큰), 파라미터 약 10배}. 그 격차가 top-5 의 \emph{질적 차이} 로 정확히 드러납니다.
 \end{quote}
 
 이 장의 작은 BERT 는 \emph{한국어 위키 paragraphs 5K \(\times\) 2 epoch} 로 학습한 \emph{일반 도메인 mini BERT}. 위키 도메인은 직접 본 분포라 향상이 빠르지만, NSMC 영화 리뷰는 \emph{다른 도메인} 이라 fine-tune 단계에서 적응이 필요합니다 --- 이게 \emph{진짜 사전학습 \(\to\) fine-tune 패러다임} 의 핵심. \ref{ch:23}장에서 NSMC 이진 분류로 fine-tune 할 때 진짜 비교 --- \emph{우리가 직접 만든 작은 한국어 BERT (일반 도메인 5K, 약 10M)} vs \emph{\ref{ch:15}장의 \inlinecode{klue/bert-base} (대규모 일반 코퍼스, 약 110M)}.
@@ -1502,9 +1505,9 @@ loss = loss_fn(logits, labels)
 
 \end{faqBox}
 
-\begin{faqBox}{Q6. (실무) MLM eval loss 가 4-6 부근에서 \emph{더 떨어지지 않으면} 어떻게 진단하나요?}
+\begin{faqBox}{Q6. (실무) MLM eval loss 가 7.5 부근에서 \emph{더 떨어지지 않으면} 어떻게 진단하나요?}
 
-작은 BERT scratch + 5K 문장의 \emph{자연스러운 수렴 영역} 입니다. 추가로 떨어뜨리려면:
+작은 BERT scratch + 5K paragraphs 의 \emph{자연스러운 수렴 영역} 입니다 (§7-1 실측 약 7.5). 고장이 아니라 이 셋업의 정상 도달점이니, 추가로 떨어뜨리려면:
 
 \Needspace{7\baselineskip}
 \begin{lstlisting}
