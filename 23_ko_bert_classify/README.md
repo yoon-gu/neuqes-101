@@ -32,7 +32,7 @@ self-contained 노트북: 한국어 Wikipedia MLM 학습을 짧게 재현 → �
 같은 토크나이저 (`klue/bert-base`) 가 두 도메인의 텍스트를 처리. `block_size=128` `group_texts` 패턴으로 MLM 3 epoch + NSMC 분류 fine-tune 2 epoch.
 
 ## 환경
-Google Colab T4 GPU (fp16). 약 20-23분 (한국어 Wikipedia 다운로드·필터링 약 2분 + MLM 3 epoch 약 8-10분 + 분류 fine-tune 2 epoch 약 8-10분 + 평가/시각화 약 2분). 부록 [`appendix_random_baseline.ipynb`](./appendix_random_baseline.ipynb) 은 별도로 약 25-28분.
+Google Colab T4 GPU (fp16). 약 2-4분 — 대부분이 데이터 다운로드입니다 (T4 실측 전체 약 2분: 한국어 Wikipedia·NSMC 다운로드·전처리 약 1분 30초 + MLM 3 epoch 약 0.2분 + 분류 fine-tune 2 epoch 약 0.2분 + 평가/시각화 수 초). 부록 [`appendix_random_baseline.ipynb`](./appendix_random_baseline.ipynb) 도 같은 규모로 별도 약 2-4분.
 
 ## 변화 추적
 
