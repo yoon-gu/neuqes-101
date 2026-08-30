@@ -31,7 +31,7 @@ else:
 
 **▶ 실행 결과**
 
-![output](../assets/22-ko_bert_pretrain-out1-1.png)
+![output](../assets/22-ko_bert_pretrain-out1-3.png)
 
 ```python
 eval_metrics = trainer.evaluate()
@@ -52,14 +52,14 @@ print(f"  -> model narrowed vocab to approx. {eval_ppl:.0f} candidates per maske
 
 ```text
 Training Loss  Validation Loss  Epoch
-7.385564       7.513839         2
+7.368646       7.493273         2
 === eval (held-out Korean Wikipedia paragraphs) ===
-               eval_loss: 7.5138
+               eval_loss: 7.4933
 
-  MLM loss:               7.5138
-  perplexity (exp loss):  1833.24
+  MLM loss:               7.4933
+  perplexity (exp loss):  1795.92
   random baseline PPL:    32,000  (uniform over vocab)
-  -> model narrowed vocab to approx. 1833 candidates per masked position
+  -> model narrowed vocab to approx. 1796 candidates per masked position
 ```
 
 ## 사전학습 전·후 비교 — random init 본체 vs 2 epoch 학습 후
@@ -95,25 +95,25 @@ for sent in test_sentences:
 
 ```text
 Training Loss  Validation Loss  Epoch
-7.385564       7.524879         2
+7.368646       7.503568         2
 ==============================================================================
 AFTER pretraining  (2 epoch MLM)
 ==============================================================================
-  eval_loss       : 7.5249   (before: 10.4255)
-  eval_perplexity : 1,853.59        (before: 33,709)
-  -> narrowed vocab to approx. 1854 candidates per masked position
+  eval_loss       : 7.5036   (before: 10.4216)
+  eval_perplexity : 1,814.51        (before: 33,576)
+  -> narrowed vocab to approx. 1815 candidates per masked position
 
 input: 대한민국의 수도는 [MASK]이다.
-  top-5 after pretraining: ['.', '##의', ',', '##에', '##는']
+  top-5 after pretraining: ['.', '##의', ',', '##년', '##는']
 
 input: 태양계에는 행성이 [MASK] 개 있다.
-  top-5 after pretraining: ['.', '##의', '##다', '##에', ',']
+  top-5 after pretraining: ['##의', '.', '##는', ',', ')']
 
 input: 이 영화 정말 [MASK].
-  top-5 after pretraining: ['.', '##의', ',', ')', '##다']
+  top-5 after pretraining: ['.', ')', ',', '##의', '(']
 
 input: 배우 연기가 [MASK] 좋았어요.
-  top-5 after pretraining: ['.', '##의', ',', ')', '##다']
+  top-5 after pretraining: ['.', ',', ')', '##의', '##는']
 ```
 
 ### 7-1. eval_loss / perplexity — 수치 비교
@@ -137,8 +137,8 @@ print(metric_compare.round(4).to_string(index=False))
 ```text
 Before vs After — eval metrics
          metric  before (random)  after (2 epoch)  random baseline
-      eval_loss          10.4255           7.5249          10.3735
-eval_perplexity       33708.8968        1853.5880       32000.0000
+      eval_loss          10.4216           7.5036          10.3735
+eval_perplexity       33576.0053        1814.5053       32000.0000
 ```
 
 ```python
@@ -170,13 +170,15 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/22-ko_bert_pretrain-out2-1.png)
+![output](../assets/22-ko_bert_pretrain-out2-2.png)
 
 ### 7-2. 🏆 학습이 *충분히 잘 된 경우* 의 기준점 — 표준 `klue/bert-base` 비교
 
-우리 작은 BERT (10M, 한국어 위키 5K paragraphs × 2 epoch) 의 top-5 가 *방향성은 맞지만 정답이 잘 안 보이는* 이유는 단순합니다 — **학습 데이터·모델 크기·학습 시간 모두 부족**. *그럼 학습이 충분히 잘 되면 어떤 결과가 나오나?* 의 답을 같은 한국어 문장에 표준 `klue/bert-base` (110M, 약 8.4B 토큰 대규모 한국어 코퍼스) 를 적용해 직접 봅니다.
+우리 작은 BERT (10M, 한국어 위키 5K paragraphs × 2 epoch) 의 top-5 가 *고빈도 기능 토큰에 머무는* 이유는 단순합니다 — **학습 데이터·모델 크기·학습 시간 모두 부족**. *그럼 학습이 충분히 잘 되면 어떤 결과가 나오나?* 의 답을 같은 한국어 문장에 표준 `klue/bert-base` (110M, 약 8.4B 토큰 대규모 한국어 코퍼스) 를 적용해 직접 봅니다.
 
 같은 토크나이저 (`klue/bert-base`) 를 쓰고 있으므로 *모델만 바꿔* 두 결과를 나란히.
+
+우리 작은 BERT (10M, 한국어 위키 5K paragraphs × 2 epoch) 의 top-5 가 *방향성은 맞지만 정답이 잘 안 보이는* 이유는 단순합니다 — **학습 데이터·모델 크기·학습 시간 모두 부족**. *그럼 학습이 충분히 잘 되면 어떤 결과가 나오나?* 의 답을 같은 한국어 문장에 표준 `klue/bert-base` (110M, 약 8.4B 토큰 대규모 한국어 코퍼스) 를 적용해 직접 봅니다.
 
 ```python
 # 표준 klue/bert-base 로드 — 학습이 충분히 잘 된 경우의 기준점
@@ -195,13 +197,14 @@ print(f"Reference BERT params: {ref_param_count/1e6:.1f}M  ({ref_param_count/our
 **▶ 실행 결과**
 
 ```text
+model.safetensors: downloading bytes:           |  0.00B            
 [transformers] BertForMaskedLM LOAD REPORT from: klue/bert-base
 Key                         | Status     |  | 
 ----------------------------+------------+--+-
-cls.seq_relationship.bias   | UNEXPECTED |  | 
-bert.pooler.dense.weight    | UNEXPECTED |  | 
 cls.seq_relationship.weight | UNEXPECTED |  | 
+bert.pooler.dense.weight    | UNEXPECTED |  | 
 bert.pooler.dense.bias      | UNEXPECTED |  | 
+cls.seq_relationship.bias   | UNEXPECTED |  | 
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
@@ -275,36 +278,36 @@ for _, row in top5_compare.iterrows():
 Before (random) vs Ours (small BERT, ko wiki 5K) vs Reference (klue/bert-base, approx. 8.4B tokens)
 ====================================================================================================
 input: 대한민국의 수도는 [MASK]이다.
-  before (random)            : ##희정, 해석, 찬성, 전한, par
-  ours  (small, 5K para)     : ., ##의, ,, ##에, ##는
+  before (random)            : 만지, 기구, 등, 자산운용, 청약
+  ours  (small, 5K para)     : ., ##의, ,, ##년, ##는
   ref   (klue/bert-base)     : 서울, 광화문, 평양, 부산, 인천
 
 input: 태양계에는 행성이 [MASK] 개 있다.
-  before (random)            : 이씨, 저지른, 1958, 몰입, 끄집어내
-  ours  (small, 5K para)     : ., ##의, ##다, ##에, ,
+  before (random)            : 놀림, 한입, 여전히, 뒤졌, 강판
+  ours  (small, 5K para)     : ##의, ., ##는, ,, )
   ref   (klue/bert-base)     : 여러, 몇, 두, 세, 다섯
 
 input: 이 영화 정말 [MASK].
-  before (random)            : 계약서, 서귀, 스페인어, 드세요, William
-  ours  (small, 5K para)     : ., ##의, ,, ), ##다
+  before (random)            : 以, 야경, 영남대, ##다랗, 학살
+  ours  (small, 5K para)     : ., ), ,, ##의, (
   ref   (klue/bert-base)     : 좋아, [UNK], ., 좋아해, 좋아한다
 
 input: 배우 연기가 [MASK] 좋았어요.
-  before (random)            : 계약서, 서귀, 드세요, 스페인어, William
-  ours  (small, 5K para)     : ., ##의, ,, ), ##다
+  before (random)            : 以, 야경, 영남대, ##다랗, Tr
+  ours  (small, 5K para)     : ., ,, ), ##의, ##는
   ref   (klue/bert-base)     : 너무, 정말, 참, 굉장히, 아주
 ```
 
 **해석 가이드 — 사전학습이 만든 차이**
 
-- **`eval_loss`**: random baseline `ln V ≈ 10.37` 에서 약 5-7 부근까지 떨어졌으면 본체가 *언어 구조 일부* 를 학습. *완전한* 한국어 표상은 아니어도 `klue/bert-base` 가 학습한 것의 *방향* 은 맞춤.
-- **`perplexity`**: 32,000 (vocab 전체) 에서 수십-수백 부근으로. *마스크 자리마다 후보를 약 50-500 개로 좁힌 상태* 라는 직관적 해석.
+- **`eval_loss`**: random baseline `ln V ≈ 10.37` 에서 **약 7.5 부근** 까지 내려옵니다 — *어떤 토큰이 흔한가* 를 막 새긴 단계 (정확값은 위 §7-1 셀 출력이 단일 출처). *완전한* 한국어 표상에는 한참 못 미치지만, `klue/bert-base` 가 학습한 것의 *방향* 은 맞춥니다.
+- **`perplexity`**: 33,000 안팎 (≈ vocab 전체) 에서 **2,000 안팎** 으로. *마스크 자리마다 후보를 32,000 개에서 약 2,000 개 수준으로 좁힌 상태* 라는 직관적 해석 — 아직 *흔한 토큰들* 의 범위를 크게 벗어나지 못한 수준입니다.
 - **top-5 토큰** (3-way 비교):
-  - *before (random)*: 자주 등장하는 *조사·어미·특수문자* (`##요`, `##어`, `.`, `는`, `이`) — random init 이지만 logits 가 미세하게 흔들려 *통계적 빈도* 높은 토큰만 뽑힘.
-  - *ours (small BERT, 위키 5K paragraphs × 2 epoch)*: 한국어 어미·내용어 일부가 섞이기 시작 — 위키 도메인은 *방향성이 보이지만* 정답 (`서울`, `8` 등) 이 top-5 안에 *안정적으로* 들어오지는 못함. **데이터·모델 크기 부족의 한계**.
-  - *ref (klue/bert-base, 약 8.4B 토큰)*: 위키 도메인은 *정답이 top-1* — `서울`, `여덟` 같은 자연스러운 답. NSMC 도메인 (다른 도메인) 도 *감성 형용사·부사* (`재미있`, `정말`, `너무`) 가 자연스럽게 top-5 에 들어옴. **이게 사전학습이 충분히 잘 됐을 때의 모습**.
+  - *before (random)*: random init 의 logits 는 학습 신호가 없는 난수라 **빈도와 무관한 토큰들이 무작위로** 뽑힙니다 — 희귀 명사·조각 토큰·한자 등이 뒤섞인 목록 (`set_seed(SEED)` 로 고정했으므로 다시 돌리면 같은 목록, 시드를 바꾸면 완전히 달라집니다).
+  - *ours (small BERT, 위키 5K paragraphs × 2 epoch)*: 네 문장 모두 `.`·`##의`·`,` 같은 **구두점·조사 계열 고빈도 토큰** 이 top-5 를 채웁니다 — *어떤 토큰이 흔한가* 를 막 배운 단계로, 내용어·정답 (`서울`, `8` 등) 은 아직 보이지 않습니다. **빈도 통계는 새겼지만 문맥·내용은 아직** — 이게 데이터·모델 크기 부족의 정직한 모습.
+  - *ref (klue/bert-base, 약 8.4B 토큰)*: *수도* 문장은 정답 `서울` 이 top-1. 다만 *행성 개수* 문장은 `여러`·`몇` 같은 수 관형사가 나올 뿐 정답 `여덟` 은 top-5 에 없습니다 — 대규모 사전학습도 *세상 지식 회상* 까지 보장하지는 않습니다. NSMC 도메인은 `너무`·`정말` 같은 감성 부사가 자연스럽게 top-5 에 들어옵니다. **이게 사전학습이 충분히 잘 됐을 때의 모습**.
 
-> **세 모델의 격차가 정확히 *데이터 규모 + 모델 크기 + 학습 시간* 의 격차** — 우리 작은 BERT (10M, 위키 5K paragraphs, 2 epoch) → reference (110M, 약 8.4B tokens) 사이에 *데이터 수천 배, 파라미터 11배*. 그 격차가 top-5 의 *질적 차이* 로 정확히 드러납니다.
+> **세 모델의 격차가 정확히 *데이터 규모 + 모델 크기 + 학습 시간* 의 격차** — 우리 작은 BERT (10M, 위키 5K paragraphs, 2 epoch) → reference (110M, 약 8.4B tokens) 사이에 *데이터 약 1.7만 배 (약 50만 → 8.4B 토큰), 파라미터 11배*. 그 격차가 top-5 의 *질적 차이* 로 정확히 드러납니다.
 
 이번 챕터의 작은 BERT 는 *한국어 위키 paragraphs 5K × 2 epoch* 로 학습한 *일반 도메인 mini BERT*. 위키 도메인은 직접 본 분포라 향상이 빠르지만, NSMC 영화 리뷰는 *다른 도메인* 이라 fine-tune 단계에서 적응이 필요합니다 — 이게 *진짜 사전학습 → fine-tune 패러다임* 의 핵심. Ch 23 에서 NSMC 이진 분류로 fine-tune 할 때 진짜 비교 — *우리가 직접 만든 작은 한국어 BERT (일반 도메인 5K, 약 10M)* vs *Ch 15 의 `klue/bert-base` (대규모 일반 코퍼스, 약 110M)*.
 
