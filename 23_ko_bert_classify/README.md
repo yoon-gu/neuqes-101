@@ -56,7 +56,7 @@ Google Colab T4 GPU (fp16). 약 2-4분 — 대부분이 데이터 다운로드�
 | 사전학습 시간 | TPU 수일 | T4 약 8-10분 |
 | Fine-tune 도메인 | NSMC 이진 (다른 도메인) | NSMC 이진 (다른 도메인) |
 | 분류 fine-tune 셋업 | (둘 다 같음 — 5K/1K, batch 16, lr 2e-5, 2 epoch, fp16) | |
-| 기대 accuracy | 약 85-88% | 약 65-75% |
+| 기대 accuracy | 약 86% (`executed/15_ko_binary.ipynb`) | 약 55% (T4 실측 — 동전 던지기에 가까운 자리) |
 
 비교가 *공정* 한 이유 — Ch 15 도 Ch 23 ours 도 둘 다 *일반 도메인 한국어 사전학습 → NSMC 분류 transfer* 의 같은 패턴이라 *사전학습 규모* (약 4만 배) 와 *모델 크기* (11배) 만 변수. 격차가 *사전학습 규모의 가치* 를 정량으로 보여줍니다.
 
