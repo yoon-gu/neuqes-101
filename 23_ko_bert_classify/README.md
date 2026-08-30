@@ -52,13 +52,13 @@ Google Colab T4 GPU (fp16). 약 20-23분 (한국어 Wikipedia 다운로드·필�
 | 차원 | Ch 15 (klue/bert-base) | Ch 23 ours (small + MLM) |
 |---|---|---|
 | 본체 파라미터 | 약 110M | 약 10M |
-| 사전학습 코퍼스 | 한국어 위키 + 모두의 말뭉치 + 뉴스 + 댓글 (약 8.4B 토큰) | 한국어 Wikipedia paragraphs 5K (약 50만-80만 토큰) |
+| 사전학습 코퍼스 | 한국어 위키 + 모두의 말뭉치 + 뉴스 + 댓글 (약 8.4B 토큰) | 한국어 Wikipedia paragraphs 2K (1,562 블록 ≈ 약 20만 토큰) |
 | 사전학습 시간 | TPU 수일 | T4 약 8-10분 |
 | Fine-tune 도메인 | NSMC 이진 (다른 도메인) | NSMC 이진 (다른 도메인) |
 | 분류 fine-tune 셋업 | (둘 다 같음 — 5K/1K, batch 16, lr 2e-5, 2 epoch, fp16) | |
 | 기대 accuracy | 약 85-88% | 약 65-75% |
 
-비교가 *공정* 한 이유 — Ch 15 도 Ch 23 ours 도 둘 다 *일반 도메인 한국어 사전학습 → NSMC 분류 transfer* 의 같은 패턴이라 *사전학습 규모* (약 10,000배) 와 *모델 크기* (11배) 만 변수. 격차가 *사전학습 규모의 가치* 를 정량으로 보여줍니다.
+비교가 *공정* 한 이유 — Ch 15 도 Ch 23 ours 도 둘 다 *일반 도메인 한국어 사전학습 → NSMC 분류 transfer* 의 같은 패턴이라 *사전학습 규모* (약 4만 배) 와 *모델 크기* (11배) 만 변수. 격차가 *사전학습 규모의 가치* 를 정량으로 보여줍니다.
 
 ## 부록 — random init baseline + negative transfer 분석
 [`appendix_random_baseline.ipynb`](./appendix_random_baseline.ipynb) — *MLM 사전학습 없이 random init 으로 바로 분류 fine-tune* 한 결과와의 비교 + *한국어 위키 → NSMC 의 큰 도메인 gap* 에서 발생할 수 있는 **negative transfer** 현상의 메커니즘 분석. 영어 Ch 21 (transfer 양성) 과 한국어 Ch 23 (transfer 음성 가능) 의 비대칭 메커니즘이 핵심. 변형 옵션 (위키 양 늘림 / DAPT / seed 평균 / lr 조정) 4가지로 negative transfer 극복 실험까지.
