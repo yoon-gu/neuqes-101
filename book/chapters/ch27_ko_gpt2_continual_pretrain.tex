@@ -153,7 +153,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Loss \\
 
 Phase 4 는 영어 (\ref{ch:24}--\ref{ch:25}장) 와 한국어 (\ref{ch:26}--\ref{ch:27}장) 가 \emph{같은 학습 단계} 를 \emph{언어만 바꿔} 반복하는 구조입니다. 본 장은 영어 \ref{ch:25}장 (gpt2 continual pretraining) 의 한국어 짝.
 
-\begin{booktable}{27장 Phase 4 의 영어·한국어 대칭 - 25장 \textbackslash leftrightarrow 27장 표}{tab:ch27-02}
+\begin{booktable}{27장 Phase 4 의 영어·한국어 대칭 - 25장 \ensuremath{\leftrightarrow} 27장 표}{tab:ch27-02}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -175,7 +175,7 @@ Phase 4 는 영어 (\ref{ch:24}--\ref{ch:25}장) 와 한국어 (\ref{ch:26}--\re
 
 \subsection{\texorpdfstring{\ref{ch:26}장 \(\leftrightarrow\) \ref{ch:27}장 격리 실험의 통제 변수}{\ref{ch:26}장 \textbackslash leftrightarrow \ref{ch:27}장 격리 실험의 통제 변수}}
 
-\begin{booktable}{27장 26장 \textbackslash leftrightarrow 27장 격리 실험의 통제 변수 표}{tab:ch27-03}
+\begin{booktable}{27장 26장 \ensuremath{\leftrightarrow} 27장 격리 실험의 통제 변수 표}{tab:ch27-03}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}llll@{}}
 \toprule
@@ -295,7 +295,7 @@ SFT (단계 3) 는 \ref{ch:28}장에서 본격. \emph{왜 모델이 한국어 in
 
 \subsection{\texorpdfstring{숫자로 감 잡기 --- \emph{시작점 \(\leftrightarrow\) 도달점}}{숫자로 감 잡기 --- 시작점 \textbackslash leftrightarrow 도달점}}
 
-\begin{booktable}{27장 숫자로 감 잡기 - 시작점 \textbackslash leftrightarrow 도달점 표}{tab:ch27-07}
+\begin{booktable}{27장 숫자로 감 잡기 - 시작점 \ensuremath{\leftrightarrow} 도달점 표}{tab:ch27-07}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -363,7 +363,7 @@ KoGPT2 본체의 input embedding \inlinecode{wte} (51200 \(\times\) 768) 와 LM 
 
 \subsection{\texorpdfstring{\ref{ch:26}장 \(\leftrightarrow\) \ref{ch:27}장 토크나이저 비교}{\ref{ch:26}장 \textbackslash leftrightarrow \ref{ch:27}장 토크나이저 비교}}
 
-\begin{booktable}{27장 26장 \textbackslash leftrightarrow 27장 토크나이저 비교 표}{tab:ch27-09}
+\begin{booktable}{27장 26장 \ensuremath{\leftrightarrow} 27장 토크나이저 비교 표}{tab:ch27-09}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -785,7 +785,7 @@ BEFORE continual pretraining - KoGPT2 pretrained on Korean corpus, as-is
 
 \section{\texorpdfstring{Continual Pretraining --- \emph{trainer 코드는 \ref{ch:26}장과 거의 동일}}{Continual Pretraining --- trainer 코드는 \ref{ch:26}장과 거의 동일}}
 
-\ref{ch:26}장과 \emph{완전히 같은 구조} 의 \inlinecode{Trainer} 코드. 변하는 곳은 \textbf{lr (\texttt{5e-4\ \$\textbackslash{}to\$\ 2e-5})} 와 \textbf{step 설정 (max\_steps \(\to\) 1 epoch, 48,513 chunks / eff. batch 16 \(\approx\) 약 3,000 step)}, 그리고 \textbf{메모리 제약 대응 (batch 4 + grad accum 4)} 입니다.
+\ref{ch:26}장과 \emph{완전히 같은 구조} 의 \inlinecode{Trainer} 코드. 변하는 곳은 \textbf{lr (\texttt{5e-4\ →\ 2e-5})} 와 \textbf{step 설정 (max\_steps \(\to\) 1 epoch, 48,513 chunks / eff. batch 16 \(\approx\) 약 3,000 step)}, 그리고 \textbf{메모리 제약 대응 (batch 4 + grad accum 4)} 입니다.
 
 \subsection{\texorpdfstring{왜 lr 가 작아지는가 --- \inlinecode{2e-5} 의 정확한 의미}{왜 lr 가 작아지는가 --- 2e-5 의 정확한 의미}}
 
@@ -808,7 +808,7 @@ BEFORE continual pretraining - KoGPT2 pretrained on Korean corpus, as-is
 
 
 
-\textbf{관전 포인트} --- \ref{ch:26}장과 달리 \emph{첫 step loss 가 random baseline \texttt{ln(51200)\ \$\textbackslash{}approx\$\ 10.84} 부근이 아니라 약 3.0-4.0 부근} 에서 시작합니다. \emph{KoGPT2 가 이미 일반 한국어 분포를 학습해 둔 덕분에 TinyStories 평가에서도 시작 loss 가 낮음}. 학습 진행과 함께 약 2.0-2.5 로 더 떨어지는데, 이게 \emph{TinyStories 동화 도메인 적응} 의 효과. 곡선이 \emph{random baseline 으로부터 빠르게 떨어지는 \ref{ch:26}장} vs \emph{이미 낮은 지점에서 시작해 천천히 더 떨어지는 \ref{ch:27}장} 의 모양 차이가 한눈에 보입니다 (영어 \ref{ch:24}장\(\to\)25 와 같은 결).
+\textbf{관전 포인트} --- \ref{ch:26}장과 달리 \emph{첫 step loss 가 random baseline \texttt{ln(51200)\ ≈\ 10.84} 부근이 아니라 약 3.0-4.0 부근} 에서 시작합니다. \emph{KoGPT2 가 이미 일반 한국어 분포를 학습해 둔 덕분에 TinyStories 평가에서도 시작 loss 가 낮음}. 학습 진행과 함께 약 2.0-2.5 로 더 떨어지는데, 이게 \emph{TinyStories 동화 도메인 적응} 의 효과. 곡선이 \emph{random baseline 으로부터 빠르게 떨어지는 \ref{ch:26}장} vs \emph{이미 낮은 지점에서 시작해 천천히 더 떨어지는 \ref{ch:27}장} 의 모양 차이가 한눈에 보입니다 (영어 \ref{ch:24}장\(\to\)25 와 같은 결).
 
 
 
@@ -973,7 +973,7 @@ Generation 품질 & 동화 풍 단순 한국어 & \textbf{자연스러운 동화
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
 \item
-  \ref{ch:26}장의 학습 첫 step loss 는 약 \texttt{ln(4000)\ \$\textbackslash{}approx\$\ 8.29} 에서 시작했습니다. \ref{ch:27}장은 random baseline 이 \texttt{ln(51200)\ \$\textbackslash{}approx\$\ 10.84} 인데 \emph{시작 loss 가 약 3.0-4.0} 입니다. 두 장의 \emph{시작 loss 차이} 가 의미하는 바는 무엇인가요? (랜덤 추측 / 사전학습된 본체 / vocab 차원의 관계)
+  \ref{ch:26}장의 학습 첫 step loss 는 약 \texttt{ln(4000)\ ≈\ 8.29} 에서 시작했습니다. \ref{ch:27}장은 random baseline 이 \texttt{ln(51200)\ ≈\ 10.84} 인데 \emph{시작 loss 가 약 3.0-4.0} 입니다. 두 장의 \emph{시작 loss 차이} 가 의미하는 바는 무엇인가요? (랜덤 추측 / 사전학습된 본체 / vocab 차원의 관계)
 \item
   본 장의 lr (\inlinecode{2e-5}) 가 \ref{ch:26}장의 lr (\inlinecode{5e-4}) 보다 \emph{약 25배 작은} 이유를 \emph{catastrophic forgetting} 키워드로 설명해 보세요. 만약 \ref{ch:27}장에서도 \inlinecode{5e-4} 를 썼다면 무슨 일이 일어날까요?
 \item

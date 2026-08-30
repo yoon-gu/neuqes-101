@@ -1301,7 +1301,7 @@ if torch.cuda.is_available():
 \begin{itemize}
 \tightlist
 \item
-  \textbf{\inlinecode{eval\_loss}}: random baseline \texttt{ln\ V\ \$\textbackslash{}approx\$\ 10.37} 에서 \textbf{약 7.5 부근} 까지 내려옵니다 --- \emph{어떤 토큰이 흔한가} 를 막 새긴 단계 (정확값은 위 §7-1 셀 출력이 단일 출처). \emph{완전한} 한국어 표상에는 한참 못 미치지만, \inlinecode{klue/bert-base} 가 학습한 것의 \emph{방향} 은 맞춥니다.
+  \textbf{\inlinecode{eval\_loss}}: random baseline \texttt{ln\ V\ ≈\ 10.37} 에서 \textbf{약 7.5 부근} 까지 내려옵니다 --- \emph{어떤 토큰이 흔한가} 를 막 새긴 단계 (정확값은 위 §7-1 셀 출력이 단일 출처). \emph{완전한} 한국어 표상에는 한참 못 미치지만, \inlinecode{klue/bert-base} 가 학습한 것의 \emph{방향} 은 맞춥니다.
 \item
   \textbf{\inlinecode{perplexity}}: 33,000 안팎 (\(\approx\) vocab 전체) 에서 \textbf{2,000 안팎} 으로. \emph{마스크 자리마다 후보를 32,000 개에서 약 2,000 개 수준으로 좁힌 상태} 라는 직관적 해석 --- 아직 \emph{흔한 토큰들} 의 범위를 크게 벗어나지 못한 수준입니다.
 \item

@@ -125,7 +125,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Loss \\
 
 \subsection{\texorpdfstring{\ref{ch:24}장 \(\leftrightarrow\) \ref{ch:25}장 격리 실험의 통제 변수}{\ref{ch:24}장 \textbackslash leftrightarrow \ref{ch:25}장 격리 실험의 통제 변수}}
 
-\begin{booktable}{25장 24장 \textbackslash leftrightarrow 25장 격리 실험의 통제 변수 표}{tab:ch25-02}
+\begin{booktable}{25장 24장 \ensuremath{\leftrightarrow} 25장 격리 실험의 통제 변수 표}{tab:ch25-02}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}llll@{}}
 \toprule
@@ -245,7 +245,7 @@ SFT (단계 3) 는 \ref{ch:28}장에서 본격. \emph{왜 모델이 instruction 
 
 \subsection{\texorpdfstring{숫자로 감 잡기 --- \emph{시작점 \(\leftrightarrow\) 도달점}}{숫자로 감 잡기 --- 시작점 \textbackslash leftrightarrow 도달점}}
 
-\begin{booktable}{25장 숫자로 감 잡기 - 시작점 \textbackslash leftrightarrow 도달점 표}{tab:ch25-06}
+\begin{booktable}{25장 숫자로 감 잡기 - 시작점 \ensuremath{\leftrightarrow} 도달점 표}{tab:ch25-06}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -313,7 +313,7 @@ CLM loss & PPL & 해석 \\
 
 \subsection{\texorpdfstring{\ref{ch:24}장 \(\leftrightarrow\) \ref{ch:25}장 토크나이저 비교}{\ref{ch:24}장 \textbackslash leftrightarrow \ref{ch:25}장 토크나이저 비교}}
 
-\begin{booktable}{25장 24장 \textbackslash leftrightarrow 25장 토크나이저 비교 표}{tab:ch25-08}
+\begin{booktable}{25장 24장 \ensuremath{\leftrightarrow} 25장 토크나이저 비교 표}{tab:ch25-08}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -715,7 +715,7 @@ A big dog is a dog that loves to eat, but is also a dog that's afraid to do...
 
 \section{\texorpdfstring{Continual Pretraining --- \emph{trainer 코드는 \ref{ch:24}장과 거의 동일}}{Continual Pretraining --- trainer 코드는 \ref{ch:24}장과 거의 동일}}
 
-\ref{ch:24}장과 \emph{완전히 같은 구조} 의 \inlinecode{Trainer} 코드. 변하는 곳은 \textbf{lr (\texttt{3e-4\ \$\textbackslash{}to\$\ 2e-5})} 한 곳. step 수는 \emph{데이터 1 epoch 을 도는 방식} 이라 \ref{ch:24}장의 \inlinecode{max\_steps=1500} 과 달리 chunk 수에 따라 정해집니다 (51,863 chunks / eff. batch 16 \(\approx\) \textbf{약 3,200 step}).
+\ref{ch:24}장과 \emph{완전히 같은 구조} 의 \inlinecode{Trainer} 코드. 변하는 곳은 \textbf{lr (\texttt{3e-4\ →\ 2e-5})} 한 곳. step 수는 \emph{데이터 1 epoch 을 도는 방식} 이라 \ref{ch:24}장의 \inlinecode{max\_steps=1500} 과 달리 chunk 수에 따라 정해집니다 (51,863 chunks / eff. batch 16 \(\approx\) \textbf{약 3,200 step}).
 
 \subsection{\texorpdfstring{왜 lr 가 작아지는가 --- \inlinecode{2e-5} 의 정확한 의미}{왜 lr 가 작아지는가 --- 2e-5 의 정확한 의미}}
 
@@ -738,7 +738,7 @@ A big dog is a dog that loves to eat, but is also a dog that's afraid to do...
 
 
 
-\textbf{관전 포인트} --- \ref{ch:24}장과 달리 \emph{첫 step loss 가 random baseline \texttt{ln(50257)\ \$\textbackslash{}approx\$\ 10.82} 부근이 아니라 약 3.0-4.0 부근} 에서 시작합니다. \emph{gpt2 가 이미 일반 영어 분포를 학습해 둔 덕분에 TinyStories 평가에서도 시작 loss 가 낮음}. 학습 진행과 함께 약 2.0-2.5 로 더 떨어지는데, 이게 \emph{TinyStories 도메인 적응} 의 효과. 곡선이 \emph{random baseline 으로부터 빠르게 떨어지는 \ref{ch:24}장} vs \emph{이미 낮은 지점에서 시작해 천천히 더 떨어지는 \ref{ch:25}장} 의 모양 차이가 한눈에 보입니다.
+\textbf{관전 포인트} --- \ref{ch:24}장과 달리 \emph{첫 step loss 가 random baseline \texttt{ln(50257)\ ≈\ 10.82} 부근이 아니라 약 3.0-4.0 부근} 에서 시작합니다. \emph{gpt2 가 이미 일반 영어 분포를 학습해 둔 덕분에 TinyStories 평가에서도 시작 loss 가 낮음}. 학습 진행과 함께 약 2.0-2.5 로 더 떨어지는데, 이게 \emph{TinyStories 도메인 적응} 의 효과. 곡선이 \emph{random baseline 으로부터 빠르게 떨어지는 \ref{ch:24}장} vs \emph{이미 낮은 지점에서 시작해 천천히 더 떨어지는 \ref{ch:25}장} 의 모양 차이가 한눈에 보입니다.
 
 
 
@@ -905,7 +905,7 @@ Generation 품질 & grammatical 한 동화 & \textbf{자연스러운 동화 + �
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
 \item
-  \ref{ch:24}장의 학습 첫 step loss 는 약 \texttt{ln(2048)\ \$\textbackslash{}approx\$\ 7.62} 에서 시작했습니다. \ref{ch:25}장은 random baseline 이 \texttt{ln(50257)\ \$\textbackslash{}approx\$\ 10.82} 인데 \emph{시작 loss 가 약 3.0-4.0} 입니다. 두 장의 \emph{시작 loss 차이} 가 의미하는 바는 무엇인가요? (랜덤 추측 / 사전학습된 본체 / vocab 차원의 관계)
+  \ref{ch:24}장의 학습 첫 step loss 는 약 \texttt{ln(2048)\ ≈\ 7.62} 에서 시작했습니다. \ref{ch:25}장은 random baseline 이 \texttt{ln(50257)\ ≈\ 10.82} 인데 \emph{시작 loss 가 약 3.0-4.0} 입니다. 두 장의 \emph{시작 loss 차이} 가 의미하는 바는 무엇인가요? (랜덤 추측 / 사전학습된 본체 / vocab 차원의 관계)
 \item
   본 장의 lr (\inlinecode{2e-5}) 가 \ref{ch:24}장의 lr (\inlinecode{3e-4}) 보다 \emph{약 15배 작은} 이유를 \emph{catastrophic forgetting} 키워드로 설명해 보세요. 만약 \ref{ch:25}장에서도 \inlinecode{3e-4} 를 썼다면 무슨 일이 일어날까요?
 \item

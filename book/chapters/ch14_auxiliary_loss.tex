@@ -93,7 +93,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 
 9 & DistilBERT 파인튜닝 & WordPiece & Yelp 별점 & \inlinecode{Linear(H,\ 1)} & 없음 & \inlinecode{MSELoss} \\
 13 & DistilBERT 파인튜닝 & WordPiece & Yelp + 항목 합성 & \inlinecode{Linear(H,\ 5)} & sigmoid (각각) & \inlinecode{BCEWithLogitsLoss} \\
-\textbf{14 \(\leftarrow\) 여기} & DistilBERT + \textbf{보조 헤드} & WordPiece & Yelp + 항목 + \textbf{별점} & \textbf{메인(5) + 보조(1)} & 메인 sigmoid + 보조 없음 & \textbf{\texttt{BCE\ per-label\ +\ \$\textbackslash{}lambda\$·MSE}} \\
+\textbf{14 \(\leftarrow\) 여기} & DistilBERT + \textbf{보조 헤드} & WordPiece & Yelp + 항목 + \textbf{별점} & \textbf{메인(5) + 보조(1)} & 메인 sigmoid + 보조 없음 & \textbf{\texttt{BCE\ per-label\ +\ λ·MSE}} \\
 15 (다음 Phase 2) & klue/bert-base & WordPiece (한국어) & NSMC & \inlinecode{Linear(H,\ 2)} & softmax & \inlinecode{CrossEntropyLoss} \\
 \bottomrule
 \end{tabular}
@@ -120,7 +120,7 @@ Task (메인) & 5라벨 multi-label & (그대로) \\
 \textbf{보조 head} & 없음 & \textbf{새로 추가}: \inlinecode{Linear(H,\ 1)} linear regressor \\
 \textbf{보조 라벨} & 없음 & \textbf{새로 추가}: 별점 0-1 스케일 (\inlinecode{label\ /\ 4}, 1\(\to\)0.0, 5\(\to\)1.0) \\
 \textbf{보조 loss} & --- & \textbf{\inlinecode{MSELoss}} (\ref{ch:09}장 그대로) \\
-\textbf{결합 loss} & \inlinecode{outputs.loss} 자동 & \textbf{\texttt{L\_main\ +\ \$\textbackslash{}lambda\$·L\_aux}} 직접 계산 \\
+\textbf{결합 loss} & \inlinecode{outputs.loss} 자동 & \textbf{\texttt{L\_main\ +\ λ·L\_aux}} 직접 계산 \\
 \inlinecode{Trainer.compute\_loss} & 자동 (오버라이드 X) & \textbf{오버라이드 필수} \\
 데이터 콜레이터 & \inlinecode{DataCollatorWithPadding} 자동 & \textbf{커스텀} --- \inlinecode{aux\_labels} 도 같이 batching \\
 학습 hyperparams & (epoch=2, lr=2e-5, \ldots) & (그대로) \\
@@ -245,7 +245,7 @@ BERT 자체가 \emph{MLM + NSP (Next Sentence Prediction)} 이라는 멀티태�
 
 
 
-\section{\texorpdfstring{손실 노트 --- Combined loss \texttt{L\ =\ L\_main\ +\ \$\textbackslash{}lambda\$\ ·\ L\_aux}}{손실 노트 --- Combined loss L = L\_main + \$\textbackslash lambda\$ · L\_aux}}
+\section{\texorpdfstring{손실 노트 --- Combined loss \texttt{L\ =\ L\_main\ +\ λ\ ·\ L\_aux}}{손실 노트 --- Combined loss L = L\_main + λ · L\_aux}}
 
 \begin{equation}
 \label{eq:ch14-01}
@@ -266,7 +266,7 @@ L = \underbrace{\frac{1}{N \cdot K}\sum_{i,k}\text{BCE}(z_{i,k}^{main}, y_{i,k}^
 
 \textbf{\(\lambda\) 선택 가이드 --- 숫자로 감 잡기}
 
-\begin{booktable}{14장 손실 노트 - Combined loss L = L\_main + \$\textbackslash lambda\$ · L\_aux 표}{tab:ch14-05}
+\begin{booktable}{14장 손실 노트 - Combined loss L = L\_main + \ensuremath{\lambda} · L\_aux 표}{tab:ch14-05}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -287,7 +287,7 @@ L = \underbrace{\frac{1}{N \cdot K}\sum_{i,k}\text{BCE}(z_{i,k}^{main}, y_{i,k}^
 
 \textbf{숫자로 감 잡기 (단일 샘플)} --- 항목 multi-hot \(\mathbf{y}^\text{main} = [1, 0, 1, 0, 1]\), 별점 보조 라벨 \(y^\text{aux} = 0.75\) (4/4):
 
-\begin{booktable}{14장 손실 노트 - Combined loss L = L\_main + \$\textbackslash lambda\$ · L\_aux 표}{tab:ch14-06}
+\begin{booktable}{14장 손실 노트 - Combined loss L = L\_main + \ensuremath{\lambda} · L\_aux 표}{tab:ch14-06}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}ll@{}}
 \toprule
@@ -527,7 +527,7 @@ Aux head:             Linear(in_features=768, out_features=1, bias=True)
 
 \Needspace{6\baselineskip}
 \begin{lstlisting}
-loss = outputs.loss + $\lambda$ · MSE(
+loss = outputs.loss + λ · MSE(
     aux_head(CLS),
     aux_labels,
 )

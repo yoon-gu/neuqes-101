@@ -111,10 +111,10 @@
 Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 \midrule
 
-14 & DistilBERT + 보조 헤드 & WordPiece (영어) & Yelp + 항목 + 별점 & 메인(5) + 보조(1) & 메인 sigmoid + 보조 없음 & \texttt{BCE\ per-label\ +\ \$\textbackslash{}lambda\$·MSE} \\
+14 & DistilBERT + 보조 헤드 & WordPiece (영어) & Yelp + 항목 + 별점 & 메인(5) + 보조(1) & 메인 sigmoid + 보조 없음 & \texttt{BCE\ per-label\ +\ λ·MSE} \\
 16 & klue/bert-base & WordPiece (한국어) & KLUE-YNAT (뉴스 7분류) & \inlinecode{Linear(H,\ 7)} & softmax & \inlinecode{CrossEntropyLoss} \\
 17 & klue/bert-base & 같음 & KLUE-YNAT 합성 multi-label & \inlinecode{Linear(H,\ 7)} & sigmoid (per-label) & \inlinecode{BCEWithLogitsLoss} (per-label) \\
-\textbf{18 \(\leftarrow\) 여기} & klue/bert-base + \textbf{보조 헤드} & 같음 & KLUE-YNAT 합성 multi-label + \textbf{활성 개수} & \textbf{메인(7) + 보조(1)} & 메인 sigmoid + 보조 없음 & \textbf{\texttt{BCE\ per-label\ +\ \$\textbackslash{}lambda\$·MSE}} \\
+\textbf{18 \(\leftarrow\) 여기} & klue/bert-base + \textbf{보조 헤드} & 같음 & KLUE-YNAT 합성 multi-label + \textbf{활성 개수} & \textbf{메인(7) + 보조(1)} & 메인 sigmoid + 보조 없음 & \textbf{\texttt{BCE\ per-label\ +\ λ·MSE}} \\
 19 (다음 Phase 3) & (없음) --- 토크나이저 학습 & \textbf{직접 학습한 워드레벨} & (코퍼스) & --- & --- & --- \\
 \bottomrule
 \end{tabular}
@@ -140,7 +140,7 @@ Task (메인) & 7라벨 multi-label & (그대로) \\
 \textbf{보조 head} & 없음 & \textbf{새로 추가}: \inlinecode{Linear(H,\ 1)} linear regressor \\
 \textbf{보조 라벨} & 없음 & \textbf{새로 추가}: \inlinecode{n\_active} (활성 카테고리 \emph{개수}, 합성 과정에서 얻음 --- 1 또는 2) \\
 \textbf{보조 loss} & --- & \textbf{\inlinecode{MSELoss}} (\ref{ch:09}·\ref{ch:14}장과 같은 식) \\
-\textbf{결합 loss} & \inlinecode{outputs.loss} 자동 (BCE) & \textbf{\texttt{L\_main\ +\ \$\textbackslash{}lambda\$·L\_aux}} 직접 계산 \\
+\textbf{결합 loss} & \inlinecode{outputs.loss} 자동 (BCE) & \textbf{\texttt{L\_main\ +\ λ·L\_aux}} 직접 계산 \\
 모델 구조 & \inlinecode{AutoModelForSequenceClassification} (자동 매핑) & \textbf{\inlinecode{AutoModel} 본체 + 메인 헤드 + 보조 헤드 직접 부착} (자동 매핑 X) \\
 \inlinecode{Trainer.compute\_loss} & 자동 (오버라이드 X) & \textbf{오버라이드 필수} \\
 데이터 콜레이터 & \inlinecode{DataCollatorWithPadding} 자동 & \textbf{커스텀} --- \inlinecode{n\_active} 도 같이 batching \\
@@ -173,7 +173,7 @@ Task (메인) & 7라벨 multi-label & (그대로) \\
 
 
 
-\section{\texorpdfstring{손실 노트 --- Combined loss \texttt{L\ =\ L\_main\ +\ \$\textbackslash{}lambda\$\ ·\ L\_aux}}{손실 노트 --- Combined loss L = L\_main + \$\textbackslash lambda\$ · L\_aux}}
+\section{\texorpdfstring{손실 노트 --- Combined loss \texttt{L\ =\ L\_main\ +\ λ\ ·\ L\_aux}}{손실 노트 --- Combined loss L = L\_main + λ · L\_aux}}
 
 \begin{equation}
 \label{eq:ch18-01}
@@ -198,7 +198,7 @@ L = \underbrace{\frac{1}{N \cdot K}\sum_{i,k}\text{BCE}(z_{i,k}^\text{main}, y_{
 
 활성 개수 정답은 1 또는 2 의 \emph{정수}. 학습 초기 보조 헤드 예측이 평균 1.5 근처면 MSE 는 약 \(0.25\), 무작위 예측이면 \(1-4\)까지 커질 수 있습니다. 메인 BCE 는 K=7 평균이라 학습 초반에도 \(0.3-0.7\) 수준입니다. 따라서 \emph{\(\lambda\)=1} 은 과하고, 부록 스윕에서는 \textbf{\(\lambda\)=0.05} 가 메인 F1 을 가장 끌어올렸습니다.
 
-\begin{booktable}{18장 손실 노트 - Combined loss L = L\_main + \$\textbackslash lambda\$ · L\_aux 표}{tab:ch18-03}
+\begin{booktable}{18장 손실 노트 - Combined loss L = L\_main + \ensuremath{\lambda} · L\_aux 표}{tab:ch18-03}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lllll@{}}
 \toprule
@@ -575,7 +575,7 @@ Aux  head: Linear(in_features=768, out_features=1, bias=True)
 
 \Needspace{5\baselineskip}
 \begin{lstlisting}
-loss = l_main + $\lambda$ · l_aux
+loss = l_main + λ · l_aux
 # l_main: BCE per-label, l_aux: MSE on n_active
 \end{lstlisting}
 
@@ -1018,7 +1018,7 @@ KLUE-YNAT 합성 데이터에서 \emph{공짜로} 얻을 수 있는 보조 신�
 \end{adjustbox}
 \end{booktable}
 
-원본 카테고리 예측을 보조로 쓰려면 \inlinecode{make\_multilabel} 에서 \inlinecode{(c\_A,\ c\_B)} 를 \emph{순서 라벨} 로 보존하고 보조 헤드를 \texttt{Linear(H,\ K)\ \$\textbackslash{}times\$\ 2} 로 두 개 만들면 됩니다 (multi-task 가 \emph{3-task} 가 됨 --- multi-label + 2개 single-label).
+원본 카테고리 예측을 보조로 쓰려면 \inlinecode{make\_multilabel} 에서 \inlinecode{(c\_A,\ c\_B)} 를 \emph{순서 라벨} 로 보존하고 보조 헤드를 \texttt{Linear(H,\ K)\ ×\ 2} 로 두 개 만들면 됩니다 (multi-task 가 \emph{3-task} 가 됨 --- multi-label + 2개 single-label).
 
 \end{faqBox}
 

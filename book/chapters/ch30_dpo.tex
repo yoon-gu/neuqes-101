@@ -403,8 +403,8 @@ CausalLM & \ref{ch:24}·\ref{ch:25}장·26·27 & 거의 전 토큰 (pad 만 제�
 \Needspace{5\baselineskip}
 \begin{lstlisting}
 prompt:   ### 명령어:\n건강한 식습관을 알려줘\n\n### 응답:\n   <- 양쪽 공통, log-prob 계산 제외
-chosen:   규칙적인 식사와 채소 섭취가 중요합니다.            <- 이 부분의 log π_$\theta$, log π_ref
-rejected: ㄴㄴ 몰라 아무거나 먹어                          <- 이 부분의 log π_$\theta$, log π_ref
+chosen:   규칙적인 식사와 채소 섭취가 중요합니다.            <- 이 부분의 log π_θ, log π_ref
+rejected: ㄴㄴ 몰라 아무거나 먹어                          <- 이 부분의 log π_θ, log π_ref
 \end{lstlisting}
 
 \begin{quote}
@@ -730,7 +730,7 @@ DPO loss = -log sigmoid(beta*margin) =   0.6931   (beta=0.1)
 \begin{itemize}
 \tightlist
 \item
-  \emph{학습 전} (policy = reference 와 동일) 이라면 \texttt{r\_w\ \$\textbackslash{}approx\$\ r\_l\ \$\textbackslash{}approx\$\ 0}, margin \(\approx\) 0, loss \(\approx\) \(-\log 0.5 = 0.693\) 근처에서 출발합니다
+  \emph{학습 전} (policy = reference 와 동일) 이라면 \texttt{r\_w\ ≈\ r\_l\ ≈\ 0}, margin \(\approx\) 0, loss \(\approx\) \(-\log 0.5 = 0.693\) 근처에서 출발합니다
 \item
   학습이 진행되면 policy 가 \emph{chosen 의 log-prob 은 올리고 (r\_w ↑), rejected 는 내려 (r\_l \(\downarrow\))} margin 이 커지고 loss 가 줄어듭니다
 \item
