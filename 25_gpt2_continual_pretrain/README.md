@@ -44,7 +44,7 @@ Phase 4 의 두 번째 챕터. Ch 24 에서 *random init 작은 GPT (3M) 를 Tin
 ## Hyperparams
 - `num_train_epochs=1`, `per_device_train_batch_size=4`, `gradient_accumulation_steps=4` (effective batch 16)
 - `learning_rate=2e-5` ← *Ch 24 의 `3e-4` 와 다른 유일한 큰 차이*
-- `lr_scheduler_type="cosine"`, `warmup_ratio=0.06`
+- `lr_scheduler_type="cosine"`, `warmup_steps=0.06` (1 미만 값은 전체 step 대비 비율 해석 — 구 `warmup_ratio`)
 - AdamW `weight_decay=0.01`, `max_grad_norm=1.0`
 - `fp16=True` (T4 는 bf16 불가)
 - `eval_strategy="steps"`, `eval_steps=100`
