@@ -115,6 +115,7 @@
   * [23-1. 실습: 환경 셋업](pages/23-ko_bert_classify-practice.md)
   * [23-2. 해부: 평가 — Ch 15 / Ch 21 과 같은 5종 metric + 학습 곡선](pages/23-ko_bert_classify-anatomy.md)
   * [23-3. 정리와 FAQ](pages/23-ko_bert_classify-wrapup.md)
+  * [23-4. 부록 — random init baseline + negative transfer 분석](pages/23-ko_bert_classify-random_baseline.md)
 * [24. 작은 GPT 사전학습 (TinyStories Causal LM)](pages/24-gpt_tinystories.md)
   * [24-1. 실습: 환경 셋업](pages/24-gpt_tinystories-practice.md)
   * [24-2. 변형: sampling hyperparam 비교](pages/24-gpt_tinystories-variation.md)
