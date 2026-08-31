@@ -46,7 +46,7 @@ DataCollatorForLanguageModeling(tokenizer, mlm=False)
 
 ### Q2. (이론) TinyStories 는 *일반 도메인* 인가요 *task corpus* 인가요? 왜 일반 위키 (Wikitext-103) 가 아닌가요?
 
-**TinyStories 는 *합성된 simple 스토리* 라 *generation 시연 가치* 가 우선** 인 데이터입니다. *진정한 일반 도메인 사전학습* 의 의미에서는 Wikitext-103 보다 약하지만, 본 챕터의 목적은 *작은 모델로 generation 이 어떻게 동작하는지를 직접 보는 것* - 일반 위키 (Wikitext-103) 로 같은 셋업을 돌리면 3M 모델이 *문장 구조를 학습하기 전에 학습이 끝남*. TinyStories 의 단순한 어휘·문법 덕분에 *작은 모델로도 grammatical 한 생성이 가능* 합니다.
+**TinyStories 는 *합성된 simple 스토리* 라 *generation 시연 가치* 가 우선** 인 데이터입니다. *진정한 일반 도메인 사전학습* 의 의미에서는 Wikitext-103 보다 약하지만, 본 챕터의 목적은 *작은 모델로 generation 이 어떻게 동작하는지를 직접 보는 것* - 일반 위키 (Wikitext-103) 로 같은 셋업을 돌리면 3.7M 모델이 *문장 구조를 학습하기 전에 학습이 끝남*. TinyStories 의 단순한 어휘·문법 덕분에 *작은 모델로도 grammatical 한 생성이 가능* 합니다.
 
 Ch 25 가 그 *trade-off 의 반대편* 을 다룹니다 - *큰 모델 (gpt2 124M) + 대규모 일반 코퍼스 (WebText)* 의 사전학습된 본체를 TinyStories 로 **continual pretraining**. *작은 + 합성 도메인 from-scratch* vs *큰 + 일반 도메인 사전학습 후 continual pretraining* 의 generation 품질 격차가 핵심 비교.
 

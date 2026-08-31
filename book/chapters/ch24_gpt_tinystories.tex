@@ -334,7 +334,7 @@ L_{\text{CLM}} = -\frac{1}{n-1} \sum_{i=1}^{n-1} \log P(x_{i+1} \mid x_1, \dots,
 \item
   학습 첫 step loss 가 약 7.6 부근이면 random init 직후 \emph{균등 추측} 상태. 첫 100 step 안에 빠르게 떨어지면 vocab + 모델 정상.
 \item
-  1분 (1500 step) 학습으로 누적 평균 \inlinecode{train\_loss} 가 \emph{약 3.8} 까지 내려갑니다. \emph{vocab 후보를 좁히는} 단계로 충분히 진입한 수준 - TinyStories 의 단순한 어휘·문법 덕분에 3M 짜리 작은 모델로도 도달 가능합니다. 더 길게 학습하면 약 2-3 까지 더 내려갑니다.
+  1분 (1500 step) 학습으로 누적 평균 \inlinecode{train\_loss} 가 \emph{약 3.7} 까지 내려갑니다. \emph{vocab 후보를 좁히는} 단계로 충분히 진입한 수준 - TinyStories 의 단순한 어휘·문법 덕분에 3.7M 짜리 작은 모델로도 도달 가능합니다. 더 길게 학습하면 약 2-3 까지 더 내려갑니다.
 \end{itemize}
 
 \subsection{Perplexity}
@@ -603,7 +603,7 @@ print(
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-BPE training done: 10.1s, vocab=2048
+BPE training done: 9.8s, vocab=2048
 
 === encode/decode demo ===
 input      : Once upon a time, a little rabbit went to the forest.
