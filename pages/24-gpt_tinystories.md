@@ -4,7 +4,6 @@
 
 **예상 소요 시간**: 약 4-6분 (데이터 로드 약 1-2분 + BPE 토크나이저 학습 약 10초 + 학습 전 generation 약 30초 + 모델 학습 약 1분 + 학습 후 generation + reference 비교 약 2분)
 
-
 ## 학습 흐름
 
 1. 📊 **변화 추적표 + Phase 전환 도입부** — Encoder (BERT) → Decoder (GPT) 큰 그림 한 화면
@@ -15,7 +14,6 @@
 6. 🔬 **사전·사후 generation 비교** — 같은 prompt 3개, *학습 전 (random init) vs 학습 후* 나란히, 그리고 reference `gpt2` (124M, WebText) 도 함께
 7. 🛠️ **변형**: `temperature / top_k / top_p` sampling 비교
 8. 📦 **등장 라이브러리** / 🎯 **체크포인트** / ❓ **FAQ** (답변 포함)
-
 
 > 📒 **사전 학습 자료**: Ch 20-23 (작은 BERT scratch MLM + 분류 fine-tune). Ch 24 는 *같은 from-scratch 사전학습* 흐름인데, 본체가 *encoder (BERT) → decoder (GPT)*, 학습 목표가 *MLM → CausalLM*, 산출물이 *fine-tune 체크포인트 → generation 모델* 로 바뀝니다.
 
@@ -31,7 +29,6 @@
 | 25 (다음) | `gpt2` (124M, OpenAI WebText 사전학습) | BPE (GPT2 그대로) | TinyStories (Ch 24 와 동일) | `Linear(H, V)` (LM head 그대로) | `CrossEntropyLoss` (next-token) - **continual pretraining** |
 
 전체 챕터 표는 [루트 README](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표) 를 참고하세요.
-
 
 ## Phase 전환 — Encoder (BERT) → Decoder (GPT) 패러다임
 
