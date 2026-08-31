@@ -22,30 +22,24 @@ for c in configs:
 ```text
 ======================================================================
 [T=0.3, top_k=20  (conservative)]
-Once upon a time, a little rabbit named Lily. She loved to play with her toys and play with her toys. One day, Lily's mom saw a big tree wit …(뒤 113자 생략)
-
-Lily was sad
+Once upon a time, a little rabbit named Timmy. Timmy loved to play with his friends. One day, Timmy's mom asked him to play with his friends …(뒤 141자 생략)
 
 ======================================================================
 [T=0.8, top_k=50  (balanced)]
-Once upon a time, a little rabbit who liked to play in the park. One day, his friends found a big smile on the park. And it was very happy t …(뒤 35자 생략)
+Once upon a time, a little rabbit who liked to play in the park. One day, his friends found a big smile on the ground. And they decided to g …(뒤 34자 생략)
 
-One day, Timmy saw a small house, Timmy's mom a shiny tree in a big tree. Timmy was so
+One day, the kitchen couldn't find a big boy named Timmy. Timmy was so happy because he saw a big
 
 ======================================================================
 [T=1.0, top_p=0.9 (nucleus)]
-Once upon a time, a little rabbit who liked to read water to play the squirrel. One day, Joe's mommy saw a window, who was green bunny, but they felt sad. 
+Once upon a time, a little rabbit who liked to read water to play the squirrel. One day, Joe's mommy saw a window, who was gone. He wanted t …(뒤 21자 생략)
 
-She did not know what. She liked to do with some other adventure. She would a lot of fun at her problege. She
+"Sure, Mr. That is here, Tom! I have a towel," replied. "Mama," he said
 
 ======================================================================
 [T=1.2, top_k=100 (diverse)]
-Once upon a time, a little rabbit who liked to read water to play the toys. One day, Joe's mommy saw fool, who was gone to explore it. They …(뒤 136자 생략)
+Once upon a time, a little rabbit who liked to read water to play the toys. day his friends found a big smile on the ball. And it made it ve …(뒤 156자 생략)
 ```
-
-**결과 해석**
-
-`T=0.3, top_k=20` 은 "play with her toys" 가 반복될 만큼 안전하지만 단조롭고, `T=0.8` 은 적당히 다양하면서 문장이 이어집니다. `T=1.0, top_p=0.9` 와 `T=1.2, top_k=100` 으로 갈수록 "read water" 처럼 말이 안 되는 조합이 섞이며, 학습된 본체는 그대로인 채 sampling 분포만으로 다양성↔일관성 trade-off 가 조절됨이 드러납니다.
 
 **관전 포인트**
 

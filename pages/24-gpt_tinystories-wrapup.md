@@ -83,7 +83,7 @@ model.lm_head.weight = model.transformer.wte.weight   # 같은 텐서, 같은 �
 
 직관: input embedding 은 *vocab token → hidden* 변환, LM head 는 *hidden → vocab logit* 변환. 둘이 *transpose 관계* 라 같은 weight 를 공유해도 의미가 통합니다. 효과:
 
-- **파라미터 절약**: `vocab_size × hidden_size` 만큼 (본 챕터: 2,048 × 256 = 524,288 = 약 0.5M params). 전체 3M 모델의 약 17% - 작은 모델에선 비중이 큼.
+- **파라미터 절약**: `vocab_size × hidden_size` 만큼 (본 챕터: 2,048 × 256 = 524,288 = 약 0.5M params). 전체 3.7M 모델의 약 14% - 작은 모델에선 비중이 큼.
 - **학습 안정**: input 과 output 이 *같은 임베딩 공간* 을 공유 → 일관성 ↑.
 
 GPT-2 의 기본값. 우리 모델도 자동으로 적용됩니다 (`config.tie_word_embeddings=True`).
@@ -98,10 +98,10 @@ GPT-2 의 기본값. 우리 모델도 자동으로 적용됩니다 (`config.tie_
 
 ```python
 # 셋이 같이 쓰일 때의 적용 순서
-# logits / T  → softmax
-# top_k 로 후보 잘라냄
-# top_p 로 후보 더 잘라냄
-# 남은 후보에서 multinomial sampling
+# 1. logits / T  → softmax
+# 2. top_k 로 후보 잘라냄
+# 3. top_p 로 후보 더 잘라냄
+# 4. 남은 후보에서 multinomial sampling
 model.generate(do_sample=True, temperature=0.8, top_k=50, top_p=0.9, max_new_tokens=60)
 ```
 
@@ -135,7 +135,7 @@ Ch 25 = *OpenAI 가 사전학습한 `gpt2` (124M params, WebText 약 40GB) 를 T
 
 | 축 | Ch 24 (본 챕터) | Ch 25 (다음) |
 |---|---|---|
-| 모델 크기 | 약 3M params | **약 124M (40배)** |
+| 모델 크기 | 약 3.7M params | **약 124M (약 33배)** |
 | 사전학습 | from scratch (random init) | **OpenAI WebText 약 40GB 사전학습** |
 | TinyStories 학습 | 사전학습 그 자체 (1500 steps) | **continual pretraining** (1 epoch, 약 3,200 steps) |
 | 토크나이저 | 직접 학습 BPE vocab 2,048 | **gpt2 BPE vocab 50,257 (그대로)** |
@@ -150,9 +150,9 @@ Ch 25 = *OpenAI 가 사전학습한 `gpt2` (124M params, WebText 약 40GB) 를 T
 
 - `AutoModelForCausalLM.from_pretrained("gpt2")` - OpenAI WebText 약 40GB 로 사전학습된 124M params 모델 로드
 - **같은 TinyStories 30K** 데이터 (본 챕터와 동일) 로 **continual pretraining** (계속 사전학습 / continual learning — *같은 CausalLM task, 새 데이터, head 그대로*. *task adaptation 의미의 fine-tune 이 아니라 단계 2*)
-- **핵심 비교**: 본 챕터 (3M, from scratch, 약 1분) vs Ch 25 (124M, continual pretraining, 약 19분) 의 generation 품질·학습 곡선 격차
-- *trainer 자체는 Ch 24 와 동일* (`transformers.Trainer` + `DataCollatorForLanguageModeling(mlm=False)`) — *변하는 건 모델 로드 한 줄 + lr (scratch 5e-4 → continual pretraining 2e-5)*
+- **핵심 비교**: 본 챕터 (3.7M, from scratch, 약 1분) vs Ch 25 (124M, continual pretraining, 약 19분) 의 generation 품질·학습 곡선 격차
+- *trainer 자체는 Ch 24 와 동일* (`transformers.Trainer` + `DataCollatorForLanguageModeling(mlm=False)`) — *변하는 건 모델 로드 한 줄 + lr (scratch 3e-4 → continual pretraining 2e-5)*
 - 작은 데이터 + 큰 사전학습 모델 = *왜 실무가 from-scratch 가 아니라 사전학습 모델 위에 계속 학습 패턴인가* 의 정량 답변
 - *진짜 task adaptation 의미의 fine-tune (instruction tuning)* 은 Ch 28 SFT 에서 본격 등장
 
-> **변하는 축**: *모델 크기 + 사전학습 여부* (3M / scratch → 124M / pretrained). 데이터·토크나이저 규약·loss·trainer 는 같음. Phase 4 의 *학습 단계 2 (continual pretraining)* 가 본격적으로 자리 잡는 챕터.
+> **변하는 축**: *모델 크기 + 사전학습 여부* (3.7M / scratch → 124M / pretrained). 데이터·토크나이저 규약·loss·trainer 는 같음. Phase 4 의 *학습 단계 2 (continual pretraining)* 가 본격적으로 자리 잡는 챕터.

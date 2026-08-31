@@ -2,7 +2,8 @@
 
 **환경**: Google Colab **T4 GPU 필수**.
 
-**예상 소요 시간**: 약 8-12분 (데이터 로드 약 2분 + BPE 토크나이저 학습 약 3분 + 학습 전 generation 약 30초 + 모델 학습 약 1분 + 학습 후 generation + reference 비교 약 2분)
+**예상 소요 시간**: 약 4-6분 (데이터 로드 약 1-2분 + BPE 토크나이저 학습 약 10초 + 학습 전 generation 약 30초 + 모델 학습 약 1분 + 학습 후 generation + reference 비교 약 2분)
+
 
 ## 학습 흐름
 
@@ -10,10 +11,11 @@
 2. 🔄 **변경점** — 모델 패밀리 (encoder → decoder), 학습 목표 (MLM → CausalLM), 토크나이저 (WordPiece → BPE 직접 학습)
 3. 📐 **Loss** — `CrossEntropyLoss(next-token)`. MLM 의 *15% 자리* vs CausalLM 의 *거의 모든 자리* 차이
 4. 🔤 **토크나이저 노트** — BPE 직접 학습 (Ch 19 의 WordPiece/WordLevel 과 비교)
-5. 🚀 **실습**: TinyStories 30K stories → BPE vocab=2048 학습 → 작은 `GPT2LMHeadModel` (약 3M params) 학습
+5. 🚀 **실습**: TinyStories 30K stories → BPE vocab=2048 학습 → 작은 `GPT2LMHeadModel` (약 3.7M params) 학습
 6. 🔬 **사전·사후 generation 비교** — 같은 prompt 3개, *학습 전 (random init) vs 학습 후* 나란히, 그리고 reference `gpt2` (124M, WebText) 도 함께
 7. 🛠️ **변형**: `temperature / top_k / top_p` sampling 비교
 8. 📦 **등장 라이브러리** / 🎯 **체크포인트** / ❓ **FAQ** (답변 포함)
+
 
 > 📒 **사전 학습 자료**: Ch 20-23 (작은 BERT scratch MLM + 분류 fine-tune). Ch 24 는 *같은 from-scratch 사전학습* 흐름인데, 본체가 *encoder (BERT) → decoder (GPT)*, 학습 목표가 *MLM → CausalLM*, 산출물이 *fine-tune 체크포인트 → generation 모델* 로 바뀝니다.
 
@@ -29,6 +31,7 @@
 | 25 (다음) | `gpt2` (124M, OpenAI WebText 사전학습) | BPE (GPT2 그대로) | TinyStories (Ch 24 와 동일) | `Linear(H, V)` (LM head 그대로) | `CrossEntropyLoss` (next-token) - **continual pretraining** |
 
 전체 챕터 표는 [루트 README](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표) 를 참고하세요.
+
 
 ## Phase 전환 — Encoder (BERT) → Decoder (GPT) 패러다임
 
@@ -92,7 +95,7 @@ generation 을 하려면 둘 중 하나가 필요합니다:
 
 > 본 커리큘럼 Phase 4 (Ch 24-31) 가 이 타임라인을 *압축 재현* 합니다 — *작은 GPT 사전학습 (본 챕터)* → *continual pretraining (Ch 25)* → *SFT (Ch 28)* → *alignment (Ch 30-31)*. 2017-2022 의 흐름을 손으로 한 번 따라가 보는 셈입니다.
 
-> 📚 **참고** — *T4 30분 룰 너머* 로 GPT/LLM scratch 학습을 더 키워 보고 싶다면 [FareedKhan-dev/train-llm-from-scratch](https://github.com/FareedKhan-dev/train-llm-from-scratch) 가 좋은 출발점입니다. Transformer 를 PyTorch 로 직접 구현하고 *13M → 2B params* 까지 consumer GPU 로 학습하는 과정 + **GPU별 실용 모델 크기 표** (예: T4 16GB ≈ 1.5-2B, RTX 4090 24GB ≈ 4B, A100 40GB ≈ 6-8B) 가 인상적입니다 — 본 챕터의 약 3M 모델이 *어디까지 커질 수 있는지* 의 감을 줍니다.
+> 📚 **참고** — *T4 30분 룰 너머* 로 GPT/LLM scratch 학습을 더 키워 보고 싶다면 [FareedKhan-dev/train-llm-from-scratch](https://github.com/FareedKhan-dev/train-llm-from-scratch) 가 좋은 출발점입니다. Transformer 를 PyTorch 로 직접 구현하고 *13M → 2B params* 까지 consumer GPU 로 학습하는 과정 + **GPU별 실용 모델 크기 표** (예: T4 16GB ≈ 1.5-2B, RTX 4090 24GB ≈ 4B, A100 40GB ≈ 6-8B) 가 인상적입니다 — 본 챕터의 약 3.7M 모델이 *어디까지 커질 수 있는지* 의 감을 줍니다.
 
 ## 변경점 (Diff from Ch 23)
 
