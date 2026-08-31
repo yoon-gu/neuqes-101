@@ -29,7 +29,7 @@ Phase 4 의 첫 챕터. Ch 7-23 의 *BERT (encoder, MLM, task head 부착 fine-t
 - **`model.generate(do_sample=True, ...)`** - temperature / top_k / top_p sampling 비교
 - **`-100` thread 환기** - MLM (15% 자리) vs CausalLM (거의 모든 자리) vs SFT (response 부분만, Ch 28) - 같은 트릭, 정반대 자리
 - **파인튜닝 의미 변화 thread 환기** - BERT 시대 (task head 부착) vs GPT 시대 (head 그대로, 행동 정렬)
-- Random baseline loss `ln(2048) ≈ 7.62`, TinyStories 3M 모델은 보통 *약 2.5-3.0* 까지 도달
+- Random baseline loss `ln(2048) ≈ 7.62`, 1,500 step 학습 후 누적 평균 train_loss 는 *약 3.7* (실측 — 노트북 학습 셀 출력이 단일 출처)
 - **Reference 비교** - `gpt2` (124M, WebText 약 40GB) 의 같은 prompt generation 으로 *모델 크기 + 데이터 격차* 의 generation 품질 차이 직접 확인
 
 ## Loss
