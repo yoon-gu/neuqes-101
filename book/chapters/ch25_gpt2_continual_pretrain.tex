@@ -438,7 +438,7 @@ print(
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 model.safetensors: downloading bytes:           |  0.00B
-load done: 15.2s
+load done: 9.2s
 
 === model ===
 #params : 124.44 M (24장 was approx. 3.7M; 25장 is approx. 33x larger)
@@ -892,7 +892,7 @@ Generation 품질 & grammatical 한 동화 & \textbf{자연스러운 동화 + �
 \inlinecode{model.generate(do\_sample=True,\ ...)} & sampling-based text generation & \textbf{공유} \\
 \inlinecode{warmup\_steps} 1 미만 비율 해석 & 전체 step 대비 비율 기반 warmup --- 구 \inlinecode{warmup\_ratio} (continual pretraining 표준) & \textbf{약간 다름} (\ref{ch:24}장은 \inlinecode{warmup\_steps=100} 절대값) \\
 \inlinecode{num\_train\_epochs} (vs \inlinecode{max\_steps}) & epoch 수 기반 학습 (continual pretraining 1 epoch 충분) & \textbf{약간 다름} (\ref{ch:24}장은 \inlinecode{max\_steps=1500}) \\
-\inlinecode{gradient\_accumulation\_steps} & 작은 배치를 누적해 큰 effective batch (T4 + 124M 메모리 제약) & \textbf{새로 등장} (\ref{ch:24}장은 3M 이라 불필요) \\
+\inlinecode{gradient\_accumulation\_steps} & 작은 배치를 누적해 큰 effective batch (T4 + 124M 메모리 제약) & \textbf{새로 등장} (\ref{ch:24}장은 3.7M 이라 불필요) \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -912,7 +912,7 @@ Generation 품질 & grammatical 한 동화 & \textbf{자연스러운 동화 + �
 \item
   \emph{Continual pretraining} (단계 2, 본 장) 과 \emph{SFT} (단계 3, \ref{ch:28}장) 의 가장 큰 차이는 \emph{\inlinecode{labels\ =\ -100} 자리} 입니다. 본 장의 collator 가 만드는 \inlinecode{labels} 패턴과, \ref{ch:28}장에서 등장할 \texttt{labels{[}:prompt\_len{]}\ =\ -100} 한 줄의 차이를 직접 비교해 설명해 보세요.
 \item
-  \ref{ch:25}장 AFTER 의 generation 이 \ref{ch:24}장보다 좋아 보인다면, \emph{모델 크기 (3M \(\to\) 124M)} 의 효과인가 \emph{사전학습 데이터 (없음 \(\to\) WebText 40GB)} 의 효과인가? 본 장의 실험 셋업으로는 둘을 분리할 수 있나요? (분리하려면 어떤 추가 실험이 필요할까요?)
+  \ref{ch:25}장 AFTER 의 generation 이 \ref{ch:24}장보다 좋아 보인다면, \emph{모델 크기 (3.7M \(\to\) 124M)} 의 효과인가 \emph{사전학습 데이터 (없음 \(\to\) WebText 40GB)} 의 효과인가? 본 장의 실험 셋업으로는 둘을 분리할 수 있나요? (분리하려면 어떤 추가 실험이 필요할까요?)
 \end{enumerate}
 
 

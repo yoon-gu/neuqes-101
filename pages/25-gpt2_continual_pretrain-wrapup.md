@@ -11,14 +11,14 @@
 | `model.generate(do_sample=True, ...)` | sampling-based text generation | **공유** |
 | `warmup_steps` 1 미만 비율 해석 | 전체 step 대비 비율 기반 warmup — 구 `warmup_ratio` (continual pretraining 표준) | **약간 다름** (Ch 24 는 `warmup_steps=100` 절대값) |
 | `num_train_epochs` (vs `max_steps`) | epoch 수 기반 학습 (continual pretraining 1 epoch 충분) | **약간 다름** (Ch 24 는 `max_steps=1500`) |
-| `gradient_accumulation_steps` | 작은 배치를 누적해 큰 effective batch (T4 + 124M 메모리 제약) | **새로 등장** (Ch 24 는 3M 이라 불필요)
+| `gradient_accumulation_steps` | 작은 배치를 누적해 큰 effective batch (T4 + 124M 메모리 제약) | **새로 등장** (Ch 24 는 3.7M 이라 불필요)
 
 ## 체크포인트 질문
 
 1. Ch 24 의 학습 첫 step loss 는 약 `ln(2048) ≈ 7.62` 에서 시작했습니다. Ch 25 는 random baseline 이 `ln(50257) ≈ 10.82` 인데 *시작 loss 가 약 3.0-4.0* 입니다. 두 챕터의 *시작 loss 차이* 가 의미하는 바는 무엇인가요? (랜덤 추측 / 사전학습된 본체 / vocab 차원의 관계)
 2. 본 챕터의 lr (`2e-5`) 가 Ch 24 의 lr (`3e-4`) 보다 *약 15배 작은* 이유를 *catastrophic forgetting* 키워드로 설명해 보세요. 만약 Ch 25 에서도 `3e-4` 를 썼다면 무슨 일이 일어날까요?
 3. *Continual pretraining* (단계 2, 본 챕터) 과 *SFT* (단계 3, Ch 28) 의 가장 큰 차이는 *`labels = -100` 자리* 입니다. 본 챕터의 collator 가 만드는 `labels` 패턴과, Ch 28 에서 등장할 `labels[:prompt_len] = -100` 한 줄의 차이를 직접 비교해 설명해 보세요.
-4. Ch 25 AFTER 의 generation 이 Ch 24 보다 좋아 보인다면, *모델 크기 (3M → 124M)* 의 효과인가 *사전학습 데이터 (없음 → WebText 40GB)* 의 효과인가? 본 챕터의 실험 셋업으로는 둘을 분리할 수 있나요? (분리하려면 어떤 추가 실험이 필요할까요?)
+4. Ch 25 AFTER 의 generation 이 Ch 24 보다 좋아 보인다면, *모델 크기 (3.7M → 124M)* 의 효과인가 *사전학습 데이터 (없음 → WebText 40GB)* 의 효과인가? 본 챕터의 실험 셋업으로는 둘을 분리할 수 있나요? (분리하려면 어떤 추가 실험이 필요할까요?)
 
 ## FAQ
 
@@ -76,7 +76,7 @@ HF 의 continual pretraining / fine-tuning 표준 lr 범위: `1e-5` - `5e-5`. SF
 | (c) | 124M | 없음 | (미실험 — 124M scratch + TinyStories 만 학습) |
 | (d) | 124M | WebText 약 40GB | **Ch 25** |
 
-본 커리큘럼에는 (a) 와 (d) 만 있어 *둘의 차이* 만 보입니다. (b) 와 (c) 는 *T4 + 30분 룰* 안에 어렵습니다 (124M scratch 는 *TinyStories 만으로 의미 있는 학습이 부족함*, 3M WebText 사전학습은 *데이터 규모 자체가 30분에 안 맞음*).
+본 커리큘럼에는 (a) 와 (d) 만 있어 *둘의 차이* 만 보입니다. (b) 와 (c) 는 *T4 + 30분 룰* 안에 어렵습니다 (124M scratch 는 *TinyStories 만으로 의미 있는 학습이 부족함*, 3.7M WebText 사전학습은 *데이터 규모 자체가 30분에 안 맞음*).
 
 **실용적 결론**: 실무에서는 (b)(c) 가 *비용 대비 비효율* 이라 (d) 패턴이 표준. *대규모 사전학습 모델을 가져와 작은 도메인 데이터로 continual pretraining* — 본 챕터의 패턴이 그 자체로 *실무 표준 레시피*.
 

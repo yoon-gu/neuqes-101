@@ -9,16 +9,14 @@
 **▶ 실행 결과**
 
 ```text
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸━━━━━━━━ 9.7/12.1 MB 141.2 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.1/12.1 MB 37.8 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.3/3.3 MB 110.0 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 559.1/559.1 kB 48.6 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━╸━━━━━━━━━━━━━━━━━━━━━━━ 20.9/50.1 MB 189.0 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 213.5 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 213.5 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 213.5 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 213.5 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 50.1/50.1 MB 13.3 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.1/12.1 MB 121.6 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.3/3.3 MB 120.1 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 559.1/559.1 kB 49.5 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━╸━━━━━━━━━━━━━━━━━━━━━━━━━━ 17.0/50.1 MB 233.1 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 278.9 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 278.9 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 278.9 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 50.1/50.1 MB 16.7 MB/s eta 0:00:00
 ```
 
 ```python
@@ -167,7 +165,7 @@ print(f"  - head : {type(model.lm_head).__name__}(in={model.lm_head.in_features}
 
 ```text
 model.safetensors: downloading bytes:           |  0.00B            
-load done: 15.2s
+load done: 9.2s
 
 === model ===
 #params           : 124.44 M  (Ch 24 was approx. 3.7M; Ch 25 is approx. 33x larger)
@@ -187,7 +185,6 @@ model: GPT2LMHeadModel
 **결과 해석**
 
 본체가 124.44M params 로 Ch 24 의 약 3.7M 대비 약 33배, vocab 은 50,257 로 약 25배 큽니다. `pad_token` 이 `eos_token`(id=50256)으로 지정됐고, LM head 가 `Linear(768, 50257)` 에 weight tying(`lm_head ↔ wte` 공유)된 점이 Ch 24 와 같은 CausalLM 구조임을 보여줍니다.
-
 
 ### Ch 24 ↔ Ch 25 코드 diff — *모델·토크나이저 로드 두 줄 차이*
 
@@ -381,7 +378,6 @@ from transformers import (DataCollatorForLanguageModeling, Trainer,
                           TrainingArguments, TrainerCallback)
 
 collator = DataCollatorForLanguageModeling(tokenizer=tokenizer, mlm=False)
-
 ```
 
 **위 코드 읽기** — `DataCollatorForLanguageModeling(mlm=False)` 는 Ch 24 와 한 글자도 다르지 않은 causal LM collator 입니다. `mlm=False` 라 마스킹 없이 `labels = input_ids.clone()` 을 자동으로 만들어 next-token 예측 loss 를 구성합니다. *collator 가 그대로* 라는 점이 이번 학습이 단계 2(continual pretraining)임을 보여주는 핵심 증거입니다.
@@ -408,8 +404,6 @@ args = TrainingArguments(
     dataloader_pin_memory=True,
     seed=SEED,
 )
-
-
 ```
 
 **위 코드 읽기** — `learning_rate=2e-5` 가 Ch 24 의 `3e-4` 와 다른 *유일한 큰 차이* 입니다. 이미 학습된 본체를 큰 lr 로 흔들면 사전학습 표상이 망가지는 catastrophic forgetting 위험이 있어, continual pretraining 표준 범위(`1e-5`~`5e-5`)의 작은 값을 씁니다. `per_device_train_batch_size=4` + `gradient_accumulation_steps=4` 로 effective batch 16 을 맞춰 124M 본체를 T4 16GB 안에 욱여넣고, `num_train_epochs=1` 은 본체가 이미 좋아 1 epoch 면 충분하다는 뜻입니다.
@@ -434,7 +428,6 @@ class VRAMCallback(TrainerCallback):
 
 
 vram_cb = VRAMCallback()
-
 ```
 
 **위 코드 읽기** — `VRAMCallback` 은 학습과 무관한 관찰용 콜백으로, 로그 구간마다 peak VRAM 을 기록한 뒤 통계를 reset 합니다. 뒤의 VRAM trace 그림을 그리기 위한 데이터 수집일 뿐 loss 계산에는 관여하지 않습니다.
@@ -461,13 +454,6 @@ print(f"vocab ln (random baseline): {math.log(tokenizer.vocab_size):.4f}  (we st
 if torch.cuda.is_available():
     print(f"final peak    : {torch.cuda.max_memory_allocated()/1024**2:.0f} MiB")
 ```
-
-**결과 해석**
-
-T4 에서 약 19분 / 3,242 step 동안 1 epoch 을 돌아 누적 평균 `train_loss` 가 2.07 까지 내려왔습니다. random baseline `ln(50257) ≈ 10.82` 보다 훨씬 낮은 지점에서 시작·도달한 것으로, *사전학습된 본체에서 출발* 한 효과가 그대로 드러납니다. peak VRAM 약 1,450 MiB 라 T4 16GB 에 여유 있게 들어갑니다.
-
-
-**위 코드 읽기** — `Trainer` 인스턴스의 인자 구조가 Ch 24 와 글자 그대로 같고, `model`(gpt2 124M)과 `args`(lr·epoch)만 다릅니다. 이 *trainer 코드 재사용* 이 continual pretraining 의 미적 본질입니다. `trainer.train()` 이 1 epoch 학습을 돌리고, 끝나면 누적 평균 `train_loss` 와 random baseline `ln(vocab)` 을 함께 출력해 *시작점이 random 이 아님* 을 강조합니다.
 
 **▶ 실행 결과**
 
@@ -506,12 +492,16 @@ Step  Training Loss  Validation Loss
 3000  1.980746       1.760369
 ...
 === continual pretraining summary ===
-elapsed       : 19.05 min
+elapsed       : 18.46 min
 global_step   : 3242
 train_loss    : 2.0699
 vocab ln (random baseline): 10.8249  (we start MUCH lower than this)
 final peak    : 1450 MiB
 ```
+
+**결과 해석**
+
+T4 에서 약 19분 / 3,242 step 동안 1 epoch 을 돌아 누적 평균 `train_loss` 가 2.07 까지 내려왔습니다. random baseline `ln(50257) ≈ 10.82` 보다 훨씬 낮은 지점에서 시작·도달한 것으로, *사전학습된 본체에서 출발* 한 효과가 그대로 드러납니다. peak VRAM 약 1,450 MiB 라 T4 16GB 에 여유 있게 들어갑니다.
 
 이어서 학습 곡선과 VRAM 추이를 그립니다. train/eval loss 와 함께 random baseline 기준선을 점선으로 그려 *시작 loss 가 이미 baseline 한참 아래* 임을 시각적으로 확인합니다.
 
@@ -717,11 +707,6 @@ for p, before, after in zip(PROMPTS, before_outputs, after_outputs):
     print(f"Ch 25 AFTER     : {after[len(p):].strip()[:240]}")
 ```
 
-**결과 해석**
-
-Ch 24(3.7M scratch)는 작은 모델·작은 데이터로도 동화 풍 단순 영어를 내지만 어휘가 동화 도메인에 한정되고, Ch 25 BEFORE 는 도메인은 넓되 동화 풍이 아니며, Ch 25 AFTER 는 *동화 풍 + 넓은 어휘력* 을 함께 보입니다. 다만 AFTER 가 더 좋아 보이는 것이 모델 크기(약 40배)의 힘인지 사전학습(WebText 40GB)의 힘인지는 두 요인이 함께 바뀌어 본 셋업으로는 분리되지 않습니다(FAQ Q3 참고).
-
-
 **▶ 실행 결과**
 
 ```text
@@ -759,6 +744,10 @@ Ch 24 (scratch) : A big dog came to the dog. They saw the tree. Tom felt sorry. 
 Ch 25 BEFORE    : is a dog
 ...
 ```
+
+**결과 해석**
+
+Ch 24(3.7M scratch)는 작은 모델·작은 데이터로도 동화 풍 단순 영어를 내지만 어휘가 동화 도메인에 한정되고, Ch 25 BEFORE 는 도메인은 넓되 동화 풍이 아니며, Ch 25 AFTER 는 *동화 풍 + 넓은 어휘력* 을 함께 보입니다. 다만 AFTER 가 더 좋아 보이는 것이 모델 크기(약 33배)의 힘인지 사전학습(WebText 40GB)의 힘인지는 두 요인이 함께 바뀌어 본 셋업으로는 분리되지 않습니다(FAQ Q3 참고).
 
 **해석 가이드 — 세 셋업의 격차**
 
