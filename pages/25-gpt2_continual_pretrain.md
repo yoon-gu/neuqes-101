@@ -4,7 +4,6 @@
 
 **예상 소요 시간**: 약 20-25분 (데이터 로드·gpt2 로드·토큰화 약 2분 + 학습 전 baseline generation 약 30초 + continual pretraining 약 19분 + 학습 후 generation + 3-way 비교 약 1분)
 
-
 ## 학습 흐름
 
 1. 📊 **누적 추적표** — Ch 22-24 + 본 챕터 강조 + Ch 26 예고
@@ -15,7 +14,6 @@
 6. 🚀 **실습**: TinyStories 30K → `gpt2` 로드 → 학습 전 generation → continual pretraining → 학습 후 generation
 7. 🆚 **3-way generation 비교** — Ch 24 (scratch) vs Ch 25 BEFORE (gpt2 그대로) vs Ch 25 AFTER (continual pretraining)
 8. 📦 **등장 라이브러리** / 🎯 **체크포인트** / ❓ **FAQ** (답변 포함)
-
 
 > 📒 **사전 학습 자료**: Ch 24 (영어 GPT scratch + TinyStories). 본 챕터는 Ch 24 와 *데이터·trainer·collator·loss 모두 같고 본체 출발점·토크나이저·lr 만 다른* 격리 실험. *trainer 코드 차이가 극단적으로 적음* — 그게 *학습 단계 2 (continual pretraining)* 의 본질입니다.
 
@@ -30,7 +28,6 @@
 | 26 (다음) | 작은 GPT (한국어, scratch) | BPE (한국어 직접 학습) | 한국어 TinyStories-Korean | `Linear(H, V)` (LM head, weight tied) | `CrossEntropyLoss` (next-token) |
 
 전체 챕터 표는 [루트 README](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표) 를 참고하세요.
-
 
 ### Ch 24 ↔ Ch 25 격리 실험의 통제 변수
 
