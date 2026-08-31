@@ -9,7 +9,7 @@
 | `DataCollatorForLanguageModeling(mlm=False)` | CausalLM collator (`labels = input_ids.clone()` 자동) | **공유** (Ch 24 와 정확히 같음) |
 | `group_texts` 패턴 (HF run_clm.py 표준) | 가변 길이 텍스트 → 고정 길이 블록 스트림 | **공유** |
 | `model.generate(do_sample=True, ...)` | sampling-based text generation | **공유** |
-| `warmup_ratio` (vs `warmup_steps`) | epoch 비율 기반 warmup (continual pretraining 표준) | **약간 다름** (Ch 24 는 `warmup_steps=100`) |
+| `warmup_steps` 1 미만 비율 해석 | 전체 step 대비 비율 기반 warmup — 구 `warmup_ratio` (continual pretraining 표준) | **약간 다름** (Ch 24 는 `warmup_steps=100` 절대값) |
 | `num_train_epochs` (vs `max_steps`) | epoch 수 기반 학습 (continual pretraining 1 epoch 충분) | **약간 다름** (Ch 24 는 `max_steps=1500`) |
 | `gradient_accumulation_steps` | 작은 배치를 누적해 큰 effective batch (T4 + 124M 메모리 제약) | **새로 등장** (Ch 24 는 3M 이라 불필요)
 
@@ -61,18 +61,18 @@ TrainingArguments(learning_rate=2e-5, ...)
 
 HF 의 continual pretraining / fine-tuning 표준 lr 범위: `1e-5` - `5e-5`. SFT (Ch 28) 도 비슷한 범위.
 
-### Q3. (이론) Ch 24 (3M) 가 같은 데이터로 학습했는데 Ch 25 (124M) 결과가 훨씬 좋다면, *모델 크기의 위력* 인가 *사전학습의 위력* 인가?
+### Q3. (이론) Ch 24 (3.7M) 가 같은 데이터로 학습했는데 Ch 25 (124M) 결과가 훨씬 좋다면, *모델 크기의 위력* 인가 *사전학습의 위력* 인가?
 
 **둘이 *섞여서* 분리 불가능** 입니다. 본 챕터의 셋업은 *두 변수가 동시에 변함*:
 
-- Ch 24 → Ch 25 변화: 모델 크기 *3M → 124M (약 40배)* + 사전학습 *없음 → WebText 약 40GB*
+- Ch 24 → Ch 25 변화: 모델 크기 *3.7M → 124M (약 33배)* + 사전학습 *없음 → WebText 약 40GB*
 
 진짜 *모델 크기와 사전학습 효과를 분리* 하려면 *2 × 2 격자* 실험이 필요:
 
 | 셋업 | 모델 크기 | 사전학습 | 본 커리큘럼 |
 |---|---|---|---|
-| (a) | 3M | 없음 | **Ch 24** |
-| (b) | 3M | WebText 풍 사전학습 | (미실험) |
+| (a) | 3.7M | 없음 | **Ch 24** |
+| (b) | 3.7M | WebText 풍 사전학습 | (미실험) |
 | (c) | 124M | 없음 | (미실험 — 124M scratch + TinyStories 만 학습) |
 | (d) | 124M | WebText 약 40GB | **Ch 25** |
 
@@ -125,7 +125,7 @@ Ch 25 에서는 *짧은 (1 epoch) continual pretraining + 작은 lr (`2e-5`)* �
 ```python
 # Ch 24
 trainer = Trainer(
-    model=model,                              # GPT2LMHeadModel (3M, random init)
+    model=model,                              # GPT2LMHeadModel (3.7M, random init)
     args=args,                                # TrainingArguments(lr=3e-4, max_steps=1500, ...)
     train_dataset=lm_train,                   # TinyStories
     eval_dataset=lm_val,
@@ -152,7 +152,7 @@ trainer = Trainer(
 
 Ch 26 는 *Ch 24 의 한국어판* — *작은 GPT + 한국어 TinyStories-Korean + BPE 직접 학습* 패턴. *Ch 25 의 한국어판 (한국어 사전학습 GPT + continual pretraining)* 이 *아닌* 이유:
 
-- **한국어 사전학습 GPT 가 부족** — `skt/kogpt2-base-v2` (125M) 등이 있지만 *영어 gpt2 만큼 표준화된 토크나이저·본체 조합* 이 아님. Ch 28 SFT 에서 KoGPT2 가 등장
+- **한국어 사전학습 GPT 가 부족** — `skt/kogpt2-base-v2` (125M) 등이 있지만 *영어 gpt2 만큼 표준화된 토크나이저·본체 조합* 이 아님. KoGPT2 는 Ch 27 (continual pretraining)·Ch 28 (SFT) 에서 등장
 - **한국어 토크나이저 새로 학습이 필요** — Q4 에서 봤듯 영어 BPE 는 한국어를 못 다룸. *한국어 BBPE 를 직접 학습* 하는 게 정공법
 - **Phase 4 의 한국어 사전학습 단계 1 챕터** — Ch 22 (한국어 BERT scratch) 의 GPT 판
 
