@@ -43,7 +43,7 @@ Phase 4 의 첫 챕터. Ch 7-23 의 *BERT (encoder, MLM, task head 부착 fine-t
 `block_size=128` 로 `group_texts` 후 train 약 30,000-50,000 chunks / eval 약 500 chunks.
 
 ## 모델
-**`GPT2LMHeadModel`** with `n_layer=4, n_head=4, n_embd=256, n_positions=128`. 약 **3M params** (weight tying 자동 적용). BERT 챕터들 (Ch 20·22 의 작은 BERT 약 10M, Ch 9-18 의 DistilBERT 약 66M) 과 다르게 *완전 random init* 에서 시작.
+**`GPT2LMHeadModel`** with `n_layer=4, n_head=4, n_embd=256, n_positions=128`. 약 **3.7M params** (weight tying 자동 적용). BERT 챕터들 (Ch 20·22 의 작은 BERT 약 10M, Ch 9-18 의 DistilBERT 약 66M) 과 다르게 *완전 random init* 에서 시작.
 
 ## Hyperparams
 - `max_steps=1500`, `per_device_train_batch_size=32`, `learning_rate=3e-4`
@@ -53,7 +53,7 @@ Phase 4 의 첫 챕터. Ch 7-23 의 *BERT (encoder, MLM, task head 부착 fine-t
 - `eval_strategy="steps"`, `eval_steps=150`
 
 ## 환경
-Google Colab **T4 GPU 필수**. 약 25-30분 (데이터 로드 약 2분 + BPE 학습 약 3분 + 학습 전 generation 약 30초 + 모델 학습 약 18분 + 학습 후 generation + reference `gpt2` 비교 약 2분).
+Google Colab **T4 GPU 필수**. 약 4-6분 (데이터 로드 약 1-2분 + BPE 학습 약 10초 + 학습 전 generation 약 30초 + 모델 학습 약 1분 + 학습 후 generation + reference `gpt2` 비교 약 2분).
 
 device 자동 감지 (CUDA / MPS / CPU) - 로컬 Mac MPS 에서도 실행 가능 (학습 시간 약 2-3배 증가).
 
@@ -68,4 +68,4 @@ device 자동 감지 (CUDA / MPS / CPU) - 로컬 Mac MPS 에서도 실행 가능
 전체 챕터 표는 [루트 README](../README.md#챕터별-변화추적표) 를 참고하세요.
 
 ## 다음 챕터
-[25_gpt2_continual_pretrain](../25_gpt2_continual_pretrain/) - OpenAI `gpt2` (124M, WebText 약 40GB 사전학습) 을 *같은 TinyStories 30K* 로 **continual pretraining** (계속 사전학습 / continual learning — 같은 CausalLM task, head 그대로). *데이터를 통제하고 본체 출발점만 다름*. 본 챕터 (3M, from scratch, 약 18분) vs Ch 25 (124M, continual pretraining, 약 5-8분) 의 generation 품질·학습 곡선 격차가 *왜 실무는 from-scratch 가 아니라 대규모 사전학습 모델을 활용하는가* 의 정량 답변. *진짜 task adaptation 의미의 fine-tune (instruction tuning)* 은 Ch 28 SFT 에서 본격 등장.
+[25_gpt2_continual_pretrain](../25_gpt2_continual_pretrain/) - OpenAI `gpt2` (124M, WebText 약 40GB 사전학습) 을 *같은 TinyStories 30K* 로 **continual pretraining** (계속 사전학습 / continual learning — 같은 CausalLM task, head 그대로). *데이터를 통제하고 본체 출발점만 다름*. 본 챕터 (3.7M, from scratch, 약 4분) vs Ch 25 (124M, continual pretraining, 약 22분) 의 generation 품질·학습 곡선 격차가 *왜 실무는 from-scratch 가 아니라 대규모 사전학습 모델을 활용하는가* 의 정량 답변. *진짜 task adaptation 의미의 fine-tune (instruction tuning)* 은 Ch 28 SFT 에서 본격 등장.
