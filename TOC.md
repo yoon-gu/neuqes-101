@@ -100,7 +100,7 @@
   * [20-2. 해부: 평가 — MLM loss 곡선 + perplexity + masked token 예측](pages/20-en_bert_pretrain-anatomy.md)
   * [20-3. 변형: 학습 step 더 늘리거나 block_size 변경](pages/20-en_bert_pretrain-variation.md)
   * [20-4. 정리와 FAQ](pages/20-en_bert_pretrain-wrapup.md)
-  * [20-5. 부록 — 사전학습량과 perplexity 곡선](pages/20-en_bert_pretrain-scaling.md)
+  * [20-5. 부록 — 사전학습량과 perplexity: 더 돌리면 얼마나 내려가나](pages/20-en_bert_pretrain-scaling.md)
 * [21. 작은 BERT 이진 분류 (English Yelp Fine-tuning)](pages/21-en_bert_classify.md)
   * [21-1. 실습: 환경 셋업](pages/21-en_bert_classify-practice.md)
   * [21-2. 해부: 평가 — Ch 10 과 같은 5종 metric + 학습 곡선](pages/21-en_bert_classify-anatomy.md)
