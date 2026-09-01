@@ -104,7 +104,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 \midrule
 
 17 & klue/bert-base & WordPiece (한국어, 사전학습) & KLUE-YNAT 합성 multi-label & \inlinecode{Linear(H,\ 7)} & sigmoid (각각) & \inlinecode{BCEWithLogitsLoss} \\
-18 & klue/bert-base + 보조 & WordPiece (한국어, 사전학습) & KLUE-YNAT 합성 + 보조 라벨 & 메인(7) + 보조 & sigmoid + 태스크별 & \texttt{BCEWithLogitsLoss\ +\ λ·L\_aux} \\
+18 & klue/bert-base + 보조 & WordPiece (한국어, 사전학습) & KLUE-YNAT 합성 + 보조 라벨 & 메인(7) + 보조 & sigmoid + 태스크별 & \inlinecode{BCEWithLogitsLoss\ +\ λ·L\_aux} \\
 19 & --- (토크나이저 학습 전용) & WordPiece + WordLevel (둘 다 직접 학습) & Yelp text + NSMC text & --- & --- & --- \\
 \textbf{20 \(\leftarrow\) 여기} & \textbf{작은 BERT (직접, scratch)} & \textbf{\inlinecode{bert-base-uncased} 토크나이저 (가져옴)} & \textbf{Wikitext-103 paragraphs (일반 도메인)} & \textbf{MLM head} & softmax (MLM) & \textbf{\inlinecode{CrossEntropyLoss} (masked token)} \\
 21 (다음) & \ref{ch:20}장 사전학습 BERT + 분류 헤드 & (\ref{ch:20}장과 동일) & Yelp 이진화 (다른 도메인 transfer) & \inlinecode{Linear(H,\ 2)} & softmax & \inlinecode{CrossEntropyLoss} \\
@@ -241,7 +241,7 @@ MLM loss & PPL & 해석 \\
 \end{booktable}
 
 \begin{quote}
-이전 분류 장의 \inlinecode{random\ baseline\ =\ log\ K} (K=2 \(\to\) 0.69, K=7 \(\to\) 1.95) 와 같은 직관을 \emph{vocab 차원에 확장} 한 게 MLM. \texttt{ln(30522)\ ≈\ 10.33} 이 그 random baseline.
+이전 분류 장의 \inlinecode{random\ baseline\ =\ log\ K} (K=2 \(\to\) 0.69, K=7 \(\to\) 1.95) 와 같은 직관을 \emph{vocab 차원에 확장} 한 게 MLM. \inlinecode{ln(30522)\ ≈\ 10.33} 이 그 random baseline.
 \end{quote}
 
 
@@ -1314,7 +1314,7 @@ if torch.cuda.is_available():
 \begin{itemize}
 \tightlist
 \item
-  \textbf{\inlinecode{eval\_loss}}: 균등 분포 \texttt{ln\ V\ ≈\ 10.33} 에서 약 7.1 까지 내려왔습니다. 다만 6-3 에서 확인했듯 그 값은 \textbf{unigram 기준선 바로 위} --- 즉 2 epoch 이 새긴 것은 대부분 \emph{“어떤 토큰이 흔한가”} 라는 \textbf{빈도 통계} 이고, \emph{“앞뒤 문맥상 무엇이 와야 하는가”} 는 아직 거의 못 배웠습니다.
+  \textbf{\inlinecode{eval\_loss}}: 균등 분포 \inlinecode{ln\ V\ ≈\ 10.33} 에서 약 7.1 까지 내려왔습니다. 다만 6-3 에서 확인했듯 그 값은 \textbf{unigram 기준선 바로 위} --- 즉 2 epoch 이 새긴 것은 대부분 \emph{“어떤 토큰이 흔한가”} 라는 \textbf{빈도 통계} 이고, \emph{“앞뒤 문맥상 무엇이 와야 하는가”} 는 아직 거의 못 배웠습니다.
 \item
   \textbf{\inlinecode{perplexity}}: 30,522 (vocab 전체) 에서 약 1,250 부근으로. \emph{마스크 자리마다 후보를 약 1,250 개로 좁힌 상태} 라는 직관적 해석. 이 역시 unigram 모델이 도달하는 수준과 거의 같습니다.
 \item
@@ -1456,7 +1456,7 @@ for f in sorted(os.listdir(SAVE_DIR)):
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
 \item
-  MLM 사전학습의 random baseline loss 가 \texttt{ln(30522)\ ≈\ 10.33} 인 이유는 무엇이고, 학습 첫 step 의 loss 가 이 값과 \emph{크게} 다르다면 무엇을 의심해야 하나요? 또 학습 후 loss 가 \textbf{unigram 기준선 근처에서 멈춰 있다면} 모델은 무엇을 배웠고 무엇을 아직 못 배운 상태인가요?
+  MLM 사전학습의 random baseline loss 가 \inlinecode{ln(30522)\ ≈\ 10.33} 인 이유는 무엇이고, 학습 첫 step 의 loss 가 이 값과 \emph{크게} 다르다면 무엇을 의심해야 하나요? 또 학습 후 loss 가 \textbf{unigram 기준선 근처에서 멈춰 있다면} 모델은 무엇을 배웠고 무엇을 아직 못 배운 상태인가요?
 \item
   \inlinecode{DataCollatorForLanguageModeling} 이 매 batch 마다 \emph{다른} 위치를 mask 합니다. 같은 위치를 \emph{고정해서} mask 하면 어떤 문제가 생길까요?
 \item
@@ -1570,7 +1570,7 @@ model_scratch = BertForSequenceClassification(config)
 
 \section{온라인 부록: 사전학습량과 perplexity}
 
-\onlineAppendixLink{사전학습량과 perplexity}{영어 perplexity는 1,173에서 696으로, 한국어는 1,626에서 709로 내려가지만 8--10 epoch 이후에는 개선이 평탄해집니다. 같은 5,000개 텍스트를 반복하는 것보다 데이터와 compute를 늘리는 편이 다음 성능 레버라는 결론입니다.}{https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/20_en_bert_pretrain/20_en_bert_pretrain_scaling.ipynb}
+\onlineAppendixLink{사전학습량과 perplexity}{영어 perplexity는 1,173에서 697로, 한국어는 1,626에서 707로 내려가지만 8--10 epoch 이후에는 개선이 평탄해집니다. 같은 5,000개 텍스트를 반복하는 것보다 데이터와 compute를 늘리는 편이 다음 성능 레버라는 결론입니다.}{https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/20_en_bert_pretrain/20_en_bert_pretrain_scaling.ipynb}
 
 \begin{bookfigurelabel}[H]{사전학습 epoch에 따른 영어와 한국어 MLM perplexity}{fig:ch20-pretrain-scaling-curve}
 \centering
