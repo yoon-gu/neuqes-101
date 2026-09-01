@@ -1160,7 +1160,7 @@ COMPACT_APPENDICES: dict[int, CompactAppendixSpec] = {
     ),
     20: CompactAppendixSpec(
         "사전학습량과 perplexity",
-        "영어 perplexity는 1,173에서 696으로, 한국어는 1,626에서 709로 내려가지만 8--10 epoch 이후에는 개선이 평탄해집니다. "
+        "영어 perplexity는 1,173에서 697로, 한국어는 1,626에서 707로 내려가지만 8--10 epoch 이후에는 개선이 평탄해집니다. "
         "같은 5,000개 텍스트를 반복하는 것보다 데이터와 compute를 늘리는 편이 다음 성능 레버라는 결론입니다.",
         FigureSpec(
             "ch20_pretrain_scaling_curve.png",
