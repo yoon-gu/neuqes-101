@@ -91,9 +91,9 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 
 15 & \inlinecode{klue/bert-base} 파인튜닝 (약 110M) & WordPiece (한국어, 사전학습) & NSMC (네이버 영화 리뷰, 이진) & \inlinecode{Linear(H,\ 2)} & softmax & \inlinecode{CrossEntropyLoss} \\
 20 & 작은 BERT (직접, scratch) & \inlinecode{bert-base-uncased} 토크나이저 (가져옴) & Wikitext-103 paragraphs (일반 도메인) & MLM head & softmax (MLM) & \inlinecode{CrossEntropyLoss} (masked token) \\
-21 & \ref{ch:20}장 사전학습 BERT + 분류 헤드 (약 10M) & (\ref{ch:20}장과 동일) & Yelp 이진화 (다른 도메인 transfer) & \inlinecode{Linear(H,\ 2)} & softmax & \inlinecode{CrossEntropyLoss} \\
+21 & \ref{ch:20}장 사전학습 BERT + 분류 헤드 (약 11.1M) & (\ref{ch:20}장과 동일) & Yelp 이진화 (다른 도메인 transfer) & \inlinecode{Linear(H,\ 2)} & softmax & \inlinecode{CrossEntropyLoss} \\
 22 & 작은 BERT (직접, scratch) --- 한국어 & \inlinecode{klue/bert-base} 토크나이저 (가져옴) & 한국어 Wikipedia paragraphs (일반 도메인) & MLM head & softmax (MLM) & \inlinecode{CrossEntropyLoss} (masked token) \\
-\textbf{23 \(\leftarrow\) 여기} & \textbf{\ref{ch:22}장 사전학습 BERT + 분류 헤드 (약 10M)} & \textbf{(\ref{ch:22}장과 동일)} & \textbf{NSMC 이진 (다른 도메인 transfer)} & \textbf{\inlinecode{Linear(H,\ 2)}} & \textbf{softmax} & \textbf{\inlinecode{CrossEntropyLoss}} \\
+\textbf{23 \(\leftarrow\) 여기} & \textbf{\ref{ch:22}장 사전학습 BERT + 분류 헤드 (약 11.5M)} & \textbf{(\ref{ch:22}장과 동일)} & \textbf{NSMC 이진 (다른 도메인 transfer)} & \textbf{\inlinecode{Linear(H,\ 2)}} & \textbf{softmax} & \textbf{\inlinecode{CrossEntropyLoss}} \\
 24 (다음, Phase 4) & GPT-2 (직접, scratch) & BPE 토크나이저 (직접 학습) & TinyStories 영어 동화 & LM head & softmax (next-token) & \inlinecode{CrossEntropyLoss} (causal LM) \\
 \bottomrule
 \end{tabular}
@@ -161,18 +161,18 @@ Loss & \inlinecode{CrossEntropyLoss} (vocab 약 32,000 logits) & \textbf{\inline
 차원 & \ref{ch:15}장 (klue/bert-base) & \ref{ch:23}장 (이 장) & 비고 \\
 \midrule
 
-본체 파라미터 & 약 110M & \textbf{약 10M} & \ref{ch:23}장은 1/11 작음 \\
-사전학습 코퍼스 & 한국어 위키 + 모두의 말뭉치 + 뉴스 + 댓글 (약 8.4B 토큰, 일반 도메인) & \textbf{한국어 Wikipedia paragraphs 5K (약 50만-80만 토큰, 일반 도메인)} & 약 10,000배 격차, \textbf{둘 다 일반 한국어 코퍼스} \\
-사전학습 시간 & TPU 수일 & \textbf{T4 약 8-10분} & \\
+본체 파라미터 & 약 110M & \textbf{약 11.5M} & \ref{ch:23}장은 약 1/10 크기 \\
+사전학습 코퍼스 & 한국어 위키 + 모두의 말뭉치 + 뉴스 + 댓글 (약 8.4B 토큰, 일반 도메인) & \textbf{한국어 Wikipedia paragraphs 2K (약 20만 토큰, 일반 도메인)} & 약 4만 배 격차, \textbf{둘 다 일반 한국어 코퍼스} \\
+사전학습 시간 & TPU 수일 & \textbf{T4 약 0.2분} (MLM 3 epoch 실측) & \\
 Fine-tune 도메인 & NSMC 이진 (사전학습과 다른 도메인) & NSMC 이진 (사전학습과 다른 도메인) & \textbf{둘 다 일반 한국어 \(\to\) NSMC transfer 라 fair} \\
 분류 fine-tune 셋업 & \ref{ch:15}장 = 이 장 동일 (같은 데이터, 같은 hyperparams) & & 변하는 건 \emph{본체 출발점} 뿐 \\
-실측 accuracy & 약 0.86 & \textbf{약 0.54} & 실행본 기준 (\ref{ch:15}장=0.86, \ref{ch:23}장=0.5420). 짧은 사전학습(MLM 약 0.2분)이라 동전 던지기에 가까움 \\
+실측 accuracy & 약 0.86 (\inlinecode{executed/15\_ko\_binary.ipynb}) & \textbf{약 0.55} & \ref{ch:23}장의 정확값은 5절 셀 출력이 단일 출처. 짧은 사전학습(MLM 약 0.2분)이라 동전 던지기에 가까움 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
-비교가 \emph{공정} 한 이유 --- \ref{ch:15}장도 본 장도 둘 다 \emph{일반 도메인 한국어 사전학습 \(\to\) NSMC 분류 transfer} 의 같은 패턴. \emph{사전학습 규모} (약 10,000배) 와 \emph{모델 크기} (11배) 만 차이. 만약 \ref{ch:23}장이 NSMC text 로 사전학습했다면 비교가 unfair 했을 것 --- domain-adaptive pretraining 우위 때문.
+비교가 \emph{공정} 한 이유 --- \ref{ch:15}장도 본 장도 둘 다 \emph{일반 도메인 한국어 사전학습 \(\to\) NSMC 분류 transfer} 의 같은 패턴. \emph{사전학습 규모} (약 4만 배) 와 \emph{모델 크기} (약 10배) 만 차이. 만약 \ref{ch:23}장이 NSMC text 로 사전학습했다면 비교가 unfair 했을 것 --- domain-adaptive pretraining 우위 때문.
 
 \subsection{\texorpdfstring{\ref{ch:21}장 (영어) \(\to\) \ref{ch:23}장 (한국어) 대칭}{\ref{ch:21}장 (영어) \textbackslash to \ref{ch:23}장 (한국어) 대칭}}
 
@@ -183,7 +183,7 @@ Fine-tune 도메인 & NSMC 이진 (사전학습과 다른 도메인) & NSMC 이�
 항목 & \ref{ch:21}장 (영어) & \ref{ch:23}장 (한국어, 이 장) \\
 \midrule
 
-사전학습 코퍼스 (일반 도메인) & Wikitext-103 paragraphs 5K & 한국어 Wikipedia paragraphs 5K \\
+사전학습 코퍼스 (일반 도메인) & Wikitext-103 paragraphs 2K (약 27만 토큰) & 한국어 Wikipedia paragraphs 2K (약 20만 토큰) \\
 분류 데이터 (다른 도메인) & Yelp polarity 5K/1K & NSMC 5K/1K \\
 비교 대상 (대규모 사전학습) & \ref{ch:10}장 (DistilBERT, 약 66M, 약 33억 토큰) & \ref{ch:15}장 (\inlinecode{klue/bert-base}, 약 110M, 약 8.4B 토큰) \\
 토크나이저 & \inlinecode{bert-base-uncased} & \inlinecode{klue/bert-base} \\
@@ -247,14 +247,16 @@ MLM (\ref{ch:22}장) & 약 32,000 & \textbf{10.37} & 매우 어려움 --- 가려
 셋업 & 학습 첫 step loss & 학습 종료 loss (epoch 2) & 메모 \\
 \midrule
 
-한국어 Wikipedia MLM 사전학습 본체 + 분류 (본 장) & 약 0.693 & \textbf{약 0.45-0.6} & 본체에 \emph{일반 한국어 어휘·문맥 구조} 가 들어 있어 헤드가 NSMC 분류로 비교적 빠르게 적응 \\
-\ref{ch:15}장 \inlinecode{klue/bert-base} 사전학습 본체 + 분류 & 약 0.693 & \textbf{약 0.25-0.4} & 대규모 일반 한국어 사전학습이 만든 표상의 위력 \\
+한국어 Wikipedia MLM 사전학습 본체 + 분류 (본 장) & 약 0.693 & \textbf{약 0.69 \(\leftarrow\) 실측} & 본체가 \emph{일반 위키 어휘} 만 얕게 학습한 상태라, NSMC 짧은 구어체에서는 random init 대비 우위가 보장되지 않습니다 \\
+\ref{ch:15}장 \inlinecode{klue/bert-base} 사전학습 본체 + 분류 & 약 0.693 & \textbf{약 0.39} (\inlinecode{executed/15\_ko\_binary.ipynb}) & 대규모 일반 한국어 사전학습이 만든 표상의 위력 --- \emph{이 셋업의 사정거리 밖} \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
 \end{booktable}
 
-random baseline 은 \emph{두 셋업 모두 같음} --- 사전학습이 \emph{학습 속도} 와 \emph{수렴점} 에 영향. 학습 첫 step loss 가 같다고 사전학습이 의미 없는 게 아닙니다. \emph{위키 사전학습 본체} 가 NSMC 도메인에서 \emph{완벽한 성능} 을 내지는 못해도, random 보다 일관되게 빠르고 낮게 수렴 (사전학습 없는 random init 과의 직접 비교는 부록 \href{./appendix_random_baseline.ipynb}{\inlinecode{appendix\_random\_baseline.ipynb}}).
+본 장의 종료 loss 가 랜덤 기준선 \inlinecode{ln\ 2} = 0.693 바로 아래에서 평탄한 것은 \textbf{고장이 아니라 이 셋업(작은 본체 + 위키 2K paragraphs \(\times\) 3 epoch)의 정상 도달점} 입니다. 정확값은 5절 셀 출력이 단일 출처입니다.
+
+random baseline 은 \emph{두 셋업 모두 같음} --- 사전학습이 \emph{학습 속도} 와 \emph{수렴점} 에 영향을 줍니다. 다만 \textbf{얕은 일반 도메인 사전학습이 random init 보다 낫다는 보장은 없습니다}. 이 셋업 (위키 2K paragraphs \(\times\) 3 epoch \(\to\) NSMC 한 줄 구어체) 의 부록 실측은 오히려 \emph{random init 쪽이 높습니다} --- accuracy 약 0.55 vs 약 0.60, 즉 \textbf{negative transfer}. 사전학습 없는 random init 과의 직접 비교와 그 메커니즘은 부록 \href{https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/23_ko_bert_classify/appendix_random_baseline.ipynb}{\inlinecode{appendix\_random\_baseline.ipynb}} 에서 다룹니다.
 
 \begin{quote}
 \textbf{숫자로 감 잡기} (K=2, 정답 = 클래스 1):
@@ -404,7 +406,11 @@ tokens (16): ['[CLS]', '이', '영화', '정말', '재미있', '##었', '##고',
 
 이 노트북을 \emph{self-contained} 로 만들기 위해 \ref{ch:22}장의 MLM 사전학습을 여기서 짧게 재현합니다. \ref{ch:22}장 (5K paragraphs) 보다 \emph{데이터를 줄이고 (2K) 3 epoch} 로 돌려 시간을 단축하면서도, \emph{random init 보다는 낫다} 는 차이를 만들기에는 충분합니다.
 
-\textbf{MLM 사전학습 데이터는 \emph{분류용 NSMC 와 별도}} --- \inlinecode{wikimedia/wikipedia} config \inlinecode{20231101.ko} paragraphs 5K 를 \emph{새로 로드}. 본 장의 \emph{진짜 transfer 메시지} --- \emph{일반 한국어 위키 사전학습 \(\to\) NSMC 영화 리뷰 분류 transfer} 가 노트북 한 구조에 자연스럽게 들어맞도록 \emph{두 데이터셋이 공존}. 같은 토크나이저 (\inlinecode{klue/bert-base}) 가 두 도메인을 모두 처리.
+\textbf{MLM 사전학습 데이터는 \emph{분류용 NSMC 와 별도}} --- \inlinecode{wikimedia/wikipedia} config \inlinecode{20231101.ko} paragraphs 2K (+ eval 400) 를 \emph{새로 로드}. 본 장의 \emph{진짜 transfer 메시지} --- \emph{일반 한국어 위키 사전학습 \(\to\) NSMC 영화 리뷰 분류 transfer} 가 노트북 한 구조에 자연스럽게 들어맞도록 \emph{두 데이터셋이 공존}. 같은 토크나이저 (\inlinecode{klue/bert-base}) 가 두 도메인을 모두 처리.
+
+\begin{quote}
+\textbf{사전학습 코퍼스가 얼마나 작은가} --- 2K paragraphs 를 \inlinecode{block\_size=128} 로 이어 붙이면 아래 셀에서 \emph{1,562 block} 이 나옵니다. 토큰으로는 \inlinecode{1,562\ ×\ 128\ =\ 199,936} --- \textbf{약 20만 토큰} 입니다. \inlinecode{klue/bert-base} 가 본 약 8.4B 토큰의 \emph{약 1/42,000}. 이 숫자는 설정이 정하므로 재실행해도 같습니다.
+\end{quote}
 
 같은 작은 \inlinecode{BertConfig} (hidden=256, layer=4, head=4, intermediate=1024) \(\to\) \inlinecode{BertForMaskedLM(config)} random init \(\to\) 한국어 Wikipedia paragraphs 2K MLM \textbf{3 epoch} (1 epoch 만으로는 본체 정렬이 약해 \emph{random init 보다 못한} 결과가 나올 수 있음 --- \ref{ch:21}장 부록 패턴 따라 3 epoch).
 
@@ -434,6 +440,8 @@ mlm_config = BertConfig(
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=17]
+set_seed(SEED)
+
 mlm_model = BertForMaskedLM(mlm_config)  # random init
 total = sum(p.numel() for p in mlm_model.parameters())
 print(
@@ -466,7 +474,7 @@ mlm_collator = DataCollatorForLanguageModeling(
 
 
 
-\textbf{\inlinecode{labels\ =\ -100} 한 줄 환기} --- \inlinecode{DataCollatorForLanguageModeling} 이 가려지지 않은 자리에 \inlinecode{labels\ =\ -100} 을 채워 \emph{해당 위치의 CE loss 를 무시}. 분류 fine-tune (다음 섹션) 에서는 -100 을 \emph{전혀 사용하지 않습니다} --- 모든 sample 에 \emph{정답 라벨} (0/1) 이 명시되어 있기 때문. 같은 \inlinecode{-100} 트릭이 Phase 4 의 SFT (\ref{ch:27}장) 에서 \emph{prompt 자리} 를 가리는 정반대 자리로 다시 등장합니다 --- 풀버전 표는 \ref{ch:21}장 §3 \emph{labels = -100 thread} 참조.
+\textbf{\inlinecode{labels\ =\ -100} 한 줄 환기} --- \inlinecode{DataCollatorForLanguageModeling} 이 가려지지 않은 자리에 \inlinecode{labels\ =\ -100} 을 채워 \emph{해당 위치의 CE loss 를 무시}. 분류 fine-tune (다음 섹션) 에서는 -100 을 \emph{전혀 사용하지 않습니다} --- 모든 sample 에 \emph{정답 라벨} (0/1) 이 명시되어 있기 때문. 같은 \inlinecode{-100} 트릭이 Phase 4 의 SFT (\ref{ch:28}장) 에서 \emph{prompt 자리} 를 가리는 정반대 자리로 다시 등장합니다 --- 풀버전 표는 \ref{ch:21}장 §3 \emph{labels = -100 thread} 참조.
 
 
 
@@ -504,16 +512,16 @@ print(f"(random baseline PPL: {tokenizer.vocab_size:,})")
 \begin{bookoutputbox}
 Training Loss  Validation Loss  Epoch
 -------------  ---------------  -----
-7.486276       7.809189         3
-MLM eval loss:        7.8092
-MLM eval perplexity:  2463.13
+7.481032       7.801960         3
+MLM eval loss:        7.8020
+MLM eval perplexity:  2445.39
 (random baseline PPL: 32,000)
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
 
 
-\textbf{관전 포인트} --- 한국어 Wikipedia paragraphs 에서 MLM loss 가 \emph{random baseline 10.37} 에서 시작해 5-7 부근까지 떨어졌다면 본체가 \emph{일반 한국어 어휘·문맥 구조의 일부} 를 학습한 상태. perplexity 로 환산하면 vocab 약 32,000 중 \emph{수백-수천 개 후보} 로 좁혀진 정도. \ref{ch:22}장의 2 epoch 보다는 약간 얕지만, \emph{NSMC 분류 fine-tune 출발점} 으로는 충분합니다 --- 본체가 \emph{일반 한국어 구조} 를 가지면 \emph{영화 리뷰 비격식 도메인} 도 fine-tune 으로 빠르게 적응.
+\textbf{관전 포인트} --- 한국어 Wikipedia paragraphs 에서 MLM loss 가 \emph{random baseline 10.37} 에서 시작해 \textbf{약 7.8 부근} 까지 떨어졌다면 본체가 \emph{일반 한국어 어휘·문맥 구조의 일부} 를 학습한 상태입니다 --- 이 셋업의 정상 도달점이라 5 이하로 내려가지 않는 것이 고장이 아닙니다 (\ref{ch:22}장의 5K paragraphs \(\times\) 2 epoch 도 약 7.5 에서 멈춥니다). perplexity 로 환산하면 vocab 약 32,000 중 \emph{약 2,400 개 후보} 로 좁혀진 정도 --- 정확값은 위 셀 출력이 단일 출처. \ref{ch:22}장의 2 epoch 보다는 약간 얕지만, \emph{NSMC 분류 fine-tune 출발점} 으로는 충분합니다 --- 본체가 \emph{일반 한국어 구조} 를 가지면 \emph{영화 리뷰 비격식 도메인} 도 fine-tune 으로 빠르게 적응.
 
 \begin{quote}
 \textbf{체크포인트 저장은 생략} --- 노트북 안에서 바로 본체 가중치를 분류 모델로 옮기기 때문. \ref{ch:22}장처럼 디스크에 저장하려면 \inlinecode{mlm\_model.save\_pretrained("./ch23\_mlm\_ckpt")} 한 줄.
@@ -554,7 +562,7 @@ cls_config = BertConfig(
     label2id={"negative": 0, "positive": 1},
 )
 
-cls_model = BertForSequenceClassification(cls_config)
+set_seed(SEED)
 
 \end{lstlisting}
 
@@ -562,6 +570,8 @@ cls_model = BertForSequenceClassification(cls_config)
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}[firstnumber=17]
+cls_model = BertForSequenceClassification(cls_config)
+
 missing, unexpected = cls_model.bert.load_state_dict(
     mlm_model.bert.state_dict(),
     strict=False,
@@ -581,7 +591,7 @@ print(
 \noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=31]
+\begin{lstlisting}[firstnumber=33]
 total_cls = sum(p.numel() for p in cls_model.parameters())
 total_body = sum(
     p.numel() for n,
@@ -603,7 +613,7 @@ print(
 \noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
 \Needspace{8\baselineskip}
-\begin{lstlisting}[firstnumber=47]
+\begin{lstlisting}[firstnumber=49]
     f"{total_head/total_cls:.1%})"
 )
 print(
@@ -771,17 +781,17 @@ print(classification_report(
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 Logits shape: (1000, 2)
-Predicted positive rate: 38.3%
-Top-1 prob mean: correct=0.5245, wrong=0.5226
+Predicted positive rate: 41.0%
+Top-1 prob mean: correct=0.5274, wrong=0.5236
 
               precision    recall  f1-score   support
 
-    negative     0.5397    0.6647    0.5957       501
-    positive     0.5614    0.4309    0.4875       499
+    negative     0.5407    0.6367    0.5848       501
+    positive     0.5561    0.4569    0.5017       499
 
-    accuracy                         0.5480      1000
-   macro avg     0.5505    0.5478    0.5416      1000
-weighted avg     0.5505    0.5480    0.5417      1000
+    accuracy                         0.5470      1000
+   macro avg     0.5484    0.5468    0.5432      1000
+weighted avg     0.5484    0.5470    0.5433      1000
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -830,9 +840,9 @@ weighted avg     0.5505    0.5480    0.5417      1000
 차원 & \ref{ch:15}장 (klue/bert-base) & \ref{ch:23}장 ours (small + MLM) \\
 \midrule
 
-본체 파라미터 & 약 110M & 약 10M \\
-사전학습 코퍼스 & 한국어 위키 + 모두의 말뭉치 + 뉴스 + 댓글 (약 8.4B 토큰) & 한국어 Wikipedia paragraphs 5K (약 50만-80만 토큰) \\
-사전학습 시간 & TPU 수일 & T4 약 8-10분 \\
+본체 파라미터 & 약 110M & 약 11.5M \\
+사전학습 코퍼스 & 한국어 위키 + 모두의 말뭉치 + 뉴스 + 댓글 (약 8.4B 토큰) & 한국어 Wikipedia paragraphs 2K (약 20만 토큰) \\
+사전학습 시간 & TPU 수일 & T4 약 0.2분 (MLM 3 epoch 실측) \\
 Fine-tune 도메인 & NSMC 이진 (다른 도메인) & NSMC 이진 (다른 도메인) \\
 분류 fine-tune 셋업 & (둘 다 같음 --- 5K/1K, batch 16, lr 2e-5, 2 epoch, fp16) & \\
 \bottomrule
@@ -860,9 +870,9 @@ Fine-tune 도메인 & NSMC 이진 (다른 도메인) & NSMC 이진 (다른 도�
 \begin{itemize}
 \tightlist
 \item
-  \textbf{\ref{ch:15}장} (\inlinecode{klue/bert-base}, 약 110M, 약 8.4B 토큰 대규모 한국어 사전학습): accuracy 약 0.86, AUC 약 0.93
+  \textbf{\ref{ch:15}장} (\inlinecode{klue/bert-base}, 약 110M, 약 8.4B 토큰 대규모 한국어 사전학습): accuracy 약 0.86, AUC 약 0.93 (\inlinecode{executed/15\_ko\_binary.ipynb})
 \item
-  \textbf{\ref{ch:23}장 ours} (small BERT, 한국어 Wikipedia 2K paragraphs \(\times\) 3 epoch 사전학습): accuracy 약 0.54, AUC 약 0.56 (동전 던지기 수준 --- MLM 약 0.2분의 짧은 사전학습 한계)
+  \textbf{\ref{ch:23}장 ours} (small BERT, 한국어 Wikipedia 2K paragraphs \(\times\) 3 epoch 사전학습): accuracy 약 0.55, AUC 약 0.57 --- 정확값은 위 셀 출력이 단일 출처 (동전 던지기 수준 --- MLM 약 0.2분의 짧은 사전학습 한계)
 \end{itemize}
 
 \textbf{\ref{ch:15}장 vs \ref{ch:23}장 ours}: accuracy 약 32\%p 격차. 두 모델이 \emph{같은 transfer 패턴} (일반 한국어 위키 \(\to\) NSMC) 을 따르므로 격차의 거의 전부가 \emph{사전학습 규모의 가치} --- 약 8.4B 토큰의 \emph{일반 한국어 지식} 이 \inlinecode{klue/bert-base} 본체에 압축되어 있어, NSMC 같은 \emph{비격식 구어체 도메인} 에도 빠르게 적응합니다. \emph{작은 일반 사전학습 \textless{} 대규모 일반 사전학습} 의 본질은 단순 양적 차이가 아니라 \emph{도메인 다양성의 질적 차이} --- \inlinecode{klue/bert-base} 는 위키 + 뉴스 + 블로그·댓글까지 포함한 약 8.4B 토큰으로 비격식 한국어 도메인도 \emph{이미 본 적이 있어} transfer 가 자연스럽습니다.
@@ -875,7 +885,7 @@ NSMC 는 \emph{짧은 한 줄 리뷰} 이고 \emph{반어·맞춤법 흔들림·
 
 \section{참고: random init baseline}
 
-\emph{MLM 사전학습 없이 random init 으로 바로 분류 fine-tune} 한 결과와의 비교, 그리고 \emph{한국어 위키 \(\to\) NSMC 의 큰 도메인 gap} 에서 발생할 수 있는 \textbf{negative transfer} 현상의 분석은 부록 노트북 \href{./appendix_random_baseline.ipynb}{\inlinecode{appendix\_random\_baseline.ipynb}} 에서 다룹니다. 영어 \ref{ch:21}장 (transfer 양성) 과 한국어 \ref{ch:23}장 (transfer 음성 가능) 의 비대칭 메커니즘이 핵심.
+\emph{MLM 사전학습 없이 random init 으로 바로 분류 fine-tune} 한 결과와의 비교, 그리고 \emph{한국어 위키 \(\to\) NSMC 의 큰 도메인 gap} 에서 발생할 수 있는 \textbf{negative transfer} 현상의 분석은 부록 노트북 \href{https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/23_ko_bert_classify/appendix_random_baseline.ipynb}{\inlinecode{appendix\_random\_baseline.ipynb}} 에서 다룹니다. 영어 \ref{ch:21}장 (transfer 양성) 과 한국어 \ref{ch:23}장 (transfer 음성 가능) 의 비대칭 메커니즘이 핵심.
 
 
 
@@ -912,9 +922,9 @@ NSMC 는 \emph{짧은 한 줄 리뷰} 이고 \emph{반어·맞춤법 흔들림·
 \item
   MLM 학습 첫 step 의 loss 가 약 10.37 인 반면, 분류 fine-tune 첫 step 의 loss 는 약 0.693 입니다. 이 차이가 모델의 학습 어려움 차이를 의미하나요? (힌트: K=vocab\_size 약 32,000 vs K=2)
 \item
-  \ref{ch:23}장 ours 가 \ref{ch:15}장보다 \emph{낮은 정확도} 를 보입니다. 이 격차가 (a) \emph{모델 크기} 차이 (약 10M vs 약 110M), (b) \emph{사전학습 데이터 양·도메인 다양성} 차이 (약 50만-80만 토큰 위키 vs 약 8.4B 토큰 위키+뉴스+댓글) 중 어느 쪽 영향이 클까요? 둘 다 \emph{한국어 일반 도메인 \(\to\) NSMC transfer} 의 같은 패턴이라 \emph{도메인 정합} 변수는 통제됨. 추가 실험으로 어떻게 (a) 와 (b) 를 분리할 수 있나요?
+  \ref{ch:23}장 ours 가 \ref{ch:15}장보다 \emph{낮은 정확도} 를 보입니다. 이 격차가 (a) \emph{모델 크기} 차이 (약 11.5M vs 약 110M), (b) \emph{사전학습 데이터 양·도메인 다양성} 차이 (약 20만 토큰 위키 vs 약 8.4B 토큰 위키+뉴스+댓글) 중 어느 쪽 영향이 클까요? 둘 다 \emph{한국어 일반 도메인 \(\to\) NSMC transfer} 의 같은 패턴이라 \emph{도메인 정합} 변수는 통제됨. 추가 실험으로 어떻게 (a) 와 (b) 를 분리할 수 있나요?
 \item
-  \emph{사전학습 효과의 순 측정} --- 한국어 환경에서는 \emph{얕은 일반 도메인 사전학습} 이 \emph{random init} 보다 우위인지 \emph{비슷한지} 또는 \emph{역전 (negative transfer)} 인지를 직접 확인하려면 어떤 실험이 필요할까요? 영어 \ref{ch:21}장의 패턴 (위키 \(\to\) Yelp transfer) 과 비교해 한국어 NSMC 환경의 특수성은 무엇인가요? (부록 \href{./appendix_random_baseline.ipynb}{\inlinecode{appendix\_random\_baseline.ipynb}} 에서 직접 측정·분석)
+  \emph{사전학습 효과의 순 측정} --- 한국어 환경에서는 \emph{얕은 일반 도메인 사전학습} 이 \emph{random init} 보다 우위인지 \emph{비슷한지} 또는 \emph{역전 (negative transfer)} 인지를 직접 확인하려면 어떤 실험이 필요할까요? 영어 \ref{ch:21}장의 패턴 (위키 \(\to\) Yelp transfer) 과 비교해 한국어 NSMC 환경의 특수성은 무엇인가요? (부록 \href{https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/23_ko_bert_classify/appendix_random_baseline.ipynb}{\inlinecode{appendix\_random\_baseline.ipynb}} 에서 직접 측정·분석)
 \end{enumerate}
 
 
@@ -966,8 +976,8 @@ NSMC 의 \emph{짧은 한 줄} 은 분류 신호가 \emph{한두 단어에 집�
 
 \textbf{MLM 압축 재현} (셀 3) & 선택된 약 15\% 만 원본 token id, 나머지 = \inlinecode{-100} & 가려진 자리 & 주변 문맥으로 \emph{가려진 토큰 복원} \\
 \textbf{NSMC 분류 fine-tune} (셀 4) & 모든 sample 에 \inlinecode{0} 또는 \inlinecode{1} & sample 전체 (배치 차원) & \emph{문장 \(\to\) 긍정/부정} 분류 \\
-\textbf{GPT CausalLM 사전학습} (\ref{ch:24}--\ref{ch:26}장) & \inlinecode{input\_ids.clone()} --- \emph{거의 모든 토큰} & (pad 만 \inlinecode{-100}) 사실상 \emph{전 자리} & 모든 자리에서 \emph{다음 토큰 예측} \\
-\textbf{SFT / Instruction Tuning} (\ref{ch:27}장) & \textbf{prompt 부분 = \inlinecode{-100}}, \emph{답변 토큰만} 원본 id & \emph{답변 부분만} & “질문 외우지 말고 답변하는 법” \\
+\textbf{GPT CausalLM 사전학습·계속 사전학습} (\ref{ch:24}--\ref{ch:27}장) & \inlinecode{input\_ids.clone()} --- \emph{거의 모든 토큰} & (pad 만 \inlinecode{-100}) 사실상 \emph{전 자리} & 모든 자리에서 \emph{다음 토큰 예측} \\
+\textbf{SFT / Instruction Tuning} (\ref{ch:28}장) & \textbf{prompt 부분 = \inlinecode{-100}}, \emph{답변 토큰만} 원본 id & \emph{답변 부분만} & “질문 외우지 말고 답변하는 법” \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -999,7 +1009,7 @@ def cls_tokenize(batch):
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
-축 & \textbf{BERT 파인튜닝} (\ref{ch:09}--\ref{ch:18}장, \ref{ch:23}장) & \textbf{GPT 파인튜닝 = SFT} (\ref{ch:25}장, \ref{ch:27}장) \\
+축 & \textbf{BERT 파인튜닝} (\ref{ch:09}--\ref{ch:18}장, \ref{ch:23}장) & \textbf{GPT 파인튜닝 = SFT} (\ref{ch:28}장) \\
 \midrule
 
 무엇을 바꾸나 & 본체 + \textbf{새 head} (task별 부착) & 본체 + \textbf{기존 LM head 그대로} \\

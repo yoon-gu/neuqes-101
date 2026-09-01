@@ -14,8 +14,8 @@
 
 1. `BertForMaskedLM` 과 `BertForSequenceClassification` 둘 다 *내부에 같은 `BertModel`* 을 갖습니다. 두 모델 사이에서 *어떤 파라미터* 가 이어지고 *어떤 파라미터* 가 새로 학습되나요? (Ch 21 의 같은 질문을 한국어 환경에서 재확인)
 2. MLM 학습 첫 step 의 loss 가 약 10.37 인 반면, 분류 fine-tune 첫 step 의 loss 는 약 0.693 입니다. 이 차이가 모델의 학습 어려움 차이를 의미하나요? (힌트: K=vocab_size 약 32,000 vs K=2)
-3. Ch 23 ours 가 Ch 15 보다 *낮은 정확도* 를 보입니다. 이 격차가 (a) *모델 크기* 차이 (약 10M vs 약 110M), (b) *사전학습 데이터 양·도메인 다양성* 차이 (약 50만-80만 토큰 위키 vs 약 8.4B 토큰 위키+뉴스+댓글) 중 어느 쪽 영향이 클까요? 둘 다 *한국어 일반 도메인 → NSMC transfer* 의 같은 패턴이라 *도메인 정합* 변수는 통제됨. 추가 실험으로 어떻게 (a) 와 (b) 를 분리할 수 있나요?
-4. *사전학습 효과의 순 측정* — 한국어 환경에서는 *얕은 일반 도메인 사전학습* 이 *random init* 보다 우위인지 *비슷한지* 또는 *역전 (negative transfer)* 인지를 직접 확인하려면 어떤 실험이 필요할까요? 영어 Ch 21 의 패턴 (위키 → Yelp transfer) 과 비교해 한국어 NSMC 환경의 특수성은 무엇인가요? (부록 [`appendix_random_baseline.ipynb`](./appendix_random_baseline.ipynb) 에서 직접 측정·분석)
+3. Ch 23 ours 가 Ch 15 보다 *낮은 정확도* 를 보입니다. 이 격차가 (a) *모델 크기* 차이 (약 11.5M vs 약 110M), (b) *사전학습 데이터 양·도메인 다양성* 차이 (약 20만 토큰 위키 vs 약 8.4B 토큰 위키+뉴스+댓글) 중 어느 쪽 영향이 클까요? 둘 다 *한국어 일반 도메인 → NSMC transfer* 의 같은 패턴이라 *도메인 정합* 변수는 통제됨. 추가 실험으로 어떻게 (a) 와 (b) 를 분리할 수 있나요?
+4. *사전학습 효과의 순 측정* — 한국어 환경에서는 *얕은 일반 도메인 사전학습* 이 *random init* 보다 우위인지 *비슷한지* 또는 *역전 (negative transfer)* 인지를 직접 확인하려면 어떤 실험이 필요할까요? 영어 Ch 21 의 패턴 (위키 → Yelp transfer) 과 비교해 한국어 NSMC 환경의 특수성은 무엇인가요? (부록 [`appendix_random_baseline.ipynb`](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/23_ko_bert_classify/appendix_random_baseline.ipynb) 에서 직접 측정·분석)
 
 ## FAQ
 
@@ -39,21 +39,21 @@ nsmc_lens = [len(tokenizer(t)["input_ids"]) for t in df_train["document"][:1000]
 
 NSMC 의 *짧은 한 줄* 은 분류 신호가 *한두 단어에 집중* 됩니다 (`명작`, `시간 낭비`, `감동`). 모델이 *문맥 이해* 보다 *키워드 매칭* 에 가까워져, 사전학습이 얕은 작은 BERT 에는 더 불리합니다 — Ch 15 의 `klue/bert-base` 같은 *대규모 사전학습 + 비격식 코퍼스 포함* 모델이 진가를 발휘하는 영역.
 
-### Q2. (이론) `klue/bert-base` 가 약 110M params 인데 우리 작은 BERT 약 10M 으로 따라잡을 수 있나요? 격차가 얼마나 본질적인가요?
+### Q2. (이론) `klue/bert-base` 가 약 110M params 인데 우리 작은 BERT 약 11.5M 으로 따라잡을 수 있나요? 격차가 얼마나 본질적인가요?
 
 **완전히 따라잡기는 어렵습니다** — 본 챕터의 2-way 비교 (+ 부록의 random init baseline) 가 그 정량입니다.
 
 | 차원 | klue/bert-base | 우리 작은 BERT |
 |---|---|---|
-| 본체 파라미터 | 약 110M | 약 10M (11x 작음) |
-| 사전학습 코퍼스 | 약 8.4B 토큰 (한국어 위키 + 모두의 말뭉치 + 뉴스 + 댓글) | 약 20만-30만 토큰 (위키 2K paragraphs × 3 epoch) — *약 30,000x 격차* |
-| 사전학습 시간 | TPU 수일 | T4 약 8-12분 |
+| 본체 파라미터 | 약 110M | 약 11.5M (약 10x 작음) |
+| 사전학습 코퍼스 | 약 8.4B 토큰 (한국어 위키 + 모두의 말뭉치 + 뉴스 + 댓글) | 약 20만 토큰 (위키 2K paragraphs → 1,562 블록 × 128) — *약 4만 배 격차* |
+| 사전학습 시간 | TPU 수일 | T4 약 0.2분 (MLM 3 epoch 실측) |
 
-본 챕터의 *T4 30분 룰* 안에서 가능한 최대치는 *MLM 데이터 약 10K-15K paragraphs + 2 epoch* 정도. 그래도 *대규모 사전학습* 의 격차는 메우기 어렵습니다 — *데이터 규모 자체의 가치* 가 진짜 BERT 의 비밀.
+MLM 3 epoch 이 실측 약 0.2분이라 *T4 30분 룰* 의 상한은 학습이 아니라 **한국어 위키 parquet 다운로드와 토큰화·메모리** 입니다 — paragraphs 를 수만 단위로 늘려도 학습 시간 자체는 몇 분 수준. 그렇게 늘려도 *대규모 사전학습* 의 격차는 메우기 어렵습니다 — *데이터 규모 자체의 가치* 가 진짜 BERT 의 비밀.
 
 ```python
-# T4 30분 룰 안에서 격차 줄여 보기
-N_MLM_TRAIN = 10000          # 2K -> 10K (5x)
+# T4 30분 룰 안에서 격차 줄여 보기 (학습 시간보다 다운로드·토큰화가 상한)
+N_MLM_TRAIN = 10000          # 2K -> 10K (5x). 학습은 여전히 1분 남짓
 MLM_EPOCHS = 3               # 그대로 유지 (3 epoch 가 본체 정렬 적정선)
 # 또는 모델 키우기
 HIDDEN_SIZE = 384            # 256 -> 384, 약 18M params, T4 안 가능
@@ -88,8 +88,8 @@ cls_model.bert.load_state_dict(mlm_model.bert.state_dict(), strict=False)
 |---|---|---|---|
 | **MLM 압축 재현** (셀 3) | 선택된 약 15% 만 원본 token id, 나머지 = `-100` | 가려진 자리 | 주변 문맥으로 *가려진 토큰 복원* |
 | **NSMC 분류 fine-tune** (셀 4) | 모든 sample 에 `0` 또는 `1` | sample 전체 (배치 차원) | *문장 → 긍정/부정* 분류 |
-| **GPT CausalLM 사전학습** (Ch 24-26) | `input_ids.clone()` — *거의 모든 토큰* | (pad 만 `-100`) 사실상 *전 자리* | 모든 자리에서 *다음 토큰 예측* |
-| **SFT / Instruction Tuning** (Ch 27) | **prompt 부분 = `-100`**, *답변 토큰만* 원본 id | *답변 부분만* | "질문 외우지 말고 답변하는 법" |
+| **GPT CausalLM 사전학습·계속 사전학습** (Ch 24-27) | `input_ids.clone()` — *거의 모든 토큰* | (pad 만 `-100`) 사실상 *전 자리* | 모든 자리에서 *다음 토큰 예측* |
+| **SFT / Instruction Tuning** (Ch 28) | **prompt 부분 = `-100`**, *답변 토큰만* 원본 id | *답변 부분만* | "질문 외우지 말고 답변하는 법" |
 
 ```python
 # 분류 task — 모든 sample 에 라벨, -100 사용 안 함
@@ -105,7 +105,7 @@ def cls_tokenize(batch):
 
 본 챕터는 **Phase 3 의 마지막 챕터** 이자 *마지막 BERT 파인튜닝 (task head 부착 패러다임)* 챕터입니다. Phase 4 (Ch 24-) 부터는 같은 단어 "파인튜닝" 이 *다른 의미* 로 쓰입니다.
 
-| 축 | **BERT 파인튜닝** (Ch 9-18, Ch 23) | **GPT 파인튜닝 = SFT** (Ch 25, Ch 27) |
+| 축 | **BERT 파인튜닝** (Ch 9-18, Ch 23) | **GPT 파인튜닝 = SFT** (Ch 28) |
 |---|---|---|
 | 무엇을 바꾸나 | 본체 + **새 head** (task별 부착) | 본체 + **기존 LM head 그대로** |
 | 출력 형식 | task별 다름 (class id / score / multi-hot) | *항상 토큰 시퀀스* — 형식 통일 |
@@ -134,9 +134,9 @@ for i in confident_wrong[:5]:
 
 **일반 도메인 사전학습 + 다른 도메인 fine-tune transfer 가 *task 별 from-scratch 학습 보다 압도적으로 효율적*** 이라는 것이 Phase 3 의 한 줄 결론. 본 챕터의 2-way 비교와 부록의 random init baseline 이 그 직접 증거:
 
-- *random init* 만 가지고 NSMC fine-tune: accuracy 약 0.50-0.55 (부록에서 측정 — 한국어 환경에선 negative transfer 로 *작은 사전학습 모델* 과 비등하거나 역전될 수도)
-- *작은 일반 도메인 사전학습 + fine-tune* (본 챕터): accuracy 약 0.54 (실측 — MLM 약 0.2분의 짧은 사전학습이라 동전 던지기에 가까움)
-- *대규모 일반 도메인 사전학습 + fine-tune* (Ch 15): accuracy 약 0.86 (실무 baseline)
+- *random init* 만 가지고 NSMC fine-tune: accuracy 약 0.60 (부록 실측 — 한국어 환경에선 negative transfer 로 *작은 사전학습 모델* 을 앞지릅니다)
+- *작은 일반 도메인 사전학습 + fine-tune* (본 챕터): accuracy 약 0.55 (실측 — MLM 약 0.2분의 짧은 사전학습이라 동전 던지기에 가까움)
+- *대규모 일반 도메인 사전학습 + fine-tune* (Ch 15): accuracy 약 0.86 (실무 baseline, `executed/15_ko_binary.ipynb`)
 
 세 셋업의 격차가 *사전학습 데이터 양·도메인 다양성 + 모델 크기* 에 거의 비례 (한국어는 도메인 다양성 변수가 특히 중요). *task 도메인으로 직접 사전학습* 하지 않고 *일반 위키* 만으로도 충분한 transfer 가 일어난다는 게 *원본 BERT 의 진짜 통찰*.
 

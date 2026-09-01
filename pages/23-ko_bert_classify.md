@@ -1,24 +1,26 @@
-**목표**: Phase 3 의 마지막 챕터. Ch 22 에서 *작은 한국어 BERT 를 일반 도메인 (한국어 Wikipedia) 으로 직접 MLM 사전학습* 했다면, 이번엔 그 위에 **분류 헤드를 얹어 *완전히 다른 도메인 (NSMC 영화 리뷰)* 이진 분류로 fine-tune** 합니다. Ch 15 (`klue/bert-base`, 약 110M params, 약 8.4B 토큰 대규모 한국어 사전학습) 와 같은 NSMC 분류 셋업에 *우리가 만든 작은 BERT* (약 10M params, 한국어 위키 2K paragraphs × 3 epoch MLM) 를 붙여 두 결과를 나란히 비교 — 둘 다 *일반 한국어 사전학습 → NSMC transfer* 라 비교가 *fair*, *사전학습 규모* 차이만 측정됩니다.
+**목표**: Phase 3 의 마지막 챕터. Ch 22 에서 *작은 한국어 BERT 를 일반 도메인 (한국어 Wikipedia) 으로 직접 MLM 사전학습* 했다면, 이번엔 그 위에 **분류 헤드를 얹어 *완전히 다른 도메인 (NSMC 영화 리뷰)* 이진 분류로 fine-tune** 합니다. Ch 15 (`klue/bert-base`, 약 110M params, 약 8.4B 토큰 대규모 한국어 사전학습) 와 같은 NSMC 분류 셋업에 *우리가 만든 작은 BERT* (약 11.5M params, 한국어 위키 2K paragraphs × 3 epoch MLM) 를 붙여 두 결과를 나란히 비교 — 둘 다 *일반 한국어 사전학습 → NSMC transfer* 라 비교가 *fair*, *사전학습 규모* 차이만 측정됩니다.
 
 본 챕터의 강점: *위키 사전학습 → NSMC 분류 transfer* 가 **진짜 transfer**. 사전학습이 *task 도메인 (영화 리뷰) 자체* 를 본 적이 없는 일반 위키 본문으로 진행되어, *일반 표상 학습 → 다른 도메인 fine-tune* 의 정직한 메시지가 나옵니다. **두 데이터셋이 노트북 안에 공존** — MLM 용 한국어 Wikipedia (2K paragraphs × 3 epoch) + 분류용 NSMC (5K/1K).
 
-self-contained 노트북: Ch 22 의 MLM 학습을 짧게 재현 → 같은 본체로 분류 fine-tune → Ch 15 결과와 2-way 비교. **random init baseline 비교 + negative transfer 분석** 은 부록 노트북 [`appendix_random_baseline.ipynb`](./appendix_random_baseline.ipynb) 으로 분리.
+self-contained 노트북: Ch 22 의 MLM 학습을 짧게 재현 → 같은 본체로 분류 fine-tune → Ch 15 결과와 2-way 비교. **random init baseline 비교 + negative transfer 분석** 은 부록 노트북 [`appendix_random_baseline.ipynb`](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/23_ko_bert_classify/appendix_random_baseline.ipynb) 으로 분리.
 
 **환경**: Google Colab **T4 GPU 필수**.
 
-**예상 소요 시간**: 약 20-23분 (한국어 위키 다운로드·필터링 약 2분 + MLM 3 epoch 약 8-10분 + 분류 fine-tune 2 epoch 약 8-10분 + 평가 약 2분)
+**예상 소요 시간**: 약 2-4분 — 대부분이 데이터 다운로드입니다 (실행본 `executed/23_ko_bert_classify.ipynb` 기준 전체 약 2분: 한국어 위키·NSMC 다운로드·전처리 약 1분 30초 + MLM 3 epoch 약 0.2분 + 분류 fine-tune 2 epoch 약 0.2분 + 평가·시각화 수 초). 다운로드 속도에 따라 달라집니다.
+
 
 ## 학습 흐름
 
 1. 🚀 **분류 데이터**: NSMC 이진 (e9t/nsmc, GitHub raw TSV, Ch 15 와 같은 5K/1K split, seed 42)
 2. 🔤 **토크나이저**: `klue/bert-base` (Ch 22 와 동일)
-3. 📥 **MLM 사전학습 데이터**: `wikimedia/wikipedia` `20231101.ko` paragraphs 5K (일반 도메인 — *분류용 NSMC 와 별도*)
+3. 📥 **MLM 사전학습 데이터**: `wikimedia/wikipedia` `20231101.ko` paragraphs 2K (일반 도메인 — *분류용 NSMC 와 별도*)
 4. 🏗️ **MLM 사전학습 재현 (Ch 22 압축본)**: 같은 작은 BertConfig 로 2K paragraphs × 3 epoch
 5. 🔀 **헤드 교체**: `BertForMaskedLM` → `BertForSequenceClassification(num_labels=2)`. 본체는 그대로, MLM head 떼고 분류 head 부착
 6. 🚀 **분류 fine-tune**: Trainer fp16, 2 epoch
 7. 🔬 **평가**: accuracy / precision / recall / F1 / AUC (Ch 15 / Ch 21 과 같은 5종) + confusion matrix
 8. 🆚 **Ch 15 vs Ch 23 ours** 2-way 비교 — 정확도, 모델 크기, 사전학습 토큰량
-9. 📒 **부록**: random init baseline + negative transfer 분석 → [`appendix_random_baseline.ipynb`](./appendix_random_baseline.ipynb)
+9. 📒 **부록**: random init baseline + negative transfer 분석 → [`appendix_random_baseline.ipynb`](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/23_ko_bert_classify/appendix_random_baseline.ipynb)
+
 
 > 📒 **사전 학습 자료**: Ch 22 (한국어 작은 BERT scratch MLM, 한국어 Wikipedia), Ch 15 (`klue/bert-base` 한국어 사전학습 + NSMC 이진 분류), Ch 21 (영어 작은 BERT 분류 — 본 챕터의 영어 대칭본). Ch 23 은 세 챕터를 *합쳐서* — Ch 22 의 한국어 일반 도메인 사전학습 흐름 그대로 + Ch 15 의 한국어 분류 fine-tune 평가 그대로 + Ch 21 의 transfer 메시지를 한국어 환경에서 재확인. **Phase 3 의 마지막 챕터** — Phase 4 (Ch 24, GPT scratch) 부터는 *decoder-only* 와 *SFT 의미의 파인튜닝* 으로 흐름이 바뀝니다.
 
@@ -28,9 +30,9 @@ self-contained 노트북: Ch 22 의 MLM 학습을 짧게 재현 → 같은 본�
 |---|---|---|---|---|---|---|
 | 15 | `klue/bert-base` 파인튜닝 (약 110M) | WordPiece (한국어, 사전학습) | NSMC (네이버 영화 리뷰, 이진) | `Linear(H, 2)` | softmax | `CrossEntropyLoss` |
 | 20 | 작은 BERT (직접, scratch) | `bert-base-uncased` 토크나이저 (가져옴) | Wikitext-103 paragraphs (일반 도메인) | MLM head | softmax (MLM) | `CrossEntropyLoss` (masked token) |
-| 21 | Ch 20 사전학습 BERT + 분류 헤드 (약 10M) | (Ch 20과 동일) | Yelp 이진화 (다른 도메인 transfer) | `Linear(H, 2)` | softmax | `CrossEntropyLoss` |
+| 21 | Ch 20 사전학습 BERT + 분류 헤드 (약 11.1M) | (Ch 20과 동일) | Yelp 이진화 (다른 도메인 transfer) | `Linear(H, 2)` | softmax | `CrossEntropyLoss` |
 | 22 | 작은 BERT (직접, scratch) — 한국어 | `klue/bert-base` 토크나이저 (가져옴) | 한국어 Wikipedia paragraphs (일반 도메인) | MLM head | softmax (MLM) | `CrossEntropyLoss` (masked token) |
-| **23 ← 여기** | **Ch 22 사전학습 BERT + 분류 헤드 (약 10M)** | **(Ch 22와 동일)** | **NSMC 이진 (다른 도메인 transfer)** | **`Linear(H, 2)`** | **softmax** | **`CrossEntropyLoss`** |
+| **23 ← 여기** | **Ch 22 사전학습 BERT + 분류 헤드 (약 11.5M)** | **(Ch 22와 동일)** | **NSMC 이진 (다른 도메인 transfer)** | **`Linear(H, 2)`** | **softmax** | **`CrossEntropyLoss`** |
 | 24 (다음, Phase 4) | GPT-2 (직접, scratch) | BPE 토크나이저 (직접 학습) | TinyStories 영어 동화 | LM head | softmax (next-token) | `CrossEntropyLoss` (causal LM) |
 
 전체 챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
@@ -67,20 +69,20 @@ self-contained 노트북: Ch 22 의 MLM 학습을 짧게 재현 → 같은 본�
 
 | 차원 | Ch 15 (klue/bert-base) | Ch 23 (이 챕터) | 비고 |
 |---|---|---|---|
-| 본체 파라미터 | 약 110M | **약 10M** | Ch 23 은 1/11 작음 |
-| 사전학습 코퍼스 | 한국어 위키 + 모두의 말뭉치 + 뉴스 + 댓글 (약 8.4B 토큰, 일반 도메인) | **한국어 Wikipedia paragraphs 5K (약 50만-80만 토큰, 일반 도메인)** | 약 10,000배 격차, **둘 다 일반 한국어 코퍼스** |
-| 사전학습 시간 | TPU 수일 | **T4 약 8-10분** | |
+| 본체 파라미터 | 약 110M | **약 11.5M** | Ch 23 은 약 1/10 크기 |
+| 사전학습 코퍼스 | 한국어 위키 + 모두의 말뭉치 + 뉴스 + 댓글 (약 8.4B 토큰, 일반 도메인) | **한국어 Wikipedia paragraphs 2K (약 20만 토큰, 일반 도메인)** | 약 4만 배 격차, **둘 다 일반 한국어 코퍼스** |
+| 사전학습 시간 | TPU 수일 | **T4 약 0.2분** (MLM 3 epoch 실측) | |
 | Fine-tune 도메인 | NSMC 이진 (사전학습과 다른 도메인) | NSMC 이진 (사전학습과 다른 도메인) | **둘 다 일반 한국어 → NSMC transfer 라 fair** |
 | 분류 fine-tune 셋업 | Ch 15 = 이번 챕터 동일 (같은 데이터, 같은 hyperparams) | | 변하는 건 *본체 출발점* 뿐 |
-| 실측 accuracy | 약 0.86 | **약 0.54** | 실행본 기준 (Ch 15=0.86, Ch 23=0.5420). 짧은 사전학습(MLM 약 0.2분)이라 동전 던지기에 가까움 |
+| 실측 accuracy | 약 0.86 (`executed/15_ko_binary.ipynb`) | **약 0.55** | Ch 23 의 정확값은 5절 셀 출력이 단일 출처. 짧은 사전학습(MLM 약 0.2분)이라 동전 던지기에 가까움 |
 
-비교가 *공정* 한 이유 — Ch 15 도 본 챕터도 둘 다 *일반 도메인 한국어 사전학습 → NSMC 분류 transfer* 의 같은 패턴. *사전학습 규모* (약 10,000배) 와 *모델 크기* (11배) 만 차이. 만약 Ch 23 이 NSMC text 로 사전학습했다면 비교가 unfair 했을 것 — domain-adaptive pretraining 우위 때문.
+비교가 *공정* 한 이유 — Ch 15 도 본 챕터도 둘 다 *일반 도메인 한국어 사전학습 → NSMC 분류 transfer* 의 같은 패턴. *사전학습 규모* (약 4만 배) 와 *모델 크기* (약 10배) 만 차이. 만약 Ch 23 이 NSMC text 로 사전학습했다면 비교가 unfair 했을 것 — domain-adaptive pretraining 우위 때문.
 
 ### Ch 21 (영어) → Ch 23 (한국어) 대칭
 
 | 항목 | Ch 21 (영어) | Ch 23 (한국어, 이번 챕터) |
 |---|---|---|
-| 사전학습 코퍼스 (일반 도메인) | Wikitext-103 paragraphs 5K | 한국어 Wikipedia paragraphs 5K |
+| 사전학습 코퍼스 (일반 도메인) | Wikitext-103 paragraphs 2K (약 27만 토큰) | 한국어 Wikipedia paragraphs 2K (약 20만 토큰) |
 | 분류 데이터 (다른 도메인) | Yelp polarity 5K/1K | NSMC 5K/1K |
 | 비교 대상 (대규모 사전학습) | Ch 10 (DistilBERT, 약 66M, 약 33억 토큰) | Ch 15 (`klue/bert-base`, 약 110M, 약 8.4B 토큰) |
 | 토크나이저 | `bert-base-uncased` | `klue/bert-base` |
@@ -114,18 +116,21 @@ $$L_{\text{cls}} = -\frac{1}{N}\sum_{i=1}^{N} \log \hat p_{i, y_i}$$
 
 | 셋업 | 학습 첫 step loss | 학습 종료 loss (epoch 2) | 메모 |
 |---|---|---|---|
-| 한국어 Wikipedia MLM 사전학습 본체 + 분류 (본 챕터) | 약 0.693 | **약 0.45-0.6** | 본체에 *일반 한국어 어휘·문맥 구조* 가 들어 있어 헤드가 NSMC 분류로 비교적 빠르게 적응 |
-| Ch 15 `klue/bert-base` 사전학습 본체 + 분류 | 약 0.693 | **약 0.25-0.4** | 대규모 일반 한국어 사전학습이 만든 표상의 위력 |
+| 한국어 Wikipedia MLM 사전학습 본체 + 분류 (본 챕터) | 약 0.693 | **약 0.69 ← 실측** | 본체가 *일반 위키 어휘* 만 얕게 학습한 상태라, NSMC 짧은 구어체에서는 random init 대비 우위가 보장되지 않습니다 |
+| Ch 15 `klue/bert-base` 사전학습 본체 + 분류 | 약 0.693 | **약 0.39** (`executed/15_ko_binary.ipynb`) | 대규모 일반 한국어 사전학습이 만든 표상의 위력 — *이 셋업의 사정거리 밖* |
 
-random baseline 은 *두 셋업 모두 같음* — 사전학습이 *학습 속도* 와 *수렴점* 에 영향. 학습 첫 step loss 가 같다고 사전학습이 의미 없는 게 아닙니다. *위키 사전학습 본체* 가 NSMC 도메인에서 *완벽한 성능* 을 내지는 못해도, random 보다 일관되게 빠르고 낮게 수렴 (사전학습 없는 random init 과의 직접 비교는 부록 [`appendix_random_baseline.ipynb`](./appendix_random_baseline.ipynb)).
+본 챕터의 종료 loss 가 랜덤 기준선 `ln 2` = 0.693 바로 아래에서 평탄한 것은 **고장이 아니라 이 셋업(작은 본체 + 위키 2K paragraphs × 3 epoch)의 정상 도달점** 입니다. 정확값은 5절 셀 출력이 단일 출처입니다.
 
-> **숫자로 감 잡기** (K=2, 정답 = 클래스 1):
-> | logits $(z_0, z_1)$ | softmax → $\hat p_1$ | 손실 |
-> |---|---|---|
-> | (0, 0) | 0.5 | **0.693** ← random |
-> | (-1, +1) | 0.881 | 0.127 |
-> | (-2, +2) | 0.982 | 0.018 |
-> | (+2, -2) | 0.018 | **4.018** ← 자신 있게 틀림 |
+random baseline 은 *두 셋업 모두 같음* — 사전학습이 *학습 속도* 와 *수렴점* 에 영향을 줍니다. 다만 **얕은 일반 도메인 사전학습이 random init 보다 낫다는 보장은 없습니다**. 이 셋업 (위키 2K paragraphs × 3 epoch → NSMC 한 줄 구어체) 의 부록 실측은 오히려 *random init 쪽이 높습니다* — accuracy 약 0.55 vs 약 0.60, 즉 **negative transfer**. 사전학습 없는 random init 과의 직접 비교와 그 메커니즘은 부록 [`appendix_random_baseline.ipynb`](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/23_ko_bert_classify/appendix_random_baseline.ipynb) 에서 다룹니다.
+
+**숫자로 감 잡기** (K=2, 정답 = 클래스 1):
+
+| logits $(z_0, z_1)$ | softmax → $\hat p_1$ | 손실 |
+|---|---|---|
+| (0, 0) | 0.5 | **0.693** ← random |
+| (-1, +1) | 0.881 | 0.127 |
+| (-2, +2) | 0.982 | 0.018 |
+| (+2, -2) | 0.018 | **4.018** ← 자신 있게 틀림 |
 
 ## 토크나이저 노트
 
