@@ -9,14 +9,11 @@
 **▶ 실행 결과**
 
 ```text
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 102.1 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 49.4 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.2/389.2 kB 38.0 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 0.0/48.9 MB ? eta -:--:--
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╺━━━━━━ 40.4/48.9 MB 169.3 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 140.6 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 140.6 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 16.9 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 559.1/559.1 kB 26.8 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━╸━━━━━━━━━━━━━━━━━━━━━━━ 21.0/50.1 MB 204.9 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 240.6 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 240.6 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 50.1/50.1 MB 18.4 MB/s eta 0:00:00
 ```
 
 ```python
@@ -103,6 +100,11 @@ print(raw_train[0]["text"][:400])
 **▶ 실행 결과**
 
 ```text
+data/train-00000-of-00004-2d5a1467fff108(…): downloading bytes:           |  0.00B            
+data/train-00001-of-00004-5852b56a2bd28f(…): downloading bytes:           |  0.00B            
+data/train-00002-of-00004-a26307300439e9(…): downloading bytes:           |  0.00B            
+data/train-00003-of-00004-d243063613e5a0(…): downloading bytes:           |  0.00B            
+data/validation-00000-of-00001-869c898b5(…): downloading bytes:           |  0.00B            
 train: Dataset({
     features: ['text'],
     num_rows: 30000
@@ -122,7 +124,7 @@ To
 
 **결과 해석**
 
-train 30,000 편 / val 500 편이 정상적으로 로드되었고, 샘플 story 가 "One day, a little girl named Lily..." 처럼 4세 어린이가 이해할 단어로만 쓰인 짧은 동화임이 보입니다. 이 단순한 어휘·문법 덕분에 약 3M 짜리 작은 모델로도 grammatical 한 생성이 가능합니다.
+train 30,000 편 / val 500 편이 정상적으로 로드되었고, 샘플 story 가 "One day, a little girl named Lily..." 처럼 4세 어린이가 이해할 단어로만 쓰인 짧은 동화임이 보입니다. 이 단순한 어휘·문법 덕분에 약 3.7M 짜리 작은 모델로도 grammatical 한 생성이 가능합니다.
 
 ## BPE 토크나이저 직접 학습
 
@@ -187,7 +189,7 @@ print(f"eos_token  : {tokenizer.eos_token}  id={tokenizer.eos_token_id}")
 **▶ 실행 결과**
 
 ```text
-BPE training done: 10.3s, vocab=2048
+BPE training done: 10.7s, vocab=2048
 
 === encode/decode demo ===
 input      : Once upon a time, a little rabbit went to the forest.
@@ -350,7 +352,7 @@ total positions      : 256
 
 `GPT2Config` 의 핵심 필드만 작게 잡고 *random init* (사전학습 X) 시작.
 
-- `n_layer=4, n_head=4, n_embd=256` → 약 3M params, BERT 챕터들의 small DistilBERT 와 비슷한 스케일
+- `n_layer=4, n_head=4, n_embd=256` → 약 3.7M params — Ch 20·22 의 작은 BERT (약 11.5M) 의 약 1/3 스케일
 - `n_positions = BLOCK_SIZE = 128` - 학습한 만큼만 context 사용
 - bos / eos / pad token id 를 토크나이저와 동기화
 - `tie_word_embeddings=True` (기본) - LM head 와 input embedding 의 weight 를 공유 → 파라미터 절약
@@ -360,7 +362,7 @@ total positions      : 256
 - `BertForMaskedLM` 이 아니라 `GPT2LMHeadModel` - 클래스 자체가 *causal attention 내장*
 - `from_pretrained(...)` 없이 `GPT2LMHeadModel(config)` - 무작위 초기화 from scratch (Ch 20·22 의 `BertForMaskedLM(config)` 와 같은 패턴, *모델 패밀리만* 다름)
 
-`GPT2Config` 의 핵심 필드만 작게 (`n_layer=4, n_head=4, n_embd=256`) 잡아 약 3M 짜리 작은 모델을 *random init* 으로 띄웁니다. `from_pretrained` 없이 `GPT2LMHeadModel(config)` 로 만드는 것이 from-scratch 의 핵심이고, bos/eos/pad token id 를 토크나이저와 동기화해야 generation 이 정상 종료됩니다.
+`GPT2Config` 의 핵심 필드만 작게 (`n_layer=4, n_head=4, n_embd=256`) 잡아 약 3.7M 짜리 작은 모델을 *random init* 으로 띄웁니다. `from_pretrained` 없이 `GPT2LMHeadModel(config)` 로 만드는 것이 from-scratch 의 핵심이고, bos/eos/pad token id 를 토크나이저와 동기화해야 generation 이 정상 종료됩니다.
 
 ```python
 from transformers import GPT2Config, GPT2LMHeadModel
@@ -460,18 +462,18 @@ for p in PROMPTS:
 UNTRAINED model - generation from random initial weights
 ======================================================================
 [prompt] Once upon a time,
-Once upon a time,ushinkush min is wondered5 cruallyked bed farmer smo wonder smo dropped crush child�� grabbed home5ail wonder� bed j( slow …(뒤 96자 생략)
+Once upon a time, any again�� Sally gardBsyons Lila ve bar�Hello sign� sear sear wasn wasnag with snowwhereerix surprised y laug herllowat b …(뒤 113자 생략)
 [prompt] The little girl
-The little girlakak everyush Sarahgged:un't different different# gl keepner Graied likedJackampsel turnedDo decided beautiful} Gra has Benny …(뒤 120자 생략)
+The little girl outside_ prin oldisy roll toy le joy carefully redaisy clot hugsav Tied mar fro has� sto�hyuc so accidenterefulful wet Spll …(뒤 137자 생략)
 [prompt] A big dog
-A big dog cle music hisftere learnedpe fam pullve bat batinin paper paper teacherkes cr wear soup yes curi tw7 colors wall runlf This Sam bb …(뒤 113자 생략)
+A big dog hunoughummy Fluffy disapp� stuck The The feeling�_ desavyseideHe your stose accidentby count sear lo swingpe5 far through surprise …(뒤 120자 생략)
 ```
 
 **결과 해석**
 
-세 prompt 모두 영어와 거리가 먼 byte 조각·의미 없는 짧은 단어가 반복되는 무작위 나열입니다. logits 가 random 초기값이라 sampling 이 통계적 빈도 토큰 사이에서만 흔들리는 상태로, 학습 후 결과의 비교 기준선이 됩니다.
+세 prompt 모두 영어와 거리가 먼 byte 조각·의미 없는 짧은 단어가 반복되는 무작위 나열입니다. logits 가 random 초기값이라 분포가 거의 균등해 sampling 이 빈도와 무관하게 vocab 전체에서 뽑는 상태로, 학습 후 결과의 비교 기준선이 됩니다.
 
-**관전 포인트** - 학습 전 출력은 *무작위 토큰 나열* (반복되는 짧은 byte 조각, 의미 없는 단어들). Ch 20·22 의 *학습 전 [MASK] top-5* 가 *the / a / of / , / .* 같은 통계적 빈도 토큰이었던 것과 같은 현상의 *generation 판* 입니다. 학습 후 출력과 *나란히 비교* 하면 사전학습이 본체에 *next-token 분포* 를 새긴 증거를 직접 보게 됩니다.
+**관전 포인트** - 학습 전 출력은 *무작위 토큰 나열* (반복되는 짧은 byte 조각, 의미 없는 단어들). random init 의 logits 는 거의 균등 분포라 `top_k=50` 후보가 매 step *vocab 무작위 표본* 이 되고, vocab 대부분이 희귀 조각이라 이런 나열이 나옵니다. Ch 20·22 의 *학습 전 [MASK] top-5* 도 같은 이유로 *빈도와 무관한 희귀 토큰* 이었습니다 — 거기서 *the / , / .* 같은 고빈도 기능 토큰이 올라온 것은 학습 *후* 이고, 사전학습이 가장 먼저 새기는 것이 vocab 빈도 통계라는 뜻입니다. 학습 후 출력과 *나란히 비교* 하면 사전학습이 본체에 *next-token 분포* 를 새긴 증거를 직접 보게 됩니다.
 
 ## `Trainer` 로 사전학습
 
@@ -559,27 +561,27 @@ if torch.cuda.is_available():
 ```text
 [transformers] `loss_type=None` was set in the config but it is unrecognized. Using the default loss: `ForCausalLMLoss`.
 Step  Training Loss  Validation Loss
-150   4.943553       4.512319
-300   4.164156       3.928088
-450   3.859346       3.635721
-600   3.661513       3.438943
-750   3.525258       3.297616
-900   3.410508       3.207347
-1050  3.381458       3.144733
-1200  3.332278       3.108168
-1350  3.313862       3.091538
-1500  3.305599       3.088617
+150   4.793751       4.404722
+300   4.091294       3.842071
+450   3.763691       3.538971
+600   3.566863       3.346995
+750   3.439389       3.211231
+900   3.324096       3.125928
+1050  3.293605       3.063447
+1200  3.244897       3.022857
+1350  3.224973       3.004528
+1500  3.215564       3.001219
 === training summary ===
-elapsed       : 0.87 min
+elapsed       : 0.88 min
 global_step   : 1500
-train_loss    : 3.8319
+train_loss    : 3.7399
 random baseline (ln vocab): 7.6246
 final peak    : 60 MiB
 ```
 
 **결과 해석**
 
-1500 step 학습이 약 0.87분 만에 끝났고, 누적 평균 `train_loss` 가 3.83 으로 random baseline `ln(2048) ≈ 7.62` 에서 크게 내려왔습니다. perplexity 로는 약 $e^{3.83} \approx 46$ 으로, vocab 2,048 중 수십 개 후보로 좁힌 상태이고 peak VRAM 도 60MiB 에 불과해 T4 30분 룰 안에 여유롭게 들어옵니다.
+1500 step 학습이 약 0.88분 만에 끝났고, 누적 평균 `train_loss` 가 3.74 로 random baseline `ln(2048) ≈ 7.62` 에서 크게 내려왔습니다. perplexity 로는 약 $e^{3.74} \approx 42$ 으로, vocab 2,048 중 수십 개 후보로 좁힌 상태이고 peak VRAM 도 60MiB 에 불과해 T4 30분 룰 안에 여유롭게 들어옵니다.
 
 학습 로그에서 train/eval loss 와 step 별 peak VRAM 을 뽑아 두 패널로 그립니다. loss 패널에는 `ln(2048)` 무작위 추측 기준선을 점선으로 함께 표시해, 곡선이 그 기준선에서 얼마나 내려왔는지를 한눈에 보게 합니다.
 
@@ -620,9 +622,9 @@ plt.tight_layout(); plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/24-gpt_tinystories-out1-1.png)
+![output](../assets/24-gpt_tinystories-out1-2.png)
 
-**관전 포인트** - 학습 첫 step loss 가 약 7.6 (random baseline `ln(2048)`) 부근에서 시작해 *수백 step 안에 약 4-5* 로 빠르게 떨어지고, 1500 step 끝에 누적 평균 `train_loss` 가 *약 3.8* 까지 내려가면 정상 (`train_loss` 는 학습 내내 본 step 들의 누적 평균이라 마지막 step 의 순간 loss 보다 다소 높게 보입니다). perplexity 로 환산하면 vocab 2,048 중 *수십 개 후보* 로 좁힌 상태 - 다음 토큰을 *어느 정도 결정적* 으로 뽑는 수준.
+**관전 포인트** - 학습 첫 step loss 가 약 7.6 (random baseline `ln(2048)`) 부근에서 시작해 *수백 step 안에 약 4-5* 로 빠르게 떨어지고, 1500 step 끝에 누적 평균 `train_loss` 가 *약 3.7* 까지 내려가면 정상 (실행 환경·라이브러리 버전에 따라 ±0.1 수준 변동 — 정확값은 위 학습 셀 출력이 단일 출처) (`train_loss` 는 학습 내내 본 step 들의 누적 평균이라 마지막 step 의 순간 loss 보다 다소 높게 보입니다). perplexity 로 환산하면 vocab 2,048 중 *수십 개 후보* 로 좁힌 상태 - 다음 토큰을 *어느 정도 결정적* 으로 뽑는 수준.
 
 ## 학습 *후* generation + before/after 비교
 
@@ -651,17 +653,17 @@ for p in PROMPTS:
 TRAINED model - generation after Trainer.train()
 ======================================================================
 [prompt] Once upon a time,
-Once upon a time, there was a girl named Lily. She loved to play with her friends. She loved to play outside to play with her friends when t …(뒤 32자 생략)
+Once upon a time, there was a girl named Lily. She loved to play with her friends. She had a big ball to play with a new toy. Every day, Jan …(뒤 98자 생략)
 
-One day, Lily saw a small house, a boy named Timmy. He was so happy because he saw a big
+Lily wanted
 [prompt] The little girl
-The little girl had been a wonderful time. It was so happy to see the park. She thanked the garden, and the girl. She thanked the little gir …(뒤 129자 생략)
+The little girl had been able to go home and play with her mommy. She kept her bed and she got better. She had a new friends and had a lot of fun.
+
+One day, Lily saw a big dog named Lily. She had an idea. She was very sad and couldn't get off
 [prompt] A big dog
-A big dog, but they could go in the park. They ran away and the truck. The bird was sad. It had a bit fun.
+A big dog came to the dog. They saw the tree. Tom felt sorry. They wanted to leave the ball. They knew they would be a lot of fun. They had …(뒤 43자 생략)
 
-"But we can't get my mouth. I can play with you."
-
-"It's okay, it is not very curious. He is not
+"It's okay, it is not old," Anna asked. "
 ```
 
 **결과 해석**
@@ -689,40 +691,40 @@ BEFORE (random init) vs AFTER (trained on TinyStories 30K)
 
 PROMPT  : Once upon a time,
 ------------------------------------------------------------------------------
-BEFORE  : ushinkush min is wondered5 cruallyked bed farmer smo wonder smo dropped crush child�� grabbed home5ail wonder� bed j( slowy clapp …(뒤 89자 생략)
-AFTER   : there was a girl named Lily. She loved to play with her friends. She loved to play outside to play with her friends when they put …(뒤 24자 생략)
+BEFORE  : any again�� Sally gardBsyons Lila ve bar�Hello sign� sear sear wasn wasnag with snowwhereerix surprised y laug herllowat brown cla …(뒤 105자 생략)
+AFTER   : there was a girl named Lily. She loved to play with her friends. She had a big ball to play with a new toy. Every day, Jane saw a …(뒤 90자 생략)
 
-One day, Lily saw a small house, a boy named Timmy. He was so happy because he saw a big
+Lily wanted
 
 PROMPT  : The little girl
 ------------------------------------------------------------------------------
-BEFORE  : akak everyush Sarahgged:un't different different# gl keepner Graied likedJackampsel turnedDo decided beautiful} Gra has Benny find …(뒤 115자 생략)
-AFTER   : had been a wonderful time. It was so happy to see the park. She thanked the garden, and the girl. She thanked the little girl to k …(뒤 123자 생략)
+BEFORE  : outside_ prin oldisy roll toy le joy carefully redaisy clot hugsav Tied mar fro has� sto�hyuc so accidenterefulful wet Spll kitcTh …(뒤 131자 생략)
+AFTER   : had been able to go home and play with her mommy. She kept her bed and she got better. She had a new friends and had a lot of fun.
+
+One day, Lily saw a big dog named Lily. She had an idea. She was very sad and couldn't get off
 
 PROMPT  : A big dog
 ------------------------------------------------------------------------------
-BEFORE  : cle music hisftere learnedpe fam pullve bat batinin paper paper teacherkes cr wear soup yes curi tw7 colors wall runlf This Sam bb …(뒤 113자 생략)
-AFTER   : , but they could go in the park. They ran away and the truck. The bird was sad. It had a bit fun.
+BEFORE  : hunoughummy Fluffy disapp� stuck The The feeling�_ desavyseideHe your stose accidentby count sear lo swingpe5 far through surprise …(뒤 120자 생략)
+AFTER   : came to the dog. They saw the tree. Tom felt sorry. They wanted to leave the ball. They knew they would be a lot of fun. They had …(뒤 43자 생략)
 
-"But we can't get my mouth. I can play with you."
-
-"It's okay, it is not very curious. He is not
+"It's okay, it is not old," Anna asked. "
 ```
 
 **해석 가이드 - 사전학습이 만든 차이**
 
-- **BEFORE (random init)**: *영어와 거리가 먼 byte 조각 / 의미 없는 짧은 단어 반복*. logits 가 random 초기값이라 sampling 이 통계적 빈도 토큰들 사이에서만 흔들림.
+- **BEFORE (random init)**: *영어와 거리가 먼 byte 조각 / 의미 없는 짧은 단어 반복*. logits 가 random 초기값이라 분포가 거의 균등 - sampling 이 *빈도와 무관하게 vocab 전체* 에서 뽑는 상태.
 - **AFTER (TinyStories 30K × 1500 steps)**: *말이 되는 영어 문장* - 짧지만 *주어 + 동사 + 목적어* 구조, *동화 풍 어휘* (rabbit, forest, friend, mom, happy, ...). 완벽하진 않아도 *학습이 본체에 next-token 분포를 새긴 증거* 가 한 줄에서 명확.
 
-> Ch 20·22 의 *사전·사후 [MASK] top-5* 비교에서 `[MASK]` 자리에 *the / a / of* 같은 빈도 토큰만 뽑히던 random init 모델이, 학습 후엔 *문맥에 맞는 정답 토큰* 을 top-5 에 담아내던 그 변화의 *generation 판* 입니다.
+> Ch 20·22 의 *사전·사후 [MASK] top-5* 비교의 *generation 판* 입니다 — random init 이 *빈도와 무관한 희귀 토큰* 을 무작위로 뽑다가, 학습 후 *the / , / . 같은 고빈도 기능 토큰* 으로 재편되던 그 변화와 같은 구조 (거기서 *문맥 정답* 은 대규모 사전학습 reference 모델에서야 나왔습니다). 본 챕터의 AFTER 가 *문장이 되는* 이유는 CausalLM 이 *거의 모든 자리* 에서 학습 신호를 받아 같은 데이터로도 배우는 양이 많기 때문.
 
 ### Reference 비교 - `gpt2` (124M, OpenAI WebText) 의 같은 prompt generation
 
-같은 prompt 3개를 *학습이 충분히 잘 된* 표준 `gpt2` (124M params, WebText 약 40GB 사전학습) 에 넣어 *우리 작은 GPT (약 3M, TinyStories 30K)* 와 격차를 직접 비교. Ch 20 의 *3-way [MASK] top-5 비교* (before / ours / `bert-base-uncased`) 와 같은 패턴.
+같은 prompt 3개를 *학습이 충분히 잘 된* 표준 `gpt2` (124M params, WebText 약 40GB 사전학습) 에 넣어 *우리 작은 GPT (약 3.7M, TinyStories 30K)* 와 격차를 직접 비교. Ch 20 의 *3-way [MASK] top-5 비교* (before / ours / `bert-base-uncased`) 와 같은 패턴.
 
 T4 에서 약 1분 추가. 데이터·파라미터 격차가 generation 품질의 격차로 어떻게 드러나는지 한 화면에.
 
-같은 prompt 3개를 충분히 학습된 표준 `gpt2` (124M, WebText 약 40GB 사전학습) 에 넣어, 우리 작은 GPT (약 3M, TinyStories 30K) 와 격차를 직접 비교합니다. Ch 20 의 *3-way [MASK] top-5 비교* 와 같은 패턴이고, T4 에서 약 1분 추가됩니다. 끝에서 `del` + `empty_cache()` 로 124M 모델 메모리를 정리합니다.
+같은 prompt 3개를 충분히 학습된 표준 `gpt2` (124M, WebText 약 40GB 사전학습) 에 넣어, 우리 작은 GPT (약 3.7M, TinyStories 30K) 와 격차를 직접 비교합니다. Ch 20 의 *3-way [MASK] top-5 비교* 와 같은 패턴이고, T4 에서 약 1분 추가됩니다. 끝에서 `del` + `empty_cache()` 로 124M 모델 메모리를 정리합니다.
 
 ```python
 from transformers import AutoTokenizer, AutoModelForCausalLM
@@ -755,6 +757,7 @@ if torch.cuda.is_available():
 
 ```text
 loading reference gpt2 (124M, OpenAI WebText pretraining)...
+model.safetensors: downloading bytes:           |  0.00B            
   vocab_size : 50,257
   #params    : 124.4 M
 
@@ -782,9 +785,9 @@ But these people are less likely to have
 `gpt2` (124M, vocab 50,257) 는 같은 prompt 에 동화풍이 아닌 일반 산문·뉴스·대화 등 훨씬 다양한 톤·도메인 어휘로 자연스러운 문장 흐름을 만들어 냅니다. WebText 의 다양성이 generation 다양성으로 직결되며, 이는 우리 작은 GPT 가 동화 도메인에 강한 대신 폭이 좁은 것과 대비됩니다.
 
 ```python
-# 3-way 비교 - BEFORE (random) / OURS (3M, TinyStories) / REF (gpt2 124M, WebText)
+# 3-way 비교 - BEFORE (random) / OURS (3.7M, TinyStories) / REF (gpt2 124M, WebText)
 print("=" * 78)
-print("3-way comparison: BEFORE (random) / OURS (3M, TinyStories 30K) / REF (gpt2 124M, WebText)")
+print("3-way comparison: BEFORE (random) / OURS (3.7M, TinyStories 30K) / REF (gpt2 124M, WebText)")
 print("=" * 78)
 for p, before, after, ref in zip(PROMPTS, before_outputs, after_outputs, ref_outputs):
     print(f"\nPROMPT : {p}")
@@ -798,15 +801,15 @@ for p, before, after, ref in zip(PROMPTS, before_outputs, after_outputs, ref_out
 
 ```text
 ==============================================================================
-3-way comparison: BEFORE (random) / OURS (3M, TinyStories 30K) / REF (gpt2 124M, WebText)
+3-way comparison: BEFORE (random) / OURS (3.7M, TinyStories 30K) / REF (gpt2 124M, WebText)
 ==============================================================================
 
 PROMPT : Once upon a time,
 ------------------------------------------------------------------------------
-BEFORE : ushinkush min is wondered5 cruallyked bed farmer smo wonder smo dropped crush child�� grabbed home5ail wonder� bed j( slowy clappe …(뒤 88자 생략)
-OURS   : there was a girl named Lily. She loved to play with her friends. She loved to play outside to play with her friends when they put o …(뒤 23자 생략)
+BEFORE : any again�� Sally gardBsyons Lila ve bar�Hello sign� sear sear wasn wasnag with snowwhereerix surprised y laug herllowat brown clap …(뒤 104자 생략)
+OURS   : there was a girl named Lily. She loved to play with her friends. She had a big ball to play with a new toy. Every day, Jane saw a b …(뒤 89자 생략)
 
-One day, Lily saw a small house, a boy named Timmy. He was so happy because he saw a
+Lily wanted
 REF    : if you don't know what your country's government is doing, you can find out.
 
 In the last few months, I've traveled to dozens of countries around the world, and I've seen the results of that.
@@ -815,31 +818,31 @@ My new book — the Making of a Better World Orde
 
 PROMPT : The little girl
 ------------------------------------------------------------------------------
-BEFORE : akak everyush Sarahgged:un't different different# gl keepner Graied likedJackampsel turnedDo decided beautiful} Gra has Benny find …(뒤 109자 생략)
-OURS   : had been a wonderful time. It was so happy to see the park. She thanked the garden, and the girl. She thanked the little girl to ke …(뒤 109자 생략)
+BEFORE : outside_ prin oldisy roll toy le joy carefully redaisy clot hugsav Tied mar fro has� sto�hyuc so accidenterefulful wet Spll kitcTha …(뒤 109자 생략)
+OURS   : had been able to go home and play with her mommy. She kept her bed and she got better. She had a new friends and had a lot of fun.
+
+One day, Lily saw a big dog named Lily. She had an idea. She was very sad and couldn't get off
 REF    : has been at her desk all day...for two hours. She's got a pen and paper and a pen and paper, not a pen and paper and pencil. And sh …(뒤 105자 생략)
 
 PROMPT : A big dog
 ------------------------------------------------------------------------------
-BEFORE : cle music hisftere learnedpe fam pullve bat batinin paper paper teacherkes cr wear soup yes curi tw7 colors wall runlf This Sam bby …(뒤 109자 생략)
-OURS   : , but they could go in the park. They ran away and the truck. The bird was sad. It had a bit fun.
+BEFORE : hunoughummy Fluffy disapp� stuck The The feeling�_ desavyseideHe your stose accidentby count sear lo swingpe5 far through surprised …(뒤 109자 생략)
+OURS   : came to the dog. They saw the tree. Tom felt sorry. They wanted to leave the ball. They knew they would be a lot of fun. They had a …(뒤 42자 생략)
 
-"But we can't get my mouth. I can play with you."
-
-"It's okay, it is not
+"It's okay, i
 ...
 ```
 
 **결과 해석**
 
-세 모델을 한 줄에 놓으면 격차가 또렷합니다. BEFORE 는 영어와 거리가 먼 byte 조각 나열, OURS (3M, TinyStories 30K) 는 "there was a girl named Lily..." 처럼 문법은 맞지만 같은 구절을 반복하는 단순한 동화체, REF (`gpt2` 124M) 는 동화와 무관한 일반 산문·뉴스·대화체입니다. OURS 가 동화 도메인 안에서는 그럴듯하지만 폭이 좁고 반복이 잦은 반면 REF 는 도메인이 넓고 자연스러워, generation 품질이 *모델 크기 + 데이터 규모·다양성* 의 격차를 그대로 반영함이 드러납니다.
+세 모델을 한 줄에 놓으면 격차가 또렷합니다. BEFORE 는 영어와 거리가 먼 byte 조각 나열, OURS (3.7M, TinyStories 30K) 는 "there was a girl named Lily..." 처럼 문법은 맞지만 같은 구절을 반복하는 단순한 동화체, REF (`gpt2` 124M) 는 동화와 무관한 일반 산문·뉴스·대화체입니다. OURS 가 동화 도메인 안에서는 그럴듯하지만 폭이 좁고 반복이 잦은 반면 REF 는 도메인이 넓고 자연스러워, generation 품질이 *모델 크기 + 데이터 규모·다양성* 의 격차를 그대로 반영함이 드러납니다.
 
 **해석 가이드 - 데이터·파라미터 규모가 만든 격차**
 
 - **BEFORE (random)**: 영어와 거리 먼 byte 조각.
-- **OURS (3M, TinyStories 30K × 1500 steps)**: *동화 풍 단순 영어* - 어휘는 동화 도메인에 강하지만 (rabbit, forest, mom, friend, ...) *복잡한 문장 구조 / 추상적 어휘* 는 약함.
+- **OURS (3.7M, TinyStories 30K × 1500 steps)**: *동화 풍 단순 영어* - 어휘는 동화 도메인에 강하지만 (rabbit, forest, mom, friend, ...) *복잡한 문장 구조 / 추상적 어휘* 는 약함.
 - **REF (gpt2 124M, WebText 약 40GB)**: *다양한 도메인 어휘 + 자연스러운 문장 흐름* - 같은 prompt 에 대해 *동화풍이 아닌 일반 산문 / 뉴스 / 대화* 등 다양한 톤. 학습 데이터 분포 (WebText) 의 다양성이 generation 다양성으로 직결.
 
-> **세 모델의 격차가 정확히 *모델 크기 + 데이터 크기 + 데이터 다양성* 의 격차** - 우리 작은 GPT (3M, TinyStories 30K stories) → reference `gpt2` (124M, WebText 약 40GB) 사이에 *파라미터 약 40배, 데이터 규모 약 수천 배, 도메인 다양성 격차*. 그게 generation 의 *질적 차이* 로 정확히 드러납니다.
+> **세 모델의 격차가 정확히 *모델 크기 + 데이터 크기 + 데이터 다양성* 의 격차** - 우리 작은 GPT (3.7M, TinyStories 30K stories) → reference `gpt2` (124M, WebText 약 40GB) 사이에 *파라미터 약 33배, 데이터 규모 약 수천 배, 도메인 다양성 격차*. 그게 generation 의 *질적 차이* 로 정확히 드러납니다.
 
 > Ch 25 가 이 격차를 *데이터 축을 통제하고* 좁히는 챕터입니다 - `gpt2` (124M) 의 사전학습 *위에* 같은 TinyStories 30K 로 **continual pretraining**. *대규모 일반 사전학습 모델을 작은 도메인 데이터로 적응* 시킬 때의 generation 품질이, 우리 from-scratch 작은 GPT 와 어떻게 다른지 직접 비교.
