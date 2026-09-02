@@ -9,14 +9,14 @@
 **▶ 실행 결과**
 
 ```text
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 100.4 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 44.1 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.2/389.2 kB 36.7 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━╺━━━━━━━━━━━━━━━━━━━━━━━ 20.1/48.9 MB 183.0 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 159.0 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 159.0 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 159.0 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 15.7 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.1/12.1 MB 121.6 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.3/3.3 MB 120.1 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 559.1/559.1 kB 49.5 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━╸━━━━━━━━━━━━━━━━━━━━━━━━━━ 17.0/50.1 MB 233.1 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 278.9 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 278.9 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 278.9 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 50.1/50.1 MB 16.7 MB/s eta 0:00:00
 ```
 
 ```python
@@ -105,6 +105,11 @@ print(raw_train[0]["text"][:400])
 **▶ 실행 결과**
 
 ```text
+data/train-00000-of-00004-2d5a1467fff108(…): downloading bytes:           |  0.00B            
+data/train-00001-of-00004-5852b56a2bd28f(…): downloading bytes:           |  0.00B            
+data/train-00002-of-00004-a26307300439e9(…): downloading bytes:           |  0.00B            
+data/train-00003-of-00004-d243063613e5a0(…): downloading bytes:           |  0.00B            
+data/validation-00000-of-00001-869c898b5(…): downloading bytes:           |  0.00B            
 train: Dataset({
     features: ['text'],
     num_rows: 30000
@@ -144,7 +149,7 @@ print(f"load done: {time.time()-t0:.1f}s")
 
 n_params = model.num_parameters()
 print(f"\n=== model ===")
-print(f"#params           : {n_params/1e6:.2f} M  (Ch 24 was approx. 3M; Ch 25 is approx. {n_params/3e6:.0f}x larger)")
+print(f"#params           : {n_params/1e6:.2f} M  (Ch 24 was approx. 3.7M; Ch 25 is approx. {n_params/3.72e6:.0f}x larger)")
 print(f"vocab_size        : {tokenizer.vocab_size:,}  (Ch 24 was 2,048; Ch 25 is approx. {tokenizer.vocab_size/2048:.0f}x larger)")
 print(f"weight tying      : {model.config.tie_word_embeddings}  (lm_head <-> wte shared)")
 print(f"fp32 weight size  : {n_params * 4 / 1024**2:.1f} MiB")
@@ -159,10 +164,11 @@ print(f"  - head : {type(model.lm_head).__name__}(in={model.lm_head.in_features}
 **▶ 실행 결과**
 
 ```text
-load done: 15.8s
+model.safetensors: downloading bytes:           |  0.00B            
+load done: 9.2s
 
 === model ===
-#params           : 124.44 M  (Ch 24 was approx. 3M; Ch 25 is approx. 41x larger)
+#params           : 124.44 M  (Ch 24 was approx. 3.7M; Ch 25 is approx. 33x larger)
 vocab_size        : 50,257  (Ch 24 was 2,048; Ch 25 is approx. 25x larger)
 weight tying      : True  (lm_head <-> wte shared)
 fp32 weight size  : 474.7 MiB
@@ -178,7 +184,7 @@ model: GPT2LMHeadModel
 
 **결과 해석**
 
-본체가 124.44M params 로 Ch 24 의 약 3M 대비 약 41배, vocab 은 50,257 로 약 25배 큽니다. `pad_token` 이 `eos_token`(id=50256)으로 지정됐고, LM head 가 `Linear(768, 50257)` 에 weight tying(`lm_head ↔ wte` 공유)된 점이 Ch 24 와 같은 CausalLM 구조임을 보여줍니다.
+본체가 124.44M params 로 Ch 24 의 약 3.7M 대비 약 33배, vocab 은 50,257 로 약 25배 큽니다. `pad_token` 이 `eos_token`(id=50256)으로 지정됐고, LM head 가 `Linear(768, 50257)` 에 weight tying(`lm_head ↔ wte` 공유)된 점이 Ch 24 와 같은 CausalLM 구조임을 보여줍니다.
 
 ### Ch 24 ↔ Ch 25 코드 diff — *모델·토크나이저 로드 두 줄 차이*
 
@@ -385,7 +391,7 @@ args = TrainingArguments(
     gradient_accumulation_steps=4,         # effective batch = 16
     learning_rate=2e-5,                    # <- Ch 24 의 3e-4 와 다른 유일한 큰 차이
     weight_decay=0.01,
-    warmup_ratio=0.06,
+    warmup_steps=0.06,                     # 1 미만이면 전체 step 대비 *비율* 로 해석 (구 warmup_ratio)
     lr_scheduler_type="cosine",
     max_grad_norm=1.0,
     fp16=USE_FP16,                         # T4 는 bf16 불가
@@ -449,12 +455,9 @@ if torch.cuda.is_available():
     print(f"final peak    : {torch.cuda.max_memory_allocated()/1024**2:.0f} MiB")
 ```
 
-**위 코드 읽기** — `Trainer` 인스턴스의 인자 구조가 Ch 24 와 글자 그대로 같고, `model`(gpt2 124M)과 `args`(lr·epoch)만 다릅니다. 이 *trainer 코드 재사용* 이 continual pretraining 의 미적 본질입니다. `trainer.train()` 이 1 epoch 학습을 돌리고, 끝나면 누적 평균 `train_loss` 와 random baseline `ln(vocab)` 을 함께 출력해 *시작점이 random 이 아님* 을 강조합니다.
-
 **▶ 실행 결과**
 
 ```text
-[transformers] warmup_ratio is deprecated and will be removed in v5.2. Use `warmup_steps` instead.
 [transformers] `loss_type=None` was set in the config but it is unrecognized. Using the default loss: `ForCausalLMLoss`.
 Step  Training Loss  Validation Loss
 100   2.496852       2.241520
@@ -489,7 +492,7 @@ Step  Training Loss  Validation Loss
 3000  1.980746       1.760369
 ...
 === continual pretraining summary ===
-elapsed       : 19.06 min
+elapsed       : 18.46 min
 global_step   : 3242
 train_loss    : 2.0699
 vocab ln (random baseline): 10.8249  (we start MUCH lower than this)
@@ -655,13 +658,13 @@ The big dog felt
 
 ## 3-way generation 비교 — Ch 24 (scratch) vs Ch 25 BEFORE vs Ch 25 AFTER
 
-Ch 24 의 *작은 from-scratch 모델* (3M, TinyStories 1500 step) 의 generation 결과를 *옆에 두고* 비교합니다. *Ch 24 노트북 §7 의 "TRAINED model" generation 출력* 을 직접 인용 (사용자가 본인 결과로 갱신 가능).
+Ch 24 의 *작은 from-scratch 모델* (3.7M, TinyStories 1500 step) 의 generation 결과를 *옆에 두고* 비교합니다. *Ch 24 노트북 §7 의 "TRAINED model" generation 출력* 을 직접 인용 (사용자가 본인 결과로 갱신 가능).
 
 ### 세 셋업의 차이
 
 | 셋업 | 본체 | 사전학습 | TinyStories 학습 |
 |---|---|---|---|
-| Ch 24 (scratch) | 3M params, random init | 없음 (from scratch) | 1500 step 사전학습 자체 |
+| Ch 24 (scratch) | 3.7M params, random init | 없음 (from scratch) | 1500 step 사전학습 자체 |
 | **Ch 25 BEFORE** | 124M params (gpt2) | **WebText 약 40GB** | 없음 (gpt2 그대로) |
 | **Ch 25 AFTER** | 124M params (gpt2) | **WebText 약 40GB** | **1 epoch continual pretraining** |
 
@@ -669,26 +672,31 @@ Ch 24 의 *작은 from-scratch 모델* (3M, TinyStories 1500 step) 의 generatio
 
 ```python
 # Ch 24 의 TRAINED model generation 결과 인용
-# (Ch 24 노트북 §7 "TRAINED model" 출력에서 본인 결과로 갱신하시면 비교가 정확해집니다)
+# (기준: 검수 2026-09 Ch 24 최종 실행본 executed/24_gpt_tinystories.ipynb 의 §7 출력.
+#  Ch 24 를 재실행했다면 본인 결과로 갱신하시면 비교가 정확해집니다)
 ch24_outputs = {
     "Once upon a time,": (
-        "Once upon a time, there was a little girl named Lily. She loved to play "
-        "in the park with her mommy. One day, they saw a big dog. Lily said hi to "
-        "the dog and the dog wagged its tail."
+        "Once upon a time, there was a girl named Lily. She loved to play with "
+        "her friends. She had a big ball to play with a new toy. Every day, Jane "
+        "saw a big dog named Lily. She liked to play with her toys, but her mom "
+        "didn't know what to play.\n\nLily wanted"
     ),
     "The little girl": (
-        "The little girl was very happy. She wanted to play with her toys. "
-        "Her mom said, \"Let's go to the park.\" They went to the park and saw "
-        "a big tree."
+        "The little girl had been able to go home and play with her mommy. She "
+        "kept her bed and she got better. She had a new friends and had a lot of "
+        "fun.\n\nOne day, Lily saw a big dog named Lily. She had an idea. She was "
+        "very sad and couldn't get off"
     ),
     "A big dog": (
-        "A big dog was in the yard. The dog was brown and had a long tail. "
-        "A boy came and said, \"Hi dog!\" The dog wagged its tail and was happy."
+        "A big dog came to the dog. They saw the tree. Tom felt sorry. They "
+        "wanted to leave the ball. They knew they would be a lot of fun. They "
+        "had a lesson. They were happy. They felt sorry.\n\n\"It's okay, it is "
+        "not old,\" Anna asked. \""
     ),
 }
 
 print("=" * 80)
-print("3-way comparison: Ch 24 (3M scratch) vs Ch 25 BEFORE vs Ch 25 AFTER")
+print("3-way comparison: Ch 24 (3.7M scratch) vs Ch 25 BEFORE vs Ch 25 AFTER")
 print("=" * 80)
 for p, before, after in zip(PROMPTS, before_outputs, after_outputs):
     ch24_text = ch24_outputs.get(p, "(Ch 24 result not recorded for this prompt)")
@@ -703,12 +711,14 @@ for p, before, after in zip(PROMPTS, before_outputs, after_outputs):
 
 ```text
 ================================================================================
-3-way comparison: Ch 24 (3M scratch) vs Ch 25 BEFORE vs Ch 25 AFTER
+3-way comparison: Ch 24 (3.7M scratch) vs Ch 25 BEFORE vs Ch 25 AFTER
 ================================================================================
 
 PROMPT          : Once upon a time,
 --------------------------------------------------------------------------------
-Ch 24 (scratch) : Once upon a time, there was a little girl named Lily. She loved to play in the park with her mommy. One day, they saw a bi …(뒤 59자 생략)
+Ch 24 (scratch) : Once upon a time, there was a girl named Lily. She loved to play with her friends. She had a big ball to play with a new t …(뒤 116자 생략)
+
+
 Ch 25 BEFORE    : if you don't know what your country's government is doing, you can find out.
 
 In the last few months, I've traveled to dozens of countries around the world, and I've seen the results of that.
@@ -718,7 +728,9 @@ Ch 25 AFTER     : there was a little girl named Sally who wanted to play with he
 
 PROMPT          : The little girl
 --------------------------------------------------------------------------------
-Ch 24 (scratch) : The little girl was very happy. She wanted to play with her toys. Her mom said, "Let's go to the park." They went to the p …(뒤 23자 생략)
+Ch 24 (scratch) : The little girl had been able to go home and play with her mommy. She kept her bed and she got better. She had a new frien …(뒤 24자 생략)
+
+One day, Lily saw a big dog named Lily. She had an idea. She was very sad and couldn't get o
 Ch 25 BEFORE    : has been at her desk all day...for two hours. She's got a pen and paper and a pen and paper, not a pen and paper and penci …(뒤 114자 생략)
 Ch 25 AFTER     : was so happy and hugged her mom. She said, "Mommy, I'm so glad you found your new bike. I love it!"
 
@@ -726,30 +738,30 @@ Her mom hugged her and said, "It's so much fun to ride a bike in the park. Just 
 
 PROMPT          : A big dog
 --------------------------------------------------------------------------------
-Ch 24 (scratch) : A big dog was in the yard. The dog was brown and had a long tail. A boy came and said, "Hi dog!" The dog wagged its tail and was happy.
-Ch 25 BEFORE    : is a dog that loves to eat, but is also a dog that's afraid to do anything that might hurt others.
+Ch 24 (scratch) : A big dog came to the dog. They saw the tree. Tom felt sorry. They wanted to leave the ball. They knew they would be a lot …(뒤 61자 생략)
 
-In the long run, we find that people who have an
+"It's okay, it is not old," Anna asked. "
+Ch 25 BEFORE    : is a dog
 ...
 ```
 
 **결과 해석**
 
-Ch 24(3M scratch)는 작은 모델·작은 데이터로도 동화 풍 단순 영어를 내지만 어휘가 동화 도메인에 한정되고, Ch 25 BEFORE 는 도메인은 넓되 동화 풍이 아니며, Ch 25 AFTER 는 *동화 풍 + 넓은 어휘력* 을 함께 보입니다. 다만 AFTER 가 더 좋아 보이는 것이 모델 크기(약 40배)의 힘인지 사전학습(WebText 40GB)의 힘인지는 두 요인이 함께 바뀌어 본 셋업으로는 분리되지 않습니다(FAQ Q3 참고).
+Ch 24(3.7M scratch)는 작은 모델·작은 데이터로도 동화 풍 단순 영어를 내지만 어휘가 동화 도메인에 한정되고, Ch 25 BEFORE 는 도메인은 넓되 동화 풍이 아니며, Ch 25 AFTER 는 *동화 풍 + 넓은 어휘력* 을 함께 보입니다. 다만 AFTER 가 더 좋아 보이는 것이 모델 크기(약 33배)의 힘인지 사전학습(WebText 40GB)의 힘인지는 두 요인이 함께 바뀌어 본 셋업으로는 분리되지 않습니다(FAQ Q3 참고).
 
 **해석 가이드 — 세 셋업의 격차**
 
-- **Ch 24 (3M scratch, TinyStories 1500 step)**: *동화 풍 단순 영어* 가능 — 작은 모델·작은 데이터로도 grammatical 한 생성. 다만 어휘는 동화 도메인에 한정
+- **Ch 24 (3.7M scratch, TinyStories 1500 step)**: *동화 풍 단순 영어* 가능 — 작은 모델·작은 데이터로도 grammatical 한 생성. 다만 어휘는 동화 도메인에 한정
 - **Ch 25 BEFORE (gpt2 그대로)**: *다양한 도메인 영어* 가능. 자연스러운 산문이지만 *TinyStories 풍은 아님*
 - **Ch 25 AFTER (gpt2 + TinyStories continual pretrain)**: *동화 풍 + 자연스러움 + 일반 도메인 어휘력* 결합. *작은 from-scratch 의 도메인 특화 + 큰 사전학습 모델의 어휘 폭* 이 모두
 
-> **세 셋업의 비교가 던지는 질문** — Ch 25 AFTER 가 Ch 24 보다 *훨씬 좋아 보인다면*, 이게 *모델 크기 (3M → 124M, 약 40배) 의 위력인가, 사전학습 (WebText 약 40GB) 의 위력인가?* — 본 챕터의 셋업으로는 *분리 불가능*. 두 요인이 *함께 변함*. FAQ Q3 에서 더 자세히.
+> **세 셋업의 비교가 던지는 질문** — Ch 25 AFTER 가 Ch 24 보다 *훨씬 좋아 보인다면*, 이게 *모델 크기 (3.7M → 124M, 약 33배) 의 위력인가, 사전학습 (WebText 약 40GB) 의 위력인가?* — 본 챕터의 셋업으로는 *분리 불가능*. 두 요인이 *함께 변함*. FAQ Q3 에서 더 자세히.
 
 ## 학습 곡선 비교 — Ch 24 vs Ch 25 의 학습 효율
 
 *같은 데이터 (TinyStories 30K)* 에 대한 *random init vs 사전학습 본체* 의 학습 효율 격차를 표로 정리.
 
-| 항목 | Ch 24 (3M scratch) | **Ch 25 (124M continual pretrain)** |
+| 항목 | Ch 24 (3.7M scratch) | **Ch 25 (124M continual pretrain)** |
 |---|---|---|
 | 시작 loss | 약 7.62 (`ln(2048)`, random baseline) | **약 3.0-4.0** (gpt2 pretrained, TinyStories 평가) |
 | 도달 loss (학습 끝, 누적 평균 `train_loss`) | 약 3.8 | **약 2.07** |
@@ -760,4 +772,4 @@ Ch 24(3M scratch)는 작은 모델·작은 데이터로도 동화 풍 단순 영
 
 > **요점**: Ch 25 는 *시작부터 낮은 loss* 에서 출발해 더 낮은 지점까지 내려갑니다 — 사전학습된 본체의 *시작 이점*. step·시간은 Ch 24 보다 오히려 더 큽니다 (124M 본체 + chunk 수가 많아 1 epoch 이 길어짐). 다만 *loss 의 절대값* 은 vocab 단위가 달라 직접 비교 어려움 (vocab 25배 차이). *Generation 품질* 로는 §7 의 3-way 비교가 정성적 차이를 보여줍니다.
 
-> Ch 25 의 결과만 보면 *대규모 사전학습 + continual pretraining* 이 압도적으로 보이지만, *3M params + WebText 사전학습* (가상의 비교군) 이라면 어떻게 될까요 — *모델 크기와 사전학습 데이터를 분리하는 비교* 는 본 챕터의 셋업으로는 어렵습니다. 그게 *실험 설계의 한계* 이자 *학습 단계 2 의 실용성* — 실무는 보통 *큰 사전학습 모델을 그대로 가져와 continual pretraining* 하는 게 비용 대비 최선이라.
+> Ch 25 의 결과만 보면 *대규모 사전학습 + continual pretraining* 이 압도적으로 보이지만, *3.7M params + WebText 사전학습* (가상의 비교군) 이라면 어떻게 될까요 — *모델 크기와 사전학습 데이터를 분리하는 비교* 는 본 챕터의 셋업으로는 어렵습니다. 그게 *실험 설계의 한계* 이자 *학습 단계 2 의 실용성* — 실무는 보통 *큰 사전학습 모델을 그대로 가져와 continual pretraining* 하는 게 비용 대비 최선이라.

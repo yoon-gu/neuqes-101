@@ -1,8 +1,8 @@
-**목표**: Phase 4 의 두 번째 챕터. Ch 24 에서 *random init 작은 GPT (약 3M params) 를 TinyStories 로 from scratch 사전학습* 했다면, 이번엔 **OpenAI `gpt2` (124M params, WebText 약 40GB 사전학습된 본체)** 를 *같은 TinyStories 데이터* 로 **continual pretraining** (계속 사전학습 / continual learning) 합니다. **같은 CausalLM task, 같은 LM head, 같은 collator, 같은 loss** — 변하는 건 *모델 로드 한 줄 + 학습률* 뿐. 그게 GPT 시대 *학습 단계 2 (continual pretraining)* 의 본질입니다.
+**목표**: Phase 4 의 두 번째 챕터. Ch 24 에서 *random init 작은 GPT (약 3.7M params) 를 TinyStories 로 from scratch 사전학습* 했다면, 이번엔 **OpenAI `gpt2` (124M params, WebText 약 40GB 사전학습된 본체)** 를 *같은 TinyStories 데이터* 로 **continual pretraining** (계속 사전학습 / continual learning) 합니다. **같은 CausalLM task, 같은 LM head, 같은 collator, 같은 loss** — 변하는 건 *모델 로드 한 줄 + 학습률* 뿐. 그게 GPT 시대 *학습 단계 2 (continual pretraining)* 의 본질입니다.
 
 **환경**: Google Colab **T4 GPU 필수**.
 
-**예상 소요 시간**: 약 25-30분 (데이터 로드 약 2분 + gpt2 로드·토큰화 약 2분 + 학습 전 baseline generation 약 1분 + continual pretraining 약 19분 + 학습 후 generation + 3-way 비교 약 2분)
+**예상 소요 시간**: 약 20-25분 (데이터 로드·gpt2 로드·토큰화 약 2분 + 학습 전 baseline generation 약 30초 + continual pretraining 약 19분 + 학습 후 generation + 3-way 비교 약 1분)
 
 ## 학습 흐름
 
@@ -23,7 +23,7 @@
 |---|---|---|---|---|---|
 | 22 | 작은 BERT (한국어, scratch) | `klue/bert-base` (가져옴) | 한국어 위키 paragraphs | MLM head | `CrossEntropyLoss` (masked 15%) |
 | 23 | Ch 22 + 분류 헤드 | (Ch 22 와 동일) | NSMC 이진 | `Linear(H, 2)` | `CrossEntropyLoss` |
-| 24 | 작은 GPT2 (직접, scratch, 약 3M) | BPE (직접 학습, vocab 2,048) | TinyStories 30K | `Linear(H, V)` (LM head, weight tied) | `CrossEntropyLoss` (next-token) |
+| 24 | 작은 GPT2 (직접, scratch, 약 3.7M) | BPE (직접 학습, vocab 2,048) | TinyStories 30K | `Linear(H, V)` (LM head, weight tied) | `CrossEntropyLoss` (next-token) |
 | **25 ← 여기** | **`gpt2` (124M, OpenAI WebText 사전학습)** | **BPE (gpt2 그대로, vocab 50,257)** | **TinyStories 30K (Ch 24 와 동일)** | **`Linear(H, V)` (LM head 그대로)** | **`CrossEntropyLoss` (next-token) — *continual pretraining***  |
 | 26 (다음) | 작은 GPT (한국어, scratch) | BPE (한국어 직접 학습) | 한국어 TinyStories-Korean | `Linear(H, V)` (LM head, weight tied) | `CrossEntropyLoss` (next-token) |
 
@@ -37,7 +37,7 @@
 | Trainer 클래스 | `transformers.Trainer` | `transformers.Trainer` | **같음** |
 | Data collator | `DataCollatorForLanguageModeling(mlm=False)` | `DataCollatorForLanguageModeling(mlm=False)` | **같음** |
 | Loss | CE next-token (`labels = input_ids.clone()`) | CE next-token (`labels = input_ids.clone()`) | **같음** |
-| 본체 출발점 | `GPT2LMHeadModel(config)` random init (3M) | `AutoModelForCausalLM.from_pretrained("gpt2")` (124M) | **다름** |
+| 본체 출발점 | `GPT2LMHeadModel(config)` random init (3.7M) | `AutoModelForCausalLM.from_pretrained("gpt2")` (124M) | **다름** |
 | 토크나이저 | BPE 직접 학습 (vocab 2,048) | `AutoTokenizer.from_pretrained("gpt2")` (vocab 50,257) | **다름** (본체와 운명공동체) |
 | 학습률 | 3e-4 (scratch 표준) | **2e-5** (continual pretraining 표준) | **다름** |
 | 학습 step | 약 1,500 | **약 3,200** (51,863 chunks / eff. batch 16, 1 epoch) | **다름** (lr 만 작아짐) |
@@ -48,7 +48,7 @@
 
 | 축 | Ch 24 (영어 GPT scratch) | Ch 25 (본 챕터, gpt2 continual pretraining) |
 |---|---|---|
-| **본체** | 작은 GPT2 (약 3M params, random init) | **`gpt2`** (124M, OpenAI WebText 약 40GB 사전학습) ← *출발점 변화* |
+| **본체** | 작은 GPT2 (약 3.7M params, random init) | **`gpt2`** (124M, OpenAI WebText 약 40GB 사전학습) ← *출발점 변화* |
 | **토크나이저** | BPE 직접 학습 (vocab 2,048) | **`AutoTokenizer.from_pretrained("gpt2")`** (vocab 50,257) ← *본체에 맞춰 함께 변함* |
 | 데이터 | TinyStories 30K | **TinyStories 30K (동일)** ← 통제 변수 |
 | Trainer | `transformers.Trainer` | **`transformers.Trainer` (동일)** |
