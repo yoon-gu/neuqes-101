@@ -9,13 +9,11 @@
 **▶ 실행 결과**
 
 ```text
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.1/12.1 MB 123.9 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.3/3.3 MB 125.5 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 559.1/559.1 kB 47.7 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━╸━━━━━━━━━━━━━━━━━━━ 26.0/50.1 MB 227.2 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 266.6 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 266.6 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 50.1/50.1 MB 19.2 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 559.1/559.1 kB 26.8 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━╸━━━━━━━━━━━━━━━━━━━━━━━ 21.0/50.1 MB 204.9 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 240.6 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 240.6 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 50.1/50.1 MB 18.4 MB/s eta 0:00:00
 ```
 
 ```python
@@ -191,7 +189,7 @@ print(f"eos_token  : {tokenizer.eos_token}  id={tokenizer.eos_token_id}")
 **▶ 실행 결과**
 
 ```text
-BPE training done: 9.8s, vocab=2048
+BPE training done: 10.7s, vocab=2048
 
 === encode/decode demo ===
 input      : Once upon a time, a little rabbit went to the forest.
@@ -473,9 +471,9 @@ A big dog hunoughummy Fluffy disapp� stuck The The feeling�_ desavyseideHe y
 
 **결과 해석**
 
-세 prompt 모두 영어와 거리가 먼 byte 조각·의미 없는 짧은 단어가 반복되는 무작위 나열입니다. logits 가 random 초기값이라 sampling 이 통계적 빈도 토큰 사이에서만 흔들리는 상태로, 학습 후 결과의 비교 기준선이 됩니다.
+세 prompt 모두 영어와 거리가 먼 byte 조각·의미 없는 짧은 단어가 반복되는 무작위 나열입니다. logits 가 random 초기값이라 분포가 거의 균등해 sampling 이 빈도와 무관하게 vocab 전체에서 뽑는 상태로, 학습 후 결과의 비교 기준선이 됩니다.
 
-**관전 포인트** - 학습 전 출력은 *무작위 토큰 나열* (반복되는 짧은 byte 조각, 의미 없는 단어들). Ch 20·22 의 *학습 전 [MASK] top-5* 가 *the / a / of / , / .* 같은 통계적 빈도 토큰이었던 것과 같은 현상의 *generation 판* 입니다. 학습 후 출력과 *나란히 비교* 하면 사전학습이 본체에 *next-token 분포* 를 새긴 증거를 직접 보게 됩니다.
+**관전 포인트** - 학습 전 출력은 *무작위 토큰 나열* (반복되는 짧은 byte 조각, 의미 없는 단어들). random init 의 logits 는 거의 균등 분포라 `top_k=50` 후보가 매 step *vocab 무작위 표본* 이 되고, vocab 대부분이 희귀 조각이라 이런 나열이 나옵니다. Ch 20·22 의 *학습 전 [MASK] top-5* 도 같은 이유로 *빈도와 무관한 희귀 토큰* 이었습니다 — 거기서 *the / , / .* 같은 고빈도 기능 토큰이 올라온 것은 학습 *후* 이고, 사전학습이 가장 먼저 새기는 것이 vocab 빈도 통계라는 뜻입니다. 학습 후 출력과 *나란히 비교* 하면 사전학습이 본체에 *next-token 분포* 를 새긴 증거를 직접 보게 됩니다.
 
 ## `Trainer` 로 사전학습
 
@@ -574,7 +572,7 @@ Step  Training Loss  Validation Loss
 1350  3.224973       3.004528
 1500  3.215564       3.001219
 === training summary ===
-elapsed       : 0.87 min
+elapsed       : 0.88 min
 global_step   : 1500
 train_loss    : 3.7399
 random baseline (ln vocab): 7.6246
@@ -583,7 +581,7 @@ final peak    : 60 MiB
 
 **결과 해석**
 
-1500 step 학습이 약 0.87분 만에 끝났고, 누적 평균 `train_loss` 가 3.74 로 random baseline `ln(2048) ≈ 7.62` 에서 크게 내려왔습니다. perplexity 로는 약 $e^{3.74} \approx 42$ 으로, vocab 2,048 중 수십 개 후보로 좁힌 상태이고 peak VRAM 도 60MiB 에 불과해 T4 30분 룰 안에 여유롭게 들어옵니다.
+1500 step 학습이 약 0.88분 만에 끝났고, 누적 평균 `train_loss` 가 3.74 로 random baseline `ln(2048) ≈ 7.62` 에서 크게 내려왔습니다. perplexity 로는 약 $e^{3.74} \approx 42$ 으로, vocab 2,048 중 수십 개 후보로 좁힌 상태이고 peak VRAM 도 60MiB 에 불과해 T4 30분 룰 안에 여유롭게 들어옵니다.
 
 학습 로그에서 train/eval loss 와 step 별 peak VRAM 을 뽑아 두 패널로 그립니다. loss 패널에는 `ln(2048)` 무작위 추측 기준선을 점선으로 함께 표시해, 곡선이 그 기준선에서 얼마나 내려왔는지를 한눈에 보게 합니다.
 
@@ -715,7 +713,7 @@ AFTER   : came to the dog. They saw the tree. Tom felt sorry. They wanted to lea
 
 **해석 가이드 - 사전학습이 만든 차이**
 
-- **BEFORE (random init)**: *영어와 거리가 먼 byte 조각 / 의미 없는 짧은 단어 반복*. logits 가 random 초기값이라 sampling 이 통계적 빈도 토큰들 사이에서만 흔들림.
+- **BEFORE (random init)**: *영어와 거리가 먼 byte 조각 / 의미 없는 짧은 단어 반복*. logits 가 random 초기값이라 분포가 거의 균등 - sampling 이 *빈도와 무관하게 vocab 전체* 에서 뽑는 상태.
 - **AFTER (TinyStories 30K × 1500 steps)**: *말이 되는 영어 문장* - 짧지만 *주어 + 동사 + 목적어* 구조, *동화 풍 어휘* (rabbit, forest, friend, mom, happy, ...). 완벽하진 않아도 *학습이 본체에 next-token 분포를 새긴 증거* 가 한 줄에서 명확.
 
 > Ch 20·22 의 *사전·사후 [MASK] top-5* 비교의 *generation 판* 입니다 — random init 이 *빈도와 무관한 희귀 토큰* 을 무작위로 뽑다가, 학습 후 *the / , / . 같은 고빈도 기능 토큰* 으로 재편되던 그 변화와 같은 구조 (거기서 *문맥 정답* 은 대규모 사전학습 reference 모델에서야 나왔습니다). 본 챕터의 AFTER 가 *문장이 되는* 이유는 CausalLM 이 *거의 모든 자리* 에서 학습 신호를 받아 같은 데이터로도 배우는 양이 많기 때문.

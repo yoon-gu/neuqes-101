@@ -56,17 +56,17 @@ Ch 23 (한국어 BERT 분류) 에서 Ch 24 (GPT) 로 넘어오면 *왜 갑자기
 | 갈래 | attention | 대표 모델 | 잘하는 task | 본 커리큘럼 |
 |---|---|---|---|---|
 | **Encoder-only** | 양방향 (bidirectional) | BERT, RoBERTa, DistilBERT, klue/bert-base | 분류·NER·추출형 QA (*이해*) | **Phase 1-3 (Ch 7-23)** |
-| **Decoder-only** | causal (좌→오 마스킹) | GPT-2/3/4, LLaMA, Mistral, KoGPT2 | generation·in-context learning·SFT/RLHF (*생성*) | **Phase 4 (Ch 24-31)** |
+| **Decoder-only** | causal (좌→우 마스킹) | GPT-2/3/4, LLaMA, Mistral, KoGPT2 | generation·in-context learning·SFT/RLHF (*생성*) | **Phase 4 (Ch 24-31)** |
 | **Encoder-Decoder (seq2seq)** | encoder 양방향 + decoder causal + **cross-attention** | T5, BART, mBART, KoBART, KE-T5 | 번역·요약·생성형 QA (*변환*) | (본 커리큘럼은 미포함 — 맥락만) |
 
 > 본 커리큘럼은 *encoder-only (이해)* → *decoder-only (생성)* 의 두 축을 직접 구현하며 잇습니다. **seq2seq** 는 *입력 시퀀스를 출력 시퀀스로 변환* (번역·요약) 하는 제3의 길로, 두 절반을 다시 합치고 *cross-attention* 으로 연결합니다 — 본 커리큘럼에선 다루지 않지만 *지형의 한 축* 으로 기억해 두세요.
 
 ### 왜 BERT 는 generation 이 어려운가
 
-BERT 의 *양방향* attention 은 토큰 $i$ 가 *좌·우 전부* 를 봅니다. 그래서 *다음 토큰을 좌→오로 하나씩 뽑는* autoregressive 생성에는 부적합합니다 — 미래 토큰을 이미 보고 있으니 "다음을 예측" 이 성립하지 않습니다. BERT 가 일부만 `[MASK]` 로 가려 복원하는 (MLM) 것도 이 *양방향 cheating* 을 막기 위함이었습니다 (Ch 20).
+BERT 의 *양방향* attention 은 토큰 $i$ 가 *좌·우 전부* 를 봅니다. 그래서 *다음 토큰을 좌→우로 하나씩 뽑는* autoregressive 생성에는 부적합합니다 — 미래 토큰을 이미 보고 있으니 "다음을 예측" 이 성립하지 않습니다. BERT 가 일부만 `[MASK]` 로 가려 복원하는 (MLM) 것도 이 *양방향 cheating* 을 막기 위함이었습니다 (Ch 20).
 
 generation 을 하려면 둘 중 하나가 필요합니다:
-- **causal masking** — 미래를 가려 *좌→오 순차 생성* 을 가능케 함 → **decoder (GPT), 본 챕터부터**
+- **causal masking** — 미래를 가려 *좌→우 순차 생성* 을 가능케 함 → **decoder (GPT), 본 챕터부터**
 - **반복 denoise** — 양방향을 유지한 채 *마스킹 비율을 일반화* 해 병렬 생성 → **diffusion LM (Phase 5, Ch 32)**
 
 > 즉 BERT 의 양방향성은 *이해* 엔 강점, *순차 생성* 엔 약점입니다. 이 한 가지 차이가 Phase 4 (decoder) 와 Phase 5 (diffusion) 두 갈래를 가릅니다.

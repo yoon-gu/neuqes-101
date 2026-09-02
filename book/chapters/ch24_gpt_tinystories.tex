@@ -182,7 +182,7 @@ Downstream 적응 & head 교체 + 본체 fine-tune (\emph{task 적응}) & \textb
 \midrule
 
 \textbf{Encoder-only} & 양방향 (bidirectional) & BERT, RoBERTa, DistilBERT, klue/bert-base & 분류·NER·추출형 QA (\emph{이해}) & \textbf{Phase 1-3 (\ref{ch:07}--\ref{ch:23}장)} \\
-\textbf{Decoder-only} & causal (좌\(\to\)오 마스킹) & GPT-2/3/4, LLaMA, Mistral, KoGPT2 & generation·in-context learning·SFT/RLHF (\emph{생성}) & \textbf{Phase 4 (\ref{ch:24}--\ref{ch:31}장)} \\
+\textbf{Decoder-only} & causal (좌\(\to\)우 마스킹) & GPT-2/3/4, LLaMA, Mistral, KoGPT2 & generation·in-context learning·SFT/RLHF (\emph{생성}) & \textbf{Phase 4 (\ref{ch:24}--\ref{ch:31}장)} \\
 \textbf{Encoder-Decoder (seq2seq)} & encoder 양방향 + decoder causal + \textbf{cross-attention} & T5, BART, mBART, KoBART, KE-T5 & 번역·요약·생성형 QA (\emph{변환}) & (본 커리큘럼은 미포함 --- 맥락만) \\
 \bottomrule
 \end{tabular}
@@ -195,14 +195,14 @@ Downstream 적응 & head 교체 + 본체 fine-tune (\emph{task 적응}) & \textb
 
 \subsection{왜 BERT 는 generation 이 어려운가}
 
-BERT 의 \emph{양방향} attention 은 토큰 \(i\) 가 \emph{좌·우 전부} 를 봅니다. 그래서 \emph{다음 토큰을 좌\(\to\)오로 하나씩 뽑는} autoregressive 생성에는 부적합합니다 --- 미래 토큰을 이미 보고 있으니 “다음을 예측” 이 성립하지 않습니다. BERT 가 일부만 \texttt{{[}MASK{]}} 로 가려 복원하는 (MLM) 것도 이 \emph{양방향 cheating} 을 막기 위함이었습니다 (\ref{ch:20}장).
+BERT 의 \emph{양방향} attention 은 토큰 \(i\) 가 \emph{좌·우 전부} 를 봅니다. 그래서 \emph{다음 토큰을 좌\(\to\)우로 하나씩 뽑는} autoregressive 생성에는 부적합합니다 --- 미래 토큰을 이미 보고 있으니 “다음을 예측” 이 성립하지 않습니다. BERT 가 일부만 \texttt{{[}MASK{]}} 로 가려 복원하는 (MLM) 것도 이 \emph{양방향 cheating} 을 막기 위함이었습니다 (\ref{ch:20}장).
 
 generation 을 하려면 둘 중 하나가 필요합니다:
 
 \begin{itemize}
 \tightlist
 \item
-  \textbf{causal masking} --- 미래를 가려 \emph{좌\(\to\)오 순차 생성} 을 가능케 함 \(\to\) \textbf{decoder (GPT), 본 장부터}
+  \textbf{causal masking} --- 미래를 가려 \emph{좌\(\to\)우 순차 생성} 을 가능케 함 \(\to\) \textbf{decoder (GPT), 본 장부터}
 \item
   \textbf{반복 denoise} --- 양방향을 유지한 채 \emph{마스킹 비율을 일반화} 해 병렬 생성 \(\to\) \textbf{diffusion LM (Phase 5, 32장)}
 \end{itemize}
@@ -603,7 +603,7 @@ print(
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-BPE training done: 9.8s, vocab=2048
+BPE training done: 10.7s, vocab=2048
 
 === encode/decode demo ===
 input      : Once upon a time, a little rabbit went to the forest.
@@ -1036,7 +1036,7 @@ A big dog hunoughummy Fluffy disapp? stuck The The feeling?_ desavyseideHe...
 
 
 
-\textbf{관전 포인트} - 학습 전 출력은 \emph{무작위 토큰 나열} (반복되는 짧은 byte 조각, 의미 없는 단어들). \ref{ch:20}·\ref{ch:22}장의 \emph{학습 전 {[}MASK{]} top-5} 가 \emph{the / a / of / , / .} 같은 통계적 빈도 토큰이었던 것과 같은 현상의 \emph{generation 판} 입니다. 학습 후 출력과 \emph{나란히 비교} 하면 사전학습이 본체에 \emph{next-token 분포} 를 새긴 증거를 직접 보게 됩니다.
+\textbf{관전 포인트} - 학습 전 출력은 \emph{무작위 토큰 나열} (반복되는 짧은 byte 조각, 의미 없는 단어들). random init 의 logits 는 거의 균등 분포라 \inlinecode{top\_k=50} 후보가 매 step \emph{vocab 무작위 표본} 이 되고, vocab 대부분이 희귀 조각이라 이런 나열이 나옵니다. \ref{ch:20}·\ref{ch:22}장의 \emph{학습 전 {[}MASK{]} top-5} 도 같은 이유로 \emph{빈도와 무관한 희귀 토큰} 이었습니다 --- 거기서 \emph{the / , / .} 같은 고빈도 기능 토큰이 올라온 것은 학습 \emph{후} 이고, 사전학습이 가장 먼저 새기는 것이 vocab 빈도 통계라는 뜻입니다. 학습 후 출력과 \emph{나란히 비교} 하면 사전학습이 본체에 \emph{next-token 분포} 를 새긴 증거를 직접 보게 됩니다.
 
 
 
@@ -1082,7 +1082,7 @@ BERT 장들 (\ref{ch:20}·\ref{ch:22}장) 과 \emph{완전히 같은} Trainer �
 \begin{itemize}
 \tightlist
 \item
-  \textbf{BEFORE (random init)}: \emph{영어와 거리가 먼 byte 조각 / 의미 없는 짧은 단어 반복}. logits 가 random 초기값이라 sampling 이 통계적 빈도 토큰들 사이에서만 흔들림.
+  \textbf{BEFORE (random init)}: \emph{영어와 거리가 먼 byte 조각 / 의미 없는 짧은 단어 반복}. logits 가 random 초기값이라 분포가 거의 균등 - sampling 이 \emph{빈도와 무관하게 vocab 전체} 에서 뽑는 상태.
 \item
   \textbf{AFTER (TinyStories 30K \(\times\) 1500 steps)}: \emph{말이 되는 영어 문장} - 짧지만 \emph{주어 + 동사 + 목적어} 구조, \emph{동화 풍 어휘} (rabbit, forest, friend, mom, happy, ...). 완벽하진 않아도 \emph{학습이 본체에 next-token 분포를 새긴 증거} 가 한 줄에서 명확.
 \end{itemize}
