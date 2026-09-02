@@ -38,12 +38,12 @@ Phase 4 의 첫 챕터. Ch 7-23 의 *BERT (encoder, MLM, task head 부착 fine-t
 수식: $L_{\text{CLM}} = -\frac{1}{n-1} \sum_{i=1}^{n-1} \log P(x_{i+1} \mid x_{\leq i})$
 
 ## 데이터
-`roneneldan/TinyStories` (Eldan & Li 2023, arXiv:2305.07759) - GPT-3.5 / GPT-4 가 *4세 어린이 어휘* 로 생성한 짧은 영어 동화 약 2.1M 편. 본 챕터는 *학습 split 의 처음 30,000 stories* 만 사용 (약 4-6M 토큰).
+`roneneldan/TinyStories` (Eldan & Li 2023, arXiv:2305.07759) - GPT-3.5 / GPT-4 가 *4세 어린이 어휘* 로 생성한 짧은 영어 동화 약 2.1M 편. 본 챕터는 *학습 split 의 처음 30,000 stories* 만 사용 (BPE vocab 2,048 로 약 7.42M 토큰).
 
-`block_size=128` 로 `group_texts` 후 train 약 30,000-50,000 chunks / eval 약 500 chunks.
+`block_size=128` 로 `group_texts` 후 train 57,973 chunks / eval 867 chunks.
 
 ## 모델
-**`GPT2LMHeadModel`** with `n_layer=4, n_head=4, n_embd=256, n_positions=128`. 약 **3.7M params** (weight tying 자동 적용). BERT 챕터들 (Ch 20·22 의 작은 BERT 약 10M, Ch 9-18 의 DistilBERT 약 66M) 과 다르게 *완전 random init* 에서 시작.
+**`GPT2LMHeadModel`** with `n_layer=4, n_head=4, n_embd=256, n_positions=128`. 약 **3.7M params** (weight tying 자동 적용). BERT 챕터들 (Ch 20·22 의 작은 BERT 약 11.5M, Ch 9-18 의 DistilBERT 약 66M) 과 다르게 *완전 random init* 에서 시작.
 
 ## Hyperparams
 - `max_steps=1500`, `per_device_train_batch_size=32`, `learning_rate=3e-4`
