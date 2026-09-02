@@ -36,7 +36,7 @@ Phase 4 의 두 번째 챕터. Ch 24 에서 *random init 작은 GPT (3.7M) 를 T
 ## 데이터
 `roneneldan/TinyStories` — *Ch 24 와 정확히 같은 split* (train 30K + eval 500). *데이터는 통제 변수*.
 
-`block_size=128` 로 `group_texts` 후 train 약 20K-30K chunks (gpt2 vocab 이 커서 토큰 수가 Ch 24 보다 적음) / eval 약 300-500 chunks.
+`block_size=128` 로 `group_texts` 후 train 51,863 chunks (약 6.64M 토큰) / eval 788 chunks. gpt2 vocab 이 커서 같은 텍스트가 Ch 24 보다 적은 토큰·chunk 로 쪼개집니다.
 
 ## 모델
 **`AutoModelForCausalLM.from_pretrained("gpt2")`** — `n_layer=12, n_head=12, n_embd=768, n_positions=1024`. 약 **124M params** (Ch 24 의 약 33배). WebText 약 40GB 로 사전학습된 본체 그대로 로드 → continual pretraining.
