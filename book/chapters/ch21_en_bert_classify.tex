@@ -225,7 +225,7 @@ MLM (\ref{ch:20}장) & 30,522 & \textbf{10.33} & 매우 어려움 --- 가려진 
 
 \subsection{\texorpdfstring{사전학습 효과와 loss 곡선}{사전학습 효과가 loss 곡선 에 어떻게 드러나나}}
 
-\begin{booktable}{21장 사전학습 효과가 loss 곡선 에 어떻게 드러나나 표}{tab:ch21-06}
+\begin{booktable}{21장 사전학습 효과가 loss 곡선 에 어떻게 드러나나 표 (1)}{tab:ch21-06}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}llll@{}}
 \toprule
@@ -244,12 +244,22 @@ random baseline 은 \emph{세 셋업 모두 같음} --- 사전학습은 \emph{�
 
 \begin{quote}
 \textbf{숫자로 감 잡기} (K=2, 정답 = 클래스 1):
-\textbar{} logits \((z_0, z_1)\) \textbar{} softmax \(\to\) \(\hat p_1\) \textbar{} 손실 \textbar{}
-\textbar-\/-\/-\textbar-\/-\/-\textbar-\/-\/-\textbar{}
-\textbar{} (0, 0) \textbar{} 0.5 \textbar{} \textbf{0.693} \(\leftarrow\) random \textbar{}
-\textbar{} (-1, +1) \textbar{} 0.881 \textbar{} 0.127 \textbar{}
-\textbar{} (-2, +2) \textbar{} 0.982 \textbar{} 0.018 \textbar{}
-\textbar{} (+2, -2) \textbar{} 0.018 \textbar{} \textbf{4.018} \(\leftarrow\) 자신 있게 틀림 \textbar{}
+
+\begin{booktable}{21장 사전학습 효과가 loss 곡선 에 어떻게 드러나나 표 (2)}{tab:ch21-07}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{@{}lll@{}}
+\toprule
+logits \((z_0, z_1)\) & softmax \(\to\) \(\hat p_1\) & 손실 \\
+\midrule
+
+(0, 0) & 0.5 & \textbf{0.693} \(\leftarrow\) random \\
+(-1, +1) & 0.881 & 0.127 \\
+(-2, +2) & 0.982 & 0.018 \\
+(+2, -2) & 0.018 & \textbf{4.018} \(\leftarrow\) 자신 있게 틀림 \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{booktable}
 \end{quote}
 
 
@@ -291,7 +301,7 @@ MLM 사전학습 (\ref{ch:20}장) 에서는 \inlinecode{group\_texts} 패턴으�
 
 \subsection{헤드 교체와 파라미터}
 
-\begin{booktable}{21장 헤드 교체와 파라미터 표}{tab:ch21-07}
+\begin{booktable}{21장 헤드 교체와 파라미터 표}{tab:ch21-08}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -460,7 +470,7 @@ mlm_collator = DataCollatorForLanguageModeling(
 
 \inlinecode{DataCollatorForLanguageModeling} 은 매 step 마다 \emph{입력 토큰의 약 15\%} 를 \emph{무작위로} 선택하고, 선택된 위치마다 세 가지 중 하나를 적용합니다.
 
-\begin{booktable}{21장 {[}MASK{]} 가 들어가는 원리 - 한 눈에 보는 80/10/10 표}{tab:ch21-08}
+\begin{booktable}{21장 {[}MASK{]} 가 들어가는 원리 - 한 눈에 보는 80/10/10 표}{tab:ch21-09}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -652,7 +662,7 @@ Selected for loss (target 15%):      1,217  (14.86%)
 
 PyTorch \inlinecode{CrossEntropyLoss} 의 \inlinecode{ignore\_index=-100} 은 \emph{어느 토큰 자리의 loss 를 학습 신호로 쓸지} 고르는 범용 스위치입니다. 같은 트릭이 Phase 4 GPT 장에서 \textbf{사전학습 vs Instruction Tuning(SFT) 의 가장 큰 차이} 를 만듭니다.
 
-\begin{booktable}{21장 labels = -100 ignore\_index 는 BERT-만의 트릭이 아닙니다 - Phase 4 (GPT) 의 핵심으로 다시 표}{tab:ch21-09}
+\begin{booktable}{21장 labels = -100 ignore\_index 는 BERT-만의 트릭이 아닙니다 - Phase 4 (GPT) 의 핵심으로 다시 표}{tab:ch21-10}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}llll@{}}
 \toprule
@@ -679,7 +689,7 @@ PyTorch \inlinecode{CrossEntropyLoss} 의 \inlinecode{ignore\_index=-100} 은 \e
 
 GPT 시대 (Phase 4 \ref{ch:24}장 이후) 부터는 같은 단어가 \emph{살짝 다른 의미} 를 가집니다.
 
-\begin{booktable}{21장 같은 단어 “파인튜닝”, BERT 단계와 GPT 시대의 의미가 살짝 다릅니다 표}{tab:ch21-10}
+\begin{booktable}{21장 같은 단어 “파인튜닝”, BERT 단계와 GPT 시대의 의미가 살짝 다릅니다 표}{tab:ch21-11}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -1052,7 +1062,7 @@ weighted avg     0.6344    0.6310    0.6303      1000
 
 \emph{같은 데이터·같은 hyperparams} 에 \emph{본체 출발점만 다른} 두 셋업의 정확도 비교. 둘 다 \emph{일반 도메인 위키 사전학습 \(\to\) Yelp 분류 transfer} 의 같은 패턴이라 비교가 \emph{fair}. \ref{ch:10}장의 수치는 본 장을 작성하는 시점에 \emph{해당 노트북의 README/실행 결과} 를 참고해 인용 --- 학습자가 노트북을 돌려 본인 수치로 갱신해 보면 더 좋습니다.
 
-\begin{booktable}{21장 10장 (DistilBERT) vs 21장 (작은 BERT scratch) - 본 장의 핵심 결과 표}{tab:ch21-11}
+\begin{booktable}{21장 10장 (DistilBERT) vs 21장 (작은 BERT scratch) - 본 장의 핵심 결과 표}{tab:ch21-12}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}llll@{}}
 \toprule
@@ -1124,7 +1134,7 @@ Fine-tune 도메인 & Yelp 이진 (사전학습과 다른 도메인) & Yelp 이�
 
 \section{이 장에 등장한 라이브러리·함수}
 
-\begin{booktable}{21장 새로 등장한 라이브러리}{tab:ch21-12}
+\begin{booktable}{21장 새로 등장한 라이브러리}{tab:ch21-13}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule

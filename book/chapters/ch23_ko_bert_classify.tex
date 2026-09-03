@@ -240,7 +240,7 @@ MLM (\ref{ch:22}장) & 약 32,000 & \textbf{10.37} & 매우 어려움 --- 가려
 
 \subsection{\texorpdfstring{사전학습 효과와 loss 곡선}{사전학습 효과가 loss 곡선 에 어떻게 드러나나}}
 
-\begin{booktable}{23장 사전학습 효과가 loss 곡선 에 어떻게 드러나나 표}{tab:ch23-07}
+\begin{booktable}{23장 사전학습 효과가 loss 곡선 에 어떻게 드러나나 표 (1)}{tab:ch23-07}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}llll@{}}
 \toprule
@@ -260,12 +260,22 @@ random baseline 은 \emph{두 셋업 모두 같음} --- 사전학습이 \emph{�
 
 \begin{quote}
 \textbf{숫자로 감 잡기} (K=2, 정답 = 클래스 1):
-\textbar{} logits \((z_0, z_1)\) \textbar{} softmax \(\to\) \(\hat p_1\) \textbar{} 손실 \textbar{}
-\textbar-\/-\/-\textbar-\/-\/-\textbar-\/-\/-\textbar{}
-\textbar{} (0, 0) \textbar{} 0.5 \textbar{} \textbf{0.693} \(\leftarrow\) random \textbar{}
-\textbar{} (-1, +1) \textbar{} 0.881 \textbar{} 0.127 \textbar{}
-\textbar{} (-2, +2) \textbar{} 0.982 \textbar{} 0.018 \textbar{}
-\textbar{} (+2, -2) \textbar{} 0.018 \textbar{} \textbf{4.018} \(\leftarrow\) 자신 있게 틀림 \textbar{}
+
+\begin{booktable}{23장 사전학습 효과가 loss 곡선 에 어떻게 드러나나 표 (2)}{tab:ch23-08}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{@{}lll@{}}
+\toprule
+logits \((z_0, z_1)\) & softmax \(\to\) \(\hat p_1\) & 손실 \\
+\midrule
+
+(0, 0) & 0.5 & \textbf{0.693} \(\leftarrow\) random \\
+(-1, +1) & 0.881 & 0.127 \\
+(-2, +2) & 0.982 & 0.018 \\
+(+2, -2) & 0.018 & \textbf{4.018} \(\leftarrow\) 자신 있게 틀림 \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{booktable}
 \end{quote}
 
 
@@ -307,7 +317,7 @@ MLM 사전학습 (\ref{ch:22}장) 에서는 \inlinecode{group\_texts} 패턴으�
 
 \subsection{헤드 교체와 파라미터}
 
-\begin{booktable}{23장 헤드 교체와 파라미터 표}{tab:ch23-08}
+\begin{booktable}{23장 헤드 교체와 파라미터 표}{tab:ch23-09}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -833,7 +843,7 @@ weighted avg     0.5484    0.5470    0.5433      1000
 
 두 셋업을 한 표·한 막대 그래프로. \ref{ch:15}장의 수치는 \emph{해당 노트북의 검증된 결과} 를 인용 --- 학습자가 직접 \ref{ch:15}장 노트북을 돌려 본인 수치로 갱신해 보면 더 좋습니다.
 
-\begin{booktable}{23장 2-way 비교 - 15장 (klue/bert-base) vs 23장 ours (small BERT + ko wiki MLM) 표}{tab:ch23-09}
+\begin{booktable}{23장 2-way 비교 - 15장 (klue/bert-base) vs 23장 ours (small BERT + ko wiki MLM) 표}{tab:ch23-10}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -891,7 +901,7 @@ NSMC 는 \emph{짧은 한 줄 리뷰} 이고 \emph{반어·맞춤법 흔들림·
 
 \section{이 장에 등장한 라이브러리·함수}
 
-\begin{booktable}{23장 새로 등장한 라이브러리}{tab:ch23-10}
+\begin{booktable}{23장 새로 등장한 라이브러리}{tab:ch23-11}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -935,7 +945,7 @@ NSMC 는 \emph{짧은 한 줄 리뷰} 이고 \emph{반어·맞춤법 흔들림·
 
 여러 요인이 겹쳐 \emph{살짝 더 어렵습니다}.
 
-\begin{booktable}{23장 FAQ 표}{tab:ch23-11}
+\begin{booktable}{23장 FAQ 표 (1)}{tab:ch23-12}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -967,7 +977,7 @@ NSMC 의 \emph{짧은 한 줄} 은 분류 신호가 \emph{한두 단어에 집�
 
 \textbf{분류 task 는 모든 sample 에 \emph{정답 라벨} 이 있기 때문} --- 가릴 자리가 없습니다.
 
-\begin{booktable}{23장 FAQ 표}{tab:ch23-13}
+\begin{booktable}{23장 FAQ 표 (2)}{tab:ch23-14}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}llll@{}}
 \toprule
@@ -1005,7 +1015,7 @@ def cls_tokenize(batch):
 
 본 장은 \textbf{Phase 3 의 마지막 장} 이자 \emph{마지막 BERT 파인튜닝 (task head 부착 패러다임)} 장입니다. Phase 4 (\ref{ch:24}장-) 부터는 같은 단어 “파인튜닝” 이 \emph{다른 의미} 로 쓰입니다.
 
-\begin{booktable}{23장 FAQ 표}{tab:ch23-14}
+\begin{booktable}{23장 FAQ 표 (3)}{tab:ch23-15}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
