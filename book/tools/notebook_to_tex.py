@@ -17,6 +17,7 @@ import io
 import textwrap
 import tokenize
 import unicodedata
+from collections import Counter
 from collections.abc import Callable
 from dataclasses import dataclass
 from html import unescape
@@ -2127,6 +2128,49 @@ def escape_table_math_pipes(markdown: str) -> str:
     return "\n".join(converted_lines) + "\n"
 
 
+_TABLE_DELIM_RE = re.compile(r"\|(?:\s*:?-+:?\s*\|)+")
+# 헤딩 / 표행 / 목록 마커 / 구분선 — 이미 블록을 끊으므로 빈 줄이 필요 없다.
+# `**bold**` 를 목록으로 오인하지 않도록 마커 뒤 공백까지 확인한다.
+_OPENS_BLOCK_RE = re.compile(r"(?:#|\||[-*+]\s|\d+[.)]\s|-{3,}\s*$|_{3,}\s*$)")
+_BLOCKQUOTE_RE = re.compile(r"^(\s*(?:>\s?)*)(.*)$")
+
+
+def insert_table_blank_lines(markdown: str) -> str:
+    """Give pipe tables the blank line the gfm reader needs to see them.
+
+    Colab renders a table that starts right after a paragraph line, but
+    pandoc's gfm reader only opens a table block after a blank line and
+    otherwise flattens the whole thing into `\textbar{}` prose. The blank
+    line we insert keeps the caller's blockquote prefix so a table inside a
+    quote stays inside it.
+    """
+    lines = markdown.splitlines()
+    result: list[str] = []
+    in_fence = False
+    for index, line in enumerate(lines):
+        prefix, body = _BLOCKQUOTE_RE.match(line).groups()
+        stripped = body.strip()
+
+        if stripped.startswith(("```", "~~~")):
+            in_fence = not in_fence
+            result.append(line)
+            continue
+        if in_fence:
+            result.append(line)
+            continue
+
+        # 헤더행은 다음 줄이 구분행(|---|---|)일 때만 표의 시작으로 본다.
+        if stripped.startswith("|") and index + 1 < len(lines):
+            next_body = _BLOCKQUOTE_RE.match(lines[index + 1]).group(2).strip()
+            if _TABLE_DELIM_RE.fullmatch(next_body) and result:
+                previous = _BLOCKQUOTE_RE.match(result[-1]).group(2).strip()
+                # 앞줄이 문단 텍스트면 빈 줄을 끼운다. 헤딩·목록·표·구분선은 이미 블록을 끊는다.
+                if previous and not _OPENS_BLOCK_RE.match(previous):
+                    result.append(prefix.rstrip() if prefix.strip() else "")
+        result.append(line)
+    return "\n".join(result) + ("\n" if markdown.endswith("\n") else "")
+
+
 def promote_headings(text: str) -> str:
     """Turn notebook h2 sections into book h1 sections inside a chapter."""
     promoted = []
@@ -2498,6 +2542,45 @@ def wrap_tabular_tables(latex: str, chapter_number: int) -> str:
             wrapped.append(line)
         i += 1
     return "\n".join(wrapped)
+
+
+_BOOKTABLE_OPEN = "\\begin{booktable}{"
+
+
+def _split_booktable_line(line: str) -> tuple[str, str] | None:
+    """Pull (caption, label) out of a `\begin{booktable}{...}{...}` line."""
+    if not line.startswith(_BOOKTABLE_OPEN) or not line.endswith("}"):
+        return None
+    # 캡션에는 \ensuremath{...} 처럼 중괄호가 들어가지만 라벨에는 없으므로
+    # 뒤에서부터 마지막 `}{` 를 경계로 삼는다.
+    body = line[len(_BOOKTABLE_OPEN):-1]
+    if "}{" not in body:
+        return None
+    caption, label = body.rsplit("}{", 1)
+    return caption, label
+
+
+def dedupe_table_captions(latex: str) -> str:
+    """Number table captions that repeat inside one chapter.
+
+    캡션은 가장 가까운 헤딩에서 따오므로 한 헤딩 아래 표가 둘이면 그대로
+    같아진다. 겹치는 것들만 (1)(2)... 로 구분한다 — 첫 표만 맨몸으로 두면
+    뒤엣것과 짝이라는 게 드러나지 않으므로 전부 붙인다.
+
+    반드시 compact_faq_section 처럼 표를 쳐내는 단계 **뒤에** 돌아야 한다.
+    앞에서 돌리면 잘려 나간 표의 번호가 빠져 (1) 없는 (4) 가 남는다.
+    """
+    lines = latex.splitlines()
+    parsed = [(index, _split_booktable_line(line)) for index, line in enumerate(lines)]
+    slots = [(index, found[0], found[1]) for index, found in parsed if found]
+    repeated = Counter(caption for _, caption, _ in slots)
+    seen: Counter[str] = Counter()
+    for index, caption, label in slots:
+        if repeated[caption] < 2:
+            continue
+        seen[caption] += 1
+        lines[index] = f"{_BOOKTABLE_OPEN}{caption} ({seen[caption]})}}{{{label}}}"
+    return "\n".join(lines) + ("\n" if latex.endswith("\n") else "")
 
 
 def unescape_texttt_content(text: str) -> str:
@@ -3585,6 +3668,7 @@ def markdown_to_latex(markdown: str, chapter_number: int) -> str:
     markdown = normalize_markdown_math_symbols(markdown)
     markdown = rewrite_notebook_links(markdown, chapter_number)
     markdown = escape_table_math_pipes(markdown)
+    markdown = insert_table_blank_lines(markdown)
     raw_blocks: list[str] = []
 
     def protect_raw_latex(match: re.Match[str]) -> str:
@@ -5849,6 +5933,8 @@ def chapter_tex(
     chapter_latex = chapter_specific_fixes(chapter_latex, chapter.number)
     if compact_code:
         chapter_latex = compact_faq_section(chapter_latex, chapter.number)
+    # 표를 쳐내는 단계가 모두 끝난 뒤에 캡션 중복을 정리한다.
+    chapter_latex = dedupe_table_captions(chapter_latex)
     return chapter_latex
 
 
