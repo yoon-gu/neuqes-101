@@ -499,12 +499,13 @@ print(f"Aux head:             {model.aux_head}")
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
+model.safetensors: downloading bytes:           |  0.00B
 Key                     | Status     | 
 ------------------------+------------+-
 classifier.weight       | MISSING    | 
+classifier.bias         | MISSING    | 
 pre_classifier.bias     | MISSING    | 
 pre_classifier.weight   | MISSING    | 
-classifier.bias         | MISSING    | 
 
 - MISSING: those params were newly initialized because missing from the che...
 Parameters:              66,958,086  (67.0 M)
@@ -548,7 +549,7 @@ loss = outputs.loss + λ · MSE(
 from transformers.modeling_outputs import SequenceClassifierOutput
 
 class AuxTrainer(Trainer):
-    def __init__(self, *args, lambda_aux: float = 0.05, **kwargs):   # 기본값은 sweet spot (부록 λ 스윕)
+    def __init__(self, *args, lambda_aux: float = 0.05, **kwargs):
         super().__init__(*args, **kwargs)
         self.lambda_aux = lambda_aux
 
@@ -817,10 +818,12 @@ print(f"Eval samples:      {len(labels_eval)}")
 \item
   \textbf{별점과 상관이 강한 항목} (food, service): 보조 별점 회귀 학습이 \emph{긍정/부정 신호} 를 잘 잡으면 도움이 됩니다. 작은 양의 delta 기대.
 \item
-  \textbf{별점과 상관이 약한 항목} (location, price): 별점 신호가 \emph{직접적 도움} 이 안 됨. delta가 0 근처거나 약간 음수일 수 있음.
+  \textbf{별점과 상관이 약한 항목} (location 등): 별점 신호가 \emph{직접적 도움} 이 안 됨. delta가 0 근처거나 약간 음수일 수 있음.
 \item
   \textbf{분산이 큰 라벨} --- eval 표본이 적어 F1 자체가 노이즈가 큼. delta 도 의미 해석 조심.
 \end{itemize}
+
+\textbf{실제 결과와 맞춰보면} 위 예상이 부분적으로만 맞습니다. 위 표에서 개선폭이 가장 큰 라벨은 상관이 강한 항목이 아니라 \textbf{baseline F1 이 낮은 항목} 쪽입니다 --- 올라갈 여지가 많은 라벨이 더 크게 움직였다고 읽는 편이 실측에 맞습니다. 단일 시드 1회 결과이므로 순위 자체는 시드에 따라 뒤집힐 수 있습니다.
 
 
 
@@ -933,7 +936,7 @@ print(f"Eval samples:      {len(labels_eval)}")
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
 \item
-  \(\lambda\)를 0.1에서 10까지 grid search한다고 할 때 \emph{작은 \(\lambda\)} 와 \emph{큰 \(\lambda\)} 가 각각 어떤 학습 양상을 만드는지 한 줄로 설명하세요.
+  \(\lambda\)를 0.01에서 1까지 grid search한다고 할 때 \emph{작은 \(\lambda\)} 와 \emph{큰 \(\lambda\)} 가 각각 어떤 학습 양상을 만드는지 한 줄로 설명하세요.
 \item
   \inlinecode{remove\_unused\_columns=False} 를 빠뜨리면 어떤 에러가 나나요? \inlinecode{aux\_labels} 가 어디로 사라지는지 추적해 보세요.
 \item
@@ -948,11 +951,12 @@ print(f"Eval samples:      {len(labels_eval)}")
 
 \begin{faqBox}{Q1. (실무) \(\lambda\)는 어떻게 정하나요? 단순히 1.0으로 두면 되나요?}
 
-1.0은 \emph{시작점} 일 뿐 거의 항상 grid search가 필요합니다.
+1.0 은 흔한 출발점으로 알려져 있지만, 이 장 셋업에서는 \(\lambda\)=1 에서 메인이 무너집니다 (§9).
+손실 종류가 다르면 \textbf{1 보다 훨씬 작은 쪽부터} 훑어야 합니다.
 
 \Needspace{10\baselineskip}
 \begin{lstlisting}
-for lam in [0.1, 0.3, 1.0, 3.0, 10.0]:
+for lam in [0.01, 0.03, 0.05, 0.1, 0.3, 1.0]:
     trainer = AuxTrainer(..., lambda_aux=lam)
     trainer.train()
     metrics = trainer.evaluate()
@@ -971,7 +975,8 @@ for lam in [0.1, 0.3, 1.0, 3.0, 10.0]:
 \item
   메인이 복잡하고 보조가 \emph{미세} 보조 \(\to\) \(\lambda\)=0.01-0.1
 \item
-  메인과 보조가 비슷한 중요도 \(\to\) \(\lambda\)=1.0
+  메인과 보조가 비슷한 중요도이고 \textbf{두 손실의 스케일도 비슷할 때} \(\to\) \(\lambda\)=1.0
+  (이 장처럼 BCE + MSE 로 스케일이 다르면 해당하지 않습니다 --- §9 참고)
 \end{itemize}
 
 또 다른 패턴: \textbf{uncertainty weighting} --- \(\lambda\)를 \emph{학습 가능한 파라미터} 로 두고 모델이 직접 결정하게 함 (Kendall et al. 2018).
@@ -1059,7 +1064,7 @@ trainer = AuxTrainer(...)
 trainer.train()
 \end{lstlisting}
 
-힌트: Trainer 가 \inlinecode{aux\_labels} 를 \emph{자동 제거} 한 뒤 우리 \inlinecode{compute\_loss} 안에서 \inlinecode{inputs.pop("aux\_labels")} 가 KeyError. \inlinecode{aux\_labels} 가 어디서 사라지는지 추적해 보면 학습 inputs 가 model.forward 시그니처와 맞춰지는 구조를 이해하게 됩니다.
+힌트: \texttt{KeyError:\ \textquotesingle{}aux\_labels\textquotesingle{}} 가 나는데, \textbf{\inlinecode{compute\_loss} 가 아니라 \inlinecode{AuxCollator.\_\_call\_\_}} 에서 터집니다. \inlinecode{remove\_unused\_columns} 는 모델 \inlinecode{forward} 시그니처에 없는 컬럼을 \emph{데이터셋 단계} 에서 걷어내므로, collator 가 받는 \inlinecode{features} 에 이미 \inlinecode{aux\_labels} 가 없습니다. 배치가 만들어지지 못해 \inlinecode{compute\_loss} 는 호출조차 되지 않습니다. \inlinecode{aux\_labels} 가 어디서 사라지는지 추적해 보면 학습 inputs 가 model.forward 시그니처와 맞춰지는 구조를 이해하게 됩니다.
 
 
 
