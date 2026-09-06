@@ -69,7 +69,7 @@ GPU:             Tesla T4
 **▶ 실행 결과**
 
 ```text
-Mon Jun 22 04:00:43 2026       
+Sun Sep  6 06:04:12 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -78,7 +78,7 @@ Mon Jun 22 04:00:43 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   39C    P8             10W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   41C    P8             14W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -131,6 +131,8 @@ for ex in ds["train"].select(range(2)):
 **▶ 실행 결과**
 
 ```text
+ynat/train-00000-of-00001.parquet: downloading bytes:           |  0.00B            
+ynat/validation-00000-of-00001.parquet: downloading bytes:           |  0.00B            
 splits: ['train', 'validation']
 sizes: [('train', 45678), ('validation', 9107)]
 label names (7): ['IT과학', '경제', '사회', '생활문화', '세계', '스포츠', '정치']
@@ -330,16 +332,17 @@ print(f"id2label:             {model.config.id2label}")
 **▶ 실행 결과**
 
 ```text
+model.safetensors: downloading bytes:           |  0.00B            
 [transformers] BertForSequenceClassification LOAD REPORT from: klue/bert-base
 Key                                        | Status     | 
 -------------------------------------------+------------+-
-cls.predictions.transform.dense.bias       | UNEXPECTED | 
-cls.predictions.transform.LayerNorm.weight | UNEXPECTED | 
-cls.seq_relationship.weight                | UNEXPECTED | 
-cls.predictions.bias                       | UNEXPECTED | 
-cls.seq_relationship.bias                  | UNEXPECTED | 
-cls.predictions.transform.LayerNorm.bias   | UNEXPECTED | 
 cls.predictions.transform.dense.weight     | UNEXPECTED | 
+cls.seq_relationship.bias                  | UNEXPECTED | 
+cls.predictions.transform.dense.bias       | UNEXPECTED | 
+cls.seq_relationship.weight                | UNEXPECTED | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED | 
+cls.predictions.bias                       | UNEXPECTED | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED | 
 classifier.bias                            | MISSING    | 
 classifier.weight                          | MISSING    | 
 
@@ -362,7 +365,7 @@ id2label:             {0: 'IT/Science', 1: 'Economy', 2: 'Society', 3: 'Life&Cul
 **▶ 실행 결과**
 
 ```text
-Mon Jun 22 04:01:09 2026       
+Sun Sep  6 06:04:34 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -371,7 +374,7 @@ Mon Jun 22 04:01:09 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   38C    P8              9W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   42C    P8             14W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -458,9 +461,9 @@ print(f"\nTraining done — mean train loss: {train_result.training_loss:.4f}")
 
 ```text
 Epoch  Training Loss  Validation Loss  Hamming Loss  Micro F1  Micro Precision  Micro Recall  Macro F1  Macro Precision  Macro Recall  Macro Auc  Runtime   Samples Per Second  Steps Per Second
-1      0.239451       0.261441         0.098143      0.798711  0.823565         0.775313      0.811643  0.816980         0.823295      0.954714   0.737500  1356.006000         43.392000
-2      0.175560       0.216631         0.074143      0.850043  0.863770         0.836746      0.848716  0.844496         0.855612      0.962340   0.670700  1490.876000         47.708000
-Training done — mean train loss: 0.2660
+1      0.231119       0.256440         0.099000      0.796834  0.822142         0.773038      0.808625  0.814437         0.820321      0.953456   0.944200  1059.123000         33.892000
+2      0.176106       0.217527         0.077857      0.841616  0.860368         0.823663      0.847575  0.844402         0.854208      0.961867   0.693900  1441.224000         46.119000
+Training done — mean train loss: 0.2604
 ```
 
 ```python
@@ -470,7 +473,7 @@ Training done — mean train loss: 0.2660
 **▶ 실행 결과**
 
 ```text
-Mon Jun 22 04:01:52 2026       
+Sun Sep  6 06:05:19 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -479,7 +482,7 @@ Mon Jun 22 04:01:52 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   63C    P0             70W /   70W |    2209MiB /  15360MiB |     75%      Default |
+| N/A   63C    P0             36W /   70W |    2209MiB /  15360MiB |     72%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -488,6 +491,6 @@ Mon Jun 22 04:01:52 2026
 |  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
 |        ID   ID                                                               Usage      |
 |=========================================================================================|
-|    0   N/A  N/A             692      C   /usr/bin/python3                       2206MiB |
+|    0   N/A  N/A            1318      C   /usr/bin/python3                       2206MiB |
 +-----------------------------------------------------------------------------------------+
 ```
