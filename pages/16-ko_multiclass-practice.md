@@ -231,6 +231,7 @@ Ch 15 셋업에서 K=2 → K=7 한 줄 변화.
 Ch 15 의 모델 로드에서 `num_labels` 만 2 → 7 로 바뀝니다. `num_labels=len(LABEL_NAMES)` 로 실제 클래스 수를 직접 세어 넣고, `problem_type="single_label_classification"` 으로 softmax + `CrossEntropyLoss` 경로를 명시합니다. `id2label`/`label2id` 를 같이 넘겨 두면 나중에 `model.config` 가 라벨 이름을 기억합니다.
 
 ```python
+torch.manual_seed(SEED); np.random.seed(SEED)   # 분류 헤드 초기화까지 고정 — 재현성 확보
 model = AutoModelForSequenceClassification.from_pretrained(
     "klue/bert-base",
     num_labels=len(LABEL_NAMES),
