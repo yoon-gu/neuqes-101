@@ -42,7 +42,7 @@
 
 \index{0매크로 F1@매크로 F1}
 
-\index{1load dataset klue ynat@load\_dataset("klue/klue", "ynat")}
+\index{1load dataset klue ynat@load\_dataset("klue", "ynat")}
 
 \index{1problem type single label classification@problem\_type="single\_label\_classification"}
 
@@ -135,9 +135,9 @@ logits & softmax \(\to\) \(\hat p_5\) & 손실 \\
 \midrule
 
 모두 0 (균등) & \(1/7 \approx 0.143\) & \textbf{1.946} \(\leftarrow\) random \\
-정답 클래스만 +2 & \(\approx 0.552\) & 0.594 \\
-정답 클래스만 +5 & \(\approx 0.961\) & 0.040 \\
-다른 클래스 하나만 +5 (정답 0) & \(\approx 0.006\) & \textbf{5.040} \(\leftarrow\) 자신 있게 틀림 \\
+정답 클래스만 +2 & \(\approx 0.471\) & 0.752 \\
+정답 클래스만 +5 & \(\approx 0.985\) & 0.015 \\
+다른 클래스 +5 (정답 0) & \(\approx 0.005\) & \textbf{5.302} \(\leftarrow\) 자신 있게 틀림 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -152,7 +152,7 @@ logits & softmax \(\to\) \(\hat p_5\) & 손실 \\
 \ref{ch:15}장과 \emph{완전히 동일} --- \inlinecode{klue/bert-base} 한국어 WordPiece. 토크나이저는 K 변화에 무관 (라벨 처리는 모델 측 일).
 
 \begin{quote}
-\textbf{Phase 2 안에서는 토크나이저 고정} --- \ref{ch:15}--\ref{ch:18}장 모두 같은 한국어 WordPiece. Phase 3 의 첫 장(\ref{ch:19}장)에서 비로소 \emph{토크나이저를 직접 학습} 해 WordPiece 와 WordLevel 을 비교하고, \ref{ch:20}--\ref{ch:23}장의 사전학습은 다시 기성 WordPiece 토크나이저를 가져와 씁니다.
+\textbf{Phase 2 안에서는 토크나이저 고정} --- \ref{ch:15}·\ref{ch:16}장·17·18 모두 같은 한국어 WordPiece. Phase 3 (\ref{ch:19}--\ref{ch:23}장) 에서 비로소 \emph{직접 학습한 워드레벨 토크나이저} 가 등장.
 \end{quote}
 
 \subsection{헤드라인 토큰화 예시}
@@ -283,7 +283,6 @@ First sample label: 3  (int 0-6)
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
-torch.manual_seed(SEED); np.random.seed(SEED)
 model = AutoModelForSequenceClassification.from_pretrained(
     "klue/bert-base",
     num_labels=len(LABEL_NAMES),
@@ -302,7 +301,7 @@ def param_summary(m):
 \noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=15]
+\begin{lstlisting}[firstnumber=14]
 total, trainable = param_summary(model)
 print(
     f"Parameters:           {total:>13,}  ("
@@ -318,7 +317,6 @@ print(f"id2label:             {model.config.id2label}")
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-model.safetensors: downloading bytes:           |  0.00B
 Key                                        | Status     | 
 -------------------------------------------+------------+-
 classifier.bias                            | MISSING    | 
@@ -467,17 +465,17 @@ print(classification_report(
 \begin{bookoutputbox}
 precision    recall  f1-score   support
 
-  IT/Science     0.7778    0.9655    0.8615        58
-     Economy     0.8261    0.8471    0.8365       157
-     Society     0.8803    0.8275    0.8531       400
-Life&Culture     0.8301    0.8699    0.8495       146
-       World     0.9082    0.9175    0.9128        97
+  IT/Science     0.7857    0.9483    0.8594        58
+     Economy     0.8210    0.8471    0.8339       157
+     Society     0.8830    0.8300    0.8557       400
+Life&Culture     0.8129    0.8630    0.8372       146
+       World     0.9053    0.8866    0.8958        97
       Sports     0.9459    0.9459    0.9459        74
-    Politics     0.7727    0.7500    0.7612        68
+    Politics     0.7941    0.7941    0.7941        68
 
-    accuracy                         0.8570      1000
-   macro avg     0.8487    0.8748    0.8601      1000
-weighted avg     0.8588    0.8570    0.8569      1000
+    accuracy                         0.8560      1000
+   macro avg     0.8497    0.8736    0.8603      1000
+weighted avg     0.8582    0.8560    0.8562      1000
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -505,18 +503,18 @@ weighted avg     0.8588    0.8570    0.8569      1000
 \begin{itemize}
 \tightlist
 \item
-  \textbf{대각선 셀} = 그 카테고리의 재현율. 표본이 많은 카테고리일수록 안정적이고, 표본이 적은 카테고리는 흔들립니다 --- 위 행렬을 클래스별 support 와 함께 보세요.
+  \textbf{대각선 셀} = 그 카테고리의 재현율. 모든 셀이 0.85+ 면 잘 학습된 것.
 \item
   \textbf{오답 패턴}:
 
   \begin{itemize}
   \tightlist
   \item
-    \textbf{다수 클래스로 쏠림} --- eval 에서 \emph{사회} 가 가장 큰 비중을 차지해, 애매한 헤드라인이 \emph{사회} 로 흘러가거나 \emph{사회} 가 다른 카테고리로 새는 쌍이 오답의 대부분입니다. 위 행렬에서 오답 상위 쌍을 확인해 보세요.
+    정치 \(\leftrightarrow\) 경제: 둘 다 정책·법안·국제 이슈 다뤄 \emph{경계가 모호} --- 자연스러운 혼동
   \item
-    \textbf{의미가 가까운 경계} --- 생활문화 \(\leftrightarrow\) 사회처럼 일상·문화 보도와 사회 이슈는 헤드라인 한 줄로는 사람도 헷갈립니다.
+    생활문화 \(\leftrightarrow\) 사회: 사회 이슈 vs 일상·문화 보도 --- 헤드라인 한 줄로는 사람도 혼동하는 경계
   \item
-    \textbf{비대칭 혼동} --- 한 방향으로만 새는 쌍도 있습니다 (기업·산업 뉴스가 양쪽에 걸치지만 학습된 시그널 단어가 한쪽에 쏠린 경우). FAQ Q2 참고.
+    IT과학 \(\leftrightarrow\) 경제: 기업·산업 뉴스가 양쪽에 걸침 (예: “삼성전자 4분기 실적 발표”)
   \end{itemize}
 \item
   \textbf{먼 클래스 혼동} (스포츠 \(\leftrightarrow\) 정치 등) 이 자주 보이면 라벨 노이즈나 학습 부족 신호.
@@ -546,9 +544,9 @@ K=7 에선 \emph{어느 한 클래스에 압도적 자신} 있는 경우 vs \emp
 \begin{itemize}
 \tightlist
 \item
-  잘 학습된 모델은 \emph{correct} 곡선이 1.0 가까이 몰리고, \emph{wrong} 은 그보다 낮은 쪽에 분산됩니다. 위 출력에서도 correct 평균이 wrong 평균보다 뚜렷이 높습니다.
+  잘 학습된 모델은 \emph{correct} 곡선이 1.0 가까이 몰림. \emph{wrong} 은 더 낮은 영역 (0.4-0.7) 에 분산.
 \item
-  correct/wrong 둘 다 1.0 근처에 압축돼 있으면 \emph{over-confident} --- 틀린 답에도 자신만만한 위험 신호. K 가 클수록 (7클래스) 이런 경향이 더 잘 드러남. 이 장에도 \emph{자신있게 틀린} 샘플이 있습니다 --- §5-3 에서 실제 헤드라인으로 확인합니다.
+  correct/wrong 둘 다 1.0 근처에 압축돼 있으면 \emph{over-confident} --- 틀린 답에도 자신만만한 위험 신호. K 가 클수록 (7클래스) 이런 경향이 더 잘 드러남.
 \item
   \emph{random baseline} 인 1/K = 0.143 근처 봉우리가 보이면 모델이 \emph{판단 자체를 못 하는} 샘플 --- 학습 데이터 부족 또는 헤드라인이 너무 짧은 경우.
 \end{itemize}
@@ -641,9 +639,9 @@ for label_str, idx in samples:
 
 \inlinecode{load\_dataset("klue/klue",\ "ynat")} & KLUE 벤치마크 YNAT (한국어 뉴스 7분류) & \ref{ch:17}장에서 같은 데이터로 multi-label 합성 \\
 \texttt{ds{[}“train”{]}.features{[}“label”{]}.names} & datasets.ClassLabel 의 사람-읽는 이름 & id2label 자동 매핑에 사용 \\
-\inlinecode{seaborn.heatmap(...,\ xticklabels=LABEL\_NAMES\_EN)} & 혼동 행렬 카테고리 라벨 표시 (plot 은 폰트 문제를 피해 영문 이름) & \ref{ch:17}장도 사용 \\
+\inlinecode{seaborn.heatmap(...,\ xticklabels=한국어)} & 혼동 행렬 한국어 라벨 표시 & \ref{ch:17}장도 사용 \\
 \inlinecode{sklearn.metrics.precision\_recall\_fscore\_support(...,\ average="macro")} & 클래스별 평균 metric (불균형에 강함) & 분류 장마다 \\
-\inlinecode{roc\_auc\_score(...,\ multi\_class="ovr")} & multi-class AUC (One-vs-Rest) & \ref{ch:17}장은 multi-hot 라벨에 \inlinecode{average="macro"} 로 \\
+\inlinecode{roc\_auc\_score(...,\ multi\_class="ovr")} & multi-class AUC (One-vs-Rest) & \ref{ch:17}장 multi-label 평가 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -661,7 +659,7 @@ for label_str, idx in samples:
 \item
   macro F1 이 weighted F1 보다 \emph{훨씬} 낮으면 무엇을 의심해야 하나요?
 \item
-  혼동 행렬에서 오답이 가장 많은 쌍들의 공통점은 무엇인가요? 클래스별 표본 수와 함께 설명해 보세요.
+  혼동 행렬에서 \emph{정치 \(\leftrightarrow\) 경제} 혼동이 많은데 \emph{스포츠 \(\leftrightarrow\) 정치} 혼동은 거의 없는 이유는?
 \item
   같은 klue/bert-base 가 NSMC binary (\ref{ch:15}장) 와 KLUE-YNAT 7분류 (\ref{ch:16}장) 에서 \emph{분류 헤드만} 다른데, 왜 두 task 모두 잘 동작하나요?
 \end{enumerate}
@@ -680,6 +678,7 @@ for label_str, idx in samples:
 \midrule
 
 \textbf{KLUE-YNAT} (이 장) & 뉴스 헤드라인 & 7 & 45K train \\
+KLUE-TC (KLUE Topic Classification) & 짧은 문서 토픽 & 7 & 같은 KLUE 시리즈 \\
 AI Hub 뉴스 분류 & 뉴스 본문 & 50+ & 100K+ (가입 필요) \\
 모두의 말뭉치 신문 코퍼스 & 신문 기사 & 다양 & 매우 큼 (라이선스 확인 필요) \\
 Naver shopping 카테고리 분류 & 상품 설명 & 100+ & 1M+ (실무에선 흔히 다룸) \\
@@ -688,7 +687,7 @@ Naver shopping 카테고리 분류 & 상품 설명 & 100+ & 1M+ (실무에선 �
 \end{adjustbox}
 \end{booktable}
 
-KLUE 벤치마크의 TC(Topic Classification) task 가 곧 YNAT 입니다 --- 별도 데이터셋이 아닙니다. KLUE-YNAT 가 \emph{입문에 편한 이유} --- datasets.load\_dataset 한 줄, 깔끔한 라벨, 균형 분포에 가까움, 헤드라인 한 줄이라 max\_length 짧음.
+KLUE-YNAT 가 \emph{입문에 편한 이유} --- datasets.load\_dataset 한 줄, 깔끔한 라벨, 균형 분포에 가까움, 헤드라인 한 줄이라 max\_length 짧음.
 
 \end{faqBox}
 
