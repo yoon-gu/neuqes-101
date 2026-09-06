@@ -42,7 +42,7 @@
 
 \index{0매크로 F1@매크로 F1}
 
-\index{1load dataset klue ynat@load\_dataset("klue", "ynat")}
+\index{1load dataset klue ynat@load\_dataset("klue/klue", "ynat")}
 
 \index{1problem type single label classification@problem\_type="single\_label\_classification"}
 
@@ -135,9 +135,9 @@ logits & softmax \(\to\) \(\hat p_5\) & 손실 \\
 \midrule
 
 모두 0 (균등) & \(1/7 \approx 0.143\) & \textbf{1.946} \(\leftarrow\) random \\
-정답 클래스만 +2 & \(\approx 0.471\) & 0.752 \\
-정답 클래스만 +5 & \(\approx 0.985\) & 0.015 \\
-다른 클래스 +5 (정답 0) & \(\approx 0.005\) & \textbf{5.302} \(\leftarrow\) 자신 있게 틀림 \\
+정답 클래스만 +2 & \(\approx 0.552\) & 0.594 \\
+정답 클래스만 +5 & \(\approx 0.961\) & 0.040 \\
+다른 클래스 하나만 +5 (정답 0) & \(\approx 0.006\) & \textbf{5.040} \(\leftarrow\) 자신 있게 틀림 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -152,7 +152,7 @@ logits & softmax \(\to\) \(\hat p_5\) & 손실 \\
 \ref{ch:15}장과 \emph{완전히 동일} --- \inlinecode{klue/bert-base} 한국어 WordPiece. 토크나이저는 K 변화에 무관 (라벨 처리는 모델 측 일).
 
 \begin{quote}
-\textbf{Phase 2 안에서는 토크나이저 고정} --- \ref{ch:15}·\ref{ch:16}장·17·18 모두 같은 한국어 WordPiece. Phase 3 (\ref{ch:19}--\ref{ch:23}장) 에서 비로소 \emph{직접 학습한 워드레벨 토크나이저} 가 등장.
+\textbf{Phase 2 안에서는 토크나이저 고정} --- \ref{ch:15}--\ref{ch:18}장 모두 같은 한국어 WordPiece. Phase 3 의 첫 장(\ref{ch:19}장)에서 비로소 \emph{토크나이저를 직접 학습} 해 WordPiece 와 WordLevel 을 비교하고, \ref{ch:20}--\ref{ch:23}장의 사전학습은 다시 기성 WordPiece 토크나이저를 가져와 씁니다.
 \end{quote}
 
 \subsection{헤드라인 토큰화 예시}
@@ -639,9 +639,9 @@ for label_str, idx in samples:
 
 \inlinecode{load\_dataset("klue/klue",\ "ynat")} & KLUE 벤치마크 YNAT (한국어 뉴스 7분류) & \ref{ch:17}장에서 같은 데이터로 multi-label 합성 \\
 \texttt{ds{[}“train”{]}.features{[}“label”{]}.names} & datasets.ClassLabel 의 사람-읽는 이름 & id2label 자동 매핑에 사용 \\
-\inlinecode{seaborn.heatmap(...,\ xticklabels=한국어)} & 혼동 행렬 한국어 라벨 표시 & \ref{ch:17}장도 사용 \\
+\inlinecode{seaborn.heatmap(...,\ xticklabels=LABEL\_NAMES\_EN)} & 혼동 행렬 카테고리 라벨 표시 (plot 은 폰트 문제를 피해 영문 이름) & \ref{ch:17}장도 사용 \\
 \inlinecode{sklearn.metrics.precision\_recall\_fscore\_support(...,\ average="macro")} & 클래스별 평균 metric (불균형에 강함) & 분류 장마다 \\
-\inlinecode{roc\_auc\_score(...,\ multi\_class="ovr")} & multi-class AUC (One-vs-Rest) & \ref{ch:17}장 multi-label 평가 \\
+\inlinecode{roc\_auc\_score(...,\ multi\_class="ovr")} & multi-class AUC (One-vs-Rest) & \ref{ch:17}장은 multi-hot 라벨에 \inlinecode{average="macro"} 로 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -678,7 +678,6 @@ for label_str, idx in samples:
 \midrule
 
 \textbf{KLUE-YNAT} (이 장) & 뉴스 헤드라인 & 7 & 45K train \\
-KLUE-TC (KLUE Topic Classification) & 짧은 문서 토픽 & 7 & 같은 KLUE 시리즈 \\
 AI Hub 뉴스 분류 & 뉴스 본문 & 50+ & 100K+ (가입 필요) \\
 모두의 말뭉치 신문 코퍼스 & 신문 기사 & 다양 & 매우 큼 (라이선스 확인 필요) \\
 Naver shopping 카테고리 분류 & 상품 설명 & 100+ & 1M+ (실무에선 흔히 다룸) \\
@@ -687,7 +686,7 @@ Naver shopping 카테고리 분류 & 상품 설명 & 100+ & 1M+ (실무에선 �
 \end{adjustbox}
 \end{booktable}
 
-KLUE-YNAT 가 \emph{입문에 편한 이유} --- datasets.load\_dataset 한 줄, 깔끔한 라벨, 균형 분포에 가까움, 헤드라인 한 줄이라 max\_length 짧음.
+KLUE 벤치마크의 TC(Topic Classification) task 가 곧 YNAT 입니다 --- 별도 데이터셋이 아닙니다. KLUE-YNAT 가 \emph{입문에 편한 이유} --- datasets.load\_dataset 한 줄, 깔끔한 라벨, 균형 분포에 가까움, 헤드라인 한 줄이라 max\_length 짧음.
 
 \end{faqBox}
 

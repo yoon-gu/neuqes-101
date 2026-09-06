@@ -4,9 +4,9 @@
 |---|---|---|
 | `load_dataset("klue/klue", "ynat")` | KLUE 벤치마크 YNAT (한국어 뉴스 7분류) | Ch 17 에서 같은 데이터로 multi-label 합성 |
 | `ds["train"].features["label"].names` | datasets.ClassLabel 의 사람-읽는 이름 | id2label 자동 매핑에 사용 |
-| `seaborn.heatmap(..., xticklabels=한국어)` | 혼동 행렬 한국어 라벨 표시 | Ch 17 도 사용 |
+| `seaborn.heatmap(..., xticklabels=LABEL_NAMES_EN)` | 혼동 행렬 카테고리 라벨 표시 (plot 은 폰트 문제를 피해 영문 이름) | Ch 17 도 사용 |
 | `sklearn.metrics.precision_recall_fscore_support(..., average="macro")` | 클래스별 평균 metric (불균형에 강함) | 분류 챕터마다 |
-| `roc_auc_score(..., multi_class="ovr")` | multi-class AUC (One-vs-Rest) | Ch 17 multi-label 평가 |
+| `roc_auc_score(..., multi_class="ovr")` | multi-class AUC (One-vs-Rest) | Ch 17 은 multi-hot 라벨에 `average="macro"` 로 |
 
 ## 체크포인트 질문
 
@@ -22,12 +22,11 @@
 | 데이터셋 | 도메인 | 클래스 수 | 크기 |
 |---|---|---|---|
 | **KLUE-YNAT** (이번 챕터) | 뉴스 헤드라인 | 7 | 45K train |
-| KLUE-TC (KLUE Topic Classification) | 짧은 문서 토픽 | 7 | 같은 KLUE 시리즈 |
 | AI Hub 뉴스 분류 | 뉴스 본문 | 50+ | 100K+ (가입 필요) |
 | 모두의 말뭉치 신문 코퍼스 | 신문 기사 | 다양 | 매우 큼 (라이선스 확인 필요) |
 | Naver shopping 카테고리 분류 | 상품 설명 | 100+ | 1M+ (실무에선 흔히 다룸) |
 
-KLUE-YNAT 가 *입문에 편한 이유* — datasets.load_dataset 한 줄, 깔끔한 라벨, 균형 분포에 가까움, 헤드라인 한 줄이라 max_length 짧음.
+KLUE 벤치마크의 TC(Topic Classification) task 가 곧 YNAT 입니다 — 별도 데이터셋이 아닙니다. KLUE-YNAT 가 *입문에 편한 이유* — datasets.load_dataset 한 줄, 깔끔한 라벨, 균형 분포에 가까움, 헤드라인 한 줄이라 max_length 짧음.
 
 ### Q2. (이론) 혼동 행렬에서 *대칭* 인 혼동과 *비대칭* 인 혼동은 무슨 차이인가요?
 
@@ -60,7 +59,7 @@ class WeightedTrainer(Trainer):
 
 KLUE-YNAT 는 *심한* 불균형이 아니라 (5K-8K 범위) class_weight 효과가 *작은 폭* — 완전 균형이 아닌 데이터에서도 보통 +1-2%p macro F1 정도 개선. 사용 결정은 *macro F1 vs accuracy* 의 격차로.
 
-### Q4. (이론) 헤드라인 한 줄 (~30 토큰) 이 분류에 *충분* 한가요?
+### Q4. (이론) 헤드라인 한 줄 (평균 약 16 토큰) 이 분류에 *충분* 한가요?
 
 대부분의 경우 충분합니다 — *카테고리* 라는 task 가 *키워드 + 표현 스타일* 로 풀리고, 그 신호가 헤드라인에 *압축* 되어 들어 있어요. 예: "월드컵 한국 vs 일본 16강전 시작" → 스포츠 신호 명확.
 
