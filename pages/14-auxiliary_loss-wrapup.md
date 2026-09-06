@@ -125,7 +125,7 @@ with torch.no_grad():
 다음 코드를 돌려보면 어떤 에러가 날까요?
 
 ```python
-# remove_unused_columns 를 True (기본값) 로 두기
+# 1. remove_unused_columns 를 True (기본값) 로 두기
 training_args = TrainingArguments(
     ...,
     remove_unused_columns=True,   # ← 잘못 (default 가 True 임)
