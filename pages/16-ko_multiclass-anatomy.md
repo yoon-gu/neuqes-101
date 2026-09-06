@@ -16,19 +16,19 @@ for k, v in eval_metrics.items():
 
 ```text
 Training Loss  Validation Loss  Epoch  Accuracy  Macro Precision  Macro Recall  Macro F1  Auc Ovr
-0.286288       0.402871         2      0.856000  0.849702         0.873584      0.860287  0.982976
+0.289142       0.420051         2      0.857000  0.848727         0.874784      0.860081  0.981029
 klue/bert-base KLUE-YNAT — evaluation:
-             eval_loss: 0.4029
-         eval_accuracy: 0.8560
-  eval_macro_precision: 0.8497
-     eval_macro_recall: 0.8736
-         eval_macro_f1: 0.8603
-          eval_auc_ovr: 0.9830
+             eval_loss: 0.4201
+         eval_accuracy: 0.8570
+  eval_macro_precision: 0.8487
+     eval_macro_recall: 0.8748
+         eval_macro_f1: 0.8601
+          eval_auc_ovr: 0.9810
 ```
 
 **결과 해석**
 
-accuracy 0.856, macro F1 0.860 으로 7클래스 분류치고 견고합니다. accuracy 와 macro F1 이 거의 같다는 건 *클래스 편향이 작다* 는 뜻 — 다수·소수 클래스 모두 고르게 맞혔습니다. OvR AUC 0.983 은 모델이 정답 클래스에 다른 클래스보다 높은 확률을 부여하는 *순위 능력* 이 매우 좋음을 보여줍니다.
+accuracy 0.857, macro F1 0.860 으로 7클래스 분류치고 견고합니다. accuracy 와 macro F1 이 거의 같다는 건 *클래스 편향이 작다* 는 뜻 — 다수·소수 클래스 모두 고르게 맞혔습니다. OvR AUC 0.981 은 모델이 정답 클래스에 다른 클래스보다 높은 확률을 부여하는 *순위 능력* 이 매우 좋음을 보여줍니다.
 
 예측 logits 를 직접 받아 softmax 확률·예측 클래스·정답 여부를 손으로 계산합니다. top-1 확률(가장 높은 클래스의 확률)을 맞은 샘플과 틀린 샘플로 나눠 평균을 비교하면, 모델 자신감과 정답 여부가 얼마나 연동되는지 가늠할 수 있습니다.
 
@@ -53,13 +53,13 @@ print(f"top-1 prob mean: correct={top1_prob[correct].mean():.4f}, wrong={top1_pr
 
 ```text
 logits shape:    (1000, 7)
-top-1 prob range: [0.2669, 0.9909]
-top-1 prob mean: correct=0.9033, wrong=0.7097
+top-1 prob range: [0.3392, 0.9919]
+top-1 prob mean: correct=0.8970, wrong=0.7244
 ```
 
 **결과 해석**
 
-맞은 샘플의 평균 top-1 확률(0.903)이 틀린 샘플(0.710)보다 확실히 높아, 모델 자신감이 정답 여부를 어느 정도 반영합니다. 다만 틀린 샘플 평균도 0.71 로 꽤 높아 *자신 있게 틀리는* 케이스가 존재함을 시사하며, 이는 뒤의 KDE·샘플 해석에서 확인됩니다.
+맞은 샘플의 평균 top-1 확률(0.897)이 틀린 샘플(0.724)보다 확실히 높아, 모델 자신감이 정답 여부를 어느 정도 반영합니다. 다만 틀린 샘플 평균도 0.72 로 꽤 높아 *자신 있게 틀리는* 케이스가 존재함을 시사하며, 이는 뒤의 KDE·샘플 해석에서 확인됩니다.
 
 카테고리별 precision/recall/F1 을 표로 출력해 어느 클래스가 강하고 약한지 한눈에 봅니다.
 
@@ -77,22 +77,22 @@ print(classification_report(
 ```text
               precision    recall  f1-score   support
 
-  IT/Science     0.7857    0.9483    0.8594        58
-     Economy     0.8210    0.8471    0.8339       157
-     Society     0.8830    0.8300    0.8557       400
-Life&Culture     0.8129    0.8630    0.8372       146
-       World     0.9053    0.8866    0.8958        97
+  IT/Science     0.7778    0.9655    0.8615        58
+     Economy     0.8261    0.8471    0.8365       157
+     Society     0.8803    0.8275    0.8531       400
+Life&Culture     0.8301    0.8699    0.8495       146
+       World     0.9082    0.9175    0.9128        97
       Sports     0.9459    0.9459    0.9459        74
-    Politics     0.7941    0.7941    0.7941        68
+    Politics     0.7727    0.7500    0.7612        68
 
-    accuracy                         0.8560      1000
-   macro avg     0.8497    0.8736    0.8603      1000
-weighted avg     0.8582    0.8560    0.8562      1000
+    accuracy                         0.8570      1000
+   macro avg     0.8487    0.8748    0.8601      1000
+weighted avg     0.8588    0.8570    0.8569      1000
 ```
 
 **결과 해석**
 
-Sports(F1 0.946)·World(0.896) 가 가장 강하고, Politics(0.794)·Economy(0.834) 가 상대적으로 약합니다 — 정치·경제는 정책·국제 이슈가 겹쳐 경계가 모호한 카테고리라는 통념과 일치합니다. IT/Science 는 recall 0.948 로 잘 잡지만 precision 0.786 으로, *IT가 아닌 글을 IT로 오인* 하는 경우가 더 있음을 보여줍니다.
+Sports(F1 0.946)·World(0.913) 가 가장 강하고, Politics(0.761)·Economy(0.836) 가 상대적으로 약합니다 — 정치는 표본이 68건으로 가장 적은 축에 속해 recall(0.750)이 흔들리기 쉽고, 애매한 헤드라인이 표본이 많은 카테고리 쪽으로 새는 영향도 받습니다 (위 해석 가이드 참조). IT/Science 는 recall 0.966 으로 잘 잡지만 precision 0.778 로, *IT가 아닌 글을 IT로 오인* 하는 경우가 더 있음을 보여줍니다.
 
 ### 5-1. 혼동 행렬 — 어디서 헷갈리는가
 
@@ -122,7 +122,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/16-ko_multiclass-out1-1.png)
+![output](../assets/16-ko_multiclass-out1-2.png)
 
 **해석 가이드**
 
@@ -164,7 +164,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/16-ko_multiclass-out2-1.png)
+![output](../assets/16-ko_multiclass-out2-2.png)
 
 **해석**
 
@@ -214,28 +214,28 @@ for label_str, idx in samples:
 
 ```text
 ==============================================================================
-sample #131  (most confident overall)
+sample #348  (most confident overall)
 ==============================================================================
-text:        美 시리아 북동부에 다국적 감시군 추진…미군 400명 잔류
-true label:  4  (세계)
-prediction:  4  (세계)  match: ✓
-top-1 prob:  0.9909
+text:        朴대통령 양자·다자 추가 대북제재…北도발시 응분 대가
+true label:  6  (정치)
+prediction:  6  (정치)  match: ✓
+top-1 prob:  0.9919
 top-3 distribution:
-        세계: 0.9909
-        정치: 0.0024
-      IT과학: 0.0014
+        정치: 0.9919
+        세계: 0.0024
+        사회: 0.0021
 
 ==============================================================================
-sample #929  (most uncertain (~2/K))
+sample #161  (most uncertain (~2/K))
 ==============================================================================
-text:        수능 작년보다 쉬워…1등급 컷 국어·수학가 92점·수학나 88점
+text:        인문사회 분야 유망 연구자 지원한다…총 120억원 규모
 true label:  2  (사회)
-prediction:  3  (생활문화)  match: ✗
-top-1 prob:  0.2918
+prediction:  0  (IT과학)  match: ✗
+top-1 prob:  0.3392
 top-3 distribution:
-      생활문화: 0.2918
-        사회: 0.2758
-      IT과학: 0.1989
+      IT과학: 0.3392
+        사회: 0.3125
+        경제: 0.2953
 
 ==============================================================================
 sample #57  (most confident WRONG)
@@ -243,11 +243,11 @@ sample #57  (most confident WRONG)
 text:        朴대통령 스캐퍼로티 연합사령관에 보국훈장 통일장 수여
 true label:  4  (세계)
 prediction:  6  (정치)  match: ✗
-top-1 prob:  0.9853
+top-1 prob:  0.9902
 top-3 distribution:
-        정치: 0.9853
-        사회: 0.0055
-        세계: 0.0034
+        정치: 0.9902
+        사회: 0.0043
+        세계: 0.0025
 ```
 
 **결과 해석**
