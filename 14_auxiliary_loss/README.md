@@ -1,6 +1,7 @@
 # 14_auxiliary_loss — BERT Auxiliary Loss (항목 + 별점 멀티태스크) — Phase 1 클라이맥스
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/14_auxiliary_loss/14_auxiliary_loss.ipynb)
+[![부록: λ 스윕](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/14_auxiliary_loss/14_auxiliary_loss_lambda_sweep.ipynb)
 
 ## 한 줄 목표
 Ch 13(BERT multi-label 항목 분류)에 **별점 회귀 보조 헤드** 를 추가, 결합 loss `L = L_main + λ · L_aux` 로 학습. *보조 task가 메인 task의 정확도를 끌어올리는가?* 를 같은 노트북 안에서 λ=0 baseline과 직접 비교해 측정.
@@ -21,7 +22,7 @@ Ch 13(BERT multi-label 항목 분류)에 **별점 회귀 보조 헤드** 를 추
 Ch 13의 항목 합성 라벨(food/service/price/ambiance/location, multi-hot 5차원) **+** 별점 보조 회귀 라벨(0-1 스케일, `label / 4`, 1★→0.0, 5★→1.0).
 
 ## 환경
-Google Colab **T4 GPU 필수**. 약 22분 (보조 ON 학습 ~9분 + λ=0 baseline 학습 ~9분 + 평가/시각화).
+Google Colab **T4 GPU 필수**. 약 3분 (보조 ON 학습 약 1분 + λ=0 baseline 학습 약 1분 + 다운로드·평가/시각화).
 
 **Self-contained**: 다른 챕터 결과에 의존하지 않습니다. 비교용 baseline (λ=0) 도 같은 노트북 안에서 inline 학습.
 
