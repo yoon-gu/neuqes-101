@@ -305,6 +305,7 @@ Ch 16 과 *모델 아키텍처는 완전히 동일* (`Linear(H, 7)` 분류 헤�
 모델을 로드할 때 `num_labels=7` 은 Ch 16 과 그대로지만 `problem_type="multi_label_classification"` 한 줄을 더해 loss 자동 매핑을 BCE per-label 로 전환합니다. 분류 헤드 `Linear(768, 7)` 와 파라미터 수는 Ch 16 과 완전히 동일합니다.
 
 ```python
+torch.manual_seed(SEED); np.random.seed(SEED)   # 분류 헤드 초기화까지 고정 — 재현성 확보
 model = AutoModelForSequenceClassification.from_pretrained(
     "klue/bert-base",
     num_labels=K,
