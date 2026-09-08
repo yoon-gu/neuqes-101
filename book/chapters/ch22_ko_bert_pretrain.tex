@@ -1177,12 +1177,12 @@ print(
 \begin{bookoutputbox}
 Training Loss  Validation Loss  Epoch
 -------------  ---------------  -----
-7.368658       7.493282         2
+7.368682       7.493295         2
 === eval (held-out Korean Wikipedia paragraphs) ===
                eval_loss: 7.4933
 
   MLM loss:               7.4933
-  perplexity (exp loss):  1795.94
+  perplexity (exp loss):  1795.96
   random baseline PPL:    32,000  (uniform over vocab)
   -> model narrowed vocab to approx. 1796 candidates per masked position
 \end{bookoutputbox}
@@ -1219,7 +1219,7 @@ print(metric_compare.round(4).to_string(index=False))
 Before vs After -- eval metrics
          metric  before (random)  after (2 epoch)  random baseline
       eval_loss          10.4216           7.5036          10.3735
-eval_perplexity       33576.0053        1814.5573       32000.0000
+eval_perplexity       33576.0053        1814.5417       32000.0000
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1238,7 +1238,7 @@ eval_perplexity       33576.0053        1814.5573       32000.0000
 
 \subsection{\texorpdfstring{표준 KLUE-BERT 기준점}{표준 KLUE-BERT 기준점}}
 
-우리 작은 BERT (10M, 한국어 위키 5K paragraphs \(\times\) 2 epoch) 의 top-5 가 \emph{고빈도 기능 토큰에 머무는} 이유는 단순합니다 --- \textbf{학습 데이터·모델 크기·학습 시간 모두 부족}. \emph{그럼 학습이 충분히 잘 되면 어떤 결과가 나오나?} 의 답을 같은 한국어 문장에 표준 \inlinecode{klue/bert-base} (110M, 약 8.4B 토큰 대규모 한국어 코퍼스) 를 적용해 직접 봅니다.
+우리 작은 BERT (약 11.5M, 한국어 위키 5K paragraphs \(\times\) 2 epoch) 의 top-5 가 \emph{고빈도 기능 토큰에 머무는} 이유는 단순합니다 --- \textbf{학습 데이터·모델 크기·학습 시간 모두 부족}. \emph{그럼 학습이 충분히 잘 되면 어떤 결과가 나오나?} 의 답을 같은 한국어 문장에 표준 \inlinecode{klue/bert-base} (110M, 약 8.4B 토큰 대규모 한국어 코퍼스) 를 적용해 직접 봅니다.
 
 같은 토크나이저 (\inlinecode{klue/bert-base}) 를 쓰고 있으므로 \emph{모델만 바꿔} 두 결과를 나란히.
 
@@ -1325,7 +1325,7 @@ if torch.cuda.is_available():
 \textbf{세 모델의 격차가 정확히 \emph{데이터 규모 + 모델 크기 + 학습 시간} 의 격차} --- 우리 작은 BERT (약 11.5M, 위키 5K paragraphs, 2 epoch) \(\to\) reference (약 110.7M, 약 8.4B tokens) 사이에 \emph{데이터 약 1.7만 배 (약 50만 \(\to\) 8.4B 토큰), 파라미터 약 10배}. 그 격차가 top-5 의 \emph{질적 차이} 로 정확히 드러납니다.
 \end{quote}
 
-이 장의 작은 BERT 는 \emph{한국어 위키 paragraphs 5K \(\times\) 2 epoch} 로 학습한 \emph{일반 도메인 mini BERT}. 위키 도메인은 직접 본 분포라 향상이 빠르지만, NSMC 영화 리뷰는 \emph{다른 도메인} 이라 fine-tune 단계에서 적응이 필요합니다 --- 이게 \emph{진짜 사전학습 \(\to\) fine-tune 패러다임} 의 핵심. \ref{ch:23}장에서 NSMC 이진 분류로 fine-tune 할 때 진짜 비교 --- \emph{우리가 직접 만든 작은 한국어 BERT (일반 도메인 5K, 약 10M)} vs \emph{\ref{ch:15}장의 \inlinecode{klue/bert-base} (대규모 일반 코퍼스, 약 110M)}.
+이 장의 작은 BERT 는 \emph{한국어 위키 paragraphs 5K \(\times\) 2 epoch} 로 학습한 \emph{일반 도메인 mini BERT}. 위키 도메인은 직접 본 분포라 향상이 빠르지만, NSMC 영화 리뷰는 \emph{다른 도메인} 이라 fine-tune 단계에서 적응이 필요합니다 --- 이게 \emph{진짜 사전학습 \(\to\) fine-tune 패러다임} 의 핵심. \ref{ch:23}장에서 NSMC 이진 분류로 fine-tune 할 때 진짜 비교 --- \emph{우리가 직접 만든 작은 한국어 BERT (일반 도메인 5K, 약 11.5M)} vs \emph{\ref{ch:15}장의 \inlinecode{klue/bert-base} (대규모 일반 코퍼스, 약 110M)}.
 
 
 
@@ -1538,7 +1538,7 @@ HIDDEN_SIZE = 384
 \item
   NSMC 이진 분류 fine-tune (\ref{ch:15}장과 같은 데이터·셋업) --- \emph{완전히 다른 도메인 transfer}
 \item
-  \textbf{핵심 비교}: 이번 작은 사전학습 BERT (약 10M params, 위키 5K paragraphs MLM) vs \ref{ch:15}장의 \inlinecode{klue/bert-base} (약 110M params, 대규모 일반 한국어 사전학습) --- 2-way
+  \textbf{핵심 비교}: 이번 작은 사전학습 BERT (약 11.5M params, 위키 5K paragraphs MLM) vs \ref{ch:15}장의 \inlinecode{klue/bert-base} (약 110M params, 대규모 일반 한국어 사전학습) --- 2-way
 \item
   영어 \ref{ch:20}장 \(\to\) \ref{ch:21}장 흐름의 \emph{한국어 대칭본} --- 같은 격차 패턴이 한국어 환경에서도 나오는지 검증
 \item
