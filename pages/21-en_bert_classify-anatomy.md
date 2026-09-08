@@ -14,19 +14,19 @@ for k, v in cls_eval_metrics.items():
 
 ```text
 Training Loss  Validation Loss  Epoch  Accuracy  Precision  Recall    F1        Auc
-0.667249       0.661020         2      0.631000  0.605505   0.681818  0.641399  0.680821
+0.667524       0.661433         2      0.632000  0.606618   0.681818  0.642023  0.680585
 Ch 21 small BERT (scratch MLM 3 epoch + classification fine-tune) — eval:
-             eval_loss: 0.6610
-         eval_accuracy: 0.6310
-        eval_precision: 0.6055
+             eval_loss: 0.6614
+         eval_accuracy: 0.6320
+        eval_precision: 0.6066
            eval_recall: 0.6818
-               eval_f1: 0.6414
-              eval_auc: 0.6808
+               eval_f1: 0.6420
+              eval_auc: 0.6806
 ```
 
 **결과 해석**
 
-eval accuracy 0.6310, AUC 0.6808 로, random (0.5) 보다는 분명히 높지만 Ch 10 의 DistilBERT (약 0.90) 와는 큰 격차입니다. recall 0.6818 이 precision 0.6055 보다 높아 모델이 긍정 쪽으로 다소 치우쳐 예측하는 경향도 읽힙니다.
+eval accuracy 0.6320, AUC 0.6806 로, random (0.5) 보다는 분명히 높지만 Ch 10 의 DistilBERT (약 0.90) 와는 큰 격차입니다. recall 0.6818 이 precision 0.6066 보다 높아 모델이 긍정 쪽으로 다소 치우쳐 예측하는 경향도 읽힙니다.
 
 eval set 전체에 대해 예측을 뽑아 클래스별 상세 리포트를 봅니다. 평균 정확도 한 숫자만으로는 모델이 어느 클래스에서 약한지 알 수 없으므로, 클래스별 precision/recall 과 예측 자신감 (top-1 확률) 을 함께 확인합니다.
 
@@ -62,22 +62,22 @@ print(classification_report(
 
 ```text
 Logits shape: (1000, 2)
-Predicted positive rate: 54.5%
-Top-1 prob mean: correct=0.5618, wrong=0.5480
+Predicted positive rate: 54.4%
+Top-1 prob mean: correct=0.5607, wrong=0.5473
 
               precision    recall  f1-score   support
 
-    negative     0.6615    0.5833    0.6200       516
-    positive     0.6055    0.6818    0.6414       484
+    negative     0.6623    0.5853    0.6214       516
+    positive     0.6066    0.6818    0.6420       484
 
-    accuracy                         0.6310      1000
-   macro avg     0.6335    0.6326    0.6307      1000
-weighted avg     0.6344    0.6310    0.6303      1000
+    accuracy                         0.6320      1000
+   macro avg     0.6344    0.6335    0.6317      1000
+weighted avg     0.6353    0.6320    0.6314      1000
 ```
 
 **결과 해석**
 
-맞은 예측의 평균 자신감 (0.5618) 과 틀린 예측 (0.5480) 이 거의 같아, 모델이 0.5 근처에서 머뭇거리며 결정하고 있음을 보여줍니다. 예측 긍정 비율 54.5% 와 positive 의 높은 recall (0.6818) 에서 보이듯 긍정 쪽으로 살짝 기울어, 부정 클래스의 recall (0.5833) 이 상대적으로 낮습니다.
+맞은 예측의 평균 자신감 (0.5607) 과 틀린 예측 (0.5473) 이 거의 같아, 모델이 0.5 근처에서 머뭇거리며 결정하고 있음을 보여줍니다. 예측 긍정 비율 54.4% 와 positive 의 높은 recall (0.6818) 에서 보이듯 긍정 쪽으로 살짝 기울어, 부정 클래스의 recall (0.5853) 이 상대적으로 낮습니다.
 
 ### 5-1. 학습 곡선 — MLM 사전학습 효과가 보이는 자리
 
@@ -108,7 +108,7 @@ else:
 
 **▶ 실행 결과**
 
-![output](../assets/21-en_bert_classify-out1-2.png)
+![output](../assets/21-en_bert_classify-out1-3.png)
 
 **결과 해석**
 
@@ -138,11 +138,11 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/21-en_bert_classify-out2-2.png)
+![output](../assets/21-en_bert_classify-out2-3.png)
 
 **결과 해석**
 
-혼동 행렬을 보면 실제 긍정을 긍정으로 맞춘 비율 (recall 0.6818) 이 실제 부정을 부정으로 맞춘 비율 (0.5833) 보다 높아, 모델이 긍정 쪽으로 치우쳐 오분류가 부정 행에 몰려 있음이 시각적으로 확인됩니다.
+혼동 행렬을 보면 실제 긍정을 긍정으로 맞춘 비율 (recall 0.6818) 이 실제 부정을 부정으로 맞춘 비율 (0.5853) 보다 높아, 모델이 긍정 쪽으로 치우쳐 오분류가 부정 행에 몰려 있음이 시각적으로 확인됩니다.
 
 ## Ch 10 (DistilBERT) vs Ch 21 (작은 BERT scratch) — 본 챕터의 핵심 결과
 
@@ -150,7 +150,7 @@ plt.show()
 
 | 차원 | Ch 10 (DistilBERT pretrained) | Ch 21 (작은 BERT scratch + 2K × 3 epoch MLM) | 비고 |
 |---|---|---|---|
-| 본체 파라미터 | 약 66M | 약 10M | Ch 21 은 1/6 크기 |
+| 본체 파라미터 | 약 66M | 약 11.1M | Ch 21 은 1/6 크기 |
 | 사전학습 코퍼스 | Wikipedia + BookCorpus (약 33억 토큰, 일반 도메인) | Wikitext-103 paragraphs 2K (약 27만 토큰, 일반 도메인) | 약 1.2만배 격차, **둘 다 일반 위키** |
 | 사전학습 시간 | TPU 수일 | **T4 약 15초** (2K × 3 epoch = 198 step) | |
 | Fine-tune 도메인 | Yelp 이진 (사전학습과 다른 도메인) | Yelp 이진 (사전학습과 다른 도메인) | **둘 다 일반 → Yelp transfer** |
@@ -188,16 +188,16 @@ print(comparison.round(4).to_string(index=False))
 ```text
 Ch10 vs Ch21 — classification metrics
    metric  Ch10 DistilBERT (ref)  Ch21 small BERT  delta (Ch21 - Ch10)
- accuracy                 0.8980           0.6310              -0.2670
-precision                 0.8981           0.6055              -0.2926
+ accuracy                 0.8980           0.6320              -0.2660
+precision                 0.8981           0.6066              -0.2915
    recall                 0.8787           0.6818              -0.1969
-       f1                 0.8883           0.6414              -0.2469
-      auc                 0.9680           0.6808              -0.2872
+       f1                 0.8883           0.6420              -0.2463
+      auc                 0.9680           0.6806              -0.2874
 ```
 
 **결과 해석**
 
-다섯 지표의 delta 가 모두 음수로, accuracy −0.2670, AUC −0.2872 등의 격차가 일관되게 나타납니다. 두 모델이 같은 *일반 위키 → Yelp transfer* 패턴을 따르므로, 이 격차의 거의 전부가 *사전학습 규모 (약 1.2만배) 와 모델 크기 (약 6배)* 의 차이에서 옵니다.
+다섯 지표의 delta 가 모두 음수로, accuracy −0.2660, AUC −0.2874 등의 격차가 일관되게 나타납니다. 두 모델이 같은 *일반 위키 → Yelp transfer* 패턴을 따르므로, 이 격차의 거의 전부가 *사전학습 규모 (약 1.2만배) 와 모델 크기 (약 6배)* 의 차이에서 옵니다.
 
 ```python
 # bar chart 로 한눈에 보기
@@ -225,7 +225,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/21-en_bert_classify-out3-2.png)
+![output](../assets/21-en_bert_classify-out3-3.png)
 
 **결과 해석**
 

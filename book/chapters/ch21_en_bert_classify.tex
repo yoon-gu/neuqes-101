@@ -97,7 +97,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 18 & klue/bert-base + 보조 & WordPiece (한국어, 사전학습) & KLUE-YNAT 합성 + 보조 라벨 & 메인(7) + 보조 & sigmoid + 태스크별 & \inlinecode{BCEWithLogitsLoss\ +\ λ·L\_aux} \\
 19 & --- (토크나이저 학습 전용) & WordPiece + WordLevel (둘 다 직접 학습) & Yelp text + NSMC text & --- & --- & --- \\
 20 & 작은 BERT (직접, scratch) & \inlinecode{bert-base-uncased} 토크나이저 (가져옴) & Wikitext-103 paragraphs (일반 도메인) & MLM head & softmax (MLM) & \inlinecode{CrossEntropyLoss} (masked token) \\
-\textbf{21 \(\leftarrow\) 여기} & \textbf{\ref{ch:20}장 사전학습 BERT + 분류 헤드 (약 10M)} & (\ref{ch:20}장과 동일) & \textbf{Yelp 이진화 (다른 도메인 transfer)} & \textbf{\inlinecode{Linear(H,\ 2)}} & \textbf{softmax} & \textbf{\inlinecode{CrossEntropyLoss}} \\
+\textbf{21 \(\leftarrow\) 여기} & \textbf{\ref{ch:20}장 사전학습 BERT + 분류 헤드 (약 11.1M)} & (\ref{ch:20}장과 동일) & \textbf{Yelp 이진화 (다른 도메인 transfer)} & \textbf{\inlinecode{Linear(H,\ 2)}} & \textbf{softmax} & \textbf{\inlinecode{CrossEntropyLoss}} \\
 22 (다음) & 작은 BERT (직접, scratch) --- 한국어 & \inlinecode{klue/bert-base} 토크나이저 (가져옴) & 한국어 Wikipedia paragraphs (일반 도메인) & MLM head & softmax (MLM) & \inlinecode{CrossEntropyLoss} (masked token) \\
 \bottomrule
 \end{tabular}
@@ -165,7 +165,7 @@ Loss & \inlinecode{CrossEntropyLoss} (vocab 30,522 logits) & \textbf{\inlinecode
 차원 & \ref{ch:10}장 (DistilBERT) & \ref{ch:21}장 (이 장) & 비고 \\
 \midrule
 
-본체 파라미터 & 약 66M & \textbf{약 10M} & \ref{ch:21}장은 1/6 작음 \\
+본체 파라미터 & 약 66M & \textbf{약 11.1M} & \ref{ch:21}장은 1/6 작음 \\
 사전학습 코퍼스 & Wikipedia + BookCorpus (약 33억 토큰, 일반 도메인) & \textbf{Wikitext-103 paragraphs 2K (약 27만 토큰, 일반 도메인)} & 약 1.2만배 격차, \textbf{둘 다 일반 위키} \\
 사전학습 시간 & TPU 수일 (대규모 인프라) & \textbf{T4 약 15초} (2K \(\times\) 3 epoch = 198 step) & \\
 Fine-tune 도메인 & Yelp 이진 (사전학습과 다른 도메인) & Yelp 이진 (사전학습과 다른 도메인) & \textbf{둘 다 일반 \(\to\) Yelp transfer 라 fair} \\
@@ -748,9 +748,9 @@ print(f"(random baseline PPL: {tokenizer.vocab_size:,})")
 \begin{bookoutputbox}
 Training Loss  Validation Loss  Epoch
 -------------  ---------------  -----
-7.174193       7.221408         3
-MLM eval loss:        7.2214
-MLM eval perplexity:  1368.41
+7.173933       7.221153         3
+MLM eval loss:        7.2212
+MLM eval perplexity:  1368.07
 (random baseline PPL: 30,522)
 \end{bookoutputbox}
 \par\vspace{0.9em}
@@ -1010,17 +1010,17 @@ print(classification_report(
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 Logits shape: (1000, 2)
-Predicted positive rate: 54.5%
-Top-1 prob mean: correct=0.5618, wrong=0.5480
+Predicted positive rate: 54.4%
+Top-1 prob mean: correct=0.5607, wrong=0.5473
 
               precision    recall  f1-score   support
 
-    negative     0.6615    0.5833    0.6200       516
-    positive     0.6055    0.6818    0.6414       484
+    negative     0.6623    0.5853    0.6214       516
+    positive     0.6066    0.6818    0.6420       484
 
-    accuracy                         0.6310      1000
-   macro avg     0.6335    0.6326    0.6307      1000
-weighted avg     0.6344    0.6310    0.6303      1000
+    accuracy                         0.6320      1000
+   macro avg     0.6344    0.6335    0.6317      1000
+weighted avg     0.6353    0.6320    0.6314      1000
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -1069,7 +1069,7 @@ weighted avg     0.6344    0.6310    0.6303      1000
 차원 & \ref{ch:10}장 (DistilBERT pretrained) & \ref{ch:21}장 (작은 BERT scratch + 2K \(\times\) 3 epoch MLM) & 비고 \\
 \midrule
 
-본체 파라미터 & 약 66M & 약 10M & \ref{ch:21}장은 1/6 크기 \\
+본체 파라미터 & 약 66M & 약 11.1M & \ref{ch:21}장은 1/6 크기 \\
 사전학습 코퍼스 & Wikipedia + BookCorpus (약 33억 토큰, 일반 도메인) & Wikitext-103 paragraphs 2K (약 27만 토큰, 일반 도메인) & 약 1.2만배 격차, \textbf{둘 다 일반 위키} \\
 사전학습 시간 & TPU 수일 & \textbf{T4 약 15초} (2K \(\times\) 3 epoch = 198 step) & \\
 Fine-tune 도메인 & Yelp 이진 (사전학습과 다른 도메인) & Yelp 이진 (사전학습과 다른 도메인) & \textbf{둘 다 일반 \(\to\) Yelp transfer} \\
@@ -1166,7 +1166,7 @@ Fine-tune 도메인 & Yelp 이진 (사전학습과 다른 도메인) & Yelp 이�
 \item
   MLM 학습 첫 step 의 loss 가 약 10.33 인 반면, 분류 fine-tune 첫 step 의 loss 는 약 0.693 입니다. 이 \emph{4 배 차이} 가 모델의 학습 어려움 차이를 의미하나요? (힌트: K=vocab\_size vs K=2)
 \item
-  \ref{ch:21}장의 작은 BERT 가 \ref{ch:10}장의 DistilBERT 보다 \emph{낮은 정확도} 를 보입니다. 이 격차가 (a) \emph{모델 크기} 차이 (약 10M vs 약 66M), (b) \emph{사전학습 데이터 양} 차이 (약 27만 토큰 vs 약 33억 토큰) 중 어느 쪽 영향이 클까요? 둘 다 \emph{위키 일반 도메인 \(\to\) Yelp transfer} 의 같은 패턴이라 \emph{도메인 정합} 변수는 통제됨. 추가 실험으로 어떻게 (a) 와 (b) 를 분리할 수 있나요?
+  \ref{ch:21}장의 작은 BERT 가 \ref{ch:10}장의 DistilBERT 보다 \emph{낮은 정확도} 를 보입니다. 이 격차가 (a) \emph{모델 크기} 차이 (약 11.1M vs 약 66M), (b) \emph{사전학습 데이터 양} 차이 (약 27만 토큰 vs 약 33억 토큰) 중 어느 쪽 영향이 클까요? 둘 다 \emph{위키 일반 도메인 \(\to\) Yelp transfer} 의 같은 패턴이라 \emph{도메인 정합} 변수는 통제됨. 추가 실험으로 어떻게 (a) 와 (b) 를 분리할 수 있나요?
 \item
   \emph{MLM 3 epoch} 와 \emph{random init} baseline 의 정확도 차이가 매우 작거나 (예: 1-2\%p) 거꾸로 \emph{random 이 더 높게} 나올 가능성이 있나요? 어떤 상황에서 그럴 수 있을까요? (힌트: 한국어 \ref{ch:23}장 부록 참조)
 \end{enumerate}
