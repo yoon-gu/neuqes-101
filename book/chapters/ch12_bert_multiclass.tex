@@ -143,7 +143,7 @@ L = -\frac{1}{N}\sum_{i=1}^{N}\log \hat p_{i, y_i} \quad\text{where}\quad \hat p
 
 K가 늘어나면 \emph{random baseline 손실} 도 같이 커집니다 --- 학습 초반 모델이 logit을 거의 0으로 출력하면 softmax는 균등 \((1/K, \ldots, 1/K)\) 가 되고 정답 클래스의 손실은 \(-\log(1/K) = \log K\).
 
-\begin{booktable}{12장 손실 노트 표}{tab:ch12-03}
+\begin{booktable}{12장 손실 노트 표 (1)}{tab:ch12-03}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -161,7 +161,7 @@ K & random baseline loss \(-\log(1/K)\) & 의미 \\
 
 \textbf{숫자로 감 잡기 (K=5, 정답=클래스 4)} --- logits에서 정답 클래스가 얼마나 커야 손실이 얼마인지:
 
-\begin{booktable}{12장 손실 노트 표}{tab:ch12-04}
+\begin{booktable}{12장 손실 노트 표 (2)}{tab:ch12-04}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -786,7 +786,7 @@ class WeightedTrainer(Trainer):
 
 둘 다 가능하고 각각 장단점이 있습니다.
 
-\begin{booktable}{12장 FAQ 표}{tab:ch12-08}
+\begin{booktable}{12장 FAQ 표 (1)}{tab:ch12-08}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -853,7 +853,7 @@ model.predict(tok("이 식당 음식이 정말 별로였어요"))
 
 같은 \inlinecode{distilbert-base-uncased} 본체로:
 
-\begin{booktable}{12장 FAQ 표}{tab:ch12-09}
+\begin{booktable}{12장 FAQ 표 (2)}{tab:ch12-09}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule

@@ -3,7 +3,7 @@
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/25_gpt2_continual_pretrain/25_gpt2_continual_pretrain.ipynb)
 
 ## 한 줄 목표
-Phase 4 의 두 번째 챕터. Ch 24 에서 *random init 작은 GPT (3M) 를 TinyStories 로 from scratch 사전학습* 했다면, 이번엔 **OpenAI `gpt2` (124M, WebText 약 40GB 사전학습된 본체)** 를 *같은 TinyStories 데이터* 로 **continual pretraining** (계속 사전학습 / continual learning) 합니다. *같은 CausalLM task, 같은 LM head, 같은 collator, 같은 loss* — 변하는 건 *모델 로드 한 줄 + 학습률* 뿐. 그게 GPT 시대 *학습 단계 2 (continual pretraining)* 의 본질입니다.
+Phase 4 의 두 번째 챕터. Ch 24 에서 *random init 작은 GPT (3.7M) 를 TinyStories 로 from scratch 사전학습* 했다면, 이번엔 **OpenAI `gpt2` (124M, WebText 약 40GB 사전학습된 본체)** 를 *같은 TinyStories 데이터* 로 **continual pretraining** (계속 사전학습 / continual learning) 합니다. *같은 CausalLM task, 같은 LM head, 같은 collator, 같은 loss* — 변하는 건 *모델 로드 한 줄 + 학습률* 뿐. 그게 GPT 시대 *학습 단계 2 (continual pretraining)* 의 본질입니다.
 
 ## GPT 시대 학습 4단계 — 본 챕터의 위치
 
@@ -24,7 +24,7 @@ Phase 4 의 두 번째 챕터. Ch 24 에서 *random init 작은 GPT (3M) 를 Tin
 - **`transformers.Trainer` + `DataCollatorForLanguageModeling(mlm=False)`** — *Ch 24 와 정확히 같은 코드*. 학습 단계 2 의 정의
 - **`gradient_accumulation_steps`** — T4 16GB + 124M 모델의 메모리 제약 해소 (per_device_batch=4, accumulation=4 → effective batch 16)
 - **사전학습된 본체의 시작 loss** — random baseline (`ln(50257) ≈ 10.82`) 이 아니라 *약 3.0-4.0* 에서 시작. *Ch 24 와 본질적 차이*
-- **3-way generation 비교** — Ch 24 (3M scratch) vs Ch 25 BEFORE (gpt2 그대로) vs Ch 25 AFTER (continual pretrain). *모델 크기와 사전학습 효과는 분리 불가능* 의 정량 표시
+- **3-way generation 비교** — Ch 24 (3.7M scratch) vs Ch 25 BEFORE (gpt2 그대로) vs Ch 25 AFTER (continual pretrain). *모델 크기와 사전학습 효과는 분리 불가능* 의 정량 표시
 - **Catastrophic forgetting** — 긴 학습 / 큰 lr 일 때 사전학습된 일반 도메인 능력이 손실되는 현상. 짧은 학습 + 작은 lr 로 완화
 - **Continual pretraining ↔ SFT (Ch 28) 의 정확한 경계** — `labels = -100` 자리가 *pad 만 (단계 2)* vs *prompt 부분 (단계 3)*
 
@@ -36,21 +36,21 @@ Phase 4 의 두 번째 챕터. Ch 24 에서 *random init 작은 GPT (3M) 를 Tin
 ## 데이터
 `roneneldan/TinyStories` — *Ch 24 와 정확히 같은 split* (train 30K + eval 500). *데이터는 통제 변수*.
 
-`block_size=128` 로 `group_texts` 후 train 약 20K-30K chunks (gpt2 vocab 이 커서 토큰 수가 Ch 24 보다 적음) / eval 약 300-500 chunks.
+`block_size=128` 로 `group_texts` 후 train 51,863 chunks (약 6.64M 토큰) / eval 788 chunks. gpt2 vocab 이 커서 같은 텍스트가 Ch 24 보다 적은 토큰·chunk 로 쪼개집니다.
 
 ## 모델
-**`AutoModelForCausalLM.from_pretrained("gpt2")`** — `n_layer=12, n_head=12, n_embd=768, n_positions=1024`. 약 **124M params** (Ch 24 의 약 40배). WebText 약 40GB 로 사전학습된 본체 그대로 로드 → continual pretraining.
+**`AutoModelForCausalLM.from_pretrained("gpt2")`** — `n_layer=12, n_head=12, n_embd=768, n_positions=1024`. 약 **124M params** (Ch 24 의 약 33배). WebText 약 40GB 로 사전학습된 본체 그대로 로드 → continual pretraining.
 
 ## Hyperparams
 - `num_train_epochs=1`, `per_device_train_batch_size=4`, `gradient_accumulation_steps=4` (effective batch 16)
 - `learning_rate=2e-5` ← *Ch 24 의 `3e-4` 와 다른 유일한 큰 차이*
-- `lr_scheduler_type="cosine"`, `warmup_ratio=0.06`
+- `lr_scheduler_type="cosine"`, `warmup_steps=0.06` (1 미만 값은 전체 step 대비 비율 해석 — 구 `warmup_ratio`)
 - AdamW `weight_decay=0.01`, `max_grad_norm=1.0`
 - `fp16=True` (T4 는 bf16 불가)
 - `eval_strategy="steps"`, `eval_steps=100`
 
 ## 환경
-Google Colab **T4 GPU 필수**. 약 15-20분 (데이터 로드 약 2분 + gpt2 로드·토큰화 약 2분 + 학습 전 generation 약 1분 + continual pretraining 약 8-10분 + 학습 후 generation + 3-way 비교 약 2분).
+Google Colab **T4 GPU 필수**. 약 20-25분 (데이터 로드·gpt2 로드·토큰화 약 2분 + 학습 전 generation 약 30초 + continual pretraining 약 19분 + 학습 후 generation + 3-way 비교 약 1분).
 
 device 자동 감지 (CUDA / MPS / CPU) — 로컬 Mac MPS 에서도 실행 가능 (학습 시간 약 2-3배 증가).
 
@@ -59,7 +59,7 @@ device 자동 감지 (CUDA / MPS / CPU) — 로컬 Mac MPS 에서도 실행 가�
 | Ch | 모델 | 토크나이저 | 데이터 | Output Head | Loss |
 |---|---|---|---|---|---|
 | 23 | 작은 BERT (한국어, scratch) + 분류 head | klue/bert-base | NSMC 이진 | Linear(H, 2) | CE |
-| 24 | 작은 GPT2 (3M, scratch) | BPE 직접 학습 (vocab 2,048) | TinyStories 30K | Linear(H, V) (LM head, weight tied) | CE (next-token) |
+| 24 | 작은 GPT2 (3.7M, scratch) | BPE 직접 학습 (vocab 2,048) | TinyStories 30K | Linear(H, V) (LM head, weight tied) | CE (next-token) |
 | **25** | **`gpt2` (124M, WebText 사전학습)** | **BPE (gpt2 그대로, vocab 50,257)** | **TinyStories 30K (Ch 24 와 동일)** | **Linear(H, V) (LM head 그대로)** | **CE (next-token) — *continual pretraining*** |
 | 26 (다음) | 작은 GPT (한국어, scratch) | BPE 직접 학습 (한국어) | 한국어 TinyStories-Korean | Linear(H, V) (LM head, weight tied) | CE (next-token) |
 
