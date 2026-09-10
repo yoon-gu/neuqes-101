@@ -43,7 +43,7 @@ Phase 4 의 첫 챕터. Ch 7-23 의 *BERT (encoder, MLM, task head 부착 fine-t
 `block_size=128` 로 `group_texts` 후 train 57,973 chunks / eval 867 chunks.
 
 ## 모델
-**`GPT2LMHeadModel`** with `n_layer=4, n_head=4, n_embd=256, n_positions=128`. 약 **3.7M params** (weight tying 자동 적용). BERT 챕터들 (Ch 20·22 의 작은 BERT 약 11.5M, Ch 9-18 의 DistilBERT 약 66M) 과 다르게 *완전 random init* 에서 시작.
+**`GPT2LMHeadModel`** with `n_layer=4, n_head=4, n_embd=256, n_positions=128`. 약 **3.7M params** (weight tying 자동 적용). BERT 챕터들 (Ch 20·22 의 작은 BERT 약 11M (11.1M·11.5M), Ch 9-18 의 DistilBERT 약 66M) 과 다르게 *완전 random init* 에서 시작.
 
 ## Hyperparams
 - `max_steps=1500`, `per_device_train_batch_size=32`, `learning_rate=3e-4`
