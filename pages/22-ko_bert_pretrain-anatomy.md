@@ -31,7 +31,7 @@ else:
 
 **▶ 실행 결과**
 
-![output](../assets/22-ko_bert_pretrain-out1-4.png)
+![output](../assets/22-ko_bert_pretrain-out1-5.png)
 
 ```python
 eval_metrics = trainer.evaluate()
@@ -52,12 +52,12 @@ print(f"  -> model narrowed vocab to approx. {eval_ppl:.0f} candidates per maske
 
 ```text
 Training Loss  Validation Loss  Epoch
-7.368658       7.493282         2
+7.368682       7.493295         2
 === eval (held-out Korean Wikipedia paragraphs) ===
                eval_loss: 7.4933
 
   MLM loss:               7.4933
-  perplexity (exp loss):  1795.94
+  perplexity (exp loss):  1795.96
   random baseline PPL:    32,000  (uniform over vocab)
   -> model narrowed vocab to approx. 1796 candidates per masked position
 ```
@@ -95,12 +95,12 @@ for sent in test_sentences:
 
 ```text
 Training Loss  Validation Loss  Epoch
-7.368658       7.503597         2
+7.368682       7.503588         2
 ==============================================================================
 AFTER pretraining  (2 epoch MLM)
 ==============================================================================
   eval_loss       : 7.5036   (before: 10.4216)
-  eval_perplexity : 1,814.56        (before: 33,576)
+  eval_perplexity : 1,814.54        (before: 33,576)
   -> narrowed vocab to approx. 1815 candidates per masked position
 
 input: 대한민국의 수도는 [MASK]이다.
@@ -138,7 +138,7 @@ print(metric_compare.round(4).to_string(index=False))
 Before vs After — eval metrics
          metric  before (random)  after (2 epoch)  random baseline
       eval_loss          10.4216           7.5036          10.3735
-eval_perplexity       33576.0053        1814.5573       32000.0000
+eval_perplexity       33576.0053        1814.5417       32000.0000
 ```
 
 ```python
@@ -174,9 +174,10 @@ plt.show()
 
 ### 7-2. 🏆 학습이 *충분히 잘 된 경우* 의 기준점 — 표준 `klue/bert-base` 비교
 
-우리 작은 BERT (10M, 한국어 위키 5K paragraphs × 2 epoch) 의 top-5 가 *고빈도 기능 토큰에 머무는* 이유는 단순합니다 — **학습 데이터·모델 크기·학습 시간 모두 부족**. *그럼 학습이 충분히 잘 되면 어떤 결과가 나오나?* 의 답을 같은 한국어 문장에 표준 `klue/bert-base` (110M, 약 8.4B 토큰 대규모 한국어 코퍼스) 를 적용해 직접 봅니다.
+우리 작은 BERT (약 11.5M, 한국어 위키 5K paragraphs × 2 epoch) 의 top-5 가 *고빈도 기능 토큰에 머무는* 이유는 단순합니다 — **학습 데이터·모델 크기·학습 시간 모두 부족**. *그럼 학습이 충분히 잘 되면 어떤 결과가 나오나?* 의 답을 같은 한국어 문장에 표준 `klue/bert-base` (110M, 약 8.4B 토큰 대규모 한국어 코퍼스) 를 적용해 직접 봅니다.
 
 같은 토크나이저 (`klue/bert-base`) 를 쓰고 있으므로 *모델만 바꿔* 두 결과를 나란히.
+
 
 ```python
 # 표준 klue/bert-base 로드 — 학습이 충분히 잘 된 경우의 기준점
@@ -199,10 +200,10 @@ model.safetensors: downloading bytes:           |  0.00B
 [transformers] BertForMaskedLM LOAD REPORT from: klue/bert-base
 Key                         | Status     |  | 
 ----------------------------+------------+--+-
-bert.pooler.dense.weight    | UNEXPECTED |  | 
-cls.seq_relationship.bias   | UNEXPECTED |  | 
 cls.seq_relationship.weight | UNEXPECTED |  | 
+bert.pooler.dense.weight    | UNEXPECTED |  | 
 bert.pooler.dense.bias      | UNEXPECTED |  | 
+cls.seq_relationship.bias   | UNEXPECTED |  | 
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
@@ -307,7 +308,7 @@ input: 배우 연기가 [MASK] 좋았어요.
 
 > **세 모델의 격차가 정확히 *데이터 규모 + 모델 크기 + 학습 시간* 의 격차** — 우리 작은 BERT (약 11.5M, 위키 5K paragraphs, 2 epoch) → reference (약 110.7M, 약 8.4B tokens) 사이에 *데이터 약 1.7만 배 (약 50만 → 8.4B 토큰), 파라미터 약 10배*. 그 격차가 top-5 의 *질적 차이* 로 정확히 드러납니다.
 
-이번 챕터의 작은 BERT 는 *한국어 위키 paragraphs 5K × 2 epoch* 로 학습한 *일반 도메인 mini BERT*. 위키 도메인은 직접 본 분포라 향상이 빠르지만, NSMC 영화 리뷰는 *다른 도메인* 이라 fine-tune 단계에서 적응이 필요합니다 — 이게 *진짜 사전학습 → fine-tune 패러다임* 의 핵심. Ch 23 에서 NSMC 이진 분류로 fine-tune 할 때 진짜 비교 — *우리가 직접 만든 작은 한국어 BERT (일반 도메인 5K, 약 10M)* vs *Ch 15 의 `klue/bert-base` (대규모 일반 코퍼스, 약 110M)*.
+이번 챕터의 작은 BERT 는 *한국어 위키 paragraphs 5K × 2 epoch* 로 학습한 *일반 도메인 mini BERT*. 위키 도메인은 직접 본 분포라 향상이 빠르지만, NSMC 영화 리뷰는 *다른 도메인* 이라 fine-tune 단계에서 적응이 필요합니다 — 이게 *진짜 사전학습 → fine-tune 패러다임* 의 핵심. Ch 23 에서 NSMC 이진 분류로 fine-tune 할 때 진짜 비교 — *우리가 직접 만든 작은 한국어 BERT (일반 도메인 5K, 약 11.5M)* vs *Ch 15 의 `klue/bert-base` (대규모 일반 코퍼스, 약 110M)*.
 
 ## 모델 저장 — Ch 23 에서 재사용
 

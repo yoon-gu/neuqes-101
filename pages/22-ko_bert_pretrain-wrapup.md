@@ -148,7 +148,7 @@ metrics = {
 
 - 이번 챕터의 `./ch22_small_bert_mlm_ko` 체크포인트를 `AutoModelForSequenceClassification.from_pretrained(..., num_labels=2)` 로 로드 → MLM head 떼고 분류 헤드 부착
 - NSMC 이진 분류 fine-tune (Ch 15 와 같은 데이터·셋업) — *완전히 다른 도메인 transfer*
-- **핵심 비교**: 이번 작은 사전학습 BERT (약 10M params, 위키 5K paragraphs MLM) vs Ch 15 의 `klue/bert-base` (약 110M params, 대규모 일반 한국어 사전학습) — 2-way
+- **핵심 비교**: 이번 작은 사전학습 BERT (약 11.5M params, 위키 5K paragraphs MLM) vs Ch 15 의 `klue/bert-base` (약 110M params, 대규모 일반 한국어 사전학습) — 2-way
 - 영어 Ch 20 → Ch 21 흐름의 *한국어 대칭본* — 같은 격차 패턴이 한국어 환경에서도 나오는지 검증
 - 추가로 *random init baseline* 비교 + *위키 → NSMC 의 negative transfer 분석* 은 Ch 23 부록 [`appendix_random_baseline.ipynb`](../23_ko_bert_classify/appendix_random_baseline.ipynb)
 
