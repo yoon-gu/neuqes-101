@@ -1,4 +1,4 @@
-**목표**: Phase 3 의 세 번째 챕터. Ch 20 에서 *작은 BERT 를 일반 도메인 (Wikitext-103) 으로 직접 MLM 사전학습* 했다면, 이번엔 그 위에 **분류 헤드를 얹어 *완전히 다른 도메인 (Yelp 리뷰(식당·업체))* 이진 분류로 fine-tune** 합니다. Ch 10 (DistilBERT, 약 66M params, 대규모 Wikipedia + BookCorpus 사전학습) 과 같은 Yelp 이진 분류 셋업에 *우리가 만든 작은 BERT* (약 10M params, Wikitext-103 2K paragraphs × 3 epoch MLM) 를 붙여 두 결과를 나란히 비교 — 둘 다 *일반 도메인 → Yelp transfer* 라 비교가 *fair*, *사전학습 규모* 차이만 측정됨.
+**목표**: Phase 3 의 세 번째 챕터. Ch 20 에서 *작은 BERT 를 일반 도메인 (Wikitext-103) 으로 직접 MLM 사전학습* 했다면, 이번엔 그 위에 **분류 헤드를 얹어 *완전히 다른 도메인 (Yelp 리뷰(식당·업체))* 이진 분류로 fine-tune** 합니다. Ch 10 (DistilBERT, 약 66M params, 대규모 Wikipedia + BookCorpus 사전학습) 과 같은 Yelp 이진 분류 셋업에 *우리가 만든 작은 BERT* (약 11.1M params, Wikitext-103 2K paragraphs × 3 epoch MLM) 를 붙여 두 결과를 나란히 비교 — 둘 다 *일반 도메인 → Yelp transfer* 라 비교가 *fair*, *사전학습 규모* 차이만 측정됨.
 
 본 챕터의 강점: *위키 사전학습 → Yelp 분류 transfer* 가 **진짜 transfer**. *task corpus 로 사전학습 → 같은 task fine-tune* 의 domain-adaptive pretraining 함정을 피해 원본 BERT 의 *일반 표상 학습 → downstream 전이* 메시지를 그대로 재현합니다. **두 데이터셋이 노트북 안에 공존** — MLM 용 Wikitext-103 (2K paragraphs × 3 epoch) + 분류용 Yelp 이진 (5K/1K).
 
@@ -31,7 +31,7 @@ self-contained 노트북: Ch 20 의 MLM 학습을 압축 (2K × 3 epoch) 재현 
 | 18 | klue/bert-base + 보조 | WordPiece (한국어, 사전학습) | KLUE-YNAT 합성 + 보조 라벨 | 메인(7) + 보조 | sigmoid + 태스크별 | `BCEWithLogitsLoss + λ·L_aux` |
 | 19 | — (토크나이저 학습 전용) | WordPiece + WordLevel (둘 다 직접 학습) | Yelp text + NSMC text | — | — | — |
 | 20 | 작은 BERT (직접, scratch) | `bert-base-uncased` 토크나이저 (가져옴) | Wikitext-103 paragraphs (일반 도메인) | MLM head | softmax (MLM) | `CrossEntropyLoss` (masked token) |
-| **21 ← 여기** | **Ch 20 사전학습 BERT + 분류 헤드 (약 10M)** | (Ch 20과 동일) | **Yelp 이진화 (다른 도메인 transfer)** | **`Linear(H, 2)`** | **softmax** | **`CrossEntropyLoss`** |
+| **21 ← 여기** | **Ch 20 사전학습 BERT + 분류 헤드 (약 11.1M)** | (Ch 20과 동일) | **Yelp 이진화 (다른 도메인 transfer)** | **`Linear(H, 2)`** | **softmax** | **`CrossEntropyLoss`** |
 | 22 (다음) | 작은 BERT (직접, scratch) — 한국어 | `klue/bert-base` 토크나이저 (가져옴) | 한국어 Wikipedia paragraphs (일반 도메인) | MLM head | softmax (MLM) | `CrossEntropyLoss` (masked token) |
 
 전체 챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
@@ -68,7 +68,7 @@ self-contained 노트북: Ch 20 의 MLM 학습을 압축 (2K × 3 epoch) 재현 
 
 | 차원 | Ch 10 (DistilBERT) | Ch 21 (이 챕터) | 비고 |
 |---|---|---|---|
-| 본체 파라미터 | 약 66M | **약 10M** | Ch 21 은 1/6 작음 |
+| 본체 파라미터 | 약 66M | **약 11.1M** | Ch 21 은 1/6 작음 |
 | 사전학습 코퍼스 | Wikipedia + BookCorpus (약 33억 토큰, 일반 도메인) | **Wikitext-103 paragraphs 2K (약 27만 토큰, 일반 도메인)** | 약 1.2만배 격차, **둘 다 일반 위키** |
 | 사전학습 시간 | TPU 수일 (대규모 인프라) | **T4 약 15초** (2K × 3 epoch = 198 step) | |
 | Fine-tune 도메인 | Yelp 이진 (사전학습과 다른 도메인) | Yelp 이진 (사전학습과 다른 도메인) | **둘 다 일반 → Yelp transfer 라 fair** |

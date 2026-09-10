@@ -15,7 +15,7 @@
 
 1. `BertForMaskedLM` 과 `BertForSequenceClassification` 둘 다 *내부에 같은 `BertModel`* 을 갖습니다. 두 모델 사이에서 *어떤 파라미터* 가 이어지고 *어떤 파라미터* 가 새로 학습되나요?
 2. MLM 학습 첫 step 의 loss 가 약 10.33 인 반면, 분류 fine-tune 첫 step 의 loss 는 약 0.693 입니다. 이 *4 배 차이* 가 모델의 학습 어려움 차이를 의미하나요? (힌트: K=vocab_size vs K=2)
-3. Ch 21 의 작은 BERT 가 Ch 10 의 DistilBERT 보다 *낮은 정확도* 를 보입니다. 이 격차가 (a) *모델 크기* 차이 (약 10M vs 약 66M), (b) *사전학습 데이터 양* 차이 (약 27만 토큰 vs 약 33억 토큰) 중 어느 쪽 영향이 클까요? 둘 다 *위키 일반 도메인 → Yelp transfer* 의 같은 패턴이라 *도메인 정합* 변수는 통제됨. 추가 실험으로 어떻게 (a) 와 (b) 를 분리할 수 있나요?
+3. Ch 21 의 작은 BERT 가 Ch 10 의 DistilBERT 보다 *낮은 정확도* 를 보입니다. 이 격차가 (a) *모델 크기* 차이 (약 11.1M vs 약 66M), (b) *사전학습 데이터 양* 차이 (약 27만 토큰 vs 약 33억 토큰) 중 어느 쪽 영향이 클까요? 둘 다 *위키 일반 도메인 → Yelp transfer* 의 같은 패턴이라 *도메인 정합* 변수는 통제됨. 추가 실험으로 어떻게 (a) 와 (b) 를 분리할 수 있나요?
 4. *MLM 3 epoch* 와 *random init* baseline 의 정확도 차이가 매우 작거나 (예: 1-2%p) 거꾸로 *random 이 더 높게* 나올 가능성이 있나요? 어떤 상황에서 그럴 수 있을까요? (힌트: 한국어 Ch 23 부록 참조)
 
 ## FAQ
@@ -130,7 +130,7 @@ DistilBERT 와 Ch 21 의 작은 BERT 는 *축약 방법론* 이 전혀 다릅니
 | 출발점 | *이미 학습된* BERT-base 의 *지식 증류* (teacher → student) | random init 부터 시작 |
 | 사전학습 | MLM + *teacher 의 soft label* + *hidden state 정합* | MLM only (이번 챕터 3 epoch) |
 | 학습 코퍼스 | BERT-base 와 같음 (약 33억 토큰, 일반 도메인) | Wikitext-103 2K paragraphs × 3 epoch (약 27만 토큰 × 3 epoch, 일반 도메인) |
-| 파라미터 | 66M (BERT-base 110M 의 *60%*) | 10M (BERT-base 의 *9%*) |
+| 파라미터 | 66M (BERT-base 110M 의 *60%*) | 11.1M (BERT-base 의 *약 10%*) |
 | 사전학습 시간 | TPU 수일 | **T4 약 15초** (2K × 3 epoch) |
 
 DistilBERT 가 *이미 똑똑한 큰 BERT 가 만든 답* 을 학습 신호로 받기 때문에 *훨씬 작은 데이터로도 같은 수준* 으로 학습됩니다. 우리는 *teacher 없이 처음부터* 학습하는 셋업 — *맨바닥에서 작은 모델로 사전학습이 어디까지 가능한가* 의 한계 실험.
@@ -142,7 +142,7 @@ T4 메모리 안에서는 가능합니다. 정확도 변화 추정:
 | 모델 크기 | 파라미터 | T4 학습 시간 (MLM 3 epoch + cls 2 epoch, *이 챕터 데이터 기준*) | 예상 accuracy |
 |---|---|---|---|
 | hidden=128, layer=2 | 약 5M | 약 20초 | 이번 챕터보다 낮음 |
-| **hidden=256, layer=4 (이번 챕터)** | **약 10M** | **약 30초** (실측 — MLM 약 15초 + 분류 약 15초) | **실행본 참조 (§6)** |
+| **hidden=256, layer=4 (이번 챕터)** | **약 11.1M** | **약 30초** (실측 — MLM 약 15초 + 분류 약 15초) | **실행본 참조 (§6)** |
 | hidden=384, layer=6 | 약 20M | 약 1분 | 조금 높음 |
 | hidden=512, layer=8 | 약 35M | 약 2분 | 더 높지만 *데이터* 가 먼저 한계 |
 | hidden=768, layer=12 (BERT-base) | 약 110M | 약 6분 | 대규모 사전학습 데이터가 있어야 의미 |

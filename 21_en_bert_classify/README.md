@@ -3,7 +3,7 @@
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/21_en_bert_classify/21_en_bert_classify.ipynb)
 
 ## 한 줄 목표
-Phase 3 의 세 번째 챕터. Ch 20 에서 *작은 BERT 를 일반 도메인 (Wikitext-103) 으로 직접 MLM 사전학습* 했다면, 이번엔 그 위에 **분류 헤드를 얹어 *완전히 다른 도메인 (Yelp 영화 리뷰)* 이진 분류로 fine-tune**. Ch 10 (DistilBERT, 약 66M params, 대규모 Wikipedia + BookCorpus 사전학습) 과 같은 Yelp 이진 분류 셋업에 *우리가 만든 작은 BERT* (약 10M params, Wikitext-103 2K paragraphs × 3 epoch MLM — 한국어 Ch 23 와 동일 hyperparams) 를 붙여 두 결과를 나란히 비교 — 둘 다 *일반 도메인 → Yelp transfer* 라 비교가 *fair*, *사전학습 규모* 차이만 측정됨.
+Phase 3 의 세 번째 챕터. Ch 20 에서 *작은 BERT 를 일반 도메인 (Wikitext-103) 으로 직접 MLM 사전학습* 했다면, 이번엔 그 위에 **분류 헤드를 얹어 *완전히 다른 도메인 (Yelp 영화 리뷰)* 이진 분류로 fine-tune**. Ch 10 (DistilBERT, 약 66M params, 대규모 Wikipedia + BookCorpus 사전학습) 과 같은 Yelp 이진 분류 셋업에 *우리가 만든 작은 BERT* (약 11.1M params, Wikitext-103 2K paragraphs × 3 epoch MLM — 한국어 Ch 23 와 동일 hyperparams) 를 붙여 두 결과를 나란히 비교 — 둘 다 *일반 도메인 → Yelp transfer* 라 비교가 *fair*, *사전학습 규모* 차이만 측정됨.
 
 self-contained 노트북: Wikitext-103 MLM 학습을 2K × 3 epoch 압축 재현 → 같은 본체로 Yelp 분류 fine-tune → Ch 10 결과와 비교. 본문은 *일반 사전학습 → 다른 도메인 fine-tune* 메인 흐름에 집중. *사전학습 없이 같은 GPU compute 로 분류 fine-tune* 만 했을 때의 fair-compute 비교는 부록 노트북 [`appendix_compute_budget.ipynb`](./appendix_compute_budget.ipynb) 에서 분리해 다룹니다.
 
@@ -12,7 +12,7 @@ self-contained 노트북: Wikitext-103 MLM 학습을 2K × 3 epoch 압축 재현
 - **두 데이터셋이 노트북 안에 공존** — MLM 용 Wikitext-103 + 분류용 Yelp 이진. 같은 토크나이저로 처리
 - `BertForMaskedLM` -> `BertForSequenceClassification` 헤드 교체 — 본체 (`embeddings + encoder + pooler`) 는 그대로, MLM head 떼고 분류 head (`Linear(256, 2)`) 부착
 - in-memory state_dict 전송: `cls_model.bert.load_state_dict(mlm_model.bert.state_dict())` — 디스크 없이 본체 가중치 복사
-- 같은 `BertConfig` (hidden=256, layer=4, head=4, intermediate=1024, 약 10M params) 가 MLM 모델과 분류 모델 양쪽에 적용
+- 같은 `BertConfig` (hidden=256, layer=4, head=4, intermediate=1024, 약 11.1M params) 가 MLM 모델과 분류 모델 양쪽에 적용
 - 사전학습 효과의 *순 측정* — random init baseline 과 비교
 - **Ch 10 (DistilBERT 대규모 일반 위키 사전학습) vs Ch 21 (작은 BERT 자체 일반 위키 사전학습)** 의 정량 비교 — 둘 다 *위키 → Yelp transfer* 라 fair
 
@@ -40,7 +40,7 @@ Google Colab T4 GPU (fp16). 약 3-5분 — 대부분이 데이터 다운로드�
 | 10 | DistilBERT 파인튜닝 (약 66M) | `bert-base-uncased` WordPiece | Yelp 이진화 | `Linear(H, 1)` | `BCEWithLogitsLoss` |
 | 19 | — (토크나이저 학습 전용) | WordPiece + WordLevel (둘 다 직접 학습) | Yelp text + NSMC text | — | — |
 | 20 | 작은 BERT (직접, scratch) | `bert-base-uncased` 토크나이저 (가져옴) | Wikitext-103 paragraphs (일반 도메인) | MLM head | `CrossEntropyLoss` (masked) |
-| **21** | **Ch 20 사전학습 BERT + 분류 헤드 (약 10M)** | (Ch 20과 동일) | **Yelp 이진화 (다른 도메인 transfer)** | **`Linear(H, 2)`** | **`CrossEntropyLoss`** |
+| **21** | **Ch 20 사전학습 BERT + 분류 헤드 (약 11.1M)** | (Ch 20과 동일) | **Yelp 이진화 (다른 도메인 transfer)** | **`Linear(H, 2)`** | **`CrossEntropyLoss`** |
 | 22 (다음) | 작은 BERT (직접, scratch) — 한국어 | `klue/bert-base` 토크나이저 (가져옴) | 한국어 Wikipedia paragraphs (일반 도메인) | MLM head | `CrossEntropyLoss` (masked) |
 
 전체 챕터 표는 [루트 README](../README.md#챕터별-변화추적표)를 참고하세요.
@@ -49,7 +49,7 @@ Google Colab T4 GPU (fp16). 약 3-5분 — 대부분이 데이터 다운로드�
 
 | 차원 | Ch 10 (DistilBERT) | Ch 21 (small BERT scratch) | 비고 |
 |---|---|---|---|
-| 본체 파라미터 | 약 66M | 약 10M | Ch 21 은 1/6 작음 |
+| 본체 파라미터 | 약 66M | 약 11.1M | Ch 21 은 1/6 작음 |
 | 사전학습 코퍼스 | Wikipedia + BookCorpus (약 33억 토큰, 일반 도메인) | Wikitext-103 paragraphs 2K (약 27만 토큰, 일반 도메인) | 약 1.2만배 격차, **둘 다 일반 위키** |
 | 사전학습 시간 | TPU 수일 | T4 약 15초 (2K × 3 epoch = 198 step) | |
 | Fine-tune 도메인 | Yelp 이진 (다른 도메인) | Yelp 이진 (다른 도메인) | **둘 다 위키 -> Yelp transfer** |
