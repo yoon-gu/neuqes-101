@@ -59,7 +59,7 @@ GPU:             Tesla T4
 **▶ 실행 결과**
 
 ```text
-Mon Jun 22 03:58:31 2026       
+Sun Sep  6 03:37:18 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -68,7 +68,7 @@ Mon Jun 22 03:58:31 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   45C    P8             10W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   38C    P8             12W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -135,6 +135,8 @@ for ex in ds["train"].select(range(3)):
 **▶ 실행 결과**
 
 ```text
+ynat/train-00000-of-00001.parquet: downloading bytes:           |  0.00B            
+ynat/validation-00000-of-00001.parquet: downloading bytes:           |  0.00B            
 splits: ['train', 'validation']
 sizes: [('train', 45678), ('validation', 9107)]
 label names: ['IT과학', '경제', '사회', '생활문화', '세계', '스포츠', '정치']
@@ -231,6 +233,7 @@ Ch 15 셋업에서 K=2 → K=7 한 줄 변화.
 Ch 15 의 모델 로드에서 `num_labels` 만 2 → 7 로 바뀝니다. `num_labels=len(LABEL_NAMES)` 로 실제 클래스 수를 직접 세어 넣고, `problem_type="single_label_classification"` 으로 softmax + `CrossEntropyLoss` 경로를 명시합니다. `id2label`/`label2id` 를 같이 넘겨 두면 나중에 `model.config` 가 라벨 이름을 기억합니다.
 
 ```python
+torch.manual_seed(SEED); np.random.seed(SEED)   # 분류 헤드 초기화까지 고정 — 재현성 확보
 model = AutoModelForSequenceClassification.from_pretrained(
     "klue/bert-base",
     num_labels=len(LABEL_NAMES),
@@ -258,16 +261,17 @@ print(f"id2label:             {model.config.id2label}")
 **▶ 실행 결과**
 
 ```text
+model.safetensors: downloading bytes:           |  0.00B            
 [transformers] BertForSequenceClassification LOAD REPORT from: klue/bert-base
 Key                                        | Status     | 
 -------------------------------------------+------------+-
-cls.seq_relationship.bias                  | UNEXPECTED | 
-cls.predictions.bias                       | UNEXPECTED | 
-cls.predictions.transform.dense.bias       | UNEXPECTED | 
 cls.seq_relationship.weight                | UNEXPECTED | 
-cls.predictions.transform.dense.weight     | UNEXPECTED | 
 cls.predictions.transform.LayerNorm.weight | UNEXPECTED | 
+cls.predictions.transform.dense.bias       | UNEXPECTED | 
+cls.seq_relationship.bias                  | UNEXPECTED | 
 cls.predictions.transform.LayerNorm.bias   | UNEXPECTED | 
+cls.predictions.transform.dense.weight     | UNEXPECTED | 
+cls.predictions.bias                       | UNEXPECTED | 
 classifier.bias                            | MISSING    | 
 classifier.weight                          | MISSING    | 
 
@@ -301,7 +305,7 @@ LOAD REPORT 의 `cls.*` UNEXPECTED / `classifier.*` MISSING 은 정상입니다 
 **▶ 실행 결과**
 
 ```text
-Mon Jun 22 03:58:51 2026       
+Sun Sep  6 03:37:47 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -310,7 +314,7 @@ Mon Jun 22 03:58:51 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   46C    P8             14W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   39C    P8             15W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -387,15 +391,15 @@ print(f"random baseline loss (K=7): {np.log(7):.4f}")
 
 ```text
 Epoch  Training Loss  Validation Loss  Accuracy  Macro Precision  Macro Recall  Macro F1  Auc Ovr
-1      0.441529       0.465393         0.856000  0.838248         0.881824      0.856753  0.978641
-2      0.286288       0.402871         0.856000  0.849702         0.873584      0.860287  0.982976
-Training done — mean train loss: 0.4626
+1      0.455812       0.491258         0.836000  0.816776         0.868919      0.838348  0.977976
+2      0.289142       0.420051         0.857000  0.848727         0.874784      0.860081  0.981029
+Training done — mean train loss: 0.4720
 random baseline loss (K=7): 1.9459
 ```
 
 **결과 해석**
 
-평균 train loss 0.4626 은 random baseline 1.9459 의 약 1/4 수준으로, 모델이 균등 추측에서 충분히 멀어졌음을 보여줍니다. 단 2 에폭·5K 샘플로도 한국어 헤드라인의 카테고리 신호를 잘 잡았다는 신호입니다.
+평균 train loss 0.4720 은 random baseline 1.9459 의 약 1/4 수준으로, 모델이 균등 추측에서 충분히 멀어졌음을 보여줍니다. 단 2 에폭·5K 샘플로도 한국어 헤드라인의 카테고리 신호를 잘 잡았다는 신호입니다.
 
 ```python
 !nvidia-smi
@@ -404,7 +408,7 @@ random baseline loss (K=7): 1.9459
 **▶ 실행 결과**
 
 ```text
-Mon Jun 22 03:59:33 2026       
+Sun Sep  6 03:38:29 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -413,7 +417,7 @@ Mon Jun 22 03:59:33 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   65C    P0             72W /   70W |    2195MiB /  15360MiB |     64%      Default |
+| N/A   60C    P0             39W /   70W |    2195MiB /  15360MiB |     60%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -422,6 +426,6 @@ Mon Jun 22 03:59:33 2026
 |  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
 |        ID   ID                                                               Usage      |
 |=========================================================================================|
-|    0   N/A  N/A             875      C   /usr/bin/python3                       2192MiB |
+|    0   N/A  N/A            1190      C   /usr/bin/python3                       2192MiB |
 +-----------------------------------------------------------------------------------------+
 ```
