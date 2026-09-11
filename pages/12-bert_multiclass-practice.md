@@ -62,7 +62,7 @@ GPU:             Tesla T4
 **▶ 실행 결과**
 
 ```text
-Fri Aug 21 07:28:23 2026       
+Fri Sep 11 06:17:19 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -71,7 +71,7 @@ Fri Aug 21 07:28:23 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   54C    P8             10W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   40C    P8             10W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -191,15 +191,15 @@ model.safetensors: downloading bytes:           |  0.00B
 [transformers] DistilBertForSequenceClassification LOAD REPORT from: distilbert-base-uncased
 Key                     | Status     | 
 ------------------------+------------+-
-vocab_transform.weight  | UNEXPECTED | 
-vocab_transform.bias    | UNEXPECTED | 
-vocab_projector.bias    | UNEXPECTED | 
 vocab_layer_norm.weight | UNEXPECTED | 
+vocab_transform.bias    | UNEXPECTED | 
 vocab_layer_norm.bias   | UNEXPECTED | 
-pre_classifier.bias     | MISSING    | 
+vocab_projector.bias    | UNEXPECTED | 
+vocab_transform.weight  | UNEXPECTED | 
+pre_classifier.weight   | MISSING    | 
 classifier.bias         | MISSING    | 
 classifier.weight       | MISSING    | 
-pre_classifier.weight   | MISSING    | 
+pre_classifier.bias     | MISSING    | 
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
@@ -229,7 +229,7 @@ id2label:             {0: '1★', 1: '2★', 2: '3★', 3: '4★', 4: '5★'}
 **▶ 실행 결과**
 
 ```text
-Fri Aug 21 07:28:59 2026       
+Fri Sep 11 06:17:45 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -238,7 +238,7 @@ Fri Aug 21 07:28:59 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   55C    P8             14W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   40C    P8             13W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -324,7 +324,7 @@ random baseline loss (K=5): 1.6094
 **▶ 실행 결과**
 
 ```text
-Fri Aug 21 07:29:41 2026       
+Fri Sep 11 06:18:25 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -333,7 +333,7 @@ Fri Aug 21 07:29:41 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   73C    P0             47W /   70W |    1577MiB /  15360MiB |     47%      Default |
+| N/A   57C    P0             32W /   70W |    1577MiB /  15360MiB |     57%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -342,6 +342,6 @@ Fri Aug 21 07:29:41 2026
 |  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
 |        ID   ID                                                               Usage      |
 |=========================================================================================|
-|    0   N/A  N/A             925      C   /usr/bin/python3                       1574MiB |
+|    0   N/A  N/A             917      C   /usr/bin/python3                       1574MiB |
 +-----------------------------------------------------------------------------------------+
 ```
