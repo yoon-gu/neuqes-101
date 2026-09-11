@@ -4,7 +4,7 @@
 
 가장 소박하게, 매 step 모델이 내놓은 로짓을 그대로 받아 확률이 높은 토큰부터 채워 넣습니다. 온도도 1.0, top-p도 없고, 같은 토큰을 다시 써도 막지 않습니다. 이렇게 하면 모델이 한번 "안전한" 토큰(자주 등장하는 단어나 구두점)에 높은 확률을 주기 시작했을 때 그 토큰이 계속 반복되기 쉽습니다.
 
-실제로 이 샘플러의 **4-gram 반복률은 0.177** 입니다. 생성문을 읽어 보면 같은 짧은 구절이 돌림노래처럼 되풀이됩니다(실제 출력은 아래 비교 셀에서 확인합니다). 모델이 틀려서가 아닙니다. 다음에 올 가장 그럴듯한 토큰을 매번 충실히 고르다 보니, 한번 안전한 구절을 고르면 그 구절이 국소적으로 가장 그럴듯한 선택이 되어 버리는 함정에 빠진 것입니다.
+실제로 이 샘플러의 **4-gram 반복률은 약 0.17** 입니다. 생성문을 읽어 보면 같은 짧은 구절이 돌림노래처럼 되풀이됩니다(실제 출력은 아래 비교 셀에서 확인합니다). 모델이 틀려서가 아닙니다. 다음에 올 가장 그럴듯한 토큰을 매번 충실히 고르다 보니, 한번 안전한 구절을 고르면 그 구절이 국소적으로 가장 그럴듯한 선택이 되어 버리는 함정에 빠진 것입니다.
 
 ### 비교 B — 반복 억제 샘플러 (carry-over semi-AR)
 
@@ -15,7 +15,7 @@
 - **repetition penalty 1.3** — 이미 써 버린 토큰의 로짓을 깎아 같은 단어가 다시 뽑힐 확률을 낮춥니다.
 - **no immediate repeat** — 바로 왼쪽 토큰과 똑같은 예측을 차단해 "the the", "sorry sorry" 같은 인접 중복을 원천 봉쇄합니다.
 
-결과는 극적입니다. **4-gram 반복률이 0.177에서 0.000으로 떨어집니다.** 앞서 돌림노래처럼 반복되던 문장이 사라지고, 인물과 대화가 있는 이야기가 나옵니다(아래 비교 셀의 실제 출력 참고).
+결과는 극적입니다. **4-gram 반복률이 약 0.17에서 0.00으로 떨어집니다.** 앞서 돌림노래처럼 반복되던 문장이 사라지고, 인물과 대화가 있는 이야기가 나옵니다(아래 비교 셀의 실제 출력 참고).
 
 ### carry-over의 의미 — 확정한 토큰은 건드리지 않는다
 
@@ -27,7 +27,7 @@
 
 여기서 한 가지를 분명히 해 둘 필요가 있습니다. 반복 억제 샘플러가 **collapse한 모델**(삽질 코너에서 vocab·step을 되돌려 망가뜨린 ablation)을 살려내는 건 **아닙니다.** 그렇게 유니그램만 외운 모델에 이 샘플러를 붙였다면 반복은 줄었겠지만 여전히 의미 없는 문장만 나왔을 것입니다. 유니그램 marginal만 학습한 모델에는 애초에 뽑아낼 조건부 구조가 없기 때문입니다.
 
-이번 장에서 반복 억제가 효과를 본 건 **모델이 먼저 제대로 학습됐기 때문**입니다. 고정-t(0.15) top-1 accuracy가 0.262에서 0.717로 오른, 조건부 구조를 실제로 익힌 모델 위에서만 샘플러의 미세 조정이 빛을 봅니다. 샘플러는 좋은 모델의 잠재력을 끌어낼 뿐, 없는 능력을 만들어 내지는 못합니다.
+이번 장에서 반복 억제가 효과를 본 건 **모델이 먼저 제대로 학습됐기 때문**입니다. 고정-t(0.15) top-1 accuracy가 약 0.26에서 약 0.71로 오른, 조건부 구조를 실제로 익힌 모델 위에서만 샘플러의 미세 조정이 빛을 봅니다. 샘플러는 좋은 모델의 잠재력을 끌어낼 뿐, 없는 능력을 만들어 내지는 못합니다.
 
 ### block 크기와 온도의 trade-off
 
@@ -60,47 +60,47 @@ for name, kw in configs:
 === 샘플러 sweep (같은 학습 모델, 조건부 'Once upon a time') ===
 
 ----- A) 기존 temp0.7/topk40 (반복억제 없음) -----
-[0]  Once upon a time, there was a little girl named Lily. She loved to play with her toy friends. One day, Lily's mom came to play with her …(뒤 53자 생략)
+[0]  Once upon a time, there was a little girl named Lily. She loved to play with her toys with her friends. One day, she went to the park w …(뒤 112자 생략)
 
-Lily's mom asked her to help her mom. She asked her mom if she could play with her toy ball. Lily said, "Yes, you can play with my ball with it."
+Lily's mommy told her that she was going to play with her toys. Lily was so excited that she was going to play
+[1]  Once upon a time, there was a little girl named Lily. She loved to play with her toys with her toys. One day, Lily went to the park wit …(뒤 105자 생략)
 
-Lily and her mom said,
-[1]  Once upon a time, there was a little girl named Lily. She loved to play with her toys and her friends. One day, she went to the park wi …(뒤 88자 생략)
-
-Suddenly, Lily's friend came outside and saw a big dog playing in the park. It was a big, red red ball, and they were playing in the p
+Lily's mommy gave her a big red ball and started to play with it. Lily was so happy that she couldn't reach the ball 
 
 ----- B) rep1.3 + 인접금지 + topp0.92 -----
-[0]  Once upon a time, there was a little girl named Lily. She loved to play with her friends and explore in her backyard. One day, she went …(뒤 94자 생략)
+[0]  Once upon a time, there was a little girl named Lily. She loved to play with her toys and make pretty flowers. One day, she went on the …(뒤 94자 생략)
 
-Lily picked up and tried to grab it inside. But then, she found a rock on the ground and started to run away. 
+Lily's mom said, "I want to see what I found my ball." Her mommy replied, "Yes, let's go home!"
+ 
 
-The boy said, "I
-[1]  Once upon a time, there was a little girl named Lily. She loved to play outside and play with her toys. One day, she went to the park a …(뒤 85자 생략)
+Her mom smiled and said, "I'm
+[1]  Once upon a time, there was a little girl. She loved to play with her toys and watch other animals. One day, she would go to the park w …(뒤 98자 생략)
 
-"Lily's go home me!"
-Her mom replied, "I'm sorry, sweet mommy. I don't want it again soon." 
+Lily's mom said, "I'm going to throw your ball, please?" Her mom replied, "Yes, you can help me." 
 
-The man smiled and said, "Yes, I love you. 
+Her mom replied, "Why do
 
 ----- C) rep1.2 + temp0.9 + topp0.95 -----
-[0]  Once upon a time, there was a little girl named Lily. She loved to play with her toys and leaves together. One day, she decided to go o …(뒤 25자 생략)
+[0]  Once upon a time, there was a little girl named Lily. She loved to play with her toys and leaves. One day, she saw a big forest with he …(뒤 109자 생략)
 
-Suddenly, she saw a big red rock on the ground. She picked it up and held it tightly. Lily was sad and cried and said, "It's so cool! I won' …(뒤 57자 생략)
-[1]  Once upon a time, there was a little girl named Lily. She loved to play with her toys and make pretty blankets. One day, she went to th …(뒤 55자 생략)
+Lily's mom said, "I'm sorry, but we don't have to play with your toy masks." 
 
-Later that day, Lily's mom heard her said, "I'm sorry, but you can't have some food." Her mom replied, "Don't worry, but I'll touch it." 
+Her mom replied, "No, we can be ca
+[1]  Once upon a time, there was an old man called Jake. He loved to play in the forest and explore his worlds. One day, he went on a walk w …(뒤 79자 생략)
 
-Lily felt sad too, but then,
+He saw something shiny! He had never seen it. It looked like a new toy. He thought this was special and looked inside. He wanted a big car but 
 
 ----- D) B + block16 (더 촘촘) -----
-[0]  Once upon a time, there was a little girl named Lily. She loved to play with her toys. One day, she was playing in the park and said th …(뒤 36자 생략)
+[0]  Once upon a time, there was an old girl named Lily. She loved to play with her toys. One day, she was playing in the park and wanted to …(뒤 26자 생략)
 
-Lily's mom came and replied, "Don't worry, Lily. I'm sorry, but you can change your clothes." Her mom replied, "I don't want to do it again! …(뒤 46자 생략)
-[1]  Once upon a time, there was a little girl Lily. She loved to play with her toys and pretty blankets on her shoes. One day, she went to …(뒤 86자 생략)
+Lily's mom said, "I want you go for help me first too." Her dad replied, "Sure, Mommy! I can have some cookies and having fun." 
 
-Lily's mom said, "I don't know what to do it!" Her mom replied, "Of course if I have some new things for you." 
+Her friends were so happy that they went to the store. They played
+[1]  Once upon a time, there was an old girl named Lily. She loved to play with her toys and make things in the park. One day, she went on a …(뒤 31자 생략)
 
-Her mom explained, "You
+Lily wanted to buy some candy so he could fix it. Her mommy said, "I want you to use this money for dinner instead." 
+
+Her mommy replied, "Yes, we can help me clean your room together!" So th
 ```
 
 ## Autoregressive(Ch 24) vs Diffusion(이 장)
@@ -132,7 +132,7 @@ Diffusion 모델은 한 배치에서 확률 $t$로 일부 자리만 가립니다
 
 결과물의 결을 보면, 같은 약 3.7M 규모에서 Ch 24의 GPT는 1500 step만으로도 "there was a girl named Lily" 같은 매끄러운 문장을 냈습니다. 이 장의 diffusion은 30000 step을 들여 인물(Lily, Timmy)·대화·배경이 있는 이야기까지 도달했지만, "big collar tree", "an noise" 같은 자잘한 흠이 남습니다.
 
-이 거칠기는 모델이 잘못 학습됐다는 신호가 아닙니다. **같은 규모에서 diffusion이 autoregressive보다 거친 건 정상** 입니다. 양방향 병렬 채움이라는 더 어려운 과제를, 더 희박한 감독으로, 작은 본체로 풀고 있기 때문입니다. 중요한 건 이 모델이 유니그램 collapse(". the the.. was" 같은 고빈도 토큰 반복)에 빠지지 않고 조건부 구조를 실제로 학습했다는 점입니다. 고정-t(0.15) top-1 accuracy가 0.717까지 오르고, 생성 토큰 분포가 코퍼스 유니그램과 뚜렷이 다른(KL 0.78) 상태가 그 증거입니다.
+이 거칠기는 모델이 잘못 학습됐다는 신호가 아닙니다. **같은 규모에서 diffusion이 autoregressive보다 거친 건 정상** 입니다. 양방향 병렬 채움이라는 더 어려운 과제를, 더 희박한 감독으로, 작은 본체로 풀고 있기 때문입니다. 중요한 건 이 모델이 유니그램 collapse(". the the.. was" 같은 고빈도 토큰 반복)에 빠지지 않고 조건부 구조를 실제로 학습했다는 점입니다. 고정-t(0.15) top-1 accuracy가 약 0.71까지 오르고, 생성 토큰 분포가 코퍼스 유니그램과 뚜렷이 다른(KL 약 0.58) 상태가 그 증거입니다.
 
 ### 정리
 
