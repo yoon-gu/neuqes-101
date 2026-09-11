@@ -59,7 +59,7 @@
   * [12-2. 해부: 평가 — softmax 확률 분포와 혼동 패턴](pages/12-bert_multiclass-anatomy.md)
   * [12-3. 변형: 클라이맥스 — sklearn TF-IDF + LogReg 와의 비교](pages/12-bert_multiclass-variation.md)
   * [12-4. 정리와 FAQ](pages/12-bert_multiclass-wrapup.md)
-  * [12-5. 부록 — 데이터 스케일링 곡선](pages/12-bert_multiclass-data_scaling.md)
+  * [12-5. 부록 — 데이터 스케일링: BERT vs sklearn 곡선](pages/12-bert_multiclass-data_scaling.md)
 * [13. BERT 다중 라벨 분류 (Multi-label & Per-label BCE)](pages/13-bert_multilabel.md)
   * [13-1. 실습: 데이터 — Yelp + 항목(aspect) 합성 라벨 (Ch 6과 동일)](pages/13-bert_multilabel-practice.md)
   * [13-2. 해부: 평가 — 라벨별 sigmoid 확률 + 활성 패턴](pages/13-bert_multilabel-anatomy.md)

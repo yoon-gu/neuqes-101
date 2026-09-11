@@ -251,9 +251,12 @@ print(
 
 
 
-\Needspace{11\baselineskip}
+\Needspace{14\baselineskip}
 \begin{lstlisting}
 STAR_LABELS = {0: "1", 1: "2", 2: "3", 3: "4", 4: "5"}
+
+# 분류 헤드 초기화 고정 — 부록 train_bert 와 동일
+torch.manual_seed(42); np.random.seed(42)
 
 model = AutoModelForSequenceClassification.from_pretrained(
     "distilbert-base-uncased",
@@ -556,7 +559,7 @@ weighted avg     0.5728    0.5770    0.5743      1000
 
 \section{BERT와 TF-IDF 비교}
 
-같은 데이터에 \ref{ch:05}장 셋업(TF-IDF + multinomial LogReg)을 \emph{이 노트북 안에서} 다시 학습해 비교합니다. \textbf{BERT 67M 파라미터가 진짜로 도움이 되는가?} 가 이 비교의 핵심 질문 --- sklearn은 GPU 없이도 몇 초 만에 끝나기 때문에 self-contained로 부담 없이 포함됩니다.
+\ref{ch:05}장과 \emph{같은 계열} 의 모델(TF-IDF + multinomial LogReg)을 \emph{이 노트북 안에서} 다시 학습해 비교합니다. \textbf{BERT 67M 파라미터가 진짜로 도움이 되는가?} 가 이 비교의 핵심 질문 --- sklearn은 GPU 없이도 몇 초 만에 끝나기 때문에 self-contained로 부담 없이 포함됩니다.
 
 
 
