@@ -62,7 +62,7 @@ GPU:             Tesla T4
 **▶ 실행 결과**
 
 ```text
-Mon Jun 22 03:47:31 2026       
+Fri Aug 21 07:28:23 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -71,7 +71,7 @@ Mon Jun 22 03:47:31 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   54C    P8             13W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   54C    P8             10W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -111,6 +111,8 @@ print(f"  text:  {train_full[0]['text'][:200]}...")
 **▶ 실행 결과**
 
 ```text
+yelp_review_full/train-00000-of-00001.pa(…): downloading bytes:           |  0.00B            
+yelp_review_full/test-00000-of-00001.par(…): downloading bytes:           |  0.00B            
 train: 5000 samples
 eval:  1000 samples
 
@@ -159,6 +161,8 @@ Ch 11 셋업에서 K=2 → K=5 한 줄 변화.
 ```python
 STAR_LABELS = {0: "1★", 1: "2★", 2: "3★", 3: "4★", 4: "5★"}
 
+torch.manual_seed(42); np.random.seed(42)   # 분류 헤드 초기화 고정 (부록 train_bert 와 동일)
+
 model = AutoModelForSequenceClassification.from_pretrained(
     "distilbert-base-uncased",
     num_labels=5,
@@ -183,18 +187,19 @@ print(f"id2label:             {model.config.id2label}")
 **▶ 실행 결과**
 
 ```text
+model.safetensors: downloading bytes:           |  0.00B            
 [transformers] DistilBertForSequenceClassification LOAD REPORT from: distilbert-base-uncased
 Key                     | Status     | 
 ------------------------+------------+-
-vocab_transform.bias    | UNEXPECTED | 
 vocab_transform.weight  | UNEXPECTED | 
+vocab_transform.bias    | UNEXPECTED | 
+vocab_projector.bias    | UNEXPECTED | 
 vocab_layer_norm.weight | UNEXPECTED | 
 vocab_layer_norm.bias   | UNEXPECTED | 
-vocab_projector.bias    | UNEXPECTED | 
 pre_classifier.bias     | MISSING    | 
-pre_classifier.weight   | MISSING    | 
 classifier.bias         | MISSING    | 
 classifier.weight       | MISSING    | 
+pre_classifier.weight   | MISSING    | 
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
@@ -224,7 +229,7 @@ id2label:             {0: '1★', 1: '2★', 2: '3★', 3: '4★', 4: '5★'}
 **▶ 실행 결과**
 
 ```text
-Mon Jun 22 03:47:57 2026       
+Fri Aug 21 07:28:59 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -233,7 +238,7 @@ Mon Jun 22 03:47:57 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   55C    P8             15W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   55C    P8             14W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -306,9 +311,9 @@ print(f"random baseline loss (K=5): {np.log(5):.4f}")
 
 ```text
 Epoch  Training Loss  Validation Loss  Accuracy  Macro Precision  Macro Recall  Macro F1  Auc Ovr
-1      1.113960       1.034595         0.550000  0.555570         0.550105      0.547013  0.862029
-2      0.921884       1.000020         0.558000  0.555456         0.559534      0.556056  0.865652
-Training done — mean train loss: 1.0802
+1      1.091979       1.028911         0.552000  0.555850         0.554333      0.552425  0.860851
+2      0.914690       0.999308         0.577000  0.574600         0.580221      0.576826  0.864402
+Training done — mean train loss: 1.0770
 random baseline loss (K=5): 1.6094
 ```
 
@@ -319,7 +324,7 @@ random baseline loss (K=5): 1.6094
 **▶ 실행 결과**
 
 ```text
-Mon Jun 22 03:48:37 2026       
+Fri Aug 21 07:29:41 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -328,7 +333,7 @@ Mon Jun 22 03:48:37 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   75C    P0             64W /   70W |    1577MiB /  15360MiB |     73%      Default |
+| N/A   73C    P0             47W /   70W |    1577MiB /  15360MiB |     47%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -337,6 +342,6 @@ Mon Jun 22 03:48:37 2026
 |  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
 |        ID   ID                                                               Usage      |
 |=========================================================================================|
-|    0   N/A  N/A            2000      C   /usr/bin/python3                       1574MiB |
+|    0   N/A  N/A             925      C   /usr/bin/python3                       1574MiB |
 +-----------------------------------------------------------------------------------------+
 ```

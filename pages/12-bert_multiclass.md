@@ -2,13 +2,15 @@
 
 **환경**: Google Colab **T4 GPU 필수**.
 
-**예상 소요 시간**: 약 12분 (BERT 학습 ~10분 + sklearn 비교 baseline ~30초 + 평가/시각화)
+**예상 소요 시간**: 약 3분 (BERT 학습 약 40초 + sklearn 비교 baseline 약 30초 + 다운로드·평가·시각화)
+
 
 ## 학습 흐름
 
 1. 🚀 **실습**: Ch 11과 같은 `(num_labels=K, problem_type="single_label_classification")` 셋업, K만 5로. Yelp 별점 1-5를 라벨 0-4 int 인덱스로.
 2. 🔬 **해부**: 학습 후 *혼동 행렬* 과 *top-1 확률 분포* 로 클래스별 패턴 확인. 별점 4 ↔ 5 같은 *인접 클래스 혼동* 이 자연스러운지 검증.
-3. 🛠️ **클라이맥스**: 같은 노트북 안에서 Ch 5의 sklearn baseline(TF-IDF + multinomial LogReg)을 *inline 재현* 해 BERT 67M 파라미터가 진짜 도움이 되는지 직접 비교. 격차가 *데이터 양에 어떻게 의존* 하는지는 부록 `12_bert_multiclass_data_scaling` 의 100-30K 곡선에서 봅니다.
+3. 🛠️ **클라이맥스**: 같은 노트북 안에서 Ch 5와 *같은 계열* 의 sklearn baseline(TF-IDF + multinomial LogReg)을 다시 학습해 BERT 67M 파라미터가 진짜 도움이 되는지 직접 비교. 격차가 *데이터 양에 어떻게 의존* 하는지는 부록 `12_bert_multiclass_data_scaling` 의 100-30K 곡선에서 봅니다.
+
 
 > 📒 **사전 학습 자료**: Ch 5 (sklearn multi-class), Ch 11 (BERT binary 방식 B). 이번 챕터는 self-contained — 다른 챕터의 결과 파일에 의존하지 않습니다.
 
