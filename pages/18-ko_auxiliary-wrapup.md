@@ -3,7 +3,7 @@
 | 이름 | 한 줄 설명 | 다음 챕터에서 |
 |---|---|---|
 | `AutoModel.from_pretrained(...)` | 분류 헤드 없이 BERT 본체만 로드 — 메인·보조 헤드를 직접 부착 | Phase 3 토크나이저 학습엔 등장 안 함 (Ch 19 부터는 본체보다 어휘 자체에 집중) |
-| 커스텀 `nn.Module` (KoBertMultiTask) | 본체 공유 + 두 헤드 명시 정의 — multi-task 정통 패턴 | GPT 챕터 (Ch 21) 의 task-specific head 패턴과 연결 |
+| 커스텀 `nn.Module` (KoBertMultiTask) | 본체 공유 + 두 헤드 명시 정의 — multi-task 정통 패턴 | GPT 챕터 (Ch 24) 의 task-specific head 패턴과 연결 |
 | `Trainer.compute_loss` 오버라이드 + `lambda_aux` 인자 | 자동 매핑이 못 다루는 *복합 loss* + λ 동적 주입 | λ grid search 패턴 |
 | 커스텀 `AuxCollator` | input_ids 외 *추가 라벨* (n_active) 도 batch 에 같이 담기 | Ch 14 와 같은 패턴, 보조 신호 변형마다 재사용 |
 | `remove_unused_columns=False` | 모델 시그니처와 무관하게 모든 컬럼 통과 | custom collator 패턴마다 |
@@ -120,10 +120,10 @@ def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=N
 
 ### Q7. (실무) Phase 2 (한국어, Ch 15-18) 가 끝났습니다. Phase 3 에서 토크나이저를 *직접 학습* 하는 이유는?
 
-Ch 1-18 모두 *사전학습 토크나이저* (sklearn TF-IDF 토큰화, BERT WordPiece) 에 의존했습니다. Phase 3 (Ch 19-23) 는 이 의존을 끊고 *어휘 자체를 코퍼스에서 학습*:
+Ch 1-18 모두 *사전학습 토크나이저* (sklearn TF-IDF 토큰화, BERT WordPiece) 에 의존했습니다. Phase 3 의 첫 장 **Ch 19** 가 이 의존을 끊고 *어휘 자체를 코퍼스에서 학습* 합니다 (Ch 20-23 은 학습 안정성을 위해 다시 표준 토크나이저를 가져옵니다):
 
-- **Ch 19**: BPE / WordPiece / Unigram 알고리즘을 직접 돌려 어휘 만들기 → 토큰화가 *데이터에 따라 어떻게 달라지는지* 직관.
-- **Ch 20**: 학습한 토크나이저로 *작은 BERT 를 처음부터* 사전학습 → 사전학습 의존 없는 경험.
+- **Ch 19**: WordPiece(subword) 와 WordLevel(어절) 을 직접 학습해 비교 → 토큰화가 *데이터에 따라 어떻게 달라지는지* 직관.
+- **Ch 20**: *작은 BERT 를 처음부터* 사전학습(MLM) → 모델 본체의 사전학습 의존을 끊는 경험. 토크나이저는 학습 안정성을 위해 표준 `bert-base-uncased` 를 가져옵니다.
 
 > Phase 3 가 클라이맥스인 이유 — Ch 1 부터 따라온 "🔤 토크나이저 노트" 가 *외부 도구의 사용법* 이었다면 Phase 3 는 *그 도구 자체를 만드는 단계*. 토크나이저를 직접 만들고 나면 Ch 1-18 의 모든 토큰화 노트를 *다시 읽었을 때* 보이는 풍경이 달라집니다.
 
@@ -154,7 +154,7 @@ return SequenceClassifierOutput(loss=loss, logits=main_logits)
 
 ## 다음 챕터 예고 — Phase 3 시작 (클라이맥스)
 
-**Chapter 19. 토크나이저 직접 학습 — BPE / WordPiece / Unigram**
+**Chapter 19. 토크나이저 직접 학습 — WordPiece vs WordLevel (영어 + 한국어)**
 
 - Phase 1-2 영어·한국어 모두 *사전학습 토크나이저* 를 그대로 썼습니다. Ch 19 는 그 의존을 끊고 *어휘를 코퍼스에서 직접 학습*.
 - `tokenizers` 라이브러리로 BPE, WordPiece, Unigram 세 알고리즘을 같은 코퍼스에 적용해 *어휘 차이* 비교.
