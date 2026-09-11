@@ -251,11 +251,12 @@ print(
 
 
 
-\Needspace{13\baselineskip}
+\Needspace{14\baselineskip}
 \begin{lstlisting}
 STAR_LABELS = {0: "1", 1: "2", 2: "3", 3: "4", 4: "5"}
 
-torch.manual_seed(42); np.random.seed(42)   # 분류 헤드 초기화 고정 (부록 train_bert 와 동일)
+# 분류 헤드 초기화 고정 — 부록 train_bert 와 동일
+torch.manual_seed(42); np.random.seed(42)
 
 model = AutoModelForSequenceClassification.from_pretrained(
     "distilbert-base-uncased",
