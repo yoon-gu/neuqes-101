@@ -1,8 +1,8 @@
-**목표**: Phase 4 의 *한국어 단계 1 (pretraining)* 챕터. Ch 24 에서 *영어 작은 GPT (약 3M params) 를 영어 TinyStories 로 from scratch 사전학습* 했다면, 이번엔 **완전히 같은 본체 구조** 로 **한국어 GPT 사전학습** 을 합니다. 변하는 축은 **언어** — 토크나이저는 한국어 코퍼스 위에 직접 학습한 **byte-level BPE (BBPE)**, 데이터는 **`g0ster/TinyStories-Korean`** (영어 TinyStories 의 한국어 번역본). 본체 구조·loss·trainer·hyperparams 는 Ch 24 와 동일. 같은 prompt 에 *학습 전 / 학습 후* generation 을 나란히 비교해 *사전학습이 본체에 어떤 next-token 분포를 새겼는가* 를 한국어로 직접 봅니다.
+**목표**: Phase 4 의 *한국어 단계 1 (pretraining)* 챕터. Ch 24 에서 *영어 작은 GPT (약 3.7M params) 를 영어 TinyStories 로 from scratch 사전학습* 했다면, 이번엔 **완전히 같은 본체 구조** 로 **한국어 GPT 사전학습** 을 합니다. 변하는 축은 **언어** — 토크나이저는 한국어 코퍼스 위에 직접 학습한 **byte-level BPE (BBPE)**, 데이터는 **`g0ster/TinyStories-Korean`** (영어 TinyStories 의 한국어 번역본). 본체 구조·loss·trainer 는 Ch 24 와 동일 (hyperparams 는 학습률만 `3e-4 → 5e-4`). 같은 prompt 에 *학습 전 / 학습 후* generation 을 나란히 비교해 *사전학습이 본체에 어떤 next-token 분포를 새겼는가* 를 한국어로 직접 봅니다.
 
 **환경**: Google Colab **T4 GPU 필수**.
 
-**예상 소요 시간**: 약 10-15분 (데이터 로드·story 복원 약 3분 + BBPE 토크나이저 학습 약 3분 + 학습 전 generation 약 30초 + 모델 학습 약 1분 + 학습 후 generation 약 2분)
+**예상 소요 시간**: 약 3-5분 (데이터 로드·story 복원 약 20초 + BBPE 토크나이저 학습 약 10초 + 학습 전 generation + 모델 학습 약 1분 + 학습 후 generation + (선택) KoGPT2 reference 로드·생성 약 1분)
 
 ## 학습 흐름
 
@@ -22,9 +22,9 @@
 | Ch | 모델 | 토크나이저 | 데이터 | Output Head | Loss |
 |---|---|---|---|---|---|
 | 23 | 작은 BERT (한국어, scratch) + 분류 head | `klue/bert-base` (가져옴) | NSMC 이진 | `Linear(H, 2)` | `CrossEntropyLoss` |
-| 24 | 작은 GPT2 (약 3M, scratch) | BPE (직접 학습, 영어, vocab 2,048) | 영어 TinyStories 30K stories | `Linear(H, V)` (LM head, weight tied) | `CrossEntropyLoss` (next-token) |
+| 24 | 작은 GPT2 (약 3.7M, scratch) | BPE (직접 학습, 영어, vocab 2,048) | 영어 TinyStories 30K stories | `Linear(H, V)` (LM head, weight tied) | `CrossEntropyLoss` (next-token) |
 | 25 | `gpt2` (124M, OpenAI WebText 사전학습) | BPE (gpt2 그대로, vocab 50,257) | 영어 TinyStories (Ch 24 와 동일) | `Linear(H, V)` (LM head 그대로) | `CrossEntropyLoss` (next-token) - continual pretraining |
-| **26 ← 여기** | **작은 GPT2 (약 3M, scratch)** | **BBPE (직접 학습, 한국어, vocab 약 4,000)** | **한국어 TinyStories 30K stories** | **`Linear(H, V)` (LM head, weight tied)** | **`CrossEntropyLoss` (next-token)** |
+| **26 ← 여기** | **작은 GPT2 (약 4.2M, scratch)** | **BBPE (직접 학습, 한국어, vocab 약 4,000)** | **한국어 TinyStories 30K stories** | **`Linear(H, V)` (LM head, weight tied)** | **`CrossEntropyLoss` (next-token)** |
 | 27 (다음) | KoGPT2 (`skt/kogpt2-base-v2`, 125M, 대규모 한국어 사전학습) | KoGPT2 BBPE (그대로) | 한국어 TinyStories (Ch 26 과 동일) | `Linear(H, V)` (LM head 그대로) | `CrossEntropyLoss` (next-token) - continual pretraining |
 
 전체 챕터 표는 [루트 README](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표) 를 참고하세요.
@@ -38,7 +38,7 @@ Phase 4 는 영어 (Ch 24-25) 와 한국어 (Ch 26-27) 가 *같은 학습 단계
 | **단계 1: Pretraining** (random init → scratch 사전학습) | Ch 24 (작은 GPT, 영어 TinyStories) | **Ch 26 ← 여기 (작은 GPT, 한국어 TinyStories)** |
 | **단계 2: Continual pretraining** (사전학습 본체 + 새 데이터) | Ch 25 (`gpt2` 124M + 영어 TinyStories) | Ch 27 (KoGPT2 125M + 한국어 TinyStories) |
 
-> **본 챕터 = 한국어 단계 1**. Ch 24 와 *본체·loss·trainer·hyperparams 모두 동일*, *토크나이저 학습 코퍼스 + 데이터만 한국어*. 검증 가설: *언어가 달라도 작은 GPT + 30K stories from-scratch 의 학습 동역학은 비슷하다* — Ch 20↔Ch 22 (BERT) 에서 확인한 결을 GPT 에서 재확인.
+> **본 챕터 = 한국어 단계 1**. Ch 24 와 *본체·loss·trainer 동일 (hyperparams 는 학습률만 `3e-4 → 5e-4`)*, *토크나이저 학습 코퍼스 + 데이터만 한국어*. 검증 가설: *언어가 달라도 작은 GPT + 30K stories from-scratch 의 학습 동역학은 비슷하다* — Ch 20↔Ch 22 (BERT) 에서 확인한 결을 GPT 에서 재확인.
 
 ## 변경점 (Diff from Ch 24)
 
@@ -48,7 +48,7 @@ Phase 4 는 영어 (Ch 24-25) 와 한국어 (Ch 26-27) 가 *같은 학습 단계
 | 토크나이저 학습 코퍼스 | 영어 TinyStories | **한국어 TinyStories** |
 | 토크나이저 알고리즘 | byte-level BPE (vocab 2,048) | **byte-level BPE (BBPE, vocab 약 4,000)** - 한글은 byte 단위라 어휘를 약간 키움 |
 | 데이터 | `roneneldan/TinyStories` (영어 동화) | **`g0ster/TinyStories-Korean`** (한국어 번역 동화) |
-| 본체 구조 | `GPT2Config(n_layer=4, n_head=4, n_embd=256)` 약 3M | (그대로) |
+| 본체 구조 | `GPT2Config(n_layer=4, n_head=4, n_embd=256)` 약 3.7M | (그대로) — vocab 2,048 → 4,000 만큼 embedding·LM head 가 커져 **약 4.2M** |
 | 모델 클래스 | `GPT2LMHeadModel(config)` random init | (그대로) |
 | Collator | `DataCollatorForLanguageModeling(mlm=False)` | (그대로) |
 | Loss | `CrossEntropyLoss` (next-token, vocab 2,048 logits) | **`CrossEntropyLoss`** (next-token, vocab 약 4,000 logits) |
@@ -127,7 +127,7 @@ $$L_{\text{CLM}} = -\frac{1}{n-1} \sum_{i=1}^{n-1} \log P(x_{i+1} \mid x_1, \dot
 
 **관전 포인트**:
 - 학습 첫 step loss 가 약 8.3 부근이면 random init 직후 *균등 추측* 상태. 첫 100 step 안에 빠르게 떨어지면 vocab + 모델 정상.
-- 1분 (1500 step) 학습으로 누적 평균 `train_loss` 가 *약 4.5* 까지 내려갑니다. 번역체 한국어라 영어 챕터 (약 3.8) 보다 다소 높지만, *vocab 후보를 좁히는* 단계로 진입한 수준 — Ch 24 (영어) 와 같은 결. 더 길게 학습하면 약 2.5-3.0 까지 내려갑니다.
+- 1분 (1500 step) 학습으로 누적 평균 `train_loss` 가 *약 4.5* 까지 내려갑니다. 번역체 한국어라 영어 챕터 (Ch 24, 약 3.7) 보다 다소 높지만 (학습률도 `3e-4 → 5e-4` 로 달라 언어 차이만의 효과는 아님), *vocab 후보를 좁히는* 단계로 진입한 수준 — Ch 24 (영어) 와 같은 결. 더 길게 학습하면 약 2.5-3.0 까지 내려갑니다.
 
 > Ch 24 의 `ln(2048) ≈ 7.62` 와 같은 직관. *vocab 차원* 만 약간 커진 것 (약 4,000) — 학습 동역학에는 영향 없고, *학습 종료 loss 의 절대값* 을 영어 챕터와 비교할 때만 미세 보정.
 
