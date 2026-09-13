@@ -363,6 +363,7 @@ Token length stats -- mean: 21.9, median: 17, max: 117
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
+torch.manual_seed(SEED); np.random.seed(SEED)
 model = AutoModelForSequenceClassification.from_pretrained(
     "klue/bert-base",
     num_labels=2,
@@ -381,7 +382,7 @@ def param_summary(m):
 \noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=14]
+\begin{lstlisting}[firstnumber=15]
 total, trainable = param_summary(model)
 print(
     f"Parameters:           {total:>13,}  ("
@@ -403,7 +404,7 @@ print(
 \noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
 \Needspace{5\baselineskip}
-\begin{lstlisting}[firstnumber=30]
+\begin{lstlisting}[firstnumber=31]
     f"vocab size V:         "
     f"{model.config.vocab_size:,}"
 )
@@ -411,10 +412,11 @@ print(
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
+model.safetensors: downloading bytes:           |  0.00B
 Key                                        | Status     | 
 -------------------------------------------+------------+-
-classifier.bias                            | MISSING    | 
 classifier.weight                          | MISSING    | 
+classifier.bias                            | MISSING    | 
 
 - MISSING: those params were newly initialized because missing from the che...
 Parameters:             110,618,882  (110.6 M)
@@ -559,12 +561,12 @@ print(classification_report(
 \begin{bookoutputbox}
 precision    recall  f1-score   support
 
-    negative     0.8516    0.8822    0.8667       501
-    positive     0.8773    0.8457    0.8612       499
+    negative     0.8511    0.8782    0.8644       501
+    positive     0.8737    0.8457    0.8595       499
 
-    accuracy                         0.8640      1000
-   macro avg     0.8645    0.8640    0.8639      1000
-weighted avg     0.8645    0.8640    0.8640      1000
+    accuracy                         0.8620      1000
+   macro avg     0.8624    0.8620    0.8620      1000
+weighted avg     0.8624    0.8620    0.8620      1000
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -668,21 +670,21 @@ for label_str, idx in samples:
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 ==============================================================================
-sample #580  (most confident positive)
+sample #575  (most confident positive)
 ==============================================================================
-text: 아 최고.. 지금 수능 끝나고 보고 있어요ㅠㅠ 현실적인 30대의 사랑이야기~
+text: 제가 본 최고의 액션영화 다섯손가락에 들어가요~ 액션영화하면 이 영화가...
 true label:  1  (positive)
-prob(pos):   0.9944
-logit z:     +5.19
+prob(pos):   0.9940
+logit z:     +5.12
 prediction:  1 (positive)    match: OK
 
 ==============================================================================
-sample #169  (most confident negative)
+sample #617  (most confident negative)
 ==============================================================================
-text:        한마디로노잼 재미없음
+text: 하아.. 엄정화 박서준은 좋아하지만 일단 대본이 너무 별로임;; 유치하고...
 true label:  0  (negative)
-prob(pos):   0.0033
-logit z:     -5.71
+prob(pos):   0.0036
+logit z:     -5.61
 ...
 \end{bookoutputbox}
 \par\vspace{0.9em}
@@ -833,7 +835,7 @@ model_wrong = AutoModelForSequenceClassification.from_pretrained(
 )
 \end{lstlisting}
 
-힌트: \emph{코드는 에러 없이 돌아가지만} accuracy 가 50\% (random baseline) 근처에 머뭅니다. 영어 vocab 이 한국어를 \emph{이해할 수 없는 부스러기} 로 토큰화해 모델이 학습할 신호가 거의 없음. \emph{Phase 2 의 핵심 교훈} --- 한국어엔 \emph{반드시} 한국어 토크나이저 + 한국어 사전학습 모델.
+힌트: \emph{코드는 에러 없이 돌아갑니다.} 다만 정확도가 한국어 모델에 크게 못 미칩니다 --- 영어 vocab 에 한국어 글자가 없어 문장이 \emph{자모 단위로} 쪼개지고 \texttt{{[}UNK{]}} 도 많이 섞입니다. 그래도 같은 글자는 늘 같은 자모 열이 되므로 모델이 \emph{문자열 패턴} 으로 약한 신호는 잡아냅니다 --- 의미를 이해한 게 아니라는 점이 핵심입니다. \emph{Phase 2 의 핵심 교훈} --- 한국어엔 \emph{반드시} 한국어 토크나이저 + 한국어 사전학습 모델.
 
 
 
