@@ -9,12 +9,10 @@
 **▶ 실행 결과**
 
 ```text
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 85.7 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 48.3 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 0.0/48.9 MB ? eta -:--:--
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╺━━━━━━━━ 38.3/48.9 MB 171.9 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 128.0 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 17.0 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.4/3.4 MB 41.2 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━╸━━━━━━━━━━━━━━ 7.9/12.3 MB 239.2 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.3/12.3 MB 111.8 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 559.1/559.1 kB 44.0 MB/s eta 0:00:00
 ```
 
 ```python
@@ -70,8 +68,6 @@ GPU:             Tesla T4
 
 `yelp_polarity` 의 train split 에서 5,000 문장만 sample. *라벨은 무시* — 이번 챕터는 *문장 자체* 만 필요.
 
-먼저 영어 코퍼스를 준비합니다. Yelp 리뷰 5,000문장을 받아 토크나이저 학습용 텍스트 리스트로 만들고, 문장당 문자 길이 분포를 확인합니다.
-
 ```python
 SEED = 42
 N_EN = 5000
@@ -88,6 +84,8 @@ print(f"  mean: {np.mean(char_lens_en):.0f}, median: {np.median(char_lens_en):.0
 **▶ 실행 결과**
 
 ```text
+plain_text/train-00000-of-00001.parquet: downloading bytes:           |  0.00B            
+plain_text/test-00000-of-00001.parquet: downloading bytes:           |  0.00B            
 english corpus: 5,000 sentences
 first sample (truncated):
   Unfortunately, the frustration of being Dr. Goldberg's patient is a repeat of the experience I've had with so many other doctors in NYC -- …(뒤 65자 생략)
@@ -99,8 +97,6 @@ char length stats:
 ## 한국어 코퍼스 — NSMC text 5,000건
 
 Ch 15 와 같은 패턴으로 e9t/nsmc GitHub raw 에서 직접 다운로드. 라벨 무시, `document` 컬럼만 사용.
-
-같은 방식으로 한국어 코퍼스도 준비합니다. NSMC(네이버 영화 리뷰) 학습셋을 내려받아 5,000문장을 무작위 추출합니다. 영어와 한국어를 나란히 학습해 언어별 토큰화 차이를 비교하기 위함입니다.
 
 ```python
 TRAIN_URL = "https://raw.githubusercontent.com/e9t/nsmc/master/ratings_train.txt"
@@ -141,8 +137,6 @@ char length stats:
 - 특수 토큰: `[PAD]`, `[UNK]`, `[CLS]`, `[SEP]`, `[MASK]` (BERT 컨벤션)
 - pre-tokenizer: `Whitespace` (공백·구두점 단위로 1차 분할)
 - WordPiece 만 normalizer 적용 (NFD + StripAccents + Lowercase)
-
-이 챕터의 핵심입니다. 사전학습된 토크나이저를 받아오는 대신, `tokenizers` 라이브러리로 토크나이저를 *코퍼스에서 직접 학습* 합니다. `build_wordpiece()` 는 BERT 표준인 WordPiece(서브워드) 토크나이저를, `build_wordlevel()` 은 비교용 WordLevel(어절 단위) 토크나이저를 만듭니다. 두 함수 모두 모델·normalizer·pre-tokenizer 를 조립한 뒤 `train_from_iterator()` 로 vocab 을 학습합니다.
 
 ```python
 SPECIAL_TOKENS = ["[PAD]", "[UNK]", "[CLS]", "[SEP]", "[MASK]"]
@@ -200,8 +194,6 @@ print("helper builders ready: build_wordpiece(), build_wordlevel()")
 helper builders ready: build_wordpiece(), build_wordlevel()
 ```
 
-이제 (영어/한국어) × (WordPiece/WordLevel) 조합으로 토크나이저 4개를 모두 같은 `vocab_size=8000` 으로 학습합니다. 각 학습에 걸린 시간을 함께 출력해, 모델 학습과 달리 토크나이저 학습이 GPU 없이 수 초 만에 끝남을 확인합니다.
-
 ```python
 # 4개 토크나이저 학습 (vocab_size=8000)
 t0 = time.time()
@@ -230,23 +222,17 @@ print(f"\ntotal time: {t_en_wp + t_ko_wp + t_en_wl + t_ko_wl:.2f}s")
 **▶ 실행 결과**
 
 ```text
-[1/4] en WordPiece  trained in 1.44s  vocab=8000
-[2/4] ko WordPiece  trained in 0.51s  vocab=8000
-[3/4] en WordLevel  trained in 0.51s  vocab=8000
-[4/4] ko WordLevel  trained in 0.08s  vocab=8000
+[1/4] en WordPiece  trained in 1.36s  vocab=8000
+[2/4] ko WordPiece  trained in 0.66s  vocab=8000
+[3/4] en WordLevel  trained in 0.80s  vocab=8000
+[4/4] ko WordLevel  trained in 0.14s  vocab=8000
 
-total time: 2.53s
+total time: 2.96s
 ```
-
-**결과 해석**
-
-토크나이저 4개 모두 목표 `vocab=8000` 에 정확히 도달했고, 총 학습 시간이 2.53초에 불과합니다. 사전학습 모델 없이 코퍼스만으로 vocab 을 처음부터 쌓는 작업이 GPU 없이도 순식간에 끝남을 보여줍니다.
 
 ### 3-1. 학습된 vocab 안을 들여다보기
 
 각 vocab 에서 *어떤 토큰이 등장* 했는지 일부 확인. WordPiece 는 `##` prefix 토큰이 보여야 정상.
-
-학습된 vocab 안을 직접 들여다봅니다. id 순서로 앞쪽 특수 토큰과 그 뒤 토큰을 출력하고, `##` prefix 가 붙은 서브워드 토큰이 전체 vocab 에서 차지하는 비율을 셉니다.
 
 ```python
 def vocab_peek(tok, name, n=15):
@@ -290,12 +276,8 @@ vocab_peek(tok_ko_wl, "ko WordLevel")
   subword (##) tokens  : 0  (0.0% of vocab)
 ```
 
-**결과 해석**
-
-WordPiece 한국어는 `##` 서브워드가 vocab 의 41.9% 로, 영어(21.7%)의 거의 두 배입니다. 교착어인 한국어가 어근+조사·어미를 서브워드로 더 많이 쪼개기 때문입니다. WordLevel 은 어절 단위라 두 언어 모두 `##` 토큰이 0개이며, 한국어 vocab 상위에는 `영화`·`정말`·`너무` 같은 통째 어절이 자리합니다.
-
 **관찰**
 
-- **WordPiece** 는 `##ing`, `##ed`, `##ly` 같은 *접미사* 조각이 vocab 의 큰 비중을 차지 — 영어에서 보통 30-50%.
+- **WordPiece** 는 `##ing`, `##ed`, `##ly` 같은 *접미사* 조각이 vocab 의 큰 비중을 차지 — 이 챕터의 영어 8K vocab 에서 약 20%.
 - **WordLevel** 은 `##` 토큰이 0 개 — 어절 단위라 *조각* 개념 자체가 없음.
 - 한국어 WordPiece 는 한 글자 조각 (`##다`, `##요`, `##고`) 비중이 높음 — 조사·어미 분리에 효율적.
