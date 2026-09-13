@@ -60,33 +60,33 @@ sample #0  (both categories correct)
 text: 새 현대미술 양식 꽃피운 故강국진 개인전 [SEP] 음성군 충북 혁신도시 본성고 2023년 개교 위해 올인
 
   category   true      prob   pred(>=0.5)  match
-  IT/Science      0    0.0778             0    O
-    Economy      0    0.0643             0    O
-    Society      1    0.6206             1    O
-  Life&Culture      1    0.9396             1    O
-      World      0    0.0311             0    O
-     Sports      0    0.1226             0    O
-   Politics      0    0.0603             0    O
+  IT/Science      0    0.0784             0    O
+    Economy      0    0.0520             0    O
+    Society      1    0.5631             1    O
+  Life&Culture      1    0.9689             1    O
+      World      0    0.0652             0    O
+     Sports      0    0.0763             0    O
+   Politics      0    0.0424             0    O
 
   true:      ['Society', 'Life&Culture']
   predicted: ['Society', 'Life&Culture']
 
 ================================================================================
-sample #21  (partially correct (1 of 2))
+sample #5  (partially correct (1 of 2))
 ================================================================================
-text: 흑인 미술가의 녹슨 구리거울은 무엇을 비추나 [SEP] 한국형 원격교육 구축 발언하는 유은혜 부총리
+text: 모스크바국제도서전에 한국관 설치…내년에는 주빈국 [SEP] 김천시 내년 예산안 1조1천200억원…올해보다 8.1% 증액
 
   category   true      prob   pred(>=0.5)  match
-  IT/Science      0    0.0906             0    O
-    Economy      0    0.0205             0    O
-    Society      0    0.4847             0    O
-  Life&Culture      1    0.4115             0    X
-      World      0    0.1434             0    O
-     Sports      0    0.0180             0    O
-   Politics      1    0.7287             1    O
+  IT/Science      0    0.0170             0    O
+    Economy      1    0.2529             0    X
+    Society      0    0.6295             1    X
+  Life&Culture      0    0.3975             0    O
+      World      1    0.6434             1    O
+     Sports      0    0.0152             0    O
+   Politics      0    0.0561             0    O
 
-  true:      ['Life&Culture', 'Politics']
-  predicted: ['Politics']
+  true:      ['Economy', 'World']
+  predicted: ['Society', 'World']
 
 ================================================================================
 sample #743  (confidently wrong activation)
@@ -142,12 +142,12 @@ print(f"F1 at default 0.5:        micro={micro_f1s[list(np.round(thresholds,2)).
 
 **▶ 실행 결과**
 
-![output](../assets/17-ko_multilabel-out3-1.png)
+![output](../assets/17-ko_multilabel-out3-2.png)
 
 ```text
-best micro F1 threshold: 0.40  (F1=0.8542)
-best macro F1 threshold: 0.55  (F1=0.8508)
-F1 at default 0.5:        micro=0.8500, macro=0.8487
+best micro F1 threshold: 0.40  (F1=0.8505)
+best macro F1 threshold: 0.45  (F1=0.8517)
+F1 at default 0.5:        micro=0.8416, macro=0.8476
 ```
 
 **해석** — threshold 0.5 가 *항상* 최적은 아닙니다. 활성률이 낮은 카테고리가 있으면 *낮은 threshold* 가 recall 을 끌어올려 F1 이 더 좋아질 수 있습니다. 운영 단계에선 validation set 에서 *카테고리별로* 최적 threshold 를 찾아 저장해 두고 추론 시 적용 (FAQ Q1).

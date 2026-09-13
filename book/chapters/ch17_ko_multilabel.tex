@@ -103,7 +103,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 15 & klue/bert-base & WordPiece (한국어) & NSMC binary & \inlinecode{Linear(H,\ 2)} & softmax & \inlinecode{CrossEntropyLoss} \\
 16 & klue/bert-base & 같음 & KLUE-YNAT (뉴스 7분류) & \inlinecode{Linear(H,\ 7)} & softmax & \inlinecode{CrossEntropyLoss} \\
 \textbf{17 \(\leftarrow\) 여기} & klue/bert-base & 같음 & \textbf{KLUE-YNAT 합성 multi-label (두 헤드라인 결합)} & \inlinecode{Linear(H,\ 7)} & \textbf{sigmoid (per-label)} & \textbf{\inlinecode{BCEWithLogitsLoss} (per-label)} \\
-18 (다음) & klue/bert-base & 같음 & KLUE-YNAT 합성 multi-label + 라벨 개수 보조 & \inlinecode{Linear(H,\ 7)} 메인 + \inlinecode{Linear(H,\ 1)} 보조 & sigmoid + 없음 & \texttt{BCE(per-label)\ +\ λ·MSE} \\
+18 (다음) & klue/bert-base & 같음 & KLUE-YNAT 합성 multi-label + 라벨 개수 보조 & \inlinecode{Linear(H,\ 7)} 메인 + \inlinecode{Linear(H,\ 1)} 보조 & sigmoid + 없음 & \inlinecode{BCE(per-label)\ +\ λ·MSE} \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -205,11 +205,11 @@ L_{\text{BCE}} = -\frac{1}{N \cdot K}\sum_{i=1}^{N}\sum_{k=1}^{K}\left[ y_{i,k} 
 \begin{lstlisting}
 out["labels"] = [int(l) for l in batch["label"]]
 problem_type = "single_label_classification"
-# → CrossEntropyLoss
+# -> CrossEntropyLoss
 
 out["labels"] = [list(map(float, mh)) for mh in batch["multi_hot"]]
 problem_type = "multi_label_classification"
-# → BCEWithLogitsLoss per-label
+# -> BCEWithLogitsLoss per-label
 \end{lstlisting}
 
 \subsection{왜 multi-label 은 softmax 로 풀 수 없는가}
@@ -235,7 +235,7 @@ softmax 는 출력의 \emph{합 = 1} 을 강제합니다 (\(\sum_k \mathrm{softm
 \ref{ch:16}장과 \emph{완전히 동일} --- \inlinecode{klue/bert-base} 한국어 WordPiece. 토크나이저는 라벨 \emph{형식} (int 스칼라든 multi-hot 벡터든) 에 무관하므로 변화 없음.
 
 \begin{quote}
-\textbf{Phase 2 안에서는 토크나이저 고정} --- \ref{ch:15}·\ref{ch:16}장·17·18 모두 같은 한국어 WordPiece. Phase 3 (\ref{ch:19}--\ref{ch:23}장) 에서 비로소 \emph{직접 학습한 워드레벨 토크나이저} 가 등장.
+\textbf{Phase 2 안에서는 토크나이저 고정} --- \ref{ch:15}--\ref{ch:18}장 모두 같은 한국어 WordPiece. Phase 3 의 첫 장(\ref{ch:19}장)에서 비로소 \emph{토크나이저를 직접 학습} 해 WordPiece 와 WordLevel 을 비교하고, \ref{ch:20}--\ref{ch:23}장의 사전학습은 다시 기성 WordPiece 토크나이저를 가져와 씁니다.
 \end{quote}
 
 \subsection{결합 헤드라인 토큰화 예시}
@@ -423,6 +423,7 @@ First sample label: [0.0, 1.0, 0.0, 1.0, 0.0, 0.0, 0.0] (length-7 multi-hot...
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
+torch.manual_seed(SEED); np.random.seed(SEED)
 model = AutoModelForSequenceClassification.from_pretrained(
     "klue/bert-base",
     num_labels=K,
@@ -441,7 +442,7 @@ def param_summary(m):
 \noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=14]
+\begin{lstlisting}[firstnumber=15]
 total, trainable = param_summary(model)
 print(
     f"Parameters:           {total:>13,}  ("
@@ -461,6 +462,7 @@ print(f"id2label:             {model.config.id2label}")
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
+model.safetensors: downloading bytes:           |  0.00B
 Key                                        | Status     | 
 -------------------------------------------+------------+-
 classifier.bias                            | MISSING    | 
@@ -606,18 +608,18 @@ print(classification_report(
 \begin{bookoutputbox}
 precision    recall  f1-score   support
 
-  IT/Science     0.7634    0.7937    0.7782       126
-     Economy     0.8428    0.8109    0.8266       238
-     Society     0.9267    0.7953    0.8560       684
-Life&Culture     0.8261    0.8885    0.8562       278
-       World     0.8704    0.8868    0.8785       159
-      Sports     0.8880    0.9487    0.9174       117
-    Politics     0.7941    0.8654    0.8282       156
+  IT/Science     0.7537    0.8016    0.7769       126
+     Economy     0.8253    0.7941    0.8094       238
+     Society     0.9184    0.7573    0.8301       684
+Life&Culture     0.8294    0.8921    0.8596       278
+       World     0.8647    0.9245    0.8936       159
+      Sports     0.9032    0.9573    0.9295       117
+    Politics     0.8160    0.8526    0.8339       156
 
-   micro avg     0.8638    0.8367    0.8500      1758
-   macro avg     0.8445    0.8556    0.8487      1758
-weighted avg     0.8683    0.8367    0.8501      1758
- samples avg     0.8820    0.8535    0.8485      1758
+   micro avg     0.8604    0.8237    0.8416      1758
+   macro avg     0.8444    0.8542    0.8476      1758
+weighted avg     0.8650    0.8237    0.8409      1758
+ samples avg     0.8825    0.8425    0.8408      1758
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -647,7 +649,7 @@ weighted avg     0.8683    0.8367    0.8501      1758
 \item
   \textbf{잘 학습된 카테고리} (예: 스포츠): label=0 곡선은 0 근처, label=1 곡선은 1 근처에 있고 둘이 거의 만나지 않음. \emph{분리가 깨끗}.
 \item
-  \textbf{혼동하는 카테고리} (예: 사회 \(\leftrightarrow\) 생활문화 \(\leftrightarrow\) 정치): 두 곡선이 0.5 근처에서 크게 겹침. 결합 헤드라인 안에서 두 주제 신호가 \emph{섞이는} 카테고리.
+  \textbf{혼동하는 카테고리} (예: 사회, IT과학): 두 곡선이 겹치거나 label=1 곡선이 넓게 퍼짐. 사회는 eval 활성률이 높아 온갖 결합에 섞이고, IT과학은 per-label F1 이 가장 낮은 카테고리 --- 결합 헤드라인 안에서 두 주제 신호가 \emph{섞일} 때 약해지는 지점.
 \item
   \textbf{결합의 부작용} --- 한 샘플에 \emph{두 헤드라인} 이 들어가니 모델이 “둘 중 어느 쪽 신호가 어느 라벨인지” 분리해야 합니다. 이게 단일 헤드라인 (\ref{ch:16}장) 보다 어려운 점이고, multi-label task 의 자연스러운 난이도.
 \end{itemize}
@@ -656,7 +658,7 @@ weighted avg     0.8683    0.8367    0.8501      1758
 
 \subsection{카테고리 간 공동 활성 패턴}
 
-Multi-label 의 핵심 질문: \emph{어떤 카테고리 쌍이 같이 등장하는가?} 합성 방식이 \emph{무작위 결합} 이라 true co-occurrence 는 거의 균등에 가까워야 하고, 모델 예측이 그 패턴을 따라가는지 확인합니다.
+Multi-label 의 핵심 질문: \emph{어떤 카테고리 쌍이 같이 등장하는가?} 합성이 \emph{무작위 결합} 이라 특정 \emph{의미 쌍} 의 상관은 없지만, P(j \textbar{} i) 는 \emph{상대 카테고리 j 의 활성률에 비례} 합니다 --- eval 합성의 원천인 validation split 이 사회 쏠림이라 \textbf{사회 열이 뚜렷하게 높게} 나옵니다. 모델 예측이 이 패턴을 따라가는지 확인합니다.
 
 \inlinecode{true\ co-occurrence} (실제 합성 라벨의 동시 등장) 와 \inlinecode{predicted\ co-occurrence} (모델 예측의 동시 등장) 를 나란히 그립니다.
 
@@ -682,7 +684,9 @@ Multi-label 의 핵심 질문: \emph{어떤 카테고리 쌍이 같이 등장하
 \item
   \textbf{off-diagonal cell M{[}i, j{]}} = “카테고리 i 가 활성된 샘플 중 카테고리 j 도 활성된 비율”.
 \item
-  \textbf{합성이 무작위 결합} 이라 true 행렬의 off-diagonal 은 \emph{대략 균등} (각 카테고리의 전체 활성률에 비례) --- 특정 쌍이 \emph{유난히 높지 않음}. 실제 사람-annotated 데이터라면 “정치+경제” 처럼 \emph{자연스러운 상관} 이 드러나겠지만, 여기선 합성 방식 때문에 그런 구조가 약합니다.
+  \textbf{무작위 결합의 구조} --- off-diagonal 은 \emph{균등이 아니라} 상대 카테고리 j 의 \textbf{활성률에 비례}합니다. 위 행렬에서 사회 열(0.4-0.5 대)이 다른 열(0.05-0.2)보다 뚜렷하게 높은 이유 --- eval 합성의 원천인 KLUE-YNAT validation split 은 사회 비중이 높아(활성 684/1000) 어떤 카테고리와 짝지어도 상대가 사회일 확률이 큽니다. train(사회 활성 21.8\%)과 분포가 다르다는 점도 함께 봐 두세요.
+\item
+  \textbf{의미 상관은 없음} --- 실제 사람-annotated 데이터라면 “정치+경제” 처럼 \emph{자연스러운 의미 상관} 이 행렬에 드러나겠지만, 무작위 결합에는 그런 구조가 없습니다. 여기 보이는 쏠림은 순전히 \emph{분포} 의 산물입니다.
 \item
   \textbf{predicted cell 이 true 보다 일관되게 높으면} \(\to\) 모델이 라벨을 \emph{너무 많이} 활성하는 경향 (over-prediction). threshold 를 0.5 보다 높게 두면 calibration 개선.
 \end{itemize}
@@ -840,7 +844,7 @@ for label_kind, idx in samples:
 \item
   두 헤드라인을 \texttt{{[}SEP{]}} 로 잇는 합성 방식에서, 모델이 \emph{두 주제를 모두 잡지 못하고 하나만 잡는} 경우는 왜 생기나요?
 \item
-  카테고리 간 공동 활성 행렬에서 \emph{무작위 결합} 합성이라 true co-occurrence 가 거의 균등에 가까운데, 실제 사람-annotated multi-label 데이터라면 이 행렬이 어떻게 달라질까요?
+  카테고리 간 공동 활성 행렬에서 \emph{무작위 결합} 합성인데도 true co-occurrence 의 \emph{사회 열} 이 유난히 높습니다. 왜일까요? 실제 사람-annotated multi-label 데이터라면 이 행렬이 어떻게 달라질까요?
 \end{enumerate}
 
 
@@ -954,9 +958,9 @@ def tokenize_wrong(batch):
 \item
   메인 task: \ref{ch:17}장의 multi-label 카테고리 분류 (\inlinecode{num\_labels=7} + BCE per-label) --- \emph{완전히 동일}
 \item
-  추가: \emph{보조 헤드} \inlinecode{Linear(H,\ 1)} 로 \emph{활성 라벨 개수} 를 회귀 (결합한 헤드라인이 몇 개 카테고리에 걸치는가, 정규화 0-1)
+  추가: \emph{보조 헤드} \inlinecode{Linear(H,\ 1)} 로 \emph{활성 라벨 개수} 를 회귀 (결합한 헤드라인이 몇 개 카테고리에 걸치는가 --- 1 또는 2 를 그대로 회귀)
 \item
-  손실: \texttt{L\ =\ BCE\_per\_label(메인)\ +\ λ\ ·\ MSE(보조)} 가중합 (\(\lambda\) 는 hyperparameter)
+  손실: \inlinecode{L\ =\ BCE\_per\_label(메인)\ +\ λ\ ·\ MSE(보조)} 가중합 (\(\lambda\) 는 hyperparameter)
 \item
   \inlinecode{Trainer.compute\_loss} 오버라이드로 두 헤드를 동시 학습
 \item
