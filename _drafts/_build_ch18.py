@@ -48,7 +48,7 @@ Ch 14(영어 auxiliary, 별점 회귀 보조)의 한국어 버전입니다. 보�
 
 **환경**: Google Colab **T4 GPU 필수**.
 
-**예상 소요 시간**: 약 22분 (보조 ON 학습 약 10분 + λ=0 baseline 학습 약 10분 + 평가/시각화)
+**예상 소요 시간**: 약 3분 (보조 ON 학습 약 1분 + λ=0 baseline 학습 약 1분 + 평가/시각화)
 
 ---
 
@@ -56,7 +56,7 @@ Ch 14(영어 auxiliary, 별점 회귀 보조)의 한국어 버전입니다. 보�
 
 1. 🚀 **실습**: Ch 17 의 KLUE-YNAT 합성 multi-label 데이터에 *활성 라벨 개수* 보조 라벨(`n_active`, 1 또는 2 — 두 헤드라인 결합 시 같은 카테고리면 1) 을 추가. `AutoModel` 위에 메인 헤드 `Linear(H, 7)` 와 보조 헤드 `Linear(H, 1)` 를 직접 attach, `Trainer.compute_loss` 오버라이드.
 2. 🔬 **해부**: 메인 metric (micro/macro F1, hamming, AUC) + 보조 metric (RMSE, Pearson r) 동시 측정.
-3. 🛠️ **클라이맥스**: 같은 노트북 안에서 **λ=0 baseline** (= Ch 17 재현) 을 학습한 뒤 λ=0.1 결과와 비교 — *보조 loss 가 메인 task 에 도움이 됐는가?* 카테고리별 F1 차이로 시각화.
+3. 🛠️ **클라이맥스**: 같은 노트북 안에서 **λ=0 baseline** (= Ch 17 재현) 을 학습한 뒤 λ=0.05 결과와 비교 — *보조 loss 가 메인 task 에 도움이 됐는가?* 카테고리별 F1 차이로 시각화.
 
 ---
 
@@ -73,9 +73,9 @@ md(r"""## 📊 변화추적표
 | 16 | klue/bert-base | WordPiece (한국어) | KLUE-YNAT (뉴스 7분류) | `Linear(H, 7)` | softmax | `CrossEntropyLoss` |
 | 17 | klue/bert-base | 같음 | KLUE-YNAT 합성 multi-label | `Linear(H, 7)` | sigmoid (per-label) | `BCEWithLogitsLoss` (per-label) |
 | **18 ← 여기** | klue/bert-base + **보조 헤드** | 같음 | KLUE-YNAT 합성 multi-label + **활성 개수** | **메인(7) + 보조(1)** | 메인 sigmoid + 보조 없음 | **`BCE per-label + λ·MSE`** |
-| 19 (다음 Phase 3) | (없음) — 토크나이저 학습 | **직접 학습한 워드레벨** | (코퍼스) | — | — | — |
+| 19 (다음 Phase 3) | (없음) — 토크나이저 학습 | **WordPiece + WordLevel** (둘 다 직접 학습) | (코퍼스) | — | — | — |
 
-전체 20챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.""")
+전체 챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.""")
 
 # ----- 3. 변경점 -----
 md(r"""## 🔄 변경점 (Diff from Ch 17)
@@ -113,22 +113,22 @@ $$L = \underbrace{\frac{1}{N \cdot K}\sum_{i,k}\text{BCE}(z_{i,k}^\text{main}, y
 - $z^\text{main} \in \mathbb{R}^7$ — 카테고리 logit 7개, sigmoid 후 BCE per-label.
 - $z^\text{aux} \in \mathbb{R}$ — 활성 개수 회귀 logit (활성화 없음, 직접 MSE).
 - $n^\text{active} \in \{1, 2\}$ — 합성 시 두 헤드라인이 같은 카테고리면 1, 다르면 2 (이론상 1 또는 2 만 등장).
-- $\lambda$ — 보조 loss 가중치. 본문 기본값 **0.1** (보조 MSE 가 메인 BCE 보다 *크기 자체가 커서* — 1-4 vs 0.3-0.6 — λ 를 작게 잡아 균형).
+- $\lambda$ — 보조 loss 가중치. 본문 기본값은 부록 스윕에서 확인한 sweet spot 인 **0.05** (보조 MSE 가 메인 BCE 보다 *크기 자체가 커서* — 1-4 vs 0.3-0.7 — λ 를 작게 잡아 균형).
 
 **λ 스케일 감 잡기 — 보조 MSE 의 *크기* 부터**
 
-활성 개수 정답은 1 또는 2 의 *정수*. 학습 초기 보조 헤드 예측이 평균 1.5 근처면 MSE 는 약 $0.25$, 무작위 예측이면 $1-4$. 메인 BCE 는 K=7 평균이라 학습 초반에도 $0.3-0.7$ 수준. *λ=1* 이면 보조가 메인보다 크게 잡힐 수 있어 **λ=0.1** 이 권장 기본값.
+활성 개수 정답은 1 또는 2 의 *정수*. 학습 초기 보조 헤드 예측이 평균 1.5 근처면 MSE 는 약 $0.25$, 무작위 예측이면 $1-4$. 메인 BCE 는 K=7 평균이라 학습 초반에도 $0.3-0.7$ 수준. *λ=1* 이면 보조가 메인보다 크게 잡힐 수 있어 **λ=0.05** 가 권장 기본값 (부록 스윕의 sweet spot).
 
 | λ | $L_\text{main}$ (가정 0.45) | $L_\text{aux}$ (가정 0.25) | $L$ | 보조 비중 |
 |---|---|---|---|---|
 | 0.0 | 0.45 | (무시) | 0.45 | 0% (= Ch 17) |
-| 0.1 | 0.45 | 0.25 | 0.475 | 5% ← **본문 기본** |
+| 0.05 | 0.45 | 0.25 | 0.4625 | 2.7% ← **본문 기본, sweet spot** |
 | 1.0 | 0.45 | 0.25 | 0.70 | 36% (보조가 메인의 절반 이상 영향) |
 | 5.0 | 0.45 | 0.25 | 1.70 | 74% (보조 우세 — 메인 신호 묻힘) |
 
-이번 챕터에선 **λ=0.1** 로 학습하고 λ=0 baseline 과 비교, §10 의 변형 섹션에서 λ ∈ {0.0, 0.1, 1.0} 스윕으로 효과 분포를 봅니다.
+이번 챕터에선 **λ=0.05** 로 학습하고 λ=0 baseline 과 비교, §9 의 변형 섹션에서 λ 스윕으로 효과 분포를 봅니다 (전체 곡선은 부록).
 
-> **Auxiliary 가 *새 task* 가 아니라 *loss 보조항* 인 이유** — `n_active` 회귀가 *추론 시 결과* 로 필요한 게 아닙니다. 운영에선 메인 multi-label 만 쓰고 보조 헤드는 *호출조차 하지 않음*. 학습 *과정* 에서 BERT 본체를 더 일반적인 표상으로 끌고 가려는 *정규화* 신호일 뿐 — 그래서 *task 축의 변화* 가 아니라 *loss 축의 변화* 로 분류됩니다 (CLAUDE.md 의 "Auxiliary = loss 보조항" 규칙).""")
+> **Auxiliary 가 *새 task* 가 아니라 *loss 보조항* 인 이유** — `n_active` 회귀가 *추론 시 결과* 로 필요한 게 아닙니다. 운영에선 메인 multi-label 만 쓰고 보조 헤드는 *호출조차 하지 않음*. 학습 *과정* 에서 BERT 본체를 더 일반적인 표상으로 끌고 가려는 *정규화* 신호일 뿐입니다. 그래서 이 변화는 *task 축* 이 아니라 *loss 축* 에 보조 항을 더하는 변화로 분류됩니다 — 보조 헤드는 task 를 신설하는 게 아니라 손실에 항을 추가할 뿐입니다.""")
 
 # ----- 5. 토크나이저 노트 -----
 md(r"""## 🔤 토크나이저 노트
@@ -162,6 +162,13 @@ from sklearn.metrics import (
     roc_auc_score, hamming_loss, mean_squared_error, r2_score,
 )
 
+# matplotlib 한글 폰트 (Colab — NanumGothic). plot 의 한국어가 □ 로 깨지지 않게.
+import matplotlib.pyplot as plt, matplotlib.font_manager as fm, subprocess, os
+_fp = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
+if not os.path.exists(_fp):
+    subprocess.run("apt-get -qq -y install fonts-nanum", shell=True)
+fm.fontManager.addfont(_fp)
+plt.rcParams["font.family"] = "NanumGothic"
 plt.rcParams["axes.unicode_minus"] = False
 
 # device 자동감지 — Colab(T4) 은 CUDA, 로컬 Mac 은 MPS, 그 외 CPU
@@ -375,7 +382,7 @@ code(r"""class KoBertMultiTask(nn.Module):
         self.config = self.bert.config
 
     def forward(self, input_ids=None, attention_mask=None, token_type_ids=None,
-                labels=None, n_active=None, lambda_aux: float = 0.1):
+                labels=None, n_active=None, lambda_aux: float = 0.05):
         kwargs = {"input_ids": input_ids, "attention_mask": attention_mask}
         if token_type_ids is not None:
             kwargs["token_type_ids"] = token_type_ids
@@ -402,6 +409,7 @@ def make_model(model_name="klue/bert-base"):
     return KoBertMultiTask(model_name, num_labels=K)
 
 
+torch.manual_seed(SEED); np.random.seed(SEED)   # baseline 과 동일 초기화 (λ 만 변수)
 model = make_model()
 
 
@@ -437,7 +445,7 @@ loss = l_main + λ · l_aux       # l_main: BCE per-label, l_aux: MSE on n_activ
 Ch 14 와의 차이 — Ch 14 는 `outputs.loss` (자동 매핑 메인 BCE) 를 그대로 받고 보조만 직접 계산. Ch 18 은 모델 forward 가 *이미* combined loss 를 계산해 반환하므로 `compute_loss` 는 forward 결과를 그대로 돌려주기만 하면 됩니다. λ 만 trainer 에서 model forward 로 넘김.""")
 
 code(r"""class AuxTrainer(Trainer):
-    def __init__(self, *args, lambda_aux: float = 0.1, **kwargs):
+    def __init__(self, *args, lambda_aux: float = 0.05, **kwargs):
         super().__init__(*args, **kwargs)
         self.lambda_aux = lambda_aux
 
@@ -482,11 +490,11 @@ code(r"""def compute_metrics_main(eval_pred):
     return out""")
 
 # ----- 15. 학습 (λ=0.1) -----
-md(r"""## 6. 학습 — λ=0.1 (보조 ON)
+md(r"""## 6. 학습 — λ=0.05 (sweet spot, 보조 ON)
 
-Ch 17 과 동일한 hyperparams. `AuxTrainer` + `lambda_aux=0.1`.""")
+Ch 17 과 동일한 hyperparams. `AuxTrainer` + `lambda_aux=0.05`. 이 값은 부록 `18_ko_auxiliary_lambda_sweep` 의 λ 스윕에서 **메인 F1 을 가장 끌어올린 지점** 입니다 (λ≥0.2 부터는 §10 처럼 메인이 무너집니다).""")
 
-code(r"""LAMBDA_AUX = 0.1
+code(r"""LAMBDA_AUX = 0.05
 
 training_args = TrainingArguments(
     output_dir="./ch18_aux_output",
@@ -529,7 +537,7 @@ md(r"""## 7. 🔬 평가 — 메인 task + 보조 task
 
 code(r"""# 메인 metric
 eval_metrics_aux = trainer_aux.evaluate()
-print("With-aux (lambda=0.1) — main task metrics:")
+print("With-aux (lambda=0.05) — main task metrics:")
 for k, v in eval_metrics_aux.items():
     if k.startswith("eval_") and isinstance(v, float):
         print(f"  {k:>22}: {v:.4f}")""")
@@ -559,7 +567,7 @@ rmse_aux = float(np.sqrt(mean_squared_error(aux_true, aux_preds_aux)))
 r2_aux   = float(r2_score(aux_true, aux_preds_aux))
 pear_aux = float(np.corrcoef(aux_true, aux_preds_aux)[0, 1])
 
-print("\nWith-aux (lambda=0.1) — aux task metrics (n_active regression):")
+print("\nWith-aux (lambda=0.05) — aux task metrics (n_active regression):")
 print(f"  RMSE:    {rmse_aux:.4f}")
 print(f"  R^2:     {r2_aux:.4f}")
 print(f"  Pearson: {pear_aux:.4f}")
@@ -581,7 +589,7 @@ print(f"Eval samples:      {len(labels_eval)}")""")
 
 # ----- 18. classification report -----
 code(r"""# Per-category classification report (with-aux)
-print("Per-category report — with aux (lambda=0.1):")
+print("Per-category report — with aux (lambda=0.05):")
 print(classification_report(
     labels_eval, preds_main_aux,
     target_names=LABEL_NAMES_EN,
@@ -595,7 +603,8 @@ md(r"""## 8. 🛠️ 클라이맥스 — *λ=0 baseline* 학습 (= Ch 17 재현)
 
 > 의도적으로 *Ch 17 노트북을 따로 돌리지 않고* 이 셀에서 baseline 을 다시 만듭니다 — 비교가 *같은 노트북·같은 환경* 안에서 self-contained 하도록 (Ch 14 와 같은 패턴).""")
 
-code(r"""# 새 모델 인스턴스 — λ=0 학습용
+code(r"""# 새 모델 인스턴스 — λ=0 학습용 (λ=0.05 모델과 동일 초기화로 공정 비교)
+torch.manual_seed(SEED); np.random.seed(SEED)
 model_no_aux = make_model()
 
 training_args_no_aux = TrainingArguments(
@@ -643,7 +652,7 @@ probs_no_aux = 1.0 / (1.0 + np.exp(-logits_no_aux))
 preds_main_no_aux = (probs_no_aux >= 0.5).astype(int)""")
 
 # ----- 20. 비교 시각화 -----
-md(r"""### 8-1. 메인 metric 비교 — λ=0 baseline vs λ=0.1 aux""")
+md(r"""### 8-1. 메인 metric 비교 — λ=0 baseline vs λ=0.05 aux""")
 
 code(r"""m_aux    = {k.replace("eval_", ""): v for k, v in eval_metrics_aux.items()
             if k.startswith("eval_") and isinstance(v, float)}
@@ -654,9 +663,9 @@ common = [k for k in m_aux if k in m_no_aux]
 cmp = pd.DataFrame({
     "metric":               common,
     "no aux (lambda=0)":    [m_no_aux[k] for k in common],
-    "with aux (lambda=0.1)":[m_aux[k]    for k in common],
+    "with aux (lambda=0.05)":[m_aux[k]    for k in common],
 })
-cmp["delta (aux - no_aux)"] = cmp["with aux (lambda=0.1)"] - cmp["no aux (lambda=0)"]
+cmp["delta (aux - no_aux)"] = cmp["with aux (lambda=0.05)"] - cmp["no aux (lambda=0)"]
 print(cmp.round(4).to_string(index=False))""")
 
 md(r"""**해석 가이드**
@@ -691,17 +700,17 @@ label_cmp = pd.DataFrame({
 print(label_cmp.round(4).to_string(index=False))
 
 # 막대 그래프
-sns.set_theme(style="whitegrid", context="talk")
+sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
 fig, ax = plt.subplots(figsize=(11, 5))
 x_pos = np.arange(K)
 width = 0.38
-ax.bar(x_pos - width/2, f1_no_aux, width, label="no aux (lambda=0)",    color="#5B8DEF")
-ax.bar(x_pos + width/2, f1_aux,    width, label="with aux (lambda=0.1)", color="#F47272")
+ax.bar(x_pos - width/2, f1_no_aux, width, label="aux 없음 (lambda=0)",    color="#5B8DEF")
+ax.bar(x_pos + width/2, f1_aux,    width, label="aux 적용 (lambda=0.05)", color="#F47272")
 ax.set_xticks(x_pos)
 ax.set_xticklabels(LABEL_NAMES_EN, rotation=20, ha="right")
 ax.set_ylim(0, 1)
-ax.set_ylabel("Per-label F1")
-ax.set_title("Per-category F1 — auxiliary loss effect (Korean multi-label)")
+ax.set_ylabel("라벨별 F1")
+ax.set_title("카테고리별 F1 — 보조 loss 효과 (한국어 multi-label)")
 ax.legend()
 plt.tight_layout()
 plt.show()""")
@@ -719,14 +728,14 @@ md(r"""### 8-3. 보조 task 자체는 얼마나 잘 학습됐나
 
 code(r"""# True n_active 별 예측 분포 — violin
 df_aux = pd.DataFrame({
-    "True n_active": [f"{int(v)}" for v in aux_true],
-    "Predicted":     aux_preds_aux,
+    "실제 n_active": [f"{int(v)}" for v in aux_true],
+    "예측값":     aux_preds_aux,
 })
 order = ["1", "2"]
 
 fig, ax = plt.subplots(figsize=(7.5, 5.5))
 sns.violinplot(
-    data=df_aux, x="True n_active", y="Predicted",
+    data=df_aux, x="실제 n_active", y="예측값",
     order=order, inner="quart", cut=0,
     color="#F47272", alpha=0.6, ax=ax,
 )
@@ -734,7 +743,7 @@ sns.violinplot(
 for i, target in enumerate([1.0, 2.0]):
     ax.hlines(target, i - 0.4, i + 0.4, color="black", lw=1.1, ls="--", alpha=0.7)
 ax.set_ylim(0.0, 3.0)
-ax.set_title(f"Aux task — predicted vs true n_active  (RMSE={rmse_aux:.3f}, r={pear_aux:.3f})")
+ax.set_title(f"보조 task — 예측 n_active vs 실제 n_active  (RMSE={rmse_aux:.3f}, r={pear_aux:.3f})")
 plt.tight_layout()
 plt.show()""")
 
@@ -745,13 +754,13 @@ md(r"""**해석**
 - 1.5 근처에 한 데가 몰려 있으면 *상수 평균 예측* 으로 회귀 — 보조 신호가 메인 표상에 *반영되지 못한* 상태. 이 경우 λ 를 더 키우거나 데이터·epoch 를 늘려야 함.""")
 
 # ----- 22. 변형 — λ 스윕 -----
-md(r"""## 9. 🛠️ 변형 — λ 스윕 효과 비교 (선택)
+md(r"""## 9. 🛠️ 변형 — λ 스윕 (전체 곡선은 부록에서)
 
-§8 은 λ=0 vs λ=0.1 두 점만 비교했습니다. λ 를 *그리드* 로 돌리면 *어떤 λ 가 메인 task 에 가장 도움이 되는지* 알 수 있습니다 — 운영 시 실제 grid search 패턴.
+§8 은 λ=0 vs λ=0.05 *두 점* 만 비교했습니다. **λ 전체 곡선(0 → 0.5)은 부록 `18_ko_auxiliary_lambda_sweep` 에서 실측** 으로 그립니다 — sweet spot 이 λ=0.05 이고, λ≥0.2 부터 메인이 무너지는 모습, 그리고 Ch 14(강한 보조)와의 대조를 거기서 봅니다.
 
-이 셀은 학습 시간이 약 10분씩 늘어 *선택 사항* — 시간 여유 있을 때만 실행. (또는 λ 한두 점만 추가해서 빠르게.)""")
+아래는 이 노트북 안에서 *빠르게* 몇 점만 직접 돌려보고 싶을 때의 선택 코드입니다 (각 λ 마다 처음부터 재학습 — 시간 여유 있을 때만).""")
 
-code(r"""# 시간 여유 있을 때만 실행 — 각 lambda 마다 처음부터 다시 학습
+code(r"""# 각 lambda 마다 처음부터 다시 학습 (3런, T4 에서 약 3분)
 LAMBDA_GRID = [0.0, 0.1, 1.0]   # 빠르게 보고 싶으면 [0.0, 0.1] 만
 RUN_LAMBDA_SWEEP = False        # ← True 로 바꿔 실행
 
@@ -799,7 +808,7 @@ if RUN_LAMBDA_SWEEP:
     print("\nLambda sweep result:")
     print(sweep_df.round(4).to_string(index=False))
 else:
-    print("Lambda sweep skipped. Set RUN_LAMBDA_SWEEP=True to run (~30 min extra on T4).")""")
+    print("Lambda sweep skipped. Set RUN_LAMBDA_SWEEP=True to run (~3 min extra on T4).")""")
 
 md(r"""**해석 가이드 — 결과를 직접 보면**
 
@@ -808,27 +817,28 @@ md(r"""**해석 가이드 — 결과를 직접 보면**
 - macro_f1 이 λ=0 에서 최대 (baseline 이 가장 좋음) → 보조 task 가 이 셋업에선 도움 안 됨. quick 모드 노이즈일 수 있어 시드 바꿔 재실행 권장.""")
 
 # ----- 23. 결과 해석 ----- (Ch 14 의 §9 와 같은 톤)
-md(r"""## 10. 🧭 결과 해석 — 보조 loss 가 *항상 좋게 나오지는 않습니다*
+md(r"""## 10. 🧭 결과 해석 — sweet spot 에서는 약한 보조도 메인을 (살짝) 돕는다
 
-Ch 14 에서 짚었던 4 가지 시나리오를 한국어 셋업에서도 그대로 적용:
+§8 비교에서 **λ=0.05 보조가 λ=0 baseline 을 micro·macro-F1 모두에서 앞섰습니다** (각 +0.003, +0.004). `n_active` 라는 *약한* 보조 신호도 작은 λ 에서는 공유 KLUE-BERT 본체에 가벼운 정규화로 작용해 메인 분류를 살짝 끌어올립니다.
 
-| delta 패턴 | 의미 | 권장 다음 단계 |
-|---|---|---|
-| **모든 카테고리 +1-3%p** | 정규화 효과 고르게 작동 (이상적) | λ 를 0.03·0.1·0.3 으로 grid search |
-| **일부 카테고리만 향상, 나머지 0 또는 음수** ← *quick 모드 전형* | 학습량 부족 카테고리가 둘 다 baseline 근처에 머묾 | 데이터·에폭 늘리기가 우선 |
-| **모든 카테고리 거의 0 변화** | 보조 신호가 메인 표상에 추가 정보를 못 줌 (n_active 가 너무 *예측하기 쉬워* 학습 신호로서 약함) | 보조 task 자체를 바꿔야 함 — 예: 헤드라인 길이 회귀, 발행일자 회귀 |
-| **모든 카테고리 음수** | 보조가 메인 학습을 방해 | λ 줄이거나 보조 task 제거 |
+다만 그 효과는 **Ch 14(영어, 별점 보조)보다 작습니다.** 부록 `18_ko_auxiliary_lambda_sweep` 의 λ 곡선과 Ch 14 를 나란히 두면:
 
-### Ch 18 특유의 *주의점* — `n_active` 는 *너무 예측하기 쉬워* 신호로서 약할 수 있음
+| | 보조 task | 보조 R² | sweet spot Δ(micro) |
+|---|---|---|---|
+| Ch 14 | 별점 회귀 | 0.43 (강함) | +0.007 |
+| **Ch 18** | **n_active 회귀** | **0.065 (약함)** | **+0.003** |
 
-`n_active` 는 합성 규칙상 1/7 확률로 1, 6/7 확률로 2. *상수 1.857* 만 예측해도 MSE 가 0.12 정도로 낮습니다. 모델이 *진짜 입력을 보지 않고* 평균만 출력해도 보조 loss 가 작게 유지되어 *보조 신호가 학습으로 흐르지 않는* 상황이 가능합니다.
+두 챕터의 sweet spot 은 똑같이 **λ=0.05** 인데 도움의 *크기* 가 다릅니다. 차이는 λ 가 아니라 **보조 신호의 정보량** 입니다.
 
-진단:
-- 보조 RMSE 가 0.34 (상수 평균 베이스라인) 와 *비슷* → 보조가 평균만 학습한 상태. 메인에 도움 안 됨.
-- 보조 RMSE 가 0.34 보다 *유의미하게 작음* (e.g. 0.20) → 보조가 입력을 실제로 활용. 메인 정규화 효과 기대 가능.
-- 보조 Pearson r 이 0.3 이상 → 입력 의존적 학습이 일어남.
+### 왜 `n_active` 는 약한가
 
-> *이 챕터의 메시지* — auxiliary loss 는 *공짜 만병통치약* 이 아닙니다. *어떤 보조 task 를 쓰는가* 가 성패를 결정. `n_active` 는 *데이터 합성 자연 부산물* 이라 손쉽게 시도해 볼 가치는 있지만, 진짜 도움이 되려면 *입력 의존도 가 큰* 보조 (예: 헤드라인 분야 외 추가 메타데이터) 가 더 효과적. Ch 14 의 별점은 *사용자가 직접 입력한 깨끗한 신호* 라 입력 의존도가 높았던 셋업.""")
+`n_active` 는 합성 규칙상 거의 항상 2 입니다 (train 분포 {1: 732, 2: 4268}). 분산이 작아 *예측할 게 별로 없어서*, 보조 헤드가 λ 를 0.5 까지 키워도 R² 가 0.08 에 머뭅니다. 보조가 입력을 깊이 들여다볼 동기가 약하니 공유 표현에 실어주는 추가 정보도 적습니다. 반면 Ch 14 의 별점은 *사용자가 직접 매긴* 입력 의존도 높은 신호라 R² 0.43 으로 잘 학습되고, 그만큼 메인에도 더 보탬이 됐습니다.
+
+### λ 를 키우면
+
+λ≥0.2 부터는 약한 보조가 오히려 메인을 깎습니다 (λ=0.5 에서 micro 0.80). 약한 보조일수록 *도움이 되는 작은 λ 구간이 더 좁습니다* — 본편이 λ=0.05 를 쓰는 이유입니다.
+
+> *이 챕터의 메시지* — auxiliary loss 는 공짜 만병통치약이 아니라, **(1) λ 를 작게 잡고 (2) 입력 의존도 높은 보조 신호를 골라야** 메인을 돕습니다. `n_active` 는 데이터 합성의 자연 부산물이라 손쉽지만 약하고, 그래도 sweet spot 에서는 +가 납니다. 더 큰 도움을 원하면 헤드라인 길이·발행 메타데이터처럼 *입력 의존도 큰* 보조로 바꾸는 게 다음 수입니다.""")
 
 # ----- 24. library -----
 md(r"""## 📦 이번 챕터에 등장한 라이브러리·함수
@@ -836,7 +846,7 @@ md(r"""## 📦 이번 챕터에 등장한 라이브러리·함수
 | 이름 | 한 줄 설명 | 다음 챕터에서 |
 |---|---|---|
 | `AutoModel.from_pretrained(...)` | 분류 헤드 없이 BERT 본체만 로드 — 메인·보조 헤드를 직접 부착 | Phase 3 토크나이저 학습엔 등장 안 함 (Ch 19 부터는 본체보다 어휘 자체에 집중) |
-| 커스텀 `nn.Module` (KoBertMultiTask) | 본체 공유 + 두 헤드 명시 정의 — multi-task 정통 패턴 | GPT 챕터 (Ch 21) 의 task-specific head 패턴과 연결 |
+| 커스텀 `nn.Module` (KoBertMultiTask) | 본체 공유 + 두 헤드 명시 정의 — multi-task 정통 패턴 | GPT 챕터 (Ch 24) 의 task-specific head 패턴과 연결 |
 | `Trainer.compute_loss` 오버라이드 + `lambda_aux` 인자 | 자동 매핑이 못 다루는 *복합 loss* + λ 동적 주입 | λ grid search 패턴 |
 | 커스텀 `AuxCollator` | input_ids 외 *추가 라벨* (n_active) 도 batch 에 같이 담기 | Ch 14 와 같은 패턴, 보조 신호 변형마다 재사용 |
 | `remove_unused_columns=False` | 모델 시그니처와 무관하게 모든 컬럼 통과 | custom collator 패턴마다 |
@@ -849,7 +859,7 @@ md(r"""## 🎯 체크포인트 질문
 1. Ch 14 (영어 별점 보조) 와 Ch 18 (한국어 활성 개수 보조) 의 *변경된 축* 은 무엇인가요? *한 가지 축* 원칙 관점에서 어느 쪽이 더 "loss 축 변화" 에 가까운가요?
 2. `n_active` 가 메인 multi-hot 벡터의 *합* 이라는 점이 보조 task 로서 *유리한 점* 과 *불리한 점* 을 각각 한 줄로.
 3. `AutoModelForSequenceClassification` 대신 `AutoModel + 커스텀 nn.Module` 로 간 이유는? 어떤 상황에서 자동 매핑이 부족한가요?
-4. λ=0.1 을 기본값으로 잡은 근거는? (메인 BCE 와 보조 MSE 의 *크기 자체* 가 어떻게 다른가)""")
+4. λ=0.05 를 기본값으로 잡은 근거는? (메인 BCE 와 보조 MSE 의 *크기 자체* 가 어떻게 다른가)""")
 
 # ----- 26. FAQ -----
 md(r"""## ❓ FAQ
@@ -955,10 +965,10 @@ def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=N
 
 ### Q7. (실무) Phase 2 (한국어, Ch 15-18) 가 끝났습니다. Phase 3 에서 토크나이저를 *직접 학습* 하는 이유는?
 
-Ch 1-18 모두 *사전학습 토크나이저* (sklearn TF-IDF 토큰화, BERT WordPiece) 에 의존했습니다. Phase 3 (Ch 19-20) 는 이 의존을 끊고 *어휘 자체를 코퍼스에서 학습*:
+Ch 1-18 모두 *사전학습 토크나이저* (sklearn TF-IDF 토큰화, BERT WordPiece) 에 의존했습니다. Phase 3 의 첫 장 **Ch 19** 가 이 의존을 끊고 *어휘 자체를 코퍼스에서 학습* 합니다 (Ch 20-23 은 학습 안정성을 위해 다시 표준 토크나이저를 가져옵니다):
 
-- **Ch 19**: BPE / WordPiece / Unigram 알고리즘을 직접 돌려 어휘 만들기 → 토큰화가 *데이터에 따라 어떻게 달라지는지* 직관.
-- **Ch 20**: 학습한 토크나이저로 *작은 BERT 를 처음부터* 사전학습 → 사전학습 의존 없는 경험.
+- **Ch 19**: WordPiece(subword) 와 WordLevel(어절) 을 직접 학습해 비교 → 토큰화가 *데이터에 따라 어떻게 달라지는지* 직관.
+- **Ch 20**: *작은 BERT 를 처음부터* 사전학습(MLM) → 모델 본체의 사전학습 의존을 끊는 경험. 토크나이저는 학습 안정성을 위해 표준 `bert-base-uncased` 를 가져옵니다.
 
 > Phase 3 가 클라이맥스인 이유 — Ch 1 부터 따라온 "🔤 토크나이저 노트" 가 *외부 도구의 사용법* 이었다면 Phase 3 는 *그 도구 자체를 만드는 단계*. 토크나이저를 직접 만들고 나면 Ch 1-18 의 모든 토큰화 노트를 *다시 읽었을 때* 보이는 풍경이 달라집니다.""")
 
@@ -967,16 +977,16 @@ md(r"""## 🚀 삽질 코너 (선택)
 
 다음 두 가지 흔한 함정:
 
-**1. `remove_unused_columns=True` (기본값) 로 두기**
+**1. `remove_unused_columns` 를 기본값에 맡기기**
 
 ```python
 training_args = TrainingArguments(
     ...,
-    remove_unused_columns=True,   # ← 잘못 (default)
+    remove_unused_columns=True,   # ← 기본값. 이 챕터에선 동작하지만 깨지기 쉽다
 )
 ```
 
-Trainer 가 model.forward 시그니처를 검사해 *맞지 않는 컬럼은 제거*. `n_active` 가 시그니처에 있긴 하지만 자동 검사가 실패할 때 (e.g. 커스텀 모델 시그니처 변경 시) `n_active` 가 사라져 `compute_loss` 안에서 None 이 됩니다. 안전상 `False` 권장.
+Trainer 가 model.forward 시그니처를 검사해 *맞지 않는 컬럼은 제거* 합니다. `n_active` 는 `KoBertMultiTask.forward` 에 있으니 **이 셋업에서는 살아남아 그대로 학습됩니다.** 문제는 그 동작이 *시그니처에 의존* 한다는 점 — 보조 라벨 이름을 바꾸거나 `**kwargs` 로 받도록 고치면 조용히 사라져 `compute_loss` 에서 None 이 됩니다. Ch 14 는 보조 라벨(`aux_labels`)이 시그니처에 *없어서* 같은 설정에서 `KeyError` 가 납니다 — 같은 옵션이 모델 정의 방식에 따라 다르게 동작하는 셈입니다. 에러가 늦게, 엉뚱한 곳에서 터지므로 `False` 로 명시해 두는 편이 안전합니다.
 
 **2. `count_pred` 를 모델 attribute 에 저장 안 하기**
 
@@ -991,10 +1001,10 @@ return SequenceClassifierOutput(loss=loss, logits=main_logits)
 # ----- 28. next -----
 md(r"""## 다음 챕터 예고 — Phase 3 시작 (클라이맥스)
 
-**Chapter 19. 토크나이저 직접 학습 — BPE / WordPiece / Unigram**
+**Chapter 19. 토크나이저 직접 학습 — WordPiece vs WordLevel (영어 + 한국어)**
 
 - Phase 1-2 영어·한국어 모두 *사전학습 토크나이저* 를 그대로 썼습니다. Ch 19 는 그 의존을 끊고 *어휘를 코퍼스에서 직접 학습*.
-- `tokenizers` 라이브러리로 BPE, WordPiece, Unigram 세 알고리즘을 같은 코퍼스에 적용해 *어휘 차이* 비교.
+- `tokenizers` 라이브러리로 WordPiece(subword) 와 WordLevel(어절) 두 알고리즘을 영어·한국어 코퍼스에 적용해 *어휘 차이* 비교.
 - 한국어 vs 영어 코퍼스에서 학습한 토크나이저의 *토큰 길이 분포* 가 어떻게 다른지 — Ch 1 부터 추적해 온 토크나이저 시각의 완성.
 
 > **Phase 2 마무리** — Ch 15-18 을 통해 한국어 BERT 의 binary·multi-class·multi-label·auxiliary 4 가지를 다 익혔습니다. Phase 3 는 한 발 더 내려가 *어휘 구성* 자체에 도전 — 사전학습 모델에 *완전히 의존하지 않는* 경험.
@@ -1047,7 +1057,7 @@ Ch 17(한국어 multi-label, KLUE-YNAT 합성)에 **활성 라벨 개수 회귀 
 Ch 17 의 KLUE-YNAT 합성 multi-label (두 헤드라인 결합, multi-hot 7차원) **+** 활성 개수 보조 라벨 `n_active` ∈ {1, 2} (합성 시 같은 카테고리면 1, 다르면 2). 5K train / 1K eval, seed 고정(42).
 
 ## 환경
-Google Colab **T4 GPU 필수**. 약 22분 (보조 ON 학습 약 10분 + λ=0 baseline 학습 약 10분 + 평가/시각화).
+Google Colab **T4 GPU 필수**. 약 3분 (보조 ON 학습 약 1분 + λ=0 baseline 학습 약 1분 + 평가/시각화).
 
 **Self-contained**: 다른 챕터 결과에 의존하지 않습니다. 비교용 baseline (λ=0) 도 같은 노트북 안에서 inline 학습 (Ch 14 와 같은 패턴).
 
