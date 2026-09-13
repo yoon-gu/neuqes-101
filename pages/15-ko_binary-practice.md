@@ -61,7 +61,7 @@ GPU:             Tesla T4
 **▶ 실행 결과**
 
 ```text
-Mon Jun 22 03:56:11 2026       
+Sun Sep 13 03:16:02 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -70,7 +70,7 @@ Mon Jun 22 03:56:11 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   44C    P8             13W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   40C    P8             12W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -300,18 +300,19 @@ print(f"vocab size V:         {model.config.vocab_size:,}")
 **▶ 실행 결과**
 
 ```text
+model.safetensors: downloading bytes:           |  0.00B            
 [transformers] BertForSequenceClassification LOAD REPORT from: klue/bert-base
 Key                                        | Status     | 
 -------------------------------------------+------------+-
-cls.predictions.transform.dense.bias       | UNEXPECTED | 
+cls.seq_relationship.weight                | UNEXPECTED | 
 cls.predictions.bias                       | UNEXPECTED | 
+cls.seq_relationship.bias                  | UNEXPECTED | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED | 
 cls.predictions.transform.dense.weight     | UNEXPECTED | 
 cls.predictions.transform.LayerNorm.bias   | UNEXPECTED | 
-cls.predictions.transform.LayerNorm.weight | UNEXPECTED | 
-cls.seq_relationship.weight                | UNEXPECTED | 
-cls.seq_relationship.bias                  | UNEXPECTED | 
-classifier.bias                            | MISSING    | 
+cls.predictions.transform.dense.bias       | UNEXPECTED | 
 classifier.weight                          | MISSING    | 
+classifier.bias                            | MISSING    | 
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
@@ -345,7 +346,7 @@ LOAD REPORT 의 `classifier.weight | MISSING` 은 정상입니다 — 사전학�
 **▶ 실행 결과**
 
 ```text
-Mon Jun 22 03:56:30 2026       
+Sun Sep 13 03:16:29 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -354,7 +355,7 @@ Mon Jun 22 03:56:30 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   43C    P8             13W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   41C    P8             15W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -426,14 +427,14 @@ print(f"\nTraining done — mean train loss: {train_result.training_loss:.4f}")
 
 ```text
 Epoch  Training Loss  Validation Loss  Accuracy  Precision  Recall    F1        Auc
-1      0.370798       0.348613         0.855000  0.847059   0.865731  0.856293  0.927040
-2      0.199243       0.388650         0.864000  0.877339   0.845691  0.861224  0.929182
-Training done — mean train loss: 0.2939
+1      0.366494       0.353941         0.855000  0.836502   0.881764  0.858537  0.927440
+2      0.203112       0.391946         0.862000  0.873706   0.845691  0.859470  0.928750
+Training done — mean train loss: 0.2932
 ```
 
 **결과 해석**
 
-평균 train loss 0.2939 는 random baseline $\log 2 \approx 0.693$ 보다 한참 아래로, 모델이 한국어 감성 신호를 학습했다는 뜻입니다. 짧은 한국어 리뷰에서도 긍정/부정 키워드를 충분히 잡아낸 것입니다.
+평균 train loss 는 random baseline $\log 2 \approx 0.693$ 의 절반도 안 되는 수준으로, 모델이 한국어 감성 신호를 학습했다는 뜻입니다. 짧은 한국어 리뷰에서도 긍정/부정 키워드를 충분히 잡아낸 것입니다.
 
 ```python
 !nvidia-smi
@@ -442,7 +443,7 @@ Training done — mean train loss: 0.2939
 **▶ 실행 결과**
 
 ```text
-Mon Jun 22 03:57:18 2026       
+Sun Sep 13 03:17:19 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -451,7 +452,7 @@ Mon Jun 22 03:57:18 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   62C    P0             61W /   70W |    2627MiB /  15360MiB |     55%      Default |
+| N/A   62C    P0             74W /   70W |    2627MiB /  15360MiB |     66%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -460,6 +461,6 @@ Mon Jun 22 03:57:18 2026
 |  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
 |        ID   ID                                                               Usage      |
 |=========================================================================================|
-|    0   N/A  N/A             661      C   /usr/bin/python3                       2624MiB |
+|    0   N/A  N/A            3189      C   /usr/bin/python3                       2624MiB |
 +-----------------------------------------------------------------------------------------+
 ```

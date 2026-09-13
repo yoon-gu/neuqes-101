@@ -16,19 +16,19 @@ for k, v in eval_metrics.items():
 
 ```text
 Training Loss  Validation Loss  Epoch  Accuracy  Precision  Recall    F1        Auc
-0.199243       0.388650         2      0.864000  0.877339   0.845691  0.861224  0.929182
+0.203112       0.391946         2      0.862000  0.873706   0.845691  0.859470  0.928750
 klue/bert-base NSMC binary — evaluation:
-             eval_loss: 0.3887
-         eval_accuracy: 0.8640
-        eval_precision: 0.8773
+             eval_loss: 0.3919
+         eval_accuracy: 0.8620
+        eval_precision: 0.8737
            eval_recall: 0.8457
-               eval_f1: 0.8612
-              eval_auc: 0.9292
+               eval_f1: 0.8595
+              eval_auc: 0.9287
 ```
 
 **결과 해석**
 
-accuracy 86.4%, F1 0.861, AUC 0.929 로 NSMC 5K 샘플 + 2 에폭의 전형적 성능 구간(85-88%)에 듭니다. AUC 가 0.93 으로 높아 모델이 긍정/부정을 확률로 잘 분리하고 있음을 보여줍니다. 90%+ 가 목표라면 학습 데이터를 30K 이상으로 늘려야 합니다.
+accuracy 약 86%, F1 약 0.86 으로 NSMC 5K 샘플 + 2 에폭의 전형적 성능 구간(85-88%)에 듭니다. AUC 가 0.93 에 가까워 모델이 긍정/부정을 확률로 잘 분리하고 있음을 보여줍니다. precision 과 recall 이 비슷한 수준이라 한쪽으로 치우친 판정도 아닙니다. 90%+ 가 목표라면 학습 데이터를 30K 이상으로 늘려야 합니다.
 
 전체 eval 예측을 받아 2차원 raw logit 에서 softmax 확률과, 시각화에 쓸 1차원 logit $z = z_1 - z_0$ 를 만듭니다. 방식 B(2차원 softmax)를 방식 A(1차원 logit) 형태로 환산해 Ch 10·11 과 같은 그림을 그릴 수 있게 하는 단계입니다.
 
@@ -52,14 +52,14 @@ print(f"positive prediction rate (prob >= 0.5): {(probs >= 0.5).mean():.1%}")
 
 ```text
 logits2 (raw)  shape: (1000, 2)
-logit z = z1-z0 range: [-5.71, 5.19]
-prob range:           [0.0033, 0.9944]
-positive prediction rate (prob >= 0.5): 48.1%
+logit z = z1-z0 range: [-5.61, 5.12]
+prob range:           [0.0036, 0.9940]
+positive prediction rate (prob >= 0.5): 48.3%
 ```
 
 **결과 해석**
 
-확률이 0.0033 ~ 0.9944 까지 양극단으로 넓게 퍼져 있어 모델이 많은 샘플에 자신 있는 판단을 내립니다. positive 예측 비율 48.1% 가 실제 eval 양성 비율(49.9%)과 가까워, 임계값 0.5 기준 예측이 한쪽으로 치우치지 않았습니다.
+확률이 0.00 대에서 0.99 대까지 양극단으로 넓게 퍼져 있어 모델이 많은 샘플에 자신 있는 판단을 내립니다. positive 예측 비율이 실제 eval 양성 비율(49.9%)과 1%p 안쪽으로 가까워, 임계값 0.5 기준 예측이 한쪽으로 치우치지 않았습니다.
 
 클래스별 precision/recall/F1 을 한눈에 보는 분류 리포트입니다. negative·positive 가 균형 잡힌 데이터라 두 클래스 지표가 비슷하게 나오는지 확인합니다.
 
@@ -77,12 +77,12 @@ print(classification_report(
 ```text
               precision    recall  f1-score   support
 
-    negative     0.8516    0.8822    0.8667       501
-    positive     0.8773    0.8457    0.8612       499
+    negative     0.8511    0.8782    0.8644       501
+    positive     0.8737    0.8457    0.8595       499
 
-    accuracy                         0.8640      1000
-   macro avg     0.8645    0.8640    0.8639      1000
-weighted avg     0.8645    0.8640    0.8640      1000
+    accuracy                         0.8620      1000
+   macro avg     0.8624    0.8620    0.8620      1000
+weighted avg     0.8624    0.8620    0.8620      1000
 ```
 
 ### 6-1. 메인 그림 — 확률 공간 KDE (Ch 11 와 동일 패턴)
@@ -110,7 +110,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/15-ko_binary-out1-1.png)
+![output](../assets/15-ko_binary-out1-2.png)
 
 ### 6-2. 보조 그림 — logit 공간 KDE (z = z_1 - z_0)
 
@@ -133,7 +133,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/15-ko_binary-out2-1.png)
+![output](../assets/15-ko_binary-out2-2.png)
 
 **해석**
 
@@ -181,36 +181,36 @@ for label_str, idx in samples:
 
 ```text
 ==============================================================================
-sample #580  (most confident positive)
+sample #575  (most confident positive)
 ==============================================================================
-text:        아 최고.. 지금 수능 끝나고 보고 있어요ㅠㅠ 현실적인 30대의 사랑이야기~
+text:        제가 본 최고의 액션영화 다섯손가락에 들어가요~ 액션영화하면 이 영화가 제일먼저 생각나는듯최고의영화!!
 true label:  1  (positive)
-prob(pos):   0.9944
-logit z:     +5.19
+prob(pos):   0.9940
+logit z:     +5.12
 prediction:  1 (positive)    match: ✓
 
 ==============================================================================
-sample #169  (most confident negative)
+sample #617  (most confident negative)
 ==============================================================================
-text:        한마디로노잼 재미없음
+text:        하아.. 엄정화 박서준은 좋아하지만 일단 대본이 너무 별로임;; 유치하고 지루함.. 진짜 1, 2화보는데 하루종일 봤음 계속 딴거 하다 보느라.. 그리고 너무 몰입도 안되고 ㅠㅠ
 true label:  0  (negative)
-prob(pos):   0.0033
-logit z:     -5.71
+prob(pos):   0.0036
+logit z:     -5.61
 prediction:  0 (negative)    match: ✓
 
 ==============================================================================
-sample #978  (most uncertain (prob ≈ 0.5))
+sample #993  (most uncertain (prob ≈ 0.5))
 ==============================================================================
-text:        영화보다가 진짜 기도드릴뻔했다. '제발 끝나게해주세요'라고..
+text:        옛날 1,2,3탄이 잼 있었다.
 true label:  0  (negative)
-prob(pos):   0.5040
-logit z:     +0.02
+prob(pos):   0.5007
+logit z:     +0.00
 prediction:  1 (positive)    match: ✗
 ```
 
 **결과 해석**
 
-가장 자신 있는 두 샘플은 `"아 최고.."`(prob 0.9944), `"한마디로노잼 재미없음"`(prob 0.0033)처럼 감성이 노골적인 표현이라 모델이 거의 확신합니다. 반면 망설인 샘플 `"제발 끝나게해주세요"` 는 *반어적 부정* 인데 표면 단어에 명시적 부정어가 없어 prob 0.504 로 갈팡질팡하다 오답을 냈습니다 — 짧은 한국어 리뷰에서 반어가 모델에게 가장 어려운 케이스임을 보여줍니다.
+가장 자신 있는 두 샘플은 `"제가 본 최고의 액션영화…최고의영화!!"`, `"대본이 너무 별로임;; 유치하고 지루함"` 처럼 감성이 노골적인 표현이라 모델이 양극단에 거의 확신합니다. 부정 쪽 샘플은 `"엄정화 박서준은 좋아하지만"` 이라는 칭찬이 섞여 있는데도 확신했는데, 역접 뒤의 평가를 리뷰의 결론으로 읽었다는 뜻입니다. 반면 망설인 샘플 `"옛날 1,2,3탄이 잼 있었다."` 는 확률이 0.5 에 거의 붙은 채 오답을 냈습니다 — 표면에 `"잼 있었다"` 라는 *긍정 단어* 가 있지만 *과거형으로 옛 작품을 칭찬해 현재 작품을 낮추는* 구조라, 단어만으로는 잡히지 않는 케이스임을 보여줍니다.
 
 **관찰 포인트**
 
