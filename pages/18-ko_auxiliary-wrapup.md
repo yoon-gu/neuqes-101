@@ -15,7 +15,7 @@
 1. Ch 14 (영어 별점 보조) 와 Ch 18 (한국어 활성 개수 보조) 의 *변경된 축* 은 무엇인가요? *한 가지 축* 원칙 관점에서 어느 쪽이 더 "loss 축 변화" 에 가까운가요?
 2. `n_active` 가 메인 multi-hot 벡터의 *합* 이라는 점이 보조 task 로서 *유리한 점* 과 *불리한 점* 을 각각 한 줄로.
 3. `AutoModelForSequenceClassification` 대신 `AutoModel + 커스텀 nn.Module` 로 간 이유는? 어떤 상황에서 자동 매핑이 부족한가요?
-4. λ=0.1 을 기본값으로 잡은 근거는? (메인 BCE 와 보조 MSE 의 *크기 자체* 가 어떻게 다른가)
+4. λ=0.05 를 기본값으로 잡은 근거는? (메인 BCE 와 보조 MSE 의 *크기 자체* 가 어떻게 다른가)
 
 ## FAQ
 
@@ -131,16 +131,16 @@ Ch 1-18 모두 *사전학습 토크나이저* (sklearn TF-IDF 토큰화, BERT Wo
 
 다음 두 가지 흔한 함정:
 
-**1. `remove_unused_columns=True` (기본값) 로 두기**
+**1. `remove_unused_columns` 를 기본값에 맡기기**
 
 ```python
 training_args = TrainingArguments(
     ...,
-    remove_unused_columns=True,   # ← 잘못 (default)
+    remove_unused_columns=True,   # ← 기본값. 이 챕터에선 동작하지만 깨지기 쉽다
 )
 ```
 
-Trainer 가 model.forward 시그니처를 검사해 *맞지 않는 컬럼은 제거*. `n_active` 가 시그니처에 있긴 하지만 자동 검사가 실패할 때 (e.g. 커스텀 모델 시그니처 변경 시) `n_active` 가 사라져 `compute_loss` 안에서 None 이 됩니다. 안전상 `False` 권장.
+Trainer 가 model.forward 시그니처를 검사해 *맞지 않는 컬럼은 제거* 합니다. `n_active` 는 `KoBertMultiTask.forward` 에 있으니 **이 셋업에서는 살아남아 그대로 학습됩니다.** 문제는 그 동작이 *시그니처에 의존* 한다는 점 — 보조 라벨 이름을 바꾸거나 `**kwargs` 로 받도록 고치면 조용히 사라져 `compute_loss` 에서 None 이 됩니다. Ch 14 는 보조 라벨(`aux_labels`)이 시그니처에 *없어서* 같은 설정에서 `KeyError` 가 납니다 — 같은 옵션이 모델 정의 방식에 따라 다르게 동작하는 셈입니다. 에러가 늦게, 엉뚱한 곳에서 터지므로 `False` 로 명시해 두는 편이 안전합니다.
 
 **2. `count_pred` 를 모델 attribute 에 저장 안 하기**
 
