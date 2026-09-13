@@ -89,23 +89,27 @@ Loss에는 결합 항이 없지만 *gradient가 BERT 본체를 거쳐 흐를 때
 
 **일반적 패턴**:
 
-1. **라벨이 ~50개 이하**: `num_labels=K` + per-label sigmoid + BCE 그대로. 본 챕터 패턴.
-2. **라벨이 100-1000개**: 헤드의 weight matrix가 커짐 (768·K). 메모리 압박. 해결책:
-   - **Hierarchical labels**: 라벨을 트리로 구조화해 *상위 → 하위* 단계적 분류 (예: "음식 > 한식 > 김치찌개")
+1. **라벨이 약 50개 이하**: `num_labels=K` + per-label sigmoid + BCE 그대로. 본 챕터 패턴.
+2. **라벨이 수백~수천 개**: 헤드는 아직 가볍지만(768·K — K=1,000이면 3MB) **라벨 희소성** 이 문제. 라벨당 양성 샘플이 적어 학습 신호가 부족. 해결책:
+   - **Hierarchical labels**: 라벨을 트리로 구조화해 *상위 → 하위* 단계적 분류 (예: "음식 > 한식 > 김치찌개"). 상위 노드가 하위 라벨의 양성을 합쳐 보므로 신호가 늘어남
    - **Knowledge distillation**: 큰 multi-label 모델에서 작은 모델로 distill
-3. **라벨이 1000+ 개**: extreme multi-label (XML). 별도 분야 — `XML-CNN`, `BERT-XMC` 등 특화 모델 사용.
+3. **라벨이 수만 개 이상**: extreme multi-label (XML). 헤드도 이때부터 부담 (K=10만이면 본체보다 큼). 별도 분야 — `XML-CNN`, `BERT-XMC` 등 특화 모델 사용.
 
-영화 장르 분류 (~30개), 기사 토픽 (~50개) 정도면 본 챕터 패턴으로 충분.
+영화 장르 분류 (약 30개), 기사 토픽 (약 50개) 정도면 본 챕터 패턴으로 충분.
 
 ### Q6. (실무) Multi-label에서 *클래스가 추가되면* 모델을 처음부터 다시 학습해야 하나요?
 
 기본적으론 그렇습니다. 분류 헤드의 weight shape이 `(K, 768)` 이라 K가 바뀌면 헤드가 호환 안 됨. 단, BERT 본체는 그대로 재사용 가능.
 
 ```python
+# 이 노트북은 save_strategy="no" 이므로 먼저 저장합니다
+trainer.save_model("./ch13_output")
+
 # 새 라벨 1개 추가 (K=5 → K=6)
 old_model = AutoModelForSequenceClassification.from_pretrained("./ch13_output")
 new_model = AutoModelForSequenceClassification.from_pretrained(
-    "distilbert-base-uncased", num_labels=6, problem_type="multi_label_classification",
+    "./ch13_output", num_labels=6, problem_type="multi_label_classification",
+    ignore_mismatched_sizes=True,   # 크기가 달라진 classifier 만 새로 초기화
 )
 # 기존 5라벨 weight를 새 모델에 복사
 new_model.classifier.weight.data[:5] = old_model.classifier.weight.data
@@ -131,7 +135,9 @@ def tokenize_wrong(batch):
     return out
 ```
 
-힌트: `BCEWithLogitsLoss` 는 *logits 와 같은 shape의 float 텐서* 를 라벨로 받는데, 위 코드는 *(B,) int* 를 넘깁니다. shape mismatch + dtype mismatch 두 가지 에러가 동시에 날 수 있어 메시지가 길어집니다.
+힌트: `BCEWithLogitsLoss` 는 *logits 와 같은 shape 의 float 텐서* 를 라벨로 받는데, 위 코드는 *(B,) int* 를 넘깁니다. **크기가 먼저 어긋나므로 한 줄짜리 `ValueError` 로 끊깁니다.**
+
+    ValueError: Target size (torch.Size([16])) must be the same as input size (torch.Size([16, 5]))
 
 ## 다음 챕터 예고
 

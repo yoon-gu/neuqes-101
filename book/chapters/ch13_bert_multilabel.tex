@@ -145,7 +145,7 @@ K개 라벨 각각에 \emph{독립적} BCE를 적용한 뒤 평균:
 
 \begin{equation}
 \label{eq:ch13-01}
-L = \frac{1}{N \cdot K}\sum_{i=1}^{N}\sum_{k=1}^{K}\left[ y_{i,k} \log \sigma(z_{i,k}) + (1-y_{i,k}) \log(1-\sigma(z_{i,k})) \right]
+L = \frac{1}{N \cdot K}\sum_{i=1}^{N}\sum_{k=1}^{K}\left[ -y_{i,k} \log \sigma(z_{i,k}) - (1-y_{i,k}) \log(1-\sigma(z_{i,k})) \right]
 \end{equation}
 
 식~\eqref{eq:ch13-01}은 이 절에서 사용하는 핵심 관계를 정리한 것입니다.
@@ -317,6 +317,8 @@ First sample label: [0.0, 1.0, 0.0, 0.0, 1.0] (length-5 multi-hot float vec...
 
 \Needspace{11\baselineskip}
 \begin{lstlisting}
+torch.manual_seed(42); np.random.seed(42)
+
 model = AutoModelForSequenceClassification.from_pretrained(
     "distilbert-base-uncased",
     num_labels=K,
@@ -335,7 +337,7 @@ def param_summary(m):
 \noindent\emph{앞뒤 블록은 모두 앞에서 만든 중간 값을 다음 계산으로 넘기는 단계입니다. 길이를 나누어 같은 흐름을 단계별로 확인합니다.}
 
 \Needspace{11\baselineskip}
-\begin{lstlisting}[firstnumber=14]
+\begin{lstlisting}[firstnumber=16]
 total, trainable = param_summary(model)
 print(
     f"Parameters:           {total:>13,}  ("
@@ -355,10 +357,11 @@ print(f"id2label:             {model.config.id2label}")
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
+model.safetensors: downloading bytes:           |  0.00B
 Key                     | Status     | 
 ------------------------+------------+-
-classifier.weight       | MISSING    | 
 classifier.bias         | MISSING    | 
+classifier.weight       | MISSING    | 
 pre_classifier.bias     | MISSING    | 
 pre_classifier.weight   | MISSING    | 
 
@@ -502,16 +505,16 @@ print(classification_report(
 \begin{bookoutputbox}
 precision    recall  f1-score   support
 
-        food     0.9097    0.9312    0.9203       552
-     service     0.8839    0.8270    0.8545       497
-       price     0.8987    0.2336    0.3708       304
-    ambiance     0.9540    0.4940    0.6510       168
-    location     0.9313    0.7376    0.8232       202
+        food     0.9209    0.9275    0.9242       552
+     service     0.8734    0.8189    0.8453       497
+       price     0.9388    0.6053    0.7360       304
+    ambiance     0.9888    0.5238    0.6848       168
+    location     0.9423    0.7277    0.8212       202
 
-   micro avg     0.9056    0.7127    0.7977      1723
-   macro avg     0.9155    0.6447    0.7239      1723
-weighted avg     0.9072    0.7127    0.7667      1723
- samples avg     0.7343    0.6316    0.6586      1723
+   micro avg     0.9146    0.7766    0.8399      1723
+   macro avg     0.9328    0.7206    0.8023      1723
+weighted avg     0.9195    0.7766    0.8328      1723
+ samples avg     0.7618    0.6878    0.7048      1723
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -673,9 +676,29 @@ Multi-label 의 핵심 질문 중 하나: \emph{어떤 라벨 쌍이 같이 등�
 
 
 
-\section{\texorpdfstring{BERT와 sklearn 비교}{BERT와 sklearn 비교}}
+\section{\texorpdfstring{비교 실험: sklearn \inlinecode{OneVsRestClassifier(LogisticRegression)} 와 비교}{비교 실험: sklearn OneVsRestClassifier(LogisticRegression) 와 비교}}
 
-\ref{ch:06}장의 sklearn 셋업을 \emph{이 노트북 안에서} 다시 학습해 라벨별로 BERT와 비교합니다. \textbf{multi-label에서도 BERT의 67M이 sklearn 대비 어디서 이기는가?}
+\ref{ch:06}장와 \emph{같은 계열} 의 모델(TF-IDF + 라벨마다 독립 LogisticRegression)을 \emph{이 노트북 안에서} 다시 학습해 라벨별로 BERT와 비교합니다. \textbf{multi-label에서도 BERT의 67M이 sklearn 대비 어디서 이기는가?}
+
+\begin{quote}
+주의 \textbf{\ref{ch:06}장의 숫자를 재현하는 게 아닙니다.} 설정이 다릅니다.
+
+\begin{booktable}{13장 비교 실험: sklearn OneVsRestClassifier(LogisticRegression) 와 비교 표}{tab:ch13-05}
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{@{}lll@{}}
+\toprule
+& \ref{ch:06}장 & 여기 (\ref{ch:13}장 §5) \\
+\midrule
+
+vectorizer & \inlinecode{max\_features=10000}, unigram & \inlinecode{max\_features=20000}, \textbf{bigram 포함} \\
+평가 셋 & 5,000을 80/20으로 나눈 test 1,000 & BERT와 같은 \texttt{ds{[}“test”{]}} 1,000 \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{booktable}
+
+\textbf{일부러 더 강한 baseline을 씁니다.} 목적이 \ref{ch:06}장 재현이 아니라 \emph{BERT와 똑같은 split에서의 공정한 대조군} 이기 때문입니다. 이 장에서는 특히 중요한데 --- 이렇게 강하게 잡아도 \textbf{macro AUC는 sklearn이 이깁니다}(§5-1). 키워드로 합성한 라벨에서 TF-IDF가 만만치 않다는 이 장의 결론이 바로 그 대조군에서 나옵니다.
+\end{quote}
 
 
 
@@ -780,7 +803,7 @@ sklearn TF-IDF + OvR LogReg:
 
 \section{이 장에 등장한 라이브러리·함수}
 
-\begin{booktable}{13장 새로 등장한 라이브러리}{tab:ch13-05}
+\begin{booktable}{13장 새로 등장한 라이브러리}{tab:ch13-06}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -927,7 +950,12 @@ def tokenize_wrong(batch):
     return out
 \end{lstlisting}
 
-힌트: \inlinecode{BCEWithLogitsLoss} 는 \emph{logits 와 같은 shape의 float 텐서} 를 라벨로 받는데, 위 코드는 \emph{(B,) int} 를 넘깁니다. shape mismatch + dtype mismatch 두 가지 에러가 동시에 날 수 있어 메시지가 길어집니다.
+힌트: \inlinecode{BCEWithLogitsLoss} 는 \emph{logits 와 같은 shape 의 float 텐서} 를 라벨로 받는데, 위 코드는 \emph{(B,) int} 를 넘깁니다. \textbf{크기가 먼저 어긋나므로 한 줄짜리 \inlinecode{ValueError} 로 끊깁니다.}
+
+\Needspace{5\baselineskip}
+\begin{lstlisting}
+ValueError: Target size (torch.Size([16])) must be the same as input size (torch.Size([16, 5]))
+\end{lstlisting}
 
 
 

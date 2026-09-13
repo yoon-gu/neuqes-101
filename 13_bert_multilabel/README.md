@@ -21,7 +21,7 @@ Ch 12(BERT 5클래스 분류)와 *모델 아키텍처가 완전히 동일* (`Lin
 Yelp 5,000건 + Ch 6의 항목 키워드 사전 (food/service/price/ambiance/location)으로 multi-hot 5차원 라벨 합성.
 
 ## 환경
-Google Colab **T4 GPU 필수**. 약 12분 (BERT ~10분 + sklearn 비교 ~30초).
+Google Colab **T4 GPU 필수**. 약 5분 (BERT 학습 약 1분 + sklearn 비교 약 30초).
 
 **Self-contained**: 다른 챕터 / 다른 세션 결과에 의존하지 않습니다. 5장 sklearn baseline은 inline 학습.
 
