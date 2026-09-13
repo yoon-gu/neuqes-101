@@ -22,7 +22,7 @@ Ch 17(한국어 multi-label, KLUE-YNAT 합성)에 **활성 라벨 개수 회귀 
 Ch 17 의 KLUE-YNAT 합성 multi-label (두 헤드라인 결합, multi-hot 7차원) **+** 활성 개수 보조 라벨 `n_active` ∈ {1, 2} (합성 시 같은 카테고리면 1, 다르면 2). 5K train / 1K eval, seed 고정(42).
 
 ## 환경
-Google Colab **T4 GPU 필수**. 약 22분 (보조 ON 학습 약 10분 + λ=0 baseline 학습 약 10분 + 평가/시각화).
+Google Colab **T4 GPU 필수**. 약 3분 (보조 ON 학습 약 1분 + λ=0 baseline 학습 약 1분 + 평가/시각화).
 
 **Self-contained**: 다른 챕터 결과에 의존하지 않습니다. 비교용 baseline (λ=0) 도 같은 노트북 안에서 inline 학습 (Ch 14 와 같은 패턴).
 

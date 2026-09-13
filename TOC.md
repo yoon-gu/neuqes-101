@@ -89,7 +89,7 @@
   * [18-2. 해부: 평가 — 메인 task + 보조 task](pages/18-ko_auxiliary-anatomy.md)
   * [18-3. 변형: 클라이맥스 — *λ=0 baseline* 학습 (= Ch 17 재현)](pages/18-ko_auxiliary-variation.md)
   * [18-4. 정리와 FAQ](pages/18-ko_auxiliary-wrapup.md)
-  * [18-5. 부록 — λ 스윕으로 약한 보조 신호의 sweet spot 찾기](pages/18-ko_auxiliary-lambda_sweep.md)
+  * [18-5. 부록 — λ 스윕: 약한 보조 task 의 sweet spot](pages/18-ko_auxiliary-lambda_sweep.md)
 * [19. 토크나이저 직접 학습 (Tokenizer Training)](pages/19-tokenizer_training.md)
   * [19-1. 실습: 환경 셋업](pages/19-tokenizer_training-practice.md)
   * [19-2. 해부: 같은 문장을 4 토크나이저로 비교](pages/19-tokenizer_training-anatomy.md)

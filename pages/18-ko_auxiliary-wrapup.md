@@ -3,7 +3,7 @@
 | 이름 | 한 줄 설명 | 다음 챕터에서 |
 |---|---|---|
 | `AutoModel.from_pretrained(...)` | 분류 헤드 없이 BERT 본체만 로드 — 메인·보조 헤드를 직접 부착 | Phase 3 토크나이저 학습엔 등장 안 함 (Ch 19 부터는 본체보다 어휘 자체에 집중) |
-| 커스텀 `nn.Module` (KoBertMultiTask) | 본체 공유 + 두 헤드 명시 정의 — multi-task 정통 패턴 | GPT 챕터 (Ch 21) 의 task-specific head 패턴과 연결 |
+| 커스텀 `nn.Module` (KoBertMultiTask) | 본체 공유 + 두 헤드 명시 정의 — multi-task 정통 패턴 | GPT 챕터 (Ch 24) 의 task-specific head 패턴과 연결 |
 | `Trainer.compute_loss` 오버라이드 + `lambda_aux` 인자 | 자동 매핑이 못 다루는 *복합 loss* + λ 동적 주입 | λ grid search 패턴 |
 | 커스텀 `AuxCollator` | input_ids 외 *추가 라벨* (n_active) 도 batch 에 같이 담기 | Ch 14 와 같은 패턴, 보조 신호 변형마다 재사용 |
 | `remove_unused_columns=False` | 모델 시그니처와 무관하게 모든 컬럼 통과 | custom collator 패턴마다 |
@@ -15,7 +15,7 @@
 1. Ch 14 (영어 별점 보조) 와 Ch 18 (한국어 활성 개수 보조) 의 *변경된 축* 은 무엇인가요? *한 가지 축* 원칙 관점에서 어느 쪽이 더 "loss 축 변화" 에 가까운가요?
 2. `n_active` 가 메인 multi-hot 벡터의 *합* 이라는 점이 보조 task 로서 *유리한 점* 과 *불리한 점* 을 각각 한 줄로.
 3. `AutoModelForSequenceClassification` 대신 `AutoModel + 커스텀 nn.Module` 로 간 이유는? 어떤 상황에서 자동 매핑이 부족한가요?
-4. λ=0.1 을 기본값으로 잡은 근거는? (메인 BCE 와 보조 MSE 의 *크기 자체* 가 어떻게 다른가)
+4. λ=0.05 를 기본값으로 잡은 근거는? (메인 BCE 와 보조 MSE 의 *크기 자체* 가 어떻게 다른가)
 
 ## FAQ
 
@@ -120,10 +120,10 @@ def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=N
 
 ### Q7. (실무) Phase 2 (한국어, Ch 15-18) 가 끝났습니다. Phase 3 에서 토크나이저를 *직접 학습* 하는 이유는?
 
-Ch 1-18 모두 *사전학습 토크나이저* (sklearn TF-IDF 토큰화, BERT WordPiece) 에 의존했습니다. Phase 3 (Ch 19-23) 는 이 의존을 끊고 *어휘 자체를 코퍼스에서 학습*:
+Ch 1-18 모두 *사전학습 토크나이저* (sklearn TF-IDF 토큰화, BERT WordPiece) 에 의존했습니다. Phase 3 의 첫 장 **Ch 19** 가 이 의존을 끊고 *어휘 자체를 코퍼스에서 학습* 합니다 (Ch 20-23 은 학습 안정성을 위해 다시 표준 토크나이저를 가져옵니다):
 
-- **Ch 19**: BPE / WordPiece / Unigram 알고리즘을 직접 돌려 어휘 만들기 → 토큰화가 *데이터에 따라 어떻게 달라지는지* 직관.
-- **Ch 20**: 학습한 토크나이저로 *작은 BERT 를 처음부터* 사전학습 → 사전학습 의존 없는 경험.
+- **Ch 19**: WordPiece(subword) 와 WordLevel(어절) 을 직접 학습해 비교 → 토큰화가 *데이터에 따라 어떻게 달라지는지* 직관.
+- **Ch 20**: *작은 BERT 를 처음부터* 사전학습(MLM) → 모델 본체의 사전학습 의존을 끊는 경험. 토크나이저는 학습 안정성을 위해 표준 `bert-base-uncased` 를 가져옵니다.
 
 > Phase 3 가 클라이맥스인 이유 — Ch 1 부터 따라온 "🔤 토크나이저 노트" 가 *외부 도구의 사용법* 이었다면 Phase 3 는 *그 도구 자체를 만드는 단계*. 토크나이저를 직접 만들고 나면 Ch 1-18 의 모든 토큰화 노트를 *다시 읽었을 때* 보이는 풍경이 달라집니다.
 
@@ -131,16 +131,16 @@ Ch 1-18 모두 *사전학습 토크나이저* (sklearn TF-IDF 토큰화, BERT Wo
 
 다음 두 가지 흔한 함정:
 
-**1. `remove_unused_columns=True` (기본값) 로 두기**
+**1. `remove_unused_columns` 를 기본값에 맡기기**
 
 ```python
 training_args = TrainingArguments(
     ...,
-    remove_unused_columns=True,   # ← 잘못 (default)
+    remove_unused_columns=True,   # ← 기본값. 이 챕터에선 동작하지만 깨지기 쉽다
 )
 ```
 
-Trainer 가 model.forward 시그니처를 검사해 *맞지 않는 컬럼은 제거*. `n_active` 가 시그니처에 있긴 하지만 자동 검사가 실패할 때 (e.g. 커스텀 모델 시그니처 변경 시) `n_active` 가 사라져 `compute_loss` 안에서 None 이 됩니다. 안전상 `False` 권장.
+Trainer 가 model.forward 시그니처를 검사해 *맞지 않는 컬럼은 제거* 합니다. `n_active` 는 `KoBertMultiTask.forward` 에 있으니 **이 셋업에서는 살아남아 그대로 학습됩니다.** 문제는 그 동작이 *시그니처에 의존* 한다는 점 — 보조 라벨 이름을 바꾸거나 `**kwargs` 로 받도록 고치면 조용히 사라져 `compute_loss` 에서 None 이 됩니다. Ch 14 는 보조 라벨(`aux_labels`)이 시그니처에 *없어서* 같은 설정에서 `KeyError` 가 납니다 — 같은 옵션이 모델 정의 방식에 따라 다르게 동작하는 셈입니다. 에러가 늦게, 엉뚱한 곳에서 터지므로 `False` 로 명시해 두는 편이 안전합니다.
 
 **2. `count_pred` 를 모델 attribute 에 저장 안 하기**
 
@@ -154,10 +154,10 @@ return SequenceClassifierOutput(loss=loss, logits=main_logits)
 
 ## 다음 챕터 예고 — Phase 3 시작 (클라이맥스)
 
-**Chapter 19. 토크나이저 직접 학습 — BPE / WordPiece / Unigram**
+**Chapter 19. 토크나이저 직접 학습 — WordPiece vs WordLevel (영어 + 한국어)**
 
 - Phase 1-2 영어·한국어 모두 *사전학습 토크나이저* 를 그대로 썼습니다. Ch 19 는 그 의존을 끊고 *어휘를 코퍼스에서 직접 학습*.
-- `tokenizers` 라이브러리로 BPE, WordPiece, Unigram 세 알고리즘을 같은 코퍼스에 적용해 *어휘 차이* 비교.
+- `tokenizers` 라이브러리로 WordPiece(subword) 와 WordLevel(어절) 두 알고리즘을 영어·한국어 코퍼스에 적용해 *어휘 차이* 비교.
 - 한국어 vs 영어 코퍼스에서 학습한 토크나이저의 *토큰 길이 분포* 가 어떻게 다른지 — Ch 1 부터 추적해 온 토크나이저 시각의 완성.
 
 > **Phase 2 마무리** — Ch 15-18 을 통해 한국어 BERT 의 binary·multi-class·multi-label·auxiliary 4 가지를 다 익혔습니다. Phase 3 는 한 발 더 내려가 *어휘 구성* 자체에 도전 — 사전학습 모델에 *완전히 의존하지 않는* 경험.
