@@ -100,7 +100,7 @@ print(stats.to_string(index=False))
    tokenizer  mean_tokens  median_tokens  p95_tokens
 en WordPiece      176.571          139.0      469.05
 en WordLevel      159.220          126.5      426.10
-ko WordPiece       19.804           15.0       57.05
+ko WordPiece       19.806           15.0       57.05
 ko WordLevel        9.106            7.0       27.00
 ```
 
@@ -131,7 +131,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/19-tokenizer_training-out1-1.png)
+![output](../assets/19-tokenizer_training-out1-2.png)
 
 **해석**
 
@@ -236,7 +236,7 @@ print(summary_2x2.to_string(index=False))
 language algorithm  vocab_size  mean_tokens_per_sent  p95_tokens_per_sent  unk_rate_pct
  English WordPiece        8000                176.57               469.05          0.00
  English WordLevel        8000                159.22               426.10          4.62
-  Korean WordPiece        8000                 19.80                57.05          0.08
+  Korean WordPiece        8000                 19.81                57.05          0.08
   Korean WordLevel        8000                  9.11                27.00         43.74
 ```
 
@@ -291,7 +291,7 @@ print(cross_df.to_string(index=False))
 input_lang    tokenizer tokenizer_train_lang  n_tokens  n_unk  unk_pct   match
         EN en_WordPiece                   EN        13      0      0.0  ✅ same
         EN en_WordLevel                   EN        11      0      0.0  ✅ same
-        EN ko_WordPiece                   KO        39      0      0.0 ❌ cross
+        EN ko_WordPiece                   KO        40      0      0.0 ❌ cross
         EN ko_WordLevel                   KO        11      7     63.6 ❌ cross
         KO en_WordPiece                   EN         8      5     62.5 ❌ cross
         KO en_WordLevel                   EN         6      5     83.3 ❌ cross
@@ -319,7 +319,7 @@ for lang, text in cross_examples:
 [input (EN)]  The food was absolutely delicious and the service was great.
      en_WordPiece       ( 13 tokens, UNK  0): ['[CLS]', 'the', 'food', 'was', 'absolutely', 'delicious', 'and', 'the', 'service', 'was', 'great', '.']
      en_WordLevel       ( 11 tokens, UNK  0): ['The', 'food', 'was', 'absolutely', 'delicious', 'and', 'the', 'service', 'was', 'great', '.']
-  ❌ ko_WordPiece       ( 39 tokens, UNK  0): ['[CLS]', 'Th', '##e', 'f', '##oo', '##d', 'w', '##a', '##s', 'a', '##bs', '##o']
+  ❌ ko_WordPiece       ( 40 tokens, UNK  0): ['[CLS]', 'Th', '##e', 'f', '##oo', '##d', 'w', '##a', '##s', 'a', '##b', '##s']
   ❌ ko_WordLevel       ( 11 tokens, UNK  7): ['The', '[UNK]', '[UNK]', '[UNK]', '[UNK]', 'and', 'the', '[UNK]', '[UNK]', '[UNK]', '.']
 
 [input (KO)]  음식이 정말 맛있었고 서비스도 훌륭했습니다.

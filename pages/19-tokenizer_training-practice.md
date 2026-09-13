@@ -9,10 +9,10 @@
 **▶ 실행 결과**
 
 ```text
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.4/3.4 MB 41.2 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━╸━━━━━━━━━━━━━━ 7.9/12.3 MB 239.2 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.3/12.3 MB 111.8 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 559.1/559.1 kB 44.0 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.4/3.4 MB 63.7 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━╺━━━━━━━━━━━━━━━━━━━━ 5.8/12.3 MB 175.7 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.3/12.3 MB 105.7 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 559.1/559.1 kB 40.2 MB/s eta 0:00:00
 ```
 
 ```python
@@ -222,12 +222,12 @@ print(f"\ntotal time: {t_en_wp + t_ko_wp + t_en_wl + t_ko_wl:.2f}s")
 **▶ 실행 결과**
 
 ```text
-[1/4] en WordPiece  trained in 1.36s  vocab=8000
-[2/4] ko WordPiece  trained in 0.66s  vocab=8000
-[3/4] en WordLevel  trained in 0.80s  vocab=8000
-[4/4] ko WordLevel  trained in 0.14s  vocab=8000
+[1/4] en WordPiece  trained in 1.32s  vocab=8000
+[2/4] ko WordPiece  trained in 0.52s  vocab=8000
+[3/4] en WordLevel  trained in 0.45s  vocab=8000
+[4/4] ko WordLevel  trained in 0.07s  vocab=8000
 
-total time: 2.96s
+total time: 2.36s
 ```
 
 ### 3-1. 학습된 vocab 안을 들여다보기
@@ -263,7 +263,7 @@ vocab_peek(tok_ko_wl, "ko WordLevel")
 === ko WordPiece  (size=8000) ===
   first 5 ids (specials): ['[PAD]', '[UNK]', '[CLS]', '[SEP]', '[MASK]']
   ids 5-20             : ['!', '"', '%', '&', "'", '(', ')', '*', '+', ',', '-', '.', '/', '0', '1']
-  subword (##) tokens  : 3349  (41.9% of vocab)
+  subword (##) tokens  : 3350  (41.9% of vocab)
 
 === en WordLevel  (size=8000) ===
   first 5 ids (specials): ['[PAD]', '[UNK]', '[CLS]', '[SEP]', '[MASK]']

@@ -25,7 +25,7 @@ print(df_sweep.to_string(index=False))
        1000          1000      209.815      557.35           0.0
        4000          4000      161.980      436.85           0.0
        8000          8000      152.510      412.30           0.0
-      16000         16000      148.100      398.30           0.0
+      16000         16000      148.095      398.30           0.0
 ```
 
 ```python
@@ -50,7 +50,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/19-tokenizer_training-out4-1.png)
+![output](../assets/19-tokenizer_training-out4-2.png)
 
 **해석**
 
