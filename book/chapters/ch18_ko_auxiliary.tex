@@ -1120,7 +1120,7 @@ return SequenceClassifierOutput(loss=loss, logits=main_logits)
 \item
   Phase 1-2 영어·한국어 모두 \emph{사전학습 토크나이저} 를 그대로 썼습니다. \ref{ch:19}장은 그 의존을 끊고 \emph{어휘를 코퍼스에서 직접 학습}.
 \item
-  \inlinecode{tokenizers} 라이브러리로 BPE, WordPiece, Unigram 세 알고리즘을 같은 코퍼스에 적용해 \emph{어휘 차이} 비교.
+  \inlinecode{tokenizers} 라이브러리로 WordPiece(subword) 와 WordLevel(어절) 두 알고리즘을 영어·한국어 코퍼스에 적용해 \emph{어휘 차이} 비교.
 \item
   한국어 vs 영어 코퍼스에서 학습한 토크나이저의 \emph{토큰 길이 분포} 가 어떻게 다른지 --- \ref{ch:01}장부터 추적해 온 토크나이저 시각의 완성.
 \end{itemize}
