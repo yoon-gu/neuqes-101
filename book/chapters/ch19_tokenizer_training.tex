@@ -610,11 +610,11 @@ for lang, text in cross_examples:
 \begin{itemize}
 \tightlist
 \item
-  대각선(같은 언어) 셀은 UNK 가 거의 0 --- 학습 언어와 같으면 vocab 이 커버.
+  \textbf{같은 언어라도 알고리즘이 갈립니다} --- WordPiece 는 대각선에서 UNK 가 0, 그런데 한국어 WordLevel 은 \emph{같은 언어인데도} UNK 가 크게 남습니다. 어절이 조금만 달라지면 vocab 밖이기 때문 --- 앞 절의 한국어 WordLevel 결과와 같은 현상입니다.
 \item
-  \textbf{비대각선(교차) 셀은 UNK 가 크게 솟음} --- 특히 WordLevel 은 어절 매칭이라 \emph{거의 100\%}, WordPiece 는 서브워드라도 한·영 \emph{글자} 가 vocab 에 없으면 통째 UNK.
+  \textbf{교차 셀은 UNK 가 크게 솟되 방향이 비대칭입니다} --- 한국어 코퍼스에 라틴 문자가 섞여 있어 \inlinecode{ko\_WordPiece} 는 영어를 글자 단위로 쪼개 UNK 없이 넘기지만 \emph{토큰 수가 폭증} 합니다. 반대로 \inlinecode{en\_WordPiece} 에는 한글 글자가 아예 없어 통째 UNK 가 됩니다.
 \item
-  WordPiece 가 그나마 한·영 \emph{공통 알파벳·구두점} 일부를 커버할 수 있지만, \emph{한글 자모/조합} 또는 \emph{영문 단어} 자체는 학습 corpus 에 의존.
+  \textbf{WordLevel 은 양방향 모두} 어절이 맞지 않아 UNK 가 과반입니다 --- 위 표에서 교차 셀 두 칸을 확인해 보세요.
 \end{itemize}
 
 \textbf{시사점}
@@ -749,9 +749,9 @@ decoded : [CLS] the food was unforgettable and the service was excellent. [...
 \begin{itemize}
 \tightlist
 \item
-  vocab 1K --- 극단적인 subword 분할 (한 단어 = 5+ 조각), UNK 는 거의 없음.
+  vocab 1K --- 한 단어가 평균 1.5 조각 가까이로 쪼개져 sequence 가 가장 길어짐. 그래도 UNK 는 거의 없음 --- subword 라 모르는 단어를 \emph{조각} 으로 표현할 수 있기 때문입니다.
 \item
-  vocab 8K-16K --- 한 단어가 보통 1-2 조각으로 안정. UNK 는 거의 0\%.
+  vocab 8K-16K --- 한 단어가 거의 1 조각에 수렴해 sequence 길이가 안정. UNK 는 계속 0\% 수준.
 \item
   표준 BERT (vocab 30K) 는 이 curve 의 \emph{오른쪽 끝} --- 한 단어가 거의 1 토큰에 수렴.
 \end{itemize}
