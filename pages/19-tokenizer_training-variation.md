@@ -25,7 +25,7 @@ print(df_sweep.to_string(index=False))
        1000          1000      209.815      557.35           0.0
        4000          4000      161.980      436.85           0.0
        8000          8000      152.510      412.30           0.0
-      16000         16000      148.100      398.30           0.0
+      16000         16000      148.095      398.30           0.0
 ```
 
 ```python
@@ -50,12 +50,12 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/19-tokenizer_training-out4-1.png)
+![output](../assets/19-tokenizer_training-out4-2.png)
 
 **해석**
 
-- vocab 1K — 극단적인 subword 분할 (한 단어 = 5+ 조각), UNK 는 거의 없음.
-- vocab 8K-16K — 한 단어가 보통 1-2 조각으로 안정. UNK 는 거의 0%.
+- vocab 1K — 한 단어가 평균 1.5 조각 가까이로 쪼개져 sequence 가 가장 길어짐. 그래도 UNK 는 거의 없음 — subword 라 모르는 단어를 *조각* 으로 표현할 수 있기 때문입니다.
+- vocab 8K-16K — 한 단어가 거의 1 조각에 수렴해 sequence 길이가 안정. UNK 는 계속 0% 수준.
 - 표준 BERT (vocab 30K) 는 이 curve 의 *오른쪽 끝* — 한 단어가 거의 1 토큰에 수렴.
 
 > **실무 가이드** — 사전학습 BERT 와 같은 *모델 크기* 를 노린다면 vocab 30K, 작은 모델 (Ch 20 의 scratch BERT) 이면 8K-16K 가 적절. vocab 이 커지면 임베딩 테이블 파라미터도 커지니 ($V \times H$) 모델 전체 크기와 함께 결정해야 합니다.

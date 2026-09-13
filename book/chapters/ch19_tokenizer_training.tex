@@ -114,7 +114,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output & Loss \\
 \midrule
 
 17 & klue/bert-base & WordPiece (한국어, 사전학습) & KLUE-YNAT 합성 multi-label & \inlinecode{Linear(H,\ 7)} & \inlinecode{BCEWithLogitsLoss} \\
-18 & klue/bert-base + 보조 & WordPiece (한국어, 사전학습) & KLUE-YNAT 합성 + 보조 라벨 & 메인(7) + 보조 & \texttt{BCEWithLogitsLoss\ +\ λ·L\_aux} \\
+18 & klue/bert-base + 보조 & WordPiece (한국어, 사전학습) & KLUE-YNAT 합성 + 보조 라벨 & 메인(7) + 보조 & \inlinecode{BCEWithLogitsLoss\ +\ λ·L\_aux} \\
 \textbf{19 \(\leftarrow\) 여기 (Phase 3 시작)} & --- (토크나이저 학습 전용) & \textbf{WordPiece + WordLevel} (둘 다 \emph{직접 학습}) & \textbf{Yelp text + NSMC text} & --- & --- \\
 20 (다음) & 작은 BERT (직접, scratch) & \inlinecode{bert-base-uncased} 토크나이저 (가져옴) & Wikitext-103 (일반 도메인 위키) & MLM head & \inlinecode{CrossEntropyLoss} (masked) \\
 \bottomrule
@@ -366,7 +366,7 @@ helper builders ready: build_wordpiece(), build_wordlevel()
 \begin{itemize}
 \tightlist
 \item
-  \textbf{WordPiece} 는 \inlinecode{\#\#ing}, \inlinecode{\#\#ed}, \inlinecode{\#\#ly} 같은 \emph{접미사} 조각이 vocab 의 큰 비중을 차지 --- 영어에서 보통 30-50\%.
+  \textbf{WordPiece} 는 \inlinecode{\#\#ing}, \inlinecode{\#\#ed}, \inlinecode{\#\#ly} 같은 \emph{접미사} 조각이 vocab 의 큰 비중을 차지 --- 이 장의 영어 8K vocab 에서 약 20\%.
 \item
   \textbf{WordLevel} 은 \inlinecode{\#\#} 토큰이 0 개 --- 어절 단위라 \emph{조각} 개념 자체가 없음.
 \item
@@ -486,9 +486,9 @@ print(
 \item
   \textbf{WordPiece (양쪽 언어 모두)}: UNK 비율 거의 0\%. \emph{모르는 단어} 가 와도 작은 조각으로 분해 가능.
 \item
-  \textbf{WordLevel (영어)}: 보통 1-3\% --- 영어는 어휘가 한정되어 8K vocab 으로도 그럭저럭 커버.
+  \textbf{WordLevel (영어)}: 약 5\% --- 영어는 어휘가 한정되어 8K vocab 으로도 그럭저럭 커버.
 \item
-  \textbf{WordLevel (한국어)}: 5-15\% --- 교착어 특성상 \emph{같은 어근의 다른 활용} 이 vocab 을 잡아먹어 vocab 부족.
+  \textbf{WordLevel (한국어)}: 약 40\% 대 --- 교착어 특성상 \emph{같은 어근의 다른 활용} 이 vocab 을 잡아먹어 8K 로는 크게 부족.
 \end{itemize}
 
 \begin{quote}
@@ -512,9 +512,9 @@ print(
 \item
   \textbf{WordPiece (영어)} \(\to\) 한국어 텍스트: 한국어 글자가 vocab 에 없어 대부분 \textbf{\texttt{{[}UNK{]}} 로 떨어짐} (BERT character fallback 도 없으면)
 \item
-  \textbf{WordLevel (영어)} \(\to\) 한국어 텍스트: 한국어 \emph{어절 통째} 가 단어로 vocab 에 없어 \textbf{거의 100\% UNK}
+  \textbf{WordLevel (영어)} \(\to\) 한국어 텍스트: 한국어 \emph{어절 통째} 가 단어로 vocab 에 없어 \textbf{대부분 UNK}
 \item
-  반대 (한국어 학습 \(\to\) 영어 입력) 도 같은 양상
+  반대 (한국어 학습 \(\to\) 영어 입력) 는 \emph{같은 양상이지만 정도가 다름} --- 아래 표에서 방향별 차이를 직접 비교합니다
 \end{itemize}
 
 이걸 정량 비교하면 “왜 multilingual 모델은 \emph{공통 vocab} (mBERT 의 110k WordPiece, XLM-R 의 250k SentencePiece) 으로 학습되는지” 가 직관됩니다.
@@ -610,11 +610,11 @@ for lang, text in cross_examples:
 \begin{itemize}
 \tightlist
 \item
-  대각선(같은 언어) 셀은 UNK 가 거의 0 --- 학습 언어와 같으면 vocab 이 커버.
+  \textbf{같은 언어라도 알고리즘이 갈립니다} --- WordPiece 는 대각선에서 UNK 가 0, 그런데 한국어 WordLevel 은 \emph{같은 언어인데도} UNK 가 크게 남습니다. 어절이 조금만 달라지면 vocab 밖이기 때문 --- §5-2 의 한국어 WordLevel 결과와 같은 현상입니다.
 \item
-  \textbf{비대각선(교차) 셀은 UNK 가 크게 솟음} --- 특히 WordLevel 은 어절 매칭이라 \emph{거의 100\%}, WordPiece 는 서브워드라도 한·영 \emph{글자} 가 vocab 에 없으면 통째 UNK.
+  \textbf{교차 셀은 UNK 가 크게 솟되 방향이 비대칭입니다} --- 한국어 코퍼스에 라틴 문자가 섞여 있어 \inlinecode{ko\_WordPiece} 는 영어를 글자 단위로 쪼개 UNK 없이 넘기지만 \emph{토큰 수가 폭증} 합니다. 반대로 \inlinecode{en\_WordPiece} 에는 한글 글자가 아예 없어 통째 UNK 가 됩니다.
 \item
-  WordPiece 가 그나마 한·영 \emph{공통 알파벳·구두점} 일부를 커버할 수 있지만, \emph{한글 자모/조합} 또는 \emph{영문 단어} 자체는 학습 corpus 에 의존.
+  \textbf{WordLevel 은 양방향 모두} 어절이 맞지 않아 UNK 가 과반입니다 --- 위 표에서 교차 셀 두 칸을 확인해 보세요.
 \end{itemize}
 
 \textbf{시사점}
@@ -714,7 +714,7 @@ pad_token_id    : 0
 cls_token_id    : 2
 
 input_ids shape : torch.Size([1, 15])
-input_ids : [2, 107, 218, 128, 4814, 5350, 3763, 300, 115, 107, 312, 128, 9...
+input_ids : [2, 107, 218, 128, 4814, 5350, 3762, 300, 115, 107, 312, 128, 9...
 decoded : [CLS] the food was unforgettable and the service was excellent. [...
 \end{bookoutputbox}
 \par\vspace{0.9em}
@@ -749,9 +749,9 @@ decoded : [CLS] the food was unforgettable and the service was excellent. [...
 \begin{itemize}
 \tightlist
 \item
-  vocab 1K --- 극단적인 subword 분할 (한 단어 = 5+ 조각), UNK 는 거의 없음.
+  vocab 1K --- 한 단어가 평균 1.5 조각 가까이로 쪼개져 sequence 가 가장 길어짐. 그래도 UNK 는 거의 없음 --- subword 라 모르는 단어를 \emph{조각} 으로 표현할 수 있기 때문입니다.
 \item
-  vocab 8K-16K --- 한 단어가 보통 1-2 조각으로 안정. UNK 는 거의 0\%.
+  vocab 8K-16K --- 한 단어가 거의 1 조각에 수렴해 sequence 길이가 안정. UNK 는 계속 0\% 수준.
 \item
   표준 BERT (vocab 30K) 는 이 curve 의 \emph{오른쪽 끝} --- 한 단어가 거의 1 토큰에 수렴.
 \end{itemize}

@@ -23,7 +23,7 @@ Phase 3 의 첫 챕터. 지금까지 *사전학습된* 토크나이저 (`distilb
 - 한국어: e9t/nsmc GitHub raw `ratings_train.txt` 에서 5,000 문장 sample (라벨 무시)
 
 ## 환경
-Google Colab T4 (모델 학습 없음, GPU 거의 안 씀). 약 5-7분.
+Google Colab T4 (모델 학습 없음, GPU 거의 안 씀). 약 2분.
 
 ## 변화 추적
 

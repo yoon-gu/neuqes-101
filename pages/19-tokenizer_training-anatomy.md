@@ -67,8 +67,6 @@ KOREAN sample: 이 영화는 정말 재미있어요. 배우들 연기도 훌륭�
 
 eval 코퍼스 (별도 sample 1,000 문장) 에 4 토크나이저를 적용해 *문장당 토큰 수* 분포를 비교.
 
-학습한 토크나이저를 *처음 보는* 평가 코퍼스(영어·한국어 각 1,000문장)에 적용해, 문장당 토큰 수의 평균·중앙값·p95 를 비교합니다.
-
 ```python
 N_EVAL = 1000
 eval_en = list(load_dataset("fancyzhx/yelp_polarity", split=f"train[{N_EN}:{N_EN + N_EVAL}]")["text"])
@@ -102,15 +100,9 @@ print(stats.to_string(index=False))
    tokenizer  mean_tokens  median_tokens  p95_tokens
 en WordPiece      176.571          139.0      469.05
 en WordLevel      159.220          126.5      426.10
-ko WordPiece       19.804           15.0       57.05
+ko WordPiece       19.806           15.0       57.05
 ko WordLevel        9.106            7.0       27.00
 ```
-
-**결과 해석**
-
-같은 문장이라도 WordLevel 이 WordPiece 보다 토큰 수가 적습니다(한국어 9.1 vs 19.8). 어절을 통째로 1토큰 처리하기 때문인데, 이 짧은 길이는 곧 뒤에서 보듯 다량의 `[UNK]` 와 맞바꾼 결과입니다.
-
-위 토큰 수 분포를 영어·한국어로 나눠 밀도 곡선으로 그립니다.
 
 ```python
 sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
@@ -139,7 +131,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/19-tokenizer_training-out1-1.png)
+![output](../assets/19-tokenizer_training-out1-2.png)
 
 **해석**
 
@@ -149,8 +141,6 @@ plt.show()
 ### 5-2. Unknown 토큰 비율 — vocab 한계가 드러나는 곳
 
 같은 eval 코퍼스에서 각 토크나이저가 *얼마나 자주* `[UNK]` 를 뱉는지. WordPiece 의 *진짜 장점* 이 여기서 드러납니다.
-
-토큰 수가 짧다고 좋은 토크나이저는 아닙니다. 미등록 단어가 `[UNK]` 로 바뀌면 정보가 사라지기 때문입니다. 평가 코퍼스에서 전체 토큰 대비 `[UNK]` 비율을 토크나이저별로 집계합니다.
 
 ```python
 def unk_rate(tok, texts):
@@ -186,12 +176,6 @@ ko WordPiece   0.08%
 ko WordLevel  43.74%
 ```
 
-**결과 해석**
-
-한국어 WordLevel 의 UNK 비율이 43.74% 로 압도적입니다. 교착어 특성상 같은 어근에 조사·어미가 다르게 붙은 어절이 모두 별개 vocab 항목이라, 8K vocab 으로는 평가 문장의 절반 가까운 토큰을 담지 못합니다. 반면 WordPiece 는 두 언어 모두 UNK 가 0.1% 이하로, 서브워드 분할이 미등록 문제를 사실상 해소함을 보여줍니다.
-
-같은 UNK 비율을 막대그래프로 시각화합니다.
-
 ```python
 sns.set_theme(style="whitegrid", context="talk", font="NanumGothic", rc={"axes.unicode_minus": False})
 fig, ax = plt.subplots(figsize=(9, 5))
@@ -214,16 +198,14 @@ plt.show()
 **해석 — 이 챕터의 가장 중요한 결과**
 
 - **WordPiece (양쪽 언어 모두)**: UNK 비율 거의 0%. *모르는 단어* 가 와도 작은 조각으로 분해 가능.
-- **WordLevel (영어)**: 보통 1-3% — 영어는 어휘가 한정되어 8K vocab 으로도 그럭저럭 커버.
-- **WordLevel (한국어)**: 5-15% — 교착어 특성상 *같은 어근의 다른 활용* 이 vocab 을 잡아먹어 vocab 부족.
+- **WordLevel (영어)**: 약 5% — 영어는 어휘가 한정되어 8K vocab 으로도 그럭저럭 커버.
+- **WordLevel (한국어)**: 약 40% 대 — 교착어 특성상 *같은 어근의 다른 활용* 이 vocab 을 잡아먹어 8K 로는 크게 부족.
 
 > **BERT 가 WordPiece 를 채택한 이유** — 모든 단어가 *학습 가능한 표현* 으로 인코딩되어, 모델이 가지런한 임베딩 공간에서 작동할 수 있음. WordLevel 처럼 `[UNK]` 가 빈번하면 그 위치들은 *학습 신호가 사라진 빈 구멍* 이 됩니다.
 
 ### 5-3. 2×2 비교 표 — 한눈에 정리
 
 같은 vocab=8000 일 때 *언어 × 알고리즘* 의 모든 조합.
-
-앞서 본 토큰 수와 UNK 비율을 (언어 × 알고리즘) 2×2 표 하나로 정리합니다.
 
 ```python
 summary_2x2 = pd.DataFrame({
@@ -254,7 +236,7 @@ print(summary_2x2.to_string(index=False))
 language algorithm  vocab_size  mean_tokens_per_sent  p95_tokens_per_sent  unk_rate_pct
  English WordPiece        8000                176.57               469.05          0.00
  English WordLevel        8000                159.22               426.10          4.62
-  Korean WordPiece        8000                 19.80                57.05          0.08
+  Korean WordPiece        8000                 19.81                57.05          0.08
   Korean WordLevel        8000                  9.11                27.00         43.74
 ```
 
@@ -263,12 +245,10 @@ language algorithm  vocab_size  mean_tokens_per_sent  p95_tokens_per_sent  unk_r
 지금까지 *학습 언어 = 적용 언어* 였습니다. 만약 **다른 언어 텍스트** 를 학습한 토크나이저에 통과시키면?
 
 - **WordPiece (영어)** → 한국어 텍스트: 한국어 글자가 vocab 에 없어 대부분 **`[UNK]` 로 떨어짐** (BERT character fallback 도 없으면)
-- **WordLevel (영어)** → 한국어 텍스트: 한국어 *어절 통째* 가 단어로 vocab 에 없어 **거의 100% UNK**
-- 반대 (한국어 학습 → 영어 입력) 도 같은 양상
+- **WordLevel (영어)** → 한국어 텍스트: 한국어 *어절 통째* 가 단어로 vocab 에 없어 **대부분 UNK**
+- 반대 (한국어 학습 → 영어 입력) 는 *같은 양상이지만 정도가 다름* — 아래 표에서 방향별 차이를 직접 비교합니다
 
 이걸 정량 비교하면 "왜 multilingual 모델은 *공통 vocab* (mBERT 의 110k WordPiece, XLM-R 의 250k SentencePiece) 으로 학습되는지" 가 직관됩니다.
-
-학습 언어와 입력 언어가 어긋나면 어떻게 되는지 교차 적용으로 확인합니다. 영어·한국어 예시 문장을 4개 토크나이저에 모두 통과시켜, 학습 언어와 *맞는* 경우와 *어긋나는*(cross) 경우의 토큰 수·UNK 를 비교합니다.
 
 ```python
 # 4 토크나이저를 dict 로 묶어 cross-language 분석에 사용
@@ -319,12 +299,6 @@ input_lang    tokenizer tokenizer_train_lang  n_tokens  n_unk  unk_pct   match
         KO ko_WordLevel                   KO         6      4     66.7  ✅ same
 ```
 
-**결과 해석**
-
-학습 언어와 입력 언어가 어긋난 행은 UNK 비율이 치솟습니다(영어 입력 → 한국어 WordLevel 63.6%, 한국어 입력 → 영어 WordLevel 83.3%). 토크나이저가 학습 코퍼스에 *본 적 없는* 문자·어절을 거의 다 `[UNK]` 로 떨어뜨리기 때문입니다. WordPiece 교차의 경우 UNK 는 적지만(영어→ko WordPiece 0%) 대신 토큰 수가 40개로 폭증해, 모르는 문자를 잘게 쪼개 처리함을 보여줍니다.
-
-UNK 비율은 같지만 *실제 토큰 분할* 이 어떻게 다른지 첫 12개 토큰을 직접 출력합니다.
-
 ```python
 # 같은 입력을 토크나이저 별로 실제로 어떻게 쪼개는지 (첫 12 토큰)
 print("=" * 78)
@@ -355,8 +329,6 @@ for lang, text in cross_examples:
      ko_WordLevel       (  6 tokens, UNK  4): ['[UNK]', '정말', '[UNK]', '[UNK]', '[UNK]', '.']
 ```
 
-교차 언어 UNK 비율을 (토크나이저 × 입력 언어) 히트맵으로 한눈에 정리합니다. 대각선(언어 일치)은 옅고, 어긋난 칸은 붉게 나타나는지 확인합니다.
-
 ```python
 # 시각화: UNK 비율 4×2 매트릭스 (가로 토크나이저, 세로 입력 언어)
 fig, ax = plt.subplots(figsize=(8.5, 3.6))
@@ -376,9 +348,9 @@ plt.tight_layout(); plt.show()
 
 **관찰**
 
-- 대각선(같은 언어) 셀은 UNK 가 거의 0 — 학습 언어와 같으면 vocab 이 커버.
-- **비대각선(교차) 셀은 UNK 가 크게 솟음** — 특히 WordLevel 은 어절 매칭이라 *거의 100%*, WordPiece 는 서브워드라도 한·영 *글자* 가 vocab 에 없으면 통째 UNK.
-- WordPiece 가 그나마 한·영 *공통 알파벳·구두점* 일부를 커버할 수 있지만, *한글 자모/조합* 또는 *영문 단어* 자체는 학습 corpus 에 의존.
+- **같은 언어라도 알고리즘이 갈립니다** — WordPiece 는 대각선에서 UNK 가 0, 그런데 한국어 WordLevel 은 *같은 언어인데도* UNK 가 크게 남습니다. 어절이 조금만 달라지면 vocab 밖이기 때문 — §5-2 의 한국어 WordLevel 결과와 같은 현상입니다.
+- **교차 셀은 UNK 가 크게 솟되 방향이 비대칭입니다** — 한국어 코퍼스에 라틴 문자가 섞여 있어 `ko_WordPiece` 는 영어를 글자 단위로 쪼개 UNK 없이 넘기지만 *토큰 수가 폭증* 합니다. 반대로 `en_WordPiece` 에는 한글 글자가 아예 없어 통째 UNK 가 됩니다.
+- **WordLevel 은 양방향 모두** 어절이 맞지 않아 UNK 가 과반입니다 — 위 표에서 교차 셀 두 칸을 확인해 보세요.
 
 **시사점**
 
@@ -391,8 +363,6 @@ plt.tight_layout(); plt.show()
 ## 저장·로드 — `tokenizer.save()` / `PreTrainedTokenizerFast` 로 wrap
 
 토크나이저는 학습 후 *파일로 저장* 해 다음 챕터에서 불러 쓸 수 있어야 합니다. HF 인터페이스 (`AutoModel.from_pretrained` 와 함께 사용 가능한 형태) 로 wrap 하는 패턴도 시연.
-
-학습한 토크나이저는 단일 JSON 파일로 저장해 두면 다음 챕터에서 재사용할 수 있습니다. 4개 토크나이저를 각각 파일로 저장하고 크기를 출력합니다.
 
 ```python
 import os
@@ -420,8 +390,6 @@ saved 4 tokenizer files:
   ./tokenizers_ch19/ko_wordpiece.json  (251.6 KB)
 ```
 
-저장한 파일을 `Tokenizer.from_file()` 로 다시 불러와, 같은 문장을 인코딩한 결과가 원본과 토큰 단위로 일치하는지(round-trip) 확인합니다.
-
 ```python
 # 2) Tokenizer.from_file() 로 다시 로드
 tok_en_wp_loaded = Tokenizer.from_file("./tokenizers_ch19/en_wordpiece.json")
@@ -439,12 +407,6 @@ original tokens : ['[CLS]', 'the', 'food', 'was', 'unf', '##orge', '##tt', '##ab
 loaded tokens   : ['[CLS]', 'the', 'food', 'was', 'unf', '##orge', '##tt', '##able', 'and', 'the', 'service', 'was', 'excellent', '.', '[SEP]']
 match           : True
 ```
-
-**결과 해석**
-
-로드한 토크나이저의 토큰 시퀀스가 원본과 정확히 같아 `match: True` 입니다. JSON 한 파일에 모델·normalizer·vocab·post-processor 가 모두 직렬화되므로, 저장·로드만으로 동일한 토크나이저를 완전히 복원할 수 있음을 확인합니다.
-
-마지막으로, 직접 학습한 토크나이저를 `PreTrainedTokenizerFast` 로 감싸 Ch 7 이후 익숙했던 HF 표준 인터페이스로 변환합니다. 이제 같은 호출(`padding`·`truncation`·`return_tensors`)을 *직접 학습한* 토크나이저로 그대로 쓸 수 있습니다.
 
 ```python
 # 3) PreTrainedTokenizerFast 로 wrap — HF 표준 인터페이스로 변환
@@ -476,12 +438,8 @@ pad_token_id    : 0
 cls_token_id    : 2
 
 input_ids shape : torch.Size([1, 15])
-input_ids       : [2, 107, 218, 128, 4814, 5350, 3763, 300, 115, 107, 312, 128, 956, 18, 3]
+input_ids       : [2, 107, 218, 128, 4814, 5350, 3762, 300, 115, 107, 312, 128, 956, 18, 3]
 decoded         : [CLS] the food was unforgettable and the service was excellent. [SEP]
 ```
-
-**결과 해석**
-
-`vocab_size=8000`, `pad_token_id=0`, `cls_token_id=2` 가 특수 토큰 설정대로 잡혔고, 호출 한 번으로 `[CLS]`/`[SEP]` 가 부착된 패딩·텐서 출력이 나옵니다. `decode` 결과가 원문을 그대로 복원해, 처음부터 학습한 토크나이저가 사전학습 모델과 동일한 인터페이스로 곧바로 쓰일 수 있음을 보여줍니다.
 
 **다음 챕터의 다리** — Ch 20 부터는 이 wrap 패턴으로 토크나이저를 모델에 연결합니다. 단, *학습 안정성* 을 위해 Ch 20+ 는 *직접 학습한 토크나이저 대신* 표준 사전학습 토크나이저 (`bert-base-uncased`, `klue/bert-base`) 를 가져옴 — Ch 19 의 *경험* 위에 표준 도구의 신뢰성을 얹는 구조.
