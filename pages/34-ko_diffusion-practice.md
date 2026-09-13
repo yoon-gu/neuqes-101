@@ -338,15 +338,11 @@ def fixed_t_acc(tv_=0.15,n=128):
         with torch.no_grad(): pr=model(inp.unsqueeze(0).to(device)).logits[0].argmax(-1).cpu()
         cor+=(pr[m]==ids[m]).sum().item(); tot+=int(m.sum())
     return cor/tot
-print(f"[diag] fixed-t(0.15) top-1 acc = {fixed_t_acc():.3f}   (naive diffusion 0.081)")
+print(f"[diag] fixed-t(0.15) top-1 acc = {fixed_t_acc():.3f}   (naive diffusion 약 0.08)")
 ```
 
 **▶ 실행 결과**
 
 ```text
-[diag] fixed-t(0.15) top-1 acc = 0.652   (naive diffusion 0.081)
+[diag] fixed-t(0.15) top-1 acc = 0.652   (naive diffusion 약 0.08)
 ```
-
-**결과 해석**
-
-샘플러를 배제한 고정-$t$ 정확도 0.652는 순진한 diffusion의 0.081을 8배 넘게 끌어올린 값입니다. 모델 자체가 양방향 문맥으로 가린 자리를 복원하는 능력을 제대로 배웠다는, 디코딩과 무관한 직접 증거입니다.
