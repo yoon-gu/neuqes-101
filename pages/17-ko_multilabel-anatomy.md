@@ -156,8 +156,6 @@ Multi-label 의 핵심 질문: *어떤 카테고리 쌍이 같이 등장하는�
 
 `true co-occurrence` (실제 합성 라벨의 동시 등장) 와 `predicted co-occurrence` (모델 예측의 동시 등장) 를 나란히 그립니다.
 
-Multi-label 의 핵심 질문: *어떤 카테고리 쌍이 같이 등장하는가?* 합성 방식이 *무작위 결합* 이라 true co-occurrence 는 거의 균등에 가까워야 하고, 모델 예측이 그 패턴을 따라가는지 확인합니다.
-
 ```python
 def cooccurrence_matrix(Y):
     # Y: (N, K) multi-hot. Returns (K, K) where M[i, j] = P(label_j=1 | label_i=1).
