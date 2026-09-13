@@ -945,7 +945,7 @@ def tokenize_wrong(batch):
     return out
 \end{lstlisting}
 
-힌트: \inlinecode{BCEWithLogitsLoss} 는 \emph{logits 와 같은 shape 의 float 텐서} 를 라벨로 받는데, 위 코드는 \emph{(B,) int} 를 넘깁니다. shape mismatch + dtype mismatch 두 가지 에러가 동시에 날 수 있어 메시지가 길어집니다 (\ref{ch:13}장의 삽질과 같은 함정 --- 라벨 \emph{형식} 이 problem\_type 과 일치해야 함).
+힌트: \inlinecode{BCEWithLogitsLoss} 는 \emph{logits 와 같은 shape 의 float 텐서} 를 라벨로 받는데, 위 코드는 \emph{(B,) int} 를 넘깁니다. \textbf{크기가 먼저 어긋나므로 한 줄짜리 \inlinecode{ValueError} 로 끊깁니다} --- shape 검사에서 멈춰 dtype 문제는 드러나지도 않습니다 (\ref{ch:13}장의 삽질과 같은 함정 --- 라벨 \emph{형식} 이 problem\_type 과 일치해야 함).
 
 
 
