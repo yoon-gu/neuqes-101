@@ -45,22 +45,22 @@ print(f"\nNo-aux (λ=0) baseline training done — mean train loss: {train_resul
 [transformers] DistilBertForSequenceClassification LOAD REPORT from: distilbert-base-uncased
 Key                     | Status     | 
 ------------------------+------------+-
+vocab_transform.bias    | UNEXPECTED | 
+vocab_projector.bias    | UNEXPECTED | 
+vocab_layer_norm.weight | UNEXPECTED | 
 vocab_layer_norm.bias   | UNEXPECTED | 
 vocab_transform.weight  | UNEXPECTED | 
-vocab_projector.bias    | UNEXPECTED | 
-vocab_transform.bias    | UNEXPECTED | 
-vocab_layer_norm.weight | UNEXPECTED | 
 classifier.weight       | MISSING    | 
+classifier.bias         | MISSING    | 
 pre_classifier.bias     | MISSING    | 
 pre_classifier.weight   | MISSING    | 
-classifier.bias         | MISSING    | 
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
 - MISSING:	those params were newly initialized because missing from the checkpoint. Consider training on your downstream task.
 Epoch  Training Loss  Validation Loss  Hamming Loss  Micro F1  Micro Precision  Micro Recall  Macro F1  Macro Precision  Macro Recall  Macro Auc  Runtime   Samples Per Second  Steps Per Second
-1      0.386839       0.360188         0.140600      0.764962  0.902208         0.663958      0.665433  0.926159         0.567284      0.887096   1.198000  834.696000          26.710000
-2      0.286978       0.293115         0.102000      0.839925  0.914559         0.776553      0.802303  0.932820         0.720649      0.917939   1.047900  954.249000          30.536000
+1      0.386839       0.360188         0.140600      0.764962  0.902208         0.663958      0.665433  0.926159         0.567284      0.887096   1.262200  792.282000          25.353000
+2      0.286978       0.293115         0.102000      0.839925  0.914559         0.776553      0.802303  0.932820         0.720649      0.917939   1.045600  956.386000          30.604000
 No-aux (λ=0) baseline training done — mean train loss: 0.4010
 ```
 
@@ -85,7 +85,7 @@ preds_main_no_aux = (probs_no_aux >= 0.5).astype(int)
 
 ```text
 Training Loss  Validation Loss  Epoch  Hamming Loss  Micro F1  Micro Precision  Micro Recall  Macro F1  Macro Precision  Macro Recall  Macro Auc  Runtime   Samples Per Second  Steps Per Second
-0.286978       0.293115         2      0.102000      0.839925  0.914559         0.776553      0.802303  0.932820         0.720649      0.917939   1.046900  955.176000          30.566000
+0.286978       0.293115         2      0.102000      0.839925  0.914559         0.776553      0.802303  0.932820         0.720649      0.917939   1.032000  968.979000          31.007000
 No-aux (λ=0) baseline — main task metrics:
                eval_loss: 0.2931
        eval_hamming_loss: 0.1020
@@ -96,9 +96,9 @@ No-aux (λ=0) baseline — main task metrics:
     eval_macro_precision: 0.9328
        eval_macro_recall: 0.7206
           eval_macro_auc: 0.9179
-            eval_runtime: 1.0469
-  eval_samples_per_second: 955.1760
-   eval_steps_per_second: 30.5660
+            eval_runtime: 1.0320
+  eval_samples_per_second: 968.9790
+   eval_steps_per_second: 31.0070
 ```
 
 ### 8-1. 메인 metric 비교 — λ=0 baseline vs λ=0.05 aux
@@ -132,9 +132,9 @@ print(cmp.round(4).to_string(index=False))
    macro_precision             0.9328                  0.9328               -0.0001
       macro_recall             0.7206                  0.7316                0.0109
          macro_auc             0.9179                  0.9182                0.0003
-           runtime             1.0469                  0.9952               -0.0517
-samples_per_second           955.1760               1004.7790               49.6030
-  steps_per_second            30.5660                 32.1530                1.5870
+           runtime             1.0320                  0.9882               -0.0438
+samples_per_second           968.9790               1011.8910               42.9120
+  steps_per_second            31.0070                 32.3810                1.3740
 ```
 
 **해석 가이드**
@@ -202,8 +202,10 @@ location     0.8212       0.8167               -0.0046
 **해석**
 
 - **별점과 상관이 강한 항목** (food, service): 보조 별점 회귀 학습이 *긍정/부정 신호* 를 잘 잡으면 도움이 됩니다. 작은 양의 delta 기대.
-- **별점과 상관이 약한 항목** (location, price): 별점 신호가 *직접적 도움* 이 안 됨. delta가 0 근처거나 약간 음수일 수 있음.
+- **별점과 상관이 약한 항목** (location 등): 별점 신호가 *직접적 도움* 이 안 됨. delta가 0 근처거나 약간 음수일 수 있음.
 - **분산이 큰 라벨** — eval 표본이 적어 F1 자체가 노이즈가 큼. delta 도 의미 해석 조심.
+
+**실제 결과와 맞춰보면** 위 예상이 부분적으로만 맞습니다. 위 표에서 개선폭이 가장 큰 라벨은 상관이 강한 항목이 아니라 **baseline F1 이 낮은 항목** 쪽입니다 — 올라갈 여지가 많은 라벨이 더 크게 움직였다고 읽는 편이 실측에 맞습니다. 단일 시드 1회 결과이므로 순위 자체는 시드에 따라 뒤집힐 수 있습니다.
 
 ### 8-3. 보조 task 자체는 얼마나 잘 학습됐나
 

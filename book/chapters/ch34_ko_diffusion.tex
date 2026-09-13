@@ -38,7 +38,7 @@
 
 \section{작은 diffusion LM으로 한국어 동화 만들기 --- 80/10/10 마스킹}
 
-이 장에서는 직전 영어 장와 똑같은 4.29M짜리 작은 mask-diffusion 언어 모델로 한국어 동화를 생성합니다. 전부 \texttt{{[}MASK{]}}로 채운 빈 캔버스에서 출발해도, 학습을 마친 모델은 이런 이야기를 끝까지 이어 씁니다.
+이 장에서는 직전 영어 장과 똑같은 4.29M짜리 작은 mask-diffusion 언어 모델로 한국어 동화를 생성합니다. 전부 \texttt{{[}MASK{]}}로 채운 빈 캔버스에서 출발해도, 학습을 마친 모델은 이런 이야기를 끝까지 이어 씁니다.
 
 \begin{quote}
 옛날 옛적에 팀이라는 작은 소년이 있었어요. 팀은 장난감 가지고 노는 것을 매우 좋아했지요\ldots{}
@@ -777,7 +777,7 @@ AR은 모든 위치를 매 step 감독하고 좌에서 우로 순차적으로 �
 \begin{lstlisting}
 prob = torch.rand(masked_idx.shape, device=device)
 to_mask   = prob < 0.8
-# 80% $\to$ [MASK]
+# 80% → [MASK]
 to_random = (prob >= 0.8) & (prob < 0.9)
 
 input_ids[masked_idx[to_mask]]   = mask_id
@@ -859,7 +859,7 @@ tok.train_from_iterator(
 \begin{lstlisting}
 prob = torch.rand(masked_idx.shape)
 to_mask   = prob < 0.8
-# 80% $\to$ [MASK]
+# 80% → [MASK]
 to_random = (prob >= 0.8) & (prob < 0.9)
 \end{lstlisting}
 

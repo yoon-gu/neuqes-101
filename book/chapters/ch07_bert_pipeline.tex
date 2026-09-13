@@ -121,7 +121,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 토크나이저 & \inlinecode{TfidfVectorizer()} (단어 단위 어휘 학습) & \textbf{\inlinecode{AutoTokenizer}} (사전학습된 WordPiece) \\
 학습 단계 & sklearn \inlinecode{fit()} 한 번에 학습 & \textbf{학습 없음} --- 사전학습 가중치 로드 후 추론만 \\
 데이터 & Yelp 5,000건 & 간단 영어 예시 문장 (분해 시연용) \\
-하드웨어 & CPU & CPU 또는 T4 GPU (이 장는 추론만이라 어느 쪽도 OK) \\
+하드웨어 & CPU & CPU 또는 T4 GPU (이 장은 추론만이라 어느 쪽도 OK) \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -401,11 +401,11 @@ T4 메모리(15.36 GB)는 작은 추론 모델 여러 개를 무리 없이 담�
 \Needspace{9\baselineskip}
 \begin{lstlisting}
 입력 텍스트
-   $\downarrow$ [1] Tokenizer  (텍스트 $\to$ 숫자 ID)
+   ↓ [1] Tokenizer  (텍스트 → 숫자 ID)
 input_ids, attention_mask
-   $\downarrow$ [2] Model      (숫자 $\to$ 로짓)
+   ↓ [2] Model      (숫자 → 로짓)
 logits
-   $\downarrow$ [3] Post-processing (로짓 $\to$ 라벨)
+   ↓ [3] Post-processing (로짓 → 라벨)
 {'label': 'POSITIVE', 'score': 0.9998}
 \end{lstlisting}
 
@@ -703,7 +703,7 @@ Do all three forms agree?
 
 \textbf{보너스 --- 학습 코드에서 자주 보이는 \inlinecode{log\_softmax}}
 
-수치적 안정성 때문에 학습 시에는 \texttt{softmax\ \$\textbackslash{}to\$\ log} 두 단계 대신 \textbf{\inlinecode{log\_softmax} 한 번} 으로 묶는 게 표준입니다 (\inlinecode{CrossEntropyLoss} 가 내부에서 이렇게 함).
+수치적 안정성 때문에 학습 시에는 \texttt{softmax\ →\ log} 두 단계 대신 \textbf{\inlinecode{log\_softmax} 한 번} 으로 묶는 게 표준입니다 (\inlinecode{CrossEntropyLoss} 가 내부에서 이렇게 함).
 
 \Needspace{5\baselineskip}
 \begin{lstlisting}
@@ -867,7 +867,7 @@ for name, tok in tokenizer_specs.items():
 \begin{itemize}
 \tightlist
 \item
-  \textbf{\inlinecode{\#\#} 접두사 (WordPiece)}: DistilBERT·BERT는 단어 중간 서브워드를 \inlinecode{\#\#xxx} 로 표시. 예: \texttt{tokenization\ \$\textbackslash{}to\$\ {[}\textquotesingle{}token\textquotesingle{},\ \textquotesingle{}\#\#ization\textquotesingle{}{]}}. 이전 토큰의 \emph{연속} 이라는 신호.
+  \textbf{\inlinecode{\#\#} 접두사 (WordPiece)}: DistilBERT·BERT는 단어 중간 서브워드를 \inlinecode{\#\#xxx} 로 표시. 예: \texttt{tokenization\ →\ {[}\textquotesingle{}token\textquotesingle{},\ \textquotesingle{}\#\#ization\textquotesingle{}{]}}. 이전 토큰의 \emph{연속} 이라는 신호.
 \item
   \textbf{\texttt{\textless{}sp\textgreater{}} 접두사 (BPE)}: GPT-2는 토큰 앞에 공백이 있었는지를 \texttt{\textless{}sp\textgreater{}} (Latin small letter G with stroke) 로 표시. 예: \texttt{\textless{}sp\textgreater{}love} 는 “love 앞에 공백이 있었다”. 토큰화/디코딩이 정확히 역연산이 되도록 하는 표기.
 \item

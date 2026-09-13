@@ -78,8 +78,13 @@ def main():
             nb = d / (d.name + ".ipynb")
             if nb.exists():
                 out.append((d.name, nb))
-            # 부록 노트북(<폴더>/<폴더>_*.ipynb) — 키는 노트북 stem
+            # 부록 노트북 — 키는 노트북 stem.
+            #   두 가지 명명이 섞여 있다: <폴더>_*.ipynb (12·14·18·20·31·34) 과
+            #   appendix_*.ipynb (07·09·10·21·23·27·29·31). 뒤엣것이 탐색에서 빠져 있어
+            #   해당 부록들이 한 번도 실행되지 않았다(이슈 #128). 둘 다 잡는다.
             for sub in sorted(d.glob(d.name + "_*.ipynb")):
+                out.append((sub.stem, sub))
+            for sub in sorted(d.glob("appendix_*.ipynb")):
                 out.append((sub.stem, sub))
         return out
 

@@ -9,7 +9,7 @@
 | `DataCollatorForLanguageModeling(mlm=False)` (동일) | `labels = input_ids.clone()` 자동 | (Ch 24 동일) |
 | `group_texts` 패턴 (동일) | 가변 길이 → 고정 length 블록 스트림 | (Ch 24 동일) |
 | `model.generate(do_sample=True, ...)` (동일) | sampling generation | (Ch 24 동일) |
-| `AutoModelForCausalLM.from_pretrained("skt/kogpt2-base-v2")` (선택) | KoGPT2 reference | gpt2 → KoGPT2 |
+| `AutoModelForCausalLM.from_pretrained("skt/kogpt2-base-v2")` (선택) | KoGPT2 reference — 토크나이저는 `PreTrainedTokenizerFast` 로 special token 직접 지정 (`AutoTokenizer` 는 영어 GPT2 로 fallback) | gpt2 → KoGPT2 |
 
 ## 체크포인트 질문
 
@@ -59,7 +59,7 @@ Ch 27 = *대규모 한국어 사전학습 모델 KoGPT2 (`skt/kogpt2-base-v2`, 1
 
 | 축 | Ch 26 (본 챕터) | Ch 27 (다음) |
 |---|---|---|
-| 모델 크기 | 약 3M params | **약 125M (40배)** |
+| 모델 크기 | 약 4.2M params | **약 125M (약 30배)** |
 | 사전학습 | from scratch (random init) | **대규모 한국어 코퍼스 사전학습** |
 | 토크나이저 | 직접 학습 BBPE vocab 약 4,000 | **KoGPT2 BBPE (그대로)** |
 | 한국어 TinyStories 학습 | 사전학습 그 자체 (1500 steps) | **continual pretraining** (수백 steps) |
@@ -135,8 +135,8 @@ print(f"vocab: {tokenizer.vocab_size}, ln V = {math.log(tokenizer.vocab_size):.2
 
 - `AutoModelForCausalLM.from_pretrained("skt/kogpt2-base-v2")` - 대규모 한국어 코퍼스로 사전학습된 125M params KoGPT2 로드
 - **같은 한국어 TinyStories** 데이터 (본 챕터와 동일) 로 **continual pretraining** (계속 사전학습 — *같은 CausalLM task, 새 데이터, head 그대로*. *task adaptation 의미의 fine-tune 이 아니라 단계 2*)
-- **핵심 비교**: 본 챕터 (약 3M, from scratch) vs Ch 27 (125M, continual pretraining) 의 한국어 generation 품질·학습 곡선 격차
+- **핵심 비교**: 본 챕터 (약 4.2M, from scratch) vs Ch 27 (125M, continual pretraining) 의 한국어 generation 품질·학습 곡선 격차
 - *trainer 자체는 Ch 26 과 동일* (`transformers.Trainer` + `DataCollatorForLanguageModeling(mlm=False)`) - *변하는 건 모델 로드 한 줄 + lr (scratch 5e-4 → continual pretraining 2e-5)*
 - Ch 24→Ch 25 (영어) 의 한국어 짝 - *왜 실무가 from-scratch 가 아니라 대규모 사전학습 모델 위에 계속 학습하는가* 의 한국어 정량 답변
 
-> **변하는 축**: *모델 크기 + 사전학습 여부* (3M / scratch → 125M / pretrained). 데이터·토크나이저 규약·loss·trainer 는 같음. Phase 4 의 *학습 단계 2 (continual pretraining)* 가 한국어에서 자리 잡는 챕터. *진짜 행동 정렬 (SFT)* 은 Ch 28 에서 본격 등장합니다.
+> **변하는 축**: *모델 크기 + 사전학습 여부* (4.2M / scratch → 125M / pretrained). 데이터·토크나이저 규약·loss·trainer 는 같음. Phase 4 의 *학습 단계 2 (continual pretraining)* 가 한국어에서 자리 잡는 챕터. *진짜 행동 정렬 (SFT)* 은 Ch 28 에서 본격 등장합니다.

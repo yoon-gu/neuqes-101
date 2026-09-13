@@ -356,7 +356,7 @@ print("collator ready, mask_id =", coll.mask_id)
 
 
 
-\subsection{작은 BERT-MLM 모델 (\ref{ch:24}장와 동급, 본체는 그대로)}
+\subsection{작은 BERT-MLM 모델 (\ref{ch:24}장과 동급, 본체는 그대로)}
 
 
 
@@ -377,7 +377,7 @@ print(
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-#params 3.79M | embedding share 13.9%  (Ch32: ~70%)
+#params 3.79M | embedding share 13.9%  (32장: ~70%)
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -951,7 +951,7 @@ collapse의 핵심은 어휘량이 아니라 파라미터 배분입니다. vocab
 
 \begin{faqBox}{Q3. 왜 diffusion이 AR보다 20배나 많은 step이 필요한가요?}
 
-학습 신호의 밀도가 다릅니다. AR(\ref{ch:24}장)은 한 문장을 한 번 넣으면 모든 위치에서 “왼쪽 전체 문맥으로 다음 토큰 맞히기” 감독이 동시에 걸립니다. 매 자리가 매번 학습됩니다. 반면 흡수형 diffusion은 매 배치 확률 \(t\)로 일부 토큰만 \texttt{{[}MASK{]}}로 덮고, 그 마스크 자리에서만 손실을 받습니다. 마스킹 비율 \(t\)도 배치마다 달라져서, 같은 문장이라도 어느 자리가 감독될지가 매번 바뀝니다. 결과적으로 자리당 받는 신호가 희박해 같은 수준에 도달하려면 더 많은 step이 필요합니다. \ref{ch:24}장가 1500 step, 이번 장이 30000 step이었던 약 20배 격차가 이 차이를 보여줍니다.
+학습 신호의 밀도가 다릅니다. AR(\ref{ch:24}장)은 한 문장을 한 번 넣으면 모든 위치에서 “왼쪽 전체 문맥으로 다음 토큰 맞히기” 감독이 동시에 걸립니다. 매 자리가 매번 학습됩니다. 반면 흡수형 diffusion은 매 배치 확률 \(t\)로 일부 토큰만 \texttt{{[}MASK{]}}로 덮고, 그 마스크 자리에서만 손실을 받습니다. 마스킹 비율 \(t\)도 배치마다 달라져서, 같은 문장이라도 어느 자리가 감독될지가 매번 바뀝니다. 결과적으로 자리당 받는 신호가 희박해 같은 수준에 도달하려면 더 많은 step이 필요합니다. \ref{ch:24}장이 1500 step, 이번 장이 30000 step이었던 약 20배 격차가 이 차이를 보여줍니다.
 
 \end{faqBox}
 
@@ -999,5 +999,5 @@ vocab을 줄였더라도 학습량이 절대적으로 부족하면 조건부 구
 
 \begin{previewBox}{미리보기: 다음 장}
 
-이번 장에서 작은 diffusion LM을 영어로 손수 살려냈다면, 다음 장에서는 같은 레시피를 \textbf{한국어}로 옮깁니다. 34장는 33장과 같은 본체(\inlinecode{BertForMaskedLM}, hidden 256/4L)·같은 샘플러를 그대로 두고 학습 언어만 한국어(TinyStories-Korean)로 바꿉니다. 그런데 영어에서 100\% \texttt{{[}MASK{]}}로도 버티던 레시피가 한국어에서는 무너집니다(train\_loss 7.0대, 고정-\(t\) acc 0.081). 한국어는 조사·어미를 빈도만으로 그럴듯하게 채울 수 있어 “주변을 안 봐도 되는” 지름길이 열리기 때문입니다. 그래서 34장의 단 한 가지 변화는 \textbf{BERT가 원래 쓰던 80/10/10 마스킹}(80\% \texttt{{[}MASK{]}} / 10\% 랜덤 토큰 / 10\% 원본 유지)으로, 이 지름길을 막아 train\_loss 4.13 · acc 0.652로 생성을 회복시킵니다. 같은 코퍼스(\ref{ch:26}장 한국어 AR과 동일)에서 \emph{AR은 되는데 diffusion은 왜 무너졌나}를 나란히 대조하며 Phase 5를 마무리합니다.
+이번 장에서 작은 diffusion LM을 영어로 손수 살려냈다면, 다음 장에서는 같은 레시피를 \textbf{한국어}로 옮깁니다. 34장은 33장과 같은 본체(\inlinecode{BertForMaskedLM}, hidden 256/4L)·같은 샘플러를 그대로 두고 학습 언어만 한국어(TinyStories-Korean)로 바꿉니다. 그런데 영어에서 100\% \texttt{{[}MASK{]}}로도 버티던 레시피가 한국어에서는 무너집니다(train\_loss 7.0대, 고정-\(t\) acc 0.081). 한국어는 조사·어미를 빈도만으로 그럴듯하게 채울 수 있어 “주변을 안 봐도 되는” 지름길이 열리기 때문입니다. 그래서 34장의 단 한 가지 변화는 \textbf{BERT가 원래 쓰던 80/10/10 마스킹}(80\% \texttt{{[}MASK{]}} / 10\% 랜덤 토큰 / 10\% 원본 유지)으로, 이 지름길을 막아 train\_loss 4.13 · acc 0.652로 생성을 회복시킵니다. 같은 코퍼스(\ref{ch:26}장 한국어 AR과 동일)에서 \emph{AR은 되는데 diffusion은 왜 무너졌나}를 나란히 대조하며 Phase 5를 마무리합니다.
 \end{previewBox}

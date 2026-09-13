@@ -2,7 +2,7 @@
 
 **환경**: Google Colab **T4 GPU 필수**.
 
-**예상 소요 시간**: 약 5-8분 (토크나이저 로드 + ko 위키 다운로드·paragraph split·토큰화가 대부분을 차지 + MLM 2 epoch 약 0.3분 + 평가/저장). 전체 소요는 데이터 다운로드가 지배합니다.
+**예상 소요 시간**: 약 2-4분 (토크나이저 로드 + ko 위키 다운로드·paragraph split·토큰화가 대부분을 차지 + MLM 2 epoch 약 0.3분 + 평가/저장 — 전체 실측 약 2분, 네트워크·VM 상태에 따라 늘어날 수 있음). 전체 소요는 데이터 다운로드가 지배합니다.
 
 ## 학습 흐름
 
@@ -74,16 +74,19 @@ $$L_{\text{MLM}} = -\frac{1}{|M|} \sum_{i \in M} \log P(x_i \mid x_{\setminus M}
 
 > 분류 챕터에서 K (클래스 수) 가 늘 때 random baseline `log K` 가 커지듯, MLM 도 vocab 이 커지면 random baseline 이 커집니다. 하지만 vocab 30K vs 32K 정도의 차이는 *학습 동역학에 영향 없음* — 학습 종료 loss 의 절대값을 비교할 때만 미세 보정.
 
-### 학습 목표 영역 (Ch 20 과 같음)
+### 숫자로 감 잡기 (vocab 32,000 — Ch 20 과 같은 척도)
 
 | 모델 상태 | $-\log p$ | 해석 |
 |---|---|---|
 | 균등 추측 (random init 직후) | 10.37 | random baseline |
+| **이번 챕터 도달점** (위키 5K paragraphs × 2 epoch) | **7.49 - 7.50** | ← **실측** (eval loss, `set_seed` 로 재현) |
 | 약하게 학습 (정답 확률 0.01) | 4.61 | |
-| 잘 학습된 작은 BERT (정답 확률 0.05-0.1) | 2.3 - 3.0 | 이번 챕터 목표 영역 |
+| 잘 학습된 작은 BERT (정답 확률 0.05-0.1) | 2.3 - 3.0 | **이 셋업의 사정거리 밖** |
 | 큰 사전학습 BERT (정답 확률 0.3+) | 1.20 | `klue/bert-base` 본체 수준 |
 
-**관전 포인트** — Ch 20 의 영어 MLM 과 *비슷한 수렴 곡선* 이 나오는지가 본 챕터의 핵심 관찰. *언어가 달라도 작은 BERT + 5K 문장 MLM 의 학습 동역학은 비슷하다* 가 검증 가설.
+**이번 챕터가 도달하는 곳은 약 7.5** — *어떤 토큰이 흔한가* 를 막 새긴 단계입니다. 2.3-3.0 구간은 데이터·모델 크기가 몇 자릿수 더 필요해 이 셋업으로는 닿지 않습니다. 7.5 가 나왔다면 학습이 실패한 게 아니라 *정상* 입니다.
+
+**관전 포인트** — Ch 20 의 영어 MLM 과 *비슷한 수렴 곡선* 이 나오는지가 본 챕터의 핵심 관찰. Ch 20 은 같은 셋업에서 eval loss 약 7.06-7.13 (`executed/20_en_bert_pretrain.ipynb`) — 한국어도 비슷한 자리에 멈춥니다. *언어가 달라도 작은 BERT + 5K 문장 MLM 의 학습 동역학은 비슷하다* 가 검증 가설.
 
 ## 토크나이저 노트 — 본 챕터의 핵심 한 자리
 
@@ -102,7 +105,7 @@ Ch 19 §5-4 의 cross-language 결론을 *실측* 으로 다시 확인합니다.
 
 ### `labels = -100` 한 줄 환기
 
-`DataCollatorForLanguageModeling` 이 가려지지 않은 자리에 `labels = -100` 을 채워 *해당 위치의 CE loss 를 무시* 합니다 (PyTorch `CrossEntropyLoss` 의 `ignore_index` 기본값). 같은 트릭이 Phase 4 의 SFT (Ch 27) 에서 *prompt 자리를 가리는* 방식으로 다시 등장합니다 — *적용 자리만 정반대*. 한국어 MLM 에서도 트릭 자체는 *완전히 동일*.
+`DataCollatorForLanguageModeling` 이 가려지지 않은 자리에 `labels = -100` 을 채워 *해당 위치의 CE loss 를 무시* 합니다 (PyTorch `CrossEntropyLoss` 의 `ignore_index` 기본값). 같은 트릭이 Phase 4 의 SFT (Ch 28) 에서 *prompt 자리를 가리는* 방식으로 다시 등장합니다 — *적용 자리만 정반대*. 한국어 MLM 에서도 트릭 자체는 *완전히 동일*.
 
 ## 이 장의 구성
 

@@ -113,7 +113,7 @@ Activation / Loss & softmax / CE & (그대로) \\
 
 영어 distilbert-base-uncased 토크나이저로 한국어를 처리하면 \emph{처참한} 토큰화가 나옵니다. 영어 vocab 에 한국어 글자가 없어서 \emph{바이트 단위} (\texttt{{[}UNK{]}} 또는 \inlinecode{\#\#} prefix 부스러기) 로 깨집니다. 모델이 학습한 단어 임베딩이 한국어를 못 받아내요.
 
-\textbf{해결}: \emph{한국어 텍스트로 사전학습된} BERT 와 그 토크나이저를 사용. 이 장는 KLUE 연구팀의 \inlinecode{klue/bert-base} --- 한국어 위키 + 뉴스 + 댓글 등으로 사전학습.
+\textbf{해결}: \emph{한국어 텍스트로 사전학습된} BERT 와 그 토크나이저를 사용. 이 장은 KLUE 연구팀의 \inlinecode{klue/bert-base} --- 한국어 위키 + 뉴스 + 댓글 등으로 사전학습.
 
 
 
@@ -134,7 +134,7 @@ L = -\frac{1}{N}\sum_{i=1}^{N}\log \hat p_{i, y_i} \quad\text{where}\quad \hat p
 
 \section{토크나이저 노트}
 
-\textbf{\ref{ch:11}장 까지는} \inlinecode{distilbert-base-uncased} (영어 WordPiece) 를 그대로 썼습니다. \textbf{\ref{ch:15}장 부터는} \inlinecode{klue/bert-base} (한국어 WordPiece). 두 토크나이저가 \emph{같은 한국어 문장} 을 어떻게 다르게 쪼개는지가 이 장의 \emph{교훈} 의 절반입니다.
+\textbf{\ref{ch:11}장까지는} \inlinecode{distilbert-base-uncased} (영어 WordPiece) 를 그대로 썼습니다. \textbf{\ref{ch:15}장부터는} \inlinecode{klue/bert-base} (한국어 WordPiece). 두 토크나이저가 \emph{같은 한국어 문장} 을 어떻게 다르게 쪼개는지가 이 장의 \emph{교훈} 의 절반입니다.
 
 \subsection{직관 --- 같은 문장, 두 토크나이저}
 
@@ -735,7 +735,7 @@ logit z:     -5.71
 \item
   \inlinecode{klue/bert-base} 의 파라미터 수가 110M, DistilBERT 가 67M 인데 정확도 차이가 \emph{극적이지 않은} 이유는?
 \item
-  \ref{ch:11}장과 \ref{ch:15}장 사이에 \emph{셋업 코드 자체} 가 거의 똑같은데도 장를 분리한 이유는?
+  \ref{ch:11}장과 \ref{ch:15}장 사이에 \emph{셋업 코드 자체} 가 거의 똑같은데도 장을 분리한 이유는?
 \end{enumerate}
 
 

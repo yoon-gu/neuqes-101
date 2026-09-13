@@ -38,7 +38,7 @@ toks = tokenizer_en.tokenize(sent)
 **일부 연구는 그런 시도를 했고 결과는 trade-off** 입니다. 한국어는 한 어절 안에 *어간 + 어미 + 조사* 가 결합되어 형태소 정보가 풍부 → 가릴 자리가 많아 *학습 신호 양* 은 늘 수 있습니다. 그러나:
 
 ```python
-# 15 → 0.25 로 올렸을 때
+# 0.15 → 0.25 로 올렸을 때
 data_collator = DataCollatorForLanguageModeling(
     tokenizer=tokenizer,
     mlm=True,
@@ -66,7 +66,7 @@ model = BertForMaskedLM(config)   # random init, weight 없음
 # -> 한국어 위키 5K paragraphs 로 MLM 직접 학습 (일반 도메인). Ch 23 에서 NSMC 분류 fine-tune.
 ```
 
-실무에서는 *클루 본체 그대로 가져다 쓰는 게* 답입니다 — 데이터·연산이 *5000배 이상* 격차. 본 챕터의 목적은 *그 격차의 의미* 를 Ch 23 에서 정량 비교하기 위함이고, *작은 모델 + 작은 데이터로도 사전학습 동역학을 재현* 할 수 있음을 확인하는 것. Ch 20 (영어) 의 한국어 대칭본.
+실무에서는 *클루 본체 그대로 가져다 쓰는 게* 답입니다 — 학습 토큰만 *약 1.7만 배* (약 50만 → 8.4B), 파라미터는 *약 10배* 격차. 본 챕터의 목적은 *그 격차의 의미* 를 Ch 23 에서 정량 비교하기 위함이고, *작은 모델 + 작은 데이터로도 사전학습 동역학을 재현* 할 수 있음을 확인하는 것. Ch 20 (영어) 의 한국어 대칭본.
 
 ### Q4. (실무) 한국어 텍스트에 영어가 섞여 있으면 `klue/bert-base` 토크나이저가 잘 처리하나요?
 
@@ -99,18 +99,20 @@ loss = loss_fn(logits, labels)
 
 `DataCollatorForLanguageModeling` 이 가려지지 않은 자리에 `-100` 을 채우는 게 *전 자리에서 CE 계산 후 마스킹* 보다 효율적입니다. 같은 트릭이:
 
-- **GPT 사전학습** (Ch 24-26): `labels = input_ids.clone()` → 사실상 *모든 자리* 학습 (pad 만 -100)
-- **SFT / Instruction Tuning** (Ch 27): `labels[prompt_mask] = -100` → *답변 부분만* 학습
+- **GPT 사전학습·계속 사전학습** (Ch 24-27): `labels = input_ids.clone()` → 사실상 *모든 자리* 학습 (pad 만 -100)
+- **SFT / Instruction Tuning** (Ch 28): `labels[prompt_mask] = -100` → *답변 부분만* 학습
 
 세 곳 모두 같은 `-100` 트릭, 적용 자리만 다릅니다. Ch 21 §3 의 *labels = -100 thread* 마크다운에 풀버전 설명.
 
-### Q6. (실무) MLM eval loss 가 4-6 부근에서 *더 떨어지지 않으면* 어떻게 진단하나요?
+### Q6. (실무) MLM eval loss 가 7.5 부근에서 *더 떨어지지 않으면* 어떻게 진단하나요?
+
+작은 BERT scratch + 5K paragraphs 의 *자연스러운 수렴 영역* 입니다 (§7-1 실측 약 7.5). 고장이 아니라 이 셋업의 정상 도달점이니, 추가로 떨어뜨리려면:
 
 작은 BERT scratch + 5K 문장의 *자연스러운 수렴 영역* 입니다. 추가로 떨어뜨리려면:
 
 ```python
 # (1) 데이터 늘리기 — 가장 큰 효과
-N_TRAIN_TEXT = 30000   # 5K -> 30K, T4 30분 안에 1 epoch 가능
+N_TRAIN_TEXT = 30000   # 5K -> 30K — 학습은 1 epoch 약 1분 수준 (실측 5K 2 epoch 0.3분), 상한은 다운로드·토큰화
 
 # (2) epoch 늘리기 (단, 작은 데이터에 과적합 위험)
 NUM_EPOCHS = 3
@@ -146,7 +148,7 @@ metrics = {
 
 - 이번 챕터의 `./ch22_small_bert_mlm_ko` 체크포인트를 `AutoModelForSequenceClassification.from_pretrained(..., num_labels=2)` 로 로드 → MLM head 떼고 분류 헤드 부착
 - NSMC 이진 분류 fine-tune (Ch 15 와 같은 데이터·셋업) — *완전히 다른 도메인 transfer*
-- **핵심 비교**: 이번 작은 사전학습 BERT (약 10M params, 위키 5K paragraphs MLM) vs Ch 15 의 `klue/bert-base` (약 110M params, 대규모 일반 한국어 사전학습) — 2-way
+- **핵심 비교**: 이번 작은 사전학습 BERT (약 11.5M params, 위키 5K paragraphs MLM) vs Ch 15 의 `klue/bert-base` (약 110M params, 대규모 일반 한국어 사전학습) — 2-way
 - 영어 Ch 20 → Ch 21 흐름의 *한국어 대칭본* — 같은 격차 패턴이 한국어 환경에서도 나오는지 검증
 - 추가로 *random init baseline* 비교 + *위키 → NSMC 의 negative transfer 분석* 은 Ch 23 부록 [`appendix_random_baseline.ipynb`](../23_ko_bert_classify/appendix_random_baseline.ipynb)
 

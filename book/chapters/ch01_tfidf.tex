@@ -377,14 +377,14 @@ IDF(Inverse Document Frequency)는 \textbf{“이 단어가 얼마나 희귀한�
 
 \begin{faqBox}{Q6. (이론) sparse 행렬이 dense 행렬보다 메모리에 유리한 이유는 무엇인가요? \inlinecode{.toarray()}로 바꾸면 왜 메모리가 폭발할 수 있나요?}
 
-shape \inlinecode{(5000,\ 10000)} 행렬을 dense(\inlinecode{float64})로 만들면 \texttt{5000\ \$\textbackslash{}times\$\ 10000\ \$\textbackslash{}times\$\ 8\ byte\ \$\textbackslash{}approx\$\ 400MB}입니다. 칸 대부분이 0인데 그 0까지 다 저장합니다.
+shape \inlinecode{(5000,\ 10000)} 행렬을 dense(\inlinecode{float64})로 만들면 \texttt{5000\ ×\ 10000\ ×\ 8\ byte\ ≈\ 400MB}입니다. 칸 대부분이 0인데 그 0까지 다 저장합니다.
 
-sparse(CSR) 행렬은 0이 아닌 칸만 \inlinecode{(값,\ 열\ 인덱스)}로 저장합니다. nnz가 50만이면 대략 \texttt{500000\ \$\textbackslash{}times\$\ (8\ +\ 4)\ \$\textbackslash{}approx\$\ 6MB} --- 70배 가까이 절약됩니다.
+sparse(CSR) 행렬은 0이 아닌 칸만 \inlinecode{(값,\ 열\ 인덱스)}로 저장합니다. nnz가 50만이면 대략 \texttt{500000\ ×\ (8\ +\ 4)\ ≈\ 6MB} --- 70배 가까이 절약됩니다.
 
 \Needspace{10\baselineskip}
 \begin{lstlisting}
 print(
-    f"sparse nbytes $\approx$ "
+    f"sparse nbytes ≈ "
     f"{(X_count.data.nbytes + X_count.indices.nbytes + X_count.indptr.nbytes) / 1e6:.1f} MB"
 )
 print(
@@ -393,7 +393,7 @@ print(
 )
 \end{lstlisting}
 
-\inlinecode{X\_count.toarray()}를 호출하면 dense로 풀어 그 400MB짜리 배열을 메모리에 올립니다. Yelp 5,000건 정도는 버티지만, 50,000건 + max\_features 50,000으로 키우면 \texttt{50000\ \$\textbackslash{}times\$\ 50000\ \$\textbackslash{}times\$\ 8\ =\ 20GB}가 되어 Colab이 그 자리에서 중단될 수 있습니다. \textbf{sklearn 모델 대부분(LinearRegression, LogisticRegression, LinearSVC 등)은 sparse 입력을 그대로 받기 때문에 굳이 \inlinecode{.toarray()}로 바꿀 일이 없습니다.}
+\inlinecode{X\_count.toarray()}를 호출하면 dense로 풀어 그 400MB짜리 배열을 메모리에 올립니다. Yelp 5,000건 정도는 버티지만, 50,000건 + max\_features 50,000으로 키우면 \texttt{50000\ ×\ 50000\ ×\ 8\ =\ 20GB}가 되어 Colab이 그 자리에서 중단될 수 있습니다. \textbf{sklearn 모델 대부분(LinearRegression, LogisticRegression, LinearSVC 등)은 sparse 입력을 그대로 받기 때문에 굳이 \inlinecode{.toarray()}로 바꿀 일이 없습니다.}
 \end{faqBox}
 
 

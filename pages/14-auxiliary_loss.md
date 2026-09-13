@@ -6,7 +6,7 @@ $$L = L_\text{main}(\text{항목 BCE per-label}) + \lambda \cdot L_\text{aux}(\t
 
 **환경**: Google Colab **T4 GPU 필수**.
 
-**예상 소요 시간**: 약 22분 (보조 ON 학습 ~9분 + 보조 OFF 비교용 학습 ~9분 + 평가/시각화)
+**예상 소요 시간**: 약 3분 (보조 ON 학습 약 1분 + 보조 OFF 비교용 학습 약 1분 + 다운로드·평가/시각화)
 
 ## 학습 흐름
 

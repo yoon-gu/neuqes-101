@@ -2,13 +2,15 @@
 
 **환경**: Google Colab **T4 GPU 필수**.
 
-**예상 소요 시간**: 약 12분 (BERT 학습 ~10분 + sklearn 비교 baseline ~30초 + 평가/시각화)
+**예상 소요 시간**: 약 3분 (BERT 학습 약 40초 + sklearn 비교 baseline 약 30초 + 다운로드·평가·시각화)
+
 
 ## 학습 흐름
 
 1. 🚀 **실습**: Ch 11과 같은 `(num_labels=K, problem_type="single_label_classification")` 셋업, K만 5로. Yelp 별점 1-5를 라벨 0-4 int 인덱스로.
 2. 🔬 **해부**: 학습 후 *혼동 행렬* 과 *top-1 확률 분포* 로 클래스별 패턴 확인. 별점 4 ↔ 5 같은 *인접 클래스 혼동* 이 자연스러운지 검증.
-3. 🛠️ **클라이맥스**: 같은 노트북 안에서 Ch 5의 sklearn baseline(TF-IDF + multinomial LogReg)을 *inline 재현* 해 BERT 67M 파라미터가 진짜 도움이 되는지 직접 비교. 격차가 *데이터 양에 어떻게 의존* 하는지는 부록 `12_bert_multiclass_data_scaling` 의 100-30K 곡선에서 봅니다.
+3. 🛠️ **클라이맥스**: 같은 노트북 안에서 Ch 5와 *같은 계열* 의 sklearn baseline(TF-IDF + multinomial LogReg)을 다시 학습해 BERT 67M 파라미터가 진짜 도움이 되는지 직접 비교. 격차가 *데이터 양에 어떻게 의존* 하는지는 부록 `12_bert_multiclass_data_scaling` 의 100-30K 곡선에서 봅니다.
+
 
 > 📒 **사전 학습 자료**: Ch 5 (sklearn multi-class), Ch 11 (BERT binary 방식 B). 이번 챕터는 self-contained — 다른 챕터의 결과 파일에 의존하지 않습니다.
 
@@ -58,9 +60,9 @@ K가 늘어나면 *random baseline 손실* 도 같이 커집니다 — 학습 �
 | logits $(z_0, z_1, z_2, z_3, z_4)$ | softmax → $\hat p_4$ | 손실 $-\log \hat p_4$ |
 |---|---|---|
 | $(0, 0, 0, 0, 0)$ | $0.200$ | **1.609** ← random |
-| $(0, 0, 0, 0, 2)$ | $0.541$ | 0.615 |
-| $(0, 0, 0, 0, 5)$ | $0.985$ | 0.015 |
-| $(5, 0, 0, 0, 0)$ | $0.005$ | **5.310** ← 자신 있게 틀린 케이스 |
+| $(0, 0, 0, 0, 2)$ | $0.649$ | 0.433 |
+| $(0, 0, 0, 0, 5)$ | $0.974$ | 0.027 |
+| $(5, 0, 0, 0, 0)$ | $0.007$ | **5.027** ← 자신 있게 틀린 케이스 |
 
 **핵심 직감 — softmax는 *상대 logit* 만 본다**: 모든 logit에 같은 상수를 더해도 softmax는 변하지 않음 ($e^{z_k+c} / \sum e^{z_j+c} = e^{z_k}/\sum e^{z_j}$). 즉 K=5 모델이 학습할 때 의미 있는 신호는 *클래스 간 logit 차이* 뿐. *softmax의 4가지 자유도* (K=5에서 K-1=4)만 학습됨.
 

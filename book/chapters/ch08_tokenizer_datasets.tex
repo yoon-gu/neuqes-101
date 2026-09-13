@@ -1277,7 +1277,7 @@ weights = softmax(scores, dim=-1)
 output = weights @ V
 \end{lstlisting}
 
-softmax 안에서 \texttt{e\^{}(-10000)\ \$\textbackslash{}approx\$\ 0} 이라 패딩 토큰은 다른 토큰의 표현에 \emph{전혀} 기여하지 않습니다. 학습된 모델 입장에선 패딩이 있든 없든 같은 결과 --- 단지 \emph{계산을 낭비} 한 셈.
+softmax 안에서 \texttt{e\^{}(-10000)\ ≈\ 0} 이라 패딩 토큰은 다른 토큰의 표현에 \emph{전혀} 기여하지 않습니다. 학습된 모델 입장에선 패딩이 있든 없든 같은 결과 --- 단지 \emph{계산을 낭비} 한 셈.
 
 \end{faqBox}
 

@@ -63,7 +63,7 @@ GPU:             Tesla T4
 **▶ 실행 결과**
 
 ```text
-Wed Jun 24 04:13:57 2026       
+Sun Sep  6 07:34:34 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -72,7 +72,7 @@ Wed Jun 24 04:13:57 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   48C    P8             10W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   56C    P8             13W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -154,6 +154,8 @@ print(f"  aux_score (star/4): {train_full[0]['aux_score']:.2f}  (star = {train_f
 **▶ 실행 결과**
 
 ```text
+yelp_review_full/train-00000-of-00001.pa(…): downloading bytes:           |  0.00B            
+yelp_review_full/test-00000-of-00001.par(…): downloading bytes:           |  0.00B            
 train: 5000, eval: 1000
 
 First sample:
@@ -307,18 +309,19 @@ print(f"Aux head:             {model.aux_head}")
 **▶ 실행 결과**
 
 ```text
+model.safetensors: downloading bytes:           |  0.00B            
 [transformers] DistilBertForSequenceClassification LOAD REPORT from: distilbert-base-uncased
 Key                     | Status     | 
 ------------------------+------------+-
+vocab_transform.bias    | UNEXPECTED | 
+vocab_projector.bias    | UNEXPECTED | 
+vocab_layer_norm.weight | UNEXPECTED | 
 vocab_layer_norm.bias   | UNEXPECTED | 
 vocab_transform.weight  | UNEXPECTED | 
-vocab_projector.bias    | UNEXPECTED | 
-vocab_transform.bias    | UNEXPECTED | 
-vocab_layer_norm.weight | UNEXPECTED | 
 classifier.weight       | MISSING    | 
+classifier.bias         | MISSING    | 
 pre_classifier.bias     | MISSING    | 
 pre_classifier.weight   | MISSING    | 
-classifier.bias         | MISSING    | 
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
@@ -348,7 +351,7 @@ from transformers.modeling_outputs import SequenceClassifierOutput
 
 
 class AuxTrainer(Trainer):
-    def __init__(self, *args, lambda_aux: float = 1.0, **kwargs):
+    def __init__(self, *args, lambda_aux: float = 0.05, **kwargs):   # 기본값은 sweet spot (부록 λ 스윕)
         super().__init__(*args, **kwargs)
         self.lambda_aux = lambda_aux
 
@@ -457,8 +460,8 @@ print(f"\nWith-aux training done — mean train loss: {train_result_aux.training
 
 ```text
 Epoch  Training Loss  Validation Loss  Hamming Loss  Micro F1  Micro Precision  Micro Recall  Macro F1  Macro Precision  Macro Recall  Macro Auc  Runtime   Samples Per Second  Steps Per Second
-1      0.388757       0.361938         0.140200      0.767342  0.896124         0.670923      0.668518  0.921665         0.574410      0.889660   1.035500  965.684000          30.902000
-2      0.289381       0.296347         0.097800      0.846948  0.919158         0.785258      0.810893  0.932765         0.731567      0.918232   1.145900  872.672000          27.925000
+1      0.388757       0.361938         0.140200      0.767342  0.896124         0.670923      0.668518  0.921665         0.574410      0.889660   1.024300  976.281000          31.241000
+2      0.289381       0.296347         0.097800      0.846948  0.919158         0.785258      0.810893  0.932765         0.731567      0.918232   1.219800  819.787000          26.233000
 With-aux training done — mean train loss: 0.4046
 ```
 
@@ -471,7 +474,7 @@ With-aux training done — mean train loss: 0.4046
 **▶ 실행 결과**
 
 ```text
-Wed Jun 24 04:15:10 2026       
+Sun Sep  6 07:35:45 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -480,7 +483,7 @@ Wed Jun 24 04:15:10 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   67C    P0             35W /   70W |    1619MiB /  15360MiB |     70%      Default |
+| N/A   69C    P0             70W /   70W |    1619MiB /  15360MiB |     51%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -489,6 +492,6 @@ Wed Jun 24 04:15:10 2026
 |  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
 |        ID   ID                                                               Usage      |
 |=========================================================================================|
-|    0   N/A  N/A            1097      C   /usr/bin/python3                       1616MiB |
+|    0   N/A  N/A             710      C   /usr/bin/python3                       1616MiB |
 +-----------------------------------------------------------------------------------------+
 ```

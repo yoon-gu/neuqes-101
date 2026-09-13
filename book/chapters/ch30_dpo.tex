@@ -403,8 +403,8 @@ CausalLM & \ref{ch:24}·\ref{ch:25}장·26·27 & 거의 전 토큰 (pad 만 제�
 \Needspace{5\baselineskip}
 \begin{lstlisting}
 prompt:   ### 명령어:\n건강한 식습관을 알려줘\n\n### 응답:\n   <- 양쪽 공통, log-prob 계산 제외
-chosen:   규칙적인 식사와 채소 섭취가 중요합니다.            <- 이 부분의 log π_$\theta$, log π_ref
-rejected: ㄴㄴ 몰라 아무거나 먹어                          <- 이 부분의 log π_$\theta$, log π_ref
+chosen:   규칙적인 식사와 채소 섭취가 중요합니다.            <- 이 부분의 log π_θ, log π_ref
+rejected: ㄴㄴ 몰라 아무거나 먹어                          <- 이 부분의 log π_θ, log π_ref
 \end{lstlisting}
 
 \begin{quote}
@@ -483,7 +483,7 @@ DPO 데이터는 \emph{세 개의 텍스트} 로 구성됩니다 (\inlinecode{pr
   \textbf{GPT-4 가 각 답변을 \emph{네 가지 축} 으로 채점} --- 이 네 축이 곧 \emph{지향하는 LLM 의 가치}:
 \end{enumerate}
 
-\begin{booktable}{30장 이 데이터는 무엇이고, 어떤 LLM 을 지향하는가 (가장 중요) 표}{tab:ch30-08}
+\begin{booktable}{30장이 데이터는 무엇이고, 어떤 LLM 을 지향하는가 (가장 중요) 표}{tab:ch30-08}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -730,7 +730,7 @@ DPO loss = -log sigmoid(beta*margin) =   0.6931   (beta=0.1)
 \begin{itemize}
 \tightlist
 \item
-  \emph{학습 전} (policy = reference 와 동일) 이라면 \texttt{r\_w\ \$\textbackslash{}approx\$\ r\_l\ \$\textbackslash{}approx\$\ 0}, margin \(\approx\) 0, loss \(\approx\) \(-\log 0.5 = 0.693\) 근처에서 출발합니다
+  \emph{학습 전} (policy = reference 와 동일) 이라면 \texttt{r\_w\ ≈\ r\_l\ ≈\ 0}, margin \(\approx\) 0, loss \(\approx\) \(-\log 0.5 = 0.693\) 근처에서 출발합니다
 \item
   학습이 진행되면 policy 가 \emph{chosen 의 log-prob 은 올리고 (r\_w ↑), rejected 는 내려 (r\_l \(\downarrow\))} margin 이 커지고 loss 가 줄어듭니다
 \item
@@ -945,11 +945,11 @@ IPO 는 \emph{DPO 의 overfitting} 을, KTO 는 \emph{쌍이 아닌 개별 좋�
 이름 & 한 줄 설명 & \ref{ch:28}장과 차이 \\
 \midrule
 
-\inlinecode{trl.DPOTrainer} & DPO 특화 trainer (response-only log-prob \(\to\) margin \(\to\) sigmoid loss 자동) & \textbf{새로 등장} (\ref{ch:28}장 은 \inlinecode{SFTTrainer}) \\
+\inlinecode{trl.DPOTrainer} & DPO 특화 trainer (response-only log-prob \(\to\) margin \(\to\) sigmoid loss 자동) & \textbf{새로 등장} (\ref{ch:28}장은 \inlinecode{SFTTrainer}) \\
 \inlinecode{trl.DPOConfig} & \inlinecode{DPOTrainer} 설정 (\inlinecode{TrainingArguments} 상속 + \inlinecode{beta}·\inlinecode{max\_length} 등) & \textbf{새로 등장} \\
 \inlinecode{DPOConfig(beta=0.1)} & reference 제약 강도 (KL) --- DPO 의 핵심 하이퍼파라미터 & \textbf{새로 등장} \\
 \inlinecode{DPOTrainer(ref\_model=None)} & reference 자동 복사·freeze (명시 지정도 가능) & \textbf{새로 등장} (frozen reference 개념) \\
-\inlinecode{prompt} / \inlinecode{chosen} / \inlinecode{rejected} 데이터 형식 & preference 쌍 표준 형식 & \textbf{새로 등장} (\ref{ch:28}장 은 \inlinecode{prompt}/\inlinecode{completion}) \\
+\inlinecode{prompt} / \inlinecode{chosen} / \inlinecode{rejected} 데이터 형식 & preference 쌍 표준 형식 & \textbf{새로 등장} (\ref{ch:28}장은 \inlinecode{prompt}/\inlinecode{completion}) \\
 \inlinecode{torch.nn.functional.log\_softmax} + \inlinecode{gather} & response 토큰의 log-prob 합 (§3 손계산) & \textbf{공유} (개념은 CausalLM loss 와 동일) \\
 \inlinecode{copy.deepcopy(policy)} + \inlinecode{requires\_grad\_(False)} & frozen reference 직접 생성 (§3 시연용) & \textbf{새로 등장} \\
 \inlinecode{PreTrainedTokenizerFast.from\_pretrained("skt/kogpt2-base-v2",\ ...)} & KoGPT2 BBPE (AutoTokenizer 함정 회피) & \textbf{공유} (\ref{ch:27}장 이후 고정) \\
@@ -987,7 +987,7 @@ IPO 는 \emph{DPO 의 overfitting} 을, KTO 는 \emph{쌍이 아닌 개별 좋�
 
 둘 다 \emph{preference 로 모델을 정렬} 하지만, \emph{경로} 가 다릅니다:
 
-\begin{booktable}{30장 FAQ 표}{tab:ch30-10}
+\begin{booktable}{30장 FAQ 표 (1)}{tab:ch30-10}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lll@{}}
 \toprule
@@ -1085,7 +1085,7 @@ dpo_config.beta = 0.1
 
 \textbf{Phase 4 GPT 시대 4단계 흐름 정리}:
 
-\begin{booktable}{30장 FAQ 표}{tab:ch30-13}
+\begin{booktable}{30장 FAQ 표 (2)}{tab:ch30-13}
 \begin{adjustbox}{max width=\textwidth}
 \begin{tabular}{@{}lllll@{}}
 \toprule

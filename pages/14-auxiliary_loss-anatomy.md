@@ -15,7 +15,7 @@ for k, v in eval_metrics_aux.items():
 
 ```text
 Training Loss  Validation Loss  Epoch  Hamming Loss  Micro F1  Micro Precision  Micro Recall  Macro F1  Macro Precision  Macro Recall  Macro Auc  Runtime   Samples Per Second  Steps Per Second
-0.289381       0.296347         2      0.097800      0.846948  0.919158         0.785258      0.810893  0.932765         0.731567      0.918232   0.995200  1004.779000         32.153000
+0.289381       0.296347         2      0.097800      0.846948  0.919158         0.785258      0.810893  0.932765         0.731567      0.918232   0.988200  1011.891000         32.381000
 With-aux (λ=0.05) — main task metrics:
                eval_loss: 0.2963
        eval_hamming_loss: 0.0978
@@ -26,9 +26,9 @@ With-aux (λ=0.05) — main task metrics:
     eval_macro_precision: 0.9328
        eval_macro_recall: 0.7316
           eval_macro_auc: 0.9182
-            eval_runtime: 0.9952
-  eval_samples_per_second: 1004.7790
-   eval_steps_per_second: 32.1530
+            eval_runtime: 0.9882
+  eval_samples_per_second: 1011.8910
+   eval_steps_per_second: 32.3810
 ```
 
 ```python
