@@ -450,7 +450,7 @@ class KoBertMultiTask(nn.Module):
         self.config = self.bert.config
 
     def forward(self, input_ids=None, attention_mask=None, token_type_ids=None,
-                labels=None, n_active=None, lambda_aux: float = 0.1):
+                labels=None, n_active=None, lambda_aux: float = 0.05):
         kwargs = {"input_ids": input_ids, "attention_mask": attention_mask}
         if token_type_ids is not None:
             kwargs["token_type_ids"] = token_type_ids
@@ -586,7 +586,7 @@ loss = l_main + λ · l_aux
 \Needspace{11\baselineskip}
 \begin{lstlisting}
 class AuxTrainer(Trainer):
-    def __init__(self, *args, lambda_aux: float = 0.1, **kwargs):
+    def __init__(self, *args, lambda_aux: float = 0.05, **kwargs):
         super().__init__(*args, **kwargs)
         self.lambda_aux = lambda_aux
 

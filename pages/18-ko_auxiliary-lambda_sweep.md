@@ -191,13 +191,13 @@ model.safetensors: downloading bytes:           |  0.00B
 [transformers] BertModel LOAD REPORT from: klue/bert-base
 Key                                        | Status     |  | 
 -------------------------------------------+------------+--+-
-cls.seq_relationship.bias                  | UNEXPECTED |  | 
-cls.predictions.bias                       | UNEXPECTED |  | 
-cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
 cls.seq_relationship.weight                | UNEXPECTED |  | 
-cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.seq_relationship.bias                  | UNEXPECTED |  | 
 cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
 cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
@@ -206,18 +206,18 @@ Step  Training Loss
 400   0.193545
 600   0.159128
 Training Loss  Validation Loss  Step  Micro F1  Macro F1  Hamming Loss  Runtime   Samples Per Second  Steps Per Second
-0.159128       0.193365         626   0.849143  0.845101  0.075429      0.719700  1389.475000         44.463000
+0.159128       0.193365         626   0.849143  0.845101  0.075429      0.768300  1301.490000         41.648000
 λ=0.0   micro-F1=0.8491  macro-F1=0.8451  aux_R2=-8.656
 [transformers] BertModel LOAD REPORT from: klue/bert-base
 Key                                        | Status     |  | 
 -------------------------------------------+------------+--+-
-cls.seq_relationship.bias                  | UNEXPECTED |  | 
-cls.predictions.bias                       | UNEXPECTED |  | 
-cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
 cls.seq_relationship.weight                | UNEXPECTED |  | 
-cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.seq_relationship.bias                  | UNEXPECTED |  | 
 cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
 cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
@@ -226,18 +226,18 @@ Step  Training Loss
 400   0.196293
 600   0.161915
 Training Loss  Validation Loss  Step  Micro F1  Macro F1  Hamming Loss  Runtime   Samples Per Second  Steps Per Second
-0.161915       0.195355         626   0.851355  0.848326  0.074429      0.687100  1455.417000         46.573000
+0.161915       0.195355         626   0.851355  0.848326  0.074429      0.727600  1374.296000         43.977000
 λ=0.02  micro-F1=0.8514  macro-F1=0.8483  aux_R2=+0.034
 [transformers] BertModel LOAD REPORT from: klue/bert-base
 Key                                        | Status     |  | 
 -------------------------------------------+------------+--+-
-cls.seq_relationship.bias                  | UNEXPECTED |  | 
-cls.predictions.bias                       | UNEXPECTED |  | 
-cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
 cls.seq_relationship.weight                | UNEXPECTED |  | 
-cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.seq_relationship.bias                  | UNEXPECTED |  | 
 cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
 cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
@@ -246,18 +246,18 @@ Step  Training Loss
 400   0.201903
 600   0.167037
 Training Loss  Validation Loss  Step  Micro F1  Macro F1  Hamming Loss  Runtime   Samples Per Second  Steps Per Second
-0.167037       0.200851         626   0.852328  0.849294  0.073857      0.682400  1465.438000         46.894000
+0.167037       0.200851         626   0.852328  0.849294  0.073857      0.702400  1423.753000         45.560000
 λ=0.05  micro-F1=0.8523  macro-F1=0.8493  aux_R2=+0.065
 [transformers] BertModel LOAD REPORT from: klue/bert-base
 Key                                        | Status     |  | 
 -------------------------------------------+------------+--+-
-cls.seq_relationship.bias                  | UNEXPECTED |  | 
-cls.predictions.bias                       | UNEXPECTED |  | 
-cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
 cls.seq_relationship.weight                | UNEXPECTED |  | 
-cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.seq_relationship.bias                  | UNEXPECTED |  | 
 cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
 cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
@@ -266,18 +266,18 @@ Step  Training Loss
 400   0.210297
 600   0.174338
 Training Loss  Validation Loss  Step  Micro F1  Macro F1  Hamming Loss  Runtime   Samples Per Second  Steps Per Second
-0.174338       0.211882         626   0.848900  0.845193  0.075571      0.678500  1473.796000         47.161000
+0.174338       0.211882         626   0.848900  0.845193  0.075571      0.837800  1193.618000         38.196000
 λ=0.1   micro-F1=0.8489  macro-F1=0.8452  aux_R2=+0.067
 [transformers] BertModel LOAD REPORT from: klue/bert-base
 Key                                        | Status     |  | 
 -------------------------------------------+------------+--+-
-cls.seq_relationship.bias                  | UNEXPECTED |  | 
-cls.predictions.bias                       | UNEXPECTED |  | 
-cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
 cls.seq_relationship.weight                | UNEXPECTED |  | 
-cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.seq_relationship.bias                  | UNEXPECTED |  | 
 cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
 cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
@@ -286,18 +286,18 @@ Step  Training Loss
 400   0.231085
 600   0.191303
 Training Loss  Validation Loss  Step  Micro F1  Macro F1  Hamming Loss  Runtime   Samples Per Second  Steps Per Second
-0.191303       0.237532         626   0.840138  0.841301  0.079429      0.694700  1439.427000         46.062000
+0.191303       0.237532         626   0.840138  0.841301  0.079429      0.711000  1406.521000         45.009000
 λ=0.2   micro-F1=0.8401  macro-F1=0.8413  aux_R2=+0.073
 [transformers] BertModel LOAD REPORT from: klue/bert-base
 Key                                        | Status     |  | 
 -------------------------------------------+------------+--+-
-cls.seq_relationship.bias                  | UNEXPECTED |  | 
-cls.predictions.bias                       | UNEXPECTED |  | 
-cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
 cls.seq_relationship.weight                | UNEXPECTED |  | 
-cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
+cls.seq_relationship.bias                  | UNEXPECTED |  | 
 cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
 cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
+cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
@@ -306,7 +306,7 @@ Step  Training Loss
 400   0.291899
 600   0.241862
 Training Loss  Validation Loss  Step  Micro F1  Macro F1  Hamming Loss  Runtime   Samples Per Second  Steps Per Second
-0.241862       0.317972         626   0.804100  0.819714  0.095571      0.858300  1165.095000         37.283000
+0.241862       0.317972         626   0.804100  0.819714  0.095571      0.877300  1139.864000         36.476000
 λ=0.5   micro-F1=0.8041  macro-F1=0.8197  aux_R2=+0.081
 
  lambda  micro_f1  macro_f1  hamming  aux_r2

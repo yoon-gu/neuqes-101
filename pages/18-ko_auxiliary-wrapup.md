@@ -157,7 +157,7 @@ return SequenceClassifierOutput(loss=loss, logits=main_logits)
 **Chapter 19. 토크나이저 직접 학습 — WordPiece vs WordLevel (영어 + 한국어)**
 
 - Phase 1-2 영어·한국어 모두 *사전학습 토크나이저* 를 그대로 썼습니다. Ch 19 는 그 의존을 끊고 *어휘를 코퍼스에서 직접 학습*.
-- `tokenizers` 라이브러리로 BPE, WordPiece, Unigram 세 알고리즘을 같은 코퍼스에 적용해 *어휘 차이* 비교.
+- `tokenizers` 라이브러리로 WordPiece(subword) 와 WordLevel(어절) 두 알고리즘을 영어·한국어 코퍼스에 적용해 *어휘 차이* 비교.
 - 한국어 vs 영어 코퍼스에서 학습한 토크나이저의 *토큰 길이 분포* 가 어떻게 다른지 — Ch 1 부터 추적해 온 토크나이저 시각의 완성.
 
 > **Phase 2 마무리** — Ch 15-18 을 통해 한국어 BERT 의 binary·multi-class·multi-label·auxiliary 4 가지를 다 익혔습니다. Phase 3 는 한 발 더 내려가 *어휘 구성* 자체에 도전 — 사전학습 모델에 *완전히 의존하지 않는* 경험.
