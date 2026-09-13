@@ -84,7 +84,7 @@ $$z_k = w_k^\top h + b_k, \quad k = 1, \ldots, K$$
 
 ### Q5. (실무) 헤드라인 두 개 대신 *세 개* 를 결합하면 어떻게 되나요?
 
-활성 라벨 개수가 평균 약 2.7개 (충돌 고려) 로 늘어 *더 어려운* multi-label 이 됩니다. 코드 변경은 작습니다 — `make_multilabel` 에서 3개 인덱스를 뽑아 3개 위치를 1 로:
+활성 라벨 개수가 평균 약 2.6개 (충돌 고려) 로 늘어 *더 어려운* multi-label 이 됩니다. 코드 변경은 작습니다 — `make_multilabel` 에서 3개 인덱스를 뽑아 3개 위치를 1 로:
 
 ```python
 idx = rng.integers(0, n_src, size=3 * n_samples).tolist()
@@ -127,7 +127,7 @@ def tokenize_wrong(batch):
     return out
 ```
 
-힌트: `BCEWithLogitsLoss` 는 *logits 와 같은 shape 의 float 텐서* 를 라벨로 받는데, 위 코드는 *(B,) int* 를 넘깁니다. shape mismatch + dtype mismatch 두 가지 에러가 동시에 날 수 있어 메시지가 길어집니다 (Ch 13 의 삽질과 같은 함정 — 라벨 *형식* 이 problem_type 과 일치해야 함).
+힌트: `BCEWithLogitsLoss` 는 *logits 와 같은 shape 의 float 텐서* 를 라벨로 받는데, 위 코드는 *(B,) int* 를 넘깁니다. **크기가 먼저 어긋나므로 한 줄짜리 `ValueError` 로 끊깁니다** — shape 검사에서 멈춰 dtype 문제는 드러나지도 않습니다 (Ch 13 의 삽질과 같은 함정 — 라벨 *형식* 이 problem_type 과 일치해야 함).
 
 ## 다음 챕터 예고
 
