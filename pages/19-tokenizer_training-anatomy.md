@@ -245,8 +245,8 @@ language algorithm  vocab_size  mean_tokens_per_sent  p95_tokens_per_sent  unk_r
 지금까지 *학습 언어 = 적용 언어* 였습니다. 만약 **다른 언어 텍스트** 를 학습한 토크나이저에 통과시키면?
 
 - **WordPiece (영어)** → 한국어 텍스트: 한국어 글자가 vocab 에 없어 대부분 **`[UNK]` 로 떨어짐** (BERT character fallback 도 없으면)
-- **WordLevel (영어)** → 한국어 텍스트: 한국어 *어절 통째* 가 단어로 vocab 에 없어 **거의 100% UNK**
-- 반대 (한국어 학습 → 영어 입력) 도 같은 양상
+- **WordLevel (영어)** → 한국어 텍스트: 한국어 *어절 통째* 가 단어로 vocab 에 없어 **대부분 UNK**
+- 반대 (한국어 학습 → 영어 입력) 는 *같은 양상이지만 정도가 다름* — 아래 표에서 방향별 차이를 직접 비교합니다
 
 이걸 정량 비교하면 "왜 multilingual 모델은 *공통 vocab* (mBERT 의 110k WordPiece, XLM-R 의 250k SentencePiece) 으로 학습되는지" 가 직관됩니다.
 
@@ -348,9 +348,9 @@ plt.tight_layout(); plt.show()
 
 **관찰**
 
-- 대각선(같은 언어) 셀은 UNK 가 거의 0 — 학습 언어와 같으면 vocab 이 커버.
-- **비대각선(교차) 셀은 UNK 가 크게 솟음** — 특히 WordLevel 은 어절 매칭이라 *거의 100%*, WordPiece 는 서브워드라도 한·영 *글자* 가 vocab 에 없으면 통째 UNK.
-- WordPiece 가 그나마 한·영 *공통 알파벳·구두점* 일부를 커버할 수 있지만, *한글 자모/조합* 또는 *영문 단어* 자체는 학습 corpus 에 의존.
+- **같은 언어라도 알고리즘이 갈립니다** — WordPiece 는 대각선에서 UNK 가 0, 그런데 한국어 WordLevel 은 *같은 언어인데도* UNK 가 크게 남습니다. 어절이 조금만 달라지면 vocab 밖이기 때문 — §5-2 의 한국어 WordLevel 결과와 같은 현상입니다.
+- **교차 셀은 UNK 가 크게 솟되 방향이 비대칭입니다** — 한국어 코퍼스에 라틴 문자가 섞여 있어 `ko_WordPiece` 는 영어를 글자 단위로 쪼개 UNK 없이 넘기지만 *토큰 수가 폭증* 합니다. 반대로 `en_WordPiece` 에는 한글 글자가 아예 없어 통째 UNK 가 됩니다.
+- **WordLevel 은 양방향 모두** 어절이 맞지 않아 UNK 가 과반입니다 — 위 표에서 교차 셀 두 칸을 확인해 보세요.
 
 **시사점**
 
