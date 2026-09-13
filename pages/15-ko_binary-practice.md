@@ -61,7 +61,7 @@ GPU:             Tesla T4
 **▶ 실행 결과**
 
 ```text
-Mon Jun 22 03:56:11 2026       
+Sun Sep 13 03:16:02 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -70,7 +70,7 @@ Mon Jun 22 03:56:11 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   44C    P8             13W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   40C    P8             12W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -100,7 +100,7 @@ samples = [
 ]
 ```
 
-**위 코드 읽기** — `klue/bert-base` 는 한국어 위키·뉴스·댓글로 사전학습된 한국어 WordPiece 토크나이저, `distilbert-base-uncased` 는 영어용입니다. 두 토크나이저는 vocab 규모는 비슷해도 *담긴 어휘* 가 완전히 다릅니다. `samples` 에는 양쪽에 통과시킬 짧은 한국어 리뷰 세 개를 둡니다.
+**위 코드 읽기** — `klue/bert-base` 는 모두의 말뭉치·뉴스·나무위키·국민청원·웹 크롤로 사전학습된 한국어 WordPiece 토크나이저, `distilbert-base-uncased` 는 영어용입니다. 두 토크나이저는 vocab 규모는 비슷해도 *담긴 어휘* 가 완전히 다릅니다. `samples` 에는 양쪽에 통과시킬 짧은 한국어 리뷰 세 개를 둡니다.
 
 ```python
 for sent in samples:
@@ -143,7 +143,7 @@ distilbert-base-uncased vocab:    30,522
 **관찰**
 
 - 한국어 토크나이저는 *어휘적 의미 단위* 로 분할 — `재미있` + `##었` + `##어요` 처럼 어간·어미를 살림
-- 영어 토크나이저는 한국어를 *글자 단위* 로 쪼개거나 (`이`, `영`, `##화`) `[UNK]` 로 처리 — 의미를 못 잡음
+- 영어 토크나이저는 한국어를 *자모 단위* 로 쪼개거나 (`ᄋ`, `##ᅵ`, `ᄋ`, `##ᅧ`, `##ᆼ`) `[UNK]` 로 처리 — 의미를 못 잡음. `uncased` 토크나이저가 NFD 정규화로 한글 음절을 자모로 분해한 뒤 vocab 에 있는 자모만 남기기 때문
 - vocab 크기는 비슷 (32K vs 30K) 지만 *내용물이 완전히 다름* — 한국어 vocab 은 한국어 빈도 어휘 32K, 영어 vocab 은 영어 빈도 어휘 30K
 - 토큰 수도 한국어 토크나이저가 *훨씬 적음* — 같은 문장이라도 짧은 시퀀스로 표현되어 학습 효율도 좋음
 
@@ -274,6 +274,7 @@ Ch 11 에서 `distilbert-base-uncased` 였던 자리만 `klue/bert-base` 로 교
 `klue/bert-base` 본체에 `num_labels=2` 분류 헤드를 얹습니다. `problem_type="single_label_classification"` 으로 softmax + `CrossEntropyLoss`(방식 B) 가 자동 선택됩니다 — Ch 11 에서 `distilbert-base-uncased` 였던 자리만 한국어 모델로 교체한 셋업입니다.
 
 ```python
+torch.manual_seed(SEED); np.random.seed(SEED)   # 분류 헤드 초기화까지 고정 — 재현성 확보
 model = AutoModelForSequenceClassification.from_pretrained(
     "klue/bert-base",
     num_labels=2,
@@ -299,18 +300,19 @@ print(f"vocab size V:         {model.config.vocab_size:,}")
 **▶ 실행 결과**
 
 ```text
+model.safetensors: downloading bytes:           |  0.00B            
 [transformers] BertForSequenceClassification LOAD REPORT from: klue/bert-base
 Key                                        | Status     | 
 -------------------------------------------+------------+-
-cls.predictions.transform.dense.bias       | UNEXPECTED | 
+cls.seq_relationship.weight                | UNEXPECTED | 
 cls.predictions.bias                       | UNEXPECTED | 
+cls.seq_relationship.bias                  | UNEXPECTED | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED | 
 cls.predictions.transform.dense.weight     | UNEXPECTED | 
 cls.predictions.transform.LayerNorm.bias   | UNEXPECTED | 
-cls.predictions.transform.LayerNorm.weight | UNEXPECTED | 
-cls.seq_relationship.weight                | UNEXPECTED | 
-cls.seq_relationship.bias                  | UNEXPECTED | 
-classifier.bias                            | MISSING    | 
+cls.predictions.transform.dense.bias       | UNEXPECTED | 
 classifier.weight                          | MISSING    | 
+classifier.bias                            | MISSING    | 
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
@@ -344,7 +346,7 @@ LOAD REPORT 의 `classifier.weight | MISSING` 은 정상입니다 — 사전학�
 **▶ 실행 결과**
 
 ```text
-Mon Jun 22 03:56:30 2026       
+Sun Sep 13 03:16:29 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -353,7 +355,7 @@ Mon Jun 22 03:56:30 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   43C    P8             13W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   41C    P8             15W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -425,14 +427,14 @@ print(f"\nTraining done — mean train loss: {train_result.training_loss:.4f}")
 
 ```text
 Epoch  Training Loss  Validation Loss  Accuracy  Precision  Recall    F1        Auc
-1      0.370798       0.348613         0.855000  0.847059   0.865731  0.856293  0.927040
-2      0.199243       0.388650         0.864000  0.877339   0.845691  0.861224  0.929182
-Training done — mean train loss: 0.2939
+1      0.366494       0.353941         0.855000  0.836502   0.881764  0.858537  0.927440
+2      0.203112       0.391946         0.862000  0.873706   0.845691  0.859470  0.928750
+Training done — mean train loss: 0.2932
 ```
 
 **결과 해석**
 
-평균 train loss 0.2939 는 random baseline $\log 2 \approx 0.693$ 보다 한참 아래로, 모델이 한국어 감성 신호를 학습했다는 뜻입니다. 짧은 한국어 리뷰에서도 긍정/부정 키워드를 충분히 잡아낸 것입니다.
+평균 train loss 는 random baseline $\log 2 \approx 0.693$ 의 절반도 안 되는 수준으로, 모델이 한국어 감성 신호를 학습했다는 뜻입니다. 짧은 한국어 리뷰에서도 긍정/부정 키워드를 충분히 잡아낸 것입니다.
 
 ```python
 !nvidia-smi
@@ -441,7 +443,7 @@ Training done — mean train loss: 0.2939
 **▶ 실행 결과**
 
 ```text
-Mon Jun 22 03:57:18 2026       
+Sun Sep 13 03:17:19 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -450,7 +452,7 @@ Mon Jun 22 03:57:18 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   62C    P0             61W /   70W |    2627MiB /  15360MiB |     55%      Default |
+| N/A   62C    P0             74W /   70W |    2627MiB /  15360MiB |     66%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -459,6 +461,6 @@ Mon Jun 22 03:57:18 2026
 |  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
 |        ID   ID                                                               Usage      |
 |=========================================================================================|
-|    0   N/A  N/A             661      C   /usr/bin/python3                       2624MiB |
+|    0   N/A  N/A            3189      C   /usr/bin/python3                       2624MiB |
 +-----------------------------------------------------------------------------------------+
 ```

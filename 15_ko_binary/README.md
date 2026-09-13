@@ -20,7 +20,7 @@ Ch 11 의 BERT binary 셋업을 한국어로 옮깁니다. 모델·loss·셋업�
 NSMC (네이버 영화 리뷰) — GitHub raw TSV 직접 다운로드 (`https://raw.githubusercontent.com/e9t/nsmc/master/`). 5K train / 1K eval 로 subsample. 거의 완벽 균형 (긍정/부정 ~50/50).
 
 ## 환경
-Google Colab **T4 GPU 필수**. 약 12분 (모델 다운로드 ~30s + BERT-base 110M × 2 epoch ~10분 + 평가/시각화).
+Google Colab **T4 GPU 필수**. 약 3분 (모델 다운로드 ~30s + BERT-base 110M × 2 epoch 약 1분 + 평가/시각화).
 
 ## 변화 추적
 
