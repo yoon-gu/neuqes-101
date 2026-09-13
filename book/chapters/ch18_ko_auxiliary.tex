@@ -115,7 +115,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 16 & klue/bert-base & WordPiece (한국어) & KLUE-YNAT (뉴스 7분류) & \inlinecode{Linear(H,\ 7)} & softmax & \inlinecode{CrossEntropyLoss} \\
 17 & klue/bert-base & 같음 & KLUE-YNAT 합성 multi-label & \inlinecode{Linear(H,\ 7)} & sigmoid (per-label) & \inlinecode{BCEWithLogitsLoss} (per-label) \\
 \textbf{18 \(\leftarrow\) 여기} & klue/bert-base + \textbf{보조 헤드} & 같음 & KLUE-YNAT 합성 multi-label + \textbf{활성 개수} & \textbf{메인(7) + 보조(1)} & 메인 sigmoid + 보조 없음 & \textbf{\texttt{BCE\ per-label\ +\ λ·MSE}} \\
-19 (다음 Phase 3) & (없음) --- 토크나이저 학습 & \textbf{직접 학습한 워드레벨} & (코퍼스) & --- & --- & --- \\
+19 (다음 Phase 3) & (없음) --- 토크나이저 학습 & \textbf{WordPiece + WordLevel} (둘 다 직접 학습) & (코퍼스) & --- & --- & --- \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}

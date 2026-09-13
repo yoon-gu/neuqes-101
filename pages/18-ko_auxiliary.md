@@ -28,7 +28,7 @@ Ch 14(영어 auxiliary, 별점 회귀 보조)의 한국어 버전입니다. 보�
 | 16 | klue/bert-base | WordPiece (한국어) | KLUE-YNAT (뉴스 7분류) | `Linear(H, 7)` | softmax | `CrossEntropyLoss` |
 | 17 | klue/bert-base | 같음 | KLUE-YNAT 합성 multi-label | `Linear(H, 7)` | sigmoid (per-label) | `BCEWithLogitsLoss` (per-label) |
 | **18 ← 여기** | klue/bert-base + **보조 헤드** | 같음 | KLUE-YNAT 합성 multi-label + **활성 개수** | **메인(7) + 보조(1)** | 메인 sigmoid + 보조 없음 | **`BCE per-label + λ·MSE`** |
-| 19 (다음 Phase 3) | (없음) — 토크나이저 학습 | **직접 학습한 워드레벨** | (코퍼스) | — | — | — |
+| 19 (다음 Phase 3) | (없음) — 토크나이저 학습 | **WordPiece + WordLevel** (둘 다 직접 학습) | (코퍼스) | — | — | — |
 
 전체 챕터 표는 [루트 README.md](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표)를 참고하세요.
 
