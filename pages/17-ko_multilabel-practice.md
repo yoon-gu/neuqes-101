@@ -69,7 +69,7 @@ GPU:             Tesla T4
 **▶ 실행 결과**
 
 ```text
-Sun Sep  6 06:04:12 2026       
+Sun Sep 13 04:10:35 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -78,7 +78,7 @@ Sun Sep  6 06:04:12 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   41C    P8             14W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   34C    P8             12W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -336,13 +336,13 @@ model.safetensors: downloading bytes:           |  0.00B
 [transformers] BertForSequenceClassification LOAD REPORT from: klue/bert-base
 Key                                        | Status     | 
 -------------------------------------------+------------+-
-cls.predictions.transform.dense.weight     | UNEXPECTED | 
 cls.seq_relationship.bias                  | UNEXPECTED | 
-cls.predictions.transform.dense.bias       | UNEXPECTED | 
-cls.seq_relationship.weight                | UNEXPECTED | 
+cls.predictions.transform.dense.weight     | UNEXPECTED | 
 cls.predictions.transform.LayerNorm.weight | UNEXPECTED | 
-cls.predictions.bias                       | UNEXPECTED | 
 cls.predictions.transform.LayerNorm.bias   | UNEXPECTED | 
+cls.predictions.transform.dense.bias       | UNEXPECTED | 
+cls.predictions.bias                       | UNEXPECTED | 
+cls.seq_relationship.weight                | UNEXPECTED | 
 classifier.bias                            | MISSING    | 
 classifier.weight                          | MISSING    | 
 
@@ -365,7 +365,7 @@ id2label:             {0: 'IT/Science', 1: 'Economy', 2: 'Society', 3: 'Life&Cul
 **▶ 실행 결과**
 
 ```text
-Sun Sep  6 06:04:34 2026       
+Sun Sep 13 04:11:02 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -374,7 +374,7 @@ Sun Sep  6 06:04:34 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   42C    P8             14W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   35C    P8             13W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -461,8 +461,8 @@ print(f"\nTraining done — mean train loss: {train_result.training_loss:.4f}")
 
 ```text
 Epoch  Training Loss  Validation Loss  Hamming Loss  Micro F1  Micro Precision  Micro Recall  Macro F1  Macro Precision  Macro Recall  Macro Auc  Runtime   Samples Per Second  Steps Per Second
-1      0.231119       0.256440         0.099000      0.796834  0.822142         0.773038      0.808625  0.814437         0.820321      0.953456   0.944200  1059.123000         33.892000
-2      0.176106       0.217527         0.077857      0.841616  0.860368         0.823663      0.847575  0.844402         0.854208      0.961867   0.693900  1441.224000         46.119000
+1      0.231119       0.256440         0.099000      0.796834  0.822142         0.773038      0.808625  0.814437         0.820321      0.953456   0.750300  1332.867000         42.652000
+2      0.176106       0.217527         0.077857      0.841616  0.860368         0.823663      0.847575  0.844402         0.854208      0.961867   0.911700  1096.820000         35.098000
 Training done — mean train loss: 0.2604
 ```
 
@@ -473,7 +473,7 @@ Training done — mean train loss: 0.2604
 **▶ 실행 결과**
 
 ```text
-Sun Sep  6 06:05:19 2026       
+Sun Sep 13 04:11:48 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -482,7 +482,7 @@ Sun Sep  6 06:05:19 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   63C    P0             36W /   70W |    2209MiB /  15360MiB |     72%      Default |
+| N/A   55C    P0             61W /   70W |    2209MiB /  15360MiB |     61%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -491,6 +491,6 @@ Sun Sep  6 06:05:19 2026
 |  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
 |        ID   ID                                                               Usage      |
 |=========================================================================================|
-|    0   N/A  N/A            1318      C   /usr/bin/python3                       2206MiB |
+|    0   N/A  N/A            1574      C   /usr/bin/python3                       2206MiB |
 +-----------------------------------------------------------------------------------------+
 ```

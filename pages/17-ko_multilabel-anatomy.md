@@ -16,7 +16,7 @@ for k, v in eval_metrics.items():
 
 ```text
 Training Loss  Validation Loss  Epoch  Hamming Loss  Micro F1  Micro Precision  Micro Recall  Macro F1  Macro Precision  Macro Recall  Macro Auc  Runtime   Samples Per Second  Steps Per Second
-0.176106       0.217527         2      0.077857      0.841616  0.860368         0.823663      0.847575  0.844402         0.854208      0.961867   0.682100  1466.153000         46.917000
+0.176106       0.217527         2      0.077857      0.841616  0.860368         0.823663      0.847575  0.844402         0.854208      0.961867   0.700900  1426.665000         45.653000
 klue/bert-base KLUE-YNAT multi-label — evaluation:
                eval_loss: 0.2175
        eval_hamming_loss: 0.0779
@@ -27,9 +27,9 @@ klue/bert-base KLUE-YNAT multi-label — evaluation:
     eval_macro_precision: 0.8444
        eval_macro_recall: 0.8542
           eval_macro_auc: 0.9619
-            eval_runtime: 0.6821
-  eval_samples_per_second: 1466.1530
-   eval_steps_per_second: 46.9170
+            eval_runtime: 0.7009
+  eval_samples_per_second: 1426.6650
+   eval_steps_per_second: 45.6530
 ```
 
 **결과 해석**
