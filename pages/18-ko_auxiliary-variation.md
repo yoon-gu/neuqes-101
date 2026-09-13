@@ -45,19 +45,19 @@ print(f"\nNo-aux (lambda=0) baseline training done — mean train loss: {train_r
 [transformers] BertModel LOAD REPORT from: klue/bert-base
 Key                                        | Status     |  | 
 -------------------------------------------+------------+--+-
-cls.predictions.bias                       | UNEXPECTED |  | 
-cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
 cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
 cls.seq_relationship.bias                  | UNEXPECTED |  | 
 cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
-cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
 cls.seq_relationship.weight                | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
 Epoch  Training Loss  Validation Loss  Hamming Loss  Micro F1  Micro Precision  Micro Recall  Macro F1  Macro Precision  Macro Recall  Macro Auc  Runtime   Samples Per Second  Steps Per Second
-1      0.204022       0.220846         0.089000      0.820616  0.830904         0.810580      0.814124  0.817488         0.821548      0.958082   0.923800  1082.527000         34.641000
-2      0.146857       0.193365         0.075429      0.849143  0.853042         0.845279      0.845101  0.837468         0.855197      0.963320   0.675400  1480.703000         47.382000
+1      0.204022       0.220846         0.089000      0.820616  0.830904         0.810580      0.814124  0.817488         0.821548      0.958082   0.877800  1139.189000         36.454000
+2      0.146857       0.193365         0.075429      0.849143  0.853042         0.845279      0.845101  0.837468         0.855197      0.963320   0.743800  1344.535000         43.025000
 No-aux (lambda=0) baseline training done — mean train loss: 0.2258
 ```
 
@@ -82,7 +82,7 @@ preds_main_no_aux = (probs_no_aux >= 0.5).astype(int)
 
 ```text
 Training Loss  Validation Loss  Epoch  Hamming Loss  Micro F1  Micro Precision  Micro Recall  Macro F1  Macro Precision  Macro Recall  Macro Auc  Runtime   Samples Per Second  Steps Per Second
-0.146857       0.193365         2      0.075429      0.849143  0.853042         0.845279      0.845101  0.837468         0.855197      0.963320   0.670100  1492.310000         47.754000
+0.146857       0.193365         2      0.075429      0.849143  0.853042         0.845279      0.845101  0.837468         0.855197      0.963320   0.735300  1359.922000         43.518000
 No-aux (lambda=0) baseline — main task metrics:
                eval_loss: 0.1934
        eval_hamming_loss: 0.0754
@@ -93,9 +93,9 @@ No-aux (lambda=0) baseline — main task metrics:
     eval_macro_precision: 0.8375
        eval_macro_recall: 0.8552
           eval_macro_auc: 0.9633
-            eval_runtime: 0.6701
-  eval_samples_per_second: 1492.3100
-   eval_steps_per_second: 47.7540
+            eval_runtime: 0.7353
+  eval_samples_per_second: 1359.9220
+   eval_steps_per_second: 43.5180
 ```
 
 ### 8-1. 메인 metric 비교 — λ=0 baseline vs λ=0.05 aux
@@ -129,9 +129,9 @@ print(cmp.round(4).to_string(index=False))
    macro_precision             0.8375                  0.8408                0.0033
       macro_recall             0.8552                  0.8600                0.0048
          macro_auc             0.9633                  0.9640                0.0007
-           runtime             0.6701                  0.6700               -0.0001
-samples_per_second          1492.3100               1492.6430                0.3330
-  steps_per_second            47.7540                 47.7650                0.0110
+           runtime             0.7353                  0.8782                0.1429
+samples_per_second          1359.9220               1138.6320             -221.2900
+  steps_per_second            43.5180                 36.4360               -7.0820
 ```
 
 **해석 가이드**
@@ -248,7 +248,7 @@ plt.show()
 아래는 이 노트북 안에서 *빠르게* 몇 점만 직접 돌려보고 싶을 때의 선택 코드입니다 (각 λ 마다 처음부터 재학습 — 시간 여유 있을 때만).
 
 ```python
-# 시간 여유 있을 때만 실행 — 각 lambda 마다 처음부터 다시 학습
+# 각 lambda 마다 처음부터 다시 학습 (3런, T4 에서 약 3분)
 LAMBDA_GRID = [0.0, 0.1, 1.0]   # 빠르게 보고 싶으면 [0.0, 0.1] 만
 RUN_LAMBDA_SWEEP = False        # ← True 로 바꿔 실행
 
@@ -296,13 +296,13 @@ if RUN_LAMBDA_SWEEP:
     print("\nLambda sweep result:")
     print(sweep_df.round(4).to_string(index=False))
 else:
-    print("Lambda sweep skipped. Set RUN_LAMBDA_SWEEP=True to run (~30 min extra on T4).")
+    print("Lambda sweep skipped. Set RUN_LAMBDA_SWEEP=True to run (~3 min extra on T4).")
 ```
 
 **▶ 실행 결과**
 
 ```text
-Lambda sweep skipped. Set RUN_LAMBDA_SWEEP=True to run (~30 min extra on T4).
+Lambda sweep skipped. Set RUN_LAMBDA_SWEEP=True to run (~3 min extra on T4).
 ```
 
 **해석 가이드 — 결과를 직접 보면**

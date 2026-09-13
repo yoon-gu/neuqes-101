@@ -73,7 +73,7 @@ GPU:             Tesla T4
 **▶ 실행 결과**
 
 ```text
-Wed Jun 24 21:40:30 2026       
+Fri Sep 11 07:57:34 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -82,7 +82,7 @@ Wed Jun 24 21:40:30 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   35C    P8             10W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   40C    P8             16W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -133,6 +133,8 @@ for ex in ds["train"].select(range(2)):
 **▶ 실행 결과**
 
 ```text
+ynat/train-00000-of-00001.parquet: downloading bytes:           |  0.00B            
+ynat/validation-00000-of-00001.parquet: downloading bytes:           |  0.00B            
 splits: ['train', 'validation']
 sizes: [('train', 45678), ('validation', 9107)]
 label names (7): ['IT과학', '경제', '사회', '생활문화', '세계', '스포츠', '정치']
@@ -352,7 +354,7 @@ class KoBertMultiTask(nn.Module):
         self.config = self.bert.config
 
     def forward(self, input_ids=None, attention_mask=None, token_type_ids=None,
-                labels=None, n_active=None, lambda_aux: float = 0.1):
+                labels=None, n_active=None, lambda_aux: float = 0.05):
         kwargs = {"input_ids": input_ids, "attention_mask": attention_mask}
         if token_type_ids is not None:
             kwargs["token_type_ids"] = token_type_ids
@@ -403,16 +405,17 @@ print(f"Aux  head: {model.count_head}")
 **▶ 실행 결과**
 
 ```text
+model.safetensors: downloading bytes:           |  0.00B            
 [transformers] BertModel LOAD REPORT from: klue/bert-base
 Key                                        | Status     |  | 
 -------------------------------------------+------------+--+-
-cls.predictions.bias                       | UNEXPECTED |  | 
-cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
 cls.predictions.transform.dense.bias       | UNEXPECTED |  | 
+cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
 cls.seq_relationship.bias                  | UNEXPECTED |  | 
 cls.predictions.transform.LayerNorm.bias   | UNEXPECTED |  | 
-cls.predictions.transform.LayerNorm.weight | UNEXPECTED |  | 
 cls.seq_relationship.weight                | UNEXPECTED |  | 
+cls.predictions.bias                       | UNEXPECTED |  | 
+cls.predictions.transform.dense.weight     | UNEXPECTED |  | 
 
 Notes:
 - UNEXPECTED:	can be ignored when loading from different task/architecture; not ok if you expect identical arch.
@@ -433,7 +436,7 @@ Aux  head: Linear(in_features=768, out_features=1, bias=True)
 **▶ 실행 결과**
 
 ```text
-Wed Jun 24 21:40:58 2026       
+Fri Sep 11 07:58:01 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -442,7 +445,7 @@ Wed Jun 24 21:40:58 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   36C    P8             13W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   41C    P8             16W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -467,7 +470,7 @@ Ch 14 와의 차이 — Ch 14 는 `outputs.loss` (자동 매핑 메인 BCE) 를 
 
 ```python
 class AuxTrainer(Trainer):
-    def __init__(self, *args, lambda_aux: float = 0.1, **kwargs):
+    def __init__(self, *args, lambda_aux: float = 0.05, **kwargs):
         super().__init__(*args, **kwargs)
         self.lambda_aux = lambda_aux
 
@@ -561,8 +564,8 @@ print(f"\nWith-aux training done — mean train loss: {train_result_aux.training
 
 ```text
 Epoch  Training Loss  Validation Loss  Hamming Loss  Micro F1  Micro Precision  Micro Recall  Macro F1  Macro Precision  Macro Recall  Macro Auc  Runtime   Samples Per Second  Steps Per Second
-1      0.212057       0.235212         0.091429      0.814385  0.830769         0.798635      0.812249  0.816811         0.818841      0.958448   0.748700  1335.611000         42.740000
-2      0.154351       0.200851         0.073857      0.852328  0.855995         0.848692      0.849294  0.840769         0.859991      0.963988   0.671300  1489.724000         47.671000
+1      0.212057       0.235212         0.091429      0.814385  0.830769         0.798635      0.812249  0.816811         0.818841      0.958448   0.751300  1331.096000         42.595000
+2      0.154351       0.200851         0.073857      0.852328  0.855995         0.848692      0.849294  0.840769         0.859991      0.963988   0.844100  1184.697000         37.910000
 With-aux training done — mean train loss: 0.2369
 ```
 
@@ -575,7 +578,7 @@ With-aux training done — mean train loss: 0.2369
 **▶ 실행 결과**
 
 ```text
-Wed Jun 24 21:41:41 2026       
+Fri Sep 11 07:58:43 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -584,7 +587,7 @@ Wed Jun 24 21:41:41 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   57C    P0             34W /   70W |    2189MiB /  15360MiB |     75%      Default |
+| N/A   62C    P0             40W /   70W |    2189MiB /  15360MiB |     37%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -593,6 +596,6 @@ Wed Jun 24 21:41:41 2026
 |  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
 |        ID   ID                                                               Usage      |
 |=========================================================================================|
-|    0   N/A  N/A           16123      C   /usr/bin/python3                       2186MiB |
+|    0   N/A  N/A            1743      C   /usr/bin/python3                       2186MiB |
 +-----------------------------------------------------------------------------------------+
 ```
