@@ -2,7 +2,7 @@
 
 | 이름 | 한 줄 설명 | 다음 챕터에서 |
 |---|---|---|
-| `LogisticRegression()` | 데이터가 multi-class 면 multinomial(softmax+CE) 자동, binary 면 sigmoid+BCE (이번 챕터엔 K=2) | Ch 5 에서 K=5 로 확장, Ch 11 BERT multi-class 에서 같은 패러다임 |
+| `LogisticRegression()` | 데이터가 multi-class 면 multinomial(softmax+CE) 자동, binary 면 sigmoid+BCE (이번 챕터엔 K=2) | Ch 5 에서 K=5 로 확장, Ch 12 BERT multi-class 에서 같은 패러다임 |
 | `sklearn.metrics.log_loss` | CE/BCE 평가 함수 (multi-class 호환) | — |
 
 ## 체크포인트 질문
@@ -37,7 +37,7 @@ $$\text{CE} = -\sum_{k=0}^{1} y_k \log \hat p_k = -[y \log \hat p_1 + (1-y) \log
 - **sigmoid+BCE (방식 A, num_labels=1)**: sklearn 기본, 통계학·의학 분야 표준. 출력 1개라 "확률 하나"라는 해석이 단순.
 - **softmax+CE (방식 B, num_labels=2)**: BERT/PyTorch 기본, 딥러닝 표준. 다중 클래스로 일반화하기 자연스럽고 라이브러리 코드가 단순(같은 헤드/같은 loss로 K가 2이든 N이든 호환).
 
-이 커리큘럼의 BERT 챕터(Ch 9-14)는 방식 B가 기본이라 이번 챕터에서 미리 익숙해지는 게 의미 있습니다. Ch 10·11에서 두 방식을 BERT로 별도 학습해 비교합니다.
+이 커리큘럼의 BERT 챕터에서는 Ch 11·12가 방식 B, Ch 10·13·14가 방식 A 계열입니다(Ch 9는 회귀라 해당 없음). 딥러닝 표준은 방식 B이므로 이번 챕터에서 미리 익숙해지는 게 의미 있습니다. Ch 10·11에서 두 방식을 BERT로 별도 학습해 비교합니다.
 
 ### Q3. (이론) softmax 합=1 제약은 어디서 오나요?
 
@@ -83,12 +83,13 @@ OneVsRestClassifier(LogisticRegression()).fit(X, Y)   # Y 가 1D 면 OvR multi-c
 가능하고, `AutoModelForSequenceClassification` 인자 한 줄 차이입니다.
 
 ```python
-# 방식 A: num_labels=1, BCE 자동 적용
+# 방식 A: num_labels=1 + BCEWithLogitsLoss (Ch 10 과 동일한 설정)
 AutoModelForSequenceClassification.from_pretrained(
     "distilbert-base-uncased",
     num_labels=1,
-    problem_type="single_label_classification",  # 또는 자동
+    problem_type="multi_label_classification",  # num_labels=1 이어도 BCE 매핑엔 이 값을 씁니다
 )
+# 라벨은 float 텐서여야 합니다 (0.0 / 1.0)
 
 # 방식 B: num_labels=2, CE 자동 적용 (BERT 표준)
 AutoModelForSequenceClassification.from_pretrained(
