@@ -99,7 +99,7 @@ $$L = \frac{1}{N} \sum_{i=1}^{N} (y_i - \hat y_i)^2$$
 PyTorch에서는 `nn.MSELoss`, sklearn에서는 같은 개념이 `LinearRegression`에 내장돼 있고 평가 함수로는 `mean_squared_error`로 따로 부릅니다.
 
 ```python
-# PyTorch (Ch 8 이후 등장)
+# PyTorch (Ch 9 BERT 회귀에서 등장)
 criterion = nn.MSELoss()
 loss = criterion(pred, target)
 
@@ -165,7 +165,7 @@ md(r"""## 🚀 실습: 별점 1-5를 그대로 회귀하기
 
 $$\hat y = w^\top x + b$$
 
-활성화 함수 없음, 출력 범위 제한 없음. 정답 $y$와의 MSE를 최소화하도록 $w, b$를 푸는 게 학습의 전부입니다 (sklearn은 정규방정식으로 한 번에 풉니다).""")
+활성화 함수 없음, 출력 범위 제한 없음. 정답 $y$와의 MSE를 최소화하도록 $w, b$를 푸는 게 학습의 전부입니다 (sklearn은 최소제곱법으로 한 번에 풉니다 — 딥러닝처럼 epoch를 돌며 조금씩 배우지 않습니다).""")
 
 # ----- 10. fit -----
 code(r"""model = LinearRegression()
@@ -197,7 +197,9 @@ plt.show()""")
 # ----- 12. 해부 -----
 md(r"""## 🔬 해부: "출력은 그냥 숫자다"
 
-위 분포를 보면 모델이 0.4점이나 5.7점 같은 **별점 범위 밖** 의 값도 뱉습니다. 이상해 보이지만 자연스러운 결과입니다.
+먼저 위 학습 결과에서 짚어둘 것이 있습니다. `Train MSE`가 `0.0000`으로 찍힌 것은 모델이 좋아서가 아니라 **feature 10,000 > 샘플 4,000**이라 학습 데이터를 정확히 통과하는 해가 존재하기 때문입니다 — 10,000차원이 4,000개 샘플을 거의 완벽히 외운 과적합 신호입니다. 그래서 Test MSE와의 간격이 큽니다.
+
+이제 예측값 자체를 봅니다. 위 분포를 보면 모델이 **음수나 7점대** 같은 **별점 범위 밖** 의 값도 뱉습니다 — 정확한 값은 실행 환경에 따라 조금씩 달라지지만, 1 미만과 5 초과가 함께 나온다는 점은 항상 같습니다. 이상해 보이지만 자연스러운 결과입니다.
 
 `LinearRegression`이 학습한 것은 단지 "MSE를 최소화하는 가중합"이지, "출력값이 1과 5 사이여야 한다"는 제약을 듣지 않습니다. 모델은 활성화 함수 없이 $w^\top x + b$를 그대로 뱉을 뿐이라 음수도 5 초과도 모두 가능한 결과입니다.
 
@@ -260,9 +262,9 @@ md(r"""## 📦 이번 챕터에 등장한 라이브러리
 
 | 이름 | 한 줄 설명 | 다음 챕터에서 |
 |---|---|---|
-| `sklearn.linear_model.LinearRegression` | MSE 최소화 1차원 회귀 | sklearn 모델 라인업의 시작, BERT는 Ch 8부터 같은 역할 |
-| `sklearn.model_selection.train_test_split` | 훈련/평가 분할 | Ch 3-5에서 계속 사용 |
-| `sklearn.metrics.mean_squared_error` | MSE 평가 | Ch 8 BERT 회귀에서도 평가 지표로 등장 |
+| `sklearn.linear_model.LinearRegression` | MSE 최소화 1차원 회귀 | sklearn 모델 라인업의 시작, BERT는 Ch 9부터 같은 역할 |
+| `sklearn.model_selection.train_test_split` | 훈련/평가 분할 | Ch 3-6에서 계속 사용 |
+| `sklearn.metrics.mean_squared_error` | MSE 평가 | Ch 9 BERT 회귀에서도 평가 지표로 등장 |
 | `sklearn.metrics.mean_absolute_error` | MAE 평가 (참고용) | — |
 | `sklearn.metrics.r2_score` | 결정계수 R² | — |""")
 
@@ -272,7 +274,8 @@ md(r"""## 🎯 체크포인트 질문
 1. `LinearRegression`은 왜 활성화 함수가 없나요? 회귀에서 활성화 함수가 빠지면 어떤 자유도가 생기나요?
 2. MSE를 수식으로 적어보세요. 큰 오차에 큰 페널티를 주는 이유는 어느 항에서 오나요?
 3. 별점을 [0, 1]로 정규화한 모델의 예측값이 여전히 그 범위를 벗어나는 이유는 무엇인가요?
-4. 같은 데이터를 정규화 없이 학습한 모델과 정규화 후 학습한 모델은 (후처리로 되돌렸을 때) Test MSE가 거의 같습니다. 왜 그런가요?""")
+4. 같은 데이터를 정규화 없이 학습한 모델과 정규화 후 학습한 모델은 (후처리로 되돌렸을 때) Test MSE가 거의 같습니다. 왜 그런가요?
+5. `Train MSE`는 0에 가까운데 `Test MSE`는 1.5대입니다. 이 간격은 어디서 오나요? feature 수와 샘플 수를 비교해 답해보세요.""")
 
 # ----- 20. FAQ -----
 md(r"""## ❓ FAQ
@@ -305,9 +308,13 @@ mean_absolute_error(y_test, y_pred_test)
 
 ### Q3. (실무) 학습이 너무 빨리 끝나는데 정상인가요?
 
-네, 정상입니다. `LinearRegression`은 SGD가 아니라 **정규방정식(normal equation)** 으로 한 번에 답을 내는 닫힌 형태 풀이입니다.
+네, 정상입니다. `LinearRegression`은 SGD로 조금씩 학습하지 않고 **최소제곱법(least squares)** 으로 풉니다.
+
+교과서의 정규방정식
 
 $$w = (X^\top X)^{-1} X^\top y$$
+
+는 $X^\top X$가 가역일 때(대개 샘플 수 > feature 수)의 형태입니다. 다만 이 챕터는 feature 10,000 > 샘플 4,000이라 $X^\top X$가 특이행렬이어서 역행렬이 존재하지 않습니다. sklearn은 역행렬 대신 최소제곱법(dense는 SVD 기반 `lstsq`, sparse는 lsqr 계열)으로 **L2 norm이 가장 작은 해**를 찾습니다.
 
 5,000 샘플 × 10,000 feature(sparse) 정도는 1초 안에 끝납니다. BERT 파인튜닝은 같은 데이터로 5-10분 걸리는 것과 비교하면 수백 배 빠릅니다 — 모델 표현력이 다르기 때문입니다.
 

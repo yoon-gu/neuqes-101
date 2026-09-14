@@ -196,7 +196,9 @@ mean_squared_error(y, model.predict(X))
 
 식~\eqref{eq:ch02-02}은 선형 모델의 출력이 특성 벡터와 가중치의 선형 결합임을 나타냅니다.
 
-활성화 함수 없음, 출력 범위 제한 없음. 정답 \(y\)와의 MSE를 최소화하도록 \(w, b\)를 푸는 게 학습의 전부입니다 (sklearn은 정규방정식으로 한 번에 풉니다).
+활성화 함수 없음, 출력 범위 제한 없음. 정답 \(y\)와의 MSE를 최소화하도록 \(w, b\)를 푸는 게 학습의 전부입니다 (sklearn은 최소제곱법으로 한 번에 풉니다 --- 딥러닝처럼 epoch를 돌며 조금씩 배우지 않습니다).
+
+교과서의 정규방정식 \(w = (X^\top X)^{-1} X^\top y\)는 \(X^\top X\)가 가역일 때(대개 샘플 수 > feature 수)의 형태입니다. 다만 이 장은 feature 10,000 > 샘플 4,000이라 \(X^\top X\)가 특이행렬이어서 역행렬이 존재하지 않습니다 --- sklearn은 역행렬 대신 최소제곱법으로 \textbf{L2 norm이 가장 작은 해}를 찾습니다.
 
 
 
@@ -257,7 +259,9 @@ Test  R²:  0.2139
 
 \section{해부: “출력은 비활성 스칼라 출력입니다”}
 
-위 분포를 보면 모델이 0.4점이나 5.7점 같은 \textbf{별점 범위 밖} 의 값도 출력합니다. 이상해 보이지만 자연스러운 결과입니다.
+먼저 위 학습 결과에서 짚어둘 것이 있습니다. \inlinecode{Train MSE}가 \inlinecode{0.0000}으로 찍힌 것은 모델이 좋아서가 아니라 \textbf{feature 10,000 > 샘플 4,000}이라 학습 데이터를 정확히 통과하는 해가 존재하기 때문입니다 --- 10,000차원이 4,000개 샘플을 거의 완벽히 외운 과적합 신호입니다. 그래서 Test MSE와의 간격이 큽니다.
+
+이제 예측값 자체를 봅니다. 위 분포를 보면 모델이 \textbf{음수나 7점대} 같은 \textbf{별점 범위 밖} 의 값도 출력합니다 --- 정확한 값은 실행 환경에 따라 조금씩 달라지지만, 1 미만과 5 초과가 함께 나온다는 점은 항상 같습니다. 이상해 보이지만 자연스러운 결과입니다.
 
 \inlinecode{LinearRegression}이 학습한 것은 단지 “MSE를 최소화하는 가중합”이지, “출력값이 1과 5 사이여야 한다”는 제약을 포함하지 않습니다. 모델은 활성화 함수 없이 \(w^\top x + b\)를 그대로 출력할 뿐이라 음수도 5 초과도 모두 가능한 결과입니다.
 
@@ -341,9 +345,9 @@ Test MSE (no normalization):    1.5565
 이름 & 한 줄 설명 & 다음 장에서 \\
 \midrule
 
-\inlinecode{sklearn.linear\_model.LinearRegression} & MSE 최소화 1차원 회귀 & sklearn 모델 라인업의 시작, BERT는 \ref{ch:08}장부터 같은 역할 \\
-\inlinecode{sklearn.model\_selection.train\_test\_split} & 훈련/평가 분할 & \ref{ch:03}--\ref{ch:05}장에서 계속 사용 \\
-\inlinecode{sklearn.metrics.mean\_squared\_error} & MSE 평가 & \ref{ch:08}장 BERT 회귀에서도 평가 지표로 등장 \\
+\inlinecode{sklearn.linear\_model.LinearRegression} & MSE 최소화 1차원 회귀 & sklearn 모델 라인업의 시작, BERT는 \ref{ch:09}장부터 같은 역할 \\
+\inlinecode{sklearn.model\_selection.train\_test\_split} & 훈련/평가 분할 & \ref{ch:03}--\ref{ch:06}장에서 계속 사용 \\
+\inlinecode{sklearn.metrics.mean\_squared\_error} & MSE 평가 & \ref{ch:09}장 BERT 회귀에서도 평가 지표로 등장 \\
 \inlinecode{sklearn.metrics.mean\_absolute\_error} & MAE 평가 (참고용) & --- \\
 \inlinecode{sklearn.metrics.r2\_score} & 결정계수 R² & --- \\
 \bottomrule
@@ -364,6 +368,8 @@ Test MSE (no normalization):    1.5565
   MSE를 수식으로 적어보세요. 큰 오차에 큰 페널티를 주는 이유는 어느 항에서 오나요?
 \item
   별점을 {[}0, 1{]}로 정규화한 모델의 예측값이 여전히 그 범위를 벗어나는 이유는 무엇인가요?
+\item
+  \inlinecode{Train MSE}는 0에 가까운데 \inlinecode{Test MSE}는 1.5대입니다. 이 간격은 어디서 오나요? feature 수와 샘플 수를 비교해 답해보세요.
 \item
   같은 데이터를 정규화 없이 학습한 모델과 정규화 후 학습한 모델은 (후처리로 되돌렸을 때) Test MSE가 거의 같습니다. 왜 그런가요?
 \end{enumerate}
