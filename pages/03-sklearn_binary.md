@@ -57,7 +57,7 @@ $$L = -\frac{1}{N}\sum_{i=1}^{N}\left[\,y_i \log \hat p_i + (1 - y_i)\log(1 - \h
 **`BCEWithLogits`의 "Logits" 의미**: 모델 마지막 단의 raw 점수(logit) $z = w^\top x + b$를 sigmoid에 넣기 *전* 의 값을 의미합니다. PyTorch의 `BCEWithLogitsLoss`는 logit을 받아 내부에서 sigmoid + BCE를 한 번에 계산하는데, 따로 sigmoid를 통과시킨 뒤 BCE를 적용하는 것보다 수치적으로 안정적입니다.
 
 ```python
-# PyTorch (Ch 9 이후)
+# PyTorch (Ch 10 BERT binary에서 등장)
 criterion = nn.BCEWithLogitsLoss()
 loss = criterion(logits, targets.float())   # logits: 활성화 전 raw 점수
 
