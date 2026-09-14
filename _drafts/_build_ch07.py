@@ -608,7 +608,7 @@ md(r"""> 📒 **더 깊이 보고 싶다면 — 부록 노트북**
 | `model.config.max_position_embeddings` | 입력 토큰 수 상한 | `truncation=True, max_length=...` 결정 |
 | `model.config.num_labels` | 분류 헤드 출력 클래스 수 | 모델 로드 시 명시: `num_labels=5` |
 | `model.config.id2label` / `label2id` | 클래스 인덱스 ↔ 이름 매핑 | 추론 결과 해석, 학습 후 모델 카드 친절도 |
-| `model.config.problem_type` | `"regression"` / `"single_label_classification"` / `"multi_label_classification"` — `Trainer` 가 자동 loss 결정 | Ch 9·11·12에서 명시적으로 사용 |
+| `model.config.problem_type` | `"regression"` / `"single_label_classification"` / `"multi_label_classification"` — `Trainer` 가 자동 loss 결정 | Ch 9-13에서 명시적으로 사용 (특히 Ch 10의 num_labels=1 트릭이 대표 사례) |
 
 **실무 패턴**: 새 모델을 받자마자 `print(model.config)` 또는 `cfg.to_dict()` 로 내용을 먼저 본다 → 입력/출력 가정을 확인하고 토크나이저·`Trainer` 설정과 일치시킴.
 
