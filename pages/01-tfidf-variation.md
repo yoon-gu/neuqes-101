@@ -2,14 +2,14 @@
 
 **TF-IDF**는 두 항을 곱해 이 문제를 다룹니다.
 
-$$\text{tfidf}(t, d) = \underbrace{\text{tf}(t, d)}_{\text{문서 } d \text{에서 } t \text{의 빈도}} \cdot \underbrace{\log\frac{1 + N}{1 + \text{df}(t)}}_{\text{희귀도 가중치 (IDF)}}$$
+$$\text{tfidf}(t, d) = \underbrace{\text{tf}(t, d)}_{\text{문서 } d \text{에서 } t \text{의 빈도}} \cdot \underbrace{\left(\log\frac{1 + N}{1 + \text{df}(t)} + 1\right)}_{\text{희귀도 가중치 (IDF)}}$$
 
 - `tf`: 한 문서에서 단어가 얼마나 자주 나왔는가
-- `idf`: 그 단어가 **얼마나 적은 문서에 등장했는가** (모든 문서에 흔할수록 0에 가까워짐)
+- `idf`: 그 단어가 **얼마나 적은 문서에 등장했는가** (모든 문서에 흔할수록 **1에 가까워짐 — 이것이 최솟값**)
 
 직관: "이 단어가 이 문서에서 자주 나오면서 동시에 다른 문서엔 흔하지 않다면, 이 문서를 특징짓는 단어"라는 가중치입니다.
 
-$$\text{tfidf}(t, d) = \underbrace{\text{tf}(t, d)}_{\text{문서 } d \text{에서 } t \text{의 빈도}} \cdot \underbrace{\log\frac{1 + N}{1 + \text{df}(t)} + 1}_{\text{희귀도 가중치 (IDF)}}$$
+sklearn은 마지막에 문서(행)별로 L2 정규화를 합니다. 그래서 아래 표의 값이 0~1 범위입니다 — 손으로 계산한 tf × idf 를 그 문서 벡터의 L2 norm으로 나눈 값입니다.
 
 ```python
 tfidf = TfidfVectorizer(max_features=10000)
