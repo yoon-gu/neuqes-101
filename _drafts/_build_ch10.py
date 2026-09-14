@@ -84,7 +84,7 @@ md(r"""## 🔄 변경점 (Diff from Ch 9)
 
 ### `num_labels=1` + `problem_type="multi_label_classification"` 의 트릭
 
-`Trainer` 의 자동 loss 매핑은 이렇게 작동합니다 ([Ch 9에서 본 표](../09_bert_regression/09_bert_regression.ipynb)).
+`Trainer` 의 자동 loss 매핑은 이렇게 작동합니다 (이번 챕터에서 정리하는 표입니다).
 
 | `problem_type` | 자동 적용 loss | num_labels | 라벨 형식 |
 |---|---|---|---|
