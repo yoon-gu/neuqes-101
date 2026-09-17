@@ -5,11 +5,11 @@
 | `trl.GRPOTrainer` | GRPO 특화 trainer (rollout → verifier 채점 → group advantage → 정책 갱신 자동) | **새로 등장** (Ch 30 은 `DPOTrainer`) |
 | `trl.GRPOConfig` | `GRPOTrainer` 설정 (`TrainingArguments` 상속 + `num_generations`·`max_completion_length`·`beta` 등) | **새로 등장** |
 | `reward_funcs` (verifier) | 생성 답을 채점하는 callable (또는 list). `(completions, **kwargs)` → `list[float]` | **새로 등장** (DPO 는 preference 데이터, reward 함수 없음) |
-| `GRPOConfig(num_generations=4)` | group size — 한 prompt 당 생성 답 개수 (rollout) | **새로 등장** |
+| `GRPOConfig(num_generations=8)` | group size — 한 prompt 당 생성 답 개수 (rollout) | **새로 등장** |
 | `GRPOConfig(beta=0.04)` | KL 제약 강도. 작은 값으로 reference(=SFT 모델) 근처에 묶어 collapse·hacking 완화 (0 = ref-free) | **새로 등장** (DPO 의 beta 와 의미 비슷) |
 | group relative advantage | `(r - mean) / (std + eps)` — group 평균이 baseline (critic 대체) | **새로 등장** (DPO 는 쌍 비교, advantage 없음) |
 | `model.generate(num_return_sequences=k)` | rollout — 한 prompt 에 여러 답 생성 | **새로 등장** (DPO 는 생성 불필요) |
-| `PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2", ...)` | KoGPT2 BBPE (AutoTokenizer 함정 회피) | **공유** (Ch 27 이후 고정) |
+| `PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2", ...)` | KoGPT2 Character BPE (AutoTokenizer 함정 회피) | **공유** (Ch 27 이후 고정) |
 
 > `trl` 은 버전마다 `GRPOTrainer` / `GRPOConfig` API 변동이 큽니다 (`max_prompt_length` 같은 인자가 버전에 따라 없음). 본 노트북은 *버전 간 안정적인 핵심 경로* (`num_generations` + `reward_funcs` + `max_completion_length` + `prompt` 컬럼) 만 사용합니다. 설치된 `trl` 버전은 셋업 셀 출력에서 확인하세요.
 
@@ -66,7 +66,7 @@ group 평균이 *baseline (critic 대체)* 이므로, group size 가 *baseline �
 - **group 큼** (예: 8-16): baseline 안정 + 다양성 확보 → advantage 정밀. 단 *rollout 비용 = group size 에 비례* (T4 시간 ↑)
 
 ```python
-grpo_config.num_generations = 4   # T4 출발점. 시간 여유 있으면 8 로
+grpo_config.num_generations = 8   # 본 노트북 기본값. 더 작게(4) 하면 rollout 이 가벼워지지만 baseline 추정이 불안정
 ```
 
 > 직관: group 은 *"이 prompt 에서 동료 몇 명에게 물어볼까"* 입니다. 많을수록 *평균이 믿을 만* 하지만 *물어보는 비용* 이 듭니다.
@@ -114,7 +114,7 @@ PPO 는 *actor + critic + reward model + reference* **4 모델** 을 동시에 �
 ```python
 # PPO: actor + critic + reward model + reference (4 모델) -> T4 초과
 # GRPO: policy + 작은 KL 앵커(reference=SFT 모델) + verifier(함수) -> T4 가능
-GRPOConfig(num_generations=4, beta=0.04, use_vllm=False)   # 작은 KL 앵커 + HF generate
+GRPOConfig(num_generations=8, beta=0.04, use_vllm=False)   # 작은 KL 앵커 + HF generate
 ```
 
 > 단 GRPO 도 *rollout (매 step 생성)* 은 PPO 와 공유하므로, *생성 비용* 은 듭니다. T4 에서는 group·step·generation 길이를 작게 잡아 통제합니다.
@@ -123,27 +123,27 @@ GRPOConfig(num_generations=4, beta=0.04, use_vllm=False)   # 작은 KL 앵커 + 
 
 GRPO 효과는 *출발 모델이 가끔이라도 정답을 내는지* 에 달렸습니다:
 
-- **base 에서 출발 (본 노트북)**: 모델이 산술을 거의 못 풀면 group 이 *전부 오답* → std=0 → *advantage 0 (학습 신호 없음)*. 정석은 *SFT 모델에서 출발* (이미 어느 정도 푸는 상태)
+- **약한 base + 어려운 task (본 노트북)**: §2.5 SFT 워밍스타트로 출발점을 만들지만, 2자리 산술은 125M 에 어려워 baseline 이 낮습니다(≈0.19). rollout 대부분이 오답이라 밀어 올릴 신호가 희박해, GRPO 를 걸어도 held-out 정확도가 유의하게 오르지 않습니다(§5·§7). *SFT 워밍스타트조차 없이 base 로* 바로 돌리면 group 이 *전부 오답* → std=0 → advantage 0 으로 아예 학습이 안 됩니다
 - **작은 모델**: reasoning 능력 자체가 약해 GRPO 로 끌어올릴 *상한* 이 낮음 (R1 은 큰 모델이라 가능)
 - **짧은 학습**: 방향을 보기엔 충분하나 극적 변화는 어려움
 
-> 본 챕터의 목표는 *완성된 reasoning 모델* 이 아니라 ***GRPO 가 무엇을 최적화하는가 (verifier reward + group advantage) 를 눈으로 확인*** 하는 것입니다. §3 의 손계산과 §5 의 정확도 변화가 핵심. 실전은 *SFT 모델 + 큰 모델 + 많은 rollout + 엄격한 verifier* 의 영역입니다.
+> 본 챕터의 목표는 *완성된 reasoning 모델* 이 아니라 ***GRPO 가 무엇을 최적화하는가 (verifier reward + group advantage) 를 눈으로 확인*** 하는 것입니다. §3 의 손계산, §6 의 reward·KL 곡선, 그리고 §5·§7 이 말하는 *왜 정확도가 안 따라오는가* 가 핵심. 실전은 *SFT 모델 + 큰 모델 + 많은 rollout + 엄격한 verifier* 의 영역입니다.
 
 ## 왜 reward 가 잘 안 올랐는가 — GRPO 의 전제조건
 
-§5 의 정확도 막대를 보면 GRPO 후 정확도가 SFT 베이스라인 위로 **소폭 올랐습니다**(0.875 → 0.891). 극적이진 않지만 분명한 **양(+)의 개선** 이고, 이건 *그냥 얻어진 게 아닙니다*. 사실 이 산술 task 에 GRPO 를 *순진하게* 돌리면 정확도가 **오히려 떨어지거나 collapse** 합니다 — group reward 가 전부 0 이거나 전부 1 로 쏠려 학습 신호가 사라지기 때문입니다. 우리가 §2.5 의 **SFT 워밍스타트**(능력 부여)와 §4.5 의 **난이도 필터**(group 분산 확보)로 *바로 이 전제조건* 을 먼저 충족시켰기에 GRPO 가 비로소 작동했습니다. 이번 절에서 그 전제조건의 정체 — *왜 group 안에 정답·오답이 섞여야 하는가* — 를 짚습니다.
+§5 의 정확도 막대를 보면 GRPO 후 정확도가 SFT 베이스라인에서 **유의하게 오르지 않았습니다**(≈0.19 → ≈0.18, Δ 가 ±1 SE 안이라 통계적으로 *차이 없음*). 이건 *실패가 아니라* GRPO 의 전제조건을 그대로 보여주는 정직한 결과입니다. §2.5 **SFT 워밍스타트**(능력 부여)와 §4.5 **난이도 필터**(group 분산 확보) 덕분에 GRPO 가 *작동은* 했지만(§6 에서 reward_std>0 로 확인), 2자리 산술이 125M KoGPT2 에 너무 어려워 *정확도까지 끌어올리진* 못했습니다. 만약 이 두 전제조건조차 없이 base 로 바로 GRPO 를 돌렸다면 group reward 가 전부 0/전부 1 로 쏠려 학습 신호 자체가 사라졌을 겁니다. 이번 절에서 그 이유 — *GRPO 는 없는 능력을 새로 만들지 못한다* — 를 짚습니다.
 
 ### 증상 — group reward 가 대부분 0
 
-base KoGPT2 (125M) 는 산술을 거의 못 풉니다. 한 prompt 에 4개 답을 생성하면 *대부분 전부 오답* → group reward 가 `[0, 0, 0, 0]` 입니다. §3 의 손계산에서 봤듯이:
+2자리 산술은 125M KoGPT2 에 어렵습니다. 한 prompt 에 답을 여러 개 생성하면 *대부분 전부 오답* → group reward 가 `[0, 0, 0, 0]` 이 되기 쉽습니다. §3 의 손계산에서 봤듯이 (std 는 표본표준편차 ddof=1):
 
 | group reward | mean | std | advantage | 학습 신호 |
 |---|---|---|---|---|
 | `[0, 0, 0, 0]` (전부 오답) | 0 | 0 | **전부 0** | **없음** |
 | `[1, 1, 1, 1]` (전부 정답) | 1 | 0 | **전부 0** | **없음** |
-| `[1, 0, 1, 0]` (섞임) | 0.5 | 0.5 | `[+1,-1,+1,-1]` | **있음** |
+| `[1, 0, 1, 0]` (섞임) | 0.5 | 0.58 | `[+0.87,-0.87,+0.87,-0.87]` | **있음** |
 
-base KoGPT2 의 GRPO 는 거의 매번 첫 번째 줄 (`[0,0,0,0]`) 에 빠집니다.
+SFT 워밍스타트 *없이* base 로 바로 GRPO 를 돌리면 거의 매번 첫 번째 줄(`[0,0,0,0]`)에 빠집니다 — 그래서 §2.5 에서 SFT 를 먼저 했습니다. 그럼에도 base 정확도가 낮아(≈0.19) 난이도 필터를 통과한 prompt 조차 group 이 자주 한쪽으로 쏠려, GRPO 가 *정확도를 끌어올릴* 만큼의 일관된 신호를 얻지 못합니다.
 
 ### 근본 원인 — GRPO 는 "무에서 유" 를 만들지 못한다
 
@@ -166,13 +166,12 @@ GRPO 의 advantage 는 $A_i = (r_i - \text{mean}) / (\text{std} + \varepsilon)$ 
 
 ### 부록에서 reward 가 실제로 오르는 모습 확인
 
-이 레버들을 적용해 reward 가 *실제로 오르는* GRPO 는 부록 [`31_grpo_appendix.ipynb`](./31_grpo_appendix.ipynb) 에서 봅니다. 부록은:
+이 챕터의 GRPO 여정과 그 도착점은 **두 부록** 에서 더 깊이 봅니다:
 
-- **(2) 더 강한 base** — `Qwen/Qwen2.5-0.5B-Instruct` (Ch 29 에서 쓴, 산술을 *가끔 맞히는* 모델) 로 교체
-- **(4) format reward** — correctness reward + format reward 두 개를 조합해 *0 만 나오는 것* 을 방지
-- **HPO** — `num_generations`·`temperature`·`beta`·`learning_rate` 가 reward·수렴에 주는 영향
+- **디버깅 여정** — [`31_grpo_appendix.ipynb`](./31_grpo_appendix.ipynb): base 로 바로 GRPO(실패) → SFT 워밍스타트 → 난이도 필터로 신호를 되살리는 *실제 과정* 을 단계별로 재현합니다(본 챕터와 같은 설정·seed).
+- **reward 를 *실제로* 올리는 GRPO** — [`appendix_qwen_grpo_hpo.ipynb`](./appendix_qwen_grpo_hpo.ipynb): **(2) 더 강한 base**(`Qwen/Qwen2.5-0.5B-Instruct`, 산술을 *가끔 맞히는* 모델) + **(4) format reward**(correctness + format 조합으로 *0 만 나오는 것* 방지) + **HPO**(`num_generations`·`temperature`·`beta`·`learning_rate` 가 reward·수렴에 주는 영향)를 적용해, *본 챕터의 KoGPT2 와 대비* 되도록 **reward 가 실제로 오르는** 셋업을 시연합니다.
 
-을 적용해, *본 챕터의 KoGPT2 와 대비* 되도록 **reward 전·후 차이가 명확히 보이는** 셋업을 시연합니다. 본문은 *GRPO 의 전제조건을 (안 오르는 현상으로) 체감* 하는 챕터, 부록은 *그 전제조건을 충족시켜 reward 를 올리는* 챕터입니다.
+본문은 *GRPO 의 전제조건을 (정확도가 안 오르는 현상으로) 체감* 하는 챕터, 부록은 *그 전제조건을 충족시켜 reward 를 올리는* 챕터입니다.
 
 > 한 문장 요약: ***GRPO 는 모델이 이미 가끔 성공하는 능력을 증폭할 뿐, 무에서 유를 만들지 못한다. 그래서 RL 전에 SFT·충분한 base·format reward 로 "출발점" 을 먼저 마련해야 한다.***
 
