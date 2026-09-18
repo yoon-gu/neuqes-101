@@ -358,7 +358,7 @@ Max diff: 2.22e-16  (numerical noise)
 이름 & 한 줄 설명 & 다음 장에서 \\
 \midrule
 
-\inlinecode{LogisticRegression()} & 데이터가 multi-class 면 multinomial(softmax+CE) 자동, binary 면 sigmoid+BCE (이 장엔 K=2) & \ref{ch:05}장에서 K=5 로 확장, \ref{ch:11}장 BERT multi-class 에서 같은 패러다임 \\
+\inlinecode{LogisticRegression()} & 데이터가 multi-class 면 multinomial(softmax+CE) 자동, binary 면 sigmoid+BCE (이 장엔 K=2) & \ref{ch:05}장에서 K=5 로 확장, \ref{ch:12}장 BERT multi-class 에서 같은 패러다임 \\
 \inlinecode{sklearn.metrics.log\_loss} & CE/BCE 평가 함수 (multi-class 호환) & --- \\
 \bottomrule
 \end{tabular}
@@ -426,7 +426,7 @@ Max diff: 2.22e-16  (numerical noise)
   \textbf{softmax+CE (방식 B, num\_labels=2)}: BERT/PyTorch 기본, 딥러닝 표준. 다중 클래스로 일반화하기 자연스럽고 라이브러리 코드가 단순(같은 헤드/같은 loss로 K가 2이든 N이든 호환).
 \end{itemize}
 
-이 커리큘럼의 BERT 장(\ref{ch:09}--\ref{ch:14}장)는 방식 B가 기본이라 이 장에서 미리 익숙해지는 게 의미 있습니다. \ref{ch:10}·\ref{ch:11}장에서 두 방식을 BERT로 별도 학습해 비교합니다.
+이 커리큘럼의 BERT 장에서는 \ref{ch:11}·\ref{ch:12}장이 방식 B, \ref{ch:10}·\ref{ch:13}·\ref{ch:14}장이 방식 A 계열입니다(\ref{ch:09}장은 회귀라 해당 없음). 딥러닝 표준은 방식 B이므로 이 장에서 미리 익숙해지는 게 의미 있습니다. \ref{ch:10}·\ref{ch:11}장에서 두 방식을 BERT로 별도 학습해 비교합니다.
 
 \end{faqBox}
 

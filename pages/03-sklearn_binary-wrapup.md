@@ -5,7 +5,7 @@
 | `sklearn.linear_model.LogisticRegression` | sigmoid + BCE 내장 이진/다중 분류 | Ch 5에서 multi-class로 확장 |
 | `sklearn.metrics.classification_report` | accuracy/precision/recall/F1 한 번에 | 분류 챕터마다 계속 사용 |
 | `sklearn.metrics.confusion_matrix` | 혼동 행렬 | 다중 분류에서도 활용 |
-| `sklearn.metrics.log_loss` | BCE 평가 | Ch 9 이후 BERT binary에서도 |
+| `sklearn.metrics.log_loss` | BCE 평가 | Ch 10·11 BERT binary에서도 |
 | `sklearn.metrics.precision_recall_fscore_support` | 임계값별 지표 추적 | — |
 
 ## 체크포인트 질문
@@ -30,7 +30,7 @@
 ### Q2. (이론) sigmoid 대신 다른 활성화 함수(tanh, softmax)를 쓰면 어떻게 되나요?
 
 - **tanh**: 출력 범위가 $[-1, 1]$입니다. 라벨을 -1/+1로 매핑하고 hinge loss 등을 쓰면 SVM과 비슷한 모델이 됩니다. 수학적으로는 $\tanh(z) = 2\sigma(2z) - 1$이라 sigmoid의 단순 변환이지만 라벨 컨벤션이 다릅니다.
-- **softmax**: 다중 클래스용 일반화. binary에 softmax를 쓰려면 출력 차원을 2로 늘리고 라벨도 one-hot으로 바꿔야 합니다 → 이게 정확히 Ch 11에서 다룰 "방식 B"입니다 (방식 A=sigmoid 1차원, 방식 B=softmax 2차원이 수학적으로 동등).
+- **softmax**: 다중 클래스용 일반화. binary에 softmax를 쓰려면 출력 차원을 2로 늘리고 `CrossEntropyLoss`로 바꾸면 됩니다 — **라벨은 그대로 정수 0/1**을 씁니다. sklearn은 정수 인덱스만 받고(2D one-hot을 넘기면 `ValueError`), PyTorch는 정수 인덱스와 클래스 확률을 모두 받지만 관례는 정수 인덱스입니다. 이게 정확히 **Ch 4**에서 다룰 "방식 B"이고(방식 A=sigmoid 1차원, 방식 B=softmax 2차원이 수학적으로 동등), 같은 동등성을 BERT로 다시 확인하는 것이 Ch 10·11입니다.
 - **ReLU/identity**: 출력이 [0, 1] 보장이 안 됩니다 — 음수도 1 초과도 가능 → BCE의 $\log$가 정의되지 않습니다.
 
 ### Q3. (실무) 클래스 불균형이 있으면 어떻게 하나요?
@@ -78,12 +78,15 @@ print(f"Youden's J 기준 최적 임계값: {best_thr:.3f}")
 
 ### Q6. (실무) sklearn `LogisticRegression`은 정규화(L2)가 기본인데 끄려면?
 
-`penalty=None`(0.22 이상) 또는 `C` 값을 매우 크게 설정합니다.
+`C` 를 매우 크게 두면 됩니다 — 사실상 페널티가 없는 것과 같습니다.
 
 ```python
-LogisticRegression(penalty=None, max_iter=1000)        # 정규화 없음
-LogisticRegression(C=1e10, max_iter=1000)              # 거의 정규화 없음 (이전 버전 호환)
+import numpy as np
+LogisticRegression(C=np.inf, max_iter=1000)            # 정규화 없음
+LogisticRegression(C=1e10, max_iter=1000)              # 거의 정규화 없음
 ```
+
+예전에는 `penalty=None`(sklearn **1.2** 이상, 그 전에는 문자열 `penalty='none'`)을 썼지만, **`penalty` 인자 자체가 1.8에서 deprecated 되어 1.10에서 제거**됩니다. 공식 안내대로 `C=np.inf`로 쓰는 편이 앞으로도 안전합니다.
 
 기본값은 `C=1.0`(L2 정규화)이고, 텍스트 분류처럼 feature가 많은 경우 정규화가 있어야 일반화 성능이 안정적입니다. 실무에선 거의 끄지 않습니다.
 
@@ -108,7 +111,7 @@ print(f"\nLPM accuracy (threshold 0.5): {acc_lpm:.4f}")
 print(f"LogReg accuracy:               {accuracy_score(y_test, y_pred):.4f}")
 ```
 
-힌트: LPM은 출력이 [0, 1]을 안 지키지만, 임계값 0.5로 자르면 분류 성능 자체는 LogReg와 비슷할 수도 있습니다. 다만 "출력이 확률"이라는 해석을 잃습니다.
+힌트: LPM은 출력이 [0, 1]을 안 지킬 뿐 아니라, 이 셋업(feature 10,000 > 샘플 3,232)에서는 정확도도 **눈에 띄게 떨어집니다** — 실행해 보면 LogReg보다 **약 7%p 낮게** 나옵니다. 무엇보다 "출력이 확률"이라는 해석을 잃습니다.
 
 ## 다음 챕터 예고
 

@@ -393,7 +393,7 @@ BERT 계열은 `[CLS]`/`[SEP]`/`[PAD]`/`[UNK]` 4종을 명확히 구분합니다
 
 - BERT는 BookCorpus + Wikipedia로 학습됐고, 영어 중심 어휘.
 - GPT-2는 더 다양한 웹 텍스트(Reddit 등)로 학습됐고 BPE라 어휘가 더 풍부.
-- 한국어 BERT(`klue/bert-base`, Ch 14)는 한국어 코퍼스로 다시 학습돼 한국어 어휘를 보유 — 같은 문장 `"안녕"` 도 영어 BERT면 `[UNK]` 또는 글자 단위로 쪼개지지만 한국어 BERT엔 한 토큰으로 들어갑니다.
+- 한국어 BERT(`klue/bert-base`, Ch 15)는 한국어 코퍼스로 다시 학습돼 한국어 어휘를 보유 — 같은 문장 `"안녕"` 도 영어 BERT면 `[UNK]` 또는 글자 단위로 쪼개지지만 한국어 BERT엔 한 토큰으로 들어갑니다.
 
 **실무 함의**: 모델을 갈아 끼울 때 토크나이저도 *반드시 짝* 으로 바꿔야 합니다. `AutoTokenizer.from_pretrained(model_name)` 의 model_name 이 모델 자체와 일치해야 하는 이유 — 학습 때 본 어휘와 추론 때 입력 어휘가 같아야 모델이 의미를 이해합니다.
 
@@ -444,7 +444,7 @@ problem_type:            None    (None → auto-inferred from num_labels)
 
 > 📒 **더 깊이 보고 싶다면 — 부록 노트북**
 >
-> [`appendix_model_config.ipynb`](./appendix_model_config.ipynb) 에서 다음을 다룹니다:
+> [`appendix_model_config.ipynb`](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/07_bert_pipeline/appendix_model_config.ipynb) 에서 다음을 다룹니다:
 > - `PretrainedConfig` 의 정체와 클래스 계층 (BertConfig / GPT2Config / T5Config / ViTConfig …)
 > - `AutoConfig.from_pretrained` 로 *가중치 없이* config만 로드
 > - 5종 모델(bert / distilbert / gpt2 / t5 / roberta) config를 한 표에 비교 + ViT(비전) 사례
@@ -465,7 +465,7 @@ problem_type:            None    (None → auto-inferred from num_labels)
 | `model.config.max_position_embeddings` | 입력 토큰 수 상한 | `truncation=True, max_length=...` 결정 |
 | `model.config.num_labels` | 분류 헤드 출력 클래스 수 | 모델 로드 시 명시: `num_labels=5` |
 | `model.config.id2label` / `label2id` | 클래스 인덱스 ↔ 이름 매핑 | 추론 결과 해석, 학습 후 모델 카드 친절도 |
-| `model.config.problem_type` | `"regression"` / `"single_label_classification"` / `"multi_label_classification"` — `Trainer` 가 자동 loss 결정 | Ch 9·11·12에서 명시적으로 사용 |
+| `model.config.problem_type` | `"regression"` / `"single_label_classification"` / `"multi_label_classification"` — `Trainer` 가 자동 loss 결정 | Ch 9-13에서 명시적으로 사용 (특히 Ch 10의 num_labels=1 트릭이 대표 사례) |
 
 **실무 패턴**: 새 모델을 받자마자 `print(model.config)` 또는 `cfg.to_dict()` 로 내용을 먼저 본다 → 입력/출력 가정을 확인하고 토크나이저·`Trainer` 설정과 일치시킴.
 

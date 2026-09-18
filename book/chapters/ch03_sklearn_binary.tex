@@ -301,7 +301,7 @@ Row sums (should be 1): [1. 1. 1. 1. 1.]
 \inlinecode{sklearn.linear\_model.LogisticRegression} & sigmoid + BCE 내장 이진/다중 분류 & \ref{ch:05}장에서 multi-class로 확장 \\
 \inlinecode{sklearn.metrics.classification\_report} & accuracy/precision/recall/F1 한 번에 & 분류 장마다 계속 사용 \\
 \inlinecode{sklearn.metrics.confusion\_matrix} & 혼동 행렬 & 다중 분류에서도 활용 \\
-\inlinecode{sklearn.metrics.log\_loss} & BCE 평가 & \ref{ch:09}장 이후 BERT binary에서도 \\
+\inlinecode{sklearn.metrics.log\_loss} & BCE 평가 & \ref{ch:10}·\ref{ch:11}장 BERT binary에서도 \\
 \inlinecode{sklearn.metrics.precision\_recall\_fscore\_support} & 임계값별 지표 추적 & --- \\
 \bottomrule
 \end{tabular}
@@ -441,7 +441,7 @@ print(
 )
 \end{lstlisting}
 
-힌트: LPM은 출력이 {[}0, 1{]}을 안 지키지만, 임계값 0.5로 자르면 분류 성능 자체는 LogReg와 비슷할 수도 있습니다. 다만 “출력이 확률”이라는 해석을 잃습니다.
+힌트: LPM은 출력이 {[}0, 1{]}을 안 지킬 뿐 아니라, 이 셋업(feature 10,000 > 샘플 3,232)에서는 정확도도 \textbf{눈에 띄게 떨어집니다} --- 실행해 보면 LogReg보다 \textbf{약 7\%p 낮게} 나옵니다. 무엇보다 “출력이 확률”이라는 해석을 잃습니다.
 
 
 

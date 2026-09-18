@@ -2,9 +2,9 @@
 
 | 이름 | 한 줄 설명 | 다음 챕터에서 |
 |---|---|---|
-| `sklearn.linear_model.LinearRegression` | MSE 최소화 1차원 회귀 | sklearn 모델 라인업의 시작, BERT는 Ch 8부터 같은 역할 |
-| `sklearn.model_selection.train_test_split` | 훈련/평가 분할 | Ch 3-5에서 계속 사용 |
-| `sklearn.metrics.mean_squared_error` | MSE 평가 | Ch 8 BERT 회귀에서도 평가 지표로 등장 |
+| `sklearn.linear_model.LinearRegression` | MSE 최소화 1차원 회귀 | sklearn 모델 라인업의 시작, BERT는 Ch 9부터 같은 역할 |
+| `sklearn.model_selection.train_test_split` | 훈련/평가 분할 | Ch 3-6에서 계속 사용 |
+| `sklearn.metrics.mean_squared_error` | MSE 평가 | Ch 9 BERT 회귀에서도 평가 지표로 등장 |
 | `sklearn.metrics.mean_absolute_error` | MAE 평가 (참고용) | — |
 | `sklearn.metrics.r2_score` | 결정계수 R² | — |
 
@@ -14,6 +14,7 @@
 2. MSE를 수식으로 적어보세요. 큰 오차에 큰 페널티를 주는 이유는 어느 항에서 오나요?
 3. 별점을 [0, 1]로 정규화한 모델의 예측값이 여전히 그 범위를 벗어나는 이유는 무엇인가요?
 4. 같은 데이터를 정규화 없이 학습한 모델과 정규화 후 학습한 모델은 (후처리로 되돌렸을 때) Test MSE가 거의 같습니다. 왜 그런가요?
+5. `Train MSE`는 0에 가까운데 `Test MSE`는 1.5대입니다. 이 간격은 어디서 오나요? feature 수와 샘플 수를 비교해 답해보세요.
 
 ## FAQ
 
@@ -45,9 +46,13 @@ mean_absolute_error(y_test, y_pred_test)
 
 ### Q3. (실무) 학습이 너무 빨리 끝나는데 정상인가요?
 
-네, 정상입니다. `LinearRegression`은 SGD가 아니라 **정규방정식(normal equation)** 으로 한 번에 답을 내는 닫힌 형태 풀이입니다.
+네, 정상입니다. `LinearRegression`은 SGD로 조금씩 학습하지 않고 **최소제곱법(least squares)** 으로 풉니다.
+
+교과서의 정규방정식
 
 $$w = (X^\top X)^{-1} X^\top y$$
+
+는 $X^\top X$가 가역일 때(대개 샘플 수 > feature 수)의 형태입니다. 다만 이 챕터는 feature 10,000 > 샘플 4,000이라 $X^\top X$가 특이행렬이어서 역행렬이 존재하지 않습니다. sklearn은 역행렬 대신 최소제곱법(dense는 SVD 기반 `lstsq`, sparse는 lsqr 계열)으로 **L2 norm이 가장 작은 해**를 찾습니다.
 
 5,000 샘플 × 10,000 feature(sparse) 정도는 1초 안에 끝납니다. BERT 파인튜닝은 같은 데이터로 5-10분 걸리는 것과 비교하면 수백 배 빠릅니다 — 모델 표현력이 다르기 때문입니다.
 

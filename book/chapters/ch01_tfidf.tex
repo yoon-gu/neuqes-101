@@ -88,12 +88,12 @@
 
 \begin{booktable}{1장 변화추적표}{tab:ch01-01}
 \begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{@{}llllll@{}}
+\begin{tabular}{@{}lllllll@{}}
 \toprule
-Ch & 모델 & 토크나이저 & Output Head & Activation & Loss \\
+Ch & 모델 & 토크나이저 & 데이터 & Output Head & Activation & Loss \\
 \midrule
 
-\textbf{1 \(\leftarrow\) 여기} & (TF-IDF) & \inlinecode{TfidfVectorizer()} & --- & --- & --- \\
+\textbf{1 \(\leftarrow\) 여기} & (TF-IDF) & \inlinecode{TfidfVectorizer()} & Yelp 5,000 샘플 & --- & --- & --- \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -253,7 +253,7 @@ Tokenized: ['love', 'using', 'hugging', 'face']
 
 \begin{equation}
 \label{eq:ch01-01}
-\text{tfidf}(t, d) = \underbrace{\text{tf}(t, d)}_{\text{문서 } d \text{에서 } t \text{의 빈도}} \cdot \underbrace{\log\frac{1 + N}{1 + \text{df}(t)}}_{\text{희귀도 가중치 (IDF)}}
+\text{tfidf}(t, d) = \underbrace{\text{tf}(t, d)}_{\text{문서 } d \text{에서 } t \text{의 빈도}} \cdot \underbrace{\left(\log\frac{1 + N}{1 + \text{df}(t)} + 1\right)}_{\text{희귀도 가중치 (IDF)}}
 \end{equation}
 
 식~\eqref{eq:ch01-01}은 단어 빈도와 희귀도 가중치를 결합한 TF-IDF의 정의입니다.
@@ -263,10 +263,12 @@ Tokenized: ['love', 'using', 'hugging', 'face']
 \item
   \inlinecode{tf}: 한 문서에서 단어가 얼마나 자주 나왔는가
 \item
-  \inlinecode{idf}: 그 단어가 \textbf{얼마나 적은 문서에 등장했는가} (모든 문서에 흔할수록 0에 가까워짐)
+  \inlinecode{idf}: 그 단어가 \textbf{얼마나 적은 문서에 등장했는가} (모든 문서에 흔할수록 \textbf{1에 가까워짐 --- 이것이 최솟값})
 \end{itemize}
 
 직관: “이 단어가 이 문서에서 자주 나오면서 동시에 다른 문서엔 흔하지 않다면, 이 문서를 특징짓는 단어”라는 가중치입니다.
+
+sklearn은 마지막에 문서(행)별로 L2 정규화를 합니다. 그래서 아래 표의 값이 0\textasciitilde{}1 범위입니다 --- 손으로 계산한 tf \(\times\) idf 를 그 문서 벡터의 L2 norm으로 나눈 값입니다.
 
 
 
@@ -302,9 +304,9 @@ shape: (5000, 10000)
 이름 & 한 줄 설명 & 다음 장에서 \\
 \midrule
 
-\inlinecode{datasets} & Hugging Face의 데이터셋 로딩 라이브러리 (Apache Arrow 기반) & \ref{ch:07}장에서 깊게 본다 \\
+\inlinecode{datasets} & Hugging Face의 데이터셋 로딩 라이브러리 (Apache Arrow 기반) & \ref{ch:08}장에서 깊게 본다 \\
 \inlinecode{sklearn.feature\_extraction.text.CountVectorizer} & 횟수 벡터화 & 이후 장의 비교 기준 \\
-\inlinecode{sklearn.feature\_extraction.text.TfidfVectorizer} & TF-IDF 벡터화 & \ref{ch:02}--\ref{ch:05}장에서 입력으로 계속 사용 \\
+\inlinecode{sklearn.feature\_extraction.text.TfidfVectorizer} & TF-IDF 벡터화 & \ref{ch:02}--\ref{ch:06}장에서 입력으로 계속 사용 \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -379,7 +381,7 @@ IDF(Inverse Document Frequency)는 \textbf{“이 단어가 얼마나 희귀한�
 
 shape \inlinecode{(5000,\ 10000)} 행렬을 dense(\inlinecode{float64})로 만들면 \texttt{5000\ ×\ 10000\ ×\ 8\ byte\ ≈\ 400MB}입니다. 칸 대부분이 0인데 그 0까지 다 저장합니다.
 
-sparse(CSR) 행렬은 0이 아닌 칸만 \inlinecode{(값,\ 열\ 인덱스)}로 저장합니다. nnz가 50만이면 대략 \texttt{500000\ ×\ (8\ +\ 4)\ ≈\ 6MB} --- 70배 가까이 절약됩니다.
+sparse(CSR) 행렬은 0이 아닌 칸만 \inlinecode{(값,\ 열\ 인덱스)}로 저장합니다. 이 장의 nnz는 약 40만이므로 대략 \texttt{400000\ ×\ (8\ +\ 4)\ ≈\ 4.9MB} --- 80배 넘게 절약됩니다.
 
 \Needspace{10\baselineskip}
 \begin{lstlisting}

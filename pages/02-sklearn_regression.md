@@ -54,7 +54,7 @@ $$L = \frac{1}{N} \sum_{i=1}^{N} (y_i - \hat y_i)^2$$
 PyTorch에서는 `nn.MSELoss`, sklearn에서는 같은 개념이 `LinearRegression`에 내장돼 있고 평가 함수로는 `mean_squared_error`로 따로 부릅니다.
 
 ```python
-# PyTorch (Ch 8 이후 등장)
+# PyTorch (Ch 9 BERT 회귀에서 등장)
 criterion = nn.MSELoss()
 loss = criterion(pred, target)
 

@@ -208,18 +208,18 @@ Per-batch shape (batch_size=8, varies):
 # Ch 12 multi-class, Ch 13 multi-label
 # 모두 같은 골격. 바뀌는 건 num_labels / problem_type / 데이터뿐.
 
-# 토크나이저 + 데이터셋 (이번 Ch 8에서 한 작업)
+# 1) 토크나이저 + 데이터셋 (이번 Ch 8에서 한 작업)
 tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
 def tok(b): return tokenizer(b["text"], truncation=True, max_length=128)
 train_ds = small.map(tok, batched=True).remove_columns(["text"])
-# padding 없이 둠. DataCollator가 매 배치 알아서 처리
+# ← padding 없이 둠. DataCollator가 매 배치 알아서 처리
 
-# 모델 (Ch 7의 from_pretrained 패턴)
+# 2) 모델 (Ch 7의 from_pretrained 패턴)
 model = AutoModelForSequenceClassification.from_pretrained(
     "distilbert-base-uncased", num_labels=1, problem_type="regression",
 )
 
-# Trainer 한 줄로 묶음
+# 3) Trainer 한 줄로 묶음
 trainer = Trainer(
     model=model,
     args=TrainingArguments(...),
@@ -538,12 +538,10 @@ Observation: at non-padding positions, input_ids and labels match.
 
 `collate_fn` 의 시그니처는 단순합니다 — 입력은 *샘플 dict의 리스트*, 출력은 *batch dict* (각 키에 stacked 텐서).
 
-위에서 본 `DataCollatorWithPadding` 와 `DataCollatorForLanguageModeling` 은 `transformers` 가 task별로 미리 만들어준 도구입니다. 그러나 *우리 task* 가 표준 형식에서 벗어나면 (예: Ch 14 보조 loss처럼 라벨이 두 종류) 직접 함수를 작성해야 합니다.
-
 ```python
 def custom_collate(batch_list):
     # 샘플 dict 리스트 → batch dict.
-    # Ch 13 보조 loss를 미리 흉내내 라벨을 두 종류로 만들어 둠:
+    # Ch 14 보조 loss를 미리 흉내내 라벨을 두 종류로 만들어 둠:
     #   - main_label: 0-4 정수 (분류 라벨)
     #   - aux_score:  0.0-1.0 float (정규화한 별점)
 

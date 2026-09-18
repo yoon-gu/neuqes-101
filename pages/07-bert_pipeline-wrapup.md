@@ -72,7 +72,7 @@ os.environ["HF_HOME"] = "/content/drive/MyDrive/hf_cache"
 # 사전학습 어휘에 없는 단어를 어떻게 처리하는지 보기
 tokenizer.tokenize("Tokenization")     # ['token', '##ization']
 tokenizer.tokenize("antidisestablishmentarianism")
-# ['anti', '##dis', '##est', '##ab', '##lish', '##ment', '##arian', '##ism']
+# → ['anti', '##dis', '##est', '##ab', '##lish', '##ment', '##arian', '##ism']
 ```
 
 `##` 은 "이 토큰은 *이전 토큰의 연속*"이라는 표시입니다.

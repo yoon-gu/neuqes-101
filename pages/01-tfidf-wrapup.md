@@ -2,9 +2,9 @@
 
 | 이름 | 한 줄 설명 | 다음 챕터에서 |
 |---|---|---|
-| `datasets` | Hugging Face의 데이터셋 로딩 라이브러리 (Apache Arrow 기반) | Ch 7에서 깊게 본다 |
+| `datasets` | Hugging Face의 데이터셋 로딩 라이브러리 (Apache Arrow 기반) | Ch 8에서 깊게 본다 |
 | `sklearn.feature_extraction.text.CountVectorizer` | 횟수 벡터화 | 이후 챕터의 비교 기준 |
-| `sklearn.feature_extraction.text.TfidfVectorizer` | TF-IDF 벡터화 | Ch 2-5에서 입력으로 계속 사용 |
+| `sklearn.feature_extraction.text.TfidfVectorizer` | TF-IDF 벡터화 | Ch 2-6에서 입력으로 계속 사용 |
 
 ## 체크포인트 질문
 
@@ -87,13 +87,13 @@ tokenizer = Mecab().morphs  # 함수: str -> list[str]
 TfidfVectorizer(tokenizer=tokenizer, token_pattern=None)
 ```
 
-이 커리큘럼에서는 Phase 2(Ch 15-18, 한국어)에서 `klue/bert-base`의 한국어 WordPiece 토크나이저를, Phase 3(Ch 19부터)에서 형태소 기반 워드레벨 토크나이저를 직접 다룹니다.
+이 커리큘럼에서는 Phase 2(Ch 15-18, 한국어)에서 `klue/bert-base`의 한국어 WordPiece 토크나이저를, Phase 3(Ch 19)에서 **WordPiece와 WordLevel 토크나이저를 직접 학습해 비교**합니다. 위 형태소 분석기 방식은 이 커리큘럼에서 다루지 않지만, Ch 19에서 공백 기준 WordLevel이 한국어에서 어휘가 폭증하고 UNK가 급증하는 모습을 직접 보게 됩니다.
 
 ### Q6. (이론) sparse 행렬이 dense 행렬보다 메모리에 유리한 이유는 무엇인가요? `.toarray()`로 바꾸면 왜 메모리가 폭발할 수 있나요?
 
 shape `(5000, 10000)` 행렬을 dense(`float64`)로 만들면 `5000 × 10000 × 8 byte ≈ 400MB`입니다. 칸 대부분이 0인데 그 0까지 다 저장합니다.
 
-sparse(CSR) 행렬은 0이 아닌 칸만 `(값, 열 인덱스)`로 저장합니다. nnz가 50만이면 대략 `500000 × (8 + 4) ≈ 6MB` — 70배 가까이 절약됩니다.
+sparse(CSR) 행렬은 0이 아닌 칸만 `(값, 열 인덱스)`로 저장합니다. 이 챕터의 nnz는 약 40만이므로 대략 `400000 × (8 + 4) ≈ 4.9MB` — 80배 넘게 절약됩니다.
 
 ```python
 print(f"sparse nbytes ≈ {(X_count.data.nbytes + X_count.indices.nbytes + X_count.indptr.nbytes) / 1e6:.1f} MB")
