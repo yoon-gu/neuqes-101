@@ -2,12 +2,9 @@
 
 ### 변형 1. group size (`num_generations`)
 
-group 크기는 baseline (group 평균) 추정의 안정성과 rollout 비용을 동시에 좌우합니다. 키우면 advantage 가 정밀해지지만 T4 시간이 그만큼 늘어납니다. 한 줄만 바꿔 가며 출발점을 잡아 보세요.
-
 ```python
-# grpo_config.num_generations = 8   # group 키우면 baseline (group 평균) 추정이 안정 -> advantage 정밀
-# # 단 rollout 비용 = group size 에 비례 (T4 시간 증가)
-# 4 가 T4 출발점. group 안에 정답·오답이 섞이려면 너무 작지 않아야 함 (2 는 비교가 빈약).
+# grpo_config.num_generations = 4   # group 줄이면 rollout 비용 감소, 대신 baseline(group 평균) 추정이 불안정
+# # 8 이 본 노트북 기본값. group 안에 정답·오답이 섞이려면 너무 작지 않아야 함 (2 는 비교가 빈약).
 ```
 
 ### 변형 2. format reward 추가 — 여러 verifier 조합
@@ -25,7 +22,7 @@ trainer = GRPOTrainer(model=policy, reward_funcs=[reward_correct, reward_format]
 
 ### 변형 3. 코드 verifier
 
-산술 대신 *코드 생성* task 면, verifier 가 *생성 코드를 실행해 테스트 통과 여부* 를 채점합니다:
+글자 세기 대신 *코드 생성* task 면, verifier 가 *생성 코드를 실행해 테스트 통과 여부* 를 채점합니다:
 
 ```python
 def reward_code(completions, test_cases, **kwargs):
@@ -33,11 +30,9 @@ def reward_code(completions, test_cases, **kwargs):
     return [1.0 if run_tests_safely(c, t) else 0.0 for c, t in zip(completions, test_cases)]
 ```
 
-> 코드 실행은 *보안 샌드박스* 가 필수이고 T4 + 30분 룰엔 무거워 본 챕터는 산술로 한정했습니다. 원리는 동일 — *자동 검증 → reward*.
+> 코드 실행은 *보안 샌드박스* 가 필수이고 T4 + 30분 룰엔 무거워 본 챕터는 글자 세기로 한정했습니다. 원리는 동일 — *자동 검증 → reward*.
 
 ### 변형 4. GSM8K 등 실제 수학 데이터
-
-산술 대신 실제 수학 문제 데이터로 옮기면 알고리즘은 그대로지만 정답 추출이 까다로워집니다. GSM8K 는 정답이 `#### 42` 형식으로 들어 있어, verifier 의 정답 파싱을 그 형식에 맞춰야 합니다.
 
 ```python
 # from datasets import load_dataset
