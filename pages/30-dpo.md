@@ -23,7 +23,7 @@
 |---|---|---|---|---|---|
 | 27 | KoGPT2 (125M) | 한국어 TinyStories 30K | next-token | `CrossEntropyLoss` - continual pretraining | `Trainer` |
 | 28 | KoGPT2 (125M, SFT) | KoAlpaca instruction-response 쌍 | response 토큰 (답변만) | `CrossEntropyLoss` (response-only) - SFT | `SFTTrainer` |
-| 29 | Ch 28 SFT 모델 (평가) | 분야별 벤치마크 | - (평가만) | - (`lm-evaluation-harness`) | - |
+| 29 | Qwen2.5-0.5B-Instruct (+ Ch 28 SFT 모델 대조) | KoBEST/산술 subset | - (평가만) | - (`lm-evaluation-harness`) | - |
 | **30 ← 여기** | **SFT 모델 (policy) + frozen reference** | **preference 쌍 (chosen / rejected)** | **chosen 선호 ↑ / rejected 선호 ↓** | **DPO sigmoid loss (β=0.1)** | **`DPOTrainer`** |
 | 31 (다음) | SFT 모델 + verifier | verifiable-reward prompts (수학·코드) | group relative advantage | `GRPO loss` | `GRPOTrainer` |
 

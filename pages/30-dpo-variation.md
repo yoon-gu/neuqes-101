@@ -7,7 +7,7 @@
 ```python
 # dpo_config.beta = 0.5    # 제약 강함 -> reference 근처에 묶여 안전하지만 정렬 느림
 # dpo_config.beta = 0.05   # 제약 느슨 -> 빨리 정렬되지만 collapse 위험 (reference 에서 멀어짐)
-# 1 이 무난한 출발점. reward accuracy 가 안 오르면 beta 를 약간 낮춰 보세요 (제약 완화).
+# 0.1 이 무난한 출발점. reward accuracy 가 안 오르면 beta 를 약간 낮춰 보세요 (제약 완화).
 ```
 
 ### 변형 2. 더 많은 preference / SFT 모델에서 출발

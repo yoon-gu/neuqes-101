@@ -678,7 +678,7 @@ AFTER DPO - reward margin (n=64)
 
 **결과 해석**
 
-평균 margin 이 0.000 → 12.712 로 크게 양수 이동했고 reward accuracy 가 0.500 → 0.844 로 올랐습니다. base KoGPT2 + 짧은 학습임에도 policy 가 chosen 을 rejected 보다 분명히 높게 매기게 되어, DPO 의 선호 정렬이 작동했음을 보여 줍니다.
+평균 margin 이 0.000 → 12.717 로 크게 양수 이동했고 reward accuracy 가 0.500 → 0.844 로 올랐습니다. base KoGPT2 + 짧은 학습임에도 policy 가 chosen 을 rejected 보다 분명히 높게 매기게 되어, DPO 의 선호 정렬이 작동했음을 보여 줍니다.
 
 **해석 가이드 — preference alignment 의 증거**
 
