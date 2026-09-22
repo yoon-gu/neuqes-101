@@ -3,7 +3,9 @@
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/30_dpo/30_dpo.ipynb)
 
 ## 한 줄 목표
-Ch 28 (KoGPT2 SFT) 의 *다음 단계*. SFT 가 *지시를 따르게* (행동 정렬) 만들었다면, **DPO (Direct Preference Optimization)** 는 SFT 모델을 *preference 쌍 (chosen / rejected)* 으로 학습해 **사람의 선호에 맞춰 정렬** 합니다 — *좋은 답의 확률은 올리고, 나쁜 답은 내림*. 바뀌는 건 *데이터 (instruction-response → preference 쌍)* + *trainer (`SFTTrainer` → `trl.DPOTrainer`)* + *loss (next-token CE → DPO sigmoid)* + *frozen reference 모델 추가*.
+Ch 28 (KoGPT2 SFT) 의 *다음 단계*. SFT 가 *지시를 따르게* (행동 정렬) 만들었다면, **DPO (Direct Preference Optimization)** 는 SFT 모델을 *preference 쌍 (chosen / rejected)* 으로 학습해 **사람의 선호에 맞춰 정렬** 합니다 — *좋은 답의 확률은 올리고, 나쁜 답은 내림*. 바뀌는 건 *데이터 (instruction-response → preference 쌍)* + *trainer (`SFTTrainer` → `trl.DPOTrainer`)* + *loss (next-token CE → DPO sigmoid)* + *frozen reference 모델 추가* + *모델 (KoGPT2 → `Qwen2.5-0.5B-Instruct`)*.
+
+> ⚠️ **policy 를 KoGPT2 → `Qwen2.5-0.5B-Instruct` 로 올립니다.** DPO 는 *이미 지시를 따르는 SFT/Instruct 모델* 에서 출발해야 *선호만* 깨끗이 정렬됩니다. KoGPT2 base 로는 효과가 미묘했지만, Instruct 모델이면 reward accuracy 가 **0.500 → 약 0.94** 로 뚜렷이 이동합니다. (alignment 단계 Ch 30·31 모두 Qwen 사용.)
 
 ## DPO = RLHF (PPO) 의 간소화
 - 전통 RLHF = SFT → reward model 학습 → PPO (actor + critic + reward + reference, **4 모델**). T4 메모리에 무리
@@ -41,29 +43,29 @@ DPO 도 *response 부분만* log-prob 계산 (prompt 제외). MLM(15%) → Causa
 - **`DPOTrainer(ref_model=None)`** — reference 자동 복사·freeze (frozen reference 개념)
 - **`prompt` / `chosen` / `rejected` 데이터 형식** — preference 쌍 표준
 - **DPO loss 직관 시각화** (§3) — 한 샘플로 response-only log-prob → implicit reward → margin → loss 를 *손으로 계산*, margin↔loss 곡선
-- **DPO 전·후 reward margin 비교** (§5, 핵심 데모) — margin 분포가 *양수 (chosen 선호) 로 이동* 하는지 + reward accuracy
+- **DPO 전·후 reward margin 비교** (§5, 핵심 데모) — margin 분포가 *양수 (chosen 선호) 로 이동* 하는지 + reward accuracy (본편 실측: **0.500 → 약 0.94**)
 - **frozen reference 직접 생성** — `copy.deepcopy` + `requires_grad_(False)` (§3 시연)
 
 ## 데이터
 `maywell/ko_Ultrafeedback_binarized` — 한국어 preference 데이터셋 (`prompt` / `chosen` / `rejected`). 짧은 샘플 필터 + 약 1,500 subset, Ch 28 SFT 와 같은 instruction 포맷으로 prompt 감쌈.
 
 ## 모델
-**policy** = SFT 모델 (노트북 단독 실행을 위해 base KoGPT2 로 시작 — 정석은 Ch 28 SFT 체크포인트). **reference** = 같은 모델 복사 + freeze. 토크나이저 `PreTrainedTokenizerFast` (Ch 27 이후 고정, AutoTokenizer 함정 회피).
+**policy** = **`Qwen2.5-0.5B-Instruct`** (Ch 29 에서 등장한 소형 Instruct 모델). DPO 는 *이미 지시를 따르는 모델* 에서 출발하는 게 정석이라, KoGPT2 SFT 대신 이미 instruction-tuned 된 Qwen Instruct 를 policy 로 씁니다. **reference** = 같은 모델 복사 + freeze. T4 는 bf16 미지원이라 **fp32 로드 + AMP(fp16)**. 토크나이저 `Qwen2Tokenizer` (BBPE) + chat template (KoGPT2 `PreTrainedTokenizerFast` 에서 바뀜).
 
 ## Hyperparams
-- `num_train_epochs=1`, `per_device_train_batch_size=2`, `gradient_accumulation_steps=8` (effective batch 16)
-- `learning_rate=5e-6` (DPO 는 SFT 보다 작은 lr), `lr_scheduler_type="cosine"`, `warmup_ratio=0.1`
-- `beta=0.1` (DPO 기본), `max_length=512`
+- `num_train_epochs=1`, `per_device_train_batch_size=1`, `gradient_accumulation_steps=16` (effective batch 16)
+- `learning_rate=5e-6` (DPO 는 SFT 보다 작은 lr), `optim="adafactor"` (T4 메모리 - Adam 대신), `gradient_checkpointing=True`
+- `beta=0.1` (DPO 기본), `max_length=384`, `fp16=True` (T4 는 bf16 불가)
 - `fp16=True` (T4 는 bf16 불가)
 
 ## VRAM 주의
-DPO 는 *policy + frozen reference 두 모델* 을 메모리에 올립니다 (SFT 의 약 2배). T4 (16GB) 에서는 batch 작게 (2) + grad accum (8) + `fp16=True` 로 관리. `ref_model=None` 으로 주면 `DPOTrainer` 가 reference 를 자동 생성.
+DPO 는 *policy + frozen reference 두 모델* 을 메모리에 올립니다 (SFT 의 약 2배). 0.5B fp32 라 T4 에서 batch=1 + grad accum 16 + `optim="adafactor"`(Adam 4GB→~0.5GB) + `gradient_checkpointing` + §3 시각화용 ref 를 학습 중 CPU 로 오프로드해 관리합니다 (실측 peak 약 3.8GB). `ref_model=None` 으로 주면 `DPOTrainer` 가 reference 를 자동 생성.
 
 ## 라이브러리 주의 — `trl` 버전
 `trl` 은 버전마다 `DPOTrainer` / `DPOConfig` API 변동이 큽니다 (`max_prompt_length` 같은 인자가 버전에 따라 사라지기도). 본 노트북은 *버전 간 안정적인 핵심 경로* (`prompt`/`chosen`/`rejected` 데이터 + `beta` + `max_length` + `ref_model=None`) 만 사용. 설치된 `trl` 버전은 셋업 셀 출력에서 확인하세요.
 
 ## 환경
-Google Colab **T4 GPU 필수**. 약 22-30분 (preference 데이터 로드·필터 약 2분 + 모델 로드 약 2분 + DPO loss 시각화 약 1분 + DPO 학습 약 15-22분 + 전·후 margin 비교 약 3분).
+Google Colab **T4 GPU 필수**. 약 15-25분 (preference 데이터 로드·필터 약 2분 + 모델 로드 약 2분 + DPO loss 시각화 약 1분 + DPO 학습 약 10-18분 + 전·후 margin 비교 약 3분).
 
 device 자동 감지 (CUDA / MPS / CPU) — 로컬 Mac MPS 에서도 실행 가능 (학습 시간 약 2-3배 증가).
 
@@ -73,8 +75,8 @@ device 자동 감지 (CUDA / MPS / CPU) — 로컬 Mac MPS 에서도 실행 가�
 |---|---|---|---|---|---|
 | 28 | KoGPT2 (125M, SFT) | KoAlpaca instruction-response | response 토큰 (답변만) | CE (response-only) - SFT | `SFTTrainer` |
 | 29 | Ch 28 SFT 모델 (평가) | 분야별 벤치마크 | - (평가만) | - (`lm-evaluation-harness`) | - |
-| **30** | **SFT 모델 (policy) + frozen ref** | **preference 쌍 (chosen/rejected)** | **chosen 선호 ↑ / rejected ↓** | **DPO sigmoid (β=0.1)** | **`DPOTrainer`** |
-| 31 (다음) | SFT 모델 + verifier | verifiable-reward prompts (수학·코드) | group relative advantage | `GRPO loss` | `GRPOTrainer` |
+| **30** | **Qwen2.5-0.5B-Instruct (policy) + frozen ref** | **preference 쌍 (chosen/rejected)** | **chosen 선호 ↑ / rejected ↓** | **DPO sigmoid (β=0.1)** | **`DPOTrainer`** |
+| 31 (다음) | Qwen2.5-0.5B-Instruct + verifier | verifiable-reward prompts (글자 세기) | group relative advantage | `GRPO loss` | `GRPOTrainer` |
 
 전체 챕터 표는 [루트 README](../README.md#챕터별-변화추적표) 를 참고하세요.
 
