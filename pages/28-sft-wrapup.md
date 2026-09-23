@@ -141,9 +141,9 @@ SFT 는 *"좋은 답변 하나" 를 따라 학습* 합니다 (정답 demonstrati
 
 **Chapter 29. 벤치마크 평가 — SFT 모델을 분야별 벤치마크로 측정**
 
-- 본 챕터에서 만든 *SFT 모델* 을 *정량 벤치마크* 로 평가: 한국어 (KMMLU / HAERAE-Bench / LogicKor / KoBEST) + 영어 (MMLU / HellaSwag / GSM8K ...)
-- `lm-evaluation-harness` 로 *task-format 별* 자동 평가 — *instruction following 이 점수로 드러나는가*
-- *SFT 전 (base) vs SFT 후* 벤치마크 비교 — §6 의 정성적 BEFORE/AFTER 를 *정량* 으로
+- 평가 대상은 **Qwen2.5-0.5B-Instruct** — 본 챕터의 SFT 모델은 Ch29의 §7 섹션에서 대조(비교) 용도로만 서술
+- **KoBEST(HellaSwag·BoolQ subset) MC 직접 구현 + 산술 생성 평가 + `lm-evaluation-harness` 시연 1건** — MMLU/KMMLU/GSM8K/LogicKor 등은 분야 소개(§6 지도)로만 다룸, 실제 실행 대상 아님
+- *분류(Ch 1-23) vs 생성(Ch 24-)* 평가 방식의 근본 차이 — 정답이 하나가 아니라 log-likelihood/생성 채점이 필요한 이유
 - 그 다음 Ch 30 (DPO) — *preference 정렬*. **`labels = -100` thread 가 DPO 에서도 이어집니다** — chosen/rejected *response 부분만* 계산
 
 **Phase 4 GPT 시대 4단계 흐름 정리**:

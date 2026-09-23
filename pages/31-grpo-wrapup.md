@@ -5,11 +5,11 @@
 | `trl.GRPOTrainer` | GRPO 특화 trainer (rollout → verifier 채점 → group advantage → 정책 갱신 자동) | **새로 등장** (Ch 30 은 `DPOTrainer`) |
 | `trl.GRPOConfig` | `GRPOTrainer` 설정 (`TrainingArguments` 상속 + `num_generations`·`max_completion_length`·`beta` 등) | **새로 등장** |
 | `reward_funcs` (verifier) | 생성 답을 채점하는 callable (또는 list). `(completions, **kwargs)` → `list[float]` | **새로 등장** (DPO 는 preference 데이터, reward 함수 없음) |
-| `GRPOConfig(num_generations=4)` | group size — 한 prompt 당 생성 답 개수 (rollout) | **새로 등장** |
-| `GRPOConfig(beta=0.04)` | KL 제약 강도. 작은 값으로 reference(=SFT 모델) 근처에 묶어 collapse·hacking 완화 (0 = ref-free) | **새로 등장** (DPO 의 beta 와 의미 비슷) |
+| `GRPOConfig(num_generations=8)` | group size — 한 prompt 당 생성 답 개수 (rollout) | **새로 등장** |
+| `GRPOConfig(beta=0.04)` | KL 제약 강도. 작은 값으로 reference(=출발 Instruct 모델) 근처에 묶어 collapse·hacking 완화 (0 = ref-free) | **새로 등장** (DPO 의 beta 와 의미 비슷) |
 | group relative advantage | `(r - mean) / (std + eps)` — group 평균이 baseline (critic 대체) | **새로 등장** (DPO 는 쌍 비교, advantage 없음) |
 | `model.generate(num_return_sequences=k)` | rollout — 한 prompt 에 여러 답 생성 | **새로 등장** (DPO 는 생성 불필요) |
-| `PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2", ...)` | KoGPT2 Character BPE (AutoTokenizer 함정 회피) | **공유** (Ch 27 이후 고정) |
+| `AutoTokenizer.from_pretrained("Qwen/Qwen2.5-0.5B-Instruct")` + `apply_chat_template` | Qwen BBPE 토크나이저 + chat template 로 Instruct 호출 (SFT 없이 형식 유도) | **모델 교체** (Ch 30 은 KoGPT2 `PreTrainedTokenizerFast`) |
 
 > `trl` 은 버전마다 `GRPOTrainer` / `GRPOConfig` API 변동이 큽니다 (`max_prompt_length` 같은 인자가 버전에 따라 없음). 본 노트북은 *버전 간 안정적인 핵심 경로* (`num_generations` + `reward_funcs` + `max_completion_length` + `prompt` 컬럼) 만 사용합니다. 설치된 `trl` 버전은 셋업 셀 출력에서 확인하세요.
 
@@ -66,7 +66,7 @@ group 평균이 *baseline (critic 대체)* 이므로, group size 가 *baseline �
 - **group 큼** (예: 8-16): baseline 안정 + 다양성 확보 → advantage 정밀. 단 *rollout 비용 = group size 에 비례* (T4 시간 ↑)
 
 ```python
-grpo_config.num_generations = 4   # T4 출발점. 시간 여유 있으면 8 로
+grpo_config.num_generations = 8   # 본 노트북 기본값. 더 작게(4) 하면 rollout 이 가벼워지지만 baseline 추정이 불안정
 ```
 
 > 직관: group 은 *"이 prompt 에서 동료 몇 명에게 물어볼까"* 입니다. 많을수록 *평균이 믿을 만* 하지만 *물어보는 비용* 이 듭니다.
@@ -113,68 +113,69 @@ PPO 는 *actor + critic + reward model + reference* **4 모델** 을 동시에 �
 
 ```python
 # PPO: actor + critic + reward model + reference (4 모델) -> T4 초과
-# GRPO: policy + 작은 KL 앵커(reference=SFT 모델) + verifier(함수) -> T4 가능
-GRPOConfig(num_generations=4, beta=0.04, use_vllm=False)   # 작은 KL 앵커 + HF generate
+# GRPO: policy + 작은 KL 앵커(reference=출발 모델) + verifier(함수) -> T4 가능
+GRPOConfig(num_generations=8, beta=0.04, use_vllm=False)   # 작은 KL 앵커 + HF generate
 ```
 
 > 단 GRPO 도 *rollout (매 step 생성)* 은 PPO 와 공유하므로, *생성 비용* 은 듭니다. T4 에서는 group·step·generation 길이를 작게 잡아 통제합니다.
 
-### Q7. (실무) 작은 모델 (KoGPT2 125M) GRPO 의 한계는?
+### Q7. (실무) 작은 모델로 GRPO — base 모델 vs Instruct 모델?
 
-GRPO 효과는 *출발 모델이 가끔이라도 정답을 내는지* 에 달렸습니다:
+GRPO 효과는 *출발 모델이 가끔이라도 정답을 내는지* 에 달렸습니다. 그래서 *비제로 시작점* 을 만드는 두 갈래가 있습니다:
 
-- **base 에서 출발 (본 노트북)**: 모델이 산술을 거의 못 풀면 group 이 *전부 오답* → std=0 → *advantage 0 (학습 신호 없음)*. 정석은 *SFT 모델에서 출발* (이미 어느 정도 푸는 상태)
-- **작은 모델**: reasoning 능력 자체가 약해 GRPO 로 끌어올릴 *상한* 이 낮음 (R1 은 큰 모델이라 가능)
-- **짧은 학습**: 방향을 보기엔 충분하나 극적 변화는 어려움
+- **base 모델 (예: KoGPT2 125M)**: 그냥 두면 형식도 정답도 못 내 group reward 가 전부 0 → advantage 0 → 학습 불가. *SFT cold start* (Ch 28)로 형식·기초를 먼저 심어야 group 다양성이 생깁니다. 그런데 능력 자체가 약하면(KoGPT2 125M) SFT 를 해도 세기를 일반화하지 못해 GRPO 로 held-out 이 오르지 않습니다 (부록 `31_grpo_appendix.ipynb` 에서 재현).
+- **Instruct 모델 (본편, `Qwen2.5-0.5B-Instruct`)**: 이미 지시를 따르므로 chat template + 원샷만으로 형식을 내고 task 를 *가끔* 성공합니다 → **SFT cold start 없이** 바로 GRPO 를 겁니다. 그 위에서 GRPO 가 *가끔의 성공* 을 증폭해 held-out 이 약 0.10 → 0.27 로 올랐습니다(§5).
 
-> 본 챕터의 목표는 *완성된 reasoning 모델* 이 아니라 ***GRPO 가 무엇을 최적화하는가 (verifier reward + group advantage) 를 눈으로 확인*** 하는 것입니다. §3 의 손계산과 §5 의 정확도 변화가 핵심. 실전은 *SFT 모델 + 큰 모델 + 많은 rollout + 엄격한 verifier* 의 영역입니다.
+```python
+# 길 A: base 모델 + SFT cold start 후 GRPO
+# 길 B(본편): 이미 지시를 따르는 Instruct 모델로 SFT 없이 바로 GRPO
+policy = AutoModelForCausalLM.from_pretrained("Qwen/Qwen2.5-0.5B-Instruct", torch_dtype=torch.float32)
+```
 
-## 왜 reward 가 잘 안 올랐는가 — GRPO 의 전제조건
+> 요약: *SFT 를 하거나 / Instruct 모델을 쓰거나* 로 비제로 시작점을 만들고, 그 위에 *능력 있는 base* 여야 GRPO 가 실제로 정확도를 올립니다. 작은 모델이라도 *Instruct + 적정 난이도 + 안정적 학습* 이면 소규모 verifiable task 에서 GRPO 효과를 눈으로 볼 수 있습니다. 규모가 클수록(DeepSeek-R1) 이 효과가 커집니다.
 
-§5 의 정확도 막대를 보면 GRPO 후 정확도가 SFT 베이스라인 위로 **소폭 올랐습니다**(0.875 → 0.891). 극적이진 않지만 분명한 **양(+)의 개선** 이고, 이건 *그냥 얻어진 게 아닙니다*. 사실 이 산술 task 에 GRPO 를 *순진하게* 돌리면 정확도가 **오히려 떨어지거나 collapse** 합니다 — group reward 가 전부 0 이거나 전부 1 로 쏠려 학습 신호가 사라지기 때문입니다. 우리가 §2.5 의 **SFT 워밍스타트**(능력 부여)와 §4.5 의 **난이도 필터**(group 분산 확보)로 *바로 이 전제조건* 을 먼저 충족시켰기에 GRPO 가 비로소 작동했습니다. 이번 절에서 그 전제조건의 정체 — *왜 group 안에 정답·오답이 섞여야 하는가* — 를 짚습니다.
+## GRPO 는 왜 여기서 통했나 — GRPO 의 전제조건
 
-### 증상 — group reward 가 대부분 0
+§5 에서 GRPO 후 held-out 정확도가 **약 0.10 → 약 0.27 로 뚜렷이 올랐습니다** (Δ ≈ +0.18, ±1 SE 를 넘는 유의미한 상승). GRPO 가 *실제로 능력을 정렬* 한 것입니다. 이번 절에서 *왜 통했는지* — 그리고 *언제 안 통하는지* — 를 GRPO 의 전제조건으로 정리합니다.
 
-base KoGPT2 (125M) 는 산술을 거의 못 풉니다. 한 prompt 에 4개 답을 생성하면 *대부분 전부 오답* → group reward 가 `[0, 0, 0, 0]` 입니다. §3 의 손계산에서 봤듯이:
+### 핵심 원리 — GRPO 는 "무에서 유" 를 만들지 못한다 (증폭할 뿐)
+
+GRPO 의 advantage 는 $A_i = (r_i - \text{mean}) / (\text{std} + \varepsilon)$ 입니다. group 안의 *모든 답이 같은 reward* 면 std = 0 → **advantage 0 → gradient 0 → 학습 신호 없음**. 즉 GRPO 가 작동하려면 *group 안에 잘한 답과 못한 답이 섞여 있어야* 합니다 (§3 손계산, std 는 ddof=1):
 
 | group reward | mean | std | advantage | 학습 신호 |
 |---|---|---|---|---|
 | `[0, 0, 0, 0]` (전부 오답) | 0 | 0 | **전부 0** | **없음** |
 | `[1, 1, 1, 1]` (전부 정답) | 1 | 0 | **전부 0** | **없음** |
-| `[1, 0, 1, 0]` (섞임) | 0.5 | 0.5 | `[+1,-1,+1,-1]` | **있음** |
+| `[1, 0, 1, 0]` (섞임) | 0.5 | 0.58 | `[+0.87,-0.87,+0.87,-0.87]` | **있음** |
 
-base KoGPT2 의 GRPO 는 거의 매번 첫 번째 줄 (`[0,0,0,0]`) 에 빠집니다.
+*모델이 task 를 아예 못 풀면* 모든 답이 똑같이 reward 0 → 비교 자체가 불가능합니다. 반대로 *가끔이라도 성공* 하면 group 에 정답·오답이 섞여 advantage 가 살아나고, GRPO 가 그 *가끔의 성공* 을 증폭합니다.
 
-### 근본 원인 — GRPO 는 "무에서 유" 를 만들지 못한다
+> **핵심 교훈**: GRPO(RL)는 SFT 처럼 *없던 능력을 새로 가르치지* 못합니다. *모델이 이미 가끔이라도 성공하는 능력* 을 그 방향으로 **증폭** 하는 기법입니다.
 
-GRPO 의 advantage 는 $A_i = (r_i - \text{mean}) / (\text{std} + \varepsilon)$ 입니다. group 안의 *모든 답이 같은 reward* 면 std = 0 → **advantage 0 → gradient 0 → 학습 신호 없음**. 즉 GRPO 가 작동하려면 *group 안에 잘한 답과 못한 답이 섞여 있어야* 합니다. 그런데 모델이 task 를 *아예 못 풀면* 모든 답이 똑같이 reward 0 이라 비교 자체가 불가능합니다.
+### 이번 셋업이 전제조건을 충족한 두 가지
 
-> **핵심 교훈**: GRPO(RL)는 SFT 처럼 *없던 능력을 새로 가르치지* 못합니다. *모델이 이미 가끔이라도 성공하는 능력* 을 그 방향으로 **증폭** 하는 기법입니다. 그래서 *"가끔이라도 정답이 나와야"* GRPO 가 그 방향을 강화할 수 있습니다. base KoGPT2 처럼 *한 번도 성공하지 못하는* 모델에는 증폭할 신호 자체가 없습니다.
+1. **능력 있는 base (`Qwen2.5-0.5B-Instruct`)**: 8~14 글자 세기를 *가끔* 성공합니다 (baseline ≈0.10). 그래서 group 에 정답이 섞여 advantage 가 생깁니다. KoGPT2 125M 은 이걸 *한 번도* 성공 못 해(부록) group 이 `[0,0,0,0]` 으로 쏠려 GRPO 가 돌 신호가 없었습니다.
+2. **난이도 필터(§4.5)**: SFT/원샷 직후 정답률이 *중간(0.1~0.9)* 인 prompt 만 남겨 group std>0 를 보장합니다. 너무 쉬운(전부 정답)·너무 어려운(전부 오답) prompt 는 신호가 0 이라 뺍니다.
 
-작은 base 모델 (KoGPT2 125M) + 어려운 task (산술) = **reward 가 sparse(희소)** = GRPO 가 *출발점* 을 잡지 못하는 전형적 상황입니다. DeepSeek-R1 이 *순수 RL* 로 reasoning 을 끌어낼 수 있었던 것도 *충분히 큰 base 모델* 에서 출발했기 때문입니다 — 큰 모델은 어려운 문제도 *가끔* 맞히므로 group 에 다양성이 생기고, GRPO 가 그 *가끔의 성공* 을 증폭할 수 있었습니다.
+여기에 **Instruct 모델 + chat template + 원샷** 이 *SFT cold start 를 대체* 해 형식을 잡아 주고, **KL 앵커(β=0.04)** 가 정책이 시작점에서 붕괴하지 않게 잡아 줍니다.
 
-### reward 가 안 오를 때의 해결 레버 4가지
+### 대조 — 언제 GRPO 가 안 통하나 (부록에서 재현)
 
-| 레버 | 무엇을 | 왜 도움이 되나 |
-|---|---|---|
-| **(1) SFT 먼저** | instruction-response 로 형식·기초를 먼저 가르침 (Ch 28) | base 가 *가끔이라도 정답·형식* 을 내게 만들어 group 다양성 확보 |
-| **(2) 더 강한 base 모델** | KoGPT2 125M → 산술 가능한 더 큰/능력 있는 모델 | 어려운 문제도 *가끔 맞혀* group reward 에 차이 발생 |
-| **(3) task 난이도 ↓** | 더 쉬운 문제부터 (한 자리 덧셈 등) | 성공 확률 ↑ → group 에 정답이 섞일 확률 ↑ |
-| **(4) format reward + HPO** | 정답 형식을 따르면 *부분 보상* + group size↑·temperature↑ | reward 가 *0 만 나오는 것* 을 막아 *학습 신호를 확보*. 형식 준수만으로도 std>0 |
+| 조건 | 결과 |
+|---|---|
+| **약한 base** (KoGPT2 125M) | 세기를 못 해 group reward 전부 0 → advantage 0 → **정확도 안 오름** |
+| **너무 쉬운 task** (짧은 단어로 baseline≈1.0) | 헤드룸 0 → 올릴 여지 없음 |
+| **너무 공격적인 lr/step** | 정책이 붕괴(collapse)해 held-out *하락* |
+| **능력 있는 base + 적정 난이도 + 안정적 GRPO (본편)** | **held-out 상승 (0.10→0.27)** ✅ |
 
-특히 **(4) format reward** 는 작은 모델에 강력합니다. 정답을 *못 맞혀도* 답을 *정해진 형식* (예: `"정답: N"`) 으로 내면 0.2 같은 부분 보상을 줍니다. 그러면 group 안에서 *형식을 지킨 답 vs 안 지킨 답* 의 reward 차이가 생겨 (예: `[0.2, 0.0, 0.2, 0.0]`) std>0 → **advantage 가 0 에서 벗어나 학습이 시작** 됩니다. 모델이 먼저 *형식* 을 배우고, 그 위에서 *정답* 으로 나아가는 사다리를 놓는 셈입니다.
+> DeepSeek-R1 이 *순수 RL* 로 reasoning 을 끌어낸 것도 *충분히 큰 base* 에서 출발했기 때문입니다 — 큰 모델은 어려운 문제도 *가끔* 맞히므로 group 에 다양성이 생기고, GRPO 가 그 성공을 증폭합니다. 규모가 클수록 이 효과가 커집니다.
 
-### 부록에서 reward 가 실제로 오르는 모습 확인
+### 부록에서 더 깊이
 
-이 레버들을 적용해 reward 가 *실제로 오르는* GRPO 는 부록 [`31_grpo_appendix.ipynb`](./31_grpo_appendix.ipynb) 에서 봅니다. 부록은:
+- **KoGPT2 로는 왜 안 되는가 (실패 대조)** — [`31_grpo_appendix.ipynb`](./31_grpo_appendix.ipynb): 같은 GRPO 를 KoGPT2 125M 에 걸면 group reward 가 0 에 쏠려 정확도가 안 오르는 과정을 단계별로 재현합니다. *base 능력이 전제조건* 임을 실측으로 보입니다.
+- **hyperparameter 심화 (HPO)** — [`appendix_qwen_grpo_hpo.ipynb`](./appendix_qwen_grpo_hpo.ipynb): `num_generations`·`temperature`·`beta`·`learning_rate` + format reward 가 reward·수렴에 주는 영향을 더 깊이 다룹니다.
 
-- **(2) 더 강한 base** — `Qwen/Qwen2.5-0.5B-Instruct` (Ch 29 에서 쓴, 산술을 *가끔 맞히는* 모델) 로 교체
-- **(4) format reward** — correctness reward + format reward 두 개를 조합해 *0 만 나오는 것* 을 방지
-- **HPO** — `num_generations`·`temperature`·`beta`·`learning_rate` 가 reward·수렴에 주는 영향
-
-을 적용해, *본 챕터의 KoGPT2 와 대비* 되도록 **reward 전·후 차이가 명확히 보이는** 셋업을 시연합니다. 본문은 *GRPO 의 전제조건을 (안 오르는 현상으로) 체감* 하는 챕터, 부록은 *그 전제조건을 충족시켜 reward 를 올리는* 챕터입니다.
-
-> 한 문장 요약: ***GRPO 는 모델이 이미 가끔 성공하는 능력을 증폭할 뿐, 무에서 유를 만들지 못한다. 그래서 RL 전에 SFT·충분한 base·format reward 로 "출발점" 을 먼저 마련해야 한다.***
+> 한 문장 요약: ***GRPO 는 모델이 이미 가끔 성공하는 능력을 증폭할 뿐, 무에서 유를 만들지 못한다. 그래서 능력 있는 base(또는 SFT cold start) + 적정 난이도 + 안정적 학습이 "출발점" 을 마련해야 GRPO 가 정확도를 올린다.***
 
 ## Phase 4 회고 + Phase 5 예고
 

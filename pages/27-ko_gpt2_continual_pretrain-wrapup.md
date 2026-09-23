@@ -84,8 +84,6 @@ HF 의 continual pretraining / fine-tuning 표준 lr 범위: `1e-5` - `5e-5`. SF
 
 **작동은 하지만 비효율적** 입니다 — KoGPT2 Character BPE 는 *한국어 코퍼스 중심* 으로 학습돼 영어 어절의 병합 규칙이 약하고, byte-level BPE 와 달리 학습에 없던 문자는 `<unk>` 로 빠질 가능성도 있습니다. 그래서 *같은 영어 문장이 영어 gpt2 BPE 보다 다소 많은 토큰* 으로 쪼개질 수 있습니다.
 
-**작동은 하지만 비효율적** 입니다 — KoGPT2 BBPE 는 *byte-level* 이라 영어도 UNK 없이 표현하지만, *한국어 코퍼스 중심* 으로 학습돼 영어 어절의 병합 규칙이 약합니다. 그래서 *같은 영어 문장이 영어 gpt2 BPE 보다 다소 많은 토큰* 으로 쪼개질 수 있습니다.
-
 ```python
 from transformers import PreTrainedTokenizerFast, AutoTokenizer
 ko_tok = PreTrainedTokenizerFast.from_pretrained(

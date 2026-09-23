@@ -125,7 +125,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Loss \\
 24 & 작은 GPT2 (약 3M, scratch) & BPE (직접 학습, 영어, vocab 2,048) & 영어 TinyStories 30K stories & \inlinecode{Linear(H,\ V)} (LM head, weight tied) & \inlinecode{CrossEntropyLoss} (next-token) \\
 25 & \inlinecode{gpt2} (124M, OpenAI WebText 사전학습) & BPE (gpt2 그대로, vocab 50,257) & 영어 TinyStories (\ref{ch:24}장과 동일) & \inlinecode{Linear(H,\ V)} (LM head 그대로) & \inlinecode{CrossEntropyLoss} (next-token) - continual pretraining \\
 \textbf{26 \(\leftarrow\) 여기} & \textbf{작은 GPT2 (약 3M, scratch)} & \textbf{BBPE (직접 학습, 한국어, vocab 약 4,000)} & \textbf{한국어 TinyStories 30K stories} & \textbf{\inlinecode{Linear(H,\ V)} (LM head, weight tied)} & \textbf{\inlinecode{CrossEntropyLoss} (next-token)} \\
-27 (다음) & KoGPT2 (\inlinecode{skt/kogpt2-base-v2}, 125M, 대규모 한국어 사전학습) & KoGPT2 BBPE (그대로) & 한국어 TinyStories (\ref{ch:26}장과 동일) & \inlinecode{Linear(H,\ V)} (LM head 그대로) & \inlinecode{CrossEntropyLoss} (next-token) - continual pretraining \\
+27 (다음) & KoGPT2 (\inlinecode{skt/kogpt2-base-v2}, 125M, 대규모 한국어 사전학습) & KoGPT2 Character BPE (그대로) & 한국어 TinyStories (\ref{ch:26}장과 동일) & \inlinecode{Linear(H,\ V)} (LM head 그대로) & \inlinecode{CrossEntropyLoss} (next-token) - continual pretraining \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -1295,7 +1295,7 @@ model = GPT2LMHeadModel(config)
 
 모델 크기 & 약 3M params & \textbf{약 125M (40배)} \\
 사전학습 & from scratch (random init) & \textbf{대규모 한국어 코퍼스 사전학습} \\
-토크나이저 & 직접 학습 BBPE vocab 약 4,000 & \textbf{KoGPT2 BBPE (그대로)} \\
+토크나이저 & 직접 학습 BBPE vocab 약 4,000 & \textbf{KoGPT2 Character BPE (그대로)} \\
 한국어 TinyStories 학습 & 사전학습 그 자체 (1500 steps) & \textbf{continual pretraining} (수백 steps) \\
 Generation 품질 & 동화 풍 단순 한국어 & \textbf{자연스러운 동화 + 일반 도메인 폭} \\
 \bottomrule

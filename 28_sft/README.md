@@ -71,8 +71,8 @@ device 자동 감지 (CUDA / MPS / CPU) — 로컬 Mac MPS 에서도 실행 가�
 | Ch | 모델 | 토크나이저 | 데이터 | `labels = -100` 자리 | Loss |
 |---|---|---|---|---|---|
 | 26 | 작은 GPT2 (한국어, 약 3M, scratch) | BBPE (직접 학습, vocab 약 4,000) | 한국어 TinyStories 30K | pad 만 | CE (next-token) |
-| 27 | KoGPT2 (125M) | BBPE (KoGPT2 그대로, vocab 51,200) | 한국어 TinyStories 30K | pad 만 | CE (next-token) - continual pretraining |
-| **28** | **KoGPT2 (125M, 동일)** | **BBPE (KoGPT2 그대로, 동일)** | **KoAlpaca instruction-response (약 3K)** | **prompt 부분 (답변만 학습)** | **CE (next-token, response-only) — SFT** |
+| 27 | KoGPT2 (125M) | Character BPE (KoGPT2 그대로, vocab 51,200) | 한국어 TinyStories 30K | pad 만 | CE (next-token) - continual pretraining |
+| **28** | **KoGPT2 (125M, 동일)** | **Character BPE (KoGPT2 그대로, 동일)** | **KoAlpaca instruction-response (약 3K)** | **prompt 부분 (답변만 학습)** | **CE (next-token, response-only) — SFT** |
 | 29 (다음) | Ch 28 SFT 모델 + 비교 | (동일) | 분야별 벤치마크 | - (평가만) | - (`lm-evaluation-harness`) |
 
 전체 챕터 표는 [루트 README](../README.md#챕터별-변화추적표) 를 참고하세요.

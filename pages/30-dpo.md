@@ -1,21 +1,25 @@
-**목표**: Phase 4 의 *학습 단계 4 (Alignment, 선호 정렬)* 의 첫 챕터. Ch 28 에서 **SFT** 로 KoGPT2 를 *지시를 따르게* (행동 정렬) 만들었고, Ch 29 에서 *능력을 벤치마크로 측정* 했습니다. 이제 **사람의 선호에 맞춰 정렬 (alignment)** 합니다. **DPO (Direct Preference Optimization)** 는 SFT 모델을 *preference 쌍 (chosen / rejected)* 으로 학습 — *좋은 답의 확률은 올리고, 나쁜 답의 확률은 내립니다*. 바뀌는 건 **데이터 (instruction-response → preference 쌍)** + **trainer (`SFTTrainer` → `trl.DPOTrainer`)** + **loss (next-token CE → DPO sigmoid)** + **frozen reference 모델 추가** 입니다.
+**목표**: Phase 4 의 *학습 단계 4 (Alignment, 선호 정렬)* 의 첫 챕터. Ch 28 에서 **SFT** 로 *지시를 따르게* (행동 정렬) 만들었고, Ch 29 에서 *능력을 벤치마크로 측정* 했습니다. 이제 **사람의 선호에 맞춰 정렬 (alignment)** 합니다. **DPO (Direct Preference Optimization)** 는 *이미 지시를 따르는 모델* 을 *preference 쌍 (chosen / rejected)* 으로 학습 — *좋은 답의 확률은 올리고, 나쁜 답의 확률은 내립니다*. 바뀌는 건 **데이터 (instruction-response → preference 쌍)** + **trainer (`SFTTrainer` → `trl.DPOTrainer`)** + **loss (next-token CE → DPO sigmoid)** + **frozen reference 모델 추가** 입니다.
 
-**환경**: Google Colab **T4 GPU 필수**. policy + reference *두 모델* 을 동시에 올리므로 batch 를 작게 + gradient accumulation 으로 VRAM 을 관리합니다.
+> ⚠️ **본 챕터의 policy 는 `Qwen2.5-0.5B-Instruct` 입니다** (Ch 28 은 KoGPT2). DPO 는 *이미 지시를 따르는 SFT/Instruct 모델* 에서 출발하는 게 정석인데, Qwen Instruct 가 바로 그 "이미 지시를 따르는 모델" 입니다. KoGPT2 base 로는 *지시도 못 따르는 상태* 라 선호 정렬 효과가 미묘했지만, Instruct 모델이면 **선호가 정렬되는 모습(reward margin 이동)이 깨끗하게** 드러납니다. (alignment 단계는 Ch 30 DPO·Ch 31 GRPO 모두 Qwen 을 씁니다.)
 
-**예상 소요 시간**: 약 22-30분 (preference 데이터 로드·필터 약 2분 + SFT 모델 로드 약 2분 + DPO loss 직관 시각화 약 1분 + DPOTrainer 학습 약 15-22분 + DPO 전·후 reward margin 비교 약 3분)
+**환경**: Google Colab **T4 GPU 필수**. policy + reference *두 모델* 을 동시에 올리므로 batch 를 작게 + gradient accumulation + gradient checkpointing 으로 VRAM 을 관리합니다.
+
+**예상 소요 시간**: 약 15-25분 (preference 데이터 로드·필터 약 2분 + 모델 로드 약 2분 + DPO loss 직관 시각화 약 1분 + `DPOTrainer` 학습 약 10-18분 + DPO 전·후 reward margin 비교 약 3분)
+
 
 ## 학습 흐름
 
 1. 📊 **누적 추적표** (Ch 27/28/29 + **30 강조** + Ch 31 예고) + GPT 학습 4단계 표 (Ch 30 = 단계 4 alignment, DPO)
-2. 🔄 **변경점 (Diff from Ch 28 SFT)** — *데이터 + trainer + loss + reference 모델* 이 변함
+2. 🔄 **변경점 (Diff from Ch 28 SFT)** — *데이터 + trainer + loss + reference 모델 + 모델(→Qwen Instruct)* 이 변함
 3. 🎯 **alignment 의 의미** — SFT (지시 따름) → alignment (선호·품질 정렬). RLHF 흐름 + DPO 가 PPO 간소화인 이유
 4. 📐 **DPO Loss** — 수식 + 직관 + 수치 예시 표. β 의 역할, frozen reference 가 필요한 이유
 5. 🎯 **`labels = -100` thread 연결** — DPO 도 *response 부분만* log-prob 계산
-6. 🔤 **토크나이저 노트** — KoGPT2 `PreTrainedTokenizerFast` (Ch 27 이후 고정)
-7. 🚀 **실습**: preference 데이터 로드 → SFT 모델·reference 준비 → **DPO loss 직관 시각화 (margin)** → `DPOTrainer` 학습 → DPO 전·후 reward margin 비교
+6. 🔤 **토크나이저 노트** — `Qwen2.5-0.5B-Instruct` 의 BBPE + chat template (KoGPT2 에서 바뀜)
+7. 🚀 **실습**: preference 데이터 로드 → Instruct 모델·reference 준비 → **DPO loss 직관 시각화 (margin)** → `DPOTrainer` 학습 → DPO 전·후 reward margin 비교
 8. 📦 **등장 라이브러리** (`trl.DPOTrainer`·`DPOConfig` 첫 등장) / 🎯 **체크포인트** / ❓ **FAQ** (답변 포함)
 
-> 📒 **사전 학습 자료**: Ch 28 (KoGPT2 SFT — 본 챕터의 *출발 모델*), Ch 29 (벤치마크 평가), Ch 27 (KoGPT2 토크나이저 함정). 본 챕터는 *alignment 의 두 thread 연장*: (1) `labels = -100` 의 *response-only* 가 DPO 의 log-prob 계산에서도 이어지고, (2) "파인튜닝" 의 의미가 *행동 정렬 (SFT)* 에서 *선호 정렬 (alignment)* 로 한 발 더 나아갑니다.
+
+> 📒 **사전 학습 자료**: Ch 28 (SFT — *행동 정렬* 의 개념), Ch 29 (벤치마크 평가 — `Qwen2.5-0.5B-Instruct` 가 여기서 처음 등장), Ch 27 (토크나이저 함정). 본 챕터는 *alignment 의 두 thread 연장*: (1) `labels = -100` 의 *response-only* 가 DPO 의 log-prob 계산에서도 이어지고, (2) "파인튜닝" 의 의미가 *행동 정렬 (SFT)* 에서 *선호 정렬 (alignment)* 로 한 발 더 나아갑니다.
 
 ## 누적 추적표
 
@@ -23,11 +27,12 @@
 |---|---|---|---|---|---|
 | 27 | KoGPT2 (125M) | 한국어 TinyStories 30K | next-token | `CrossEntropyLoss` - continual pretraining | `Trainer` |
 | 28 | KoGPT2 (125M, SFT) | KoAlpaca instruction-response 쌍 | response 토큰 (답변만) | `CrossEntropyLoss` (response-only) - SFT | `SFTTrainer` |
-| 29 | Ch 28 SFT 모델 (평가) | 분야별 벤치마크 | - (평가만) | - (`lm-evaluation-harness`) | - |
-| **30 ← 여기** | **SFT 모델 (policy) + frozen reference** | **preference 쌍 (chosen / rejected)** | **chosen 선호 ↑ / rejected 선호 ↓** | **DPO sigmoid loss (β=0.1)** | **`DPOTrainer`** |
-| 31 (다음) | SFT 모델 + verifier | verifiable-reward prompts (수학·코드) | group relative advantage | `GRPO loss` | `GRPOTrainer` |
+| 29 | Qwen2.5-0.5B-Instruct (+ Ch 28 SFT 모델 대조) | KoBEST/산술 subset | - (평가만) | - (`lm-evaluation-harness`) | - |
+| **30 ← 여기** | **Qwen2.5-0.5B-Instruct (policy) + frozen reference** | **preference 쌍 (chosen / rejected)** | **chosen 선호 ↑ / rejected 선호 ↓** | **DPO sigmoid loss (β=0.1)** | **`DPOTrainer`** |
+| 31 (다음) | Qwen2.5-0.5B-Instruct + verifier | verifiable-reward prompts (글자 세기) | group relative advantage | `GRPO loss` | `GRPOTrainer` |
 
 전체 챕터 표는 [루트 README](https://github.com/yoon-gu/neuqes-101#챕터별-변화추적표) 를 참고하세요.
+
 
 ## GPT 시대 학습 4단계 — 본 챕터의 위치 (단계 4, Alignment / DPO)
 
@@ -51,16 +56,18 @@ Ch 24 에서 도입한 GPT 시대 학습 4단계 표. 본 챕터는 *단계 4 (A
 
 | 축 | Ch 28 (KoGPT2 SFT) | Ch 30 (본 챕터, DPO) |
 |---|---|---|
-| 본체 | KoGPT2 `skt/kogpt2-base-v2` (125M) | **SFT 모델 (= KoGPT2 SFT 산출) 을 policy 로** ← 출발점이 SFT 모델 |
-| 토크나이저 | `PreTrainedTokenizerFast` (KoGPT2 Character BPE) | **(동일)** ← 고정 |
+| **모델** | KoGPT2 `skt/kogpt2-base-v2` (125M) | **`Qwen2.5-0.5B-Instruct`** ← *변화 0* (이미 지시를 따르는 Instruct = DPO 정석 출발점) |
+| 토크나이저 | `PreTrainedTokenizerFast` (KoGPT2 Character BPE) | **`Qwen2Tokenizer` (BBPE) + chat template** ← 모델과 함께 바뀜 |
 | **데이터** | instruction-response 쌍 (`prompt` / `completion`) | **preference 쌍 (`prompt` / `chosen` / `rejected`)** ← *변화 1* |
 | **Trainer** | `trl.SFTTrainer` | **`trl.DPOTrainer`** ← *변화 2* (새 클래스, 첫 등장) |
 | **Loss** | next-token `CrossEntropyLoss` (response-only) | **DPO sigmoid loss** ← *변화 3* (log-likelihood ratio) |
-| **reference 모델** | 없음 (policy 하나) | **frozen reference 추가** ← *변화 4* (SFT 모델 복사 + freeze) |
+| **reference 모델** | 없음 (policy 하나) | **frozen reference 추가** ← *변화 4* (policy 복사 + freeze) |
 | 학습 신호 | 좋은 답변 하나 *모방* | **chosen 선호 ↑, rejected 선호 ↓** (*비교*) |
 | lr | 2e-5 | **5e-6 - 1e-5** ← DPO 는 SFT 보다 작은 lr (reference 에서 천천히 벗어남) |
 
-> **핵심**: SFT 는 *하나의 좋은 답* 을 모방했다면, DPO 는 *(좋은 답, 나쁜 답) 쌍* 을 *비교* 합니다. 그러려면 *(1) preference 데이터*, *(2) 비교를 loss 로 바꾸는 DPOTrainer*, *(3) "원본에서 얼마나 벗어났나" 의 기준이 되는 frozen reference* 가 필요합니다. 네 가지가 한꺼번에 바뀌지만, *목적은 하나* — *모델을 사람이 선호하는 방향으로* 정렬.
+> **핵심**: SFT 는 *하나의 좋은 답* 을 모방했다면, DPO 는 *(좋은 답, 나쁜 답) 쌍* 을 *비교* 합니다. 그러려면 *(1) preference 데이터*, *(2) 비교를 loss 로 바꾸는 DPOTrainer*, *(3) "원본에서 얼마나 벗어났나" 의 기준이 되는 frozen reference* 가 필요합니다.
+>
+> **모델이 바뀐 이유(변화 0)**: DPO 는 *이미 지시를 따르는 모델* 에서 출발해야 *선호만* 깨끗이 정렬됩니다. Ch 28 의 KoGPT2 SFT 를 policy 로 쓰는 게 원래 그림이지만, KoGPT2 125M 은 지시 따름 자체가 약해 선호 정렬 효과가 미묘했습니다. 그래서 *이미 지시를 잘 따르는* `Qwen2.5-0.5B-Instruct` (Ch 29 에서 등장) 로 올려, DPO 의 핵심(선호 정렬 = reward margin 이동)이 뚜렷이 드러나게 합니다. alignment 단계(Ch 30 DPO·Ch 31 GRPO)는 같은 Qwen 을 씁니다.
 
 ## alignment 의 의미 — SFT(지시 따름) 에서 선호·안전성·품질 정렬로
 
@@ -168,32 +175,34 @@ rejected: ㄴㄴ 몰라 아무거나 먹어                          <- 이 부�
 
 > `labels = -100` thread 가 *alignment 단계까지* 이어집니다. SFT 에서 "답변 부분만 학습" 이었다면, DPO 에서는 "답변 부분의 log-prob 만 비교". **prompt 는 늘 조건 (given), 답변만 학습·비교 대상 (target)** 이라는 원리가 Phase 4 전체를 관통합니다. `DPOTrainer` 가 이 마스킹을 자동으로 처리하므로 우리가 직접 `-100` 을 찍을 필요는 없습니다 (§3 에서 그 효과를 *손으로 재현* 해 확인).
 
-## 토크나이저 노트 — KoGPT2 `PreTrainedTokenizerFast` (Ch 27 이후 고정)
+## 토크나이저 노트 — `Qwen2.5-0.5B-Instruct` 의 BBPE + chat template (KoGPT2 에서 바뀜)
 
-본 챕터의 토크나이저는 *Ch 27·28 과 완전히 동일*. KoGPT2 Character BPE (vocab 51,200) 를 그대로 가져옵니다. **KoGPT2 는 `AutoTokenizer` 가 영어 GPT2 로 잘못 fallback 하는 함정** 이 있어 (Ch 27 §토크나이저 노트), `PreTrainedTokenizerFast` + special token 명시로 로드합니다.
-
-본 챕터의 토크나이저는 *Ch 27·28 과 완전히 동일*. KoGPT2 BBPE (vocab 51,200) 를 그대로 가져옵니다. **KoGPT2 는 `AutoTokenizer` 가 영어 GPT2 로 잘못 fallback 하는 함정** 이 있어 (Ch 27 §토크나이저 노트), `PreTrainedTokenizerFast` + special token 명시로 로드합니다.
+본 챕터는 모델이 바뀌면서 **토크나이저도 KoGPT2 Character BPE → `Qwen2Tokenizer` (Byte-level BPE, vocab 151,643)** 로 바뀝니다. Qwen 은 **`AutoTokenizer` 함정이 없어** 그대로 로드합니다 (KoGPT2 는 영어 GPT2 로 잘못 fallback 해 `PreTrainedTokenizerFast` 가 필요했던 것과 대조 - Ch 27).
 
 ```python
-from transformers import PreTrainedTokenizerFast
-tokenizer = PreTrainedTokenizerFast.from_pretrained(
-    "skt/kogpt2-base-v2",
-    bos_token="</s>", eos_token="</s>", unk_token="<unk>",
-    pad_token="<pad>", mask_token="<mask>",
-)
+from transformers import AutoTokenizer
+tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen2.5-0.5B-Instruct")
+if tokenizer.pad_token_id is None:
+    tokenizer.pad_token = tokenizer.eos_token
 ```
 
-### preference 데이터의 토큰화 — prompt / chosen / rejected
+### preference 데이터의 토큰화 — chat template + prompt / chosen / rejected
 
-DPO 데이터는 *세 개의 텍스트* 로 구성됩니다 (`prompt`, `chosen`, `rejected`). `DPOTrainer` 는 내부적으로:
+**Instruct 모델은 chat template 로 호출** 해야 지시를 제대로 따릅니다. Qwen 은 `<|im_start|>role ... <|im_end|>` 형식을 씁니다. prompt 를 *user 턴 + assistant 생성 지점* 까지 chat template 로 만들고, `chosen` / `rejected` 는 그 뒤에 이어질 *assistant 응답* 으로 둡니다:
+
+```python
+def build_prompt(instruction):
+    msgs = [{"role": "user", "content": instruction}]
+    return tokenizer.apply_chat_template(msgs, tokenize=False, add_generation_prompt=True)
+```
+
+`DPOTrainer` 는 내부적으로:
 
 1. `prompt + chosen` 과 `prompt + rejected` 를 *각각* 토큰화
-2. 두 시퀀스의 *prompt 부분은 공통* (같은 토큰), *response 부분만 다름*
+2. 두 시퀀스의 *prompt 부분(chat template 포함)은 공통*, *response 부분만 다름*
 3. response 부분의 토큰에서 log-prob 을 계산 (위 §의 response-only)
 
-> 같은 KoGPT2 토크나이저이므로 *Ch 28 SFT 에서 본 instruction 포맷 토큰화* 가 그대로 적용됩니다. chosen / rejected 는 *같은 prompt 에 대한 다른 답변* 이라 *prompt 토큰열은 완전히 동일*, 답변 토큰열만 갈립니다 — DPO 가 비교하는 건 정확히 그 *답변 토큰열의 log-prob* 입니다.
-
-토크나이저는 Ch 27 이후 *Phase 4 내내 고정* — Ch 31 (GRPO) 에서도 같은 KoGPT2 토크나이저를 씁니다.
+> chosen / rejected 는 *같은 prompt 에 대한 다른 답변* 이라 *prompt 토큰열은 완전히 동일*, 답변 토큰열만 갈립니다 — DPO 가 비교하는 건 정확히 그 *답변 토큰열의 log-prob* 입니다. Ch 27 이후 고정이던 KoGPT2 토크나이저 흐름은 여기서 끊깁니다 (alignment 단계에서 능력 있는 Instruct 모델로 올린 결과 - Ch 31 GRPO 도 동일하게 Qwen 을 씁니다).
 
 ## 이 장의 구성
 

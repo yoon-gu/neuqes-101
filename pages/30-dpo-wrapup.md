@@ -9,7 +9,7 @@
 | `prompt` / `chosen` / `rejected` 데이터 형식 | preference 쌍 표준 형식 | **새로 등장** (Ch 28 은 `prompt`/`completion`) |
 | `torch.nn.functional.log_softmax` + `gather` | response 토큰의 log-prob 합 (§3 손계산) | **공유** (개념은 CausalLM loss 와 동일) |
 | `copy.deepcopy(policy)` + `requires_grad_(False)` | frozen reference 직접 생성 (§3 시연용) | **새로 등장** |
-| `PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2", ...)` | KoGPT2 Character BPE (AutoTokenizer 함정 회피) | **공유** (Ch 27 이후 고정) |
+| `AutoTokenizer.from_pretrained("Qwen/Qwen2.5-0.5B-Instruct")` + `apply_chat_template` | Qwen BBPE 토크나이저 + chat template (Instruct 호출) | **모델 교체** (Ch 28 은 KoGPT2 `PreTrainedTokenizerFast`) |
 
 > `trl` 은 버전마다 `DPOTrainer` / `DPOConfig` API 변동이 큽니다 (`max_prompt_length` 같은 인자가 버전에 따라 사라지기도). 본 노트북은 *버전 간 안정적인 핵심 경로* (`prompt`/`chosen`/`rejected` 데이터 + `beta` + `max_length` + `ref_model=None`) 만 사용합니다. 설치된 `trl` 버전은 셋업 셀 출력에서 확인하세요.
 
@@ -106,15 +106,14 @@ dpo_config.loss_type = "ipo"        # IPO
 
 > 본 챕터는 *원조 DPO (sigmoid loss)* 로 *원리* 에 집중합니다. 변종들은 *같은 목표 (chosen 선호 ↑), 다른 수단*.
 
-### Q6. (실무) 작은 모델 (KoGPT2 125M) DPO 의 한계는?
+### Q6. (실무) DPO 는 base 모델 vs Instruct 모델, 어디서 출발해야 하나요?
 
-DPO 의 효과는 *출발 모델의 능력* 에 크게 의존합니다:
+DPO 의 효과는 *출발 모델이 이미 지시를 따르는가* 에 크게 의존합니다:
 
-- **base 에서 출발 (본 노트북)**: 모델이 아직 *지시를 잘 못 따르므로* preference 정렬 효과가 *미묘*. 정석은 *SFT 모델에서 출발*
-- **작은 모델**: chosen/rejected 의 log-prob 차이를 *섬세하게* 다루기 어려워 margin 이동 폭이 작음
-- **짧은 학습**: 1 epoch / 1.5K 샘플은 *방향* 을 보기엔 충분하지만 *극적 변화* 는 어려움
+- **base 모델 (예: KoGPT2 125M)**: 아직 *지시를 잘 못 따르므로* preference 정렬 효과가 *미묘* — chosen/rejected 의 log-prob 차이를 섬세하게 다루지 못해 margin 이동 폭이 작습니다.
+- **SFT/Instruct 모델 (본 노트북, `Qwen2.5-0.5B-Instruct`)**: 이미 지시를 따르므로 그 위에 *선호만* 깨끗하게 얹힙니다. 본 노트북에서 reward accuracy 가 **0.500 → 약 0.94** 로 뚜렷이 이동했습니다.
 
-> 본 챕터의 목표는 *완성된 정렬 모델* 이 아니라 ***DPO 가 무엇을 최적화하는가 (reward margin) 를 눈으로 확인*** 하는 것입니다. §3 의 손계산과 §5 의 margin 이동이 핵심. 실전 품질은 *SFT 모델 + 큰 모델 + 많은 preference + LoRA* 의 영역.
+> DPO 는 *SFT → alignment 파이프라인의 마지막 단계* 라 *이미 지시를 따르는 모델* 에서 출발하는 게 정석입니다. 그래서 본 챕터도 Ch 28 SFT 개념 위에서, 실제로는 이미 instruction-tuned 된 Qwen Instruct 를 policy 로 씁니다. 실전 품질은 *더 큰 모델 + 많은 preference + LoRA* 로 더 끌어올립니다.
 
 ### Q7. (이론) 다음 단계 GRPO (Ch 31) 는 DPO 와 뭐가 다른가요?
 
@@ -123,7 +122,7 @@ DPO 의 효과는 *출발 모델의 능력* 에 크게 의존합니다:
 | 단계 | 선호의 출처 | 데이터 |
 |---|---|---|
 | **DPO (Ch 30)** | *사람이 비교* 한 preference 쌍 | `(prompt, chosen, rejected)` |
-| **GRPO (Ch 31)** | *verifier 가 자동 채점* 한 reward | verifiable-reward prompts (수학·코드) |
+| **GRPO (Ch 31)** | *verifier 가 자동 채점* 한 reward | verifiable-reward prompts (글자 세기) |
 
 > DPO 는 *주관적 선호* (어느 답이 더 좋은가 — 사람 판단) 를, GRPO 는 *객관적 정답* (수학 답이 맞나, 코드가 돌아가나 — 자동 검증) 을 신호로 씁니다. GRPO 는 *같은 prompt 에 여러 답을 rollout* 해 *그룹 안에서 상대 비교* (group relative advantage) 합니다 — Ch 31 에서 본격.
 
@@ -150,7 +149,7 @@ DPO 의 효과는 *출발 모델의 능력* 에 크게 의존합니다:
 | Ch 24·26 | 1 (pretraining) | 작은 GPT scratch | TinyStories (영/한) | next-token |
 | Ch 25·27 | 2 (continual pretraining) | gpt2 / KoGPT2 | TinyStories (동일) | next-token |
 | Ch 28 | 3 (SFT) | KoGPT2 | KoAlpaca instruction-response | response 토큰 |
-| **Ch 30 ← 여기** | **4 (alignment, DPO)** | **SFT 모델 + frozen ref** | **preference 쌍 (chosen/rejected)** | **chosen 선호 ↑, rejected ↓** |
-| Ch 31 | 4 (alignment, GRPO) | SFT 모델 + verifier | verifiable-reward prompts | group relative advantage |
+| **Ch 30 ← 여기** | **4 (alignment, DPO)** | **Qwen2.5-0.5B-Instruct + frozen ref** | **preference 쌍 (chosen/rejected)** | **chosen 선호 ↑, rejected ↓** |
+| Ch 31 | 4 (alignment, GRPO) | Qwen2.5-0.5B-Instruct + verifier | verifiable-reward (글자 세기) | group relative advantage |
 
-> **변하는 축** (Ch 28 → Ch 30): *학습 단계* (SFT → alignment). 본체·토크나이저는 SFT 모델을 잇고, *데이터 (preference 쌍) + trainer (`DPOTrainer`) + loss (DPO sigmoid) + reference 모델* 이 바뀝니다. `labels = -100` 의 *response-only* 원리는 DPO 의 log-prob 계산에서도 이어집니다 — Phase 4 를 관통하는 thread.
+> **변하는 축** (Ch 28 → Ch 30): *학습 단계* (SFT → alignment). 모델이 KoGPT2 → `Qwen2.5-0.5B-Instruct` 로 바뀌고(alignment 은 능력 있는 모델에서), *데이터 (preference 쌍) + trainer (`DPOTrainer`) + loss (DPO sigmoid) + reference 모델* 이 바뀝니다. `labels = -100` 의 *response-only* 원리는 DPO 의 log-prob 계산에서도 이어집니다 — Phase 4 를 관통하는 thread.

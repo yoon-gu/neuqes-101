@@ -173,8 +173,6 @@ plt.tight_layout(); plt.show()
 
 `trl.SFTTrainer` 는 본 챕터에 처음 등장하는 클래스입니다. `transformers.Trainer` 를 상속해 *SFT 에 특화된 전처리* (prompt/completion 토큰화, EOS 부착, completion 마스킹) 를 자동으로 해 줍니다. 설정은 `SFTConfig` (`TrainingArguments` 를 상속) 로 주며, **`completion_only_loss=True`** 가 *답변 부분만 학습* 하라는 핵심 옵션입니다.
 
-`trl.SFTTrainer` 는 본 챕터에 처음 등장하는 클래스입니다. `transformers.Trainer` 를 상속해 *SFT 에 특화된 전처리* (prompt/completion 토큰화, EOS 부착, completion 마스킹) 를 자동으로 해 줍니다. 설정은 `SFTConfig` (── `TrainingArguments` 를 상속) 로 주며, **`completion_only_loss=True`** 가 *답변 부분만 학습* 하라는 핵심 옵션입니다.
-
 SFT 의 효과를 검증하려면 같은 instruction 을 학습 전·후에 넣어 비교해야 합니다. 먼저 비교용 프롬프트와 sampling 설정을 정하고, 답변만 깔끔히 뽑아내는 헬퍼를 정의한 뒤, 아직 SFT 하지 않은 raw KoGPT2 의 출력을 기록해 둡니다.
 
 ```python
@@ -403,7 +401,7 @@ plt.tight_layout(); plt.show()
 
 본 챕터의 핵심 데모. *같은 instruction* 을 *SFT 전 (raw KoGPT2)* 과 *SFT 후* 에 각각 넣어 답변을 비교합니다.
 
-- **SFT 전 (raw KoGPT2)**: instruction 을 *지시로 인식하지 못하고* — 질문을 *이어쓰기* 하거나, 동화처럼 계속 쓰거나, 엉뚱한 방향으로 흐름
+- **SFT 전 (raw KoGPT2)**: instruction 을 *지시로 인식하지 못하고* — 질문을 *이어쓰기* 하거나, 블로그·해시태그·SNS 잡담체로 흘러가는 경향, 엉뚱한 방향으로 흐름
 - **SFT 후**: instruction 을 *따라* — 질문에 *대답* 하는 구조화된 답변
 
 이 차이가 *행동 정렬 (behavior alignment)* 의 직접 증거입니다.
@@ -528,7 +526,7 @@ BEFORE 열은 네 질문 모두 해시태그·블로그체로 새는 반면, AFT
 
 **해석 가이드 — behavior alignment 의 증거**
 
-- **BEFORE (raw KoGPT2)**: 같은 *125M 본체* 인데도 instruction 을 *지시로 받아들이지 못합니다*. `"피보나치 수열을 설명해줘"` 를 넣으면 *설명* 대신 *질문을 이어 쓰거나*, 일반 산문으로 흘러가거나, 동화체로 새는 경향
+- **BEFORE (raw KoGPT2)**: 같은 *125M 본체* 인데도 instruction 을 *지시로 받아들이지 못합니다*. `"피보나치 수열을 설명해줘"` 를 넣으면 *설명* 대신 *질문을 이어 쓰거나*, 일반 산문으로 흘러가거나, 블로그·해시태그·SNS 잡담체로 흘러가는 경향
 - **AFTER (KoGPT2 + KoAlpaca SFT)**: *같은 본체* 가 이제 instruction 을 *따라* — 질문에 *대답하는* 구조로 응답. 짧은 SFT (1 epoch, 약 3K 샘플) 만으로도 *행동의 방향* 이 바뀝니다
 
 > **핵심**: 본체는 *한 토큰도 바꾸지 않은 같은 125M KoGPT2* 입니다 (continual pretraining 처럼 *데이터만* 바뀐 게 아니라, *데이터 형식 + 마스킹 자리* 가 바뀌었습니다). 그 결과 *모델의 행동 자체* 가 instruction 을 따르도록 정렬됐습니다. **이게 *왜 GPT 하나가 모든 task 를 해내는가* 의 답** — 입력 프롬프트 형식만 바꾸면 다른 일을 하도록, SFT 가 그 능력을 *깨웠습니다*.
