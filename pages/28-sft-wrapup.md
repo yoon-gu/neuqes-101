@@ -8,7 +8,7 @@
 | `trl` 의 SFT 데이터 준비 + collator | 데이터 준비 단계에서 `completion_mask` 로 prompt 를 `-100` 마스킹한 `labels` 를 생성, collator 는 패딩만 담당 (trl 1.10 기준) | **새로 등장** (Ch 27 은 `transformers.DataCollatorForLanguageModeling(mlm=False)`) |
 | `prompt` / `completion` 데이터 형식 | instruction-response 쌍 표준 형식 | **새로 등장** (Ch 27 은 단일 `text` 컬럼) |
 | `AutoModelForCausalLM.from_pretrained("skt/kogpt2-base-v2")` | KoGPT2 본체 로드 | **공유** (Ch 27 과 같은 본체) |
-| `PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2", ...)` | KoGPT2 BBPE 토크나이저 (AutoTokenizer 함정 회피) | **공유** (Ch 27 과 동일) |
+| `PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2", ...)` | KoGPT2 Character BPE 토크나이저 (AutoTokenizer 함정 회피) | **공유** (Ch 27 과 동일) |
 | `model.generate(repetition_penalty=...)` | 반복 억제 sampling (작은 모델의 반복 완화) | **약간 다름** (반복 페널티 추가) |
 
 > `trl` 은 버전마다 API 변동이 큰 라이브러리입니다 (`DataCollatorForCompletionOnlyLM` 처럼 버전에 따라 사라진 클래스도 있습니다). 본 노트북은 *`prompt`/`completion` 데이터 + `completion_only_loss=True`* 라는 *최신 trl 의 표준 경로* 를 씁니다 — 이 경로가 버전 간 가장 안정적입니다. 설치된 `trl` 버전은 셋업 셀의 출력에서 확인하세요.
@@ -141,9 +141,9 @@ SFT 는 *"좋은 답변 하나" 를 따라 학습* 합니다 (정답 demonstrati
 
 **Chapter 29. 벤치마크 평가 — SFT 모델을 분야별 벤치마크로 측정**
 
-- 본 챕터에서 만든 *SFT 모델* 을 *정량 벤치마크* 로 평가: 한국어 (KMMLU / HAERAE-Bench / LogicKor / KoBEST) + 영어 (MMLU / HellaSwag / GSM8K ...)
-- `lm-evaluation-harness` 로 *task-format 별* 자동 평가 — *instruction following 이 점수로 드러나는가*
-- *SFT 전 (base) vs SFT 후* 벤치마크 비교 — §6 의 정성적 BEFORE/AFTER 를 *정량* 으로
+- 평가 대상은 **Qwen2.5-0.5B-Instruct** — 본 챕터의 SFT 모델은 Ch29의 §7 섹션에서 대조(비교) 용도로만 서술
+- **KoBEST(HellaSwag·BoolQ subset) MC 직접 구현 + 산술 생성 평가 + `lm-evaluation-harness` 시연 1건** — MMLU/KMMLU/GSM8K/LogicKor 등은 분야 소개(§6 지도)로만 다룸, 실제 실행 대상 아님
+- *분류(Ch 1-23) vs 생성(Ch 24-)* 평가 방식의 근본 차이 — 정답이 하나가 아니라 log-likelihood/생성 채점이 필요한 이유
 - 그 다음 Ch 30 (DPO) — *preference 정렬*. **`labels = -100` thread 가 DPO 에서도 이어집니다** — chosen/rejected *response 부분만* 계산
 
 **Phase 4 GPT 시대 4단계 흐름 정리**:

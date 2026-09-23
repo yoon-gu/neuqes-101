@@ -251,7 +251,7 @@ HF causal LM 학습 표준 패턴 (`run_clm.py`) 그대로. Ch 26 과 정확히 
 
 다만 `BLOCK_SIZE` 는 Ch 26 과 동일하게 유지 (128) — *KoGPT2 본체의 `n_positions=1024` 까지 가능하지만, T4 + 30분 룰 안에서 비교 가능성 우선*.
 
-토큰화와 `group_texts` 는 Ch 26 과 *한 글자도 다르지 않은* HF causal LM 학습 표준 패턴 (`run_clm.py`) 입니다. 전처리는 통제 변수라, 같은 30K stories 가 *KoGPT2 BBPE (vocab 51,200)* 로 토큰화되면 Ch 26 의 직접 학습 BBPE (vocab 약 4,000) 보다 토큰 수가 줄어드는 점만 관전 포인트입니다.
+토큰화와 `group_texts` 는 Ch 26 과 *한 글자도 다르지 않은* HF causal LM 학습 표준 패턴 (`run_clm.py`) 입니다. 전처리는 통제 변수라, 같은 30K stories 가 *KoGPT2 Character BPE (vocab 51,200)* 로 토큰화되면 Ch 26 의 직접 학습 BBPE (vocab 약 4,000) 보다 토큰 수가 줄어드는 점만 관전 포인트입니다.
 
 ```python
 BLOCK_SIZE = 128   # Ch 26 과 동일
@@ -314,9 +314,9 @@ first chunk decode (first 200 chars):
 
 **결과 해석**
 
-30K stories 가 48,513 chunks (block_size=128, 약 6.21M 토큰) 로 묶였습니다. 첫 chunk 를 decode 하면 원본 동화가 깨짐 없이 그대로 복원돼, KoGPT2 BBPE 의 encode→decode 왕복이 한국어에서 정상 동작함을 확인할 수 있습니다.
+30K stories 가 48,513 chunks (block_size=128, 약 6.21M 토큰) 로 묶였습니다. 첫 chunk 를 decode 하면 원본 동화가 깨짐 없이 그대로 복원돼, KoGPT2 Character BPE 의 encode→decode 왕복이 한국어에서 정상 동작함을 확인할 수 있습니다.
 
-**비교 관전 포인트** — 같은 30K stories 가 *KoGPT2 BBPE (vocab 51,200)* 로 토큰화되면 Ch 26 의 *직접 학습 BBPE (vocab 약 4,000)* 보다 *토큰 수가 적습니다* — vocab 이 클수록 한 토큰이 더 긴 byte 시퀀스를 표현하므로. 같은 데이터의 토큰 수 차이가 *토크나이저 vocab 크기의 직접적 효과* (영어 Ch 24→25 에서 본 결의 한국어 재확인).
+**비교 관전 포인트** — 같은 30K stories 가 *KoGPT2 Character BPE (vocab 51,200)* 로 토큰화되면 Ch 26 의 *직접 학습 BBPE (vocab 약 4,000)* 보다 *토큰 수가 적습니다* — vocab 이 클수록 한 토큰이 더 긴 byte 시퀀스를 표현하므로. 같은 데이터의 토큰 수 차이가 *토크나이저 vocab 크기의 직접적 효과* (영어 Ch 24→25 에서 본 결의 한국어 재확인).
 
 ## 학습 *전* generation — *이미 잘 만들어진 한국어 본체* 라는 사실 확인
 
