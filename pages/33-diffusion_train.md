@@ -16,7 +16,7 @@
 | 챕터 | 모델·학습 (공통) | 샘플러 | 생성 결과 |
 |---|---|---|---|
 | Ch 32 (패러다임) | BertForMaskedLM hidden 256/4L (3.79M), ByteLevel BPE 2048, 30000 step, 1/t 시간가중 loss | 기본 confidence remasking | coherent하나 반복 ("They run… They run", "happy. happy") |
-| **Ch 33 (샘플러)** | **(Ch 32와 동일)** | **carry-over semi-AR + 반복 억제** | **"…named Lily. She loved to play…" — 반복 없음 (4-gram 0.177 → 0.000)** |
+| **Ch 33 (샘플러)** | **(Ch 32와 동일)** | **carry-over semi-AR + 반복 억제** | **"…named Lily. She loved to play…" — 반복 없음 (4-gram 약 0.17 → 0.00)** |
 
 모델·토크나이저·학습량·loss는 Ch 32와 **완전히 같습니다**. 이 장이 바꾸는 것은 오직 **생성 샘플러** 하나입니다.
 
@@ -26,10 +26,10 @@ Ch 32에서 작은 diffusion LM이 이미 영어 동화를 생성했습니다(vo
 
 | 항목 | Ch 32 | Ch 33 (이번) | 왜 이렇게 바꾸나 |
 |---|---|---|---|
-| 모델·vocab·학습·loss | hidden 256/4L, BPE 2048, 30000 step, 1/t | **동일 (그대로 상속)** | 모델 품질은 Ch 32에서 이미 확보(고정-t top-1 acc 0.717) |
+| 모델·vocab·학습·loss | hidden 256/4L, BPE 2048, 30000 step, 1/t | **동일 (그대로 상속)** | 모델 품질은 Ch 32에서 이미 확보(고정-t top-1 acc 약 0.71) |
 | **샘플러** | 기본 confidence remasking (일괄 복원) | **carry-over semi-AR + 반복 억제** | 확정 토큰을 다음 step으로 이어받고(carry-over), temperature 0.8 / top-p 0.92 / repetition penalty 1.3 / 인접 동일 토큰 금지로 반복을 제거합니다. |
 
-효과는 숫자로 분명합니다. **같은 모델인데 4-gram 반복률이 0.177 → 0.000**으로 떨어집니다. train loss(3.59)·고정-t acc(0.717)는 모델이 같으니 그대로입니다. *생성 품질은 모델만이 아니라 샘플러가 좌우한다* — 이 장의 한 줄 메시지입니다.
+효과는 숫자로 분명합니다. **같은 모델인데 4-gram 반복률이 약 0.17 → 0.00**으로 떨어집니다. train loss(약 3.6)·고정-t acc(약 0.71)는 Ch 32와 같은 모델·학습 레시피라 비슷하게 나옵니다(run 마다 소폭 편차). *생성 품질은 모델만이 아니라 샘플러가 좌우한다* — 이 장의 한 줄 메시지입니다.
 
 ## Loss 노트 — 흡수형 mask diffusion의 시간가중
 

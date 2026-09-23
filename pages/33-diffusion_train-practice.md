@@ -11,14 +11,13 @@ T4 GPU에서 `fp16`로 학습합니다(bf16·flash-attention 불가).
 **▶ 실행 결과**
 
 ```text
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.2/11.2 MB 108.5 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 0.0/555.1 kB ? eta -:--:--
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 555.1/555.1 kB 49.1 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 389.2/389.2 kB 39.3 MB/s eta 0:00:00
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸━━━━━ 42.7/48.9 MB 261.2 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 285.0 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 48.9/48.9 MB 285.0 MB/s eta 0:00:01
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 48.9/48.9 MB 19.2 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.4/3.4 MB 57.7 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 559.1/559.1 kB 47.3 MB/s eta 0:00:00
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 0.0/50.1 MB ? eta -:--:--
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 229.0 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 229.0 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸ 50.1/50.1 MB 229.0 MB/s eta 0:00:01
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 50.1/50.1 MB 14.2 MB/s eta 0:00:00
 ```
 
 ```python
@@ -58,6 +57,11 @@ print(raw_val[0]["text"][:160])
 **▶ 실행 결과**
 
 ```text
+data/train-00000-of-00004-2d5a1467fff108(…): downloading bytes:           |  0.00B            
+data/train-00001-of-00004-5852b56a2bd28f(…): downloading bytes:           |  0.00B            
+data/train-00002-of-00004-a26307300439e9(…): downloading bytes:           |  0.00B            
+data/train-00003-of-00004-d243063613e5a0(…): downloading bytes:           |  0.00B            
+data/validation-00000-of-00001-869c898b5(…): downloading bytes:           |  0.00B            
 Dataset({
     features: ['text'],
     num_rows: 100000
@@ -241,23 +245,23 @@ if torch.cuda.is_available():
 
 ```text
 Step   Training Loss  Validation Loss
-2000   5.888882       5.841110
-4000   5.283085       4.966988
-6000   3.858773       3.558012
-8000   3.558880       3.373290
-10000  3.355387       3.059401
-12000  3.253868       2.970810
-14000  3.169541       2.887027
-16000  3.130559       2.847089
-18000  3.058771       2.807509
-20000  3.020011       2.741545
-22000  3.022684       2.713714
-24000  2.976005       2.729231
-26000  2.984533       2.709407
-28000  2.995005       2.703988
-30000  2.972401       2.752809
+2000   5.886616       5.830340
+4000   5.150312       4.844966
+6000   3.899159       3.600897
+8000   3.594577       3.413167
+10000  3.392063       3.102043
+12000  3.284058       3.002595
+14000  3.200703       2.916767
+16000  3.159459       2.870682
+18000  3.084729       2.830795
+20000  3.045114       2.775763
+22000  3.046971       2.735025
+24000  3.000888       2.751255
+26000  3.007932       2.732396
+28000  3.018485       2.727476
+30000  2.996146       2.770905
 === summary ===
-elapsed 18.50 min | step 30000 | train_loss 3.5916
+elapsed 16.68 min | step 30000 | train_loss 3.6107
 random baseline ln(V) = 7.6246
 peak VRAM 627 MiB
 ```
@@ -352,31 +356,32 @@ for i in range(3):
 
 ```text
 === unconditional (all-[MASK] -> generate, default sampler) ===
-[0]  say, "Yes, Ben. We have a ball. They are very good friends."
+[0]  says, "We can play with our toys. We have fun."
 
-"They go to the park and play," Lily says.
-Ben follows his mom's house. He hopes to play with their toys again. She is happy and happy.
-Lily smiles at her. She shows him back to Tom and kiss. She gives Anna to his dad. She hugs her. She says, "Thank you, I love me. You're welc
-[1]  you want to play with me." She looked at Tom and put her toys in the room. 
+They get back. They sit on the slide and go to the park. They see a big slide in their rooms. They are happy. They want to play with their dolls.
+ 
+"Can we play outside with it?" Lily asks. She is sad and scared.
 
-"It's okay, Lily! I'm sorry for you. But you don't know that we should have a good friend. You are not nice. And they can share your dolls o …(뒤 122자 생략)
-[2] , so it zoomed in the air! He got very scared, but it started to run away. 
+Lily does not cry. But she does not listen to her mom or help them. She take
+[1]  it."
+ 
+Tom and her Sam go back to the park. He said, "Yes, you can have a great idea!" Tom smiled and replied, "Of course I'm going to play with me …(뒤 92자 생략)
 
-The boy was sad and wished he had never been here for being playing with his friends. They knew that they would play together again. Once up …(뒤 123자 생략)
+Tim nodded and said, "That's very good friend. I love your toy, Tim. We will put them back togethe
+[2]  
+
+One day, he saw a big tree in the woods. He wanted to see it was soldier and decided to find something new. The bird felt very happy that he …(뒤 197자 생략)
 
 === conditional (prompt 'Once upon a time' fixed) ===
-[0]  Once upon a time, there was a little girl named Lily. She loved to play with her toys and play with her mommy and her friends. One day, …(뒤 83자 생략)
+[0]  Once upon a time, there was a little girl named Lily. She loved to play with her toys and wear books. One day, she decided to walk in t …(뒤 95자 생략)
 
-Lily's mom said, "Let's go inside!" Her mommy replied, "Yes, we can slide together and have fun after you." 
-As they we
-[1]  Once upon a time, there was a little girl named Lily. She loved to play outside and watch her friends. One day, she went for bed with her mom.
- 
-Lily's mommy said, "I want to go inside the park!" Her mom replied, "Yes, I can do it." So, they walked home with their toys. They were so h …(뒤 45자 생략)
+Lily's mom told her that she had a new closet. They were very happy and didn't know again. 
 
-After a
-[2]  Once upon a time, there was a little girl named Lily. She loved to play with her toys and run in the park together. One day, she saw a …(뒤 106자 생략)
+One night, Lil
+[1]  Once upon a time, there was a little girl named Lily. She loved to play with her toys and have some fun. One day, she went outside to t …(뒤 114자 생략)
 
-Lily's mom replied, "I'm sorry! I didn't know what to do." 
+Lily's mom said, "I want to go inside now." Her friend replied, "I'm sorry, Lily! I am s
+[2]  Once upon a time, there was a little girl. She loved to play with her new friends. One day, she went for a walk in the park and saw som …(뒤 106자 생략)
 
-Her mom explained, "Why don't have 
+The little girl was very excited because she couldn't wait. She wanted to go home, but her mom t
 ```

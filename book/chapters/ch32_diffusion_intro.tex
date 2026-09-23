@@ -104,7 +104,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & 생성/학습 방식 &
 
 20 & 작은 BERT (영어, scratch) & \inlinecode{bert-base-uncased} (가져옴) & Wikitext-103 & MLM head & 고정 15\% 마스킹-복원 & \inlinecode{CrossEntropyLoss} (masked 15\%) \\
 24 & 작은 GPT2 (직접, scratch) & BPE (직접 학습) & TinyStories & \inlinecode{Linear(H,\ V)} & autoregressive (왼\(\to\)오 순차) & \inlinecode{CrossEntropyLoss} (next-token) \\
-31 & SFT base + GRPO & BBPE & verifiable-reward & \inlinecode{Linear(H,\ V)} + group adv. & autoregressive + RL & \inlinecode{GRPO\ loss} \\
+31 & Qwen2.5-0.5B-Instruct + GRPO & BBPE (Qwen2.5) & verifiable-reward & \inlinecode{Linear(H,\ V)} + group adv. & autoregressive + RL & \inlinecode{GRPO\ loss} \\
 \textbf{32 \(\leftarrow\) 여기} & \textbf{작은 BERT-style (직접, scratch)} & \textbf{ByteLevel BPE 2048 (직접 학습 + \texttt{{[}MASK{]}})} & \textbf{TinyStories} & \textbf{\inlinecode{Linear(H,\ V)}} & \textbf{parallel denoise (가변 마스킹 + 반복 복원)} & \textbf{masked-diffusion denoising loss (\inlinecode{1/t} 재가중)} \\
 33 (다음) & MDLM (170M) / DiffuGPT (124M) 사전학습 & (각 모델 토크나이저) & 영어 사전학습 추론 시연 & \inlinecode{Linear(H,\ V)} & parallel denoise (추론만) & --- \\
 \bottomrule
