@@ -27,7 +27,7 @@ Ch 25 (영어 gpt2 continual pretraining) 의 *한국어 짝*. Ch 26 에서 *ran
 
 ## 다루는 핵심 개념
 - **`AutoModelForCausalLM.from_pretrained("skt/kogpt2-base-v2")`** — 대규모 한국어 코퍼스로 사전학습된 125M params 본체. *모델 로드 한 줄* 로 학습 단계 2 진입
-- **`PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2", ...)`** — KoGPT2 BBPE (vocab 51,200) 그대로. *토크나이저는 본체와 운명공동체*
+- **`PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2", ...)`** — KoGPT2 Character BPE (vocab 51,200) 그대로. *토크나이저는 본체와 운명공동체*
 - **`if tokenizer.pad_token is None: tokenizer.pad_token = tokenizer.eos_token`** — KoGPT2 의 pad 컨벤션 (없을 때만 EOS 재활용)
 - **lr `2e-5`** — continual pretraining 표준 (Ch 26 의 `5e-4` 보다 약 25배 작음). *catastrophic forgetting 방지*. 영어 Ch 25 와 같은 값
 - **`transformers.Trainer` + `DataCollatorForLanguageModeling(mlm=False)`** — *Ch 26 과 정확히 같은 코드*. 학습 단계 2 의 정의
@@ -69,8 +69,8 @@ device 자동 감지 (CUDA / MPS / CPU) — 로컬 Mac MPS 에서도 실행 가�
 |---|---|---|---|---|---|
 | 25 | `gpt2` (124M, WebText 사전학습) | BPE (gpt2 그대로, vocab 50,257) | 영어 TinyStories 30K | Linear(H, V) (LM head 그대로) | CE (next-token) - continual pretraining |
 | 26 | 작은 GPT2 (한국어, 약 3M, scratch) | BBPE (직접 학습, 한국어, vocab 약 4,000) | 한국어 TinyStories 30K | Linear(H, V) (LM head, weight tied) | CE (next-token) |
-| **27** | **KoGPT2 (125M, 대규모 한국어 사전학습)** | **BBPE (KoGPT2 그대로, vocab 51,200)** | **한국어 TinyStories 30K (Ch 26 과 동일)** | **Linear(H, V) (LM head 그대로)** | **CE (next-token) — *continual pretraining*** |
-| 28 (다음) | KoGPT2 + SFT | KoGPT2 BBPE (그대로) | 한국어 instruction 데이터 | Linear(H, V) (LM head 그대로) | CE (`labels[:prompt_len] = -100`) |
+| **27** | **KoGPT2 (125M, 대규모 한국어 사전학습)** | **Character BPE (KoGPT2 그대로, vocab 51,200)** | **한국어 TinyStories 30K (Ch 26 과 동일)** | **Linear(H, V) (LM head 그대로)** | **CE (next-token) — *continual pretraining*** |
+| 28 (다음) | KoGPT2 + SFT | KoGPT2 Character BPE (그대로) | 한국어 instruction 데이터 | Linear(H, V) (LM head 그대로) | CE (`labels[:prompt_len] = -100`) |
 
 전체 챕터 표는 [루트 README](../README.md#챕터별-변화추적표) 를 참고하세요.
 

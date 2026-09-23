@@ -57,7 +57,7 @@ Ch 24 에서 도입한 GPT 시대 학습 4단계 표. 본 챕터는 *단계 4 (A
 | 축 | Ch 28 (KoGPT2 SFT) | Ch 30 (본 챕터, DPO) |
 |---|---|---|
 | **모델** | KoGPT2 `skt/kogpt2-base-v2` (125M) | **`Qwen2.5-0.5B-Instruct`** ← *변화 0* (이미 지시를 따르는 Instruct = DPO 정석 출발점) |
-| 토크나이저 | `PreTrainedTokenizerFast` (KoGPT2 BBPE) | **`Qwen2Tokenizer` (BBPE) + chat template** ← 모델과 함께 바뀜 |
+| 토크나이저 | `PreTrainedTokenizerFast` (KoGPT2 Character BPE) | **`Qwen2Tokenizer` (BBPE) + chat template** ← 모델과 함께 바뀜 |
 | **데이터** | instruction-response 쌍 (`prompt` / `completion`) | **preference 쌍 (`prompt` / `chosen` / `rejected`)** ← *변화 1* |
 | **Trainer** | `trl.SFTTrainer` | **`trl.DPOTrainer`** ← *변화 2* (새 클래스, 첫 등장) |
 | **Loss** | next-token `CrossEntropyLoss` (response-only) | **DPO sigmoid loss** ← *변화 3* (log-likelihood ratio) |
@@ -177,7 +177,7 @@ rejected: ㄴㄴ 몰라 아무거나 먹어                          <- 이 부�
 
 ## 토크나이저 노트 — `Qwen2.5-0.5B-Instruct` 의 BBPE + chat template (KoGPT2 에서 바뀜)
 
-본 챕터는 모델이 바뀌면서 **토크나이저도 KoGPT2 BBPE → `Qwen2Tokenizer` (Byte-level BPE, vocab 151,643)** 로 바뀝니다. Qwen 은 **`AutoTokenizer` 함정이 없어** 그대로 로드합니다 (KoGPT2 는 영어 GPT2 로 잘못 fallback 해 `PreTrainedTokenizerFast` 가 필요했던 것과 대조 - Ch 27).
+본 챕터는 모델이 바뀌면서 **토크나이저도 KoGPT2 Character BPE → `Qwen2Tokenizer` (Byte-level BPE, vocab 151,643)** 로 바뀝니다. Qwen 은 **`AutoTokenizer` 함정이 없어** 그대로 로드합니다 (KoGPT2 는 영어 GPT2 로 잘못 fallback 해 `PreTrainedTokenizerFast` 가 필요했던 것과 대조 - Ch 27).
 
 ```python
 from transformers import AutoTokenizer

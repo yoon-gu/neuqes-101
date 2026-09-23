@@ -125,7 +125,7 @@ Ch & 모델 & 토크나이저 & 데이터 & Output Head & Loss \\
 24 & 작은 GPT2 (약 3M, scratch) & BPE (직접 학습, 영어, vocab 2,048) & 영어 TinyStories 30K stories & \inlinecode{Linear(H,\ V)} (LM head, weight tied) & \inlinecode{CrossEntropyLoss} (next-token) \\
 25 & \inlinecode{gpt2} (124M, OpenAI WebText 사전학습) & BPE (gpt2 그대로, vocab 50,257) & 영어 TinyStories (\ref{ch:24}장과 동일) & \inlinecode{Linear(H,\ V)} (LM head 그대로) & \inlinecode{CrossEntropyLoss} (next-token) - continual pretraining \\
 \textbf{26 \(\leftarrow\) 여기} & \textbf{작은 GPT2 (약 3M, scratch)} & \textbf{BBPE (직접 학습, 한국어, vocab 약 4,000)} & \textbf{한국어 TinyStories 30K stories} & \textbf{\inlinecode{Linear(H,\ V)} (LM head, weight tied)} & \textbf{\inlinecode{CrossEntropyLoss} (next-token)} \\
-27 (다음) & KoGPT2 (\inlinecode{skt/kogpt2-base-v2}, 125M, 대규모 한국어 사전학습) & KoGPT2 BBPE (그대로) & 한국어 TinyStories (\ref{ch:26}장과 동일) & \inlinecode{Linear(H,\ V)} (LM head 그대로) & \inlinecode{CrossEntropyLoss} (next-token) - continual pretraining \\
+27 (다음) & KoGPT2 (\inlinecode{skt/kogpt2-base-v2}, 125M, 대규모 한국어 사전학습) & KoGPT2 Character BPE (그대로) & 한국어 TinyStories (\ref{ch:26}장과 동일) & \inlinecode{Linear(H,\ V)} (LM head 그대로) & \inlinecode{CrossEntropyLoss} (next-token) - continual pretraining \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}
@@ -376,7 +376,7 @@ byte-level BPE 의 핵심: \emph{가장 작은 단위가 byte (256개)} 라 \emp
 GPT 계열은 특수 토큰을 \emph{최소화} --- \texttt{\textless{}\textbar{}endoftext\textbar{}\textgreater{}} 하나로 bos = eos = pad 겸용. 마침 한국어 TinyStories 데이터도 story 경계를 \texttt{\textless{}\textbar{}endoftext\textbar{}\textgreater{}} 로 표시하고 있어 컨벤션이 자연스럽게 일치합니다.
 
 \begin{quote}
-\ref{ch:19}장의 “토크나이저는 모델과 운명공동체” 원칙이 본 장에서도 유효 --- vocab 약 4,000 의 BBPE 를 직접 학습한 뒤, \emph{같은 vocab 으로 GPT 본체를 random init} 합니다. \ref{ch:27}장에서는 \emph{반대로} KoGPT2 의 사전학습된 BBPE + 본체를 그대로 가져와 continual pretraining --- 토크나이저 + 모델이 \emph{함께} 변하는 게 \ref{ch:26}--\ref{ch:27}장의 핵심 비교 (\ref{ch:24}--\ref{ch:25}장의 한국어 짝).
+\ref{ch:19}장의 “토크나이저는 모델과 운명공동체” 원칙이 본 장에서도 유효 --- vocab 약 4,000 의 BBPE 를 직접 학습한 뒤, \emph{같은 vocab 으로 GPT 본체를 random init} 합니다. \ref{ch:27}장에서는 \emph{반대로} KoGPT2 의 사전학습된 Character BPE(SentencePiece 스타일, 본 장의 byte-level BBPE 와는 다른 계열) + 본체를 그대로 가져와 continual pretraining --- 토크나이저 + 모델이 \emph{함께} 변하는 게 \ref{ch:26}--\ref{ch:27}장의 핵심 비교 (\ref{ch:24}--\ref{ch:25}장의 한국어 짝).
 \end{quote}
 
 
@@ -1790,7 +1790,7 @@ model = GPT2LMHeadModel(config)
 
 모델 크기 & 약 3M params & \textbf{약 125M (40배)} \\
 사전학습 & from scratch (random init) & \textbf{대규모 한국어 코퍼스 사전학습} \\
-토크나이저 & 직접 학습 BBPE vocab 약 4,000 & \textbf{KoGPT2 BBPE (그대로)} \\
+토크나이저 & 직접 학습 BBPE vocab 약 4,000 & \textbf{KoGPT2 Character BPE (그대로)} \\
 한국어 TinyStories 학습 & 사전학습 그 자체 (1500 steps) & \textbf{continual pretraining} (수백 steps) \\
 Generation 품질 & 동화 풍 단순 한국어 & \textbf{자연스러운 동화 + 일반 도메인 폭} \\
 \bottomrule

@@ -8,7 +8,7 @@
 | `trl` 의 SFT 데이터 준비 + collator | 데이터 준비 단계에서 `completion_mask` 로 prompt 를 `-100` 마스킹한 `labels` 를 생성, collator 는 패딩만 담당 (trl 1.10 기준) | **새로 등장** (Ch 27 은 `transformers.DataCollatorForLanguageModeling(mlm=False)`) |
 | `prompt` / `completion` 데이터 형식 | instruction-response 쌍 표준 형식 | **새로 등장** (Ch 27 은 단일 `text` 컬럼) |
 | `AutoModelForCausalLM.from_pretrained("skt/kogpt2-base-v2")` | KoGPT2 본체 로드 | **공유** (Ch 27 과 같은 본체) |
-| `PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2", ...)` | KoGPT2 BBPE 토크나이저 (AutoTokenizer 함정 회피) | **공유** (Ch 27 과 동일) |
+| `PreTrainedTokenizerFast.from_pretrained("skt/kogpt2-base-v2", ...)` | KoGPT2 Character BPE 토크나이저 (AutoTokenizer 함정 회피) | **공유** (Ch 27 과 동일) |
 | `model.generate(repetition_penalty=...)` | 반복 억제 sampling (작은 모델의 반복 완화) | **약간 다름** (반복 페널티 추가) |
 
 > `trl` 은 버전마다 API 변동이 큰 라이브러리입니다 (`DataCollatorForCompletionOnlyLM` 처럼 버전에 따라 사라진 클래스도 있습니다). 본 노트북은 *`prompt`/`completion` 데이터 + `completion_only_loss=True`* 라는 *최신 trl 의 표준 경로* 를 씁니다 — 이 경로가 버전 간 가장 안정적입니다. 설치된 `trl` 버전은 셋업 셀의 출력에서 확인하세요.

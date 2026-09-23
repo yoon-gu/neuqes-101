@@ -61,7 +61,7 @@ Ch 27 = *대규모 한국어 사전학습 모델 KoGPT2 (`skt/kogpt2-base-v2`, 1
 |---|---|---|
 | 모델 크기 | 약 3M params | **약 125M (40배)** |
 | 사전학습 | from scratch (random init) | **대규모 한국어 코퍼스 사전학습** |
-| 토크나이저 | 직접 학습 BBPE vocab 약 4,000 | **KoGPT2 BBPE (그대로)** |
+| 토크나이저 | 직접 학습 BBPE vocab 약 4,000 | **KoGPT2 Character BPE (그대로)** |
 | 한국어 TinyStories 학습 | 사전학습 그 자체 (1500 steps) | **continual pretraining** (수백 steps) |
 | Generation 품질 | 동화 풍 단순 한국어 | **자연스러운 동화 + 일반 도메인 폭** |
 

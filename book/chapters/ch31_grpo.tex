@@ -206,7 +206,7 @@ DPO 가 \emph{사람의 선호} 를 따라간다면, GRPO 는 \emph{정답이라
 \midrule
 
 본체 & SFT 모델 (policy) + frozen reference & \textbf{SFT 모델 (policy)} \(\leftarrow\) \emph{reference 는 옵션} (\(\beta\)=0 이면 불필요) \\
-토크나이저 & \inlinecode{PreTrainedTokenizerFast} (KoGPT2 BBPE) & \textbf{(동일)} \(\leftarrow\) 고정 \\
+토크나이저 & \inlinecode{PreTrainedTokenizerFast} (KoGPT2 Character BPE) & \textbf{(동일)} \(\leftarrow\) 고정 \\
 \textbf{신호 출처} & preference 쌍 (사람/AI 가 비교) & \textbf{verifier reward (정답 자동 검증)} \(\leftarrow\) \emph{변화 1} \\
 \textbf{Trainer} & \inlinecode{trl.DPOTrainer} & \textbf{\inlinecode{trl.GRPOTrainer}} \(\leftarrow\) \emph{변화 2} (새 클래스, 첫 등장) \\
 \textbf{데이터} & \inlinecode{(prompt,\ chosen,\ rejected)} 쌍 & \textbf{\inlinecode{(prompt,\ 정답)}} \(\leftarrow\) \emph{변화 3} (검증 가능한 task) \\
@@ -394,7 +394,7 @@ verifiable reward 의 강점은 \emph{검증 가능한 task} 에서만 성립합
 
 \section{\texorpdfstring{토크나이저 노트}{토크나이저 노트}}
 
-본 장의 토크나이저는 \emph{\ref{ch:27}·\ref{ch:28}장·30 과 완전히 동일}. KoGPT2 BBPE (vocab 51,200) 를 그대로 가져옵니다. \textbf{KoGPT2 는 \inlinecode{AutoTokenizer} 가 영어 GPT2 로 잘못 fallback 하는 함정} 이 있어 (\ref{ch:27}장 §토크나이저 노트), \inlinecode{PreTrainedTokenizerFast} + special token 명시로 로드합니다.
+본 장의 토크나이저는 \emph{\ref{ch:27}·\ref{ch:28}장·30 과 완전히 동일}. KoGPT2 Character BPE (vocab 51,200) 를 그대로 가져옵니다. \textbf{KoGPT2 는 \inlinecode{AutoTokenizer} 가 영어 GPT2 로 잘못 fallback 하는 함정} 이 있어 (\ref{ch:27}장 §토크나이저 노트), \inlinecode{PreTrainedTokenizerFast} + special token 명시로 로드합니다.
 
 \Needspace{8\baselineskip}
 \begin{lstlisting}
@@ -1436,7 +1436,7 @@ def reward_code(completions, test_cases, **kwargs):
 \inlinecode{GRPOConfig(beta=0.04)} & KL 제약 강도. 작은 값으로 reference(=SFT 모델) 근처에 묶어 collapse·hacking 완화 (0 = ref-free) & \textbf{새로 등장} (DPO 의 beta 와 의미 비슷) \\
 group relative advantage & \inlinecode{(r\ -\ mean)\ /\ (std\ +\ eps)} --- group 평균이 baseline (critic 대체) & \textbf{새로 등장} (DPO 는 쌍 비교, advantage 없음) \\
 \inlinecode{model.generate(num\_return\_sequences=k)} & rollout --- 한 prompt 에 여러 답 생성 & \textbf{새로 등장} (DPO 는 생성 불필요) \\
-\inlinecode{PreTrainedTokenizerFast.from\_pretrained("skt/kogpt2-base-v2",\ ...)} & KoGPT2 BBPE (AutoTokenizer 함정 회피) & \textbf{공유} (\ref{ch:27}장 이후 고정) \\
+\inlinecode{PreTrainedTokenizerFast.from\_pretrained("skt/kogpt2-base-v2",\ ...)} & KoGPT2 Character BPE (AutoTokenizer 함정 회피) & \textbf{공유} (\ref{ch:27}장 이후 고정) \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}

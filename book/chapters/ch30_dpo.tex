@@ -205,7 +205,7 @@ SFT 가 \emph{지시를 따르게} 했다면, alignment 는 \emph{따르는 방�
 \midrule
 
 본체 & KoGPT2 \inlinecode{skt/kogpt2-base-v2} (125M) & \textbf{SFT 모델 (= KoGPT2 SFT 산출) 을 policy 로} \(\leftarrow\) 출발점이 SFT 모델 \\
-토크나이저 & \inlinecode{PreTrainedTokenizerFast} (KoGPT2 BBPE) & \textbf{(동일)} \(\leftarrow\) 고정 \\
+토크나이저 & \inlinecode{PreTrainedTokenizerFast} (KoGPT2 Character BPE) & \textbf{(동일)} \(\leftarrow\) 고정 \\
 \textbf{데이터} & instruction-response 쌍 (\inlinecode{prompt} / \inlinecode{completion}) & \textbf{preference 쌍 (\inlinecode{prompt} / \inlinecode{chosen} / \inlinecode{rejected})} \(\leftarrow\) \emph{변화 1} \\
 \textbf{Trainer} & \inlinecode{trl.SFTTrainer} & \textbf{\inlinecode{trl.DPOTrainer}} \(\leftarrow\) \emph{변화 2} (새 클래스, 첫 등장) \\
 \textbf{Loss} & next-token \inlinecode{CrossEntropyLoss} (response-only) & \textbf{DPO sigmoid loss} \(\leftarrow\) \emph{변화 3} (log-likelihood ratio) \\
@@ -415,7 +415,7 @@ rejected: ㄴㄴ 몰라 아무거나 먹어                          <- 이 부�
 
 \section{\texorpdfstring{토크나이저 노트}{토크나이저 노트}}
 
-본 장의 토크나이저는 \emph{\ref{ch:27}·\ref{ch:28}장과 완전히 동일}. KoGPT2 BBPE (vocab 51,200) 를 그대로 가져옵니다. \textbf{KoGPT2 는 \inlinecode{AutoTokenizer} 가 영어 GPT2 로 잘못 fallback 하는 함정} 이 있어 (\ref{ch:27}장 §토크나이저 노트), \inlinecode{PreTrainedTokenizerFast} + special token 명시로 로드합니다.
+본 장의 토크나이저는 \emph{\ref{ch:27}·\ref{ch:28}장과 완전히 동일}. KoGPT2 Character BPE (vocab 51,200) 를 그대로 가져옵니다. \textbf{KoGPT2 는 \inlinecode{AutoTokenizer} 가 영어 GPT2 로 잘못 fallback 하는 함정} 이 있어 (\ref{ch:27}장 §토크나이저 노트), \inlinecode{PreTrainedTokenizerFast} + special token 명시로 로드합니다.
 
 \Needspace{8\baselineskip}
 \begin{lstlisting}
@@ -1470,7 +1470,7 @@ IPO 는 \emph{DPO 의 overfitting} 을, KTO 는 \emph{쌍이 아닌 개별 좋�
 \inlinecode{prompt} / \inlinecode{chosen} / \inlinecode{rejected} 데이터 형식 & preference 쌍 표준 형식 & \textbf{새로 등장} (\ref{ch:28}장 은 \inlinecode{prompt}/\inlinecode{completion}) \\
 \inlinecode{torch.nn.functional.log\_softmax} + \inlinecode{gather} & response 토큰의 log-prob 합 (§3 손계산) & \textbf{공유} (개념은 CausalLM loss 와 동일) \\
 \inlinecode{copy.deepcopy(policy)} + \inlinecode{requires\_grad\_(False)} & frozen reference 직접 생성 (§3 시연용) & \textbf{새로 등장} \\
-\inlinecode{PreTrainedTokenizerFast.from\_pretrained("skt/kogpt2-base-v2",\ ...)} & KoGPT2 BBPE (AutoTokenizer 함정 회피) & \textbf{공유} (\ref{ch:27}장 이후 고정) \\
+\inlinecode{PreTrainedTokenizerFast.from\_pretrained("skt/kogpt2-base-v2",\ ...)} & KoGPT2 Character BPE (AutoTokenizer 함정 회피) & \textbf{공유} (\ref{ch:27}장 이후 고정) \\
 \bottomrule
 \end{tabular}
 \end{adjustbox}

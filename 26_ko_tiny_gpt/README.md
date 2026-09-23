@@ -57,7 +57,7 @@ device 자동 감지 (CUDA / MPS / CPU) - 로컬 Mac MPS 에서도 실행 가능
 | 24 | 작은 GPT2 (약 3M, scratch) | BPE (직접 학습, 영어, vocab 2,048) | 영어 TinyStories 30K | Linear(H, V) (LM head, weight tied) | CE (next-token) |
 | 25 | gpt2 (124M, WebText 사전학습) | BPE (gpt2 그대로, vocab 50,257) | 영어 TinyStories (Ch 24 와 동일) | Linear(H, V) (LM head 그대로) | CE (next-token) - continual pretraining |
 | **26** | **작은 GPT2 (약 3M, scratch)** | **BBPE (직접 학습, 한국어, vocab 약 4,000)** | **한국어 TinyStories 30K** | **Linear(H, V) (LM head, weight tied)** | **CE (next-token)** |
-| 27 (다음) | KoGPT2 (125M, 대규모 한국어 사전학습) | KoGPT2 BBPE (그대로) | 한국어 TinyStories (Ch 26 과 동일) | Linear(H, V) (LM head 그대로) | CE (next-token) - continual pretraining |
+| 27 (다음) | KoGPT2 (125M, 대규모 한국어 사전학습) | KoGPT2 Character BPE (그대로) | 한국어 TinyStories (Ch 26 과 동일) | Linear(H, V) (LM head 그대로) | CE (next-token) - continual pretraining |
 
 전체 챕터 표는 [루트 README](../README.md#챕터별-변화추적표) 를 참고하세요.
 
