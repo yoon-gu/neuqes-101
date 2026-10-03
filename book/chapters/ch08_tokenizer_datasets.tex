@@ -834,6 +834,10 @@ Dynamic vs static total tokens: 100.0% → ~0% reduction
 
 BERT 사전학습은 입력 토큰의 15\%를 \texttt{{[}MASK{]}} 로 가리고 모델이 맞추도록 학습됩니다 (Masked Language Modeling). 그 masking 자체를 담당하는 게 \inlinecode{DataCollatorForLanguageModeling} --- 이 장의 학습엔 안 쓰지만, BERT의 기원을 이해하는 데 직접 보는 게 빠릅니다.
 
+\begin{quote}
+주의: 어느 토큰을 가릴지는 \textbf{매번 확률적으로} 정해지므로, 아래 \texttt{{[}MASK{]}} 비율과 마스킹된 단어 위치는 실행마다 바뀝니다 --- 의도된 동작입니다. 실린 값은 한 번의 실행 예시이니 특정 숫자·단어를 정답처럼 외우지 않아도 됩니다.
+\end{quote}
+
 
 
 \Needspace{11\baselineskip}

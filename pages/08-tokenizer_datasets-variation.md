@@ -88,6 +88,8 @@ label:          4  (0-4 = stars 1-5)
 
 PyTorch `DataLoader` 는 dataset을 받아 *배치 + shuffle* 을 자동 처리합니다. Ch 9의 `Trainer` 가 내부에서 이걸 만들어 쓰지만, 직접 만들 줄 알면 디버깅에 유리.
 
+> ⚠️ `shuffle=True` 라서 아래 첫 배치의 라벨 값(`label values`)은 **실행할 때마다 달라집니다** — 의도된 동작입니다. 실린 숫자는 한 번의 실행 예시일 뿐이니, 그대로 재현되지 않아도 정상입니다.
+
 텐서 형식 데이터셋을 `DataLoader` 에 넣으면 배치 묶기와 셔플이 자동으로 처리됩니다. 첫 배치를 꺼내 각 키의 shape(`input_ids`/`attention_mask` 가 `[batch_size, max_length]`)와 라벨 값을 확인합니다 — Ch 9의 `Trainer` 가 내부에서 만들어 쓰는 입력의 모습입니다.
 
 ```python
@@ -321,6 +323,8 @@ Dynamic vs static total tokens: 100.0% → ~0% reduction
 ### 실험 2 — `DataCollatorForLanguageModeling` 으로 MLM masking 직접 보기
 
 BERT 사전학습은 입력 토큰의 15%를 `[MASK]` 로 가리고 모델이 맞추도록 학습됩니다 (Masked Language Modeling). 그 masking 자체를 담당하는 게 `DataCollatorForLanguageModeling` — 이번 챕터의 학습엔 안 쓰지만, BERT의 기원을 이해하는 데 직접 보는 게 빠릅니다.
+
+> ⚠️ 어느 토큰을 가릴지는 **매번 확률적으로** 정해지므로, 아래 `[MASK]` 비율과 마스킹된 단어 위치는 실행마다 바뀝니다 — 의도된 동작입니다. 실린 값은 한 번의 실행 예시이니 특정 숫자·단어를 정답처럼 외우지 않아도 됩니다.
 
 ```python
 from transformers import DataCollatorForLanguageModeling
