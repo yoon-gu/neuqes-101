@@ -76,3 +76,13 @@ img {
   font-size: 0.84em;
   color: rgb(91, 102, 112);
 }
+
+/* 번호 붙은 수식 (#210, epub/eqref-numbers.lua) */
+.equation {
+  display: block;
+}
+
+.eqno {
+  display: block;
+  text-align: right;
+}

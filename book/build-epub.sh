@@ -23,6 +23,7 @@ pandoc ebook-main.tex \
   --toc \
   --toc-depth=1 \
   --mathml \
+  --lua-filter=epub/eqref-numbers.lua \
   --metadata=language:ko-KR \
   --css=epub/epub-style.css \
   --epub-cover-image=epub/covers/cover-illustration-token-core.png \
@@ -66,6 +67,7 @@ pandoc "${DRAFT_SOURCE}" \
   --toc \
   --toc-depth=1 \
   --mathml \
+  --lua-filter=epub/eqref-numbers.lua \
   --metadata=language:ko-KR \
   --metadata=title:"Hugging Face로 시작하는 텍스트 분석 입문 - 출판 검토용 초안" \
   --css=epub/epub-style.css \
@@ -84,6 +86,7 @@ pandoc "${COMPACT_DRAFT_SOURCE}" \
   --toc \
   --toc-depth=1 \
   --mathml \
+  --lua-filter=epub/eqref-numbers.lua \
   --metadata=language:ko-KR \
   --metadata=title:"Hugging Face로 시작하는 텍스트 분석 입문 - 출판 검토용 compact 초안" \
   --css=epub/epub-style.css \
