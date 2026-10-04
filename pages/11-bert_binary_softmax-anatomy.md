@@ -15,19 +15,19 @@ for k, v in eval_metrics.items():
 
 ```text
 Training Loss  Validation Loss  Epoch  Accuracy  Precision  Recall    F1        Auc
-0.153909       0.265578         2      0.910448  0.902965   0.902965  0.902965  0.968875
+0.161237       0.262615         2      0.911692  0.912088   0.894879  0.903401  0.969566
 BERT method B evaluation:
-             eval_loss: 0.2656
-         eval_accuracy: 0.9104
-        eval_precision: 0.9030
-           eval_recall: 0.9030
-               eval_f1: 0.9030
-              eval_auc: 0.9689
+             eval_loss: 0.2626
+         eval_accuracy: 0.9117
+        eval_precision: 0.9121
+           eval_recall: 0.8949
+               eval_f1: 0.9034
+              eval_auc: 0.9696
 ```
 
 **결과 해석**
 
-방식 B는 accuracy 0.9104, F1 0.9030, AUC 0.9689로 안정적으로 수렴합니다. 뒤에서 다시 학습하는 방식 A(accuracy 0.9055)와 거의 같은 자리에 떨어지는데, 바로 이 일치가 이 챕터의 핵심입니다.
+방식 B는 accuracy 약 0.91, F1 약 0.90, AUC 약 0.97로 안정적으로 수렴합니다(소수점 아래 자리는 실행 환경에 따라 1%p 안팎으로 흔들립니다). 뒤에서 다시 학습하는 방식 A(accuracy 약 0.91)와 거의 같은 자리에 떨어지는데, 바로 이 일치가 이 챕터의 핵심입니다.
 
 방식 A와 비교하려면 2차원 logit을 1차원으로 환산해야 합니다. 여기서 핵심은 `logits = logits2[:, 1] - logits2[:, 0]`, 즉 $z = z_1 - z_0$ — 이렇게 두면 $\sigma(z) = \mathrm{softmax}(z_0, z_1)[1] = p_1$ 이 되어 방식 A의 1차원 logit과 정확히 같은 의미를 가집니다.
 
@@ -64,22 +64,22 @@ print(pd.DataFrame({
 
 ```text
 logits2 (raw)  shape: (804, 2)
-logit z = z1-z0 range: [-5.10, 4.88]
-Prob range:            [0.0061, 0.9925]
-Positive prediction rate (prob >= 0.5): 46.1%
+logit z = z1-z0 range: [-5.12, 4.89]
+Prob range:            [0.0059, 0.9926]
+Positive prediction rate (prob >= 0.5): 45.3%
 
 First 5 samples:
  label    z0    z1  z=z1-z0  prob_B  pred
-     1 -1.81  2.26     4.08  0.9833     1
-     0  1.47 -1.55    -3.02  0.0466     0
-     1 -2.05  2.60     4.65  0.9905     1
-     1 -1.69  2.29     3.99  0.9818     1
-     1 -2.13  2.64     4.77  0.9916     1
+     1 -1.87  2.21     4.08  0.9834     1
+     0  1.87 -1.40    -3.27  0.0367     0
+     1 -2.22  2.46     4.69  0.9909     1
+     1 -2.02  2.17     4.19  0.9851     1
+     1 -2.26  2.49     4.75  0.9914     1
 ```
 
 **결과 해석**
 
-확률이 [0.0061, 0.9925]로 양 끝까지 벌어져 모델이 확신을 갖고 분류하고 있음을 보여줍니다. 첫 5개 샘플에서 `z=z1-z0`의 부호가 그대로 예측 클래스를 가르고(양수 → pred 1, 음수 → pred 0), 모두 정답 라벨과 일치합니다.
+확률이 약 [0.006, 0.993]으로 양 끝까지 벌어져 모델이 확신을 갖고 분류하고 있음을 보여줍니다. 첫 5개 샘플에서 `z=z1-z0`의 부호가 그대로 예측 클래스를 가르고(양수 → pred 1, 음수 → pred 0), 모두 정답 라벨과 일치합니다.
 
 ### 4-1. 메인 그림 — *확률 공간* 분포 (Ch 10과 같은 KDE)
 
@@ -107,7 +107,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/11-bert_binary_softmax-out1-1.png)
+![output](../assets/11-bert_binary_softmax-out1-2.png)
 
 ### 4-2. 보조 그림 — $z = z_1 - z_0$ 의 logit 공간 분포
 
@@ -130,7 +130,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/11-bert_binary_softmax-out2-1.png)
+![output](../assets/11-bert_binary_softmax-out2-2.png)
 
 **여기까지 정리** — 4-1과 4-2의 그림은 Ch 10의 것과 *모양* 이 거의 같아야 합니다. 봉우리 높이나 위치가 미세하게 다를 순 있어도, 양 끝 압착 / 가운데 헷갈림 영역 / 결정 경계 자리 같은 *큰 그림* 은 동일. 이게 두 방식 동등성의 *시각적* 증거.
 
@@ -148,10 +148,10 @@ print(classification_report(
 ```text
               precision    recall  f1-score   support
 
-    negative     0.9169    0.9169    0.9169       433
-    positive     0.9030    0.9030    0.9030       371
+    negative     0.9114    0.9261    0.9187       433
+    positive     0.9121    0.8949    0.9034       371
 
-    accuracy                         0.9104       804
-   macro avg     0.9099    0.9099    0.9099       804
-weighted avg     0.9104    0.9104    0.9104       804
+    accuracy                         0.9117       804
+   macro avg     0.9117    0.9105    0.9110       804
+weighted avg     0.9117    0.9117    0.9116       804
 ```

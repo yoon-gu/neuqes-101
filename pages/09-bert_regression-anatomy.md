@@ -15,17 +15,17 @@ for k, v in bert_metrics.items():
 
 ```text
 Training Loss  Validation Loss  Epoch  Mse       Mae       R2
-0.576040       0.653909         2      0.653909  0.617953  0.664411
+0.563478       0.634478         2      0.634478  0.605148  0.674383
 BERT evaluation:
-             eval_loss: 0.6539
-              eval_mse: 0.6539
-              eval_mae: 0.6180
-               eval_r2: 0.6644
+             eval_loss: 0.6345
+              eval_mse: 0.6345
+              eval_mae: 0.6051
+               eval_r2: 0.6744
 ```
 
 **결과 해석**
 
-`eval_loss` 와 `eval_mse` 가 0.6539로 같습니다 — 회귀 loss가 곧 MSE이기 때문입니다. MAE 0.618은 평균적으로 별점을 약 0.6점 틀린다는 뜻이고, R² 0.664는 별점 분산의 약 66%를 설명한다는 의미입니다.
+`eval_loss` 와 `eval_mse` 가 약 0.63으로 같습니다 — 회귀 loss가 곧 MSE이기 때문입니다. MAE 약 0.61은 평균적으로 별점을 0.6점쯤 틀린다는 뜻이고, R² 약 0.67은 별점 분산의 3분의 2 가량을 설명한다는 의미입니다. 소수점 셋째 자리는 실행 환경(`transformers` 버전 등)에 따라 조금씩 달라집니다.
 
 같은 데이터를 Ch 2 방식(TF-IDF + `LinearRegression`)으로도 학습해 BERT와 직접 견줍니다.
 
@@ -82,12 +82,12 @@ pd.DataFrame(rows).round(4)
 ```text
                       model     mse     mae      r2
 0  sklearn LinearRegression  1.5597  1.0086  0.1996
-1     DistilBERT fine-tuned  0.6539  0.6180  0.6644
+1     DistilBERT fine-tuned  0.6345  0.6051  0.6744
 ```
 
 **결과 해석**
 
-세 지표 모두 BERT가 크게 앞섭니다 — MSE 1.56 → 0.65, MAE 1.01 → 0.62, R² 0.20 → 0.66. 문맥을 attention으로 읽는 BERT가 단어 빈도만 보는 TF-IDF 회귀보다 별점을 훨씬 정확히 맞춘다는 가설이 이 수치로 확인됩니다.
+세 지표 모두 BERT가 크게 앞섭니다 — MSE 1.56 → 약 0.63, MAE 1.01 → 약 0.61, R² 0.20 → 약 0.67. 문맥을 attention으로 읽는 BERT가 단어 빈도만 보는 TF-IDF 회귀보다 별점을 훨씬 정확히 맞춘다는 가설이 이 수치로 확인됩니다.
 
 **해석 가이드** (실제 숫자는 random seed에 따라 조금씩 다릅니다):
 
@@ -133,7 +133,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/09-bert_regression-out1-1.png)
+![output](../assets/09-bert_regression-out1-2.png)
 
 **무엇이 보이나**
 
@@ -165,7 +165,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/09-bert_regression-out2-1.png)
+![output](../assets/09-bert_regression-out2-2.png)
 
 **무엇이 보이나**
 

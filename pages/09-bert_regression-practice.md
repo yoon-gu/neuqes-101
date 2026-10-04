@@ -32,6 +32,8 @@ plt.rcParams["font.family"] = "NanumGothic"
 plt.rcParams["axes.unicode_minus"] = False
 
 print(f"PyTorch:        {torch.__version__}")
+import transformers, datasets
+print(f"transformers: {transformers.__version__}, datasets: {datasets.__version__}")
 print(f"CUDA available: {torch.cuda.is_available()}")
 if torch.cuda.is_available():
     print(f"GPU:             {torch.cuda.get_device_name(0)}")
@@ -42,7 +44,8 @@ else:
 **▶ 실행 결과**
 
 ```text
-PyTorch:        2.11.0+cu128
+PyTorch:        2.11.0+cu130
+transformers: 5.17.0, datasets: 4.8.5
 CUDA available: True
 GPU:             Tesla T4
 ```
@@ -56,7 +59,7 @@ GPU:             Tesla T4
 **▶ 실행 결과**
 
 ```text
-Sun Jun 21 22:51:03 2026       
+Sun Oct  4 08:27:18 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -65,7 +68,7 @@ Sun Jun 21 22:51:03 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   36C    P8             13W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   51C    P8             10W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -155,14 +158,14 @@ print(f"problem_type:  {model.config.problem_type}")
 [transformers] DistilBertForSequenceClassification LOAD REPORT from: distilbert-base-uncased
 Key                     | Status     | 
 ------------------------+------------+-
-vocab_layer_norm.bias   | UNEXPECTED | 
-vocab_projector.bias    | UNEXPECTED | 
-vocab_transform.weight  | UNEXPECTED | 
 vocab_layer_norm.weight | UNEXPECTED | 
+vocab_transform.weight  | UNEXPECTED | 
+vocab_layer_norm.bias   | UNEXPECTED | 
 vocab_transform.bias    | UNEXPECTED | 
-classifier.bias         | MISSING    | 
+vocab_projector.bias    | UNEXPECTED | 
 pre_classifier.bias     | MISSING    | 
 pre_classifier.weight   | MISSING    | 
+classifier.bias         | MISSING    | 
 classifier.weight       | MISSING    | 
 
 Notes:
@@ -241,14 +244,14 @@ if torch.cuda.is_available():
 [transformers] DistilBertForSequenceClassification LOAD REPORT from: distilbert-base-uncased
 Key                     | Status     | 
 ------------------------+------------+-
-vocab_layer_norm.bias   | UNEXPECTED | 
-vocab_projector.bias    | UNEXPECTED | 
-vocab_transform.weight  | UNEXPECTED | 
 vocab_layer_norm.weight | UNEXPECTED | 
+vocab_transform.weight  | UNEXPECTED | 
+vocab_layer_norm.bias   | UNEXPECTED | 
 vocab_transform.bias    | UNEXPECTED | 
-classifier.bias         | MISSING    | 
+vocab_projector.bias    | UNEXPECTED | 
 pre_classifier.bias     | MISSING    | 
 pre_classifier.weight   | MISSING    | 
+classifier.bias         | MISSING    | 
 classifier.weight       | MISSING    | 
 
 Notes:
@@ -280,7 +283,7 @@ Tradeoff: BERT body cannot adapt to the task — usually train the body too if d
 **▶ 실행 결과**
 
 ```text
-Sun Jun 21 22:51:27 2026       
+Sun Oct  4 08:27:41 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -289,7 +292,7 @@ Sun Jun 21 22:51:27 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   37C    P8             13W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   52C    P8             14W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -373,14 +376,14 @@ print(f"\nTraining done — mean train loss: {train_result.training_loss:.4f}")
 
 ```text
 Epoch  Training Loss  Validation Loss  Mse       Mae       R2
-1      0.782634       0.660149         0.660149  0.639380  0.661209
-2      0.576040       0.653909         0.653909  0.617953  0.664411
-Training done — mean train loss: 1.1182
+1      0.766327       0.680961         0.680961  0.655471  0.650528
+2      0.563478       0.634478         0.634478  0.605148  0.674383
+Training done — mean train loss: 1.0788
 ```
 
 **결과 해석**
 
-500 step 전체의 평균 train loss가 1.1182로 끝났습니다. 이는 MSE 단위(별점² 오차)라, 초반 step의 큰 loss까지 평균에 섞인 값입니다. 학습이 실제로 줄었는지는 아래 eval 지표(`eval_mse` 0.65)로 확인하는 편이 정확합니다.
+500 step 전체의 평균 train loss가 약 1.08로 끝났습니다. 이는 MSE 단위(별점² 오차)라, 초반 step의 큰 loss까지 평균에 섞인 값입니다. 학습이 실제로 줄었는지는 아래 eval 지표(`eval_mse` 0.65)로 확인하는 편이 정확합니다.
 
 학습이 진행되는 동안 step별 loss와 에폭별 평가 metric이 출력됩니다. **핵심 관찰**:
 
@@ -390,9 +393,9 @@ Training done — mean train loss: 1.1182
 
 > 📒 **부록 노트북 두 편**
 >
-> 1. [`appendix_experiment_tracking.ipynb`](./appendix_experiment_tracking.ipynb) — `report_to` 인자로 **wandb · trackio · MLflow** 같은 experiment tracker를 붙이는 패턴. 학습 곡선·평가 metric을 dashboard에서 보고 여러 run을 한 화면에 비교. ([Colab으로](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/09_bert_regression/appendix_experiment_tracking.ipynb))
+> 1. [`appendix_experiment_tracking.ipynb`](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/09_bert_regression/appendix_experiment_tracking.ipynb) — `report_to` 인자로 **wandb · trackio · MLflow** 같은 experiment tracker를 붙이는 패턴. 학습 곡선·평가 metric을 dashboard에서 보고 여러 run을 한 화면에 비교. ([Colab으로](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/09_bert_regression/appendix_experiment_tracking.ipynb))
 >
-> 2. [`appendix_hpo.ipynb`](./appendix_hpo.ipynb) — **하이퍼파라미터 최적화(HPO)의 어려움**. `TrainingArguments` 인자 정리, HPO가 어려운 5가지 이유, `Trainer.hyperparameter_search` + Optuna 직접 시도, wandb sweeps · MLflow autolog 통합. ([Colab으로](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/09_bert_regression/appendix_hpo.ipynb))
+> 2. [`appendix_hpo.ipynb`](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/09_bert_regression/appendix_hpo.ipynb) — **하이퍼파라미터 최적화(HPO)의 어려움**. `TrainingArguments` 인자 정리, HPO가 어려운 5가지 이유, `Trainer.hyperparameter_search` + Optuna 직접 시도, wandb sweeps · MLflow autolog 통합. ([Colab으로](https://colab.research.google.com/github/yoon-gu/neuqes-101/blob/master/09_bert_regression/appendix_hpo.ipynb))
 
 ```python
 !nvidia-smi
@@ -401,7 +404,7 @@ Training done — mean train loss: 1.1182
 **▶ 실행 결과**
 
 ```text
-Sun Jun 21 22:51:58 2026       
+Sun Oct  4 08:28:14 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -410,7 +413,7 @@ Sun Jun 21 22:51:58 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   53C    P0             64W /   70W |    1573MiB /  15360MiB |     77%      Default |
+| N/A   68C    P0             65W /   70W |    1581MiB /  15360MiB |     61%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -419,7 +422,7 @@ Sun Jun 21 22:51:58 2026
 |  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
 |        ID   ID                                                               Usage      |
 |=========================================================================================|
-|    0   N/A  N/A            9461      C   /usr/bin/python3                       1570MiB |
+|    0   N/A  N/A             912      C   /usr/bin/python3                       1578MiB |
 +-----------------------------------------------------------------------------------------+
 ```
 

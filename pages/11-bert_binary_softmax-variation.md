@@ -67,11 +67,11 @@ print(f"Method A problem_type:  {model_A.config.problem_type}")
 [transformers] DistilBertForSequenceClassification LOAD REPORT from: distilbert-base-uncased
 Key                     | Status     | 
 ------------------------+------------+-
-vocab_projector.bias    | UNEXPECTED | 
 vocab_transform.weight  | UNEXPECTED | 
 vocab_transform.bias    | UNEXPECTED | 
-vocab_layer_norm.bias   | UNEXPECTED | 
 vocab_layer_norm.weight | UNEXPECTED | 
+vocab_projector.bias    | UNEXPECTED | 
+vocab_layer_norm.bias   | UNEXPECTED | 
 classifier.bias         | MISSING    | 
 pre_classifier.bias     | MISSING    | 
 pre_classifier.weight   | MISSING    | 
@@ -177,17 +177,17 @@ print(cmp.round(4).to_string(index=False))
 
 ```text
    metric  method A (sigmoid+BCE)  method B (softmax+CE)  |A-B|
-     loss                  0.2811                 0.2656 0.0155
- accuracy                  0.9055                 0.9104 0.0050
-precision                  0.9041                 0.9030 0.0011
-   recall                  0.8895                 0.9030 0.0135
-       f1                  0.8967                 0.9030 0.0062
-      auc                  0.9663                 0.9689 0.0026
+     loss                  0.2811                 0.2626 0.0185
+ accuracy                  0.9055                 0.9117 0.0062
+precision                  0.9041                 0.9121 0.0080
+   recall                  0.8895                 0.8949 0.0054
+       f1                  0.8967                 0.9034 0.0067
+      auc                  0.9663                 0.9696 0.0033
 ```
 
 **결과 해석**
 
-모든 지표에서 두 방식의 차이가 0.02 미만입니다 (accuracy 0.0050, AUC 0.0026, precision 0.0011). 같은 데이터·같은 hyperparams로 학습했으니 남는 차이는 random init·dropout 같은 학습 경로 노이즈일 뿐 — 식으로 본 동등성이 BERT에서도 그대로 성립함을 수치로 확인합니다.
+모든 지표에서 두 방식의 차이가 0.02 미만입니다 (accuracy 약 0.006, AUC 약 0.003, precision 약 0.008). 같은 데이터·같은 hyperparams로 학습했으니 남는 차이는 random init·dropout 같은 학습 경로 노이즈일 뿐 — 식으로 본 동등성이 BERT에서도 그대로 성립함을 수치로 확인합니다.
 
 ### 5-2. 샘플 단위 확률 비교 — scatter plot
 
@@ -225,16 +225,16 @@ print(f"Mean abs diff |A-B|: {mae:.4f}")
 
 **▶ 실행 결과**
 
-![output](../assets/11-bert_binary_softmax-out3-1.png)
+![output](../assets/11-bert_binary_softmax-out3-2.png)
 
 ```text
-Pearson corr:        0.9883  (1.0 = perfect equivalence)
-Mean abs diff |A-B|: 0.0239
+Pearson corr:        0.9902  (1.0 = perfect equivalence)
+Mean abs diff |A-B|: 0.0221
 ```
 
 **결과 해석**
 
-샘플별 확률의 Pearson 상관이 0.9883, 평균 절대 차가 0.0239로 두 방식이 사실상 같은 함수를 학습했음을 보여줍니다. scatter의 점들이 $y=x$ 직선 주변에 흩어지되 체계적 치우침이 없으니, 차이는 학습 경로 노이즈일 뿐입니다.
+샘플별 확률의 Pearson 상관이 약 0.99, 평균 절대 차가 약 0.02로 두 방식이 사실상 같은 함수를 학습했음을 보여줍니다. scatter의 점들이 $y=x$ 직선 주변에 흩어지되 체계적 치우침이 없으니, 차이는 학습 경로 노이즈일 뿐입니다.
 
 **해석**
 
@@ -268,18 +268,18 @@ print(f"  both wrong:             {both_wrong:.1%}")
 **▶ 실행 결과**
 
 ```text
-Agreement rate (A vs B predictions): 97.8%
+Agreement rate (A vs B predictions): 97.9%
 
 Prediction quadrants:
-  both correct:           89.7%
-  only A correct (B wrong): 0.9%
+  both correct:           89.8%
+  only A correct (B wrong): 0.7%
   only B correct (A wrong): 1.4%
   both wrong:             8.1%
 ```
 
 **결과 해석**
 
-threshold 0.5에서 두 방식의 예측이 97.8% 일치하고, 의견이 갈리는 경우는 합쳐서 2.3%(only A 0.9% + only B 1.4%)에 불과합니다. 실질적으로 같은 분류기로 봐도 무방하다는 결론입니다.
+threshold 0.5에서 두 방식의 예측이 약 98% 일치하고, 의견이 갈리는 경우는 합쳐서 2% 남짓(only A 약 0.7% + only B 약 1.4%)에 불과합니다. 실질적으로 같은 분류기로 봐도 무방하다는 결론입니다.
 
 **여기까지 보고 결론** — 식으로 본 동등성 ($\sigma(z) = \mathrm{softmax}(z_0, z_1)[1]$ when $z = z_1 - z_0$)이 BERT에서도 그대로 성립합니다. 차이가 있어 봐야 random init / dropout 같은 *학습 경로 차이* 정도. 두 방식은 **수식이 다른 같은 모델**, 라이브러리·코드 컨벤션이 강요하는 표현 차이일 뿐입니다.
 
