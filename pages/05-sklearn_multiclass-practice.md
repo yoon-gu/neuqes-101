@@ -21,6 +21,9 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
+import sklearn, datasets
+print(f"scikit-learn: {sklearn.__version__}, datasets: {datasets.__version__}")
+
 plt.rcParams["axes.unicode_minus"] = False
 
 dataset = load_dataset("Yelp/yelp_review_full")
@@ -35,6 +38,7 @@ print(df["label"].value_counts().sort_index())
 **▶ 실행 결과**
 
 ```text
+scikit-learn: 1.6.1, datasets: 4.8.5
 Total samples: 5000
 Class distribution (label 0-4 = star 1-5):
 label
