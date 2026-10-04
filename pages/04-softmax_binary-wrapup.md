@@ -9,7 +9,7 @@
 
 1. softmax 함수 정의를 적고, $\text{softmax}([z_0, z_1])_1$ 이 $\sigma(z_1 - z_0)$ 와 같음을 증명해보세요.
 2. Cross Entropy를 K=2에 적용하면 정확히 BCE가 되는 과정을 식으로 보일 수 있나요? ($y_1 = y$, $y_0 = 1-y$ 대입)
-3. 방식 B의 두 coefficient 벡터 사이에 어떤 관계가 학습되는 경향이 있나요? 그 이유는?
+3. 두 logit $z_0, z_1$ 에 같은 상수 $c$ 를 더해도 softmax 결과가 바뀌지 않는 이유는 무엇인가요? 이 성질이 sklearn 이 K=2 에서 `coef_` 를 `(2, V)` 가 아니라 `(1, V)` 로만 저장해도 되는 이유와 어떻게 이어지나요?
 4. 같은 binary 데이터에 두 방식의 accuracy가 거의 같다면, 실무에서 어느 쪽을 택해야 하나요?
 
 ## FAQ
@@ -58,7 +58,7 @@ LogisticRegression().fit(X, y_binary).coef_.shape  # (1, V)
 LogisticRegression().fit(X, y_3class).coef_.shape  # (3, V) — K≥3 에선 (K, V)
 ```
 
-그래서 방식 A와 방식 B가 sklearn 안에서는 사실상 같은 모델이고, predict_proba 도 미세한 수치 오차 빼고 일치합니다. 진짜 *두 별개의 logit head* 가 살아 있는 형태는 프레임워크가 collapse 하지 않는 환경 — PyTorch 에서 `nn.Linear(H, 2)` 를 직접 만들 때 — 비로소 등장합니다 (Ch 10·11).
+그래서 방식 A와 방식 B가 sklearn 안에서는 같은 모델이고, predict_proba 도 완전히 일치합니다. 진짜 *두 별개의 logit head* 가 살아 있는 형태는 프레임워크가 collapse 하지 않는 환경 — PyTorch 에서 `nn.Linear(H, 2)` 를 직접 만들 때 — 비로소 등장합니다 (Ch 10·11).
 
 ### Q5. (이론) sklearn 에서 softmax 와 OvR 을 어떻게 구분하나요?
 
