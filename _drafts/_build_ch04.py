@@ -163,16 +163,18 @@ md(r"""## 🚀 실습: 두 방식을 나란히 학습
 | 방식 | sklearn 인자 | 출력 차원 | 활성화 | loss |
 |---|---|---|---|---|
 | A (Ch 3 그대로) | `LogisticRegression()` | 1 | sigmoid | BCE |
-| B (이번 챕터) | `LogisticRegression()` (multinomial 자동) | 2 | softmax | CE |""")
+| B (이번 챕터) | `LogisticRegression()` (multinomial 자동) | 2 | softmax | CE |
+
+> ⚠️ **먼저 밝혀 둘 것** — sklearn 에서는 이진 데이터에 두 방식을 *따로* 학습시킬 수 없습니다. 클래스가 2개면 `LogisticRegression()` 이 출력을 2차원으로 만들지 않고 **자동으로 1차원으로 축약**하기 때문입니다(FAQ Q4). 그래서 아래 셀의 두 모델은 사실 **같은 코드**이고, 결과가 같은 것은 당연합니다. 두 방식이 *정말* 같은지는 이어지는 🔬 해부에서 식과 numpy 로 직접 확인합니다.""")
 
 # ----- 10. fit -----
 code(r"""# 방식 A — 1차원 출력 + sigmoid + BCE (sklearn binary 의 표준 학습 형태)
 model_a = LogisticRegression(max_iter=1000)
 model_a.fit(X_train, y_train)
 
-# 방식 B — 2차원 출력 + softmax + CE 의도. binary(K=2) 데이터에선 sklearn 이
-# 내부적으로 1차원 형태로 collapse 해서 방식 A 와 같은 결과를 줍니다 (FAQ Q4).
-# 여기선 두 방식을 *명시적으로* 같이 학습한 뒤 predict_proba 일치를 확인.
+# 방식 B — 2차원 출력 + softmax + CE 를 *의도*. 하지만 binary(K=2) 데이터에선 sklearn 이
+# 자동으로 1차원 형태로 collapse 하므로, 이 두 줄은 방식 A 와 **같은 코드** 입니다 (FAQ Q4).
+# 결과가 같은 건 당연합니다 — 진짜 동등성은 아래 🔬 해부에서 식과 numpy 로 확인합니다.
 model_b = LogisticRegression(max_iter=1000)
 model_b.fit(X_train, y_train)
 
@@ -233,7 +235,7 @@ print(f"\nMax diff: {np.abs(softmax_p1 - sigmoid_diff).max():.2e}  (numerical no
 # ----- 14. 변형: sklearn coef shape 관찰 -----
 md(r"""## 🛠️ 변형: sklearn은 왜 K=2 multinomial에서 `(2, V)` coef를 안 만드나?
 
-위 동등성 덕분에 K=2에서 두 logit 중 하나는 잉여입니다. sklearn은 이 사실을 알고 **K=2 multinomial을 자동으로 binary form으로 collapse** 시킵니다 — `coef_` 를 `(2, V)` 가 아니라 `(1, V)` 로만 저장합니다. 두 방식이 그래서 사실상 같은 모델이 되어 `predict_proba`도 거의 일치하는 거였죠.
+위 동등성 덕분에 K=2에서 두 logit 중 하나는 잉여입니다. sklearn은 이 사실을 알고 **K=2 multinomial을 자동으로 binary form으로 collapse** 시킵니다 — `coef_` 를 `(2, V)` 가 아니라 `(1, V)` 로만 저장합니다. 두 방식이 그래서 **같은 모델**이 되어 `predict_proba`도 정확히 일치하는 거였죠.
 
 직접 두 모델의 `coef_` 모양을 확인합니다.""")
 
@@ -248,7 +250,7 @@ print()
 print(f"coef_ max diff:      {np.abs(model_a.coef_ - model_b.coef_).max():.2e}")
 print(f"intercept_ max diff: {np.abs(model_a.intercept_ - model_b.intercept_).max():.2e}")
 print()
-print("(small difference is only solver convergence noise; same model essentially)")
+print("(exactly identical: the same model trained twice, so the diff is 0 by construction)")
 print()
 print("True (2, V) two-logit head appears in PyTorch (Ch 10/11 BERT binary).")""")
 
@@ -265,7 +267,7 @@ md(r"""## 🎯 체크포인트 질문
 
 1. softmax 함수 정의를 적고, $\text{softmax}([z_0, z_1])_1$ 이 $\sigma(z_1 - z_0)$ 와 같음을 증명해보세요.
 2. Cross Entropy를 K=2에 적용하면 정확히 BCE가 되는 과정을 식으로 보일 수 있나요? ($y_1 = y$, $y_0 = 1-y$ 대입)
-3. 방식 B의 두 coefficient 벡터 사이에 어떤 관계가 학습되는 경향이 있나요? 그 이유는?
+3. 두 logit $z_0, z_1$ 에 같은 상수 $c$ 를 더해도 softmax 결과가 바뀌지 않는 이유는 무엇인가요? 이 성질이 sklearn 이 K=2 에서 `coef_` 를 `(2, V)` 가 아니라 `(1, V)` 로만 저장해도 되는 이유와 어떻게 이어지나요?
 4. 같은 binary 데이터에 두 방식의 accuracy가 거의 같다면, 실무에서 어느 쪽을 택해야 하나요?""")
 
 # ----- 18. FAQ -----
@@ -315,7 +317,7 @@ LogisticRegression().fit(X, y_binary).coef_.shape  # (1, V)
 LogisticRegression().fit(X, y_3class).coef_.shape  # (3, V) — K≥3 에선 (K, V)
 ```
 
-그래서 방식 A와 방식 B가 sklearn 안에서는 사실상 같은 모델이고, predict_proba 도 미세한 수치 오차 빼고 일치합니다. 진짜 *두 별개의 logit head* 가 살아 있는 형태는 프레임워크가 collapse 하지 않는 환경 — PyTorch 에서 `nn.Linear(H, 2)` 를 직접 만들 때 — 비로소 등장합니다 (Ch 10·11).
+그래서 방식 A와 방식 B가 sklearn 안에서는 같은 모델이고, predict_proba 도 완전히 일치합니다. 진짜 *두 별개의 logit head* 가 살아 있는 형태는 프레임워크가 collapse 하지 않는 환경 — PyTorch 에서 `nn.Linear(H, 2)` 를 직접 만들 때 — 비로소 등장합니다 (Ch 10·11).
 
 ### Q5. (이론) sklearn 에서 softmax 와 OvR 을 어떻게 구분하나요?
 
