@@ -58,16 +58,18 @@ X_train: (3232, 10000), positive rate: 49.4%
 | A (Ch 3 그대로) | `LogisticRegression()` | 1 | sigmoid | BCE |
 | B (이번 챕터) | `LogisticRegression()` (multinomial 자동) | 2 | softmax | CE |
 
-이제 같은 데이터에 두 방식을 나란히 학습시켜 정확도가 일치하는지 봅니다. 코드상으로는 똑같은 `LogisticRegression()` 두 번이지만, 의도는 방식 A(sigmoid+BCE)와 방식 B(softmax+CE)를 각각 대표하게 둔 것입니다.
+> ⚠️ **먼저 밝혀 둘 것** — sklearn 에서는 이진 데이터에 두 방식을 *따로* 학습시킬 수 없습니다. 클래스가 2개면 `LogisticRegression()` 이 출력을 2차원으로 만들지 않고 **자동으로 1차원으로 축약**하기 때문입니다(FAQ Q4). 그래서 아래 셀의 두 모델은 사실 **같은 코드**이고, 결과가 같은 것은 당연합니다. 두 방식이 *정말* 같은지는 이어지는 🔬 해부에서 식과 numpy 로 직접 확인합니다.
+
+그래도 두 모델을 따로 이름 붙여 학습시키는 이유는, 뒤에서 `predict_proba` 와 `coef_` 를 같은 표에서 나란히 비교하기 위해서입니다.
 
 ```python
 # 방식 A — 1차원 출력 + sigmoid + BCE (sklearn binary 의 표준 학습 형태)
 model_a = LogisticRegression(max_iter=1000)
 model_a.fit(X_train, y_train)
 
-# 방식 B — 2차원 출력 + softmax + CE 의도. binary(K=2) 데이터에선 sklearn 이
-# 내부적으로 1차원 형태로 collapse 해서 방식 A 와 같은 결과를 줍니다 (FAQ Q4).
-# 여기선 두 방식을 *명시적으로* 같이 학습한 뒤 predict_proba 일치를 확인.
+# 방식 B — 2차원 출력 + softmax + CE 를 *의도*. 하지만 binary(K=2) 데이터에선 sklearn 이
+# 자동으로 1차원 형태로 collapse 하므로, 이 두 줄은 방식 A 와 **같은 코드** 입니다 (FAQ Q4).
+# 결과가 같은 건 당연합니다 — 진짜 동등성은 아래 🔬 해부에서 식과 numpy 로 확인합니다.
 model_b = LogisticRegression(max_iter=1000)
 model_b.fit(X_train, y_train)
 
@@ -89,7 +91,7 @@ Diff: 0.0000
 
 **결과 해석**
 
-두 방식의 정확도가 `0.8639`로 소수점 넷째 자리까지 완전히 같습니다(Diff 0.0000). 출력 차원·활성화·loss가 달라 보여도 K=2에서는 같은 결정을 내린다는 첫 신호입니다.
+두 방식의 정확도가 `0.8639`로 소수점 넷째 자리까지 완전히 같습니다(Diff 0.0000). 다만 이것은 같은 코드를 두 번 실행한 결과라 당연한 일이지, 두 방식이 수학적으로 동등하다는 증거는 아닙니다 — 그 확인은 🔬 해부에서 식과 numpy 로 합니다.
 
 확률값까지 같은지는 정확도만으로는 알 수 없습니다. `predict_proba` 를 직접 꺼내 두 방식의 P(y=1)을 비교합니다.
 

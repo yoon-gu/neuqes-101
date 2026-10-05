@@ -343,7 +343,7 @@ Max diff: 2.22e-16  (numerical noise)
 
 \section{\texorpdfstring{변형: sklearn은 왜 K=2 multinomial에서 \inlinecode{(2,\ V)} coef를 안 만드나?}{변형: sklearn은 왜 K=2 multinomial에서 (2, V) coef를 안 만드나?}}
 
-위 동등성 덕분에 K=2에서 두 logit 중 하나는 잉여입니다. sklearn은 이 사실을 알고 \textbf{K=2 multinomial을 자동으로 binary form으로 collapse} 시킵니다 --- \inlinecode{coef\_} 를 \inlinecode{(2,\ V)} 가 아니라 \inlinecode{(1,\ V)} 로만 저장합니다. 두 방식이 그래서 사실상 같은 모델이 되어 \inlinecode{predict\_proba}도 거의 일치하는 거였죠.
+위 동등성 덕분에 K=2에서 두 logit 중 하나는 잉여입니다. sklearn은 이 사실을 알고 \textbf{K=2 multinomial을 자동으로 binary form으로 collapse} 시킵니다 --- \inlinecode{coef\_} 를 \inlinecode{(2,\ V)} 가 아니라 \inlinecode{(1,\ V)} 로만 저장합니다. 두 방식이 그래서 \textbf{같은 모델}이 되어 \inlinecode{predict\_proba}도 정확히 일치하는 거였죠.
 
 직접 두 모델의 \inlinecode{coef\_} 모양을 확인합니다.
 
@@ -377,7 +377,7 @@ Max diff: 2.22e-16  (numerical noise)
 \item
   Cross Entropy를 K=2에 적용하면 정확히 BCE가 되는 과정을 식으로 보일 수 있나요? (\(y_1 = y\), \(y_0 = 1-y\) 대입)
 \item
-  방식 B의 두 coefficient 벡터 사이에 어떤 관계가 학습되는 경향이 있나요? 그 이유는?
+  두 logit \(z_0, z_1\) 에 같은 상수 \(c\) 를 더해도 softmax 결과가 바뀌지 않는 이유는 무엇인가요? 이 성질이 sklearn 이 K=2 에서 \inlinecode{coef\_} 를 \inlinecode{(2,\ V)} 가 아니라 \inlinecode{(1,\ V)} 로만 저장해도 되는 이유와 어떻게 이어지나요?
 \item
   같은 binary 데이터에 두 방식의 accuracy가 거의 같다면, 실무에서 어느 쪽을 택해야 하나요?
 \end{enumerate}
@@ -442,7 +442,7 @@ LogisticRegression().fit(X, y_binary).coef_.shape
 LogisticRegression().fit(X, y_3class).coef_.shape
 \end{lstlisting}
 
-그래서 방식 A와 방식 B가 sklearn 안에서는 사실상 같은 모델이고, predict\_proba 도 미세한 수치 오차 빼고 일치합니다. 진짜 \emph{두 별개의 logit head} 가 살아 있는 형태는 프레임워크가 collapse 하지 않는 환경 --- PyTorch 에서 \inlinecode{nn.Linear(H,\ 2)} 를 직접 만들 때 --- 비로소 등장합니다 (\ref{ch:10}·\ref{ch:11}장).
+그래서 방식 A와 방식 B가 sklearn 안에서는 같은 모델이고, predict\_proba 도 완전히 일치합니다. 진짜 \emph{두 별개의 logit head} 가 살아 있는 형태는 프레임워크가 collapse 하지 않는 환경 --- PyTorch 에서 \inlinecode{nn.Linear(H,\ 2)} 를 직접 만들 때 --- 비로소 등장합니다 (\ref{ch:10}·\ref{ch:11}장).
 
 \end{faqBox}
 
