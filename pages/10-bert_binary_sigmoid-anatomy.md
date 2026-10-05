@@ -15,19 +15,19 @@ for k, v in eval_metrics.items():
 
 ```text
 Training Loss  Validation Loss  Epoch  Accuracy  Precision  Recall    F1        Auc
-0.159652       0.275900         2      0.898010  0.898072   0.878706  0.888283  0.967991
+0.170321       0.274187         2      0.906716  0.895722   0.902965  0.899329  0.966248
 BERT method A evaluation:
-             eval_loss: 0.2759
-         eval_accuracy: 0.8980
-        eval_precision: 0.8981
-           eval_recall: 0.8787
-               eval_f1: 0.8883
-              eval_auc: 0.9680
+             eval_loss: 0.2742
+         eval_accuracy: 0.9067
+        eval_precision: 0.8957
+           eval_recall: 0.9030
+               eval_f1: 0.8993
+              eval_auc: 0.9662
 ```
 
 **결과 해석**
 
-평가 정확도 약 89.8%, F1 0.888, AUC 0.968로 방식 A가 binary 분류를 잘 학습했습니다. AUC가 0.97에 가깝다는 건 임계값을 어디에 두든 두 클래스가 확률적으로 잘 분리된다는 뜻입니다. Ch 11에서 학습할 방식 B(softmax+CE)와 비교할 기준선이 됩니다.
+평가 정확도 약 91%, F1 약 0.90, AUC 약 0.97로 방식 A가 binary 분류를 잘 학습했습니다(소수점 아래 자리는 실행 환경에 따라 1%p 안팎으로 흔들립니다). AUC가 0.97에 가깝다는 건 임계값을 어디에 두든 두 클래스가 확률적으로 잘 분리된다는 뜻입니다. Ch 11에서 학습할 방식 B(softmax+CE)와 비교할 기준선이 됩니다.
 
 `Trainer.predict()` 로 평가셋의 raw logit을 받아 sigmoid로 확률을 만들고, 처음 5개 샘플의 logit·확률·예측을 정답과 나란히 봅니다.
 
@@ -53,22 +53,22 @@ print(pd.DataFrame({
 **▶ 실행 결과**
 
 ```text
-Logit range: [-4.41, 4.26]
-Prob range:  [0.0120, 0.9861]
-Positive prediction rate (prob >= 0.5): 45.1%
+Logit range: [-4.19, 4.13]
+Prob range:  [0.0149, 0.9842]
+Positive prediction rate (prob >= 0.5): 46.5%
 
 First 5 samples:
  label  logit   prob  pred
-     1   3.70 0.9758     1
-     0  -3.38 0.0331     0
-     1   4.18 0.9849     1
-     1   3.87 0.9796     1
-     1   4.21 0.9854     1
+     1   3.71 0.9762     1
+     0  -2.94 0.0501     0
+     1   4.03 0.9825     1
+     1   3.64 0.9744     1
+     1   4.04 0.9827     1
 ```
 
 **결과 해석**
 
-logit이 약 -4.4 ~ +4.3 범위로 뻗어, sigmoid 통과 후 확률은 0.01 ~ 0.99 양 끝에 압착됩니다. 처음 5개 모두 정답과 예측이 일치하며 확률도 0.03 또는 0.97처럼 자신감 있게 한쪽으로 쏠려 있습니다 — sigmoid가 큰 logit을 0/1로 포화시키는 성질이 그대로 드러납니다.
+logit이 약 -4 ~ +4 범위로 뻗어, sigmoid 통과 후 확률은 0.01 ~ 0.98 양 끝에 압착됩니다. 처음 5개 모두 정답과 예측이 일치하며 확률도 0.05 또는 0.98처럼 자신감 있게 한쪽으로 쏠려 있습니다 — sigmoid가 큰 logit을 0/1로 포화시키는 성질이 그대로 드러납니다.
 
 ### 4-1. 메인 그림 — *확률 공간* 에서 라벨별 분포 (`seaborn.kdeplot`)
 
@@ -103,7 +103,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/10-bert_binary_sigmoid-out1-1.png)
+![output](../assets/10-bert_binary_sigmoid-out1-2.png)
 
 **설명 — 왜 양 끝이 솟아 있나?** sigmoid는 logit이 ±5만 넘어가도 거의 0 또는 1로 수렴합니다 ($\sigma(5) \approx 0.993$, $\sigma(-5) \approx 0.007$). BERT가 학습 후 어느 정도 자신감을 갖게 되면 logit이 ±5-10 범위로 뻗어 나가고, 결과적으로 확률 공간에서는 **양 끝에 압착된 U자 분포**가 나옵니다. 가운데(0.3-0.7)는 모델이 *판단을 망설이는* 샘플 — 진짜 어려운 케이스이거나 라벨 노이즈일 가능성이 큽니다.
 
@@ -134,7 +134,7 @@ plt.show()
 
 **▶ 실행 결과**
 
-![output](../assets/10-bert_binary_sigmoid-out2-1.png)
+![output](../assets/10-bert_binary_sigmoid-out2-2.png)
 
 **두 그림을 함께 보는 법 — sigmoid가 한 일**
 
@@ -158,12 +158,12 @@ print(classification_report(
 ```text
               precision    recall  f1-score   support
 
-    negative     0.8980    0.9145    0.9062       433
-    positive     0.8981    0.8787    0.8883       371
+    negative     0.9163    0.9099    0.9131       433
+    positive     0.8957    0.9030    0.8993       371
 
-    accuracy                         0.8980       804
-   macro avg     0.8980    0.8966    0.8972       804
-weighted avg     0.8980    0.8980    0.8979       804
+    accuracy                         0.9067       804
+   macro avg     0.9060    0.9064    0.9062       804
+weighted avg     0.9068    0.9067    0.9067       804
 ```
 
 ## 결과 저장 — Ch 11에서 비교용

@@ -469,12 +469,12 @@ print(classification_report(
 \begin{bookoutputbox}
 precision    recall  f1-score   support
 
-    negative     0.9169    0.9169    0.9169       433
-    positive     0.9030    0.9030    0.9030       371
+    negative     0.9114    0.9261    0.9187       433
+    positive     0.9121    0.8949    0.9034       371
 
-    accuracy                         0.9104       804
-   macro avg     0.9099    0.9099    0.9099       804
-weighted avg     0.9104    0.9104    0.9104       804
+    accuracy                         0.9117       804
+   macro avg     0.9117    0.9105    0.9110       804
+weighted avg     0.9117    0.9117    0.9116       804
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -675,12 +675,12 @@ print(cmp.round(4).to_string(index=False))
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
 metric  method A (sigmoid+BCE)  method B (softmax+CE)  |A-B|
-     loss                  0.2811                 0.2656 0.0155
- accuracy                  0.9055                 0.9104 0.0050
-precision                  0.9041                 0.9030 0.0011
-   recall                  0.8895                 0.9030 0.0135
-       f1                  0.8967                 0.9030 0.0062
-      auc                  0.9663                 0.9689 0.0026
+     loss                  0.2811                 0.2626 0.0185
+ accuracy                  0.9055                 0.9117 0.0062
+precision                  0.9041                 0.9121 0.0080
+   recall                  0.8895                 0.8949 0.0054
+       f1                  0.8967                 0.9034 0.0067
+      auc                  0.9663                 0.9696 0.0033
 \end{bookoutputbox}
 \par\vspace{0.9em}
 
@@ -747,11 +747,11 @@ print(f"  both wrong:             {both_wrong:.1%}")
 
 \noindent\textbf{출력.}
 \begin{bookoutputbox}
-Agreement rate (A vs B predictions): 97.8%
+Agreement rate (A vs B predictions): 97.9%
 
 Prediction quadrants:
-  both correct:           89.7%
-  only A correct (B wrong): 0.9%
+  both correct:           89.8%
+  only A correct (B wrong): 0.7%
   only B correct (A wrong): 1.4%
   both wrong:             8.1%
 \end{bookoutputbox}

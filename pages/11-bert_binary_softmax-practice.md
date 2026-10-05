@@ -35,6 +35,8 @@ plt.rcParams["font.family"] = "NanumGothic"
 plt.rcParams["axes.unicode_minus"] = False
 
 print(f"PyTorch:        {torch.__version__}")
+import transformers, datasets
+print(f"transformers: {transformers.__version__}, datasets: {datasets.__version__}")
 print(f"CUDA available: {torch.cuda.is_available()}")
 if torch.cuda.is_available():
     print(f"GPU:             {torch.cuda.get_device_name(0)}")
@@ -45,7 +47,8 @@ else:
 **▶ 실행 결과**
 
 ```text
-PyTorch:        2.11.0+cu128
+PyTorch:        2.11.0+cu130
+transformers: 5.17.0, datasets: 4.8.5
 CUDA available: True
 GPU:             Tesla T4
 ```
@@ -59,7 +62,7 @@ GPU:             Tesla T4
 **▶ 실행 결과**
 
 ```text
-Mon Jun 22 03:44:42 2026       
+Sun Oct  4 08:31:13 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -68,7 +71,7 @@ Mon Jun 22 03:44:42 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   43C    P8             11W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   40C    P8             13W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -185,11 +188,11 @@ print(f"id2label:             {model.config.id2label}")
 [transformers] DistilBertForSequenceClassification LOAD REPORT from: distilbert-base-uncased
 Key                     | Status     | 
 ------------------------+------------+-
-vocab_projector.bias    | UNEXPECTED | 
 vocab_transform.weight  | UNEXPECTED | 
 vocab_transform.bias    | UNEXPECTED | 
-vocab_layer_norm.bias   | UNEXPECTED | 
 vocab_layer_norm.weight | UNEXPECTED | 
+vocab_projector.bias    | UNEXPECTED | 
+vocab_layer_norm.bias   | UNEXPECTED | 
 classifier.bias         | MISSING    | 
 pre_classifier.bias     | MISSING    | 
 pre_classifier.weight   | MISSING    | 
@@ -223,7 +226,7 @@ id2label:             {0: 'negative', 1: 'positive'}
 **▶ 실행 결과**
 
 ```text
-Mon Jun 22 03:45:15 2026       
+Sun Oct  4 08:31:48 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -232,7 +235,7 @@ Mon Jun 22 03:45:15 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   43C    P8             13W /   70W |       3MiB /  15360MiB |      0%      Default |
+| N/A   41C    P8             13W /   70W |       3MiB /  15360MiB |      0%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -304,9 +307,9 @@ print(f"\nTraining done — mean train loss: {train_result.training_loss:.4f}")
 
 ```text
 Epoch  Training Loss  Validation Loss  Accuracy  Precision  Recall    F1        Auc
-1      0.234228       0.246899         0.902985  0.886544   0.905660  0.896000  0.968299
-2      0.153909       0.265578         0.910448  0.902965   0.902965  0.902965  0.968875
-Training done — mean train loss: 0.2582
+1      0.241221       0.244208         0.901741  0.882199   0.908356  0.895086  0.969339
+2      0.161237       0.262615         0.911692  0.912088   0.894879  0.903401  0.969566
+Training done — mean train loss: 0.2500
 ```
 
 ```python
@@ -316,7 +319,7 @@ Training done — mean train loss: 0.2582
 **▶ 실행 결과**
 
 ```text
-Mon Jun 22 03:45:47 2026       
+Sun Oct  4 08:32:20 2026       
 +-----------------------------------------------------------------------------------------+
 | NVIDIA-SMI 580.82.07              Driver Version: 580.82.07      CUDA Version: 13.0     |
 +-----------------------------------------+------------------------+----------------------+
@@ -325,7 +328,7 @@ Mon Jun 22 03:45:47 2026
 |                                         |                        |               MIG M. |
 |=========================================+========================+======================|
 |   0  Tesla T4                       Off |   00000000:00:04.0 Off |                    0 |
-| N/A   57C    P0             65W /   70W |    1579MiB /  15360MiB |     56%      Default |
+| N/A   59C    P0             69W /   70W |    1587MiB /  15360MiB |     71%      Default |
 |                                         |                        |                  N/A |
 +-----------------------------------------+------------------------+----------------------+
 
@@ -334,6 +337,6 @@ Mon Jun 22 03:45:47 2026
 |  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
 |        ID   ID                                                               Usage      |
 |=========================================================================================|
-|    0   N/A  N/A             629      C   /usr/bin/python3                       1576MiB |
+|    0   N/A  N/A            1577      C   /usr/bin/python3                       1584MiB |
 +-----------------------------------------------------------------------------------------+
 ```
