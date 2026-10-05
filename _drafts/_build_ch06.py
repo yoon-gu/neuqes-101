@@ -156,6 +156,9 @@ from sklearn.metrics import (
     accuracy_score, hamming_loss, f1_score, classification_report,
 )
 
+import sklearn, datasets
+print(f"scikit-learn: {sklearn.__version__}, datasets: {datasets.__version__}")
+
 plt.rcParams["axes.unicode_minus"] = False
 
 dataset = load_dataset("Yelp/yelp_review_full")

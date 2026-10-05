@@ -119,6 +119,9 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
+import sklearn, datasets
+print(f"scikit-learn: {sklearn.__version__}, datasets: {datasets.__version__}")
+
 plt.rcParams["axes.unicode_minus"] = False
 
 dataset = load_dataset("Yelp/yelp_review_full")
